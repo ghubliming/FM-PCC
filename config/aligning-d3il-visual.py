@@ -1002,6 +1002,23 @@ args_to_watch_mix_visual_plan = [
     ('film_mode', 'film'),
     ('ml_bone', 'B'),                # Gen14 U8 — see the training list
     ('engine', 'E'),
+    # 🔴 Gen14 U12 — WHICH CHECKPOINT was rolled out. Emitted by _mix_epoch_keys() ONLY when
+    # the selector differs from the shipped 'best', and watch() skips keys a block does not
+    # define — so every results folder that exists today keeps its exact name, and a
+    # `latest` run lands in its own tree.
+    #
+    # WITHOUT IT a `--epoch latest` eval would write into the SAME directory as the `best`
+    # eval of the SAME checkpoint, and the two are DIFFERENT MODELS. On the af arm that is
+    # not a corner case: state_best.pt is chosen on a test_loss that scales with alpha
+    # (~0.75 + 0.25*alpha), so it structurally prefers a MID-CURRICULUM checkpoint rather
+    # than the model the alpha schedule actually produced — see
+    # logs_in_develop/Gen3v7_AlphaFlow/DA/DA_20260901_AF_UNet_alpha_clamp_T1_negative.md
+    # §3.1/§4.2, where `latest` vs `best` was the whole difference between never reaching
+    # the goal and always reaching it.
+    #
+    # Appended LAST so a non-default name reads as the existing one plus a suffix — the
+    # same trick `train_budget` uses on the training list.
+    ('diffusion_epoch_tag', 'EP'),
 ]
 
 
@@ -1074,6 +1091,58 @@ def _mix_train_block(engine, parent, overrides):
     return blk
 
 
+# ═══ Gen14 U12 — MIX_EPOCH: WHICH CHECKPOINT the eval deploys ══════════════════════════
+# WHY THIS EXISTS. `diffusion_epoch: 'best'` is inherited by all four mix plan blocks from
+# plan_fm_visual_aligning via _mix_plan_common, and NOTHING could override it: no env var, no
+# CLI flag. `best` is state_best.pt, written whenever test_loss hits a new low.
+#
+# 🔴 For the af arm that is the WRONG checkpoint by construction. alpha-Flow's test loss
+# carries an alpha-weighted term, so the minimum sits mid-homotopy: `best` deploys a model
+# caught INSIDE the curriculum, never the one the schedule ends on. Gen3v7 measured the
+# difference directly — the same training run went from 0/2 to 2/2 goals at K=1 purely by
+# evaluating `latest` instead of `best` (DA_20260901_AF_UNet_alpha_clamp_T1_negative.md §4).
+# Pairing MIX_AF_ALPHA_END (U10) with `best` would therefore floor alpha and then throw away
+# the checkpoint the floor produced, i.e. run the experiment and discard its result.
+#
+# EVAL-ONLY, NO RETRAIN. This never reaches a training block: it selects among files that
+# already exist in the checkpoint tree. The checkpoint path (`prefix` / `diffusion_loadpath`,
+# built from args_to_watch_mix_visual_train) is untouched; only the RESULTS folder moves,
+# via the 'diffusion_epoch_tag' key above.
+#
+#   MIX_EPOCH=latest        -> newest state_<step>.pt   -> results dir gains '_EPlatest'
+#   MIX_EPOCH=80000         -> state_80000.pt           -> '_EP80000'
+#   MIX_EPOCH=best / unset  -> state_best.pt            -> NO fragment (today's paths)
+_MIX_EPOCH_DEFAULT = 'best'
+
+
+def _mix_epoch_keys(raw=None):
+    """Checkpoint-selector keys for a plan block, present only when non-default.
+
+    `raw=None` reads MIX_EPOCH from the environment (blank == unset, see _env_or_none).
+    Returns {} for the shipped 'best', so with nothing set the af/mf/fm/diffusion plan
+    blocks are byte-identical to their pre-U12 selves.
+
+    The eval script calls this with an explicit value for its --epoch flag, so the CLI and
+    the env form can never disagree about what is valid or how the tag is spelled.
+    """
+    if raw is None:
+        raw = _env_or_none('MIX_EPOCH')
+    if raw is None:
+        return {}
+    val = str(raw).strip()
+    if val == _MIX_EPOCH_DEFAULT:
+        return {}                      # explicit 'best' == the default: emit nothing
+    if val != 'latest':
+        # An explicit step. Reject anything else HERE rather than let it become a
+        # 'state_<garbage>.pt' FileNotFoundError minutes into a GPU allocation.
+        if not val.isdigit():
+            raise ValueError(
+                f"CRITICAL: MIX_EPOCH/--epoch='{val}' is not 'best', 'latest', or a "
+                f"non-negative step number.")
+        val = int(val)
+    return {'diffusion_epoch': val, 'diffusion_epoch_tag': val}
+
+
 def _mix_plan_block(engine, train_blk, overrides, drop=()):
     """Assemble one planning block, deriving every path string from the watch lists.
 
@@ -1127,6 +1196,12 @@ def _mix_plan_block(engine, train_blk, overrides, drop=()):
     blk['diffusion_loadpath'] = _mix_loadpath(
         args_to_watch_mix_visual_train, train_blk,
         f'mix_visual_aligning_{engine}/', _MIX_TRAIN_TO_PLAN_KEY)
+
+    # ── Gen14 U12 ── which checkpoint this eval deploys. EMPTY at the default, so every
+    # existing results path is unchanged. Applied LAST, and deliberately AFTER
+    # diffusion_loadpath: these are EVAL keys, and nothing here may touch the checkpoint
+    # identity the two mirror loops above just finished building.
+    blk.update(_mix_epoch_keys())
     return blk
 
 

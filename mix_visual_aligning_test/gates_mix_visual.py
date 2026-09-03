@@ -12,6 +12,7 @@ G4  alpha spans the budget  alpha(0)~1, alpha(N)~0, monotone
 G5  alpha->0 == MeanFlow    af with alpha pinned to 0 matches the mf objective
 G6  projector fires at K=1  the DPCC projection is not silently skipped at 1 NFE
 G7  film_mode=v2 everywhere all four arms build at v2; two-time keeps h_mlp; JVP survives
+G-B12 MIX_EPOCH path safety  the checkpoint selector tags the RESULTS dir and nothing else
 
 G0 needs no torch at all. G1 and G4 need torch but no GPU. G6 builds small state-only
 models and runs on CPU. G2/G3/G5/G7 build visual models and need a GPU (`--gate static`
@@ -1235,10 +1236,140 @@ def gate_gb11():
     return ok
 
 
+def gate_gb12():
+    """G-B12 — MIX_EPOCH picks the checkpoint WITHOUT moving the checkpoint path.
+
+    🔴 WHY THIS GATE EXISTS. U12 makes `diffusion_epoch` overridable, and an eval-time
+    selector that lands in the wrong half of the path scheme is a data-loss bug either way:
+
+      * if it reached the CHECKPOINT identity (`prefix` / `diffusion_loadpath`), every
+        existing checkpoint would be orphaned and the eval would hunt for a directory that
+        was never written;
+      * if it reached NOTHING, a `--epoch latest` pass would write into the SAME results
+        directory as the `best` pass of the SAME weights — and on the af arm those are two
+        genuinely different models (state_best.pt is selected on an alpha-weighted
+        test_loss, so it sits MID-curriculum). One would silently overwrite the other and
+        the folder name could not tell you which survived.
+
+    So the gate asserts BOTH halves at once: checkpoint identity byte-identical, results
+    identity strictly extended by '_EPlatest', on all four arms.
+
+    `custom_msg` is forced to '' when resolving exp_name because watch_plan() appends its
+    '_msg<tag>' suffix AFTER the watch fragments; with a message set the comparison would be
+    'a_EPlatest_msgX' vs 'a_msgX' and the strict-suffix test would be meaningless.
+    """
+    print('\n=== G-B12: MIX_EPOCH is a results-path key, never a checkpoint key ===')
+    import os, importlib.util, sys, types
+    ok = True
+    path = os.path.join(REPO, 'config', 'aligning-d3il-visual.py')
+    ARMS = ('diffusion', 'fm', 'mf', 'af')
+
+    def _load(env):
+        os.environ.pop('MIX_EPOCH', None)
+        os.environ.update(env)
+        spec = importlib.util.spec_from_file_location('_cfg_probe', path)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+
+    try:
+        m_best = _load({})
+        m_late = _load({'MIX_EPOCH': 'latest'})
+    finally:
+        os.environ.pop('MIX_EPOCH', None)
+        sys.modules.pop('_cfg_probe', None)
+
+    # (a) the token is registered on the PLAN list only — never the training list.
+    plan_keys  = [k for k, _ in m_best.args_to_watch_mix_visual_plan]
+    train_keys = [k for k, _ in m_best.args_to_watch_mix_visual_train]
+    if 'diffusion_epoch_tag' not in plan_keys:
+        ok = False
+        print("  FAIL 'diffusion_epoch_tag' is not in args_to_watch_mix_visual_plan — a "
+              "'latest' eval would OVERWRITE the 'best' results directory.")
+    elif plan_keys[-1] != 'diffusion_epoch_tag':
+        ok = False
+        print(f"  FAIL 'diffusion_epoch_tag' must be LAST in the plan watch list (found "
+              f"{plan_keys[-1]!r} last) — the non-default name has to read as the shipped "
+              f"one plus a suffix.")
+    else:
+        print("  ok   'diffusion_epoch_tag' registered LAST on the plan watch list")
+    if 'diffusion_epoch_tag' in train_keys or 'diffusion_epoch' in train_keys:
+        ok = False
+        print('  FAIL the epoch keys leaked into args_to_watch_mix_visual_train — that '
+              'would put an eval-time selector in the CHECKPOINT path.')
+    else:
+        print('  ok   epoch keys absent from the training watch list')
+
+    # (b) per arm: default silent, latest tagged, checkpoint identity frozen.
+    for arm in ARMS:
+        key = f'plan_mix_visual_aligning_{arm}'
+        b0, b1 = m_best.base[key], m_late.base[key]
+
+        if 'diffusion_epoch_tag' in b0:
+            ok = False
+            print(f"  FAIL {arm}: the DEFAULT block defines diffusion_epoch_tag="
+                  f"{b0['diffusion_epoch_tag']!r} — every existing results path would move.")
+            continue
+        if b0.get('diffusion_epoch') != 'best':
+            ok = False
+            print(f"  FAIL {arm}: default diffusion_epoch is {b0.get('diffusion_epoch')!r}, "
+                  f"want 'best' (the shipped value).")
+            continue
+        if b1.get('diffusion_epoch') != 'latest' or b1.get('diffusion_epoch_tag') != 'latest':
+            ok = False
+            print(f"  FAIL {arm}: MIX_EPOCH=latest did not reach the block "
+                  f"(epoch={b1.get('diffusion_epoch')!r}, tag={b1.get('diffusion_epoch_tag')!r}).")
+            continue
+
+        moved = [k for k in ('prefix', 'diffusion_loadpath') if b0.get(k) != b1.get(k)]
+        if moved:
+            ok = False
+            print(f'  FAIL {arm}: MIX_EPOCH moved the CHECKPOINT identity {moved} — it is an '
+                  f'eval-only key and must never touch these.')
+            continue
+
+        try:
+            e0 = b0['exp_name'](types.SimpleNamespace(**{**b0, 'custom_msg': ''}))
+            e1 = b1['exp_name'](types.SimpleNamespace(**{**b1, 'custom_msg': ''}))
+        except Exception as e:
+            ok = False
+            print(f'  FAIL {arm}: exp_name did not resolve: {type(e).__name__}: {e}')
+            continue
+        if e1 != e0 + '_EPlatest':
+            ok = False
+            print(f'  FAIL {arm}: results name is not a strict extension.\n'
+                  f'        best  : {e0}\n        latest: {e1}')
+            continue
+        print(f'  ok   {arm}: ckpt path frozen; results {e0[-38:]!r} + \'_EPlatest\'')
+
+    # (c) the validator rejects what would become a state_<garbage>.pt at load time.
+    if m_best._mix_epoch_keys('best') != {}:
+        ok = False
+        print("  FAIL an explicit 'best' must emit NOTHING (it is the shipped default).")
+    else:
+        print("  ok   explicit 'best' emits no fragment")
+    _bad_ok = True
+    for bad in ('lastest', 'LATEST', '-1', '8e4', 'state_80000.pt'):
+        try:
+            m_best._mix_epoch_keys(bad)
+        except ValueError:
+            continue
+        ok = _bad_ok = False
+        print(f'  FAIL MIX_EPOCH={bad!r} was accepted — it would become state_{bad}.pt and '
+              f'die inside torch.load minutes into a GPU allocation.')
+    if _bad_ok:
+        print('  ok   malformed selectors rejected at config time, not at torch.load time')
+
+    print('\n  G-B12 PASS' if ok else '\n  G-B12 FAIL')
+    return ok
+
+
 GATES = {'gb1': gate_gb1, 'gb6': gate_gb6, 'gb7': gate_gb7,
          'gb2': gate_gb2, 'gb3': gate_gb3, 'gb45': gate_gb45,
          # Gen14 U9
          'gb8': gate_gb8, 'gb9': gate_gb9, 'gb11': gate_gb11,
+         # Gen14 U12
+         'gb12': gate_gb12,
          'g0': gate_g0, 'g1': gate_g1, 'g2': gate_g2,
          'g3': gate_g3, 'g4': gate_g4, 'g5': gate_g5, 'g6': gate_g6,
          'g7': gate_g7}

@@ -237,6 +237,30 @@ if [ -n "$MIX_AUTO_RESUME" ]; then
     EXPORT_OPTS="$EXPORT_OPTS,MIX_AUTO_RESUME=$MIX_AUTO_RESUME"
     echo "[ pipeline ] auto-resume = ON (train stage picks up the newest state_<step>.pt)"
 fi
+# ── Gen14 U12 ── MIX_EPOCH: which checkpoint the EVAL stage deploys. Train-stage-inert.
+# Exported EXPLICITLY rather than left to --export=ALL for the same reason as MIX_TRAIN_STEPS
+# above: it is a RESULTS-path key ('_EP<sel>'), and a stage that does not see it writes into
+# a differently-named directory than the one the submitter is expecting to read.
+if [ -n "${MIX_EPOCH:-}" ]; then
+    case "$MIX_EPOCH" in
+        best|latest) ;;
+        ''|*[!0-9]*)
+            echo "ERROR: MIX_EPOCH='$MIX_EPOCH' must be 'best', 'latest', or a step number."
+            exit 1 ;;
+    esac
+    EXPORT_OPTS="$EXPORT_OPTS,MIX_EPOCH=$MIX_EPOCH"
+    echo "[ pipeline ] eval checkpoint = $MIX_EPOCH"
+    if [ "$MIX_EPOCH" != "best" ]; then
+        echo "[ pipeline ]     🔴 RESULTS-PATH KEY -- the eval writes into an '_EP${MIX_EPOCH}'"
+        echo "[ pipeline ]     directory, so it cannot overwrite an existing 'best' rollout."
+    fi
+elif [ "$ENGINE" = "af" ]; then
+    echo "[ pipeline ] eval checkpoint = best (default)"
+    echo "[ pipeline ]     ⚠  on the af arm 'best' is chosen on an alpha-weighted test_loss and"
+    echo "[ pipeline ]        therefore prefers a MID-CURRICULUM model. If this run sets"
+    echo "[ pipeline ]        MIX_AF_ALPHA_END, set MIX_EPOCH=latest too or the floored alpha"
+    echo "[ pipeline ]        is trained and then discarded at eval."
+fi
 if [ "$ML_BONE" != "unet" ]; then
     echo "[ pipeline ] ml_bone = $ML_BONE — VisualDiTTwoTime (visual latent as ONE PREPENDED"
     echo "[ pipeline ]           TOKEN). RETRAIN into a separate '..._B${ML_BONE}_E${ENGINE}' tree;"

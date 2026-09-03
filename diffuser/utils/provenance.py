@@ -74,6 +74,10 @@ TRACKED_ENV = (
     'MIX_TRAIN_STEPS', 'MIX_PROJ_T',
     'MIX_AF_ALPHA_SCHED', 'MIX_AF_ALPHA_INIT', 'MIX_AF_ALPHA_END',
     'MIX_AF_ALPHA_CLAMP', 'MIX_AF_ALPHA_GAMMA',
+    # Gen14 U12 — which checkpoint the eval deployed ('best' | 'latest' | <step>). The
+    # results path carries '_EP<sel>' only when non-default, so a plain 'best' run is
+    # indistinguishable from a pre-U12 one by name alone; this is where that is recorded.
+    'MIX_EPOCH',
     'FMPCC_HF_NLP_BACKEND',
     # job-level
     'TRAIN_SEEDS', 'AUTO_RESUME', 'FORCE_OVERWRITE',

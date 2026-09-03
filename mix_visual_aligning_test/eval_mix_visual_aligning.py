@@ -2721,9 +2721,64 @@ def load_diffusion_with_override(*loadpath, target_class=None, epoch='best', dev
     model     = model_config()
     diffusion = diffusion_config(model).to(device)
     trainer   = trainer_config(diffusion_model=diffusion, dataset=dataset)
+    # ── Gen14 U12 ── resolve 'latest', and FAIL LOUDLY when it cannot be resolved.
+    #
+    # 🔴 utils.get_latest_epoch returns -1 when no NUMERIC state_<step>.pt matches, and the
+    # old code walked straight into `state_-1.pt` -> FileNotFoundError from inside torch.load,
+    # naming a file nobody ever asked for. Gen3v7 job 25253 died exactly this way and the
+    # cause (a tree holding only state_best.pt) took a manual `ls` on the cluster to find.
+    # A checkpoint tree can legitimately be in that state: /data filled up mid-run, or the
+    # job was killed before the first periodic save.
     if epoch == 'latest':
         epoch = utils.get_latest_epoch(loadpath)
+        if epoch < 0:
+            import glob as _glob
+            _have = sorted(_glob.glob1(lp, 'state_*.pt'))
+            raise SystemExit(
+                f"[ eval loading ] ERROR: --epoch latest found NO numeric state_<step>.pt in\n"
+                f"    {lp}\n"
+                f"  present: {_have if _have else '(nothing)'}\n"
+                f"  The periodic saves are missing, not the checkpoint: state_best.pt alone\n"
+                f"  cannot answer 'latest'. Either re-run with --epoch best / MIX_EPOCH=best\n"
+                f"  (⚠ on the af arm that deploys a MID-CURRICULUM model — see U12), or\n"
+                f"  retrain with MIX_SAVE_EVERY set so periodic checkpoints land on disk.")
     trainer.load(epoch)
+
+    # Breadcrumb: WHICH weights are about to be rolled out. `trainer.step` is read back out
+    # of the checkpoint itself (utils/training.py load()), so this is the file's own claim
+    # about where in training it came from, not the config's.
+    _ckpt_step = getattr(trainer, 'step', None)
+    print(f'[ eval loading ] checkpoint = state_{epoch}.pt  (trained to step {_ckpt_step})')
+
+    # ── Gen14 U12 ── the alpha breadcrumb, af arm only.
+    #
+    # 🔴 THE ONE CHECK THAT SEPARATES alpha-FLOW FROM MeanFlow AT DEPLOYMENT. af_diffusion
+    # routes `alpha <= 0` into Gen3v6's MeanFlow JVP body UNMODIFIED (af_diffusion.py:552),
+    # so a checkpoint taken from the alpha=0 tail IS a MeanFlow model however the folder is
+    # named. Printing alpha at the loaded step makes that visible in the eval log instead of
+    # only in the training log, which is usually a different job hours earlier.
+    # _get_ratio is a staticmethod for exactly this reason: schedule questions without a
+    # training loop. The alpha values here come from the TRAIN-time diffusion_config.pkl.
+    if _ckpt_step is not None and hasattr(diffusion, 'af_alpha_end'):
+        try:
+            _a = diffusion._get_ratio(
+                diffusion.af_alpha_scheduler, diffusion.af_alpha_init, diffusion.af_alpha_end,
+                diffusion.af_alpha_init_step, diffusion.af_alpha_end_step,
+                diffusion.af_alpha_gamma, diffusion.af_alpha_clamp, int(_ckpt_step))
+        except Exception as _e:
+            print(f'[ eval loading ] alpha at step {_ckpt_step}: unavailable ({type(_e).__name__})')
+        else:
+            _verdict = ('🔴 alpha = 0 -> these weights were trained on the MeanFlow target '
+                        '(af_diffusion.py:552). This is an alpha-Flow CURRICULUM endpoint, '
+                        'not the alpha-Flow objective.'
+                        if _a <= 0.0 else
+                        'alpha-Flow objective ACTIVE at this checkpoint.')
+            print(f'[ eval loading ] alpha(step {_ckpt_step}) = {_a:.4f}  '
+                  f'[schedule {diffusion.af_alpha_scheduler} '
+                  f'{diffusion.af_alpha_init} -> {diffusion.af_alpha_end} '
+                  f'over {diffusion.af_alpha_end_step} steps, clamp {diffusion.af_alpha_clamp}]')
+            print(f'[ eval loading ]   {_verdict}')
+
     return utils.DiffusionExperiment(dataset, trainer.model.model, trainer.model, trainer, epoch, None)
 
 # ── Parser & Main ─────────────────────────────────────────────────────────────
@@ -2787,6 +2842,24 @@ if __name__ == '__main__':
                              'budget) for this run. Applies to the projector, to HardFlow '
                              '(which inherits it when hardflow.activation_threshold is null) '
                              'AND to the results folder name. Env fallback: MIX_PROJ_T.')
+    # ── Gen14 U12 ── --epoch / MIX_EPOCH: WHICH CHECKPOINT gets rolled out.
+    #
+    # 🔴 Before U12 this was unreachable: 'diffusion_epoch': 'best' is inherited by all four
+    # mix plan blocks and no flag or env var could move it. `best` = state_best.pt, the
+    # lowest test_loss ever seen. On the af arm that loss carries an alpha-weighted term, so
+    # its minimum sits MID-HOMOTOPY: `best` deploys a model caught inside the curriculum,
+    # never the one the schedule ends on. Gen3v7 measured the gap — the same run went from
+    # 0/2 to 2/2 goals at K=1 purely by evaluating `latest` instead of `best`
+    # (DA_20260901_AF_UNet_alpha_clamp_T1_negative.md §4).
+    #
+    # Eval-only: it picks among files already on disk. The CHECKPOINT path is untouched;
+    # only the results folder moves, via the '_EP<sel>' fragment (config U12 block).
+    parser.add_argument('--epoch', type=str, default=None, metavar='SEL',
+                        help="which checkpoint to deploy: 'best' (default; lowest test_loss), "
+                             "'latest' (newest state_<step>.pt), or an explicit step number. "
+                             "Applies to the loader AND the results folder name ('_EP<sel>'). "
+                             "Env fallback: MIX_EPOCH. Use 'latest' on the af arm to deploy "
+                             "the model the alpha schedule actually produced.")
     args_cli, remaining = parser.parse_known_args()
     sys.argv = [sys.argv[0]] + remaining
 
@@ -2917,6 +2990,53 @@ if __name__ == '__main__':
             f'Set --proj-threshold / MIX_PROJ_T rather than editing one of them by hand.')
     print(f'[ eval ] projection threshold T = {_T_yaml}  (source: {_T_SRC})')
 
+    # ── Gen14 U12 ── --epoch / MIX_EPOCH, resolved once: CLI > env > config default.
+    #
+    # Same timing rule as --flow-steps (U6) and --proj-threshold (U11): the plan-block
+    # mutation MUST happen before any Parser().parse_args(), because exp_name is resolved
+    # inside parse_args and 'diffusion_epoch_tag' is one of args_to_watch_mix_visual_plan's
+    # keys. Set it later and the loader would honour the new checkpoint while the results
+    # folder still claimed the old one.
+    #
+    # Validation lives in the CONFIG module (_mix_epoch_keys), not here, so the CLI form and
+    # the env form can never disagree about what is legal or how the tag is spelled.
+    _EP_SRC, _ep_raw = 'config default', None
+    if args_cli.epoch is not None:
+        _ep_raw, _EP_SRC = args_cli.epoch.strip(), 'cli --epoch'
+    elif str(os.environ.get('MIX_EPOCH') or '').strip():
+        # `.strip()` truthiness, not `is not None` — shell `VAR= cmd` exports the EMPTY
+        # STRING rather than unsetting it (job 25215). Blank means absent, as in the config.
+        _ep_raw, _EP_SRC = os.environ['MIX_EPOCH'].strip(), 'env MIX_EPOCH'
+    _cfg_mod     = importlib.import_module(Parser.config)
+    _plan_blk_EP = _cfg_mod.base[EXPERIMENT]
+    if _ep_raw is not None:
+        try:
+            _ep_keys = _cfg_mod._mix_epoch_keys(_ep_raw)
+        except ValueError as _e:
+            raise SystemExit(f'[ eval ] ERROR: {_e}  (source: {_EP_SRC})')
+        _old_ep = _plan_blk_EP.get('diffusion_epoch', 'best')
+        # Pop first: an explicit --epoch best must REMOVE a tag the env may have set at
+        # config-import time, or the folder would carry '_EPlatest' for a `best` rollout.
+        _plan_blk_EP.pop('diffusion_epoch_tag', None)
+        _plan_blk_EP['diffusion_epoch'] = _ep_keys.get('diffusion_epoch', 'best')
+        _plan_blk_EP.update(_ep_keys)
+        print(f'[ eval ] --epoch: diffusion_epoch {_old_ep!r} -> '
+              f'{_plan_blk_EP["diffusion_epoch"]!r}  (source: {_EP_SRC})')
+    _ep_now = _plan_blk_EP.get('diffusion_epoch', 'best')
+    _ep_tag = _plan_blk_EP.get('diffusion_epoch_tag')
+    print(f'[ eval ] checkpoint selector = {_ep_now!r}  (source: {_EP_SRC})'
+          + (f'  -> results dir carries _EP{_ep_tag}' if _ep_tag is not None
+             else '  -> no _EP fragment (shipped path shape)'))
+    if ENGINE == 'af' and _ep_now == 'best':
+        print("[ eval ]   ⚠  af arm at 'best': state_best.pt is chosen on a test_loss that "
+              "scales with alpha, so it")
+        print("[ eval ]      structurally prefers a MID-CURRICULUM checkpoint rather than the "
+              "model the alpha")
+        print("[ eval ]      schedule actually produced. Pairing MIX_AF_ALPHA_END with 'best' "
+              "floors alpha and then")
+        print("[ eval ]      discards the checkpoint the floor produced. Use --epoch latest / "
+              "MIX_EPOCH=latest.")
+
     for _seed_i, seed in enumerate(seeds):
         # Fix_11: seed X/N — the outermost breadcrumb level (mirrors UAV's Fix_11).
         print(f'\n=== Evaluating seed {_seed_i + 1}/{len(seeds)} (seed={seed}) ===')
@@ -2926,6 +3046,9 @@ if __name__ == '__main__':
         assert_engine_matches(ENGINE, getattr(args, 'engine', None))
 
         diffusion_model = None
+        # Gen14 U12 — the RESOLVED checkpoint, for the provenance record below. 'latest' is
+        # a request; these two are the answer, and only the answer identifies the weights.
+        _ckpt_epoch_resolved = _ckpt_step_resolved = None
         if not args_cli.aggregate_only:
             exp = load_diffusion_with_override(
                 args.loadbase, args.dataset, args.diffusion_loadpath, str(args.seed),
@@ -2933,6 +3056,8 @@ if __name__ == '__main__':
                 device=args.device, override_args=args,
             )
             diffusion_model = exp.diffusion
+            _ckpt_epoch_resolved = exp.epoch
+            _ckpt_step_resolved  = getattr(getattr(exp, 'trainer', None), 'step', None)
             # Original DPCC always trains/evaluates with clip_denoised=False — the cosine schedule
             # amplifies x_0 prediction by ~9.4× at early timesteps, so clipping to ±1 corrupts the
             # denoising chain. FM ODE does not clamp at all (no cosine schedule), so False is correct here too.
@@ -3013,6 +3138,15 @@ if __name__ == '__main__':
                 'hardflow_variants_from_env': bool(os.environ.get('HFFM_VARIANTS')),
                 'diffusion_timestep_threshold': config.get('diffusion_timestep_threshold'),
                 't_override_source': _T_SRC,
+                # ── Gen14 U12 ── WHICH WEIGHTS produced these rows. The selector alone is
+                # not enough: 'latest' is a request whose answer depends on what happened to
+                # be on disk when the job ran, and two evals of the "same" checkpoint months
+                # apart can resolve it differently. Record the request, where it came from,
+                # and the step it actually resolved to.
+                'diffusion_epoch': getattr(args, 'diffusion_epoch', None),
+                'diffusion_epoch_source': _EP_SRC,
+                'checkpoint_epoch_resolved': _ckpt_epoch_resolved,
+                'checkpoint_step': _ckpt_step_resolved,
                 'flow_steps_v3': getattr(args, 'flow_steps_v3', None),
                 'n_diffusion_steps': getattr(args, 'n_diffusion_steps', None),
                 'projector_calls_per_replan': (

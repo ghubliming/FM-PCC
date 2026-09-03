@@ -263,14 +263,55 @@ else
     echo "[ eval ] arm C (HardFlow) OFF — set HFFM_VARIANTS to enable"
 fi
 
-# $SEEDS and $FLOW_ARG are intentionally unquoted: $SEEDS must word-split into separate
-# --seeds arguments, and $FLOW_ARG must vanish entirely when empty.
+# ── Gen14 U12 ── MIX_EPOCH: WHICH CHECKPOINT gets rolled out ──────────────────────────────
+#   best    (default) state_best.pt — the lowest test_loss ever recorded
+#   latest            the newest state_<step>.pt
+#   <step>            an explicit step, e.g. 100000
+#
+# 🔴 WHY THE af ARM MUST NOT USE 'best'. alpha-Flow's test loss carries an alpha-weighted
+# term, so its minimum sits MID-HOMOTOPY: state_best.pt is a model caught INSIDE the
+# curriculum, not the one the schedule ends on. Gen3v7 measured the gap — the same training
+# run went from 0/2 to 2/2 goals at K=1 purely by evaluating 'latest' instead of 'best'
+# (DA_20260901_AF_UNet_alpha_clamp_T1_negative.md §4). Setting MIX_AF_ALPHA_END (U10) and
+# then evaluating 'best' floors alpha and throws away the checkpoint the floor produced.
+#
+# ✅ EVAL-ONLY, cannot overwrite anything: it picks among files already in the checkpoint
+#    tree, and a non-default selector adds an '_EP<sel>' fragment to the RESULTS folder
+#    (config: _mix_epoch_keys), so a 'latest' pass lands beside the 'best' one instead of
+#    on top of it. The checkpoint path is untouched — same weights, no retraining.
+EPOCH_SEL="${MIX_EPOCH:-}"
+if [ -n "$EPOCH_SEL" ]; then
+    case "$EPOCH_SEL" in
+        best|latest) ;;
+        ''|*[!0-9]*)
+            echo "[ eval ] ERROR: MIX_EPOCH='$EPOCH_SEL' must be 'best', 'latest', or a"
+            echo "         non-negative step number (it names state_<sel>.pt)."
+            exit 1 ;;
+    esac
+    EPOCH_ARG="--epoch $EPOCH_SEL"
+    if [ "$EPOCH_SEL" = "best" ]; then
+        echo "[ eval ] checkpoint = best (explicit) -> no _EP fragment; shipped path shape"
+    else
+        echo "[ eval ] checkpoint = $EPOCH_SEL  -> results dir gains '_EP${EPOCH_SEL}'"
+    fi
+else
+    EPOCH_ARG=""
+    echo "[ eval ] checkpoint = best (config default) -> no _EP fragment"
+    if [ "$ENGINE" = "af" ]; then
+        echo "[ eval ]   ⚠  af arm on 'best': state_best.pt is chosen on an alpha-weighted"
+        echo "[ eval ]      test_loss and therefore prefers a MID-CURRICULUM model. Set"
+        echo "[ eval ]      MIX_EPOCH=latest to deploy the endpoint of the alpha schedule."
+    fi
+fi
+
+# $SEEDS, $FLOW_ARG and $EPOCH_ARG are intentionally unquoted: $SEEDS must word-split into
+# separate --seeds arguments, and the two *_ARG must vanish entirely when empty.
 run_eval () {                      # $1 = threshold ("" -> config default)
     local targ=()
     if [ -n "$1" ]; then targ=(--proj-threshold "$1"); fi
     python mix_visual_aligning_test/eval_mix_visual_aligning.py \
         --engine "$ENGINE" --seeds $SEEDS --record "$RECORD_MODE" --eval-on-train \
-        $FLOW_ARG "${targ[@]}"
+        $FLOW_ARG $EPOCH_ARG "${targ[@]}"
 }
 
 # Relax `set -e` around the sweep so one failing threshold does not throw away the others;

@@ -80,6 +80,13 @@ cd "$REPO"
 #   G-B6  prefix_tokens / RoPE-table / pos_embed bookkeeping agree (the silent failure mode)
 #   G-B7  bone is a checkpoint-path key, and no '_film..' fragment lands on a DiT path
 #
+# ── Gen14 U12 ── the checkpoint-selector gate (no GPU; included in `static` and `all`):
+#   G-B12 MIX_EPOCH tags the RESULTS directory and NEVER the checkpoint path, on all four
+#         arms, and malformed selectors are rejected at config time rather than becoming a
+#         state_<garbage>.pt FileNotFoundError minutes into a GPU allocation.
+#
+#   sbatch gates_mix_visual.sh gb12     # just the U12 gate (~seconds, no GPU work)
+#
 # 🔴 Run `bone` before the first DiT training job. G-B6 is the one that matters most: a
 # half-applied token bump trains fine and reads the WRONG positions.
 #

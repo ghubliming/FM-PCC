@@ -394,6 +394,29 @@ class Trainer(object):
             if on_epoch_end is not None:
                 on_epoch_end(epoch)
 
+        # ── Gen14 U12 ── SAVE THE MODEL THE SCHEDULE ACTUALLY ENDS ON.
+        #
+        # 🔴 The periodic save fires on `self.step % self.save_freq == 0` inside
+        # train_epoch, and self.step only ever reaches n_train_steps - 1 there. So the
+        # newest NUMERIC checkpoint is the last multiple of save_freq strictly below
+        # n_train_steps — at the default save_freq = n_train_steps // 5 that is step 80000
+        # of 100000. `--epoch latest` (Gen14 U12) has therefore always deployed a model 20%
+        # short of the end of training, and no MIX_SAVE_EVERY cadence can fix it: the last
+        # multiple of ANY frequency is < n_train_steps. This makes `latest` mean what it
+        # says. Gen3v7 flagged the same defect as "step 1b" and never closed it
+        # (DA_20260901_AF_UNet_alpha_clamp_T1_negative.md §4.3).
+        #
+        # Fires ONLY on a completed run: the early return at the top of this method means
+        # there are steps left to do, and that run's periodic saves still stand. Costs one
+        # extra state_<n_train_steps>.pt per completed run. Overwriting is safe — save() is
+        # atomic (Fix_10) and would write identical weights.
+        if self.step >= self.n_train_steps:
+            _last_periodic = (int(self.n_train_steps) - 1) // self.save_freq * self.save_freq
+            print(f'[ utils/training_twotime ] final checkpoint: step {self.step} '
+                  f'(the periodic save only reaches {_last_periodic}); '
+                  f'"latest" now resolves to the end of the schedule', flush=True)
+            self.save(self.step)
+
     def test(self, n_test=100):
         self.model.eval()   # Set the model to evaluation mode
 
