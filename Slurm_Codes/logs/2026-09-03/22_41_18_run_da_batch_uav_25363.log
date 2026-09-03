@@ -1,0 +1,738 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+[ DA_UAV_v1 ] auto-scan found 2 root(s):
+[ DA_UAV_v1 ]   logs/UAV_MIX
+[ DA_UAV_v1 ]   logs/UAV_FM
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO - ======================================================================
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO - DA_UAV_v1 — Gen15 UAV Mix-ML batch analysis
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO - ======================================================================
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO - Start:  2026-09-03 20:41:20
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO - Parent: logs/UAV_MIX,logs/UAV_FM
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO - Output: Data_Analysis/analysis_results/batch_uav_20260903_204120
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO - Manifest: /data/home/llim/FMPCC/FM-PCC/Data_Analysis/analysis_results/results_manifest.json
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO - [1/5] Discovering candidates
+[2026-09-03 20:41:20] discovery - INFO - Candidate 1: corridor|Gen11  seeds=[6]  (scene=corridor engine=? K=None)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 2: corridor|K20|Gen11  seeds=[6]  (scene=corridor engine=? K=20)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 3: corridor|Gen11  seeds=[6]  (scene=corridor engine=? K=None)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 4: corridor|Gen11  seeds=[6]  (scene=corridor engine=? K=None)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 5: corridor|Gen11  seeds=[6]  (scene=corridor engine=? K=None)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 6: corridor|Gen11  seeds=[6]  (scene=corridor engine=? K=None)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 7: corridor|K20|Gen11  seeds=[6]  (scene=corridor engine=? K=20)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 8: empty|Gen11  seeds=[6]  (scene=empty engine=? K=None)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 9: empty|K20|Gen11  seeds=[6]  (scene=empty engine=? K=20)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 10: empty|Gen11  seeds=[6]  (scene=empty engine=? K=None)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 11: empty|Gen11  seeds=[6]  (scene=empty engine=? K=None)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 12: pillars|Gen11  seeds=[6]  (scene=pillars engine=? K=None)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 13: pillars|Gen11  seeds=[6]  (scene=pillars engine=? K=None)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 14: pillars|Gen11  seeds=[6]  (scene=pillars engine=? K=None)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 15: pillars|Gen11  seeds=[6]  (scene=pillars engine=? K=None)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 16: pillars|K20|Gen11  seeds=[6]  (scene=pillars engine=? K=20)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 17: pillars|K20|Gen11  seeds=[6]  (scene=pillars engine=? K=20)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 18: pillars|K20|Gen11  seeds=[6]  (scene=pillars engine=? K=20)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 19: pillars|K20|Gen11  seeds=[6]  (scene=pillars engine=? K=20)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 20: pillars|Gen11  seeds=[6]  (scene=pillars engine=? K=None)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 21: pillars|Gen11  seeds=[6]  (scene=pillars engine=? K=None)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 22: pillars|K20|Gen11  seeds=[6]  (scene=pillars engine=? K=20)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 23: s_curve|Gen11  seeds=[6]  (scene=s_curve engine=? K=None)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 24: s_curve|K20|Gen11  seeds=[6]  (scene=s_curve engine=? K=20)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 25: s_curve|K20|Gen11  seeds=[6]  (scene=s_curve engine=? K=20)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 26: s_curve|Gen11  seeds=[6]  (scene=s_curve engine=? K=None)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 27: s_curve|Gen11  seeds=[6]  (scene=s_curve engine=? K=None)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 28: s_curve|K20|Gen11  seeds=[6]  (scene=s_curve engine=? K=20)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 29: corridor|af|K1|bbsit  seeds=[6]  (scene=corridor engine=af K=1)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 30: corridor|af|K2|bbsit  seeds=[6]  (scene=corridor engine=af K=2)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 31: corridor|af|K5|bbsit  seeds=[6]  (scene=corridor engine=af K=5)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 32: corridor|fm|K10  seeds=[6]  (scene=corridor engine=fm K=10)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 33: corridor|fm|K1  seeds=[6]  (scene=corridor engine=fm K=1)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 34: corridor|fm|K20  seeds=[6]  (scene=corridor engine=fm K=20)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 35: corridor|fm|K2  seeds=[6]  (scene=corridor engine=fm K=2)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 36: corridor|fm|K5  seeds=[6]  (scene=corridor engine=fm K=5)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 37: corridor|mf|K10|bbunet|dp0.5  seeds=[6]  (scene=corridor engine=mf K=10)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 38: corridor|mf|K1|bbunet|dp0.5  seeds=[6]  (scene=corridor engine=mf K=1)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 39: corridor|mf|K20|bbunet|dp0.5  seeds=[6]  (scene=corridor engine=mf K=20)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 40: corridor|mf|K2|bbunet|dp0.5  seeds=[6]  (scene=corridor engine=mf K=2)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 41: corridor|mf|K5|bbunet|dp0.5  seeds=[6]  (scene=corridor engine=mf K=5)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 42: pillars|af|K1|bbsit  seeds=[6]  (scene=pillars engine=af K=1)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 43: pillars|af|K2|bbsit  seeds=[6]  (scene=pillars engine=af K=2)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 44: pillars|af|K5|bbsit  seeds=[6]  (scene=pillars engine=af K=5)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 45: pillars|fm|K10  seeds=[6]  (scene=pillars engine=fm K=10)
+[2026-09-03 20:41:20] discovery - WARNING - Candidate 45 (pillars|fm|K10): 6 variant folder(s) carry a PROJECTION_CB_TRIPPED.txt sentinel — projection was ABANDONED there, their constraint metrics are not valid
+[2026-09-03 20:41:20] discovery - INFO - Candidate 46: pillars|fm|K1  seeds=[6]  (scene=pillars engine=fm K=1)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 47: pillars|fm|K20  seeds=[6]  (scene=pillars engine=fm K=20)
+[2026-09-03 20:41:20] discovery - WARNING - Candidate 47 (pillars|fm|K20): 3 variant folder(s) carry a PROJECTION_CB_TRIPPED.txt sentinel — projection was ABANDONED there, their constraint metrics are not valid
+[2026-09-03 20:41:20] discovery - INFO - Candidate 48: pillars|fm|K2  seeds=[6]  (scene=pillars engine=fm K=2)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 49: pillars|fm|K5  seeds=[6]  (scene=pillars engine=fm K=5)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 50: pillars|mf|K10|bbunet|dp0.5  seeds=[6]  (scene=pillars engine=mf K=10)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 51: pillars|mf|K1|bbunet|dp0.5  seeds=[6]  (scene=pillars engine=mf K=1)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 52: pillars|mf|bbunet|dp0.5  seeds=[6]  (scene=pillars engine=mf K=None)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 53: pillars|mf|bbunet|dp0.5  seeds=[6]  (scene=pillars engine=mf K=None)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 54: pillars|mf|K2|bbunet|dp0.5  seeds=[6]  (scene=pillars engine=mf K=2)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 55: pillars|mf|bbunet|dp0.5  seeds=[6]  (scene=pillars engine=mf K=None)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 56: pillars|mf|bbunet|dp0.5  seeds=[6]  (scene=pillars engine=mf K=None)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 57: pillars|mf|K5|bbunet|dp0.5  seeds=[6]  (scene=pillars engine=mf K=5)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 58: pillars|mf|bbunet|dp0.5  seeds=[6]  (scene=pillars engine=mf K=None)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 59: pillars|mf|bbunet|dp0.5  seeds=[6]  (scene=pillars engine=mf K=None)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 60: s_curve|diffusion|K20  seeds=[6]  (scene=s_curve engine=diffusion K=20)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 61: s_curve|fm|K10  seeds=[6]  (scene=s_curve engine=fm K=10)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 62: s_curve|fm|K1  seeds=[6]  (scene=s_curve engine=fm K=1)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 63: s_curve|fm|K20  seeds=[6]  (scene=s_curve engine=fm K=20)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 64: s_curve|fm|K2  seeds=[6]  (scene=s_curve engine=fm K=2)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 65: s_curve|fm|K5  seeds=[6]  (scene=s_curve engine=fm K=5)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 66: s_curve|mf|K10|bbunet|dp0.5  seeds=[6]  (scene=s_curve engine=mf K=10)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 67: s_curve|mf|K1|bbunet|dp0.5  seeds=[6]  (scene=s_curve engine=mf K=1)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 68: s_curve|mf|K20|bbunet|dp0.5  seeds=[6]  (scene=s_curve engine=mf K=20)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 69: s_curve|mf|K2|bbunet|dp0.5  seeds=[6]  (scene=s_curve engine=mf K=2)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 70: s_curve|mf|K5|bbunet|dp0.5  seeds=[6]  (scene=s_curve engine=mf K=5)
+[2026-09-03 20:41:20] discovery - INFO - Candidate 71: s_curve|diffusion|K20  seeds=[6]  (scene=s_curve engine=diffusion K=20)
+[2026-09-03 20:41:20] discovery - INFO - Total candidates discovered: 71
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO - 
+=== Candidates Discovered ===
+Total: 71
+
+  1: corridor|Gen11
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-corridor/plans(Bf_DC-FIX)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_condp_des
+      Axes:  scene=corridor  engine=?  K=None  mpc=None  ctrl=?  T=None  gen=Gen11
+      Seeds: [6]
+      Last run: 2026-06-28 14:20:52  (2 config snapshot(s) over 1 seed(s))
+
+  2: corridor|K20|Gen11
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-corridor/plans(Bf_U8)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5
+      Axes:  scene=corridor  engine=?  K=20  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen11
+      Seeds: [6]
+      Last run: 2026-07-02 05:32:07  (1 config snapshot(s) over 1 seed(s))
+
+  3: corridor|Gen11
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-corridor/plans(E6)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE
+      Axes:  scene=corridor  engine=?  K=None  mpc=None  ctrl=?  T=None  gen=Gen11
+      Seeds: [6]
+
+  4: corridor|Gen11
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-corridor/plans(E7_U1)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE
+      Axes:  scene=corridor  engine=?  K=None  mpc=None  ctrl=?  T=None  gen=Gen11
+      Seeds: [6]
+
+  5: corridor|Gen11
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-corridor/plans(E7_U3)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE
+      Axes:  scene=corridor  engine=?  K=None  mpc=None  ctrl=?  T=None  gen=Gen11
+      Seeds: [6]
+
+  6: corridor|Gen11
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-corridor/plans(E7_U4_fix3)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_condp_des
+      Axes:  scene=corridor  engine=?  K=None  mpc=None  ctrl=?  T=None  gen=Gen11
+      Seeds: [6]
+      Last run: 2026-06-28 10:08:59  (1 config snapshot(s) over 1 seed(s))
+
+  7: corridor|K20|Gen11
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-corridor/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5
+      Axes:  scene=corridor  engine=?  K=20  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen11
+      Seeds: [6]
+      Last run: 2026-07-08 16:11:14  (1 config snapshot(s) over 1 seed(s))
+
+  8: empty|Gen11
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-empty/plans(Bf_DC-FIX)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE
+      Axes:  scene=empty  engine=?  K=None  mpc=None  ctrl=?  T=None  gen=Gen11
+      Seeds: [6]
+      Last run: 2026-06-28 19:14:49  (1 config snapshot(s) over 1 seed(s))
+
+  9: empty|K20|Gen11
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-empty/plans(Bf_U8)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5
+      Axes:  scene=empty  engine=?  K=20  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen11
+      Seeds: [6]
+      Last run: 2026-07-03 09:32:41  (1 config snapshot(s) over 1 seed(s))
+
+  10: empty|Gen11
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-empty/plans(E6)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE
+      Axes:  scene=empty  engine=?  K=None  mpc=None  ctrl=?  T=None  gen=Gen11
+      Seeds: [6]
+
+  11: empty|Gen11
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-empty/plans(E7U3)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE
+      Axes:  scene=empty  engine=?  K=None  mpc=None  ctrl=?  T=None  gen=Gen11
+      Seeds: [6]
+
+  12: pillars|Gen11
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-pillars/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE
+      Axes:  scene=pillars  engine=?  K=None  mpc=None  ctrl=?  T=None  gen=Gen11
+      Seeds: [6]
+      Last run: 2026-06-28 20:32:15  (11 config snapshot(s) over 1 seed(s))
+
+  13: pillars|Gen11
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-pillars/plans(Bf_DC-FIX)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE(12D_PID_with_anchor_P)
+      Axes:  scene=pillars  engine=?  K=None  mpc=None  ctrl=?  T=None  gen=Gen11
+      Seeds: [6]
+      Last run: 2026-06-28 20:32:16  (1 config snapshot(s) over 1 seed(s))
+
+  14: pillars|Gen11
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-pillars/plans(Bf_DC-FIX)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D
+      Axes:  scene=pillars  engine=?  K=None  mpc=None  ctrl=?  T=None  gen=Gen11
+      Seeds: [6]
+      Last run: 2026-06-29 17:40:35  (3 config snapshot(s) over 1 seed(s))
+
+  15: pillars|Gen11
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-pillars/plans(Bf_DC-FIX)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D(pid_stop_go)
+      Axes:  scene=pillars  engine=?  K=None  mpc=None  ctrl=?  T=None  gen=Gen11
+      Seeds: [6]
+      Last run: 2026-06-29 15:23:55  (1 config snapshot(s) over 1 seed(s))
+
+  16: pillars|K20|Gen11
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-pillars/plans(Bf_Fix14)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5
+      Axes:  scene=pillars  engine=?  K=20  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen11
+      Seeds: [6]
+      Last run: 2026-07-06 17:32:05  (2 config snapshot(s) over 1 seed(s))
+
+  17: pillars|K20|Gen11
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-pillars/plans(Bf_U8)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_mjpc_T0.5
+      Axes:  scene=pillars  engine=?  K=20  mpc=4  ctrl=mjpc  T=0.5  gen=Gen11
+      Seeds: [6]
+      Last run: 2026-07-02 15:06:59  (1 config snapshot(s) over 1 seed(s))
+
+  18: pillars|K20|Gen11
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-pillars/plans(Bf_U8)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_const_v_T0.5
+      Axes:  scene=pillars  engine=?  K=20  mpc=4  ctrl=pid_const_v  T=0.5  gen=Gen11
+      Seeds: [6]
+      Last run: 2026-07-02 20:07:54  (1 config snapshot(s) over 1 seed(s))
+
+  19: pillars|K20|Gen11
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-pillars/plans(Bf_U8)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5
+      Axes:  scene=pillars  engine=?  K=20  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen11
+      Seeds: [6]
+      Last run: 2026-07-04 20:52:53  (1 config snapshot(s) over 1 seed(s))
+
+  20: pillars|Gen11
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-pillars/plans(E7_U3)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE
+      Axes:  scene=pillars  engine=?  K=None  mpc=None  ctrl=?  T=None  gen=Gen11
+      Seeds: [6]
+
+  21: pillars|Gen11
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-pillars/plans(U1)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE
+      Axes:  scene=pillars  engine=?  K=None  mpc=None  ctrl=?  T=None  gen=Gen11
+      Seeds: [6]
+
+  22: pillars|K20|Gen11
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-pillars/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5
+      Axes:  scene=pillars  engine=?  K=20  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen11
+      Seeds: [6]
+      Last run: 2026-07-10 21:33:43  (1 config snapshot(s) over 1 seed(s))
+
+  23: s_curve|Gen11
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-s_curve/plans(Bf_DC-FIX)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE
+      Axes:  scene=s_curve  engine=?  K=None  mpc=None  ctrl=?  T=None  gen=Gen11
+      Seeds: [6]
+      Last run: 2026-06-28 17:14:38  (1 config snapshot(s) over 1 seed(s))
+
+  24: s_curve|K20|Gen11
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-s_curve/plans(Bf_DC-FIX)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5
+      Axes:  scene=s_curve  engine=?  K=20  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen11
+      Seeds: [6]
+
+  25: s_curve|K20|Gen11
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-s_curve/plans(Bf_DC-FIX)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_anchorP_T0.5
+      Axes:  scene=s_curve  engine=?  K=20  mpc=4  ctrl=pid_stopgo_anchorP  T=0.5  gen=Gen11
+      Seeds: [6]
+
+  26: s_curve|Gen11
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-s_curve/plans(no_GIF)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE
+      Axes:  scene=s_curve  engine=?  K=None  mpc=None  ctrl=?  T=None  gen=Gen11
+      Seeds: [6]
+
+  27: s_curve|Gen11
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-s_curve/plans(with_gif_parts)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE
+      Axes:  scene=s_curve  engine=?  K=None  mpc=None  ctrl=?  T=None  gen=Gen11
+      Seeds: [6]
+
+  28: s_curve|K20|Gen11
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-s_curve/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5
+      Axes:  scene=s_curve  engine=?  K=20  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen11
+      Seeds: [6]
+      Last run: 2026-07-09 10:11:09  (2 config snapshot(s) over 1 seed(s))
+
+  29: corridor|af|K1|bbsit
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-corridor/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit/Eaf_K1_mpc4_pid_stopgo_T0.5
+      Axes:  scene=corridor  engine=af  K=1  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Model: H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit  bb=sit  dp=-
+      Seeds: [6]
+      Last run: 2026-08-23 13:30:49  (1 config snapshot(s) over 1 seed(s))
+
+  30: corridor|af|K2|bbsit
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-corridor/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit/Eaf_K2_mpc4_pid_stopgo_T0.5
+      Axes:  scene=corridor  engine=af  K=2  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Model: H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit  bb=sit  dp=-
+      Seeds: [6]
+      Last run: 2026-08-23 16:57:03  (1 config snapshot(s) over 1 seed(s))
+
+  31: corridor|af|K5|bbsit
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-corridor/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit/Eaf_K5_mpc4_pid_stopgo_T0.5
+      Axes:  scene=corridor  engine=af  K=5  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Model: H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit  bb=sit  dp=-
+      Seeds: [6]
+      Last run: 2026-08-23 18:59:36  (1 config snapshot(s) over 1 seed(s))
+
+  32: corridor|fm|K10
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-corridor/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5
+      Axes:  scene=corridor  engine=fm  K=10  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Seeds: [6]
+      Last run: 2026-08-19 21:25:38  (2 config snapshot(s) over 1 seed(s))
+
+  33: corridor|fm|K1
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-corridor/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K1_mpc4_pid_stopgo_T0.5
+      Axes:  scene=corridor  engine=fm  K=1  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Seeds: [6]
+      Last run: 2026-08-19 14:43:56  (1 config snapshot(s) over 1 seed(s))
+
+  34: corridor|fm|K20
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-corridor/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5
+      Axes:  scene=corridor  engine=fm  K=20  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Seeds: [6]
+      Last run: 2026-08-19 23:20:44  (1 config snapshot(s) over 1 seed(s))
+
+  35: corridor|fm|K2
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-corridor/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K2_mpc4_pid_stopgo_T0.5
+      Axes:  scene=corridor  engine=fm  K=2  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Seeds: [6]
+      Last run: 2026-08-19 18:25:30  (1 config snapshot(s) over 1 seed(s))
+
+  36: corridor|fm|K5
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-corridor/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K5_mpc4_pid_stopgo_T0.5
+      Axes:  scene=corridor  engine=fm  K=5  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Seeds: [6]
+      Last run: 2026-08-19 19:33:52  (1 config snapshot(s) over 1 seed(s))
+
+  37: corridor|mf|K10|bbunet|dp0.5
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-corridor/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K10_mpc4_pid_stopgo_T0.5
+      Axes:  scene=corridor  engine=mf  K=10  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Model: H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet  bb=unet  dp=0.5
+      Seeds: [6]
+      Last run: 2026-08-20 17:12:18  (2 config snapshot(s) over 1 seed(s))
+
+  38: corridor|mf|K1|bbunet|dp0.5
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-corridor/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K1_mpc4_pid_stopgo_T0.5
+      Axes:  scene=corridor  engine=mf  K=1  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Model: H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet  bb=unet  dp=0.5
+      Seeds: [6]
+      Last run: 2026-08-20 10:49:02  (1 config snapshot(s) over 1 seed(s))
+
+  39: corridor|mf|K20|bbunet|dp0.5
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-corridor/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K20_mpc4_pid_stopgo_T0.5
+      Axes:  scene=corridor  engine=mf  K=20  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Model: H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet  bb=unet  dp=0.5
+      Seeds: [6]
+      Last run: 2026-08-20 22:08:31  (1 config snapshot(s) over 1 seed(s))
+
+  40: corridor|mf|K2|bbunet|dp0.5
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-corridor/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K2_mpc4_pid_stopgo_T0.5
+      Axes:  scene=corridor  engine=mf  K=2  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Model: H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet  bb=unet  dp=0.5
+      Seeds: [6]
+      Last run: 2026-08-20 10:49:04  (1 config snapshot(s) over 1 seed(s))
+
+  41: corridor|mf|K5|bbunet|dp0.5
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-corridor/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K5_mpc4_pid_stopgo_T0.5
+      Axes:  scene=corridor  engine=mf  K=5  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Model: H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet  bb=unet  dp=0.5
+      Seeds: [6]
+      Last run: 2026-08-20 16:45:30  (1 config snapshot(s) over 1 seed(s))
+
+  42: pillars|af|K1|bbsit
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit/Eaf_K1_mpc4_pid_stopgo_T0.5
+      Axes:  scene=pillars  engine=af  K=1  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Model: H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit  bb=sit  dp=-
+      Seeds: [6]
+      Last run: 2026-08-29 05:19:44  (1 config snapshot(s) over 1 seed(s))
+
+  43: pillars|af|K2|bbsit
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit/Eaf_K2_mpc4_pid_stopgo_T0.5
+      Axes:  scene=pillars  engine=af  K=2  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Model: H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit  bb=sit  dp=-
+      Seeds: [6]
+      Last run: 2026-08-29 06:43:23  (1 config snapshot(s) over 1 seed(s))
+
+  44: pillars|af|K5|bbsit
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit/Eaf_K5_mpc4_pid_stopgo_T0.5
+      Axes:  scene=pillars  engine=af  K=5  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Model: H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit  bb=sit  dp=-
+      Seeds: [6]
+      Last run: 2026-08-29 08:14:33  (1 config snapshot(s) over 1 seed(s))
+
+  45: pillars|fm|K10
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5
+      Axes:  scene=pillars  engine=fm  K=10  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Seeds: [6]
+      Last run: 2026-08-18 13:03:46  (1 config snapshot(s) over 1 seed(s))
+      WARNING 6 variant folder(s) marked PROJECTION_CB_TRIPPED.txt
+
+  46: pillars|fm|K1
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K1_mpc4_pid_stopgo_T0.5
+      Axes:  scene=pillars  engine=fm  K=1  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Seeds: [6]
+      Last run: 2026-08-27 17:25:55  (1 config snapshot(s) over 1 seed(s))
+
+  47: pillars|fm|K20
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5
+      Axes:  scene=pillars  engine=fm  K=20  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Seeds: [6]
+      Last run: 2026-08-27 23:40:36  (1 config snapshot(s) over 1 seed(s))
+      WARNING 3 variant folder(s) marked PROJECTION_CB_TRIPPED.txt
+
+  48: pillars|fm|K2
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K2_mpc4_pid_stopgo_T0.5
+      Axes:  scene=pillars  engine=fm  K=2  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Seeds: [6]
+      Last run: 2026-08-27 20:31:40  (1 config snapshot(s) over 1 seed(s))
+
+  49: pillars|fm|K5
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K5_mpc4_pid_stopgo_T0.5
+      Axes:  scene=pillars  engine=fm  K=5  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Seeds: [6]
+      Last run: 2026-08-27 23:40:31  (1 config snapshot(s) over 1 seed(s))
+
+  50: pillars|mf|K10|bbunet|dp0.5
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K10_mpc4_pid_stopgo_T0.5
+      Axes:  scene=pillars  engine=mf  K=10  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Model: H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet  bb=unet  dp=0.5
+      Seeds: [6]
+      Last run: 2026-08-16 20:58:37  (1 config snapshot(s) over 1 seed(s))
+
+  51: pillars|mf|K1|bbunet|dp0.5
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K1_mpc4_pid_stopgo_T0.5
+      Axes:  scene=pillars  engine=mf  K=1  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Model: H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet  bb=unet  dp=0.5
+      Seeds: [6]
+      Last run: 2026-08-28 13:49:08  (1 config snapshot(s) over 1 seed(s))
+
+  52: pillars|mf|bbunet|dp0.5
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K1_mpc4_pid_stopgo_T0.5_fix16legacy
+      Axes:  scene=pillars  engine=mf  K=None  mpc=None  ctrl=?  T=None  gen=Gen15
+      Model: H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet  bb=unet  dp=0.5
+      Seeds: [6]
+      Last run: 2026-09-03 00:44:11  (1 config snapshot(s) over 1 seed(s))
+
+  53: pillars|mf|bbunet|dp0.5
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K1_mpc4_pid_stopgo_T0.5_fix16scaled
+      Axes:  scene=pillars  engine=mf  K=None  mpc=None  ctrl=?  T=None  gen=Gen15
+      Model: H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet  bb=unet  dp=0.5
+      Seeds: [6]
+      Last run: 2026-09-03 10:54:14  (1 config snapshot(s) over 1 seed(s))
+
+  54: pillars|mf|K2|bbunet|dp0.5
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K2_mpc4_pid_stopgo_T0.5
+      Axes:  scene=pillars  engine=mf  K=2  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Model: H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet  bb=unet  dp=0.5
+      Seeds: [6]
+      Last run: 2026-08-28 15:29:51  (1 config snapshot(s) over 1 seed(s))
+
+  55: pillars|mf|bbunet|dp0.5
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K2_mpc4_pid_stopgo_T0.5_fix16legacy
+      Axes:  scene=pillars  engine=mf  K=None  mpc=None  ctrl=?  T=None  gen=Gen15
+      Model: H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet  bb=unet  dp=0.5
+      Seeds: [6]
+      Last run: 2026-09-03 01:48:09  (1 config snapshot(s) over 1 seed(s))
+
+  56: pillars|mf|bbunet|dp0.5
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K2_mpc4_pid_stopgo_T0.5_fix16scaled
+      Axes:  scene=pillars  engine=mf  K=None  mpc=None  ctrl=?  T=None  gen=Gen15
+      Model: H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet  bb=unet  dp=0.5
+      Seeds: [6]
+      Last run: 2026-09-03 12:19:28  (1 config snapshot(s) over 1 seed(s))
+
+  57: pillars|mf|K5|bbunet|dp0.5
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K5_mpc4_pid_stopgo_T0.5
+      Axes:  scene=pillars  engine=mf  K=5  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Model: H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet  bb=unet  dp=0.5
+      Seeds: [6]
+      Last run: 2026-08-28 17:13:43  (1 config snapshot(s) over 1 seed(s))
+
+  58: pillars|mf|bbunet|dp0.5
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K5_mpc4_pid_stopgo_T0.5_fix16legacy
+      Axes:  scene=pillars  engine=mf  K=None  mpc=None  ctrl=?  T=None  gen=Gen15
+      Model: H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet  bb=unet  dp=0.5
+      Seeds: [6]
+      Last run: 2026-09-03 02:53:50  (1 config snapshot(s) over 1 seed(s))
+
+  59: pillars|mf|bbunet|dp0.5
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K5_mpc4_pid_stopgo_T0.5_fix16scaled
+      Axes:  scene=pillars  engine=mf  K=None  mpc=None  ctrl=?  T=None  gen=Gen15
+      Model: H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet  bb=unet  dp=0.5
+      Seeds: [6]
+      Last run: 2026-09-03 12:38:50  (1 config snapshot(s) over 1 seed(s))
+
+  60: s_curve|diffusion|K20
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-s_curve/plans(Bf_U5)/mix_uav_diffusion/H8_Dmodels.ddpm_diffusion.GaussianDiffusion_9D_K20/Ediffusion_K20_mpc4_pid_stopgo_T0.5
+      Axes:  scene=s_curve  engine=diffusion  K=20  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Seeds: [6]
+      Last run: 2026-08-26 09:32:27  (1 config snapshot(s) over 1 seed(s))
+
+  61: s_curve|fm|K10
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-s_curve/plans(Bf_U5)/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5
+      Axes:  scene=s_curve  engine=fm  K=10  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Seeds: [6]
+      Last run: 2026-08-26 19:45:32  (2 config snapshot(s) over 1 seed(s))
+
+  62: s_curve|fm|K1
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-s_curve/plans(Bf_U5)/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K1_mpc4_pid_stopgo_T0.5
+      Axes:  scene=s_curve  engine=fm  K=1  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Seeds: [6]
+      Last run: 2026-08-26 14:40:00  (1 config snapshot(s) over 1 seed(s))
+
+  63: s_curve|fm|K20
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-s_curve/plans(Bf_U5)/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5
+      Axes:  scene=s_curve  engine=fm  K=20  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Seeds: [6]
+      Last run: 2026-08-25 20:31:52  (1 config snapshot(s) over 1 seed(s))
+
+  64: s_curve|fm|K2
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-s_curve/plans(Bf_U5)/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K2_mpc4_pid_stopgo_T0.5
+      Axes:  scene=s_curve  engine=fm  K=2  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Seeds: [6]
+      Last run: 2026-08-26 15:28:12  (1 config snapshot(s) over 1 seed(s))
+
+  65: s_curve|fm|K5
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-s_curve/plans(Bf_U5)/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K5_mpc4_pid_stopgo_T0.5
+      Axes:  scene=s_curve  engine=fm  K=5  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Seeds: [6]
+      Last run: 2026-08-26 16:24:35  (1 config snapshot(s) over 1 seed(s))
+
+  66: s_curve|mf|K10|bbunet|dp0.5
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-s_curve/plans(Bf_U5)/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K10_mpc4_pid_stopgo_T0.5
+      Axes:  scene=s_curve  engine=mf  K=10  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Model: H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet  bb=unet  dp=0.5
+      Seeds: [6]
+      Last run: 2026-08-27 06:19:38  (2 config snapshot(s) over 1 seed(s))
+
+  67: s_curve|mf|K1|bbunet|dp0.5
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-s_curve/plans(Bf_U5)/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K1_mpc4_pid_stopgo_T0.5
+      Axes:  scene=s_curve  engine=mf  K=1  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Model: H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet  bb=unet  dp=0.5
+      Seeds: [6]
+      Last run: 2026-08-27 01:33:05  (1 config snapshot(s) over 1 seed(s))
+
+  68: s_curve|mf|K20|bbunet|dp0.5
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-s_curve/plans(Bf_U5)/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K20_mpc4_pid_stopgo_T0.5
+      Axes:  scene=s_curve  engine=mf  K=20  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Model: H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet  bb=unet  dp=0.5
+      Seeds: [6]
+      Last run: 2026-08-25 21:54:37  (1 config snapshot(s) over 1 seed(s))
+
+  69: s_curve|mf|K2|bbunet|dp0.5
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-s_curve/plans(Bf_U5)/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K2_mpc4_pid_stopgo_T0.5
+      Axes:  scene=s_curve  engine=mf  K=2  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Model: H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet  bb=unet  dp=0.5
+      Seeds: [6]
+      Last run: 2026-08-27 01:58:22  (1 config snapshot(s) over 1 seed(s))
+
+  70: s_curve|mf|K5|bbunet|dp0.5
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-s_curve/plans(Bf_U5)/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K5_mpc4_pid_stopgo_T0.5
+      Axes:  scene=s_curve  engine=mf  K=5  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Model: H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet  bb=unet  dp=0.5
+      Seeds: [6]
+      Last run: 2026-08-27 02:26:56  (1 config snapshot(s) over 1 seed(s))
+
+  71: s_curve|diffusion|K20
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-s_curve/plans/mix_uav_diffusion/H8_Dmodels.ddpm_diffusion.GaussianDiffusion_9D_K20/Ediffusion_K20_mpc4_pid_stopgo_T0.5
+      Axes:  scene=s_curve  engine=diffusion  K=20  mpc=4  ctrl=pid_stopgo  T=0.5  gen=Gen15
+      Seeds: [6]
+      Last run: 2026-08-28 23:40:46  (1 config snapshot(s) over 1 seed(s))
+
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO - [2/5] Enumerating result units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 1 (corridor|Gen11): 7 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 2 (corridor|K20|Gen11): 7 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 3 (corridor|Gen11): 1 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 4 (corridor|Gen11): 4 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 5 (corridor|Gen11): 13 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 6 (corridor|Gen11): 9 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 7 (corridor|K20|Gen11): 17 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 8 (empty|Gen11): 7 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 9 (empty|K20|Gen11): 7 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 10 (empty|Gen11): 1 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 11 (empty|Gen11): 4 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 12 (pillars|Gen11): 1 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 13 (pillars|Gen11): 7 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 14 (pillars|Gen11): 7 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 15 (pillars|Gen11): 7 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 16 (pillars|K20|Gen11): 13 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 17 (pillars|K20|Gen11): 7 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 18 (pillars|K20|Gen11): 7 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 19 (pillars|K20|Gen11): 15 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 20 (pillars|Gen11): 4 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 21 (pillars|Gen11): 4 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 22 (pillars|K20|Gen11): 14 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 23 (s_curve|Gen11): 7 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 24 (s_curve|K20|Gen11): 7 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 25 (s_curve|K20|Gen11): 7 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 26 (s_curve|Gen11): 1 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 27 (s_curve|Gen11): 1 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 28 (s_curve|K20|Gen11): 52 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 29 (corridor|af|K1|bbsit): 23 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 30 (corridor|af|K2|bbsit): 23 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 31 (corridor|af|K5|bbsit): 23 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 32 (corridor|fm|K10): 23 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 33 (corridor|fm|K1): 23 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 34 (corridor|fm|K20): 23 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 35 (corridor|fm|K2): 23 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 36 (corridor|fm|K5): 23 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 37 (corridor|mf|K10|bbunet|dp0.5): 23 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 38 (corridor|mf|K1|bbunet|dp0.5): 23 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 39 (corridor|mf|K20|bbunet|dp0.5): 20 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 40 (corridor|mf|K2|bbunet|dp0.5): 23 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 41 (corridor|mf|K5|bbunet|dp0.5): 23 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 42 (pillars|af|K1|bbsit): 17 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 43 (pillars|af|K2|bbsit): 17 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 44 (pillars|af|K5|bbsit): 17 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 45 (pillars|fm|K10): 23 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 46 (pillars|fm|K1): 17 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 47 (pillars|fm|K20): 4 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 48 (pillars|fm|K2): 17 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 49 (pillars|fm|K5): 17 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 50 (pillars|mf|K10|bbunet|dp0.5): 23 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 51 (pillars|mf|K1|bbunet|dp0.5): 17 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 52 (pillars|mf|bbunet|dp0.5): 10 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 53 (pillars|mf|bbunet|dp0.5): 10 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 54 (pillars|mf|K2|bbunet|dp0.5): 17 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 55 (pillars|mf|bbunet|dp0.5): 10 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 56 (pillars|mf|bbunet|dp0.5): 10 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 57 (pillars|mf|K5|bbunet|dp0.5): 17 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 58 (pillars|mf|bbunet|dp0.5): 11 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 59 (pillars|mf|bbunet|dp0.5): 5 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 60 (s_curve|diffusion|K20): 20 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 61 (s_curve|fm|K10): 20 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 62 (s_curve|fm|K1): 20 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 63 (s_curve|fm|K20): 20 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 64 (s_curve|fm|K2): 20 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 65 (s_curve|fm|K5): 20 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 66 (s_curve|mf|K10|bbunet|dp0.5): 23 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 67 (s_curve|mf|K1|bbunet|dp0.5): 20 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 68 (s_curve|mf|K20|bbunet|dp0.5): 20 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 69 (s_curve|mf|K2|bbunet|dp0.5): 20 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 70 (s_curve|mf|K5|bbunet|dp0.5): 20 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   Candidate 71 (s_curve|diffusion|K20): 8 units
+[2026-09-03 20:41:20] discovery - INFO - Discovery manifest written: Data_Analysis/analysis_results/batch_uav_20260903_204120/logs/discovery_manifest.json
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO - [3/5] Loading 1024 units
+[2026-09-03 20:41:20] DA_UAV_v1 - INFO -   25/1024 units processed
+[2026-09-03 20:41:21] DA_UAV_v1 - INFO -   50/1024 units processed
+[2026-09-03 20:41:21] DA_UAV_v1 - INFO -   75/1024 units processed
+[2026-09-03 20:41:21] DA_UAV_v1 - INFO -   100/1024 units processed
+[2026-09-03 20:41:21] DA_UAV_v1 - INFO -   125/1024 units processed
+[2026-09-03 20:41:22] DA_UAV_v1 - INFO -   150/1024 units processed
+[2026-09-03 20:41:22] DA_UAV_v1 - INFO -   175/1024 units processed
+[2026-09-03 20:41:22] DA_UAV_v1 - INFO -   200/1024 units processed
+[2026-09-03 20:41:22] DA_UAV_v1 - INFO -   225/1024 units processed
+[2026-09-03 20:41:23] DA_UAV_v1 - INFO -   250/1024 units processed
+[2026-09-03 20:41:23] DA_UAV_v1 - INFO -   275/1024 units processed
+[2026-09-03 20:41:23] DA_UAV_v1 - INFO -   300/1024 units processed
+[2026-09-03 20:41:24] DA_UAV_v1 - INFO -   325/1024 units processed
+[2026-09-03 20:41:24] DA_UAV_v1 - INFO -   350/1024 units processed
+[2026-09-03 20:41:24] DA_UAV_v1 - INFO -   375/1024 units processed
+[2026-09-03 20:41:25] DA_UAV_v1 - INFO -   400/1024 units processed
+[2026-09-03 20:41:25] DA_UAV_v1 - INFO -   425/1024 units processed
+[2026-09-03 20:41:25] DA_UAV_v1 - INFO -   450/1024 units processed
+[2026-09-03 20:41:26] DA_UAV_v1 - INFO -   475/1024 units processed
+[2026-09-03 20:41:26] DA_UAV_v1 - INFO -   500/1024 units processed
+[2026-09-03 20:41:26] DA_UAV_v1 - INFO -   525/1024 units processed
+[2026-09-03 20:41:27] DA_UAV_v1 - INFO -   550/1024 units processed
+[2026-09-03 20:41:27] DA_UAV_v1 - INFO -   575/1024 units processed
+[2026-09-03 20:41:27] DA_UAV_v1 - INFO -   600/1024 units processed
+[2026-09-03 20:41:28] DA_UAV_v1 - INFO -   625/1024 units processed
+[2026-09-03 20:41:28] DA_UAV_v1 - INFO -   650/1024 units processed
+[2026-09-03 20:41:28] DA_UAV_v1 - INFO -   675/1024 units processed
+[2026-09-03 20:41:29] DA_UAV_v1 - INFO -   700/1024 units processed
+[2026-09-03 20:41:29] DA_UAV_v1 - INFO -   725/1024 units processed
+[2026-09-03 20:41:29] DA_UAV_v1 - INFO -   750/1024 units processed
+[2026-09-03 20:41:30] DA_UAV_v1 - INFO -   775/1024 units processed
+[2026-09-03 20:41:30] DA_UAV_v1 - INFO -   800/1024 units processed
+[2026-09-03 20:41:30] DA_UAV_v1 - INFO -   825/1024 units processed
+[2026-09-03 20:41:31] DA_UAV_v1 - INFO -   850/1024 units processed
+[2026-09-03 20:41:31] DA_UAV_v1 - INFO -   875/1024 units processed
+[2026-09-03 20:41:31] DA_UAV_v1 - INFO -   900/1024 units processed
+[2026-09-03 20:41:31] DA_UAV_v1 - INFO -   925/1024 units processed
+[2026-09-03 20:41:32] DA_UAV_v1 - INFO -   950/1024 units processed
+[2026-09-03 20:41:32] DA_UAV_v1 - INFO -   975/1024 units processed
+[2026-09-03 20:41:32] DA_UAV_v1 - INFO -   1000/1024 units processed
+[2026-09-03 20:41:33] DA_UAV_v1 - INFO -   1024/1024 units processed
+[2026-09-03 20:41:33] data_loader - INFO - Loading log written: Data_Analysis/analysis_results/batch_uav_20260903_204120/logs/loading.log
+[2026-09-03 20:41:33] DA_UAV_v1 - INFO -   loaded=1024 failed=0 skipped=0 no_timing=21
+[2026-09-03 20:41:33] DA_UAV_v1 - WARNING -   21 unit(s) have NO timing — see timing_missing in data_quality.csv. On UAV that means their diagnostics JSONs are missing, since the npz never carries timing.
+[2026-09-03 20:41:33] DA_UAV_v1 - INFO - [4/5] Aggregating
+[2026-09-03 20:41:33] aggregator - INFO - Aggregating 1024 units...
+/data/home/llim/FMPCC/FM-PCC/Data_Analysis/DA_UAV_v1/aggregator.py:128: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  master = pd.concat(frames, ignore_index=True, sort=False)
+[2026-09-03 20:41:39] aggregator - INFO -   dropped 9348 all-NaN metric rows (metrics a unit never measured)
+[2026-09-03 20:41:40] aggregator - INFO -   dropped 9348 all-NaN metric rows (metrics a unit never measured)
+[2026-09-03 20:41:41] aggregator - INFO -   dropped 8248 all-NaN metric rows (metrics a unit never measured)
+[2026-09-03 20:41:41] aggregator - WARNING -   k_sweep: 1078 cell(s) pool MORE THAN ONE candidate at the same K — they differ in an axis this table does not key on (mpc batch / controller / threshold / backbone). See the `candidates` column in uav_k_sweep.csv before reading those rows.
+[2026-09-03 20:41:41] aggregator - WARNING -   4926 row(s) in this table are DEGENERATE HardFlow (hf_degenerate=1, n_genuine=0): sample-then-project, NOT HardFlow. Filter them out before any best-of / win-count / Pareto claim. See logs_in_develop/aggregated_hardflow_lowK/
+[2026-09-03 20:41:41] aggregator - WARNING -   60 row(s) in this table are DEGENERATE HardFlow (hf_degenerate=1, n_genuine=0): sample-then-project, NOT HardFlow. Filter them out before any best-of / win-count / Pareto claim. See logs_in_develop/aggregated_hardflow_lowK/
+[2026-09-03 20:41:42] aggregator - INFO - per_rollout=8504 rows, units_long=66590 rows, agg_long=66590 rows, k_sweep=65282 rows
+[2026-09-03 20:41:42] aggregator - INFO - 
+=== Cross-candidate ranking ===
+  1. Candidate 9 (empty|K20|Gen11): 100.0% success+constraint, 117.4 ms/replan, K=20
+  2. Candidate 34 (corridor|fm|K20): 63.9% success+constraint, 460.0 ms/replan, K=20
+  3. Candidate 31 (corridor|af|K5|bbsit): 51.7% success+constraint, 166.2 ms/replan, K=5
+  4. Candidate 32 (corridor|fm|K10): 51.7% success+constraint, 259.7 ms/replan, K=10
+  5. Candidate 36 (corridor|fm|K5): 40.0% success+constraint, 183.7 ms/replan, K=5
+  6. Candidate 37 (corridor|mf|K10|bbunet|dp0.5): 32.2% success+constraint, 336.4 ms/replan, K=10
+  7. Candidate 39 (corridor|mf|K20|bbunet|dp0.5): 29.5% success+constraint, 421.6 ms/replan, K=20
+  8. Candidate 30 (corridor|af|K2|bbsit): 27.0% success+constraint, 92.6 ms/replan, K=2
+  9. Candidate 41 (corridor|mf|K5|bbunet|dp0.5): 23.9% success+constraint, 241.1 ms/replan, K=5
+  10. Candidate 29 (corridor|af|K1|bbsit): 14.8% success+constraint, 135.4 ms/replan, K=1
+  11. Candidate 40 (corridor|mf|K2|bbunet|dp0.5): 13.0% success+constraint, 251.6 ms/replan, K=2
+  12. Candidate 38 (corridor|mf|K1|bbunet|dp0.5): 10.4% success+constraint, 233.6 ms/replan, K=1
+  13. Candidate 7 (corridor|K20|Gen11): 9.4% success+constraint, 200.2 ms/replan, K=20
+  14. Candidate 2 (corridor|K20|Gen11): 8.6% success+constraint, 120.1 ms/replan, K=20
+  15. Candidate 28 (s_curve|K20|Gen11): 1.2% success+constraint, 296.1 ms/replan, K=20
+  16. Candidate 69 (s_curve|mf|K2|bbunet|dp0.5): 1.0% success+constraint, 38.0 ms/replan, K=2
+  17. Candidate 35 (corridor|fm|K2): 0.9% success+constraint, 124.2 ms/replan, K=2
+  18. Candidate 16 (pillars|K20|Gen11): 0.0% success+constraint, 1914.7 ms/replan, K=20
+  19. Candidate 17 (pillars|K20|Gen11): 0.0% success+constraint, 111.9 ms/replan, K=20
+  20. Candidate 18 (pillars|K20|Gen11): 0.0% success+constraint, 109.0 ms/replan, K=20
+  21. Candidate 19 (pillars|K20|Gen11): 0.0% success+constraint, 743.1 ms/replan, K=20
+  22. Candidate 22 (pillars|K20|Gen11): 0.0% success+constraint, 920.2 ms/replan, K=20
+  23. Candidate 24 (s_curve|K20|Gen11): 0.0% success+constraint, 108.3 ms/replan, K=20
+  24. Candidate 25 (s_curve|K20|Gen11): 0.0% success+constraint, 105.9 ms/replan, K=20
+  25. Candidate 33 (corridor|fm|K1): 0.0% success+constraint, 187.4 ms/replan, K=1
+  26. Candidate 42 (pillars|af|K1|bbsit): 0.0% success+constraint, 53.2 ms/replan, K=1
+  27. Candidate 43 (pillars|af|K2|bbsit): 0.0% success+constraint, 56.2 ms/replan, K=2
+  28. Candidate 44 (pillars|af|K5|bbsit): 0.0% success+constraint, 650.0 ms/replan, K=5
+  29. Candidate 45 (pillars|fm|K10): 0.0% success+constraint, 2014.1 ms/replan, K=10
+  30. Candidate 46 (pillars|fm|K1): 0.0% success+constraint, 143.5 ms/replan, K=1
+  31. Candidate 47 (pillars|fm|K20): 0.0% success+constraint, 5869.2 ms/replan, K=20
+  32. Candidate 48 (pillars|fm|K2): 0.0% success+constraint, 132.3 ms/replan, K=2
+  33. Candidate 49 (pillars|fm|K5): 0.0% success+constraint, 666.4 ms/replan, K=5
+  34. Candidate 50 (pillars|mf|K10|bbunet|dp0.5): 0.0% success+constraint, 779.2 ms/replan, K=10
+  35. Candidate 51 (pillars|mf|K1|bbunet|dp0.5): 0.0% success+constraint, 66.8 ms/replan, K=1
+  36. Candidate 54 (pillars|mf|K2|bbunet|dp0.5): 0.0% success+constraint, 70.5 ms/replan, K=2
+  37. Candidate 57 (pillars|mf|K5|bbunet|dp0.5): 0.0% success+constraint, 636.3 ms/replan, K=5
+  38. Candidate 60 (s_curve|diffusion|K20): 0.0% success+constraint, 1645.9 ms/replan, K=20
+  39. Candidate 61 (s_curve|fm|K10): 0.0% success+constraint, 509.0 ms/replan, K=10
+  40. Candidate 62 (s_curve|fm|K1): 0.0% success+constraint, 48.9 ms/replan, K=1
+  41. Candidate 63 (s_curve|fm|K20): 0.0% success+constraint, 1286.1 ms/replan, K=20
+  42. Candidate 64 (s_curve|fm|K2): 0.0% success+constraint, 58.8 ms/replan, K=2
+  43. Candidate 65 (s_curve|fm|K5): 0.0% success+constraint, 297.9 ms/replan, K=5
+  44. Candidate 66 (s_curve|mf|K10|bbunet|dp0.5): 0.0% success+constraint, 1485.5 ms/replan, K=10
+  45. Candidate 67 (s_curve|mf|K1|bbunet|dp0.5): 0.0% success+constraint, 31.4 ms/replan, K=1
+  46. Candidate 68 (s_curve|mf|K20|bbunet|dp0.5): 0.0% success+constraint, 2008.6 ms/replan, K=20
+  47. Candidate 70 (s_curve|mf|K5|bbunet|dp0.5): 0.0% success+constraint, 443.0 ms/replan, K=5
+  48. Candidate 71 (s_curve|diffusion|K20): 0.0% success+constraint, 3377.5 ms/replan, K=20
+[2026-09-03 20:41:42] DA_UAV_v1 - INFO - [5/5] Writing reports
+[2026-09-03 20:41:42] reporter - INFO - per_rollout_detail.csv: 8504 rows, 5.4 MB
+[2026-09-03 20:41:43] reporter - INFO - uav_units_long.csv: 73528 rows, 27.3 MB
+[2026-09-03 20:41:44] reporter - INFO - uav_aggregated_long.csv: 66590 rows, 24.6 MB
+[2026-09-03 20:41:44] reporter - INFO - uav_k_sweep.csv: 65282 rows, 10.3 MB
+[2026-09-03 20:41:44] reporter - INFO - data_quality.csv: 1024 rows, 0.8 MB
+[2026-09-03 20:41:44] reporter - INFO - run_config.csv: 1024 rows, 0.3 MB
+[2026-09-03 20:41:44] reporter - INFO - candidate_axes.csv: 71 rows, 0.0 MB
+[2026-09-03 20:41:44] reporter - INFO - candidates_multidimensional_raw.csv: 33295 rows, 9.2 MB
+[2026-09-03 20:41:45] reporter - INFO - candidates_multidimensional_aggregated.csv: 33295 rows, 9.6 MB
+[2026-09-03 20:41:45] reporter - INFO - candidates_ranking.csv: 48 rows, 0.0 MB
+[2026-09-03 20:41:45] reporter - INFO - candidates_detailed.csv: 48 rows, 0.0 MB
+[2026-09-03 20:41:45] reporter - INFO - candidates_per_variant.csv: 1766 rows, 0.6 MB
+[2026-09-03 20:41:45] reporter - INFO - Summary written: Data_Analysis/analysis_results/batch_uav_20260903_204120/candidates_summary.txt
+[2026-09-03 20:41:45] reporter - INFO - 13 report files written to Data_Analysis/analysis_results/batch_uav_20260903_204120
+[2026-09-03 20:41:45] DA_UAV_v1 - INFO - ======================================================================
+[2026-09-03 20:41:45] DA_UAV_v1 - INFO - COMPLETE in 25.2s — Data_Analysis/analysis_results/batch_uav_20260903_204120
+[2026-09-03 20:41:45] DA_UAV_v1 - INFO -   candidate_axes.csv                   what is in this batch
+[2026-09-03 20:41:45] DA_UAV_v1 - INFO -   uav_k_sweep.csv                      metric vs K per engine
+[2026-09-03 20:41:45] DA_UAV_v1 - INFO -   per_rollout_detail.csv               every rollout, wide
+[2026-09-03 20:41:45] DA_UAV_v1 - INFO -   uav_units_long.csv                   per seed/geo/variant/mask
+[2026-09-03 20:41:45] DA_UAV_v1 - INFO -   uav_aggregated_long.csv              pooled over seeds
+[2026-09-03 20:41:45] DA_UAV_v1 - INFO -   candidates_multidimensional_*.csv    DA_Code_v3 visualizer
+[2026-09-03 20:41:45] DA_UAV_v1 - INFO -   data_quality.csv                     circuit breaker / timing
+[2026-09-03 20:41:45] DA_UAV_v1 - INFO - ======================================================================
+DA_UAV_v1 batch analysis completed.

@@ -1294,6 +1294,14 @@ unet validation 24348 KILLED try full seeds train
 
 25102 batch 1 run
 
+---
+
+refine 
+25251/3/4 (Success, but is mf downgraded)
+
+use af : 25279
+25280
+
 # Gen12 
 init pipeline run 23767 -> All killed, not run
 fix1(.3) -> debug_chain_23782 
@@ -1326,8 +1334,10 @@ Ablation DPCC baseline 0.1thres 24215 / 0.05thres 24226
 ---
 HF solver compare
 25121
-in real job 25161
+in real job 25161 FAIL
+25222 resub
 
+25237 thres hold both 0.5
 
 # Gen14 
 Test -> 24082
@@ -1372,10 +1382,20 @@ af/mf 24224/5
 255041
 
 - U10 af enable 
-25190
+25190 FAIL
+25239
+
 
 - U11 the K threshold 0.1/0.05 K100 mf test
-25191
+25191 FAIL
+25126
+
+---
+Flagship test K20
+Flagship — MeanFlow K20, T=0.2, arms B + C:
+25247+8(8 for fm) -> 25274 fm resume fail -> 25312 resubmit
+
+mf K10thres0.4 25273
 
 # Gen0 
 - Fix2
@@ -1419,6 +1439,10 @@ af corridor
 fm. eval: 25127-30
 mf, 25131-33
 diffu. 25134
+
+- Fix16 
+25294/5
+
 
 # Gen16 
 24850? NO logging? what happened? -> 24583/4 PASS

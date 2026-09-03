@@ -1,0 +1,1177 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Sun Aug 30 11:42:48 UTC 2026
+JOB NAME:  eval_fmv3_hardflow_job
+JOB ID:    25222
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   0c258d0
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=5  MUJOCO_EGL_DEVICE_ID=5
+[ hardflow ] HFFM_BATCH=4 (arm-C fan for -r/-c/-t; bare hardflow_new is always 1)  FMPCC_MPC_BATCH=4 (arms A/B fan)
+[ hardflow ] NLP backend sweep: ipopt slsqp  (one process per backend; ipopt -> hardflow_new-*, slsqp -> hardflow_sls-*)
+[ eval ] K sweep: 10 20   FORCE_OVERWRITE=0
+================================================================================
+[ eval ] K = 10   (Sun Aug 30 11:42:49 UTC 2026)
+================================================================================
+--------------------------------------------------------------------------------
+[ eval ] NLP backend = ipopt   K = 10   (Sun Aug 30 11:42:49 UTC 2026)
+--------------------------------------------------------------------------------
+pybullet build time: Nov 28 2023 23:45:17
+[INFO] Instantiating diffusion model from /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_f00d7682-a467-11f1-871a-d85ed34e311e.xml' with default provider at slot 1
+
+[INFO] Instantiating diffusion model from /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb1_fec8105e-a469-11f1-871a-d85ed34e311e.xml' with default provider at slot 1
+
+[ eval ] mpc fan: arms A/B=4, arm C=4
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/6
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+[ eval ] matched K (flow_steps_v3) = 10 for every arm
+[ eval ] savepath: logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K10_thres1_mpc4_n2/6
+[ provenance ] wrote logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K10_thres1_mpc4_n2/6/run_provenance.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-right-hard - diffuser (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 64.50 +- 8.50
+Avg number of constraint violations: 32.00 +- 1.00
+Avg total violation: 8.789 +- 1.702
+Average computation time per step: 0.090
+Compute: K=10  batch=4  NFE=5240  NLP solves=0  NLP failures=0
+Tracking error: 0.023
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c-tightened (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 64.00 +- 6.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.140
+Compute: K=10  batch=4  NFE=5200  NLP solves=0  NLP failures=0
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r (6) - K=10----------------------------
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 72.00 +- 12.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.981
+Compute: K=10  batch=4  NFE=11096  NLP solves=5840  NLP failures=0  act_thr=1  sel=random  nlp_backend=ipopt
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c (6) - K=10----------------------------
+[ hardflow ] 🔴 hardflow_new-c: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 77.00 +- 15.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.922
+Compute: K=10  batch=4  NFE=11856  NLP solves=6240  NLP failures=0  act_thr=1  sel=minimum_projection_cost  nlp_backend=ipopt
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t (6) - K=10----------------------------
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 0.5
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 59.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.949
+Compute: K=10  batch=4  NFE=7600  NLP solves=4000  NLP failures=0  act_thr=1  sel=temporal_consistency  nlp_backend=ipopt
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r-tightened (6) - K=10----------------------------
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 70.50 +- 11.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.978
+Compute: K=10  batch=4  NFE=10868  NLP solves=5720  NLP failures=0  act_thr=1  sel=random  nlp_backend=ipopt
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c-tightened (6) - K=10----------------------------
+[ hardflow ] 🔴 hardflow_new-c-tightened: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 76.50 +- 14.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.951
+Compute: K=10  batch=4  NFE=11780  NLP solves=6200  NLP failures=0  act_thr=1  sel=minimum_projection_cost  nlp_backend=ipopt
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t-tightened (6) - K=10----------------------------
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 67.00 +- 1.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.982
+Compute: K=10  batch=4  NFE=10336  NLP solves=5440  NLP failures=0  act_thr=1  sel=temporal_consistency  nlp_backend=ipopt
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/6
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+[ eval ] matched K (flow_steps_v3) = 10 for every arm
+[ eval ] savepath: logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K10_thres1_mpc4_n2/6
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K10_thres1_mpc4_n2/6/run_provenance.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-left-hard - diffuser (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 64.50 +- 8.50
+Avg number of constraint violations: 10.00 +- 1.00
+Avg total violation: 0.154 +- 0.026
+Average computation time per step: 0.089
+Compute: K=10  batch=4  NFE=5240  NLP solves=0  NLP failures=0
+Tracking error: 0.023
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c-tightened (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 65.50 +- 2.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.228
+Compute: K=10  batch=4  NFE=5320  NLP solves=0  NLP failures=0
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r (6) - K=10----------------------------
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 66.00 +- 11.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.930
+Compute: K=10  batch=4  NFE=10184  NLP solves=5360  NLP failures=0  act_thr=1  sel=random  nlp_backend=ipopt
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c (6) - K=10----------------------------
+[INFO] Instantiating diffusion model from /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb2_0cb58eb0-a46c-11f1-871a-d85ed34e311e.xml' with default provider at slot 1
+
+[ hardflow ] 🔴 hardflow_new-c: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 74.00 +- 15.00
+Avg number of constraint violations: 1.00 +- 1.00
+Avg total violation: 0.002 +- 0.002
+Average computation time per step: 0.921
+Compute: K=10  batch=4  NFE=11400  NLP solves=6000  NLP failures=0  act_thr=1  sel=minimum_projection_cost  nlp_backend=ipopt
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t (6) - K=10----------------------------
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 62.00 +- 5.00
+Avg number of constraint violations: 0.50 +- 0.50
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.954
+Compute: K=10  batch=4  NFE=9576  NLP solves=5040  NLP failures=0  act_thr=1  sel=temporal_consistency  nlp_backend=ipopt
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r-tightened (6) - K=10----------------------------
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 68.00 +- 11.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.966
+Compute: K=10  batch=4  NFE=10488  NLP solves=5520  NLP failures=0  act_thr=1  sel=random  nlp_backend=ipopt
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c-tightened (6) - K=10----------------------------
+[ hardflow ] 🔴 hardflow_new-c-tightened: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 74.00 +- 14.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.983
+Compute: K=10  batch=4  NFE=11400  NLP solves=6000  NLP failures=0  act_thr=1  sel=minimum_projection_cost  nlp_backend=ipopt
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t-tightened (6) - K=10----------------------------
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.00 +- 2.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 1.015
+Compute: K=10  batch=4  NFE=9576  NLP solves=5040  NLP failures=0  act_thr=1  sel=temporal_consistency  nlp_backend=ipopt
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/6
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+[ eval ] matched K (flow_steps_v3) = 10 for every arm
+[ eval ] savepath: logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K10_thres1_mpc4_n2/6
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K10_thres1_mpc4_n2/6/run_provenance.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - both-hard - diffuser (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 64.50 +- 8.50
+Avg number of constraint violations: 6.50 +- 6.50
+Avg total violation: 1.626 +- 1.612
+Average computation time per step: 0.089
+Compute: K=10  batch=4  NFE=5240  NLP solves=0  NLP failures=0
+Tracking error: 0.023
+------------------------Running avoiding-d3il - both-hard - dpcc-c-tightened (6) - K=10----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 60.00 +- 6.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.241
+Compute: K=10  batch=4  NFE=4880  NLP solves=0  NLP failures=0
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r (6) - K=10----------------------------
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 68.50 +- 10.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.979
+Compute: K=10  batch=4  NFE=10564  NLP solves=5560  NLP failures=0  act_thr=1  sel=random  nlp_backend=ipopt
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c (6) - K=10----------------------------
+[ hardflow ] 🔴 hardflow_new-c: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 74.50 +- 15.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.947
+Compute: K=10  batch=4  NFE=11476  NLP solves=6040  NLP failures=0  act_thr=1  sel=minimum_projection_cost  nlp_backend=ipopt
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t (6) - K=10----------------------------
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 65.00 +- 2.00
+Avg number of constraint violations: 1.50 +- 1.50
+Avg total violation: 0.001 +- 0.001
+Average computation time per step: 0.965
+Compute: K=10  batch=4  NFE=10032  NLP solves=5280  NLP failures=0  act_thr=1  sel=temporal_consistency  nlp_backend=ipopt
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r-tightened (6) - K=10----------------------------
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 71.00 +- 11.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 1.028
+Compute: K=10  batch=4  NFE=10944  NLP solves=5760  NLP failures=0  act_thr=1  sel=random  nlp_backend=ipopt
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c-tightened (6) - K=10----------------------------
+[ hardflow ] 🔴 hardflow_new-c-tightened: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 74.50 +- 14.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 1.022
+Compute: K=10  batch=4  NFE=11476  NLP solves=6040  NLP failures=0  act_thr=1  sel=minimum_projection_cost  nlp_backend=ipopt
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t-tightened (6) - K=10----------------------------
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 66.00 +- 3.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 1.028
+Compute: K=10  batch=4  NFE=10184  NLP solves=5360  NLP failures=0  act_thr=1  sel=temporal_consistency  nlp_backend=ipopt
+--------------------------------------------------------------------------------
+[ eval ] NLP backend = slsqp   K = 10   (Sun Aug 30 12:28:01 UTC 2026)
+--------------------------------------------------------------------------------
+pybullet build time: Nov 28 2023 23:45:17
+[INFO] Instantiating diffusion model from /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_4084a31e-a46e-11f1-9723-d85ed34e311e.xml' with default provider at slot 1
+
+[INFO] Instantiating diffusion model from /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb1_d5b4778e-a46e-11f1-9723-d85ed34e311e.xml' with default provider at slot 1
+
+[ eval ] mpc fan: arms A/B=4, arm C=4
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/6
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+[ eval ] matched K (flow_steps_v3) = 10 for every arm
+[ eval ] savepath: logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K10_thres1_mpc4_n2/6
+[ provenance ] wrote logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K10_thres1_mpc4_n2/6/run_provenance_2.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-right-hard - diffuser (6) - K=10----------------------------
+[ eval ] logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K10_thres1_mpc4_n2/6/results/halfspace_top-right-hard/diffuser.npz already exists — skipping. Set FORCE_OVERWRITE=1 to re-run it.
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c-tightened (6) - K=10----------------------------
+[ eval ] logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K10_thres1_mpc4_n2/6/results/halfspace_top-right-hard/dpcc-c-tightened.npz already exists — skipping. Set FORCE_OVERWRITE=1 to re-run it.
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r (6) - K=10----------------------------
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 72.00 +- 12.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.242
+Compute: K=10  batch=4  NFE=11096  NLP solves=5840  NLP failures=0  act_thr=1  sel=random  nlp_backend=slsqp
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c (6) - K=10----------------------------
+[ hardflow ] 🔴 hardflow_new-c: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 77.50 +- 15.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.240
+Compute: K=10  batch=4  NFE=11932  NLP solves=6280  NLP failures=0  act_thr=1  sel=minimum_projection_cost  nlp_backend=slsqp
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t (6) - K=10----------------------------
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 0.5
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 59.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.243
+Compute: K=10  batch=4  NFE=7600  NLP solves=4000  NLP failures=0  act_thr=1  sel=temporal_consistency  nlp_backend=slsqp
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r-tightened (6) - K=10----------------------------
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 70.50 +- 11.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.244
+Compute: K=10  batch=4  NFE=10868  NLP solves=5720  NLP failures=0  act_thr=1  sel=random  nlp_backend=slsqp
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c-tightened (6) - K=10----------------------------
+[ hardflow ] 🔴 hardflow_new-c-tightened: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 76.50 +- 14.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.245
+Compute: K=10  batch=4  NFE=11780  NLP solves=6200  NLP failures=0  act_thr=1  sel=minimum_projection_cost  nlp_backend=slsqp
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t-tightened (6) - K=10----------------------------
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 67.00 +- 1.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.245
+Compute: K=10  batch=4  NFE=10336  NLP solves=5440  NLP failures=0  act_thr=1  sel=temporal_consistency  nlp_backend=slsqp
+[ eval ] all_seeds: 'diffuser' not run in this pass (backend=slsqp) -- leaving the existing figure alone.
+[ eval ] all_seeds: 'dpcc-c-tightened' not run in this pass (backend=slsqp) -- leaving the existing figure alone.
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/6
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+[ eval ] matched K (flow_steps_v3) = 10 for every arm
+[ eval ] savepath: logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K10_thres1_mpc4_n2/6
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K10_thres1_mpc4_n2/6/run_provenance_2.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-left-hard - diffuser (6) - K=10----------------------------
+[ eval ] logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K10_thres1_mpc4_n2/6/results/halfspace_top-left-hard/diffuser.npz already exists — skipping. Set FORCE_OVERWRITE=1 to re-run it.
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c-tightened (6) - K=10----------------------------
+[ eval ] logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K10_thres1_mpc4_n2/6/results/halfspace_top-left-hard/dpcc-c-tightened.npz already exists — skipping. Set FORCE_OVERWRITE=1 to re-run it.
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r (6) - K=10----------------------------
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 66.00 +- 11.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.251
+Compute: K=10  batch=4  NFE=10184  NLP solves=5360  NLP failures=0  act_thr=1  sel=random  nlp_backend=slsqp
+[INFO] Instantiating diffusion model from /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb2_70c38e04-a46f-11f1-9723-d85ed34e311e.xml' with default provider at slot 1
+
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c (6) - K=10----------------------------
+[ hardflow ] 🔴 hardflow_new-c: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 74.00 +- 15.00
+Avg number of constraint violations: 1.00 +- 1.00
+Avg total violation: 0.002 +- 0.002
+Average computation time per step: 0.251
+Compute: K=10  batch=4  NFE=11400  NLP solves=6000  NLP failures=0  act_thr=1  sel=minimum_projection_cost  nlp_backend=slsqp
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t (6) - K=10----------------------------
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+[hardflow][NLP-FAILURE] first non-converged SLSQP solve at tau=0.100. Keeping scipy's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Same exposure as the IPOPT path. Further failures are silent; read `nlp_failures` in the run summary for the total.
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 70.50 +- 3.50
+Avg number of constraint violations: 1.50 +- 1.50
+Avg total violation: 0.030 +- 0.030
+Average computation time per step: 0.252
+Compute: K=10  batch=4  NFE=10868  NLP solves=5720  NLP failures=40  act_thr=1  sel=temporal_consistency  nlp_backend=slsqp
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r-tightened (6) - K=10----------------------------
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 68.00 +- 11.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.254
+Compute: K=10  batch=4  NFE=10488  NLP solves=5520  NLP failures=0  act_thr=1  sel=random  nlp_backend=slsqp
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c-tightened (6) - K=10----------------------------
+[ hardflow ] 🔴 hardflow_new-c-tightened: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 74.00 +- 14.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.258
+Compute: K=10  batch=4  NFE=11400  NLP solves=6000  NLP failures=0  act_thr=1  sel=minimum_projection_cost  nlp_backend=slsqp
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t-tightened (6) - K=10----------------------------
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+[hardflow][NLP-FAILURE] first non-converged SLSQP solve at tau=0.100. Keeping scipy's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Same exposure as the IPOPT path. Further failures are silent; read `nlp_failures` in the run summary for the total.
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.00 +- 2.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.258
+Compute: K=10  batch=4  NFE=9576  NLP solves=5040  NLP failures=6  act_thr=1  sel=temporal_consistency  nlp_backend=slsqp
+[ eval ] all_seeds: 'diffuser' not run in this pass (backend=slsqp) -- leaving the existing figure alone.
+[ eval ] all_seeds: 'dpcc-c-tightened' not run in this pass (backend=slsqp) -- leaving the existing figure alone.
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/6
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+[ eval ] matched K (flow_steps_v3) = 10 for every arm
+[ eval ] savepath: logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K10_thres1_mpc4_n2/6
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K10_thres1_mpc4_n2/6/run_provenance_2.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - both-hard - diffuser (6) - K=10----------------------------
+[ eval ] logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K10_thres1_mpc4_n2/6/results/halfspace_both-hard/diffuser.npz already exists — skipping. Set FORCE_OVERWRITE=1 to re-run it.
+------------------------Running avoiding-d3il - both-hard - dpcc-c-tightened (6) - K=10----------------------------
+[ eval ] logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K10_thres1_mpc4_n2/6/results/halfspace_both-hard/dpcc-c-tightened.npz already exists — skipping. Set FORCE_OVERWRITE=1 to re-run it.
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r (6) - K=10----------------------------
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 68.50 +- 10.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.246
+Compute: K=10  batch=4  NFE=10564  NLP solves=5560  NLP failures=0  act_thr=1  sel=random  nlp_backend=slsqp
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c (6) - K=10----------------------------
+[ hardflow ] 🔴 hardflow_new-c: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 74.50 +- 15.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.247
+Compute: K=10  batch=4  NFE=11476  NLP solves=6040  NLP failures=0  act_thr=1  sel=minimum_projection_cost  nlp_backend=slsqp
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t (6) - K=10----------------------------
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 65.00 +- 2.00
+Avg number of constraint violations: 1.50 +- 1.50
+Avg total violation: 0.001 +- 0.001
+Average computation time per step: 0.248
+Compute: K=10  batch=4  NFE=10032  NLP solves=5280  NLP failures=0  act_thr=1  sel=temporal_consistency  nlp_backend=slsqp
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r-tightened (6) - K=10----------------------------
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 71.00 +- 11.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.250
+Compute: K=10  batch=4  NFE=10944  NLP solves=5760  NLP failures=0  act_thr=1  sel=random  nlp_backend=slsqp
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c-tightened (6) - K=10----------------------------
+[ hardflow ] 🔴 hardflow_new-c-tightened: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 74.50 +- 14.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.252
+Compute: K=10  batch=4  NFE=11476  NLP solves=6040  NLP failures=0  act_thr=1  sel=minimum_projection_cost  nlp_backend=slsqp
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t-tightened (6) - K=10----------------------------
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 66.00 +- 3.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.253
+Compute: K=10  batch=4  NFE=10184  NLP solves=5360  NLP failures=0  act_thr=1  sel=temporal_consistency  nlp_backend=slsqp
+[ eval ] all_seeds: 'diffuser' not run in this pass (backend=slsqp) -- leaving the existing figure alone.
+[ eval ] all_seeds: 'dpcc-c-tightened' not run in this pass (backend=slsqp) -- leaving the existing figure alone.
+================================================================================
+[ eval ] K = 20   (Sun Aug 30 12:41:00 UTC 2026)
+================================================================================
+--------------------------------------------------------------------------------
+[ eval ] NLP backend = ipopt   K = 20   (Sun Aug 30 12:41:00 UTC 2026)
+--------------------------------------------------------------------------------
+pybullet build time: Nov 28 2023 23:45:17
+[INFO] Instantiating diffusion model from /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_110c8fe6-a470-11f1-9fcd-d85ed34e311e.xml' with default provider at slot 1
+
+[INFO] Instantiating diffusion model from /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb1_1bc47f1c-a474-11f1-9fcd-d85ed34e311e.xml' with default provider at slot 1
+
+[ eval ] mpc fan: arms A/B=4, arm C=4
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/6
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+[ eval ] matched K (flow_steps_v3) = 20 for every arm
+[ eval ] savepath: logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres1_mpc4_n2/6
+[ provenance ] wrote logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres1_mpc4_n2/6/run_provenance.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-right-hard - diffuser (6) - K=20----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 65.00 +- 8.00
+Avg number of constraint violations: 33.00 +- 2.00
+Avg total violation: 11.071 +- 0.006
+Average computation time per step: 0.174
+Compute: K=20  batch=4  NFE=10560  NLP solves=0  NLP failures=0
+Tracking error: 0.022
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c-tightened (6) - K=20----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 64.50 +- 5.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.316
+Compute: K=20  batch=4  NFE=10480  NLP solves=0  NLP failures=0
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r (6) - K=20----------------------------
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 71.00 +- 11.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 1.980
+Compute: K=20  batch=4  NFE=22464  NLP solves=11520  NLP failures=0  act_thr=1  sel=random  nlp_backend=ipopt
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c (6) - K=20----------------------------
+[ hardflow ] 🔴 hardflow_new-c: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 73.50 +- 11.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 1.909
+Compute: K=20  batch=4  NFE=23244  NLP solves=11920  NLP failures=0  act_thr=1  sel=minimum_projection_cost  nlp_backend=ipopt
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t (6) - K=20----------------------------
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.00 +- 2.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 1.937
+Compute: K=20  batch=4  NFE=19656  NLP solves=10080  NLP failures=0  act_thr=1  sel=temporal_consistency  nlp_backend=ipopt
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r-tightened (6) - K=20----------------------------
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 70.50 +- 11.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 1.990
+Compute: K=20  batch=4  NFE=22308  NLP solves=11440  NLP failures=0  act_thr=1  sel=random  nlp_backend=ipopt
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c-tightened (6) - K=20----------------------------
+[ hardflow ] 🔴 hardflow_new-c-tightened: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 72.50 +- 11.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 1.970
+Compute: K=20  batch=4  NFE=22932  NLP solves=11760  NLP failures=0  act_thr=1  sel=minimum_projection_cost  nlp_backend=ipopt
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t-tightened (6) - K=20----------------------------
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 61.50 +- 1.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 1.995
+Compute: K=20  batch=4  NFE=19500  NLP solves=10000  NLP failures=0  act_thr=1  sel=temporal_consistency  nlp_backend=ipopt
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/6
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+[ eval ] matched K (flow_steps_v3) = 20 for every arm
+[ eval ] savepath: logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres1_mpc4_n2/6
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres1_mpc4_n2/6/run_provenance.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-left-hard - diffuser (6) - K=20----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 65.00 +- 8.00
+Avg number of constraint violations: 10.00 +- 1.00
+Avg total violation: 0.143 +- 0.022
+Average computation time per step: 0.173
+Compute: K=20  batch=4  NFE=10560  NLP solves=0  NLP failures=0
+Tracking error: 0.022
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c-tightened (6) - K=20----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 63.50 +- 4.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.470
+Compute: K=20  batch=4  NFE=10320  NLP solves=0  NLP failures=0
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r (6) - K=20----------------------------
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 67.00 +- 11.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 1.862
+Compute: K=20  batch=4  NFE=21216  NLP solves=10880  NLP failures=0  act_thr=1  sel=random  nlp_backend=ipopt
+[INFO] Instantiating diffusion model from /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb2_f54f3a76-a477-11f1-9fcd-d85ed34e311e.xml' with default provider at slot 1
+
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c (6) - K=20----------------------------
+[ hardflow ] 🔴 hardflow_new-c: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 69.50 +- 10.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 1.852
+Compute: K=20  batch=4  NFE=21996  NLP solves=11280  NLP failures=0  act_thr=1  sel=minimum_projection_cost  nlp_backend=ipopt
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t (6) - K=20----------------------------
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 61.00 +- 4.00
+Avg number of constraint violations: 1.00 +- 1.00
+Avg total violation: 0.002 +- 0.002
+Average computation time per step: 1.891
+Compute: K=20  batch=4  NFE=19344  NLP solves=9920  NLP failures=0  act_thr=1  sel=temporal_consistency  nlp_backend=ipopt
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r-tightened (6) - K=20----------------------------
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 68.00 +- 11.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 1.913
+Compute: K=20  batch=4  NFE=21528  NLP solves=11040  NLP failures=0  act_thr=1  sel=random  nlp_backend=ipopt
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c-tightened (6) - K=20----------------------------
+[ hardflow ] 🔴 hardflow_new-c-tightened: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 71.50 +- 10.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 1.931
+Compute: K=20  batch=4  NFE=22620  NLP solves=11600  NLP failures=0  act_thr=1  sel=minimum_projection_cost  nlp_backend=ipopt
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t-tightened (6) - K=20----------------------------
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 60.00 +- 3.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 1.999
+Compute: K=20  batch=4  NFE=19032  NLP solves=9760  NLP failures=0  act_thr=1  sel=temporal_consistency  nlp_backend=ipopt
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/6
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+[ eval ] matched K (flow_steps_v3) = 20 for every arm
+[ eval ] savepath: logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres1_mpc4_n2/6
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres1_mpc4_n2/6/run_provenance.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - both-hard - diffuser (6) - K=20----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 65.00 +- 8.00
+Avg number of constraint violations: 12.50 +- 1.50
+Avg total violation: 3.350 +- 0.396
+Average computation time per step: 0.174
+Compute: K=20  batch=4  NFE=10560  NLP solves=0  NLP failures=0
+Tracking error: 0.022
+------------------------Running avoiding-d3il - both-hard - dpcc-c-tightened (6) - K=20----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 58.50 +- 3.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.647
+Compute: K=20  batch=4  NFE=9520  NLP solves=0  NLP failures=0
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r (6) - K=20----------------------------
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 68.50 +- 9.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 1.982
+Compute: K=20  batch=4  NFE=21684  NLP solves=11120  NLP failures=0  act_thr=1  sel=random  nlp_backend=ipopt
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c (6) - K=20----------------------------
+[ hardflow ] 🔴 hardflow_new-c: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 73.50 +- 14.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 1.933
+Compute: K=20  batch=4  NFE=23244  NLP solves=11920  NLP failures=0  act_thr=1  sel=minimum_projection_cost  nlp_backend=ipopt
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t (6) - K=20----------------------------
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 68.00 +- 4.00
+Avg number of constraint violations: 1.00 +- 1.00
+Avg total violation: 0.001 +- 0.001
+Average computation time per step: 1.908
+Compute: K=20  batch=4  NFE=21528  NLP solves=11040  NLP failures=0  act_thr=1  sel=temporal_consistency  nlp_backend=ipopt
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r-tightened (6) - K=20----------------------------
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 71.00 +- 11.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 2.058
+Compute: K=20  batch=4  NFE=22464  NLP solves=11520  NLP failures=0  act_thr=1  sel=random  nlp_backend=ipopt
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c-tightened (6) - K=20----------------------------
+[ hardflow ] 🔴 hardflow_new-c-tightened: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 73.50 +- 13.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 2.034
+Compute: K=20  batch=4  NFE=23244  NLP solves=11920  NLP failures=0  act_thr=1  sel=minimum_projection_cost  nlp_backend=ipopt
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t-tightened (6) - K=20----------------------------
+[hardflow][NLP-BACKEND] ipopt  (CasADi/IPOPT — original path)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 65.00 +- 2.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 2.096
+Compute: K=20  batch=4  NFE=20592  NLP solves=10560  NLP failures=0  act_thr=1  sel=temporal_consistency  nlp_backend=ipopt
+--------------------------------------------------------------------------------
+[ eval ] NLP backend = slsqp   K = 20   (Sun Aug 30 14:08:15 UTC 2026)
+--------------------------------------------------------------------------------
+pybullet build time: Nov 28 2023 23:45:17
+[INFO] Instantiating diffusion model from /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_40e15aec-a47c-11f1-a592-d85ed34e311e.xml' with default provider at slot 1
+
+[INFO] Instantiating diffusion model from /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb1_526e1c04-a47d-11f1-a592-d85ed34e311e.xml' with default provider at slot 1
+
+[ eval ] mpc fan: arms A/B=4, arm C=4
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/6
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+[ eval ] matched K (flow_steps_v3) = 20 for every arm
+[ eval ] savepath: logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres1_mpc4_n2/6
+[ provenance ] wrote logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres1_mpc4_n2/6/run_provenance_2.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-right-hard - diffuser (6) - K=20----------------------------
+[ eval ] logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres1_mpc4_n2/6/results/halfspace_top-right-hard/diffuser.npz already exists — skipping. Set FORCE_OVERWRITE=1 to re-run it.
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c-tightened (6) - K=20----------------------------
+[ eval ] logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres1_mpc4_n2/6/results/halfspace_top-right-hard/dpcc-c-tightened.npz already exists — skipping. Set FORCE_OVERWRITE=1 to re-run it.
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r (6) - K=20----------------------------
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 71.00 +- 11.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.493
+Compute: K=20  batch=4  NFE=22464  NLP solves=11520  NLP failures=0  act_thr=1  sel=random  nlp_backend=slsqp
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c (6) - K=20----------------------------
+[ hardflow ] 🔴 hardflow_new-c: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 73.50 +- 11.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.492
+Compute: K=20  batch=4  NFE=23244  NLP solves=11920  NLP failures=0  act_thr=1  sel=minimum_projection_cost  nlp_backend=slsqp
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t (6) - K=20----------------------------
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.50 +- 1.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.494
+Compute: K=20  batch=4  NFE=19812  NLP solves=10160  NLP failures=0  act_thr=1  sel=temporal_consistency  nlp_backend=slsqp
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r-tightened (6) - K=20----------------------------
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 70.00 +- 11.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.500
+Compute: K=20  batch=4  NFE=22152  NLP solves=11360  NLP failures=0  act_thr=1  sel=random  nlp_backend=slsqp
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c-tightened (6) - K=20----------------------------
+[ hardflow ] 🔴 hardflow_new-c-tightened: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 72.50 +- 11.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.503
+Compute: K=20  batch=4  NFE=22932  NLP solves=11760  NLP failures=0  act_thr=1  sel=minimum_projection_cost  nlp_backend=slsqp
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t-tightened (6) - K=20----------------------------
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 61.50 +- 1.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.505
+Compute: K=20  batch=4  NFE=19500  NLP solves=10000  NLP failures=0  act_thr=1  sel=temporal_consistency  nlp_backend=slsqp
+[ eval ] all_seeds: 'diffuser' not run in this pass (backend=slsqp) -- leaving the existing figure alone.
+[ eval ] all_seeds: 'dpcc-c-tightened' not run in this pass (backend=slsqp) -- leaving the existing figure alone.
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/6
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+[ eval ] matched K (flow_steps_v3) = 20 for every arm
+[ eval ] savepath: logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres1_mpc4_n2/6
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres1_mpc4_n2/6/run_provenance_2.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-left-hard - diffuser (6) - K=20----------------------------
+[ eval ] logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres1_mpc4_n2/6/results/halfspace_top-left-hard/diffuser.npz already exists — skipping. Set FORCE_OVERWRITE=1 to re-run it.
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c-tightened (6) - K=20----------------------------
+[ eval ] logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres1_mpc4_n2/6/results/halfspace_top-left-hard/dpcc-c-tightened.npz already exists — skipping. Set FORCE_OVERWRITE=1 to re-run it.
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r (6) - K=20----------------------------
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 67.00 +- 11.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.517
+Compute: K=20  batch=4  NFE=21216  NLP solves=10880  NLP failures=0  act_thr=1  sel=random  nlp_backend=slsqp
+[INFO] Instantiating diffusion model from /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb2_62cada8c-a47e-11f1-a592-d85ed34e311e.xml' with default provider at slot 1
+
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c (6) - K=20----------------------------
+[ hardflow ] 🔴 hardflow_new-c: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 69.50 +- 10.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.512
+Compute: K=20  batch=4  NFE=21996  NLP solves=11280  NLP failures=0  act_thr=1  sel=minimum_projection_cost  nlp_backend=slsqp
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t (6) - K=20----------------------------
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+[hardflow][NLP-FAILURE] first non-converged SLSQP solve at tau=0.050. Keeping scipy's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Same exposure as the IPOPT path. Further failures are silent; read `nlp_failures` in the run summary for the total.
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 61.00 +- 4.00
+Avg number of constraint violations: 1.00 +- 1.00
+Avg total violation: 0.002 +- 0.002
+Average computation time per step: 0.516
+Compute: K=20  batch=4  NFE=19344  NLP solves=9920  NLP failures=1  act_thr=1  sel=temporal_consistency  nlp_backend=slsqp
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r-tightened (6) - K=20----------------------------
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 68.00 +- 11.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.516
+Compute: K=20  batch=4  NFE=21528  NLP solves=11040  NLP failures=0  act_thr=1  sel=random  nlp_backend=slsqp
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c-tightened (6) - K=20----------------------------
+[ hardflow ] 🔴 hardflow_new-c-tightened: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 71.00 +- 10.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.518
+Compute: K=20  batch=4  NFE=22464  NLP solves=11520  NLP failures=0  act_thr=1  sel=minimum_projection_cost  nlp_backend=slsqp
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t-tightened (6) - K=20----------------------------
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+[hardflow][NLP-FAILURE] first non-converged SLSQP solve at tau=0.050. Keeping scipy's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Same exposure as the IPOPT path. Further failures are silent; read `nlp_failures` in the run summary for the total.
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 60.50 +- 2.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.526
+Compute: K=20  batch=4  NFE=19188  NLP solves=9840  NLP failures=4  act_thr=1  sel=temporal_consistency  nlp_backend=slsqp
+[ eval ] all_seeds: 'diffuser' not run in this pass (backend=slsqp) -- leaving the existing figure alone.
+[ eval ] all_seeds: 'dpcc-c-tightened' not run in this pass (backend=slsqp) -- leaving the existing figure alone.
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/6
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+[ eval ] matched K (flow_steps_v3) = 20 for every arm
+[ eval ] savepath: logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres1_mpc4_n2/6
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres1_mpc4_n2/6/run_provenance_2.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - both-hard - diffuser (6) - K=20----------------------------
+[ eval ] logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres1_mpc4_n2/6/results/halfspace_both-hard/diffuser.npz already exists — skipping. Set FORCE_OVERWRITE=1 to re-run it.
+------------------------Running avoiding-d3il - both-hard - dpcc-c-tightened (6) - K=20----------------------------
+[ eval ] logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres1_mpc4_n2/6/results/halfspace_both-hard/dpcc-c-tightened.npz already exists — skipping. Set FORCE_OVERWRITE=1 to re-run it.
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r (6) - K=20----------------------------
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 68.50 +- 9.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.501
+Compute: K=20  batch=4  NFE=21684  NLP solves=11120  NLP failures=0  act_thr=1  sel=random  nlp_backend=slsqp
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c (6) - K=20----------------------------
+[ hardflow ] 🔴 hardflow_new-c: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 72.00 +- 13.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.502
+Compute: K=20  batch=4  NFE=22776  NLP solves=11680  NLP failures=0  act_thr=1  sel=minimum_projection_cost  nlp_backend=slsqp
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t (6) - K=20----------------------------
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 69.50 +- 2.50
+Avg number of constraint violations: 1.00 +- 1.00
+Avg total violation: 0.001 +- 0.001
+Average computation time per step: 0.506
+Compute: K=20  batch=4  NFE=21996  NLP solves=11280  NLP failures=0  act_thr=1  sel=temporal_consistency  nlp_backend=slsqp
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r-tightened (6) - K=20----------------------------
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 71.00 +- 11.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.509
+Compute: K=20  batch=4  NFE=22464  NLP solves=11520  NLP failures=0  act_thr=1  sel=random  nlp_backend=slsqp
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c-tightened (6) - K=20----------------------------
+[ hardflow ] 🔴 hardflow_new-c-tightened: `-c` selection at B=4 is a KNOWN-BAD arm (49% timeouts across 750 B=4 cells). Reported for completeness; do not cite without re-checking. See logs_in_develop/HF_Batch_Parity/.
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 73.50 +- 13.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.511
+Compute: K=20  batch=4  NFE=23244  NLP solves=11920  NLP failures=0  act_thr=1  sel=minimum_projection_cost  nlp_backend=slsqp
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t-tightened (6) - K=20----------------------------
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=44  reg_scale=1.0
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 65.00 +- 2.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.517
+Compute: K=20  batch=4  NFE=20592  NLP solves=10560  NLP failures=0  act_thr=1  sel=temporal_consistency  nlp_backend=slsqp
+[ eval ] all_seeds: 'diffuser' not run in this pass (backend=slsqp) -- leaving the existing figure alone.
+[ eval ] all_seeds: 'dpcc-c-tightened' not run in this pass (backend=slsqp) -- leaving the existing figure alone.
+Evaluation completed successfully.
+================================================================================
+JOB END:   Sun Aug 30 14:31:36 UTC 2026
+================================================================================

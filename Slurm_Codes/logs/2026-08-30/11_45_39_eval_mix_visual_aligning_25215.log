@@ -1,0 +1,96 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Sun Aug 30 09:45:40 UTC 2026
+JOB NAME:  eval_mix_visual_aligning
+JOB ID:    25215
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   73adff1
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=4  MUJOCO_EGL_DEVICE_ID=4
+[ eval ] engine=mf
+[ eval ] seeds='6'
+[ eval ] Recording mode set to: all
+[ eval ] film_mode = v1  (MIX_FILM_MODE_MF; must match the checkpoint)
+[ eval ] ml_bone = unet  (MIX_BONE_MF; must match the checkpoint)
+[ eval ] NFE override: flow_steps_v3 = 100
+[ eval ] projection threshold sweep: T = 0.1 0.05   (config default 0.5)
+[ eval ]   T=0.1    -> 10 projector call(s)/replan  -> dir H8_K100_Meuler_T0.1_...
+[ eval ]   T=0.05   ->  5 projector call(s)/replan  -> dir H8_K100_Meuler_T0.05_...
+[ eval ] arm C ENABLED: HFFM_VARIANTS='hardflow_new-r hardflow_new-c hardflow_new-t'
+[ eval ]   NLP backend = slsqp (default)
+[ eval ]   -> artifacts written as hardflow_sls-*  (IPOPT corpus untouched)
+[ eval ]   arm C threshold inherits arm B's T (arms B and C matched)
+================================================================================
+[ eval ] PASS  T = 0.1   (Sun Aug 30 09:45:41 UTC 2026)
+================================================================================
+[ eval ] Using d3il from: None
+[ eval ] D3IL_DIR set to: /data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il
+pybullet build time: Nov 28 2023 23:45:17
+[ eval ] seeds: [6]  (source: cli --seeds)
+[ eval ] HardFlow variants enabled (U7): ['hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t']
+[ eval ] engine=mf | MeanFlow (Gen3v6) | two_time=True | wraps_unet=True | nfe_key=flow_steps_v3 | source=flow_matcher_v3_meanflow/ (Gen3v6)
+[ eval ] config block: plan_mix_visual_aligning_mf
+Traceback (most recent call last):
+  File "/u/home/llim/FMPCC/FM-PCC/config/aligning-d3il-visual.py", line 41, in <module>
+    _env_T = float(_env_T)
+ValueError: could not convert string to float: ''
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/mix_visual_aligning_test/eval_mix_visual_aligning.py", line 2862, in <module>
+    _plan_blk = importlib.import_module(Parser.config).base[EXPERIMENT]
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/u/home/llim/FMPCC/FM-PCC/config/aligning-d3il-visual.py", line 43, in <module>
+    raise ValueError(f"CRITICAL: MIX_PROJ_T='{_env_T}' is not a float.")
+ValueError: CRITICAL: MIX_PROJ_T='' is not a float.
+[ eval ] ❌ PASS T=0.1 FAILED (exit 1)
+================================================================================
+[ eval ] PASS  T = 0.05   (Sun Aug 30 09:45:45 UTC 2026)
+================================================================================
+[ eval ] Using d3il from: None
+[ eval ] D3IL_DIR set to: /data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il
+pybullet build time: Nov 28 2023 23:45:17
+[ eval ] seeds: [6]  (source: cli --seeds)
+[ eval ] HardFlow variants enabled (U7): ['hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t']
+[ eval ] engine=mf | MeanFlow (Gen3v6) | two_time=True | wraps_unet=True | nfe_key=flow_steps_v3 | source=flow_matcher_v3_meanflow/ (Gen3v6)
+[ eval ] config block: plan_mix_visual_aligning_mf
+Traceback (most recent call last):
+  File "/u/home/llim/FMPCC/FM-PCC/config/aligning-d3il-visual.py", line 41, in <module>
+    _env_T = float(_env_T)
+ValueError: could not convert string to float: ''
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/mix_visual_aligning_test/eval_mix_visual_aligning.py", line 2862, in <module>
+    _plan_blk = importlib.import_module(Parser.config).base[EXPERIMENT]
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/u/home/llim/FMPCC/FM-PCC/config/aligning-d3il-visual.py", line 43, in <module>
+    raise ValueError(f"CRITICAL: MIX_PROJ_T='{_env_T}' is not a float.")
+ValueError: CRITICAL: MIX_PROJ_T='' is not a float.
+[ eval ] ❌ PASS T=0.05 FAILED (exit 1)
+[ eval ] one or more passes failed: T=0.1 T=0.05
