@@ -5,6 +5,8 @@
 **Data:** `temp/3008/batch_avoiding_combined_20260901_093057/candidates_multidimensional_aggregated.csv`
 **Task:** `avoiding-d3il`, H8, U-Net `freq_dim=32` (4.0 M params)
 
+**Follow-up:** [`DA_20260903_AF_UNet_alphaflow_ENABLED_seed6_diffuser.md`](DA_20260903_AF_UNet_alphaflow_ENABLED_seed6_diffuser.md)
+
 *Rewritten from scratch 2026-09-01 on the metric below. The previous version accumulated five layers
 of amendment and was unreadable; nothing of substance is dropped, only the layering.*
 

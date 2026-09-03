@@ -1,8 +1,9 @@
 # clean_weights
 
 Safely prune **periodic training checkpoints** from the `logs/` tree while keeping the
-single best weight per run. Frees the bulk of `logs/` (alphaflow, meanflow, diffusion,
-UAV_FM, visual arms, …) without losing anything needed for eval/deployment.
+best weight and the latest (highest-numbered) checkpoint per run. Frees the bulk of
+`logs/` (alphaflow, meanflow, diffusion, UAV_FM, visual arms, …) without losing anything
+needed for eval/deployment **or training resume**.
 
 - **Runs on the cluster** (where `logs/` lives). Pure Python **stdlib** — no torch/conda.
 - **Never run the pipeline locally** in the AI-coding container; this is just a file tool,
@@ -15,11 +16,14 @@ Per `<run>/<seed>/` directory the FM/DPCC/diffusion trainers write:
 | File | Action |
 |------|--------|
 | `state_best.pt` (bundles both `model` + `ema`) | **KEEP** |
-| `state_<epoch>.pt`, e.g. `state_80000.pt` (periodic snapshot) | **DELETE** |
+| `state_<max_epoch>.pt` (highest-numbered = de-facto latest) | **KEEP** |
+| `state_<epoch>.pt`, e.g. `state_80000.pt` (other periodic snapshots) | **DELETE** |
 | `losses.pkl`, `args.json`, `plans/`, `gifs/`, `*.pth` baselines | untouched |
 
-`state_best.pt` alone is enough for eval/deploy — the numbered snapshots only exist to
-resume training from an intermediate step.
+`state_best.pt` alone is enough for eval/deploy. The highest-numbered `state_<epoch>.pt`
+is also kept because the trainers have **no `state_latest.pt` file** — at resume time,
+`find_latest_checkpoint_step()` scans for the highest-numbered `state_<digits>.pt`.
+Keeping it preserves training-resume capability.
 
 ## Safety
 
@@ -27,9 +31,11 @@ resume training from an intermediate step.
 2. **Best-gated.** A directory is pruned **only if** it contains a `state_best.pt`.
    Dirs with numbered checkpoints but **no** `state_best.pt` (crashed / still-running jobs)
    are **skipped and reported** — a run never loses its only weights.
-3. **Tight match.** Only files matching `state_<digits>.pt` are ever removed
-   (`state_best.pt`, `.pth`, `.pkl`, gifs, plans can't match).
-4. **Audit log** for every run (see below).
+3. **Latest-kept.** The highest-numbered `state_<digits>.pt` per directory is always
+   preserved, so training can be resumed from the most recent step.
+4. **Tight match.** Only files matching `state_<digits>.pt` are ever removed
+   (`state_best.pt`, `.pth`, `.pkl`, gifs, plans can’t match).
+5. **Audit log** for every run (see below).
 
 ## Usage
 
@@ -82,6 +88,8 @@ Each invocation writes `logs/_clean_weights_runlogs/clean_weights_<YYYYMMDD_HHMM
 (inside the training `logs/` dir, so it's gitignored / cluster-side) with:
 
 - **BEFORE** — total size of the root, free disk, per-top-level-folder sizes.
+- **KEPT LATEST** — the highest-numbered checkpoint per directory that was preserved
+  for training resume, with size and epoch number.
 - **DELETE manifest** — every file with size + mtime; `SKIP-NOBEST` lines for the best-less
   dirs that were left alone; `EXCLUDE` lines for anything protected via `--exclude`.
 - **AFTER** — deleted count, freed bytes, recomputed total + free disk (in `--apply`;

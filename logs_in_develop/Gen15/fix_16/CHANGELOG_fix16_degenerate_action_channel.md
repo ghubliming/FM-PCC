@@ -151,6 +151,42 @@ whose gain is now multiplied by `4e-05` instead of `1.0`.
 🔴 **If `mf` still aborts 30/30, the mechanism in the study is wrong** and links 1–2 are incidental.
 That is the point of arm B: it isolates this one variable on an otherwise identical run.
 
+### 4.3 ✅ RESULT — the prediction passed (2026-09-03)
+
+Run on the cluster, jobs **25316–25321**, all on git rev `def8fdf`. Full analysis:
+`logs_in_develop/Gen15/DA/DA_20260903_fix16_AB_mf_pillars.md`.
+
+| `mf` `pillars` `diffuser` | K1 | K2 | K5 |
+|---|---|---|---|
+| abort %, arm B (`legacy`) | 100.0 | 100.0 | 100.0 |
+| abort %, arm A (`scaled`) | **0.0** | **0.0** | **0.0** |
+| goal_dist legacy → scaled (m) | 6.50 → **0.62** | 6.46 → **0.66** | 6.49 → **0.36** |
+| success % legacy → scaled | 0 → 10 | 0 → 30 | 0 → **90** |
+| phys_safe legacy → scaled | 0.00 → **1.00** | 0.00 → **1.00** | 0.00 → **1.00** |
+
+Supporting evidence, in order of weight:
+
+- **Arm B reproduced the pre-fix run bit-for-bit** — every metric of the `fix16legacy`
+  candidates equals the untagged pre-fix candidates to the printed decimal. The A/B therefore
+  isolates exactly one variable, and `SAFE_EPS_MODE=legacy` is an exact rollback switch.
+- **The `*-geo_free` control arms, already healthy pre-fix, did not move** (K1 abort 0 % → 0 %,
+  track_err 0.329 → 0.325). The fix moves only what was broken.
+- **Aborts fall on 9 of 10 non-`geo_free` variants** at K1/K2; `overspeed` aborts vanish
+  entirely and `off_route` falls 16 → 1 at K1.
+- Realised `eps` on the cluster was **3.086e-05** (offline prediction: 3.998e-05); the projector
+  z action-bound went ±1.000 → **±3.1e-05**, a 32,000× reduction.
+
+Two things the result does **not** say:
+
+- 🔴 **`pillars` is still unsolved.** Success+constraints is **0 / 2876** rollouts — every
+  engine, every K, both arms. Fix_16 removes a failure mode; it does not make the scene solvable.
+- 🔴 **`fm` and `af` were not re-run**, so no cross-engine comparison is available yet.
+
+Two follow-ups the run surfaced: both **K5 jobs died at the wall clock** (the fixed drone now
+flies ~600 steps instead of dying at ~77, so a rollout costs ~10× more wall time — `--time`
+must go up), and **per-step projection cost rose 1.2–1.6×** because the z decision variable is
+now a near-equality constraint for SLSQP.
+
 ---
 
 ## 5. Scope, and what was deliberately NOT changed

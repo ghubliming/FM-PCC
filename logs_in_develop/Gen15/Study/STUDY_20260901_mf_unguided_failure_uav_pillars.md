@@ -15,6 +15,35 @@ here — the raw `.npz` eval artifacts.
 
 ---
 
+## ✅ CONFIRMED ON THE CLUSTER (2026-09-03)
+
+> This study was written before the fix it motivated was ever run. It has since been tested,
+> and **the mechanism below is confirmed.**
+>
+> Fix_16 rescales the degenerate `actions[2]` channel (link 2 of the chain in §3.6.4) from
+> `eps = 1.0` to a data-derived `eps = 3.086e-05`. On `pillars`, `mf`, `variant=diffuser`,
+> seed 6, jobs 25316–25321, git rev `def8fdf`:
+>
+> | | K1 | K2 | K5 |
+> |---|---|---|---|
+> | abort %, `eps = 1.0` (arm B) | 100.0 | 100.0 | 100.0 |
+> | abort %, `eps = 3.1e-05` (arm A) | **0.0** | **0.0** | **0.0** |
+> | goal_dist (m) | 6.50 → **0.62** | 6.46 → **0.66** | 6.49 → **0.36** |
+> | success % | 0 → 10 | 0 → 30 | 0 → **90** |
+>
+> Arm B reproduced the pre-fix run bit-for-bit, and the `*-geo_free` arms — healthy before the
+> fix — did not move. The falsifiable prediction in §3.5.5 / §6 was: *if `mf` still aborts
+> 30/30, the mechanism here is wrong.* It aborts **0/30**.
+>
+> **Still open, unchanged by the fix:** §3.6.5 (*why* MeanFlow learned a positive vertical gain)
+> and the §4.2 2×2. Fix_16 removed the amplifier, not the learned gain. `pillars` also remains
+> unsolved on success+constraints (0 / 2876 rollouts, every engine).
+>
+> Full analysis: [`../DA/DA_20260903_fix16_AB_mf_pillars.md`](../DA/DA_20260903_fix16_AB_mf_pillars.md).
+> Patch: [`../fix_16/CHANGELOG_fix16_degenerate_action_channel.md`](../fix_16/CHANGELOG_fix16_degenerate_action_channel.md).
+
+---
+
 ## 0. Direct answers
 
 | # | question | answer |
