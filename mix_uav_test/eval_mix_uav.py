@@ -468,11 +468,29 @@ def _apply_geo_entry(cfg, scene, entry):
     applied (or the dynamics-only global fallback if entry is None), plus its geo_tag (Fix_1).
     Shared by load_pcc_config (single-match) and eval_scene's multi-match loop (Fix_6)."""
     cfg = dict(cfg)
+    # [Gen15 U7] Reset both optional per-entry keys on EVERY call, so a base cfg that has been
+    # through one entry can never leak that entry's suffix/pad into the next (or into the
+    # entry-is-None fallback). Set before the branch, overwritten inside it.
+    cfg['geo_tag_suffix']     = ''
+    cfg['planning_inflation'] = None
     if entry is not None:
         cfg['constraint_types']      = list(entry.get('constraint_types', cfg['constraint_types']))
         cfg['workspace_bounds']      = entry.get('workspace_bounds', None)
         cfg['halfspace_constraints'] = entry.get('halfspace_constraints', [])
         cfg['obstacle_constraints']  = entry.get('obstacle_constraints', [])
+        # [Gen15 U7] Two OPTIONAL per-entry keys, both absent from every pre-U7 entry so their
+        # behaviour there is byte-identical:
+        #   geo_tag_suffix     — inserted into geo_tag so a second entry for the SAME scene with
+        #                        the SAME constraint_types lands in its own output folder
+        #                        instead of silently overwriting the first (see below).
+        #   planning_inflation — the offset the PROJECTOR applies to spatial surfaces, decoupled
+        #                        from `inflation`, which stays the PHYSICAL body radius used by
+        #                        `_exec_constraint_violations` to score collisions. Planner pad
+        #                        and body radius are different design objects; conflating them
+        #                        means loosening the planner also loosens the scoring, which
+        #                        would make any such A/B meaningless.
+        cfg['geo_tag_suffix']     = str(entry.get('geo_tag_suffix', '') or '')
+        cfg['planning_inflation'] = entry.get('planning_inflation', None)
         print(f"[ eval ] E9 geo '{scene}' ← variant '{entry['name']}': "
               f"constraint_types={cfg['constraint_types']} "
               f"(bounds={cfg['workspace_bounds'] is not None}, "
@@ -482,12 +500,20 @@ def _apply_geo_entry(cfg, scene, entry):
 
     # E9 fix1: `geo_tag` — a second, swappable output-path axis mirroring the old avoiding-task
     # `results/halfspace_<halfspace_variant>/` folder level. Encodes WHICH geometry/constraint
-    # combo produced a run (resolved geo entry name + its actually-active constraint_types),
-    # so re-running the same scene under a different constraint_types subset (e.g. an ablation
-    # like obstacles-only vs the full stack) lands in a DIFFERENT folder instead of overwriting
-    # the previous run. `empty` (constraint_types=[]) tags as '<scene>_unconstrained'.
+    # combo produced a run, so re-running the same scene under a different constraint_types
+    # subset (e.g. obstacles-only vs the full stack) lands in a DIFFERENT folder instead of
+    # overwriting the previous run. `empty` (constraint_types=[]) tags as '<scene>_unconstrained'.
+    #
+    # 🔴 [Gen15 U7] The docstring above USED TO claim this encoded the "resolved geo entry name
+    # + its actually-active constraint_types". It never encoded the name. Two entries for the
+    # same scene that declare the same constraint_types — exactly what an A/B on the GEOMETRY
+    # (not the families) looks like — therefore produced the SAME geo_tag and the second run
+    # silently overwrote the first. Opt-in `geo_tag_suffix` fixes it without touching any
+    # existing tag: every pre-U7 entry omits the key, so its geo_tag is byte-identical.
     _ctypes = cfg.get('constraint_types') or []
-    cfg['geo_tag'] = f'{scene}_unconstrained' if not _ctypes else f"{scene}_{'+'.join(sorted(_ctypes))}"
+    _sfx    = cfg.get('geo_tag_suffix') or ''
+    cfg['geo_tag'] = (f'{scene}{_sfx}_unconstrained' if not _ctypes
+                      else f"{scene}{_sfx}_{'+'.join(sorted(_ctypes))}")
     return cfg
 
 
@@ -752,6 +778,12 @@ def _realized_homotopy(scene, obs_traj):
     return None                                             # single-class scenes (s_curve, empty)
 
 
+# [Gen15 U7] Slack a scene must leave around the expert route for the constraint metrics to be
+# winnable at all. Default 0.30 m = the best measured `track_err_mean` median across scenes
+# (DA_20260903 Part II section II.3); raise to be stricter, 0 restores the old bare pass/fail.
+_GEO_SLACK_PROBE_M = float(os.environ.get('FMPCC_GEO_SLACK_PROBE_M', '0.30'))
+
+
 def _warn_expert_route_infeasibility(scene, config, homotopies, n_samples=200):
     """Fix_12: cheap sanity gate, run once per geo entry BEFORE any rollout.
 
@@ -769,10 +801,30 @@ def _warn_expert_route_infeasibility(scene, config, homotopies, n_samples=200):
     if not ({'geo_bounds', 'halfspace', 'obstacles'} & ctypes):
         return
     import uav_expert_data_collect.generator as gen
-    _infl = config.get('inflation') or {}
+    # [Gen15 U7] Probe the PLANNING offset (which `planning_inflation` may override), not the
+    # physical body radius — the projector is what the expert route has to fit inside.
+    _infl = config.get('planning_inflation') or config.get('inflation') or {}
     margin = float(_infl.get('r_drone', 0.0)) + float(_infl.get('margin_base', 0.0))
     probe_cfg = dict(config, inflation={'r_drone': margin, 'margin_base': 0.0})
     rng = np.random.default_rng(0)                         # deterministic probe routes
+
+    def _slack_m(obs_like, hi=1.0, tol=0.005):
+        # [Gen15 U7] How far the expert route could be displaced and still satisfy the planning
+        # set: bisect the extra offset at which it first violates. A PASS at `margin` says only
+        # that a PERFECT tracker fits; this says by how much — the number that has to beat the
+        # policy's measured `track_err` for the scene to be winnable at all.
+        if not _exec_constraint_violations(obs_like, probe_cfg)[0]:
+            return 0.0                                     # already infeasible at margin
+        lo = 0.0
+        while hi - lo > tol:
+            mid = 0.5 * (lo + hi)
+            c = dict(config, inflation={'r_drone': margin + mid, 'margin_base': 0.0})
+            if _exec_constraint_violations(obs_like, c)[0]:
+                lo = mid
+            else:
+                hi = mid
+        return lo
+
     for h in homotopies:
         traj_fn, _init, dur = gen._build_traj_and_init(scene, h, rng)
         ts = np.linspace(0.0, dur, n_samples)
@@ -782,8 +834,24 @@ def _warn_expert_route_infeasibility(scene, config, homotopies, n_samples=200):
             obs_like.append(np.concatenate([p, p, np.zeros(3)]))   # p in cols 3:6
         ok, n_bad, total = _exec_constraint_violations(obs_like, probe_cfg)
         if ok:
-            print(f'[ eval ] {scene} feasibility check: homotopy={h} expert route OK '
-                  f'under planning margin {margin:.2f} m')
+            # 🔴 [Gen15 U7] A bare PASS was the whole check until now, and it is not enough:
+            # `corridor` L/R passed at EXACTLY 0.000 m of slack (channels at y=±0.12, planning
+            # band [-0.12,+0.12]) while the policy's measured track_err is ~0.30-0.49 m. A
+            # zero-slack pass is a guaranteed-violating rollout, and it reported as "OK".
+            slack = _slack_m(obs_like)
+            need  = _GEO_SLACK_PROBE_M
+            tag = 'OK' if slack >= need else 'NEAR-ZERO SLACK'
+            print(f'[ eval ] {scene} feasibility check: homotopy={h} expert route {tag} '
+                  f'under planning margin {margin:.2f} m — slack {slack:.3f} m '
+                  f'(need >= {need:.2f} m to absorb the policy tracking error)')
+            if slack < need:
+                print(f'[ eval ] WARNING {scene} homotopy={h}: the expert route clears the '
+                      f'PLANNING set by only {slack:.3f} m. Any rollout whose tracking error '
+                      f'exceeds that violates the constraints even when it flies the trained '
+                      f'route perfectly in expectation — success+constraints is bounded near 0 '
+                      f'for reasons that have nothing to do with the engine. Widen the geometry '
+                      f'or lower `planning_inflation` (see Gen15/U7).')
+            continue
         else:
             print(f'[ eval ] WARNING {scene} homotopy={h}: expert route violates the '
                   f'PLANNING constraint set at {n_bad}/{n_samples} samples '
@@ -827,7 +895,8 @@ def plot_geo_constraints(geo_name, config, out_dir, is_tightened=False, basename
     from mpl_toolkits.mplot3d.art3d import Poly3DCollection as _P3C
 
     ctypes = config.get('constraint_types', [])
-    _infl = config.get('inflation') or {}
+    # [Gen15 U7] draw the offset the PROJECTOR actually enforced, not the physical body pad
+    _infl = config.get('planning_inflation') or config.get('inflation') or {}
     inflation_base = float(_infl.get('r_drone', 0.0)) + float(_infl.get('margin_base', 0.0))
     enlarge = float(config.get('enlarge_constraints') or 0.0) if is_tightened else 0.0
     margin = inflation_base + enlarge          # the TRUE enforced offset (matches setup_dpcc_projector)
@@ -1066,7 +1135,10 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
     tightening   = float(config.get('enlarge_constraints') or 0.0)
     enlarge      = tightening if is_tightened else 0.0
     # E9 inflation: always-on offset so the drone body (not just its center) clears geometry.
-    _infl = config.get('inflation') or {}
+    # [Gen15 U7] `planning_inflation` overrides it for the PROJECTOR only. `inflation` remains
+    # the physical body radius that `_exec_constraint_violations` scores collisions against, so
+    # widening the planner's tube never widens the yardstick it is measured with.
+    _infl = config.get('planning_inflation') or config.get('inflation') or {}
     inflation_base = float(_infl.get('r_drone', 0.0)) + float(_infl.get('margin_base', 0.0))
     margin = inflation_base + enlarge                 # total spatial offset (surfaces only)
     ctypes = config.get('constraint_types', [])

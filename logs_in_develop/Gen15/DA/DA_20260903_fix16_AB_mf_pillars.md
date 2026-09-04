@@ -36,7 +36,27 @@ Slurm logs. No cluster access, no re-run.
    into a near-equality constraint and SLSQP works harder for it.
 8. 🔴 **`fm` and `af` were never re-run with the fix.** Every cross-engine comparison below is
    fixed-`mf` vs **unfixed** `fm`/`af`. It is not an engine comparison.
-9. 🟡 **The DA tooling mis-parses the tagged folder names** — `K` comes back empty and all six
+9. 🟡 **Fix_16 is unlikely to rescue `s_curve` — but "impossible" was overstated** (§6.1).
+   Against: `s_curve` aborts 87–94 % for *every* engine through `p_des_runaway`, a horizontal
+   integrator gap that fires **0 times** in `pillars`; its altitude never misbehaved pre-fix
+   (90.5 % abort among the 1297 benign-altitude rollouts); and deleting the *entire* action
+   bound (`bounds_free`) barely moves it. For: the z channel is **not** separable inside the
+   SLSQP solve (§6.2.2), and the raw `s_curve` output is broken too (`track_err` p90 175).
+   `scaled` is the default now, so any new `s_curve` job gets the fix **free** — no dedicated
+   A/B is warranted either way.
+10. 🟢 **The `s_curve` lever is the projector geometry, not the normalizer.** `geo_free` (drop
+   the geometric constraints, keep dynamics) takes abort **1.00 → 0.49** and `track_err` p90
+   **175.5 → 0.38**; `geo_free-model_free` goes straight back to 1.00. The planning corridor is
+   only **24 cm** wide after inflation, and SLSQP non-convergence is **silent by design** — the
+   partly-converged iterate is flown. See §6.2.3.
+11. 🔴 **The projector never plans in z** — every wall and pillar binds `(x, y)` only, so each
+   obstacle is an **infinite cylinder**. It cannot route over or under anything (§6.2.1).
+12. 🔴 **The scenes are geometrically under-dimensioned for this policy** — the tightest
+   `pillars` planning channel is **6 cm** of slack against a **34 cm** median tracking error
+   (`s_curve`: 12 cm vs 30 cm). This is engine-independent, fix-independent, and cannot be tuned
+   away without discarding the drone's real 0.31 m rotor reach. It is the single largest fact in
+   this document and it is **not** about Fix_16 — see **Part II**.
+13. 🟡 **The DA tooling mis-parses the tagged folder names** — `K` comes back empty and all six
    tagged runs collapse to one `FolderName`, so they are dropped from `candidates_detailed.csv`
    and mis-binned in `uav_k_sweep.csv`. Per-rollout data is intact; the aggregates are not.
 
@@ -62,6 +82,120 @@ the amplifier — by deriving the widening from the data (`1e-3 ×` median half-
 non-degenerate dims) instead of hard-coding 1.0.
 
 So this run answers exactly one question: *with the amplifier gone, does `mf` fly?*
+
+### 1.1 What Fix_16 actually is
+
+**One number, in one file** — the `eps` that `SafeLimitsNormalizer` uses to widen a *constant*
+data dimension (`mix_uav/datasets/normalization.py`).
+
+`LimitsNormalizer` maps each channel through its own `mins`/`maxs`. If a channel is constant
+then `maxs - mins == 0` and the map is `0/0`. `SafeLimitsNormalizer` avoids the NaN by pushing
+the two bounds apart by `eps`:
+
+```python
+self.mins[i] -= eps
+self.maxs[i] += eps
+```
+
+Inherited code hard-coded **`eps = 1.0`**. Crucially, `normalize()` sends constant data to the
+midpoint `0` for *any* `eps` — which is why this went unnoticed for the whole project, and why
+changing it **does not invalidate a checkpoint**. What `eps` actually sets is the channel's
+physical scale on the way back *out*:
+
+| | `eps = 1.0` (legacy) | `eps = 3.086e-05` (scaled, realised) |
+|---|---|---|
+| `unnormalize` scale for the channel | **1.0 data-unit per unit output** | 3.086e-05 |
+| what a saturated (±1) model output commands | **±1 m of altitude per step** | ±3.1e-05 m per step |
+| `action_bounds:'auto'` z-cap handed to the projector | **±1.000** | ±3.1e-05 |
+
+So the one channel with **zero training signal** was the *loudest* channel in the action
+vector, and the projector was told it was free to move a full metre of altitude per step.
+
+Fix_16 derives the widening from the data instead, so a degenerate channel ends up quieter than
+every real one rather than louder:
+
+```python
+halfw = (maxs - mins)[~const] / 2.0                 # half-widths of the NON-constant dims
+eps   = max(median(halfw) * SAFE_EPS_FRAC, 1e-8)    # SAFE_EPS_FRAC default 1e-3
+```
+
+Knobs:
+
+| env var | default | effect |
+|---|---|---|
+| `FMPCC_SAFE_EPS_MODE` | `scaled` | `legacy` restores `eps = 1.0` byte-for-byte, for A/B (§2.2) |
+| `FMPCC_SAFE_EPS_FRAC` | `1e-3` | fraction of the median non-constant half-width |
+| *(constant)* `SAFE_EPS_FLOOR` | `1e-8` | never collapse to exactly zero |
+| *(fallback)* all dims constant | `eps = 1.0` | no reference scale exists; logs a ⚠ and says so (§8.1) |
+
+Shipped in the same fix: the out-of-range clip in `unnormalize` was **silent** (the warning was
+commented out) — it now warns once per normalizer and keeps `_clip_events` / `_clip_max`
+counters, and eval logs the resolved `eps` plus the derived `action_bounds` (§8).
+
+🔴 **What Fix_16 is not.** Not a model change, not a retrain, not a controller change, not a
+projector change. The weights are byte-identical across both arms; only two env vars differ.
+It is a **units** fix — the same network output now means 32,000× less altitude. That scope is
+exactly why it repairs `pillars` `mf` (§3) and why it cannot touch `s_curve` (§6.1).
+
+### 1.2 Why `fm` and `af` never hit this — the part that is *not* the normalizer
+
+This is the question the fix does not answer by itself, and it matters, because the answer
+decides whether Fix_16 is a repair or a papering-over.
+
+**Links 1 and 2 are shared by all three engines.** Every engine trains on the same expert data
+(`Δz ≡ 0`) and every engine loads through the same `SafeLimitsNormalizer(eps=1)`. So `fm` and
+`af` also had a zero-signal z channel wired to ±1 m of authority per step. They simply **never
+pushed on it**. The measured vertical feedback gain (§3.6.2 of the study — `Δz_cmd ~ b₁·e_z +
+b₂·step + b₃`, step included as a covariate, matched window ≤150 steps):
+
+| engine | K=1 | K=2 | K=5 | |
+|---|---|---|---|---|
+| `af` | −0.0018 | −0.0084 | −0.0123 | ✅ restoring |
+| `fm` | −0.0163 | +0.0123 | −0.0265 | ✅ restoring / ~0 |
+| 🔴 `mf` | **+0.1121** | **+0.0804** | **+0.0310** | 🔴 destabilising at every K |
+
+`b₁ > 0` means *"the higher the drone is above cruise, the harder the model pushes it up"*. On
+the **x and y** channels `mf`'s `b₁` sits at −0.011…+0.027 — inside the `fm`/`af` spread. The
+instability is z-specific *and* mf-specific.
+
+**Why is that gain free to be anything at all?** Because a constant channel has no gradient
+constraining it. In normalized space the training target for `actions[2]` is exactly `0` at
+every timestep, for every engine. Nothing in the loss says *"do not couple this output to the
+position channels"* — the data is silent on the entire question. The gain is therefore **pure
+inductive bias of the objective and the backbone**, and `mf` drew the bad number.
+
+Two structural reasons why `mf` is the arm most exposed to drawing it:
+
+**(a) Plain FM's target for a dead channel is self-contained; MeanFlow's is not.** On the
+linear path `x_t = (1−t)·x₀ + t·x₁` with `x₁ = 0`, the velocity target for that channel is
+`u = x₁ − x₀ = −x₀ = −x_t/(1−t)` — a function of *that channel's own* `x_t` and nothing else.
+It is a 1-D regression the network can fit exactly, and cross-channel coupling earns no loss
+reduction. MeanFlow instead regresses the **average** velocity and builds its target by
+bootstrapping through the network's own JVP,
+`u_tgt = v − (t−r)·(∂ₜu + v·∂ₓu)`. That `∂ₓu` is a directional derivative **across all input
+channels jointly**. The dead channel's target is therefore a function of the network's Jacobian
+coupling into the *live* position channels — and no data term pins that coupling to zero. A
+learned dependence of `Δz` on the position channels is exactly what "a gain on `e_z`" means.
+
+**(b) `mf` queries its sampler where it was never trained.** §3.6.7: simulating
+`_sample_tau_pair` (400 k draws), `P(anchor r < 0.05)` is **0.0004** for `mf` against
+**0.0739** for `fm`'s `t` — **185×** less training mass at the corner the sampler starts from,
+and the K=1 corner `(r=0, h=1)` drew **zero** hits in 400 k samples. The first step off pure
+noise carries the whole transport and it is **extrapolated, not interpolated** — which is
+precisely where an unpinned Jacobian coupling surfaces. The study measured
+`corr(b₁, coverage) = −0.994` across K, so this is a quantitative contributor, not a story.
+
+🔴 **What this does not establish.** `mf` is the only two-time U-Net (`E(τ) + E_h(h)`) and `af`
+is the only SiT — **engine and backbone are perfectly confounded, one cell per condition**. And
+on `avoiding-d3il` the pairing *reverses*: MF-U-Net works, AF-U-Net fails. So "MeanFlow's
+objective causes this" is **unearned** on current evidence; the mechanism above is a hypothesis
+consistent with the measurements. The 2×2 that settles it — `mf` on the SiT/DiT bone, models
+already present in `mix_uav/models/` — is §10 item 6.
+
+➡️ **The consequence for Fix_16's status.** `fm` and `af` were not *safe*, they were *lucky*:
+they sat next to the same live wire with a gain that happened to be ≈ 0. Fix_16 de-energises
+the wire, so the luck is no longer load-bearing. But the `mf` checkpoint still carries
+`b₁ = +0.11 /m`; anything that re-widens that channel brings the failure straight back (§6).
 
 ---
 
@@ -285,9 +419,225 @@ An engine claim needs the same fix applied to `fm` and `af` — see §8.
   authority. Any future change that re-widens that channel will bring the failure straight back.
 - 🔴 **`corridor` and `s_curve` were not tested.** On the older data in this batch, `corridor`
   `mf` shows the same catastrophic signature at every K (goal_dist ≈ 30 m, track_err ≈ 100,
-  final z 0.09 m — floor impact, 0 % success), and `s_curve` aborts 100 % for **every** engine
-  including the `diffusion` baseline, which points at a separate scene-level problem unrelated
-  to Fix_16.
+  final z 0.09 m — floor impact, 0 % success) — that one *is* a plausible Fix_16 candidate and
+  is worth a run. `s_curve` is a different case: it aborts 87–94 % for every engine including
+  the `diffusion` baseline, and the evidence on whether Fix_16 can reach it is genuinely
+  two-sided — §6.1 lays out both, §6.2 the mechanisms.
+
+---
+
+
+### 6.1 Can Fix_16 help `s_curve`? — 🟡 reopened, and the earlier "no" was too flat
+
+An earlier revision of this section answered a flat **no** on the grounds that `s_curve` fails
+horizontally and Fix_16 only touches z. That argument is still the strongest single one, but it
+was **incomplete in two ways** worth stating before the verdict:
+
+- It treated the NLP as if the z channel were separable from x/y. It is not — §6.2.2.
+- It implied `s_curve` fails only through the controller. The **raw** `s_curve` output is also
+  broken (`diffuser` `track_err` p90 = **175.5**), and a raw-output defect is exactly Fix_16's
+  category.
+
+So the question deserves a real answer rather than a dismissal. Here is the evidence on both
+sides, then the verdict.
+
+#### The case *for* — three genuine openings
+
+1. **The raw output is broken on `s_curve` too.** `diffuser`: abort **1.00**, `goal_dist` 5.98 m,
+   `track_err` median 1.158 but **p90 175.5** — a heavy tail, i.e. a subset of rollouts diverge
+   catastrophically rather than drift. Fix_16 repairs a raw-output scale defect. The categories
+   overlap.
+2. **Fix_16 lands on the constraint family that demonstrably matters on `s_curve`.** It rescales
+   the `dz` coefficient inside the *dynamics* deriv rows (§6.2.2), and the dynamics family is
+   the only one doing any good on this scene: `geo_free` (dynamics ON) aborts **0.49** while
+   `geo_free-model_free` (dynamics OFF) aborts **1.00**. That is not a null intersection.
+3. **The NLP is solved jointly, so z is not separable in practice.** Pre-fix, every constraint
+   row touching the z action carried a coefficient ~45× larger than the x/y rows purely because
+   of `eps` (§6.2.2). SLSQP converges on one scalar tolerance for the whole system. Measured
+   proof that the solver *is* sensitive to `eps` alone: `proj_ms` moved **1.2–1.6×** on
+   `pillars` with nothing else changed (§7).
+
+#### The case *against* — and it is heavier
+
+1. 🔴 **The empirical ceiling.** `bounds_free` deletes the **entire** action-magnitude bound on
+   `s_curve` and the abort rate barely moves: **0.98** vs 0.95–1.00 with it on. Fix_16 changes
+   *one third* of that bound. Whatever the effect is, it is bounded above by an intervention
+   that measurably does nothing.
+2. 🔴 **The amplifier existed on `s_curve` but never engaged.** Pre-fix altitude is benign:
+   `phys_min_z` median 1.02–1.10, `phys_final_z` median 1.25–1.43 (max 3.23), against `pillars`
+   `mf` reaching `final_z` **92.29 m** / `min_z` **−7.04 m**. Restrict to the **1297 / 2040**
+   `s_curve` rollouts whose altitude never misbehaved (`final_z < 3 m` and `min_z > −0.1 m`) and
+   the abort rate is **90.5 %** — indistinguishable from the 87–94 % of the full set. There is
+   no z pathology for Fix_16 to remove.
+3. 🔴 **Different abort surface.** `s_curve` aborts are 55–90 % `p_des_runaway` (the rest
+   `inverted`); `off_route`, `overspeed`, `off_map` and `nan_state` never fire. `p_des_runaway`
+   fires **0 times** in `pillars` — including in all six Fix_16 jobs. Full per-job counts:
+
+   | job | engine | K | `p_des_runaway` | `inverted` | aborts / 100 |
+   |---|---|---|---|---|---|
+   | 25077 | fm | 1 | 55 | 24 | 79 |
+   | 25078 | fm | 2 | 65 | 15 | 80 |
+   | 25079 | fm | 5 | 63 | 27 | 90 |
+   | 25080 | fm | 10 | 68 | 23 | 91 |
+   | 25072 | fm | 20 | 78 | 17 | 95 |
+   | 25081 | mf | 1 | 72 | 16 | 88 |
+   | 25082 | mf | 2 | 74 | 16 | 90 |
+   | 25083 | mf | 5 | 78 | 20 | 98 |
+   | 25084 | mf | 10 | 78 | 18 | 96 |
+   | 25073 | mf | 20 | 90 | 8 | 98 |
+   | 25075 | **diffusion** | plan-block | 15 | **75** | 90 |
+
+4. 🔴 **It is engine-independent.** The `diffusion` / DPCC baseline aborts **90 %**. `pillars`
+   `mf` was singular *because* of link 3, a learned `mf` gain; nothing analogous can explain a
+   scene that defeats every engine including the baseline.
+5. 🔴 **Fix_16 could plausibly make `s_curve` slightly *worse*.** It shrinks the `dz` coefficient
+   in the dynamics deriv row by 32,000× (2.0 → 6.17e-05). A row with near-zero coefficients is
+   near-vacuous under a shared tolerance — and the dynamics family is the one thing keeping
+   `s_curve` alive (point 2 of the "for" list, read the other way).
+
+#### 🟡 Verdict — low probability, non-zero, and **you get it for free**
+
+Not "no". **"Unlikely to be the lever, cheap enough that it does not need its own run."**
+`scaled` is now the **default** `SAFE_EPS_MODE`, so *any* new `s_curve` job carries Fix_16
+whether or not it is the point of the job. There is no reason to spend a dedicated A/B on it
+and no reason to avoid it either.
+
+🟢 **What the same data says is the actual lever, with a demonstrated 20-point effect:**
+
+| variant (s_curve, all engines pooled) | n | abort | success | `track_err` med / p90 | `goal_dist` |
+|---|---|---|---|---|---|
+| `diffuser` (no projector) | 160 | **1.00** | 0.00 | 1.158 / **175.5** | 5.98 |
+| `dpcc-c` (full stack) | 140 | 0.97 | 0.01 | 0.336 / 1.46 | 5.09 |
+| `bounds_free` (no action bound) | 75 | 0.98 | 0.00 | 0.437 / 54.6 | 5.17 |
+| `model_free` (no dynamics) | 155 | 0.96 | 0.00 | 1.202 / 186.5 | 6.11 |
+| 🟢 **`geo_free`** (no geometry) | 75 | **0.49** | **0.20** | **0.302 / 0.38** | **1.50** |
+| 🟢 `geo_free-bounds_free` (dynamics only) | 75 | **0.49** | 0.17 | 0.297 / 0.32 | 1.46 |
+| `geo_free-model_free` (bounds only) | 75 | 1.00 | 0.00 | 1.090 / 229.6 | 6.14 |
+
+**Deleting the geometric constraints halves the abort rate and is the only thing on this scene
+that produces flight** — `track_err` p90 collapses from 175.5 to **0.38**, and `goal_dist` from
+6.0 m to 1.5 m. Deleting the dynamics constraints instead sends it straight back to 1.00. So on
+`s_curve` the model can fly and the *projector's geometry* is what breaks the loop.
+
+🔴 **`geo_free` is a diagnostic, not a solution** — read it honestly. Its success is bought by
+flying **through the walls**: S&C = **0.013**, `collision_free` = **0.015**, and violations per
+live step *rise* (290/796 = 0.36 vs `diffuser`'s 136/741 = 0.18). It does not solve `s_curve`;
+it localises the failure to the constraint set. Why that set is near-infeasible is §6.2.3.
+
+
+### 6.2 Why the raw output diverges, and why projection does not save it
+
+Read from the code, not from the metrics. Three separate answers, and one design fact that
+frames all of them.
+
+#### 6.2.1 🔴 The projector never plans in z — every obstacle is an infinite cylinder
+
+The natural expectation is that the NLP takes the FM/diffusion sample and re-routes it in
+**xyz** around the geometry. It does not. In `setup_dpcc_projector`
+(`mix_uav_test/eval_mix_uav.py:1063`, `:1134`):
+
+```python
+_DIM = {'dx': 0, 'dy': 1, 'dz': 2, 'x': 6, 'y': 7, 'z': 8}
+...
+if 'halfspace' in ctypes and 'geo_free' not in variant:
+    _hs = {'x': _DIM['x'], 'y': _DIM['y']}          # ← walls bind x and y ONLY
+```
+
+and every obstacle entry in `config/uav_projection.yaml` is
+`{type: sphere_outside, dimensions: ['x', 'y'], ...}` — in all three scenes. A `sphere_outside`
+on `(x, y)` is an **infinite cylinder in z**. The consequence:
+
+| constraint family | binds | can it move z? |
+|---|---|---|
+| `halfspace` (walls) | p_x, p_y | ❌ never |
+| `obstacles` (pillars, corner caps) | p_x, p_y | ❌ never |
+| `geo_bounds` (workspace box) | p_x, p_y, p_z | 🟡 only the `[0.30, 1.80]` altitude slab |
+| `bounds` (action magnitude) | Δp_des x, y, **z** | 🟡 a box, carries no geometry |
+| `dynamics` (deriv rows) | p_des ← Δp, p ← Δp | 🟡 couples z to itself |
+
+**So the projector solves a 2-D avoidance problem and z comes along as ballast.** It cannot
+hop a pillar, duck under a wall, or trade altitude for clearance — not because it chose not to,
+but because no constraint it holds is a function of `p_z` and an obstacle at the same time.
+
+This is worth stating plainly because it re-frames Fix_16: the ±1 m z action box was not a
+loose-but-useful degree of freedom that the NLP was exploiting for avoidance. It was **a large,
+cheap, geometrically meaningless direction in a 72-variable problem** (9 dims × H=8). Nothing
+was lost by closing it, which is consistent with §3–§4: aborts fall, geometry-related metrics
+do not degrade.
+
+➡️ If routing over obstacles is ever wanted, it is a **config + `_DIM` change**
+(`dimensions: ['x','y','z']`, `sphere_outside` → capsule/box in 3-D), not a model change. Out of
+scope here; recorded because the question comes up every time someone reads the pillars plots.
+
+#### 6.2.2 The z channel is *not* separable from x/y inside the solve
+
+The objective is separable — `Q = diag(1)` in normalized space
+(`mix_uav/sampling/projection.py:67-75` — `cost_dims` is unset, so `Q = torch.eye(...)`), so the cost is `½‖z − ẑ‖²` with equal weight on all
+72 variables. If that were the whole problem, the z subproblem would decouple and Fix_16 could
+not possibly move x/y. (Note the `cost_dims` branch sets every weight to `1` as well — there is
+currently **no** way to down-weight a channel in the objective, which is precisely the knob a
+degenerate dimension would want.)
+
+It is not the whole problem. **Every constraint row is scaled by its channel's normalizer
+half-width**, and `eps` *is* that half-width for a degenerate channel:
+
+```python
+# SafetyConstraints.build_matrices  — bound rows
+mat_append = mat_append * (x_max - x_min) / 2          # = eps for the dead channel
+
+# DynamicConstraints.build_matrices — deriv rows
+mat_append[i, i*T + dx_idx] = self.dt * dx_diff        # dt = 1.0, dx_diff = 2·eps
+```
+
+| row | x action | z action, `eps=1.0` | z action, `eps=3.086e-05` |
+|---|---|---|---|
+| action-bound coefficient | 0.022 | **1.0** (45× larger) | 3.1e-05 (713× smaller) |
+| dynamics deriv coefficient | 0.044 | **2.0** (45× larger) | 6.2e-05 (713× smaller) |
+
+`minimize(..., method='SLSQP', options={'maxiter': 1000})` converges on **one** scalar tolerance
+for the whole KKT system, so rows differing by 45×–700× in scale spend the budget unevenly.
+That is a real coupling: **Fix_16 can move the x/y solution, in either direction.** The
+measured `proj_ms` shift of 1.2–1.6× from the `eps` change alone (§7) is direct evidence the
+solver's trajectory through the problem changed.
+
+➡️ This is the honest reason §6.1 is "unlikely" rather than "impossible", and it is also the
+argument for the §7 follow-up: **eliminate the degenerate dimension from the decision vector**
+rather than choosing between two badly scaled boxes for it.
+
+#### 6.2.3 Three distinct ways a *projected* variant still crashes
+
+| # | mechanism | code | fired here? |
+|---|---|---|---|
+| 1 | **Circuit breaker opens** — sustained-slow episode → `return trajectory, inf`, i.e. the **unprojected** sample is executed. A projected variant silently degenerates into `diffuser`. | `projection.py:116-131` (Fix_15.2), `last_proj_skipped` | ❌ **No** — `projection_cb_tripped = 0.00` on every `s_curve` variant. Ruled out. |
+| 2 | 🔴 **Non-convergence is silent and the iterate is executed.** `# DPCC itself still silently keeps res.x on non-convergence — that is unchanged here on purpose` (`projection.py:182-186`). A near-infeasible NLP returns a partly-converged point and the loop flies it as if it were a solution. | `projection.py:182-233` | 🔴 **Prime suspect** on `s_curve` — see below. |
+| 3 | **The projection is valid but the tracker cannot execute it.** `pid_stopgo` sets `v_des = np.zeros(3)` (`eval_mix_uav.py:1423`) — no velocity feed-forward — while `p_des += action` runs free (`:1416`). In a sustained turn the drone lags, `p_des` keeps advancing, the gap grows monotonically until `|p_des − p| > 5 m`. | `eval_mix_uav.py:1416-1436` | 🔴 **The measured abort reason**, 55–90 % of `s_curve` aborts. |
+
+**Why mechanism 2 is the prime suspect on `s_curve`.** The feasible set is genuinely thin. The
+scene's walls have inner faces 0.90 m apart; inflation is `r_drone 0.31 + margin_base 0.02 =
+0.33` per side, so the planning corridor is **0.90 − 0.66 = 0.24 m** wide, with a crossover
+corner gate of about the same. The set is also **non-convex and switched** — each wall
+halfspace is live only over its own `x_active` interval, so the constraint set *changes between
+replans*. SLSQP is being handed a 24 cm tube in a non-convex, time-varying problem, 1000
+iterations, and no failure signal on the way out. `geo_free`'s 1.00 → 0.49 abort collapse
+(§6.1) is what that looks like from the outside.
+
+➡️ **The single highest-value `s_curve` experiment** is therefore not the normalizer. It is:
+**(a)** log `res.status` / `last_solve_success` per solve and count non-convergence — the
+plumbing already exists (`self.last_solve_success`, added by SolverSwap, currently only read by
+`HardFlowNLP`), so this is a reporting change, not a solver change; and **(b)** sweep
+`margin_base` down from 0.02 (and reconsider whether the 0.31 m per-axis rotor reach must be
+applied to *both* sides of a 0.90 m gap) to see whether the corridor widens enough for the NLP
+to converge. Both are cheaper than a model run and both attack the mechanism the data points at.
+
+#### 6.2.4 🟡 The still-unfixed sibling defect — the observation clip
+
+§8.2 records `observations (-1.0617, 0.3512)` clipped on **both** arms. With `cond_mode=pos_only`
+the observation is `[p_des | p]`, so **`p_des` itself is an input**. When `p_des` runs away it
+leaves the training range and `unnormalize`/`normalize` **clips it**: the model stops being able
+to see how far the commanded point has drifted, and keeps emitting whatever it emits at
+saturation. That is a lock-in for exactly the `p_des_runaway` failure mode, it is scene-general,
+and Fix_16 did **not** address it — it only un-silenced the warning. Same file, same class of
+defect (a normalizer range silently truncating the control path), different fix.
 
 ---
 
@@ -396,12 +746,32 @@ Ordered by value.
    ```
 3. 🟡 **`corridor` with the fix** — `mf` shows the same catastrophic signature there
    (goal_dist ≈ 30 m, floor impact) and it has never been A/B'd.
-4. 🟡 **Fix the DA folder-name regex** (§2.4) before the next tagged batch, otherwise the
-   aggregate CSVs keep silently dropping tagged runs.
+4. ✅ **Fix the DA folder-name regex** (§2.4) — **done 2026-09-03**; re-run `main_da_batch.py`
+   over the 0309 tree to regenerate the aggregates (no eval needed, it only re-reads artifacts,
+   and it is the only way to exercise the pandas-side changes).
 5. 🟡 **Eliminate degenerate dims from the projector decision vector** (§7) instead of boxing
    them, and re-measure `proj_ms`.
 6. ⚪ The 2×2 from the study (`mf` on the SiT/DiT bone, `mf_dit_trajectory.py`) is unaffected by
    this result — it targets link 3, why `mf` learned the gain, which Fix_16 does not address.
+
+**On `s_curve` specifically** (§6.1, §6.2): don't book a dedicated Fix_16 A/B — `scaled` is the
+default, so every new job carries it for free. Book these instead, in order:
+
+- 🔴 **a. Count the silent NLP failures.** `self.last_solve_success` is already populated
+   (`projection.py:186`) and currently read only by `HardFlowNLP`. Surfacing it per variant is a
+   reporting change, no solver change — and it would say directly whether §6.2.3 mechanism 2 is
+   what breaks `s_curve`.
+- 🔴 **b. Sweep the inflation margin.** `r_drone 0.31 + margin_base 0.02` leaves a **24 cm**
+   corridor in a 0.90 m gap. `geo_free` shows what happens when that pressure is removed
+   (abort 1.00 → 0.49). Widening it is the intervention with a demonstrated effect size.
+- 🟡 **c. A/B `pid_stopgo_anchorP`** — it re-anchors `p_des` to the drone, attacking the
+   `p_des_runaway` mechanism (§6.2.3 #3) directly.
+- 🟡 **d. Explain the Gen11 → Gen15 regression** — Gen11 `s_curve` candidates 26/27 report
+   95 % / 100 % success against Gen15's ~2 %. A 50× drop on one scene is more likely a config or
+   data-path regression than a modelling problem, and finding it costs no GPU time.
+- ⚪ **e. Fix the observation clip** (§6.2.4) — `p_des` is an input under `cond_mode=pos_only`, so
+   a runaway setpoint saturates the model's own view of the runaway. Scene-general, untouched by
+   Fix_16.
 
 ---
 
@@ -417,3 +787,175 @@ Ordered by value.
 | DA batch | `temp/0309/batch_uav_20260903_204120/` |
 | primary table | `per_rollout_detail.csv`, candidates 51–59 (2876 pillars rollouts; 551 in the tagged arms) |
 | ⚠ do not use | `candidates_detailed.csv`, `uav_k_sweep.csv` for the tagged runs — see §2.4 |
+
+---
+
+# Part II — Is the 2-D projector a design bug? The Gen14 precedent, and what `pillars`/`s_curve` actually reveal
+
+*Added 2026-09-04, prompted by "is the xyz 3D a logic bug in design?". Read from the code and
+the configs; no new runs. §II.3 is the part that matters and it is not about Fix_16 at all.*
+
+## II.1 How Gen14 V_A holds obstacles — the same way, and it already A/B's 2-D vs 3-D
+
+`mix_visual_aligning_test/eval_mix_visual_aligning.py` uses the **identical** pattern:
+
+```python
+_DIM = {'dx':0,'dy':1,'dz':2, 'des_x':3,'des_y':4,'des_z':5, 'x':6,'y':7,'z':8}   # :209
+...
+_hs_indices = {'x': _DIM['x'], 'y': _DIM['y']}                                     # :283
+```
+
+Both generations inherit it from DPCC-avoiding, which is a **planar** task where a 2-D
+reduction is exact. Two things follow that are directly relevant here:
+
+**(a) 🟢 The 3-D machinery already exists and is already exercised — just not by the UAV.**
+`ObstacleConstraints.build_matrices` (`projection.py:512-570`) loops `for dim in dims:` and
+builds `P`, `q`, `v` for **any** number of dimensions. `config/visual_aligning_eval.yaml` ships
+both spellings as a deliberate A/B pair:
+
+```yaml
+  - name: obstacle_only_1
+      dimensions: ['x', 'y']       # 2D cylinder projection — avoiding-paper style
+  - name: obstacle_only_2
+      dimensions: ['x', 'y', 'z']  # true 3D sphere — stricter
+```
+
+So `dimensions: ['x','y','z']` in `config/uav_projection.yaml` would work **today, with no code
+change**. The UAV — the one task that is genuinely 3-D — is the only one that never tried it.
+The single real capability gap is **3-D halfspaces**, which the same yaml marks
+`PENDING impl` ("3D requires a full plane normal — different yaml format").
+
+**(b) 🟡 Gen14 hit the 2-D-blindness failure mode first, and built a guard.** From the D1
+header (`eval_mix_visual_aligning.py:92-104`):
+
+> *"The `obstacles` family is a sphere_outside cylinder on the EE position dims (6,7); it knows
+> nothing about the box. So a box that starts inside the obstacle disc is NOT itself a
+> constraint violation — but it is a guaranteed-futile rollout… surfacing downstream only as
+> unexplained solver thrash."*
+
+Gen14's response was a **pre-flight feasibility guard that skips the context** so "aggregate
+metrics are not polluted by a rollout that never had a chance". The UAV's analogue is
+`_warn_expert_route_infeasibility` (`eval_mix_uav.py:755`, Fix_12), and it is **weaker on two
+axes**: it only *warns* (never skips), and it checks only the **expert reference route**. See
+§II.3 for why that second limitation is the important one.
+
+Gen14 aligning has no `s_curve` analogue — its geometry vocabulary is the same three families
+(`geo_bounds` / `halfspace` / `obstacles`) but on a table-top EE workspace, with no switched
+`x_active` walls and no non-convex crossover.
+
+## II.2 Is the 2-D reduction a logic bug? — 🟢 **No.** It is documented, and made sound by the ceiling
+
+I went looking for a bug and did not find one. The reduction is *deliberate* and each scene has
+a stated reason why it is not lossy:
+
+| scene | real geometry | why 2-D is sound |
+|---|---|---|
+| `pillars` | 6 pillars, **full-height** in the XML | a full-height cylinder **is** its own 2-D projection — the reduction is **exact**, not an approximation |
+| `corridor` | walls top at 1.5 m | ceiling is `ub 1.80 − margin 0.33 = 1.47 m < 1.5` — the config comment says outright *"so walls can't be hopped"* |
+| `s_curve` | walls top at 1.5 m | same ceiling argument, same comment |
+
+So the projector cannot route over an obstacle **because in these three scenes there is no legal
+over-the-top route to find**. The altitude ceiling was chosen to guarantee that. Planning and
+scoring agree (both treat walls as z-invariant), so there is no plan/score mismatch either.
+
+🟡 **The one genuine artifact** it produces: `_exec_constraint_violations` applies the 2-D wall
+test at *any* altitude, so a diverged rollout at `phys_final_z = 92 m` is scored as colliding
+with a 1.5 m wall it is nowhere near. This only touches already-failed rollouts, but it means
+**`n_violations` is not a clean physical quantity on diverged runs** — one more reason not to
+read violation counts without normalising by live steps.
+
+➡️ The real cost of the 2-D reduction is not correctness, it is **§6.2.1**: the z action
+dimension carries *zero* geometric information, which is exactly why the pre-Fix_16 ±1 m z box
+was a large, cheap, meaningless direction in the NLP.
+
+## II.3 🔴 The serious finding: the planning channel is **narrower than the policy's own tracking error**
+
+This is what came out of the geometry that I did not expect, and it is scene-level, engine-
+independent, and unaffected by every fix discussed above.
+
+Inflation is `r_drone 0.31 + margin_base 0.02 = 0.33 m`, applied to **every** surface. Working
+out the resulting free channels from the raw config numbers:
+
+| scene · route | raw geometry | free channel after inflation | **half-width (slack)** |
+|---|---|---|---|
+| `pillars` · outer | pillar edge `0.6+0.12=0.72`; field ub `1.5` | `[1.05, 1.17]`, expert at 1.11 | 🔴 **0.06 m** |
+| `pillars` · centre | two pillar rows at `y=±0.6`, r 0.12 | `[−0.15, +0.15]` | 🔴 **0.15 m** |
+| `s_curve` · corridor | wall inner faces 0.90 m apart | `[−0.92, −0.68]`, expert at −0.8 | 🔴 **0.12 m** |
+| `s_curve` · crossover | corner balls r `0.05+0.33=0.38` | gate ≈ 0.24 m | 🔴 **0.12 m** |
+
+Now the measured tracking error of the policy that has to fly inside those channels
+(`track_err_mean`, best-behaved variant per scene):
+
+| scene | variant | n | median | p25 |
+|---|---|---|---|---|
+| `pillars` | `geo_free` | 26 | **0.336** | 0.331 |
+| `pillars` | `dpcc-c` | 207 | 0.468 | 0.427 |
+| `pillars` | `diffuser` | 237 | 0.486 | 0.398 |
+| `s_curve` | `geo_free` | 75 | **0.302** | 0.237 |
+| `s_curve` | `dpcc-c` | 140 | 0.336 | 0.291 |
+
+🔴 **The tightest `pillars` channel is 6 cm of slack against a 34 cm median tracking error —
+5.6× too wide. Even the 25th percentile is 4–5× over. `s_curve` is 12 cm against 30 cm.**
+
+That single comparison explains, without reference to any engine, objective, normalizer or
+solver:
+
+- why **success + constraints is 0 / 2876** on `pillars` for every engine, every K, both Fix_16
+  arms (§6) — the policy is never inside the tube long enough to score;
+- why `geo_free` on `s_curve` "succeeds" 20 % of the time **by flying through the walls** (§6.1)
+  — with the constraints off it flies fine; the constraints are what it cannot satisfy;
+- why the projector "fights" the sample on every replan: SLSQP is repeatedly asked to move a
+  point that is ~0.3 m outside a ~0.1 m tube back into it, in 8 steps, under a dynamics
+  equality, inside `maxiter=1000`, non-convex on `s_curve` — and then keeps `res.x` **silently**
+  if it fails (§6.2.3 #2).
+
+**Why `_warn_expert_route_infeasibility` said "OK".** It passed on both scenes — `s_curve
+homotopy=default expert route OK` (11 logs), `pillars homotopy=(L,L,L)/(L,R,L)/(R,L,R)/(R,R,R)
+expert route OK` (6 logs each), all at `margin 0.33 m`. That is a true statement about the
+**ideal expert route**, which threads the channel by construction. It says nothing about the
+route the policy actually flies — and `_realized_homotopy`'s own docstring concedes the point:
+*"the FM policy is unconditioned and never tracks that route"*. The gate answers *"could a
+perfect pilot fit?"* when the question that decides the metrics is *"can this pilot, with 0.3 m
+of error, fit?"*. Its own docstring already hedges in the right direction — *"treat a near-zero-
+slack PASS here as a tightened FAIL"* — and 6 cm is a near-zero-slack pass.
+
+🔴 **And this one cannot be tuned away.** To open the `pillars` outer channel to 0.34 m of
+half-width you would need `margin ≈ 0.05 m`, i.e. to discard the 0.31 m rotor reach — which is
+physically real (rotor centres at ±0.14/±0.18 plus 0.13 m rotor radius). **A drone with a 0.31 m
+body and 0.34 m of tracking error does not fit between pillars 1.2 m apart on a 3.0 m field.**
+The scene is under-dimensioned for this policy, not mis-implemented.
+
+## II.4 What I checked and cleared — the negative results
+
+Recorded so nobody re-derives them:
+
+| # | suspicion | verdict |
+|---|---|---|
+| 1 | Batch initial-state pinning uses `trajectory_reshaped[0]` for **all** batch elements (`projection.py:151`, `:282`) | 🟢 **Not a bug.** All `mpc_batch` candidates are sampled from the same current observation, so they share the first transition by construction. |
+| 2 | Planning margin `0.33` vs scoring margin `0.31` | 🟢 **Deliberate**, documented: scoring is *"physical collision truth — NOT the planning margin"*. |
+| 3 | Constraint set infeasible at build time | 🟢 **No** — the Fix_12 gate passes on both scenes for every homotopy. (But see §II.3 for what that does and does not mean.) |
+| 4 | 3-D obstacles need new solver code | 🟢 **No** — `ObstacleConstraints` is already N-dimensional; only 3-D *halfspaces* are unimplemented. |
+| 5 | Circuit breaker silently degrading `s_curve` projected variants to `diffuser` | 🟢 **Ruled out** — `projection_cb_tripped = 0.00` on every `s_curve` variant. |
+| 6 | `cost_dims` lets you down-weight a channel in the objective | 🔴 **It does not.** `costs[idx] = 1` sets the weight to the value it already had (`projection.py:68-72`) — the branch is a no-op and `Q` is the identity either way. Harmless today, but the knob a degenerate dimension would want does not actually exist. |
+
+## II.5 What follows
+
+Ordered by how much it changes the conclusions of this project.
+
+1. 🔴 **Re-dimension the scenes, or state the limit.** `pillars` as configured cannot be solved
+   on the constraint axis by any policy in this repo. Either widen the pillar spacing / field in
+   the XML and regenerate the expert data, or keep the scene and **report it as a diagnostic
+   scene with a stated geometric infeasibility**, never as a benchmark row. Publishing an engine
+   ranking off a scene where every engine scores 0/2876 would be reporting solver noise.
+2. 🔴 **Add a policy-aware feasibility gate**, the UAV analogue of Gen14's D1: compare each
+   scene's channel half-width against the measured `track_err` and refuse-or-flag when slack <
+   error. Cheap, and it would have caught this months ago.
+3. 🟡 **Log NLP non-convergence.** `self.last_solve_success` is already populated and read only
+   by `HardFlowNLP` (§6.2.3). Surfacing it per variant turns "the projector fights the sample"
+   from an inference into a measurement.
+4. ⚪ **Try `dimensions: ['x','y','z']` on `pillars`** — a one-line config A/B mirroring Gen14's
+   `obstacle_only_1` vs `_2`. It will *not* help here (the pillars are full-height, so the 3-D
+   sphere is strictly *looser* than the true geometry and the reduction was already exact), but
+   it closes the "did we ever check?" question at zero cost, and it is the right shape for any
+   future scene with finite-height obstacles.
+

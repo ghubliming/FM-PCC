@@ -134,10 +134,24 @@ HFFM_ACT_THRESHOLD='${HFFM_ACT_THRESHOLD:-<config default>}'"
 EVAL="Slurm_Codes/sbatch/uav_mix/eval_mix_uav.sh"
 
 N_SEEDS=$(echo $SEEDS | wc -w)
-EVAL_HOURS=$((N_SEEDS * 8))
+# [Gen15 U7 2026-09-04] --time is now overridable, because 8 h/seed is NOT enough at high K.
+# Evidence: jobs 25318/25321 (pillars K5, 1 seed) both hit the wall clock with 5 of 17 variants
+# done. Two compounding reasons: Fix_16 made rollouts ~10x longer (they fly ~600 steps instead
+# of aborting at ~77), and projection cost scales hard with K -- measured `proj_ms` for
+# `dpcc-c` was 63 ms at K2 against 1751 ms at K5, a 28x step. Budget accordingly:
+#   K<=2 : the 8 h/seed default is comfortable (both K2 arms finished 10/10 variants)
+#   K=5  : needs ~27 h for the full 17-variant sweep -- over the 24 h cap. Split the variant
+#          list or run it as two submissions; do NOT just raise this and hope.
+# Per the cluster convention --time is ~2x expected and hard-capped at 24 h.
+EVAL_HOURS=${UAV_EVAL_HOURS:-$((N_SEEDS * 8))}
+if [ "$EVAL_HOURS" -gt 24 ]; then
+    echo "[ WARN ] UAV_EVAL_HOURS=$EVAL_HOURS exceeds the 24 h cluster cap -> clamped to 24."
+    EVAL_HOURS=24
+fi
 
 echo "================================================================================"
 echo "UAV-MIX K SWEEP  $(date)   engine=$ENGINE  scene=$SCENE  seeds=[$SEEDS]  K=[$KS]  proj=$PROJ  record=$RECORD"
+echo "  --time per eval job: ${EVAL_HOURS}:00:00  (override with UAV_EVAL_HOURS=<hours>)"
 echo "================================================================================"
 
 DATE=${SUBMIT_DATE:-$(date +%Y-%m-%d)}; TIME=${SUBMIT_TIME:-$(date +%H_%M_%S)}

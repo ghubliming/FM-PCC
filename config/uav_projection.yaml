@@ -187,7 +187,18 @@ action_bounds: 'auto'
 #
 # Altitude band (z floor/ceiling) and exact arena extents are first-cut values — CONFIRM the
 # flight altitude on the cluster from the expert trajectories; pillars/walls span z∈[0,2].
-active_geo_variants: ['empty_no_constraint', 'corridor', 'pillars', 's_curve']
+# [Gen15 U7 2026-09-04] SIX scene-geometry entries are now DEFINED (plus `empty_no_constraint`);
+# three are ACTIVE.
+#   <scene>      — the E9/Fix_12 geometry. Kept verbatim for rollback and A/B; every number in
+#                  every DA up to 2026-09-03 was produced under these.
+#   <scene>_hg   — "honest geometry" (U7). Same physical obstacles, but the SYNTHETIC parts
+#                  corrected: walls limited to the x-range they actually occupy, the invented
+#                  workspace box widened to the empty arena, and the arbitrary 2 cm
+#                  `margin_base` pad dropped from the PLANNER only.
+# 🔴 Do NOT activate a scene's `<scene>` and `<scene>_hg` entries in the SAME job: both run
+#    (Fix_6 multi-match) and the job takes twice as long — K5 already hits the wall clock.
+#    They land in different folders (`geo_tag_suffix`), so run them as separate submissions.
+active_geo_variants: ['empty_no_constraint', 'corridor_hg', 'pillars_hg', 's_curve_hg']
 
 geo_constraint_variants:
 
@@ -269,5 +280,101 @@ geo_constraint_variants:
       - {line: [[ 0.5,  0.35], [ 3.0,  0.35]], side: 'above', x_active: [ 0.5,  3.0]}  # seg2 lower wall inner face
       - {line: [[ 0.5,  1.25], [ 3.0,  1.25]], side: 'below', x_active: [ 0.5,  3.0]}  # seg2 upper wall inner face
     obstacle_constraints:         # cap the inside corners at the crossover (wall ends)
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [-0.5, -0.3], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 0.5,  0.3], radius: 0.05}
+
+  # ══════════════════════════════════════════════════════════════════════════════
+  # [Gen15 U7 2026-09-04] "Honest geometry" entries — pillars_hg / corridor_hg / s_curve_hg
+  #
+  # WHY. DA_20260903 Part II measured the free channel each scene leaves around its own expert
+  # route and compared it against the policy's measured tracking error:
+  #
+  #   scene · route        channel half-width      best measured track_err     verdict
+  #   pillars · outer        0.060 m                 0.336 m (geo_free)         5.6x too tight
+  #   pillars · centre       0.150 m                 0.336 m                    2.2x too tight
+  #   s_curve · corridor     0.120 m                 0.302 m                    2.5x too tight
+  #   corridor · L and R     0.000 m                 n/a                        infeasible
+  #
+  # `corridor` L/R is the sharp one: expert channels sit at y = +/-0.12 and the planning band
+  # is EXACTLY [-0.12, +0.12], so the trained route lies ON the boundary. The Fix_12 gate
+  # passed it because penetration is 0.000, which is why U7 also makes that gate slack-aware.
+  # Under those numbers success+constraints is bounded near zero for reasons that have nothing
+  # to do with the engine, the objective or the projector -- 0/2876 on pillars is the geometry.
+  #
+  # WHAT CHANGED, and what deliberately did NOT. Only SYNTHETIC quantities are touched; every
+  # number that corresponds to a physical geom in the scene XML is untouched.
+  #   1. pillars workspace box y +/-1.5 -> +/-2.5, x +/-3.6 -> +/-4.0. scene_pillars.xml has NO
+  #      walls -- the floor is a 10x10 plane and the box was invented. At +/-1.5 it was a second
+  #      binding surface only 0.06 m outside the expert route; at +/-2.5 the pillars are the
+  #      only thing that binds.
+  #   2. corridor walls get `x_active: [-2.0, 2.0]`. scene_corridor.xml: `pos="0 +/-0.5 0.75"
+  #      size="2.0 0.05 0.75"` -- the walls physically span x in [-2, 2], but the halfspaces
+  #      were infinite lines constraining the approach and departure where no wall exists. The
+  #      `x_active` mechanism already existed (s_curve uses it); corridor simply never did.
+  #   3. `planning_inflation: {r_drone: 0.31, margin_base: 0.0}` on all three -- drops the
+  #      arbitrary 2 cm pad from the PLANNER. `inflation` (0.31 + 0.02) is untouched and is
+  #      still what `_exec_constraint_violations` scores collisions with, so this loosens the
+  #      tube WITHOUT loosening the yardstick.
+  #   4. Obstacle centres/radii, wall faces, altitude slab: UNCHANGED. They are physics.
+  #
+  # WHAT THIS DOES NOT FIX -- state it up front so the runs are not over-read:
+  #   - pillars outer: the binding surface is now the pillar, and the expert route clears it by
+  #     0.080 m by CONSTRUCTION (`trajectories.PILLAR_SAFETY = 0.08`, chosen when the data was
+  #     generated on the assumption that 8 cm was "sufficient for PID tracking error"). No
+  #     projector config can widen that. It needs a scene + dataset change.
+  #   - corridor / s_curve: the physical gap is 0.90 m and the drone is 0.62 m wide. Best case
+  #     slack is 0.140 m against a ~0.30 m tracking error. Expect S&C near 0 here too.
+  # The point of these entries is to remove every ARTIFICIAL contribution to the deficit so
+  # what remains is attributable to the policy and the scene, not to a config accident.
+  # Changelog: logs_in_develop/Gen15/U7/
+  # ══════════════════════════════════════════════════════════════════════════════
+
+  - name: pillars_hg
+    scene: pillars
+    geo_tag_suffix: '_hg'
+    constraint_types: ['dynamics', 'geo_bounds', 'obstacles', 'bounds']
+    planning_inflation: {r_drone: 0.31, margin_base: 0.0}
+    workspace_bounds:             # y widened to the empty arena; x clears the +/-3.2 path ends
+      lb: [-4.0, -2.5, 0.30]
+      ub: [ 4.0,  2.5, 1.80]
+    obstacle_constraints:         # PHYSICAL: scene_pillars.xml cylinders, r=0.12, full height
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0, -0.6], radius: 0.12}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 0.0, -0.6], radius: 0.12}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0, -0.6], radius: 0.12}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0,  0.6], radius: 0.12}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 0.0,  0.6], radius: 0.12}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0,  0.6], radius: 0.12}
+
+  - name: corridor_hg
+    scene: corridor
+    geo_tag_suffix: '_hg'
+    constraint_types: ['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds']
+    planning_inflation: {r_drone: 0.31, margin_base: 0.0}
+    workspace_bounds:             # y is left to the wall halfspaces, as before
+      lb: [-4.0, -.inf, 0.30]
+      ub: [ 4.0,  .inf, 1.80]
+    halfspace_constraints:        # inner faces y = -/+0.45; NOW limited to the walls real x-span
+      - {line: [[-2.0, -0.45], [2.0, -0.45]], side: 'above', x_active: [-2.0, 2.0]}
+      - {line: [[-2.0,  0.45], [2.0,  0.45]], side: 'below', x_active: [-2.0, 2.0]}
+    obstacle_constraints:         # PHYSICAL: cap the finite wall ends
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0, -0.5], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0, -0.5], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0,  0.5], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0,  0.5], radius: 0.05}
+
+  - name: s_curve_hg
+    scene: s_curve
+    geo_tag_suffix: '_hg'
+    constraint_types: ['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds']
+    planning_inflation: {r_drone: 0.31, margin_base: 0.0}
+    workspace_bounds:
+      lb: [-4.0, -1.8, 0.30]
+      ub: [ 4.0,  1.8, 1.80]
+    halfspace_constraints:        # PHYSICAL inner faces, per-segment x_active (unchanged)
+      - {line: [[-3.0, -0.35], [-0.5, -0.35]], side: 'below', x_active: [-3.0, -0.5]}
+      - {line: [[-3.0, -1.25], [-0.5, -1.25]], side: 'above', x_active: [-3.0, -0.5]}
+      - {line: [[ 0.5,  0.35], [ 3.0,  0.35]], side: 'above', x_active: [ 0.5,  3.0]}
+      - {line: [[ 0.5,  1.25], [ 3.0,  1.25]], side: 'below', x_active: [ 0.5,  3.0]}
+    obstacle_constraints:         # PHYSICAL: inside corners at the crossover
       - {type: sphere_outside, dimensions: ['x', 'y'], center: [-0.5, -0.3], radius: 0.05}
       - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 0.5,  0.3], radius: 0.05}

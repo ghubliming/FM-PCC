@@ -5578,3 +5578,197 @@ Comprehensive data analysis of the MPC candidate fan ($B=4$ vs $B=1$) on `avoidi
    - **100% of arm-C items hit a non-converged SLSQP solve** at the second projector call in both K configs (§1.3 of `DA_20260902`). Executed violations remain 0.00, but the terminal-solve feasibility guarantee does not hold as documented.
    - No $K$ between 2 and 10 has been tested; K=5 is the most informative missing cell.
    - Untouched-box rates are elevated under `-t`/`-c` projection (up to 6/10) and not yet explained.
+
+***
+
+## Gen14 Visual Aligning: Three-Stage Funnel Evaluation (K=10/T=0.4 vs K=20/T=0.2) & Flagship Operating Point Re-Alignment (September 2, 2026)
+
+**Keywords**: Gen14, visual aligning, three-stage funnel, K-sweep, K=10 vs K=20, DA_20260902_Gen14_three_stage_funnel_K10_vs_K20.md, batch_va2_20260902_114841, hardflow_sls-r, legal minimum distance, per-context rescue count, geo_free, action bounds ablation.
+
+1. **Three-Stage Decision Protocol Established**:
+   - To systematically evaluate whether K=10/T=0.4 is an acceptable cheaper replacement for the K=20/T=0.2 flagship, established a strict three-stage decision cascade evaluated strictly on the tightened geometry (`combined_5-tightened`, 10 paired contexts, seed 6, `filmv1`, `mpc4`):
+     $$\text{Stage 1 (Minimum Distance)} \longrightarrow \text{Stage 2 (Constraint Satisfaction)} \longrightarrow \text{Stage 3 (Average Latency)}$$
+   - A subsequent stage is consulted only when the preceding stage yields a tie. Evaluated on `context_final_xy_dist` (metres, box $\rightarrow$ target; mean initial distance $0.4530\,\text{m}$), tracking untouched-box rates beside every distance.
+
+2. **Stage 1 (Minimum Distance): Inconclusive Tie on the Unguided Arm**:
+   - On the unguided (`diffuser`) arm where threshold $T$ is inert:
+     - K=10 won the absolute best single rollout capability ceiling by $3.4\times$ (**$0.0082\,\text{m}$** vs $0.0278\,\text{m}$), setting the lowest unguided minimum in the entire corpus.
+     - K=20 won every robust summary statistic: median distance (**$0.0902\,\text{m}$** vs $0.1421\,\text{m}$), mean distance (**$0.1431\,\text{m}$** vs $0.1992\,\text{m}$), worst-case maximum ($0.4524\,\text{m}$ vs $0.4746\,\text{m}$), and untouched rate (**1/10** vs 2/10).
+     - Paired sign test split 5/4 ($p = 1.000$, permutation $p = 0.250$). Neither configuration separated with statistical significance at $n=10$. Stage 1 resulted in a tie; proceeding to Stage 2.
+
+3. **Stage 2 (Constraint Satisfaction & Legal Minimum): Decisive Separation for K=20**:
+   - Ranked all legal arms in the tightened corpus ($1.000$ zero-violation rate, $0.00$ executed violations):
+
+   | Rank | Cell · Arm | MIN (m) | Median (m) | Mean (m) | Max (m) | Untouched | ms/replan |
+   |---|---|---|---|---|---|---|---|
+   | 1 | *`mf` K=2 T0.5 · `dpcc-t`* | *0.0175* | *0.2207* | *0.2499* | *0.4713* | *3/10* | *43.0* |
+   | **2** | **`mf` K=20 T0.2 · `hardflow_sls-r`** | **0.0220** | **0.1967** | **0.2108** | **0.4524** | **2/10** | 275.3 |
+   | 3 | `mf` K=20 T0.2 · `hardflow_sls-c` | 0.0241 | 0.3227 | 0.2863 | 0.4842 | 4/10 | 282.3 |
+   | **4** | **`mf` K=10 T0.4 · `hardflow_sls-r`** | **0.0455** | **0.2416** | **0.2365** | **0.4524** | **2/10** | 192.5 |
+
+   - *K=10 Projection Collapse*: K=10's unguided minimum did not survive projection. Entering Stage 2 with the corpus-best unguided minimum ($0.0082\,\text{m}$), it degraded **$5.5\times$** under projection to **$0.0455\,\text{m}$**—the worst minimum of any legal configuration. In contrast, K=20 actually improved under projection ($0.0278\,\text{m} \rightarrow 0.0220\,\text{m}$) while maintaining a superior median ($0.1967\,\text{m}$ vs $0.2416\,\text{m}$).
+   - *Feasible Breadth*: K=20 maintained two distinct legal arms at 1.000 zero-violation (`-r` and `-c`), whereas K=10 produced only one (`-r`). Pooled zero-violation across all variants favored K=20 (**0.967 vs 0.867**).
+
+4. **Per-Context Projection Rescue Diagnostics**:
+   - Evaluated whether projection ever lands closer than unguided generation on the same context:
+     - At K=20, 5 of 12 arms beat the unguided minimum outright, rescuing rollouts across 2–5 of 10 contexts.
+     - At K=10, **0 of 12 arms beat the unguided minimum**. Projection provided zero rescue capability and exclusively imposed an accuracy penalty.
+   - *Theoretical Rule*: The weaker the underlying sampler, the more guidance projection can inject (K=2 rescued on 5–6/10 contexts). When the unguided minimum is already near the origin, projection can only degrade terminal placement.
+
+5. **`geo_free` Constraint Ablation: Pinpointing the Distance Penalty**:
+   - Evaluated `geo_free` (stripping obstacles and halfspaces, retaining dynamics and action bounds) against full geometry:
+     - K=10 distance penalty: $+0.0427\,\text{m}$ (`geo_free`) vs $+0.0373\,\text{m}$ (full geometry).
+     - K=20 distance penalty: $+0.0642\,\text{m}$ (`geo_free`) vs $+0.0677\,\text{m}$ (full geometry).
+   - *Key Mechanistic Finding*: **Obstacle geometry is not what costs accuracy.** The ~0.04–0.07 m distance degradation is caused by the dynamics and action bounds projection itself. Loosening obstacle margins cannot recover this penalty.
+   - *Action-Bound Efficiency*: `geo_free-model_free` (action bounds alone) improved distance to $0.1415\,\text{m}$ and lifted zero-violation from $0.100 \rightarrow 0.500$ for only $+22\,\text{ms}$, while `bounds_free` degraded latency to $557.5\,\text{ms}$, demonstrating that action bounds provide cheap, highly effective constraint enforcement.
+
+6. **Scientific Verdict**:
+   - **Retain K=20 / T=0.2 with `hardflow_sls-r` as the flagship operating point; drop K=10 from flagship status.**
+   - K=10's apparent advantage was an artifact of an unguided capability ceiling destroyed by constraint enforcement. K=10 is retained strictly as a low-latency secondary operating point for `-r` (saving 30% compute, $192.5$ vs $275.3\,\text{ms}$, $p = 0.0039$ with bit-identical safety). Supersedes the "K=10 best horse" recommendation of earlier analyses while confirming its cost mechanism.
+
+***
+
+## Gen3v7 AlphaFlow: Live Bootstrap Verification on 4.0M U-Net, Pareto Dominance over MeanFlow at Low-K & DPCC Target Clearance (September 3, 2026)
+
+**Keywords**: Gen3v7, AlphaFlow, avoiding-d3il, AF_ALPHA_END, live bootstrap, discrete_frac, 4.0M UNet, Pareto dominance, MeanFlow, DPCC baseline clearance, dpcc-t-tightened, n_steps metric split, DA_20260903_AF_UNet_alphaflow_ENABLED_seed6_diffuser.md, Report_20260903_AF_UNet.
+
+1. **Verification of the Live Bootstrapped Objective (`AF_ALPHA_END`)**:
+   - Verified that running with `AF_ALPHA_END=0.2` and `0.05` (Jobs 25290/25292, batch `batch_avoiding_combined_20260903_133730`, seed 6, $n=20$ trials, halfspace constraints) successfully eliminated the historical MeanFlow collapse defect:
+     - Final epoch α remained active at exactly the prescribed floor ($0.20$ and $0.05$, rather than collapsing to $0.0006$).
+     - `train/discrete_frac` was sustained at **0.25–0.41** through the final training epochs (matching `rf0.5`), proving for the first time in the project that roughly half of every training batch took the self-bootstrapped no-grad target $\mathbf{u}_{\text{tgt}} = \frac{\Delta t \cdot \mathbf{v} + (h - \Delta t)\mathbf{u}_{\text{next}}}{h}$ through to the final weights.
+     - Confirmed architecture-matched parity on the frozen 4.0M `Flow_matcher_U_Net_v2` backbone (`bbunet`, `aw10`, `tslogit_normal`).
+
+2. **Raw Unprojected Plan: Strict Pareto Dominance over MeanFlow at Low K**:
+   - On the unprojected network output (`variant=diffuser`) on `top-right-hard` (the sole halfspace where models operate below the ceiling):
+
+   | Model | K | Goal Reached | Steps (Successes-Only) | Steps (All Episodes) | Latency (s/step) | Episode Time (s) |
+   |---|---|---|---|---|---|---|
+   | **AF $\alpha \rightarrow 0.2$** | **1** | **1.00 (20/20)** | **60.90** | 60.90 | 0.0097 | **0.59** |
+   | AF $\alpha \rightarrow 0.05$ | 1 | 0.90 (18/20) | 62.28 | 60.65 | 0.0097 | 0.59 |
+   | MF-UNet | 1 | 0.85 (17/20) | 62.41 | 59.70 | 0.0096 | 0.57 |
+   | FM-UNet (naive) | 1 | 0.85 (17/20) | 62.45 | 62.45 | 0.0093 | 0.58 |
+   | DPCC K20 (Target) | 20 | 0.60 (12/20) | 57.25 | 57.25 | 0.1779 | 10.18 |
+
+   - *Strict Pareto Dominance*: On the successes-only step basis, AF $\alpha \rightarrow 0.2$ strictly Pareto-dominated MF-UNet across $K \in \{1, 5, 10\}$ (at K=1: **1.00 vs 0.85 success**, **60.90 vs 62.41 steps**).
+   - *Zero Cost Penalty*: `avg_time` was identical between AF and MF across all K ($\sim 9.7\,\text{ms}$ at K=1; $\sim 178\,\text{ms}$ at K=20). The secondary no-grad evaluation is strictly a training-time cost; at inference, α-Flow executes identical operations to MeanFlow.
+
+3. **Projected Frontier: Clearing the Pinned DPCC Target 33× Cheaper**:
+   - Evaluated under the winning projection rule (`dpcc-t-tightened`) against the pinned DPCC K20 target (`dpcc-c-tightened`):
+     - On `top-left-hard` at K=1: AF $\alpha \rightarrow 0.2$ achieved **S&C 1.00**, **57.20 steps**, and **1.07 s/episode** (vs DPCC K20's 1.00, 61.00 steps, 35.66 s/episode), clearing the target **$33.3\times$ cheaper** with fewer steps, and beating MF-UNet (60.75 steps, 1.13 s/ep).
+     - On `both-hard` at K=1: AF $\alpha \rightarrow 0.2$ achieved **S&C 1.00**, **59.25 steps**, and **1.08 s/episode** ($33.9\times$ cheaper than target), whereas MF-UNet failed the safety gate (S&C 0.95, 0.1 violations).
+     - On `top-right-hard`: MF-UNet K=5 reached a shorter trajectory (60.60 steps) but cost $12.64\,\text{s/ep}$, whereas AF K=2 reached 63.40 steps at $1.77\,\text{s/ep}$ ($7.1\times$ cheaper for 2.8 steps).
+
+4. **Aggregate 3-Environment Pareto Front**:
+   - Aggregating per-environment means across `top-left-hard`, `top-right-hard`, and `both-hard`, AF $\alpha \rightarrow 0.2$ at K=2 formed the **sole non-dominated point** on the aggregate frontier:
+
+   | Engine | K | Rule | S&C | Steps | Latency (s/step) | Wall Time (s/ep) | Dominance vs Target |
+   |---|---|---|---|---|---|---|---|
+   | **AF $\alpha \rightarrow 0.2$** | **2** | `dpcc-t-tightened` | **1.00** | **59.68** | **0.0286** | **1.71** | **$19.8\times$ cheaper** (strict) |
+   | MF-UNet | 5 | `dpcc-t-tightened` | 1.00 | 60.17 | 0.2209 | 13.29 | $2.6\times$ cheaper (dominated by AF) |
+   | Naive FM | 5 | `dpcc-t-tightened` | 1.00 | 64.20 | 0.1121 | 7.20 | $4.7\times$ cheaper (dominated by AF) |
+   | DPCC Baseline | 20 | `dpcc-c-tightened` | 1.00 | 60.57 | 0.5603 | 33.93 | Baseline (dominated by AF & MF) |
+
+5. **Tooling & Methodological Audit Findings**:
+   - *Metric Incompatibility Uncovered*: Diagnosed a critical reporting discrepancy across 116/318 cells: eval logs compute `n_steps` averaged over *successful episodes only*, while the DA CSV computes `n_steps` averaged over *all episodes*. The all-episode metric rewards models that fail fast (failed episodes aborting at step ~40 drag the mean down). Established that both metrics must be tracked explicitly.
+   - *HardFlow Arm Confound Identified*: Discovered that the `_B4_` folder token represents `hf_batch_size=4` for HardFlow, whereas legacy MF runs used `hf_batch_size=1`. The 4:1 candidate fan confound completely voids cross-engine comparisons on Arm C (`hardflow_*`), leading to its exclusion from the official report.
+   - *Low-K Projector Degeneracy*: `s/step` on `dpcc-*` jumped $\sim 14\times$ between K=2 and K=5 ($0.0280 \rightarrow 0.2501\,\text{s/step}$). Under threshold $T=0.5$, K=1 and K=2 execute fewer than one projected step per replan, meaning low-K speedups predominantly reflect MPC candidate selection rather than iterative trajectory optimization.
+
+***
+
+## Pruning Infrastructure: Latest Epoch Preservation in clean_weights.py (September 3, 2026)
+
+**Keywords**: cluster maintenance, clean_weights, checkpoint pruning, state_best.pt, training resume, CHANGELOG_clean_weights.md, commit 38e588a5.
+
+1. **Catastrophic Resume Failure Diagnosis**:
+   - Discovered that the original `clean_weights.py` tool (which deleted all `state_<digits>.pt` while preserving only `state_best.pt`) completely broke training resume functionality across the entire repository.
+   - *Root Cause*: All trainers (`training.py`, `training_twotime.py`) implement resume logic via `find_latest_checkpoint_step()`, which searches for the highest-numbered `state_<epoch>.pt`. None of the trainers write a dedicated `state_latest.pt`. Pruning all numbered checkpoints left only `state_best.pt` (a model reflecting the lowest validation loss, often thousands of steps behind active training), making interrupted or chained runs un-resumable.
+
+2. **De-Facto Latest Preservation Upgrade**:
+   - Refactored `tools/clean_weights/clean_weights.py` to group candidate checkpoints by parent directory, extract the integer step via `_epoch_from_name()`, and unconditionally preserve the highest-numbered periodic checkpoint `state_<max_epoch>.pt` alongside `state_best.pt`.
+   - Updated dry-run analysis and audit logging to include an explicit `KEPT LATEST` section, recording path, filesize, and epoch number for every preserved endpoint.
+   - Updated `tools/clean_weights/README.md` to document the two-checkpoint retention policy (`state_best.pt` for deployment, `state_<max>.pt` for resume), ensuring complete safety for ongoing multi-stage SLURM pipelines.
+
+***
+
+## Gen14 Visual Aligning: Four-Gate Evaluation of Flow Matching vs MeanFlow at K=20/T=0.2 (September 3, 2026)
+
+**Keywords**: Gen14, visual aligning, Flow Matching vs MeanFlow, K=20, T=0.2, Job 25312, Fix_11 verification, four gates, encoder caching defect, NLP non-convergence invariance, DA_20260903_Gen14_four_gate_fm_vs_mf_K20_T0.2.md.
+
+1. **First End-to-End Tightened FM Run with Arm C (Job 25312)**:
+   - Evaluated the first complete tightened-geometry `fm` run on `aligning-d3il-visual` (Job 25312, commit `c721f7d`, node `i6-gpu-1`, 38/38 items, K=20, T=0.2, seed 6, 10 paired contexts) following Fix_11.
+   - Applied a four-gate sequential evaluation protocol: Runs $\rightarrow$ Box Moves $\rightarrow$ NFE Scaling $\rightarrow$ Projection Survival.
+
+2. **Gate Evaluation Results**:
+   - **Gate 1 (Runs) — PASS**: Completed 38/38 items without crashing. Verified that the Fix_11 `_encode_once` decoupling resolved the earlier `AttributeError`, allowing in-loop SLSQP NLP solves (`dof=66`, `reg_scale=1.0`) to execute cleanly on `engine=fm`.
+   - **Gate 2 (Box Moves) — FAIL**: Unguided `fm` median distance was **$0.4131\,\text{m}$** against a starting distance of $0.4530\,\text{m}$, with **5/10 rollouts completely untouched**. Paired against `mf` on identical contexts: distance degraded $+0.216\,\text{m}$ (9/0, $p = 0.0039$), violations increased $+78.20$ (8/1, $p = 0.0195$), and latency was $+87.52\,\text{ms}$ slower (9/0, $p = 0.0039$). Across all cells, `fm` achieved 0/712 successes (vs `mf` 67/4365, 1.5%, and frozen baseline 8/3884, 0.2%).
+   - **Gate 3 (NFE Scaling) — FAIL**: Sweeping NFE ($K \in \{20, 100\}$) showed that $5\times$ compute made `fm` *worse* ($0.3266\,\text{m} \rightarrow 0.3471\,\text{m}$) and increased freezing from 10/30 to 12/30 untouched rollouts, indicating a mis-trained velocity field rather than an under-resolved ODE.
+   - **Gate 4 (Projection Survival) — FAIL**: Evaluated all 19 projection variants on tightened geometry. **Zero legal arms exist** for `fm` (zero-violation ceiling was 0.700, achieved by `dpcc-c-dt0p25` which was 5/10 untouched). `hardflow_sls-r` reached $0.1104\,\text{m}$ MIN (0.600 zero-violation), $2.8\times$ worse than its unguided minimum.
+
+3. **Encoder Re-Evaluation Defect Discovered in `VisualFlowMatching`**:
+   - Discovered that `fm` costs **$14.15\,\text{ms/NFE}$** vs `mf`'s **$9.17\,\text{ms/NFE}$** ($1.54\times$ slower).
+   - *Root Cause*: `VisualMeanFlow` caches image features via `_encode_once` and passes `visual_latent` to the ODE sampler (1 ResNet pass per replan). `VisualFlowMatching` lacked this caching, repeatedly re-encoding raw images on every single ODE step (20 ResNet passes per replan). Fixing this would reduce K=20 latency from ~294 ms to ~190 ms but would not repair field quality.
+
+4. **Invariance of NLP Non-Convergence Across Engines**:
+   - Exactly 6/6 arm-C items in `fm` hit a non-converged SLSQP solve at call #2 ($\tau = 0.850$), identical to `mf` at K=20/T=0.2 (and matching `mf` at K=10/T=0.4 at $\tau = 0.700$).
+   - *Crucial Finding*: The non-convergence is completely invariant to whether the field is single-time or two-time. The failure is driven by **NLP conditioning at that specific $\tau$ window**, exonerating the generative model architecture and identifying a core numerical limitation of the solver.
+
+5. **Verdict**:
+   - **Exclude `fm` from visual aligning benchmark comparisons; retain the validated arm-C pipeline plumbing.** `mf` strictly Pareto-dominates `fm` across distance, safety, and speed.
+
+***
+
+## Gen14 U12: `MIX_EPOCH` Checkpoint Selector, Final Step Persistence & G-B12 Gate (September 3, 2026)
+
+**Keywords**: Gen14, visual aligning, MIX_EPOCH, checkpoint selector, alpha bias, G-B12 gate, training endpoint save, CHANGELOG_Gen14_U12_checkpoint_selector_MIX_EPOCH.md, commit ba05cb7c.
+
+1. **Problem: Architectural Checkpoint Selection Defect**:
+   - Identified that `'diffusion_epoch': 'best'` was hardcoded across all visual aligning plan blocks. For α-Flow, validation loss contains an $\alpha$-weighted term ($0.75 + 0.25\alpha$), causing `state_best.pt` to systematically select a mid-curriculum model caught at $\alpha \approx 0.01–0.02$ rather than the post-curriculum endpoint.
+   - Identified two supporting bugs: (1) periodic checkpoints saved at `n_train_steps // 5` meant `latest` only reached step 80,000 of 100,000; (2) requesting `latest` on an un-checkpointed directory crashed into `state_-1.pt`.
+
+2. **Implementation & Features**:
+   - **`_mix_epoch_keys(raw)`**: Implemented in `config/aligning-d3il-visual.py`. Parses `MIX_EPOCH` (`best`, `latest`, or explicit integer step) with strict validation. Appended `('diffusion_epoch_tag', 'EP')` **last** to `args_to_watch_mix_visual_plan`, ensuring non-default selections isolate evaluation directories (`_EPlatest`) without altering checkpoint loadpaths or colliding with `best` results.
+   - **CLI & Diagnostics**: Added `--epoch` CLI argument in `eval_mix_visual_aligning.py` (CLI > env > default precedence). Added fail-fast error reporting if numeric checkpoints are missing, and added runtime breadcrumb logging printing actual $\alpha(\text{step})$ from train-time configs to verify whether α-Flow was active.
+   - **Endpoint Persistence**: Added `self.save(self.step)` at the conclusion of `train()` in `mix_visual_aligning/utils/training.py` and `training_twotime.py`. Strictly verified with `difflib` that rewritten line counts remained at exactly 3 (`removed=3`), satisfying G0 copy-fidelity constraints (+62/-3 and +132/-3).
+   - **Gate G-B12**: Added a new static verification gate in `mix_visual_aligning_test/gates_mix_visual.py` asserting tag registration order, byte-identical checkpoint loadpaths, path extension under `latest`, and rejection of malformed values.
+
+***
+
+## Gen15 UAV Mix-ML: Fix_16 A/B Validation on `pillars` & DA_UAV_v1 Run-Tag Aggregation Fix (September 3, 2026)
+
+**Keywords**: Gen15, UAV Mix-ML, uav-pillars, Fix_16 A/B test, SafeLimitsNormalizer, degenerate channel, DA_UAV_v1, run_tag, silent data drop, DA_20260903_fix16_AB_mf_pillars.md, CHANGELOG_20260903_run_tag_axis.md, commits 43d684cb & f4a67706.
+
+1. **Fix_16 A/B Empirical Validation on `pillars` (Jobs 25316–25321, Rev `def8fdf`)**:
+   - Conducted an exact single-variable A/B test on `uav-pillars` (`mf`, seed 6, $K \in \{1, 2, 5\}$, 551 rollouts) comparing `FMPCC_SAFE_EPS_MODE=scaled` (Fix_16, $\text{eps} \approx 3.086 \times 10^{-5}$) against `=legacy` ($\text{eps} = 1.0$):
+     - **Complete Eradication of Unguided Divergence Aborts**: Unguided `diffuser` went from **100% aborts across all K to 0.0% aborts across all K**; mean goal distance collapsed from $6.50\,\text{m} \rightarrow \mathbf{0.62\,\text{m}}$ at K=1, $6.46\,\text{m} \rightarrow \mathbf{0.66\,\text{m}}$ at K=2, and $6.49\,\text{m} \rightarrow \mathbf{0.36\,\text{m}}$ at K=5; physical safety rose from 0.00 to 1.00; final altitude stabilized dead-flat at $1.13\,\text{m}$.
+     - **Exact Rollback Verification**: The `legacy` arm reproduced pre-fix numbers bit-for-bit, proving `legacy` operates as a byte-exact rollback switch.
+     - **Broad Guidance Improvement**: Projected aborts dropped across 9 of 10 non-`geo_free` variants (e.g. K1 `dpcc-t` 80% $\rightarrow$ 0%; K5 `dpcc-r` 100% $\rightarrow$ 20%). Healthy `geo_free` control arms remained unmoved (0% abort).
+   - *Trade-offs & Constraints*: S&C remained 0/2876 due to tight obstacle geometries ($12\,\text{cm}$ outer clearance). Per-step projection latency increased $1.2–1.6\times$ (K1 `dpcc-c` $76 \rightarrow 120\,\text{ms}$; K5 $1425 \rightarrow 1751\,\text{ms}$) because bounding the constant channel creates a near-equality constraint for SLSQP. Both K5 jobs hit the SLURM wall limit due to longer rollout survival.
+
+2. **DA_UAV_v1 Silent Data Loss Bug Diagnosis & Repair**:
+   - *The Defect*: `EVAL_TAG_RE` anchored on `_T{threshold}$`, failing to match folder names with trailing `FMPCC_UAV_EVAL_TAG` suffixes (e.g., `..._fix16scaled`). As a result, $K$ parsed as `NaN`, causing pandas `groupby(dropna=True)` in `_reduce()` to silently delete all 6 A/B runs (23 of 71 candidates, 551 rollouts) from `candidates_detailed.csv` and `uav_k_sweep.csv`.
+   - *The Silent Pooling Danger*: Simply extending the regex would have pooled `scaled` and `legacy` arms into the same candidate cell in `uav_k_sweep.csv`, averaging 0% and 100% aborts into a misleading 50%.
+   - *Implementation (`CHANGELOG_20260903_run_tag_axis.md`, commit 43d684cb)*:
+     - Extended `EVAL_TAG_RE` with optional `run_tag` capture group and introduced `run_tag` into `AXIS_COLUMNS` and **`K_SWEEP_KEYS`**, preventing candidate pooling.
+     - Changed `_reduce()` to `dropna=False` to ensure unparsed axes never drop rollouts.
+     - Added loud warnings for tag-shaped folders that fail regex matching. Added 33 offline unit tests.
+
+***
+
+## Gen15 U6: AlphaFlow Pipeline Enhancements (`UAV_MIX_BONE_AF`, `UAV_MIX_AF_ALPHA_END`, `UAV_MIX_EPOCH`) & Gate G9 (September 3, 2026)
+
+**Keywords**: Gen15, UAV Mix-ML, AlphaFlow, UAV_MIX_BONE_AF, UAV_MIX_AF_ALPHA_END, UAV_MIX_EPOCH, Gate G9, backbone confound, MeanFlow relabelling, CHANGELOG_Gen15_U6_af_unet_default_and_alpha_epoch_knobs.md, commit ca0eb314.
+
+1. **Foundational Confound Audited in Pre-U6 Gen15**:
+   - Audited the Gen15 `af` pipeline and uncovered two critical flaws:
+     1. *Backbone Confound*: `config/uav_mix.py` hardcoded `imf_backbone: 'sit'`, utilizing an un-matched ~9.4M parameter SiT ($2.4\times$ larger than the 4.0M U-Net used by `fm` and `mf`).
+     2. *Un-activated α-Flow*: Hardcoding `af_alpha_end: 0.0` caused α to collapse to 0 by step ~71k, routing to MeanFlow. All prior published UAV "α-Flow" rows were actually **MeanFlow-on-SiT (9.4M) vs MeanFlow-on-UNet (4.0M)**—an architecture ablation under an objective's name.
+     3. *Unreachable/Unsafe Epoch Selection*: `--epoch` existed in Python CLI but was not passed by sbatch, and did not reach folder tagging, risking silent overwrite between `best` and `latest`.
+
+2. **Pipeline Upgrades & Knob Propagation**:
+   - **`UAV_MIX_BONE_AF`**: Flipped default backbone from `sit` to **`unet`** (`_bbunet`), establishing true 4.0M parameter-matched parity across `fm`, `mf`, and `af`. Existing SiT checkpoints remain accessible via `UAV_MIX_BONE_AF=sit` (`_bbsit`).
+   - **`UAV_MIX_AF_ALPHA_END`**: Introduced configurable terminal α floor (default 0.0, validated $\ge 0.005$, generating `_ae` path token) synchronized across train and plan blocks.
+   - **`UAV_MIX_EPOCH`**: Added explicit epoch override (`best`, `latest`, `<step>`), generating `_EP<sel>` in evaluation result directories.
+   - **Endpoint Persistence**: Added atomic `self.save(self.step)` at the end of training in `mix_uav/utils/training.py` and `training_twotime.py`.
+   - **Diagnostic Telemetry**: Added eval-time breadcrumbs reporting actual resolved step, backbone parameter size, and $\alpha(\text{step})$ from train config, logging an explicit warning if α=0.
+   - **Gate G9**: Implemented static verification in `mix_uav_test/gates_mix_uav.py` asserting engine registry compliance, train/plan block synchronization, path distinctness, and rejection of invalid knob values.
+
