@@ -579,7 +579,26 @@ A claim that would count needs all of:
    winner after the fact from a family this size is how a null becomes a false positive — and the
    non-monotone floor result in §6.1 row 5 is exactly the shape of noise that would do it.
 
-### 6.4 Recommendation
+### 6.4 ⚠️ SUPERSEDED — read the attack plan instead
+
+**2026-09-04, later the same day.** Re-analysing on the **`diffuser` arm alone** (the raw network
+output, the funnel's Stage 1) overturns the α = 0.2 preference stated below and in §3.1. Paired at
+matched K = 2 on the same contexts:
+
+| arm vs `mf` K2 | p (distance) | 0-viol A/mf | p (0-viol) |
+|---|---|---|---|
+| **`af` α_end=0.05** | 0.359 — **tie** | **0.750 / 0.550** | 0.289 — tie |
+| `af` α_end=0.2 | 1.000 — tie | 0.100 / 0.550 | **0.004 — significantly worse** |
+
+**On the raw field the live arm is `α_end=0.05`, not 0.2.** The α = 0.2 preference below was derived
+from *progress aggregated across projected variants*, where the projector masks the raw field. The
+one untried cell is `α_end=0.05 @latest` at MeanFlow's flagship **K = 20, T = 0.2** — two eval jobs,
+zero training.
+
+➡️ **[`PLAN_20260904_Gen14_AF_attack_plan_beat_MF_on_aligning.md`](PLAN_20260904_Gen14_AF_attack_plan_beat_MF_on_aligning.md)**
+carries the full Stage-1 board, the paired tests, the fixed kill thresholds and the commands.
+
+### 6.5 Recommendation *(superseded — kept for the record)*
 
 - **Here, now:** run §6.2 (free, six evals). It is a genuine hypothesis test, not a fishing trip,
   and it is the only thing that could reverse the direction of the U12 recipe.

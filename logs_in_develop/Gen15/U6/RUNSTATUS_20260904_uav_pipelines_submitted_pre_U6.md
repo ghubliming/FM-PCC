@@ -125,3 +125,120 @@ floor traded task progress for constraint satisfaction and did **not** reproduce
 win. Whether the UAV scenes behave like `avoiding` or like Visual Aligning is exactly what these
 runs are for — and `pillars` still cannot rank anything (S&C = 0 for every arm, no `diffusion`
 target arm for the scene), so `s_curve` is where the answer will come from.
+
+---
+
+## 7. RESOLUTION — 2026-09-05, from the `temp/0509` export
+
+**§5 was followed only in part: step 2 (`git pull`) was done; step 1 (`scancel`) and step 4
+(resubmit) were not.** Every job below is from the user's original **Sep 3 22:05–22:11** batch —
+no `af` pipeline was ever resubmitted (the next `af`-family job ids, 25410–25415 on 09-05, are the
+`fm`/`mf` `u7hg` sweep). The cluster was pulled to `ca0eb314` between 20:24 and 22:56 UTC on 09-04,
+**while the queued children of §1 were still draining**. A Slurm job checks out nothing; it runs
+whatever the working tree holds **at its start time**, so the pull cut the three pipelines in half:
+
+| job | start (UTC) | `GIT REV` | savepath resolved | outcome |
+|---|---|---|---|---|
+| 25383 train `s_curve` | 09-04 15:40 | `43d684c` (pre-U6) | `…_as1_ae0_bbsit/6` | ran; α dead |
+| 25384/85/86 eval `s_curve` | 18:03 / 20:24 / 21:27 | pre-U6 | same | ran; rows tagged `u6unet_ae0` — **tag lies**, this is SiT + α=0 |
+| 25388 train `s_curve` | 09-04 18:02 | `43d684c` (pre-U6) | `…_as1_ae0_bbsit/6` | ran; **collided** with 25383 as predicted in §3.2 |
+| 25389/90/91 eval `s_curve` | 09-04 22:56 | **`ca0eb31`** (U6) | `…_as1_ae0.2_bbunet/6` | ❌ **crashed in 5 s** — `FileNotFoundError: …/dataset_config.pkl` |
+| 25393 train `pillars` | 09-04 22:56 | **`ca0eb31`** (U6) | `…_as1_ae0.2_bbunet/6` | ✅ trained the real arm |
+| 25394 / 25395 eval `pillars` | 09-05 01:50 / 02:59 | **`ca0eb31`** | `Eaf_K{1,2}_…_EPlatest_u6unet_ae02` | ✅ complete, 10 variants × 10 rollouts |
+
+**This corrects §1's guess** that all three pipelines would produce pre-U6 arms. The *pipelines*
+were pre-U6 (§2 stands — the U6 echo block is absent from all three stubs, and all three started
+Sep 3 22:05–22:11), but job 25392's children happened to start after the pull and therefore ran
+U6 code. The `pillars` α-Flow arm exists because of that timing accident, not because it was
+submitted correctly.
+
+### 7.1 What is real
+
+`logs/UAV_MIX/uav-pillars/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K{1,2}_mpc4_pid_stopgo_T0.5_EPlatest_u6unet_ae02`
+
+`ae0.2` in the **checkpoint** dir (α floored at train time) and `EPlatest` in the **results** dir
+(step-100 000 save, not `best`) — both U6 knobs took. First genuine α-Flow arm on UAV.
+
+### 7.2 What is still missing, and why
+
+| gap | classification | cause |
+|---|---|---|
+| `s_curve` α-Flow (K 1/2/5) | **lacking — will never appear** | train ran pre-U6, evals ran post-U6; the eval crashed on the absent checkpoint. Needs a fresh train+eval. |
+| `corridor` α-Flow | **lacking — never submitted** | no `corridor` pipeline in the batch at all |
+| `pillars` α-Flow **K=5** | **lacking — never submitted** | 25392's K list was `1 2`; the `s_curve` pipelines carried `1 2 5` |
+| `fm`/`mf` K=2 × 3 scenes, tag `u7hg` (25419–25424) | **unknown — needs `sacct`** | parents 25410–25415 started 09-05 04:13 and scheduled the six children; no child log and no `u7hg` row anywhere in the 16:38 batch |
+
+### 7.3 Process note — and a gap in §5
+
+Both failure modes here are the same root cause: **`git pull` on the cluster while jobs are
+queued**. `submit.sh` performs no git sync and Slurm holds no snapshot, so a chained pipeline can
+straddle two revisions — the exact hazard that produced the train/eval savepath mismatch.
+
+**§5 under-specified this.** It listed `scancel` as step 1 and `git pull` as step 2, but it never
+said *why the order matters*, so running step 2 alone looks harmless — it is not. Jobs 25389–25391
+are literally in §5's `scancel` list; had step 1 run, they would have been cancelled instead of
+crashing, and 25393–25395 would have been resubmitted cleanly rather than succeeding by accident.
+Any future corrective sequence in this repo must state the hazard inline, not just the order:
+
+> ⚠ **Never `git pull` on the cluster with jobs queued.** `squeue -u $USER` first. A queued job
+> runs the tree as of its *start* time, so a pull mid-drain can hand a pipeline's train and eval
+> stages two different revisions — and two different savepaths.
+
+### 7.4 Attribution — these were prescribed commands, and the prescription was defective
+
+The Sep-3 batch was not improvised. Four of the five jobs are verbatim from the command block in
+`CHANGELOG_Gen15_U6_af_unet_default_and_alpha_epoch_knobs.md`:
+
+| job | changelog line | role |
+|---|---|---|
+| 25379 | `:233-234` | Stage 1, the free re-eval of the SiT tree |
+| 25382 | `:265-267` | s_curve **arm A** — architecture fix alone, α off |
+| 25387 | `:270-273` | s_curve **arm B** — α actually on. → the 25389/90/91 crashes |
+| 25392 | `:284-287` | pillars **arm B** |
+
+(pillars arm A, `:280-281`, was never submitted.)
+
+So 25382 and 25387 are **not a duplicate submission**. They are arms A and B of a deliberate
+α-ablation, written as consecutive commands, which is why they landed 43 s apart. With the knobs
+inert on the pre-U6 tree they collapsed onto one savepath: trains 25383 and 25388 **both wrote
+`…_as1_ae0_bbsit/6/`**.
+
+**Correction (2026-09-05, from `uav_mix_tree.txt`).** An earlier revision of this section called
+those three s_curve rows *contaminated*. That was stronger than the evidence. The collision was
+benign on the config side:
+
+* 25388 wrote `dataset_config_resume_1.json`, `model_config_resume_1.json`,
+  `diffusion_config_resume_1.json`, `trainer_config_resume_1.json` — **`.json` only, no `.pkl`.**
+  It took the trainer's *resume* branch, not a clobber.
+* `load_diffusion` reads the **`.pkl`** configs. Those are still 25383's originals, untouched.
+* The two trainers overlapped by **61 s** (25383 END 18:03:31, 25388 START 18:02:30), not for hours.
+
+So evals 25384/85/86 are **mistagged, not corrupt** — the same category as `u6sitlatest` in §4. The
+`u6unet_ae0` tag names an arm that was never trained (this is SiT + α_end=0). Read them as a
+MeanFlow-on-SiT s_curve row, or retag. Do not delete them.
+
+⚠️ **One unresolved anomaly.** `state_best.pt` is stamped 09-04 **21:09** and the periodic set
+`state_<N>.pt x5` **21:32** — both *after* 25388 exited at 20:24 — and the span is `[0..80000]`
+while both trainers' configs request `n_train_steps: 100000`. Nothing in the 09-04 log set accounts
+for a writer in that window. Re-verify these weights (step count in `losses.json`, and an
+`--epoch` echo in a fresh eval) before publishing any number derived from them.
+
+**The defect is in the handover.** The changelog's command block opens directly with
+`UAV_MIX_BONE_AF=… ./Slurm_Codes/submit.sh …`. It has **no step 0**. `submit.sh` performs no git
+sync, commit `ca0eb314` was authored 22:04:12 UTC, and the block was executed from 22:05:16 — the
+race was all but guaranteed by the ordering as written. A command block that depends on a commit
+must say so in the block itself; a `⚠` further down the page does not travel with the copy-paste.
+
+**Rule adopted (applied in the U7 block, `CHANGELOG_20260904_honest_geometry_and_slack_gate.md`):**
+every cluster command block in this repo begins with the sync-and-verify pair, inside the fenced
+block, above the first `submit.sh`:
+
+```bash
+cd /path/to/FM-PCC && git pull && git log --oneline -1   # must show the commit this block needs
+squeue -u "$USER"                                        # must be EMPTY, or drain/scancel first
+```
+
+The second line is the half §7.3 identifies as the real hazard: pulling is safe only when nothing
+is queued.
+
+**Follow-up:** [`RUNSTATUS_20260905_af_unet_resubmit_25434_25439_and_cleanup.md`](RUNSTATUS_20260905_af_unet_resubmit_25434_25439_and_cleanup.md)

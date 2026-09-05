@@ -1,267 +1,260 @@
-# PLAN 2026-09-04 — Making α-Flow win on Visual Aligning: the attack plan
+# PLAN 2026-09-04 — Make α-Flow beat MeanFlow on the Visual-Aligning U-Net
 
-*Goal: reproduce the `avoiding-d3il` AF-UNet result
-([`Report_20260903_AF_UNet`](../../Data_Analysis/DA_Result_Curated_MD/Report_20260903_AF_UNet/README.md))
-on `aligning-d3il-visual`. Written against
-[`DA_20260904_Gen14_U12_alpha_floor_and_latest_checkpoint.md`](DA_20260904_Gen14_U12_alpha_floor_and_latest_checkpoint.md),
-which is the run this plan is reacting to.*
-
-**The headline finding of this plan: we never tested the cell where α-Flow wins.**
-Avoiding's win is specifically at **K = 1**. Every Gen14 α-Flow evaluation ever run is at **K = 2**.
-K is an **inference-only** knob, so testing it costs **zero training** — and there is no `mf` K = 1
-row on this scene either, so the matched comparison does not currently exist in any form.
+*Rebuilt 2026-09-04 on the Gen3v7 template
+([`DA_20260901_AF_UNet_alpha_clamp_T1_negative.md`](../Gen3v7_AlphaFlow/DA/DA_20260901_AF_UNet_alpha_clamp_T1_negative.md) §0)
+and the Gen14 funnel
+([`Report_20260829_VA_funnel`](../../Data_Analysis/DA_Result_Curated_MD/Report_20260829_VA_funnel/README.md)).
+Supersedes the K-sweep draft of the same name — that plan is withdrawn.*
 
 ---
 
-## 1. What "winning" means here — decided before the runs
+## 🎯 The objective
 
-Fixed now so it cannot be reinterpreted after the numbers land.
+> ## **Make α-Flow beat MeanFlow on the Visual-Aligning U-Net. Nothing else is in scope.**
+>
+> **Success criterion — `diffuser` arm, seed 6, the MF flagship setup (K = 20, T = 0.2), paired
+> on the same contexts:**
+>
+> ### **ratio ≤ 0.267 mean / 0.178 median × start  AND  0-viol ≥ 0.150**
+>
+> Those are **MeanFlow K20 T0.2's own numbers** (§1.2). `fm` and `diffusion` are context, not targets.
 
-| rank | claim | requirement |
-|---|---|---|
-| **W1 — the real win** | α-Flow **Pareto-dominates** MeanFlow | at equal `S&C`, **fewer `n_steps` AND lower `avg_time`**. Same K, same bone, same seed, same contexts, same variant. |
-| **W2 — acceptable** | α-Flow is **non-dominated** vs MeanFlow | better on one axis, worse on another, both reported. The word is "trade-off", never "beats". |
-| **W3 — the ladder** | `af > mf > fm` | must **name the axis**. §3.1 Q3 of the DA shows it currently holds on 0-viol only and inverts on task progress. |
-| **W0 — the blocker** | any of the above is *citable* | at least one arm must reach **`S&C > 0`**. Today every arm — including the pinned `diffusion` K20 aw10 target — is at **`S&C = 0.000`**. **Until W0 clears, W1–W3 cannot be claimed at all.** |
+**Why `diffuser` first, and only `diffuser`.** It is the unprojected rollout — the raw network output
+with no MPC, no DPCC, no HardFlow. It is the only thing that speaks to *"is AF's U-Net better than
+MF's U-Net"*, and it is Stage 1 of the funnel: **an arm that fails Stage 1 is never ranked on Stage 2.**
+The projected comparison (HardFlow-SLSQP at T = 0.2) happens **only if Stage 1 is won.**
 
-W0 is the honest gate and it is not negotiable: with the primary metric at zero for every engine
-*and the baseline*, a "win" on a secondary axis inside failed rollouts has no anchor. Every phase
-below is therefore scored on **W0 first** — does anything move `S&C` off the floor — and only then
-on W1/W2.
+**Hard constraints, carried from Gen3v7 §5:**
 
----
-
-## 2. Avoiding WIN vs Gen14 LOSS — knob by knob
-
-Avoiding checkpoint: `…AlphaFlowODE_aw10_bbunet_tslogit_normal_ai1.0_ae0.2_ag25.0_rf0.5`
-Gen14 checkpoint:    `H8_<AF>_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Eaf_tslogit_normal_afschsigmoid_AFAFend0p2`
-
-| knob | avoiding (WIN) | Gen14 (LOSS) | verdict |
-|---|---|---|---|
-| `af_alpha_init` | 1.0 | 1.0 | ✅ same |
-| **`af_alpha_end`** | **0.2** | **0.2** (cand 9) | ✅ same |
-| `af_alpha_gamma` | 25.0 | 25.0 | ✅ same |
-| `af_ratio_fm` | 0.5 | 0.5 | ✅ same |
-| `t_schedule` | `logit_normal` | `logit_normal` | ✅ same |
-| checkpoint selector | `latest` | `latest` | ✅ same |
-| **K (NFE)** | **1** ← *the winning cell* | **2, and only 2** | 🔴 **NEVER TESTED — lever #1** |
-| **n rollouts** | **20** | **10** | 🟠 half the power — lever #4 |
-| headline variant | `dpcc-t-tightened` | reported on `combined_5` | 🟠 read the right cell |
-| **`discrete_frac`, final** | **0.25 – 0.41** | **0.50173** | ⚠️ **unexplained** — §5 |
-| backbone | 4.0 M state U-Net | 26.4 M visual U-Net + `MultiImageObsEncoder` | ⛔ structural, cannot match |
-| `action_weight` | `aw10` | `aw1` | ⛔ **NOT a lever** — see §4 |
-| baseline `S&C` | **1.00 reachable** | **0.000 for everyone** | ⛔ the W0 blocker |
-
-**The α-Flow objective is already configured identically.** Every knob that defines the method
-matches the winning recipe. What differs is *where we looked* (K, variant, power) and *what the
-scene can support* (W0).
+> 🔒 **The U-Net does not change. The parameter count does not change.**
+> 🔒 **Everything that is not an α-Flow knob must match MeanFlow's flagship exactly.**
+> 🔒 **No K sweep.** K = 20 is the flagship and the only K used.
 
 ---
 
-## 3. The three leverage points, in order
+## 1. The setup that must match
 
-### Lever 1 — K = 1. Free, and it is the whole ballgame.
+### 1.1 MeanFlow's flagship — the thing to beat
 
-Avoiding's report is explicit that the ordering lives at low NFE:
+From [`DA_20260901_Gen14_flagship_K20_T0.2_dpcc_vs_hardflow.md`](DA_20260901_Gen14_flagship_K20_T0.2_dpcc_vs_hardflow.md),
+job **25247**, `38/38` items, `Job completed successfully`:
 
-> `top-left-hard`, K = 1, `dpcc-t-tightened`, all at S&C 1.00 — **α-Flow 57.20 steps < MeanFlow
-> 60.75 < naive FM 65.65**… **`both-hard` puts `A1t` alone at the front. MeanFlow has *no* S&C = 1.00
-> row at K = 1 here** — its cheapest clearing point is `M2t` at K = 2.
-
-That last sentence is the mechanism. The bootstrapped target buys **few-step quality**; by K = 2
-MeanFlow has caught up. **Gen14 has run α-Flow at K = 2 and nowhere else** — i.e. exclusively at the
-budget where avoiding says the advantage has already washed out.
-
-`flow_steps_v3` is eval-time (`[ config->pkl ] INFO flow_steps_v3: train=100 -> eval=2`), passed as
-`$4` of the eval sbatch. **No retraining.** There is also **no `mf` K = 1 row and no `fm` K = 1 row**
-on this scene, so the matched ladder has to be built from scratch — four eval jobs.
-
-### Lever 2 — the mid-curriculum checkpoint. Free.
-
-α at the steps actually on disk (`sigmoid`, γ = 25, `save_freq = 20 000`):
-
-| step | α (`ae0.05`) | α (`ae0.2`) | what it is |
-|---|---|---|---|
-| 20 000 | 1.000 | 1.000 | pure FM |
-| 40 000 | 0.928 | 0.939 | ~FM |
-| 50 000 | 0.525 | 0.600 | the crossover — **no checkpoint** |
-| **60 000** | **0.122** | **0.261** | **genuinely mid-curriculum** |
-| 100 000 | 0.050 | 0.200 | the floor ← what U12 deployed |
-
-γ = 25 compresses the entire FM → MeanFlow transition into steps 40 k–60 k — **20 % of the budget**.
-And the strongest `af` arm on task in the whole DA is the shipped `α_end=0` arm evaluated at
-**`best`**, which is selected on `test_loss ≈ 0.75 + 0.25·α` and therefore *structurally prefers a
-mid-curriculum checkpoint*. **The best "α-Flow" model we own may be a mid-curriculum one, by
-accident** — and U12's contribution was to move away from it. `state_60000.pt` already exists on
-both new trees.
-
-### Lever 3 — γ. One train job.
-
-If lever 2 fires, γ is the principled version of it: `MIX_AF_ALPHA_GAMMA=5` spreads the homotopy
-across most of training instead of 20 % of it. Wired already (`config/aligning-d3il-visual.py:1545`),
-path key `_AFg5`. Pair it with `MIX_SAVE_EVERY=5000` so the curve is sampled 20× instead of 5×.
-
----
-
-## 4. Ruled out — do not spend GPU here
-
-| candidate | why not |
+| | value |
 |---|---|
-| **`action_weight` 1 → 10** | Looks like a 10× difference from avoiding's `aw10`. It is **cosmetic on both sides.** `mix_visual_aligning/models/af_diffusion.py:67-70`: *"FIX-3: action_weight / loss_discount are KEPT (utils + folder naming read them) but are deliberately **NOT applied** to the α-Flow loss… **DO NOT "fix" this back**."* Same in `avoiding-d3il.py:885`. The token differs; the loss does not. |
-| **backbone** | 4.0 M state U-Net vs 26.4 M visual U-Net + vision encoder. Not matchable, and matching it would destroy the task. This is the one genuinely structural difference and it is a *finding*, not a bug to fix. |
-| **more α floors first** | The three we have are **non-monotone** in progress (0.140 / 0.042 / 0.072 for α = 0 / 0.05 / 0.2). At n = 1 seed that shape is as likely noise as signal. Floors come *after* K and seeds, not before. |
-| **`af_adp_eps` 1e-3 → 0.01** | Real and uncontrolled (`config/aligning-d3il-visual.py:1675-1678` calls the 10× gap deliberate), but it is **also 1e-3 on avoiding**, where α-Flow wins. It cannot explain the difference. Park it; it only matters for a *clean one-knob* af-vs-mf claim later, and it needs a code edit. |
+| engine | `mf` — MeanFlow (Gen3v6) in Gen14's `VisualUNetTwoTime` |
+| bone | `unet`, FiLM **v1**, `freq_dim = 32`, **26.4 M** params |
+| **K** | **20** |
+| **T** | **0.2** |
+| projector | DPCC **and** HardFlow-SLSQP (arm C) |
+| seed | 6 |
+| horizon / vision / bs | H8 / `VTrue` / 64 |
+| `t_schedule` | `logit_normal`, `p_mean −0.4`, `p_std 1.0` |
+| U9 vision knobs | **all default** — `vis_pretrained=False`, `vis_lr_scale=1.0`, `vis_cond=token` |
+
+**α-Flow must be run at exactly this**, differing only in the α knobs. It already does: the
+`AFAFend0p*` trees are `unet` + `filmv1` + `logit_normal` + all-U9-default, same seed, same bone,
+same 26.4 M. **The only thing never matched is K — af has only ever been evaluated at K = 2 and
+K = 100.**
+
+### 1.2 The Stage-1 board today
+
+`diffuser` arm, `split=train`, **ratio = final/init × start** (the funnel's lead metric — lower is
+better; the d3il baseline scores **1.000×**, a no-op).
+
+| arm | K | n | mean × | **median ×** | 0-viol | sat | ms |
+|---|---|---|---|---|---|---|---|
+| **`mf` K20 T0.2 — 🎯 THE TARGET** | 20 | 20 | **0.267** | **0.178** | 0.150 | 0.884 | 181.5 |
+| `mf` K100 T0.1 | 100 | 10 | 0.321 | 0.202 | 0.100 | 0.907 | 924.6 |
+| `mf` K10 T0.4 | 10 | 20 | 0.405 | 0.271 | 0.100 | 0.864 | 94.4 |
+| `mf` K100 T0.5 | 100 | 30 | 0.491 | 0.277 | 0.200 | 0.804 | 892.9 |
+| `af` α_end=0 @best *(α dead)* | 2 | 60 | 0.584 | 0.370 | 0.200 | 0.795 | 25.0 |
+| `diffusion` K100 | 100 | 30 | 0.476 | 0.409 | 0.267 | 0.717 | 1526.6 |
+| **`mf` K2** | 2 | 60 | 0.786 | 0.517 | 0.550¹ | 0.803 | 25.8 |
+| `af` α=0.05 const @best | 2 | 20 | 0.711 | 0.595 | 0.050 | 0.707 | 26.4 |
+| `af` α_end=0 @best | 100 | 30 | 0.809 | 0.689 | 0.200 | 0.718 | 902.0 |
+| **`af` α_end=0.05 @latest** | 2 | 20 | **0.707** | 0.919 | **0.750** | 0.905 | 26.0 |
+| **`af` α_end=0.2 @latest** | 2 | 20 | 0.772 | 0.983 | 0.100 | 0.627 | 26.6 |
+| *d3il baseline (funnel)* | — | — | — | *1.000* | — | — | — |
+
+¹ 0.550 on the 20 contexts paired against the af arms; 0.350 over all 60 of its own rows.
 
 ---
 
-## 5. One thing we do not understand
+## 2. Gate 0 — is there buffer space at all? **Zero compute. Already answered.**
 
-`train/discrete_frac` at the final epochs: **avoiding 0.25 – 0.41**, **Gen14 0.50173**.
+The medians look like a massacre: the two α-ON arms sit at **0.919× and 0.983×**, i.e. d3il-baseline
+no-op territory, against the flagship's 0.178×. **But the medians are the wrong read**, and the
+paired test says so.
 
-With `af_ratio_fm = 0.5` forcing half the batch to `r == t` (the FM anchors), 0.5 is the *ceiling* —
-Gen14 sits exactly at it, meaning **every** non-anchor sample takes the bootstrapped branch. On
-avoiding a substantial fraction is instead routed to the exact-JVP branch by the `clamp_value` snap
-(`flow_matcher_v3_alphaflow/models/af_diffusion.py:437-441`). Same α, same `rf`, different routing.
+### 2.1 The paired test, `diffuser` only, matched K = 2, same contexts
 
-Not a lever yet — but if levers 1–3 all miss, this is the next thing to instrument, because it means
-the two runs are training on different *mixtures* of target despite identical α knobs.
+Exact two-sided sign test on the ratio; exact McNemar on 0-viol. n = 20 pairs (10 contexts × 2 geos).
+
+| arm vs `mf` K2 | mean × A/mf | median × A/mf | A<mf / A>mf | **p (dist)** | 0-viol A/mf | **p (0-viol)** |
+|---|---|---|---|---|---|---|
+| **`af` α_end=0.05 @latest** | **0.707** / 0.761 | 0.919 / 0.700 | 7 / 12 | **0.359 — tie** | **0.750 / 0.550** | 0.289 — tie |
+| `af` α_end=0.2 @latest | 0.772 / 0.761 | 0.983 / 0.700 | 9 / 9 | **1.000 — tie** | 0.100 / 0.550 | **0.004 — WORSE** |
+| `af` α_end=0 @best *(α dead)* | 0.584 / 0.786 | 0.370 / 0.517 | 31 / 25 | 0.504 — tie | 0.200 / 0.350 | **0.035 — worse** |
+| `af` α=0.05 const @best | 0.711 / 0.761 | 0.595 / 0.700 | 8 / 11 | 0.648 — tie | 0.050 / 0.550 | **0.002 — WORSE** |
+
+### 2.2 Verdict: **not zero. Thin, and it is `α_end=0.05` — not 0.2.**
+
+- **On distance, no α-Flow arm is significantly different from MeanFlow at matched K.** Every row is
+  a tie. The median gap is a **bimodal field**, not a uniform failure: for `α_end=0.05`,
+  mean 0.707 < median 0.919 means a minority of rollouts engage the box *well* while most do not
+  move it. MeanFlow is the reverse (mean 0.761 > median 0.700 — it engages usually, fails badly
+  sometimes). Two different failure shapes at the same average.
+- **On 0-viol, exactly one af arm is not significantly worse than `mf` — and it is numerically
+  ahead: `α_end=0.05` at 0.750 vs 0.550.** Same direction as the 320-rollout aggregate
+  (`p = 1.6e-23` in the DA), just under-powered here at n = 20.
+- **`α_end=0.2` is dead on this metric.** Tied on distance, `p = 0.004` worse on 0-viol. The
+  avoiding winner is *not* the Gen14 candidate. **This overturns the α=0.2 recommendation in the
+  previous DA, which was made on progress aggregated across projected variants, not on the raw field.**
+
+**So the live hypothesis is exactly one arm, at one untried setting:**
+
+> **`α_end=0.05 @latest` at the flagship K = 20 Pareto-dominates `mf` K20 T0.2 on the raw field —
+> equal or better distance, better 0-viol.**
+
+### 2.3 The counter-signal, stated up front
+
+**`af`'s raw field gets *worse* with more NFE; `mf`'s gets better.**
+
+| | K2 | K100 | direction |
+|---|---|---|---|
+| `af` α_end=0 @best | 0.370× | 0.689× | **1.9× worse** |
+| `mf` | 0.517× | 0.277× | 1.9× better |
+
+That is the single strongest argument that Gate 1 will fail. It is measured on the α-dead arm at
+`best`, so it is not a clean read on `α_end=0.05 @latest` — but it points the wrong way and it must
+be in the record before the run, not after. **If `af` follows its own K-trend, K = 20 lands worse
+than K = 2 and the line dies at Gate 1.**
 
 ---
 
-## 6. The plan
+## 3. Gate 1 — the one submit. 2 eval jobs, **zero training.**
 
-### Phase 0 — free. Eight eval jobs, zero training. **Submit this now.**
+Both checkpoints are on disk (`state_100000.pt`, α verified live). K is inference-only. Nothing is
+retrained, nothing existing is overwritten.
 
 ```bash
-# ── P0.1  THE K LADDER — the single highest-value test in this plan ──────────────────
-# af, alpha floored 0.2, endpoint checkpoint, at K=1 and K=5.
-# K=2 already exists (DA candidate 9) — do NOT resubmit it.
-# Keep FMPCC_RUN_MSG identical so the ladder is ONE family and K differentiates the folder.
-for K in 1 5; do
-  MIX_AF_ALPHA_END=0.2 MIX_EPOCH=latest FMPCC_RUN_MSG=afon02_s6 \
-    ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/mix_visual_aligning/eval_mix_visual_aligning.sh \
-    af 6 all $K
-done
-
-# The comparators at K=1 DO NOT EXIST on this scene. Without these the ladder is unmatched.
-./Slurm_Codes/submit.sh Slurm_Codes/sbatch/mix_visual_aligning/eval_mix_visual_aligning.sh mf 6 all 1
-./Slurm_Codes/submit.sh Slurm_Codes/sbatch/mix_visual_aligning/eval_mix_visual_aligning.sh fm 6 all 1
-
-# ── P0.2  MID-CURRICULUM SWEEP — tests whether we deployed the wrong point ───────────
-# alpha at these steps on the ae0.2 tree: 0.939 / 0.261 / 0.200
-for EP in 40000 60000 80000; do
-  MIX_AF_ALPHA_END=0.2 MIX_EPOCH=$EP FMPCC_RUN_MSG=afon02_ep${EP}_s6 \
-    ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/mix_visual_aligning/eval_mix_visual_aligning.sh \
-    af 6 all 1
-done
-
-# ── P0.3  THE LOW FLOOR AT K=1 — cheap, completes the floor × K grid ─────────────────
-MIX_AF_ALPHA_END=0.05 MIX_EPOCH=latest FMPCC_RUN_MSG=afon005_s6 \
+# ── THE SHOT: alpha-Flow at MeanFlow's flagship setup, K=20, T=0.2 ──────────────────
+# arm A — alpha_end 0.05: the ONLY arm that survived Gate 0
+MIX_AF_ALPHA_END=0.05 MIX_EPOCH=latest MIX_PROJ_T=0.2 FMPCC_RUN_MSG=afon005_s6 \
   ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/mix_visual_aligning/eval_mix_visual_aligning.sh \
-  af 6 all 1
+  af 6 all 20
+
+# arm B — alpha_end 0.2: the avoiding winner. Dead on Gate 0, but it is the published
+# recipe and one job settles whether K=20 revives it.
+MIX_AF_ALPHA_END=0.2 MIX_EPOCH=latest MIX_PROJ_T=0.2 FMPCC_RUN_MSG=afon02_s6 \
+  ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/mix_visual_aligning/eval_mix_visual_aligning.sh \
+  af 6 all 20
 ```
 
-Every job writes its own `H8_K<k>_…_EP<sel>_msg…` directory. **Nothing existing is touched.**
+**`diffuser` is variant 1 of 19** (`config/visual_aligning_eval.yaml:projection_variants[0]`, and
+confirmed first in job 25373's log). **Stage 1 lands in the first few minutes of each job even if it
+later hits the 24 h wall** — which is the real risk at K = 20 × T = 0.2 (job 25248, the `fm` twin,
+died inside item 17). Read Stage 1 the moment `variant=diffuser_train_set` prints its summary; do
+not wait for the job.
 
-### Phase 1 — one train job each. Submit only if Phase 0 moves `S&C` or reverses the af/mf order.
+### Read exactly this, and nothing else
 
-```bash
-# P1.1  gamma=5 — make the curriculum an actual curriculum, and sample it 20x not 5x
-MIX_AF_ALPHA_END=0.2 MIX_AF_ALPHA_GAMMA=5 MIX_SAVE_EVERY=5000 MIX_EPOCH=latest \
-  FMPCC_RUN_MSG=afon02_g5_s6 \
-  ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/mix_visual_aligning/mix_visual_aligning_pipeline.sh \
-  af 6 1
-#   -> checkpoint tree gains '_AFend0p2-g5';  eval at K=1
-
-# P1.2  a higher floor — avoiding's own next step was alpha->0.4
-MIX_AF_ALPHA_END=0.4 MIX_EPOCH=latest FMPCC_RUN_MSG=afon04_s6 \
-  ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/mix_visual_aligning/mix_visual_aligning_pipeline.sh \
-  af 6 1
-#   -> checkpoint tree '_AFend0p4';  eval at K=1
 ```
-
-✅ Verified: the pipeline signature is `<engine> <seeds> <flow_steps>`
-(`mix_visual_aligning_pipeline.sh:79-86`) and it forwards `"$FLOW_STEPS"` to the eval stage at
-line 300, so the trailing `1` in both commands above **is** K = 1. Gates → train → eval are
-chained with `afterok`, so a failed stage cancels only its own downstream.
-
-### Phase 2 — power. Only for whatever configuration survives Phases 0–1.
-
-```bash
-# seeds 7 and 8 on the winner (substitute the winning knobs)
-MIX_AF_ALPHA_END=0.2 MIX_EPOCH=latest FMPCC_RUN_MSG=afon02_s7 \
-  ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/mix_visual_aligning/mix_visual_aligning_pipeline.sh af 7 1
-MIX_AF_ALPHA_END=0.2 MIX_EPOCH=latest FMPCC_RUN_MSG=afon02_s8 \
-  ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/mix_visual_aligning/mix_visual_aligning_pipeline.sh af 8 1
+--- aligning-d3il-visual [seen training set] diffuser_train_set seed=6 ---
 ```
+then from `results_train_set/combined_5/diffuser_train_set/`:
+`context_final_xy_dist / context_init_xy_dist` (mean **and** median) and `collision_free_completed`,
+paired per context against `mf` K20 T0.2.
 
-**Optional, and think before doing it:** raising `n_contexts` 10 → 20 in
-`config/visual_aligning_eval.yaml` doubles the power and matches avoiding's `n_trials = 20`. But that
-yaml is **shared with the Gen6V4 and Gen7 evals**, so it changes the benchmark for arms that are
-already banked. If you do it, re-run the `mf` comparator at the same count in the same batch.
+### The decision, fixed now
+
+| outcome on `diffuser`, paired vs `mf` K20 T0.2 | verdict | next |
+|---|---|---|
+| ratio ≤ 0.267 mean **and** 0-viol ≥ 0.150 | 🏆 **STAGE 1 WON** | go to Stage 2 — the projected comparison at T = 0.2, DPCC **and** HardFlow-SLSQP, same job's later items |
+| ratio tied (`p > 0.05`) **and** 0-viol > 0.150 | 🟡 **BUFFER** | one power buy: seeds 7–8 on `α_end=0.05` only (§4) |
+| ratio significantly worse, **or** > 0.517× (`mf`'s *weakest* K) | ⛔ **KILL** | stop. Write the negative (§5). No further AF spend on this scene |
 
 ---
 
-## 7. Reproducibility hazard to fix first
+## 4. Gate 2 — only if Gate 1 says BUFFER. One thing, then stop.
 
-**The repo and the cluster disagree on `n_contexts`.** `config/visual_aligning_eval.yaml:44` says
-`n_contexts: 3` at every commit in the range these runs used (`ba05cb7c`, `43d684cb`), yet jobs
-25373 / 25377 evaluated **10 rollouts per variant** (`Zero-violation rollouts: 9 / 10`). The cluster
-copy is locally edited and **not** tracked. Consequences:
+Per Gen3v7 §5 the sanctioned search space with the U-Net frozen is **the α schedule and
+`af_clamp_utgt`** — and it is nearly exhausted:
 
-- a fresh clone reproduces this DA at **3 contexts**, not 10;
-- Phase 0 will silently inherit whatever the cluster copy currently holds.
+| knob | status |
+|---|---|
+| `af_alpha_end` | ✅ **done** — 0.05 and 0.2 both trained and evaluated. This is the knob that won on avoiding. |
+| `af_alpha_clamp` | ⚠️ **already tested and negative** on avoiding (`DA_20260901_..._T1_negative`). Wired here as `MIX_AF_ALPHA_CLAMP`, but the prior is bad. |
+| `af_alpha_gamma` | 🟢 **untried.** `MIX_AF_ALPHA_GAMMA=5` — γ=25 compresses the whole FM→MeanFlow homotopy into steps 40 k–60 k, 20 % of the budget. Wired, no code, path key `_AFend0p05-g5`. |
+| `af_ratio_fm` | ⛔ Gen3v7 §9.4: *"theory says it makes things worse until the probe is fixed."* Do not spend. |
+| `af_clamp_utgt` | ⛔ no env knob — needs a config edit. Not without a go-ahead. |
+| U-Net rewrite (§10.4 / §10.5) | ⛔ **withdrawn** by the frozen-parameter constraint. |
 
-**Before submitting Phase 0**, check it and record the value in the batch notes:
+**If BUFFER, buy power before you buy knobs.** The Gate-0 signal is a real effect at n = 20 that just
+misses significance; two more seeds is a better use of 8 GPU-h than another α value.
 
 ```bash
-grep -n 'n_contexts' /data/home/llim/FMPCC/FM-PCC/config/visual_aligning_eval.yaml
+# power the ONE surviving arm — seeds 7 and 8, flagship setup
+for S in 7 8; do
+  MIX_AF_ALPHA_END=0.05 MIX_EPOCH=latest MIX_PROJ_T=0.2 FMPCC_RUN_MSG=afon005_s${S} \
+    ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/mix_visual_aligning/mix_visual_aligning_pipeline.sh \
+    af $S 20
+done
+# and the matching mf seeds, or the comparison is unpaired
+for S in 7 8; do
+  MIX_PROJ_T=0.2 ./Slurm_Codes/submit.sh \
+    Slurm_Codes/sbatch/mix_visual_aligning/mix_visual_aligning_pipeline.sh mf $S 20
+done
 ```
 
-Every Phase-0 cell must run at the **same** count as candidates 8/9 or the K ladder is not paired.
+*(pipeline signature verified: `<engine> <seeds> <flow_steps>`, `mix_visual_aligning_pipeline.sh:79-86`,
+forwarded to the eval at line 300 — so the trailing `20` is K = 20.)*
 
 ---
 
-## 8. How to read the results, and when to stop
+## 5. The kill — what we write if Gate 1 fails
 
-**Read in this order.** For each new cell, from `constraint_metrics.json` + the aggregated CSVs:
+No hedging, no third attempt. The negative is publishable and it is already well-supported:
 
-1. **`S&C` (`n_success_and_constraints`)** — the W0 gate. Anything > 0 is the first real news this
-   scene has produced.
-2. **progress** = `context_init_xy_dist − context_final_xy_dist`. The DA's §3.0 table is the
-   reference; a new cell joins that table or it means nothing.
-3. **0-viol** (`collision_free_completed`) and `constraint_exec_sat_rate`.
-4. **`n_steps` and `avg_time_ms`** — only meaningful *at equal S&C*, per W1.
+> **α-Flow's few-step advantage is real on a 4.0 M state-space U-Net (`avoiding-d3il`: Pareto-dominant
+> over MeanFlow at K = 1, 33× cheaper than DPCC K20) and does not survive transfer to a 26.4 M visual
+> U-Net with a randomly-initialised encoder. At matched backbone, seed, contexts and K, the raw
+> generative field of α-Flow is statistically indistinguishable from MeanFlow's on distance, and its
+> constraint behaviour is either equal (α→0.05) or significantly worse (α→0.2). The α floor that wins
+> on avoiding forfeits the full-weight JVP repair phase that Gen3v7 §7.4 predicts the U-Net needs
+> most — and on the visual bone that cost is not repaid.**
 
-**Report the sweep as a sweep.** Phase 0 produces 8 cells; Phase 1 adds 2 more. If one of them beats
-`mf`, the artefact is **all** cells plus the α and K curves — not the single flattering cell. Picking
-a winner post hoc out of a family this size is precisely how the non-monotone floor result in §4
-would turn a null into a false positive.
+Supporting evidence already banked: the α-mechanism gates all green
+([`DA_20260904`](DA_20260904_Gen14_U12_alpha_floor_and_latest_checkpoint.md) Part 1), the paired
+Gate-0 ties above, the inverted K-trend (§2.3), and `S&C = 0.000` for every arm on this scene
+including the pinned `diffusion` K20 aw10 target.
 
-**Kill criteria — stop and write the negative result if:**
-
-- Phase 0 leaves `S&C = 0.000` in every cell **and** `mf` still leads on progress at K = 1.
-  That is a matched, well-powered-in-cells negative and it is publishable as scene-dependence:
-  *α-Flow's few-step advantage is real on a 4.0 M state-space U-Net and does not survive a 26.4 M
-  visual encoder.*
-- Or Phase 1 changes nothing after γ and the floor have both moved.
-
-At that point the AF budget goes to **`s_curve` (Gen15)**, which has a live `diffusion` target arm and
-can actually rank a result — carrying **`α_end=0.2 @latest`, and now also `K=1`**, per
+**Where the AF budget goes instead:** `s_curve` (Gen15), which has a live `diffusion` target arm and
+can rank a result — per
 [`RUNSTATUS_20260904`](../Gen15/U6/RUNSTATUS_20260904_uav_pipelines_submitted_pre_U6.md).
 
 ---
 
-## 9. Summary — one line per phase
+## 6. Free pre-checks — do these while Gate 1 queues
 
-| phase | cost | tests | kills the plan if |
-|---|---|---|---|
-| **P0.1 K ladder** | 4 evals, **0 GPU-train** | Does α-Flow's few-step edge exist here at all? | af ≤ mf at K=1 on progress |
-| **P0.2 mid-curriculum** | 3 evals, **0 GPU-train** | Did U12 deploy the wrong checkpoint? | step 60 000 ≤ step 100 000 |
-| **P0.3 low floor @ K=1** | 1 eval, **0 GPU-train** | Completes the floor × K grid | — |
-| **P1.1 γ = 5** | 1 train + 1 eval | Is γ=25 too sharp to be a curriculum? | no change vs γ=25 |
-| **P1.2 α_end = 0.4** | 1 train + 1 eval | Does a higher floor help, as on avoiding? | worse than 0.2 |
-| **P2 seeds 7, 8** | 2 trains + 2 evals | Is the winner real or n=1 noise? | margin inside seed spread |
+Both cost zero compute and either can pre-empt the result.
 
-**Start with Phase 0. It is eight eval jobs and no training, and P0.1 alone tests the one hypothesis
-that best explains why avoiding won and aligning did not.**
+1. **`h_mse_b3` overlay (Gen3v7 §9.2).** At low NFE the sampler evaluates `u` at large `h`, so
+   `h_mse_b3` (h ≥ 0.6) is the training-time proxy for few-step quality — **already logged**. We have
+   the α-Flow endpoints: `val/h_mse_b3` = **0.0033** (α_end=0.05, job 25376) and **0.0747**
+   (α_end=0.2, job 25372). **Pull `mf`'s from W&B project `FM-PCC-visual-aligning-gen14` and compare.**
+   If `mf` is an order of magnitude below 0.0033, Gate 1 is already lost on the training side.
+2. **The 28.8 k coincidence check (Gen3v7 §10.1).** Steps 0 → ~28.8 k hold α = 1.0, where α-Flow is
+   *bitwise* plain flow matching. Overlay `raw_mse_u` / `per_dim_rms_u` for af vs mf on the step axis.
+   **If af is already behind at 28.8 k, the problem is upstream of α-Flow entirely** — data,
+   normalisation, LR, EMA — and none of this plan applies.
+
+---
+
+## 7. One-line summary
+
+**Gate 0 is not a zero.** Every α-Flow arm ties MeanFlow on raw distance at matched K, and
+**`α_end=0.05` leads on zero-violation (0.750 vs 0.550) without being significantly worse anywhere.**
+The one thing never tried is that arm at MeanFlow's own flagship budget, K = 20 — **two eval jobs, no
+training.** The K-trend argues it will fail. Run it, read `diffuser` in the first five minutes, and
+take the answer either way.
