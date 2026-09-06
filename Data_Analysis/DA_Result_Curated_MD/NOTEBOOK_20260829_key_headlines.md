@@ -1,7 +1,12 @@
 # FM-PCC — Key Headlines Notebook
 
-**Last updated:** 2026-08-29 · **Author:** auto-generated from curated reports  
+**Last updated:** 2026-09-05 · **Author:** auto-generated from curated reports  
 **Status:** 🟡 Two tasks established, one under construction, several open experiments
+
+> ⚠️ **Headlines 1–5 are the 2026-08-29 snapshot. Read the
+> [Addendum 2026-09-05](#addendum-2026-09-05--evidence-against-the-thesis-target) before quoting
+> anything about HardFlow or the `-r`/`-c`/`-t` selection rules** — Headline 6 supersedes this
+> directory's earlier "HardFlow never beat DPCC" answer, and Headline 7 refines Headline 5.
 
 ---
 
@@ -21,6 +26,11 @@
 | 2026-08-29 | **VA funnel report** — 4-engine funnel, mf/af win Stage 1–3 |
 | 2026-08-27 | MPC candidate-fan study: B=4 → 1, fan scales projector only, sign flips by model |
 | 2026-08-29 | α-Flow vs MeanFlow analysis — confirmed same engine, different curriculum |
+| 2026-08-30 | **IPOPT → SLSQP adopted**; at matched threshold HF-SLSQP `-t` Pareto-dominates DPCC on avoiding K20 |
+| 2026-09-01 | **VA flagship** K20/T0.2 — first non-degenerate HF cell on visual aligning; HF ≥ DPCC on constraints 3/3 |
+| 2026-09-03 | **Fix_16 A/B on `pillars`** — divergence abort 100 % → 0 %; scene still unrankable (S&C 0/2876) |
+| 2026-09-04 | Honest-geometry audit — UAV scene slack measured below policy tracking error |
+| 2026-09-05 | **Thesis target written**; evidence board + Headlines 6–8 (this addendum) |
 
 ---
 
@@ -265,6 +275,10 @@ The four SLSQP solves per replan are independent (same constraints, different `x
 | **UAV corridor** | MF > FM at K ≤ 2 | 🟡 Directional (1 seed, n=10) | Multi-seed, diffusion baseline |
 | **UAV pillars** | MF > FM > DPCC? | 🔴 Not yet tested | Expand pillars to full sweep |
 | **Avoiding** (state) | MPC fan B=4 not needed; B=1 statistically good | ⚠️ Directional (30 ep. fan 4, 6 ep. fan 1) | K1 fan 1 @ 20 trials; parallelise projector |
+| **Avoiding** (state) | HF-SLSQP `-t` ≻ DPCC at K20, matched threshold | 🟢 Pareto, but n=6 seed 6 (H6a) | seeds 7–10 |
+| **Visual Aligning** | HF-SLSQP ≥ DPCC on constraints 3/3 | ⚠️ *p* floor 0.125 at n=30 (H6b) | seeds 7–10, arm C |
+| **All tasks** | `-r`/`-c`/`-t` do not earn their compute | 🟢 exact at B=1; ⚠️ directional at B=4 (H7) | paired B=4 A/B, seeds 7–10 |
+| **UAV pillars** | Fix_16 confirmed; scene still unrankable | 🟢 A/B clean · 🔴 S&C 0/2876 (H8) | `*_hg` re-run, all 3 engines |
 
 ---
 
@@ -296,7 +310,243 @@ The four SLSQP solves per replan are independent (same constraints, different `x
 the Pillars results is good
 /workspaces/FM-PCC/logs_in_develop/Gen15/DA/DA_20260830_pillars_K_sweep_fm_mf_af.md
 
+> ✅ **Folded in → [Headline 8](#headline-8--uav-pillars-the-engine-was-fixed-the-scene-still-is-not-).**
+> Split in two, because the two halves point opposite ways: **8a** the Fix_16 A/B is a clean
+> methodological win (100 % → 0 % divergence abort, 6.50 m → 0.62 m); **8b** the scene is still
+> unrankable (S&C 0/2876, no `diffusion` arm). The 08-30 K-sweep you linked is the *negative* half;
+> the positive half is the newer [`DA_20260903_fix16_AB_mf_pillars`](../../logs_in_develop/Gen15/DA/DA_20260903_fix16_AB_mf_pillars.md).
+
 
 2.
 HF beat DPCC in the d3il avoiding. 
 /workspaces/FM-PCC/logs_in_develop/aggregated_hf_nlp_backend/DA_20260830_ipopt_vs_slsqp_fmv3ode_K10_K20.md
+
+> ✅ **Confirmed and folded in → [Headline 6a](#headline-6--hardflow-vs-dpcc-the-threshold-was-the-confound-not-the-solver-).**
+> You were right and it **supersedes** this directory's standing answer
+> ([`RESPONSE_20260826_did_HardFlow_ever_beat_DPCC`](RESPONSE_20260826_did_HardFlow_ever_beat_DPCC.md) §Q3 "No" and
+> [`SNAPSHOT_20260823_visual_aligning_env_status`](SNAPSHOT_20260823_visual_aligning_env_status.md) §5 "No").
+> The old "no" was measured with **IPOPT at an unmatched activation threshold** (HF `A=1.0` vs DPCC `0.5`,
+> i.e. HF doing ~2× the projection work). With SLSQP + `A=0.5`, `hardflow_sls-t-tightened` at K=20
+> **Pareto-dominates** DPCC: 61.0 vs 62.2 steps and 0.343 vs 0.475 s/step, both at 100 % S&C and 0.00000
+> violations. ⚠️ n = 6, seed 6 only, and only the `-t` arm — `-r`/`-c` are non-dominated.
+
+---
+
+# Addendum 2026-09-05 — evidence against the thesis target
+
+> **Written against** [`logs_in_develop/Writing/Working_Space/TARGET_20260905_thesis_claim_ladder.md`](../../logs_in_develop/Writing/Working_Space/TARGET_20260905_thesis_claim_ladder.md).
+> That file holds **goals only**; this section holds the evidence for and against them.
+> Nothing below was independently computed — every number is quoted from a curated DA, cited inline.
+
+---
+
+## Headline 6 — HardFlow vs DPCC: the threshold was the confound, not the solver ✅⚠️
+
+> **Sources:** [`Gen14/DA_20260901_…flagship_K20_T0.2_dpcc_vs_hardflow`](../../logs_in_develop/Gen14/DA_20260901_Gen14_flagship_K20_T0.2_dpcc_vs_hardflow.md) §2.1 ·
+> [`aggregated_hf_nlp_backend/DA_20260830_ipopt_vs_slsqp_fmv3ode_K10_K20`](../../logs_in_develop/aggregated_hf_nlp_backend/DA_20260830_ipopt_vs_slsqp_fmv3ode_K10_K20.md) §5.4
+
+### The correction
+
+The standing answer in this directory — [`RESPONSE_20260826_did_HardFlow_ever_beat_DPCC`](RESPONSE_20260826_did_HardFlow_ever_beat_DPCC.md) §Q3 ("**No.** DPCC wins every axis at every K") and [`SNAPSHOT_20260823_visual_aligning_env_status`](SNAPSHOT_20260823_visual_aligning_env_status.md) §5 ("**No**") — **is superseded on both tasks.** Those runs carried two confounds that have since been removed:
+
+| confound | old setting | fixed in | effect |
+|---|---|---|---|
+| **NLP backend** | IPOPT (`hardflow_new-*`) | job 25222 → SLSQP | HF/DPCC cost **4.07–4.75× → 1.05–1.21×** |
+| **Activation threshold** | HF `A=1.0` vs DPCC `thr=0.5` — HF did ~2× the projection work | job 25237 → `A=0.5` | comparison becomes like-for-like |
+| **Projection threshold (VA)** | only ever `K=2` at `thr=0.5` → `n_active=1`, **`n_genuine=0`** | job 25247 → `K=20, T=0.2` (`n_genuine=3`) | the old VA rows were **degenerate — not HardFlow at all**, but sample-then-project; 25247 is the first genuine HF cell on this task |
+
+Gen14 U7 had already flagged the third one: *"the comparison the benchmark hierarchy actually asks for (a lower projection threshold) has never been run."* Running it flipped the direction. **Present this as a threshold being located, not a result being reversed.**
+
+### 6a — Avoiding (state): HardFlow-SLSQP Pareto-dominates at K=20 ✅
+
+Job 25237, `A=0.5` matched, K20, seed 6, n_trials 2, 3 geometries. `hf_n_genuine = 9` → ✅ genuine.
+
+| arm | S&C | total_viol | steps | s/step |
+|---|---:|---:|---:|---:|
+| DPCC `dpcc-c-tightened` | 100 % | 0.00000 | 62.2 | 0.475 |
+| **HF-SLSQP `-t-tightened`** | **100 %** | **0.00000** | **61.0** | **0.343 (0.72×)** |
+| HF-SLSQP `-r-tightened` | 100 % | 0.00000 | 68.2 | 0.338 |
+| HF-SLSQP `-c-tightened` | 100 % | 0.00000 | 103.0 | 0.334 |
+
+**Fewer steps *and* 0.72× wall-clock at equal S&C and equal violations — strict Pareto dominance, measured not extrapolated.** At K=10 every tightened arm is 0.82–0.84× DPCC's time but uses more steps: trade-off, not a win.
+
+⚠️ n = 6 per cell (seed 6 only) · ⚠️ SLSQP `-t` logged **15 non-convergences** at `A=0.5` (both backends degrade at the lower threshold) · ⚠️ this is the **`-t` arm only**; `-r` and `-c` are non-dominated.
+
+### 6b — Visual aligning: direction right, power missing ⚠️
+
+Job 25247, `mf`, K=20, T=0.2, `combined_5-tightened`, fan 4 **both arms**, `n_genuine = 3` → ✅ `HF_OK`. Both arms fire at the same four ODE steps, same solver dof, same feasible set — **they differ only in *when* the constraint is applied.**
+
+| rule | arm | dist (m) | 0-viol | viol | ms/step |
+|---|---|---:|---:|---:|---:|
+| `-r` | DPCC | 0.2001 | 0.900 | 2.70 | 265.9 |
+| `-r` | **HF-SLSQP** | 0.2108 | **1.000** | **0.00** | 275.3 |
+| `-c` | DPCC | 0.3059 | 0.900 | 4.30 | 325.3 |
+| `-c` | **HF-SLSQP** | 0.2863 | **1.000** | **0.00** | **282.3** |
+| `-t` | DPCC | 0.2398 | 0.800 | 1.50 | 323.2 |
+| `-t` | **HF-SLSQP** | 0.2555 | **0.900** | **0.60** | **301.5** |
+
+HF ≥ DPCC on constraints **3/3**, strictly better **2/3**, cheaper **2/3**; distance a wash.
+
+🔴 **Nothing is significant, and it structurally cannot be at this n.** Pooled n = 30 paired rollouts: 0-viol 0.967 vs 0.867 (McNemar 3/0, *p* = 0.250); violations 0.200 vs 2.833 (sign 4/0/26, *p* = 0.125); 286.4 vs 304.8 ms (*p* = 0.248). **26 of 30 pairs are tied at zero violations, so *p* = 0.125 is the floor a 4/0 split can reach** — a perfect result at this n could not clear 0.05. **Power problem, not a null result.**
+
+> The honest sentence until more seeds land: *"matched on distance, directionally ahead on constraints and cost, n too small."*
+
+#### 🔴 Matched-pair dominance ≠ best-vs-best dominance
+
+Read rule-by-rule, **exactly one pair is a clean Pareto win: `-c`**, where HF is better on all four axes (0.2863 vs 0.3059 m, 1.000 vs 0.900, 0.00 vs 4.30, 282.3 vs 325.3 ms). `-r` and `-t` are trade-offs — HF ahead on constraints, behind on distance.
+
+**But `-c` is DPCC's worst arm.** Under this directory's own reporting rule (*model-vs-model uses each side's own best projector, always named*), the comparison is HF `-c` vs **DPCC `-r`** (0.2001 m, 0.900, 265.9 ms) — where HF is better on constraints and **worse on distance and cost**. So:
+
+> **Non-dominated, not dominant.** Do not quote the `-c` pair as "HardFlow Pareto-dominates on visual aligning" without naming that it is the rule-matched comparison against DPCC's weakest selection rule.
+
+**The mechanism, and it is consistent across two independent batches.** `-c` picks the candidate needing the *least* projection correction — the worst possible rule for safety — and HF's in-loop enforcement repairs exactly that deficit. The 08-23 DA found the same asymmetry: its single result surviving multiple-comparison correction was also `-c` on tightened `mf` (−0.067 m, dz = −0.69, *p* = 1e-4). **HardFlow's advantage is largest where the DPCC selection rule is weakest.**
+
+⚠️ **Tension with Goal C (Headline 7): deleting `-c` also deletes HardFlow's best showing.** Decide that deliberately. The defensible reading is that both point the same way — `-c` is a bad rule, and needing an in-loop NLP to rescue it is an argument against the rule, not for the NLP.
+
+**One unambiguous HF win exists:** latency on `mf` at K=10 — 206.3 vs 491.8 ms, 26/1, ***p* < 0.001**. It is a cost claim, not a safety one.
+
+**Blocking item: seeds 7–10 for arm C on `mf` at K=10 and K=20.** Already the standing top priority in the Gen14 DA; it is the single run between this and a defensible RQ3 answer.
+
+---
+
+## Headline 7 — The `-r`/`-c`/`-t` selection rules do not earn their compute ⚠️
+
+> **Sources:** [`DA_20260827_mpc_candidate_fan_avoiding`](DA_20260827_mpc_candidate_fan_avoiding.md) F3 ·
+> [`HF_Batch_Parity/DA_20260827_mpc1_full_seeds_state_avoiding`](../../logs_in_develop/HF_Batch_Parity/DA_20260827_mpc1_full_seeds_state_avoiding.md) §10 ·
+> plus the two projector runs in Headline 6.
+> **Target:** Goal C — remove the candidate-selection machinery from the final deliverable.
+
+### 7.1 At fan 1 the three rules are the same computation — exact, not statistical
+
+F3: at `B=1` the `-r`/`-c`/`-t` arms are **bit-identical** — same S&C *and* same steps, **all 15 blocks, every generation**. There is only one candidate; every selection rule returns slot 0.
+
+> **Running all three at `B=1` is exactly 3× wasted projection compute, with a provable zero information gain.** This half of Goal C needs no further experiment — it is closed.
+
+### 7.2 🔴 A consequence nobody has drawn: the AlphaFlow "`-c` win" is a fan effect, not a rule effect
+
+F2 reports AlphaFlow `-c-tightened` going **6/30 → 30/30** (*p* = 0.0005, survives Bonferroni) with 113 fewer steps when the fan drops 4 → 1. But by 7.1, **at `B=1` the label `-c` denotes no selection at all.** The improvement therefore cannot be attributed to the min-cost rule; it is *"AlphaFlow does better when the fan stops discarding its trajectories."* Re-read as: **`-c` at `B=4` was destroying 24/30 AlphaFlow episodes that survive without it.** That is evidence *for* deleting `-c`, not for keeping it.
+
+### 7.3 At fan 4 the rules diverge widely — and `-c` is the consistent loser
+
+Same run, same engine, same everything except the rule:
+
+| task / arm | `-r` | `-c` | `-t` |
+|---|---:|---:|---:|
+| avoiding, HF-SLSQP K20 tightened — **steps** | 68.2 | **103.0** 🔴 | **61.0** ✅ |
+| VA flagship, DPCC K20 T0.2 — **dist (m)** | **0.2001** ✅ | **0.3059** 🔴 | 0.2398 |
+| VA flagship, DPCC K20 T0.2 — **ms/step** | **265.9** ✅ | 325.3 | 323.2 |
+
+`-c` is worst on steps by **69 %** on avoiding and worst on distance **and** cost on visual aligning. `-t` wins where the flagship actually operates: `mf_unet` K1/K2 both ship `dpcc-t-tightened` (0.993 S&C, 61.0/60.4 steps, 18.1/27.1 ms), and the only HF Pareto win in the project is `-t`.
+
+### 7.4 The cost is real and structural
+
+The projector is **serial** — `diffuser/sampling/projection.py:132` runs one SLSQP per candidate in a Python `for` loop; `parallelize` (`projection.py:9,20`) is **assigned and never read**. Cost is `S + B·P`, linear in `B`, with all of it on one CPU core. The fan is free on the generator (batched GPU forward, invariant to within 2 %).
+
+### 7.5 Verdict and recommendation
+
+| claim | status |
+|---|---|
+| At `B=1`, running three rules is pure waste | ✅ **proven exactly** — closed |
+| `-c` never earns its cost | ⚠️ **strongly directional** — worst on 3/3 axes across two tasks and two projector arms, plus 7.2; no cell found where it leads |
+| `-t` is the right single default | ⚠️ directional — wins the flagship and the HF Pareto cell |
+| `-r` is redundant with `-t` | ⬜ open — `-r` leads on VA distance and cost |
+
+> ### Recommendation for the final deliverable
+> **Ship one rule (`-t`) as the default. Disable `-c`. Keep `-r` as the documented null control.**
+> Handle the fan by **parallelising the projector** — a code change that gives `B=4` safety at `B=1` latency (`mf_unet` K1: 18.1 ms → ≈11.7 ms) — **not** by shrinking `B`.
+>
+> ⚠️ **`-r` stays in the thesis as an ablation even if it leaves the shipped default.** Deleting the random control from the *deliverable* is an engineering decision; deleting it from the *evidence* would remove the baseline that makes 7.3 interpretable.
+
+**To close 7.3 and 7.4 into a hard claim:** the rules need a paired A/B at `B=4` across seeds 7–10 on both tasks. Cheap — eval-only, no retraining — and it rides along with the Headline 6 blocking run.
+
+---
+
+## Headline 8 — UAV `pillars`: the engine was fixed, the scene still is not 🟢🔴
+
+> **Sources:** [`Gen15/DA/DA_20260903_fix16_AB_mf_pillars`](../../logs_in_develop/Gen15/DA/DA_20260903_fix16_AB_mf_pillars.md) ·
+> [`Gen15/DA/DA_20260830_pillars_K_sweep_fm_mf_af`](../../logs_in_develop/Gen15/DA/DA_20260830_pillars_K_sweep_fm_mf_af.md) ·
+> [`Gen15/U7/CHANGELOG_20260904_honest_geometry…`](../../logs_in_develop/Gen15/U7/CHANGELOG_20260904_honest_geometry_and_slack_gate.md)
+
+**Two results that must not be conflated.** "Pillars is good now" is true of the *policy* and false of the *benchmark*.
+
+### 8a — 🟢 Fix_16 passed a falsifiable prediction, cleanly
+
+Jobs 25316–25321, one git rev, `mf`, seed 6, K ∈ {1,2,5}, `SAFE_EPS_MODE=scaled` vs `legacy`:
+
+| | pre-fix (`legacy`) | post-fix (`scaled`) |
+|---|---|---|
+| unguided (`diffuser`) divergence abort, every K | **100 %** | **0 %** |
+| goal distance, K1 / K2 / K5 | 6.50 / 6.46 / 6.49 m | **0.62 / 0.66 / 0.36 m** |
+| K5 `dpcc-r` abort | 100 % | 20 % |
+| K1 `dpcc-t` abort | 80 % | 0 % |
+
+This is the strongest methodological result in the UAV line: a mechanism was proposed in a study, converted into a falsifiable prediction, and confirmed — with **`legacy` reproducing the pre-fix numbers bit-for-bit** (clean single-variable A/B) and the already-healthy `*-geo_free` arms **not moving** (internal control). ⚠️ Cost: projection time rises **1.2–1.6×**.
+
+### 8b — 🔴 It changes nothing about the ladder
+
+**Success + constraints = 0 / 2876 rollouts** — every engine, every K, both arms; collision-free completion 4 / 2876. Unchanged from the 08-30 batch (0 / 1707, 2 collision-free). **No engine ranking can be drawn from this scene**, and there is **no `diffusion` arm for `pillars` at all**, so the pinned DA target does not even exist here.
+
+The cause is geometric, not generative, and is now measured: the tightest `pillars` planning channel is **6 cm** of slack against a **34 cm** median tracking error; `corridor` has **0.000 m**. **S&C was bounded near zero before any engine ran.** Compounding it: the projector **never plans in z** — every wall and pillar binds `(x,y)` only, so each obstacle is an infinite cylinder it cannot route over or under.
+
+⚠️ **`fm` and `af` were never re-run with Fix_16.** Every cross-engine number in that batch is fixed-`mf` vs unfixed `fm`/`af` — **not an engine comparison.** Do not quote it as one.
+
+### 8c — What this means for the thesis
+
+Fix_16 and the honest-geometry work belong in **methodology and threats-to-validity**, where they are a genuine strength (a measured, self-diagnosed benchmark defect). Until the `*_hg` scenes are re-run with all three engines fixed, **UAV cannot carry Goal A**, and the target's UAV kill criterion is live.
+
+---
+
+## Evidence board vs. the target (2026-09-05)
+
+🟢 supported · 🟡 partial / underpowered · 🔴 contradicted · ⬜ not measured
+
+### Goal A — engine ladder `af_unet ≥ mf > fm > diffusion`
+
+| environment | `mf > fm` | `fm > diffusion` | `af_unet ≥ mf` |
+|---|---|---|---|
+| `avoiding-d3il` | 🟢 Pareto-dominant, 30× | 🟡 21×, needs NFE-matched restatement | ⬜ AF ran (24515), never ranked |
+| `aligning-d3il` (3-D state) | ⬜ | ⬜ | ⬜ — **no data at all** |
+| `aligning-d3il-visual` | 🟢 K2 beats K20 on every axis | 🟢 | 🔴 **AF has never been run at MF's flagship K=20** |
+| `uav-corridor` | 🔴 **regime-split**: W13 at K1–K2, L25 at K5–K20 | 🟡 | ⬜ AF was SiT 10.0 M (unmatched); `af_unet` only landed with Gen15 U6 (25434/25439) |
+| `uav-pillars` | ⬜ **unrankable** — S&C 0/2876, no `diffusion` arm exists (Headline 8) | ⬜ | ⬜ |
+
+### Goal B — projector ladder
+
+| environment | status |
+|---|---|
+| `avoiding-d3il`, matched threshold + SLSQP | 🟢 **HF `-t` Pareto-dominates at K=20** (n = 6, seed 6) |
+| `aligning-d3il-visual`, K20/T0.2 | 🟡 3/3 constraints, 2/3 strictly better, **but *p* floor is 0.125** |
+| `uav-corridor` | 🟡 win switches on at K≥5; 1 seed, pilot, pre-honest-geometry |
+
+### Goal C — selection machinery
+
+| claim | status |
+|---|---|
+| `B=1` → three rules identical → 3× waste | 🟢 **exact** |
+| `-c` is deletable | 🟡 strongly directional |
+| `-t` as sole default | 🟡 directional |
+
+### The three real gaps
+
+1. **`af_unet ≥ mf` is unproven everywhere** — the top rung of the headline ladder. Fix: AF at MF's exact flagship (unet, FiLM v1, K=20, T=0.2, seed 6, 26.4 M), **`diffuser` arm first** — an arm that loses unprojected is never ranked projected.
+2. **Every projector result is underpowered** — Goal B and Goal C both bottleneck on the same run: seeds 7–10, arm C, `mf`, K=10 and K=20.
+3. **`aligning-d3il` 3-D state has no data** — the modality-transfer argument claims state→visual on *aligning*, but aligning was only ever measured visually.
+
+### Run queue implied by the target
+
+| # | run | closes |
+|---|---|---|
+| 1 | AF U-Net at MF's flagship, VA, `diffuser` arm | gap 1, Stage 1 |
+| 2 | if #1 wins: same config through DPCC + HF arms | gap 1, Stage 2 |
+| 3 | **Seeds 7–10, arm C, `mf`, K=10 + K=20, VA** | gap 2 — Goal B *and* Goal C |
+| 4 | `af_unet` UAV (25434/25439) ranked vs `mf`/`fm` on `pillars_hg` | Goal A row 4 |
+| 5 | UAV `*_hg` K-sweep, **all three engines re-run with Fix_16**, ≥3 seeds | UAV S&C → paper grade; makes UAV rankable at all |
+| 6 | `aligning-d3il` 3-D state, four-engine ladder | gap 3 |
+
+
+
+# DA — HardFlow's minimum K, run: MeanFlow-UNet at `A = 1.0`, K ∈ {2, 3, 5} on `avoiding-d3il`
+
+...
+
+GOOD REUSLT

@@ -3,10 +3,33 @@ import copy
 import math
 import numpy as np
 import torch
+import sys
 from tqdm.auto import tqdm
 from diffusers.optimization import get_cosine_schedule_with_warmup
 
 from .arrays import batch_to_device
+
+# ---------------------------------------------------------------------------- #
+# Batch-log hygiene. tqdm renders ONCE on construction and again on close, so
+# `mininterval=1e10` alone does NOT keep a bar out of a non-interactive log --
+# it only suppresses the redraws in between. Nothing here called close(), so the
+# bar was closed by __del__ instead, leaving two carriage-return frames per epoch
+# in every sbatch job log (100 epochs = 200 frames), which bloats the file and
+# breaks grep on the training curve.
+#
+# Under sbatch stderr is not a TTY, so the bar is disabled outright and the same
+# `logs` dict is emitted as ONE plain greppable line at the same log_freq cadence.
+# Interactive runs are unchanged. Force a bar anyway with FMPCC_TQDM=1.
+# ---------------------------------------------------------------------------- #
+_TQDM_OFF = os.environ.get('FMPCC_TQDM', '') != '1' and not sys.stderr.isatty()
+
+
+def _fmt_logs(logs):
+    out = []
+    for k, v in logs.items():
+        out.append(f"{k}={v:.5g}" if isinstance(v, float) else f"{k}={v}")
+    return "  ".join(out)
+
 
 # ── Gen3v7 — extra per-step metrics from AlphaFlowODE._build_info ─────────────────────
 # Tracked generically (train + test) and persisted as training_<key>_losses /
@@ -267,7 +290,7 @@ class Trainer(object):
     #-----------------------------------------------------------------------------#
 
     def train_epoch(self, n_train_steps, epoch=0):        
-        progress_bar = tqdm(total=n_train_steps, mininterval=1e10)
+        progress_bar = tqdm(total=n_train_steps, mininterval=1e10, disable=_TQDM_OFF)
         progress_bar.set_description(f"Epoch {epoch}")
 
         for step in range(n_train_steps):
@@ -375,6 +398,9 @@ class Trainer(object):
             if (self.step + 1) % self.log_freq == 0 or step == n_train_steps - 1:
                 progress_bar.update(step - progress_bar.n + 1)
                 progress_bar.set_postfix(**logs)
+                if _TQDM_OFF:
+                    print(f"[ train ] epoch {epoch} step {self.step + 1}/"
+                          f"{self.n_train_steps}  " + _fmt_logs(logs), flush=True)
 
             self.step += 1
 
