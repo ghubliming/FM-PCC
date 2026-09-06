@@ -63,6 +63,12 @@ export FMPCC_UAV_EVAL_TAG="${FMPCC_UAV_EVAL_TAG:-}"
 export UAV_MIX_BONE_AF="${UAV_MIX_BONE_AF:-}"
 export UAV_MIX_AF_ALPHA_END="${UAV_MIX_AF_ALPHA_END:-}"
 export UAV_MIX_EPOCH="${UAV_MIX_EPOCH:-}"
+# [Gen15 U9] Per-job variant subset. At K>=3 the HardFlow arm re-enables and the set goes
+# 10 -> 17, which is what walled the pillars K=5 jobs. Filters the assembled list; the eval
+# refuses names it does not implement, and refuses a HardFlow-only set (no DPCC arm left to
+# compare against at the same K). Empty = run everything.
+export UAV_MIX_VARIANTS="${UAV_MIX_VARIANTS:-}"
+[ -n "$UAV_MIX_VARIANTS" ] && echo "[ U9 ] variant subset = $UAV_MIX_VARIANTS"
 if [ -n "$UAV_MIX_BONE_AF" ]; then
     case "$UAV_MIX_BONE_AF" in
         unet|sit|dit) ;;

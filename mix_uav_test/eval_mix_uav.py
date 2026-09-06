@@ -625,6 +625,48 @@ def _load_base_cfg(scene, seed):
         print(f'[ eval ] HardFlow arm: +{len(_hf_variants)} variants {_hf_variants} '
               f'(from config/uav_mix.py, NOT the shared yaml)')
 
+    # ── [Gen15 U9 2026-09-06] UAV_MIX_VARIANTS — explicit variant subset ────────────────
+    # A K-sweep job runs len(projection_variants) x n_trials rollouts, and at K>=3 the
+    # HardFlow arm re-enables, taking the set from 10 to 17. Both pillars K=5 jobs in the
+    # Fix_16 A/B died at the 24 h wall at 17 variants, and there was no way to trim the set
+    # without editing the shared yaml (which would silently change every other job too).
+    #
+    # This is the read-only, per-job counterpart to UAV_MIX_HF_OFF above: it filters the
+    # ALREADY-ASSEMBLED list (yaml base + config/uav_mix.py HardFlow arm), so it can select
+    # from both families at once and can never invent a variant the eval does not implement.
+    #
+    #   UAV_MIX_VARIANTS='diffuser,dpcc-r,dpcc-c,dpcc-t,hardflow_new,hardflow_new-r,hardflow_new-c,hardflow_new-t'
+    #
+    # 🔴 MATCHED COMPARISON: whatever you keep must keep BOTH sides of the question. Dropping
+    # every `dpcc-*` row to run HardFlow alone leaves nothing at that K to compare HardFlow
+    # against, and comparing across K violates the matched-budget rule. The guard below
+    # refuses that specific mistake; everything else is the caller's judgement.
+    _var_env = (os.environ.get('UAV_MIX_VARIANTS') or '').strip()
+    if _var_env:
+        _avail = list(cfg.get('projection_variants') or [])
+        _want = [v.strip() for v in _var_env.split(',') if v.strip()]
+        _unknown = [v for v in _want if v not in _avail]
+        if _unknown:
+            print(f'[ ERROR ] UAV_MIX_VARIANTS names {len(_unknown)} variant(s) that do not '
+                  f'exist for this job: {_unknown}')
+            print(f'          available at K={cfg["flow_steps_v3"]}: {_avail}')
+            if any('hardflow' in v for v in _unknown) and not _hf_variants:
+                print('          (the HardFlow arm is OFF for this job -- see the BLOCKED/'
+                      'UAV_MIX_HF_OFF line above. Raise K or drop the hardflow_* names.)')
+            raise SystemExit(2)
+        _kept_hf  = [v for v in _want if 'hardflow' in v]
+        _kept_pcc = [v for v in _want if 'hardflow' not in v and v != 'diffuser']
+        if _kept_hf and not _kept_pcc:
+            print('[ ERROR ] UAV_MIX_VARIANTS keeps HardFlow variants but no dpcc-* row. '
+                  'HardFlow-vs-DPCC needs both arms at the SAME K -- comparing against a '
+                  'dpcc row from a different K breaks the matched-budget rule. Add at least '
+                  'one dpcc-* variant, or set UAV_MIX_HF_OFF=1 to run the DPCC side alone.')
+            raise SystemExit(2)
+        cfg['projection_variants'] = _want
+        print(f'[ eval ] UAV_MIX_VARIANTS -> running {len(_want)}/{len(_avail)} variants: {_want}')
+        print(f'[ eval ]   dropped {len(_avail) - len(_want)}: '
+              f'{[v for v in _avail if v not in _want]}')
+
     cfg['control_hz']                   = float(getattr(plan_args, 'control_hz', DATASET_HZ))
     cfg['behavior_log']                 = bool(getattr(plan_args, 'behavior_log', True))
 
