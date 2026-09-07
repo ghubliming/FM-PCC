@@ -106,6 +106,10 @@ export UAV_MIX_EPOCH="${UAV_MIX_EPOCH:-}"
 # refuses names it does not implement, and refuses a HardFlow-only set (no DPCC arm left to
 # compare against at the same K). Empty = run everything.
 export UAV_MIX_VARIANTS="${UAV_MIX_VARIANTS:-}"
+# [Gen15 U10] Tracker override (pid|pid_stopgo|pid_const_v|mjpc). RESULTS-PATH key, and 'mjpc'
+# also selects the FMPCC_mjx conda env in eval_mix_uav.sh. Empty = use config/uav_mix.py.
+export UAV_MIX_CONTROLLER="${UAV_MIX_CONTROLLER:-}"
+[ -n "$UAV_MIX_CONTROLLER" ] && echo "[ U10 ] controller = $UAV_MIX_CONTROLLER"
 [ -n "$UAV_MIX_VARIANTS" ] && echo "[ U9 ] variant subset = $UAV_MIX_VARIANTS"
 if [ -n "$UAV_MIX_BONE_AF" ]; then
     case "$UAV_MIX_BONE_AF" in

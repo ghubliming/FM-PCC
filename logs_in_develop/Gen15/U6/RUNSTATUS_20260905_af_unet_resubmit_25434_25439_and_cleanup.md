@@ -235,3 +235,5 @@ UAV_MIX_EPOCH=latest FMPCC_UAV_EVAL_TAG=u12latest \
 gone from `squeue` and 25435 never started, so no directory was created and nothing needs cleaning.
 The only UAV `af` work outstanding is the **25440 chain** (train + evals 25441 / 25442 / 25443), all
 still `PENDING` behind `AssocGrpCpuLimit` while 25416 holds the allocation.
+
+**Follow-up DA:** [`../DA/DA_20260907_af_unet_uav_s_curve_pillars_K_sweep.md`](../DA/DA_20260907_af_unet_uav_s_curve_pillars_K_sweep.md) — the 25439/25392 chains landed; results and verdict there.

@@ -258,3 +258,25 @@ Both cost zero compute and either can pre-empt the result.
 The one thing never tried is that arm at MeanFlow's own flagship budget, K = 20 — **two eval jobs, no
 training.** The K-trend argues it will fail. Run it, read `diffuser` in the first five minutes, and
 take the answer either way.
+
+---
+
+# ⛔ CLOSED — 2026-09-07. Gate 1 returned KILL.
+
+Jobs **25416** (`α_end=0.05`) and **25417** (`α_end=0.2`) completed on 09-05 with α verified ACTIVE
+at `state_100000.pt`. On the `diffuser` arm at K=20 / T=0.2, paired on the same 10 contexts:
+
+| arm | mean × start | contexts won vs `mf` | p |
+|---|---|---|---|
+| `mf` — target | **0.210** | — | — |
+| `af` α_end=0.2 | 0.709 | 3/10 | 0.344 |
+| `af` α_end=0.05 | 0.969 | 1/10 | **0.0215 — worse** |
+
+Both arms exceed the pre-registered KILL threshold (> 0.517×). §5's kill statement is executed.
+
+**Cause:** α-Flow's field is flat in NFE (K2→K20: 0.744→0.969, 0.787→0.709) while MeanFlow's
+sharpens 4.6× (0.976→0.210). Matching MF's setup forces K=20; K=20 is where α-Flow has no advantage.
+The "match exactly" and "beat" requirements are not simultaneously satisfiable here.
+
+Gate 2 is not opened. Full read-out, mechanism, and what the thesis can still claim:
+`logs_in_develop/Gen14/DA_20260907_Gen14_Gate1_AF_vs_MF_K20_flagship_KILL.md`.

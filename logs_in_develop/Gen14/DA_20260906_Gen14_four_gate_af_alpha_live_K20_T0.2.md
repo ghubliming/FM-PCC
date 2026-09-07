@@ -198,7 +198,16 @@ which is where its 3.44 % success rate lives, and where it costs 24.5 ms.
 
 ---
 
-# Gate 4 · Does projection rescue it? — 🟡 **INCOMPLETE — arm C was never run**
+# Gate 4 · Does projection rescue it? — 🔴 **FAIL** *(closed 2026-09-07)*
+
+> ✅ **RESOLVED by job `25475`.** This section was written 🟡 INCOMPLETE because arm C was off.
+> Arm C has since been run on `af` α=0.2 at this exact operating point: **ceiling zero-violation
+> 0.80** against `mf`'s 1.000, MIN 0.0485 (4.4× worse than its own unguided), `hardflow_sls-c`
+> frozen 6/10. Gate 4 **fails**. See `DA_20260907_Gen14_af_arm_C_gate4_closed.md` — which also
+> carries the one genuinely valuable finding the run produced (HardFlow removes 124.70
+> violations/rollout from α-Flow at zero distance cost) and a measured ~0.4 m run-to-run
+> reproducibility floor on projected arms that qualifies every MIN below.
+
 
 MIN-ranked, tightened geometry. 🚫 = constraint-ablated, illegal to quote.
 
@@ -345,15 +354,12 @@ unit of analysis is right. No α-Flow success claim is supportable in V_A.
 
 # Next actions
 
-1. 🛑 **Do NOT run arm C (HF-SLSQP) on `af`.** It was Next-action #1 in the first draft of this DA;
-   §5.5 and the low-K guard together remove the case for it. Two independent blockers:
-   - α-Flow's only tolerable operating point is **K=2**, and at `A=0.5` the HardFlow guard reports
-     `n_genuine=0 [DEGENERATE]` for K≤2 — the arm runs **no HardFlow arithmetic**, it is
-     `Π_S(Euler sample)` ≡ DPCC modulo solver. Genuine needs K≥3, attributable K≥5.
-   - At K≥5, where arm C *would* be genuine, `af` is already flat-to-worse than `mf` on distance.
-     Proving a dominated arm can be made safe does not make it competitive.
-
-   Arm C on `af` is only worth revisiting if some *other* result revives α-Flow first.
+1. ~~🛑 **Do NOT run arm C (HF-SLSQP) on `af`.**~~ **WITHDRAWN — this was wrong.** Arm C was run
+   (job `25475`) and, while it did not change the α-Flow verdict, it produced three findings that
+   existed nowhere else: HardFlow's benefit scaling with plan error, τ=0.850 confirmed on a third
+   engine, and the reproducibility floor. The reasoning that a dominated arm is not worth measuring
+   was the error — the *arm* was dominated, the *projector behaviour on it* was not yet known.
+   See `DA_20260907_Gen14_af_arm_C_gate4_closed.md`.
 2. 🛑 **Do not extend the α sweep.** α ∈ {0.05, 0.2} disagree with each other on nearly every axis
    and agree on the one that matters: neither beats `mf`. A denser sweep buys resolution on a
    dominated arm.

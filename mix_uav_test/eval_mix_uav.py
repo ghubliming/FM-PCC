@@ -673,6 +673,27 @@ def _load_base_cfg(scene, seed):
     # E8 (Epoch8) — observation layout + tracker selection. Defaults = E7 (p_des / pid).
     cfg['cond_mode']                    = str(getattr(plan_args, 'cond_mode', 'p_des'))
     cfg['controller']                   = str(getattr(plan_args, 'controller', 'pid'))
+    # ── [Gen15 U10 2026-09-07] UAV_MIX_CONTROLLER — per-job tracker override ────────────
+    # `controller` lives in a SHARED base dict in config/uav_mix.py (~line 271/308), so the
+    # only way to try a different tracker was to edit it there -- which switches every Gen15
+    # run at once, including anything already queued. This makes it per-job, like the other
+    # UAV_MIX_* knobs.
+    #
+    # It is a RESULTS-PATH key (`Emf_K3_mpc4_<controller>_T0.5`), so a controller A/B lands in
+    # two separate folders and cannot collide. See _uav_eval_tag().
+    #
+    # 🔴 'mjpc' additionally needs the FMPCC_mjx conda env (mujoco>=3 / mjx, which conflicts
+    # with the mujoco==2.3.7 pin the rest of the repo needs). eval_mix_uav.sh reads this same
+    # variable to pick the env -- keep the two in sync.
+    _ctrl_env = (os.environ.get('UAV_MIX_CONTROLLER') or '').strip()
+    if _ctrl_env:
+        _valid = ('pid', 'pid_stopgo', 'pid_const_v', 'mjpc')
+        if _ctrl_env not in _valid:
+            print(f"[ ERROR ] UAV_MIX_CONTROLLER='{_ctrl_env}' must be one of {_valid}")
+            raise SystemExit(2)
+        if _ctrl_env != cfg['controller']:
+            print(f"[ U10 ] controller: '{cfg['controller']}' (config) -> '{_ctrl_env}' (env override)")
+        cfg['controller'] = _ctrl_env
     # U6: MJX predictive-sampling params (replaces gRPC mjpc_task_id/planner_steps).
     cfg['mjx_n_samples']                = int(getattr(plan_args, 'mjx_n_samples', 16))
     cfg['mjx_horizon']                  = float(getattr(plan_args, 'mjx_horizon', 0.3))

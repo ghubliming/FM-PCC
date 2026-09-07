@@ -116,8 +116,19 @@ CONDA_DIR="$HOME/miniconda3"
 # an isolated clone env (`conda create -n FMPCC_mjx --clone FMPCC && pip install
 # "jax[cuda12]" mujoco-mjx`). Every other controller uses the default FMPCC env.
 # See CHANGELOG_U6_mjx_tracker.md.
-DETECTED_CONTROLLER=$(awk "/'plan_flow_matching_v3_uav': \{/,0" "$REPO/config/uav.py" \
-    | grep -m1 "'controller':" | sed -E "s/.*'controller':[[:space:]]*'([^']*)'.*/\1/")
+# [Gen15 U10] Read the GEN15 config, not Gen11's. This block used to awk
+# `plan_flow_matching_v3_uav` out of config/uav.py -- a Gen11 block. Gen15's controller lives
+# in config/uav_mix.py, so a Gen15 mjpc run resolved '' here and silently activated the plain
+# FMPCC env, where `import mujoco.mjx` dies on the mujoco==2.3.7 pin. UAV_MIX_CONTROLLER (U10)
+# takes precedence so the tracker is a per-job choice, not a shared-config edit.
+export UAV_MIX_CONTROLLER="${UAV_MIX_CONTROLLER:-}"
+if [ -n "$UAV_MIX_CONTROLLER" ]; then
+    DETECTED_CONTROLLER="$UAV_MIX_CONTROLLER"
+    echo "[ U10 ] UAV_MIX_CONTROLLER='$DETECTED_CONTROLLER' (env override)"
+else
+    DETECTED_CONTROLLER=$(grep -m1 "'controller':" "$REPO/config/uav_mix.py" \
+        | sed -E "s/.*'controller':[[:space:]]*'([^']*)'.*/\1/")
+fi
 if [ "$DETECTED_CONTROLLER" = "mjpc" ]; then
     CONDA_ENV_NAME="FMPCC_mjx"
 else
