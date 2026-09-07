@@ -1,29 +1,13 @@
 # Concept: Unified FM-PCC Repository Rebuild
 
-> **Status**: DRAFT — awaiting review  
-> **Branch**: `rebuild/unified-api` (proposed)  
-> **Date**: 2026-08-17  
+> **Status**: CONCEPT / IDEAS — not a finalized plan  
+> **Last Updated**: 2026-09-07 (v2)  
+> **Location**: `logs_in_develop/Rebuild_repo/`  
+> **Changelog**: See [`CHANGELOG_unified_rebuild.md`](file:///workspaces/FM-PCC/logs_in_develop/Rebuild_repo/CHANGELOG_unified_rebuild.md)
 
 ---
 
-## 1 — Motivation: Why Rebuild
-
-The current repo has grown through **copy-modify isolation** across 15+ generations.
-This delivered velocity during research but left behind:
-
-| Pain Point | Evidence |
-|---|---|
-| **~20 sibling model folders** that duplicate 80-90 % of code | `diffuser/`, `flow_matcher_v3/`, `fm_visual_avoiding/`, `fm_visual_aligning/`, `flow_matcher_v3_uav/`, `mix_uav/`, `mix_visual_aligning/`, `imf_visual_aligning/`, … |
-| **Inconsistent naming** | `flow_matcher_v3`, `fm_visual_avoiding`, `diffuser_visual_aligning`, `mix_uav` — 4 different naming schemes for the same conceptual layer |
-| **Per-folder test scripts** with divergent CLI APIs | `scripts/train.py`, `FM_v3_test/train_FM_v3.py`, `mix_uav_test/train_mix_uav.py` — each invented its own arg parser |
-| **Cross-generation sync burden** | Fixes must be mirrored across 3-5 active siblings (commit messages: "Sync to Gen7/Gen6V4 C4") |
-| **No single entry point** for the full experiment matrix | Reviewers / collaborators cannot reproduce all results from one command |
-
-The goal is a **single, clean codebase** that can express the full experiment matrix of the submitted paper while keeping **output format backward-compatible** with existing analysis pipelines (`Data_Analysis/`, Colab notebooks).
-
----
-
-## 2 — The Experiment Matrix
+## 1 — The Experiment Matrix
 
 The paper's claims rest on a **4-axis Cartesian product**:
 
@@ -31,135 +15,69 @@ The paper's claims rest on a **4-axis Cartesian product**:
 Experiment = ML_Model × Projector × Environment × Seed
 ```
 
-### 2.1 — Axis 1: ML Model (Generative Engine)
+### Axis 1: ML Model (Generative Engine)
 
 | Key | Full Name | Origin Gen | Backbone Options |
 |-----|-----------|------------|------------------|
 | `fm` | Flow Matching ODE | Gen11 (FMv3) | U-Net |
 | `mf` | MeanFlow ODE | Gen3v6 | U-Net, DiT, MF-DiT |
 | `af` | α-Flow ODE | Gen3v7 | U-Net, DiT, SiT |
-| `ddpm` | Gaussian Diffusion (DPCC baseline) | DPCC upstream | U-Net |
+| `ddpm` | Gaussian Diffusion (baseline) | upstream | U-Net |
 
-> **Note**: `mix_uav/models/engine_registry.py` already implements this dispatch for UAV. The rebuild **generalises** the registry to all environments.
-
-### 2.2 — Axis 2: Projector (Control Layer)
+### Axis 2: Projector (Control Layer)
 
 | Key | Full Name | Description |
 |-----|-----------|-------------|
-| `dpcc` | MPC / DPCC Projection | Model-Predictive Control filter that enforces physical constraints on the generated trajectory |
-| `hf` | HardFlow Projection | In-loop constrained sampling via the Neural Lyapunov–Projection (NLP) barrier function |
+| `pcc` | PCC Projection | Model-Predictive Control filter enforcing physical constraints |
+| `hf` | HardFlow Projection | In-loop constrained sampling via Neural Lyapunov–Projection barrier |
 
-### 2.3 — Axis 3: Environment (Task Domain)
+### Axis 3: Environment (Task Domain)
 
-| Key | Full Name | Observation Mode | Sub-cases |
-|-----|-----------|-----------------|-----------|
-| `avoiding` | D3IL Obstacle Avoiding | State-only | — |
-| `visual_avoiding` | D3IL Visual Avoiding | Image + State (FiLM) | — |
-| `visual_aligning` | D3IL Visual Aligning | Image + State (FiLM) | — |
-| `uav` | UAV Trajectory Tracking | State-only | **4 sub-cases** (see below) |
+| Key | Full Name | Observation Mode |
+|-----|-----------|-----------------|
+| `avoiding` | D3IL Obstacle Avoiding | State-only |
+| `visual_avoiding` | D3IL Visual Avoiding | Image + State |
+| `visual_aligning` | D3IL Visual Aligning | Image + State |
+| `uav_circle` | UAV Circle Tracking | State-only |
+| `uav_lemniscate` | UAV Lemniscate (∞) Tracking | State-only |
+| `uav_helix` | UAV Helix Tracking | State-only |
+| `uav_random` | UAV Random Waypoint | State-only |
 
-#### UAV Sub-Cases
+### Axis 4: Seeds
 
-| Sub | Environment ID | Description |
-|-----|---------------|-------------|
-| `uav_circle` | Circle tracking | Circular reference trajectory |
-| `uav_lemniscate` | Lemniscate (∞) tracking | Figure-8 reference trajectory |
-| `uav_helix` | Helix tracking | 3D helical reference trajectory |
-| `uav_random` | Random waypoint | Stochastic waypoint sequences |
+Default: `[5, 6, 7, 8, 9]` — configurable via CLI `--seeds`.
 
-### 2.4 — Axis 4: Seeds
-
-Default seed set: `[5, 6, 7, 8, 9]` (5 seeds, matching existing runs).
-Configurable via CLI `--seeds` or JSON config file (preserve existing mechanism from `TRAINING_CLI_USAGE.md`).
-
-### 2.5 — Total Experiment Count
-
-```
-4 models × 2 projectors × 7 envs × 5 seeds = 280 runs
-```
-
-> Not all cells are valid (e.g., DDPM + HardFlow is unsupported — DDPM lacks a velocity field).
-> The registry will encode validity constraints explicitly and skip/error on invalid combos.
+### Total: `4 × 2 × 7 × 5 = 280 runs` (not all valid — invalid combos rejected by registry)
 
 ---
 
-## 3 — Target Architecture
+## 2 — Target Architecture
 
-### 3.1 — Directory Layout (proposed)
+Single `fmpcc/` Python package. Registry-driven dispatch. One `train.py`, one `eval.py`.
 
 ```
-FM-PCC/                          # repo root
-├── fmpcc/                       # ← THE single Python package (replaces all siblings)
-│   ├── __init__.py
-│   ├── models/                  # ALL model code, ONE copy
-│   │   ├── __init__.py
-│   │   ├── registry.py          # ← generalised engine_registry (from mix_uav)
-│   │   ├── backbones/           # network architectures
-│   │   │   ├── unet1d.py        # temporal U-Net (from Gen11)
-│   │   │   ├── unet1d_twotime.py   # two-time U-Net (from Gen3v6)
-│   │   │   ├── unet1d_ddpm.py   # DPCC baseline U-Net
-│   │   │   ├── dit.py           # DiT transformer
-│   │   │   ├── sit.py           # SiT transformer
-│   │   │   └── mlp.py           # value / simple MLP
-│   │   ├── engines/             # generative objective wrappers
-│   │   │   ├── fm_ode.py        # FlowMatchingODE
-│   │   │   ├── mf_ode.py        # MeanFlowODE + MeanFlowEngine
-│   │   │   ├── af_ode.py        # AlphaFlowODE + AlphaFlowEngine
-│   │   │   └── ddpm.py          # GaussianDiffusion
-│   │   └── visual/              # visual conditioning wrappers
-│   │       ├── visual_unet.py   # FiLM-conditioned visual U-Net
-│   │       ├── visual_unet_twotime.py
-│   │       └── visual_diffusion.py   # thin wrappers per engine
-│   ├── projectors/              # constraint-enforcement layers
-│   │   ├── __init__.py
-│   │   ├── dpcc_projection.py   # MPC / DPCC projection
-│   │   └── hardflow_projection.py   # HardFlow NLP projection
-│   ├── envs/                    # environment-specific adapters
-│   │   ├── __init__.py
-│   │   ├── avoiding.py          # D3IL avoiding (state)
-│   │   ├── visual_avoiding.py   # D3IL visual avoiding
-│   │   ├── visual_aligning.py   # D3IL visual aligning
-│   │   └── uav.py               # UAV (4 sub-cases parametric)
-│   ├── datasets/                # data loading (unified)
-│   │   ├── __init__.py
-│   │   ├── d3il.py              # D3IL dataset loader
-│   │   ├── uav.py               # UAV dataset loader
-│   │   └── normalization.py
-│   ├── sampling/                # trajectory sampling logic
-│   │   ├── __init__.py
-│   │   ├── policy.py            # unified Policy class
-│   │   └── guides.py            # guidance wrappers
-│   ├── utils/                   # shared utilities
-│   │   ├── __init__.py
-│   │   ├── config.py            # Config class (from diffuser/utils)
-│   │   ├── training.py          # base Trainer
-│   │   ├── training_twotime.py  # two-time Trainer extension
-│   │   ├── serialization.py     # checkpoint save/load
-│   │   └── timer.py
-│   └── configs/                 # YAML/Python config definitions
-│       ├── defaults.py          # shared default hyperparameters
-│       ├── avoiding.py
-│       ├── visual_avoiding.py
-│       ├── visual_aligning.py
-│       └── uav.py               # UAV configs (4 sub-cases)
-├── scripts/                     # CLI entry points (unified)
-│   ├── train.py                 # ONE train script for ALL combos
-│   ├── eval.py                  # ONE eval script for ALL combos
-│   └── load_results.py          # result loader (backward-compat output)
-├── tests/                       # unit / smoke tests
-│   ├── test_registry.py
-│   ├── test_config_resolution.py
-│   └── test_output_compat.py    # assert output format matches legacy
-├── config/                      # ← keep for eval YAML backward compat
-├── Slurm_Codes/                 # SLURM scripts (updated paths)
+FM-PCC/
+├── fmpcc/                       # THE single package
+│   ├── models/
+│   │   ├── registry.py          # universal dispatch table
+│   │   ├── backbones/           # unet1d.py, dit.py, sit.py, ...
+│   │   ├── engines/             # flow_matching_ode.py, meanflow_ode.py, alphaflow_ode.py, gaussian_diffusion.py
+│   │   ├── conditioning/        # vision_trajectory_unet.py, vision_trajectory_unet_twotime.py, ...
+│   │   └── film/                # concat_cond.py, affine_film.py
+│   ├── projectors/              # pcc_projection.py, hardflow_projection.py
+│   ├── envs/                    # avoiding.py, visual_avoiding.py, visual_aligning.py, uav.py
+│   ├── datasets/                # d3il.py, uav.py, normalization.py
+│   ├── sampling/                # policy.py, guides.py
+│   ├── utils/                   # config.py, config_resolver.py, training.py, training_twotime.py
+│   └── configs/                 # defaults.py, per-env py + yaml
+├── scripts/                     # train.py, eval.py, load_results.py
+├── tests/
+├── config/                      # eval YAML (backward compat)
 ├── Data_Analysis/               # unchanged
-├── Archived_Codes/              # old generation folders moved here
-└── requirements.txt
+└── Archived_Codes/              # old generation folders
 ```
 
-### 3.2 — Key Design Principle: Registry-Driven Dispatch
-
-The core insight from `mix_uav/models/engine_registry.py` is the right pattern — **extend it to be the universal dispatch table** across ALL four axes:
+### Registry-Driven Dispatch
 
 ```python
 # fmpcc/models/registry.py  (conceptual sketch)
@@ -172,7 +90,7 @@ ENGINES = {
 }
 
 PROJECTORS = {
-    'dpcc':     { class: ..., supports: ['fm','mf','af','ddpm'] },
+    'pcc':      { class: ..., supports: ['fm','mf','af','ddpm'] },
     'hardflow': { class: ..., supports: ['fm','mf','af'] },  # not ddpm
 }
 
@@ -183,199 +101,190 @@ ENVS = {
     'uav':             { dataset: ..., config: ..., visual: False, sub_cases: [...] },
 }
 
-def build_experiment(engine, projector, env, seed, **overrides):
-    """Single function to construct the full train/eval pipeline."""
-    ...
-```
-
-### 3.3 — Unified CLI
-
-```bash
-# Training — ONE command, ANY combo
-python scripts/train.py \
-    --engine fm \
-    --projector dpcc \
-    --env visual_avoiding \
-    --seeds 5 6 7 8 9 \
-    --use-wandb
-
-# UAV with sub-case
-python scripts/train.py \
-    --engine mf \
-    --projector hardflow \
-    --env uav \
-    --uav-sub circle \
-    --backbone dit \
-    --seeds 5 6 7
-
-# Eval — same pattern
-python scripts/eval.py \
-    --engine af \
-    --projector dpcc \
-    --env visual_aligning \
-    --seeds 5 6 7 8 9 \
-    --nfe 5 10 20
+ENGINE_ALIASES = { 'diffusion': 'ddpm', 'diffuser': 'ddpm' }
+PROJECTOR_ALIASES = { 'dpcc': 'pcc', 'dpcc-r': 'pcc-r', 'dpcc-c': 'pcc-c', 'dpcc-t': 'pcc-t' }
+CONDITIONING_ALIASES = { 'v1': 'concat', 'v2': 'affine', 'film_v1': 'concat', 'film_v2': 'affine' }
 ```
 
 ---
 
-## 4 — Naming Conventions
+## 3 — Unified CLI
 
-### 4.1 — Python Package & Module Names
+```bash
+# Training — ONE command, ANY combo
+python scripts/train.py --engine fm --projector pcc --env visual_avoiding --seeds 5 6 7 8 9
 
-| Rule | Convention | Example |
-|------|-----------|---------|
-| Package name | `fmpcc` (single, flat) | `import fmpcc` |
-| Module names | `snake_case`, descriptive | `fmpcc.models.engines.fm_ode` |
-| Class names | `PascalCase` | `FlowMatchingODE`, `MeanFlowEngine` |
-| Registry keys | Short `snake_case` strings | `'fm'`, `'mf'`, `'af'`, `'ddpm'` |
-| Config keys | `snake_case` | `engine`, `projector`, `env`, `uav_sub` |
+# Eval — same pattern, full CLI override on BOTH py and yaml params
+python scripts/eval.py --engine af --projector pcc --env visual_aligning --seeds 5 6 7 8 9 \
+    --nfe 5 10 20 --proj-threshold 0.1 --epoch latest
+```
 
-### 4.2 — Experiment Path Naming (for logs / checkpoints)
+---
 
-Maintain a **deterministic, human-readable path template**:
+## 4 — Unified Config Resolution
+
+Both `.py` (training) and `.yaml` (eval) configs go through a single `ConfigResolver`.
+
+**Precedence**: `CLI flags > env vars > YAML file > .py defaults`
+
+Every key in the YAML automatically becomes a CLI flag (`--key-name`), with types inferred from defaults. No per-param wiring needed.
+
+```python
+# fmpcc/utils/config_resolver.py  (conceptual sketch)
+class ConfigResolver:
+    def __init__(self, py_defaults: dict, yaml_path: str = None):
+        # Merge py defaults + yaml
+        ...
+    
+    def add_cli_overrides(self, parser: argparse.ArgumentParser):
+        # Auto-register every config key as a --flag
+        for key, default in self.base.items():
+            cli_key = f'--{key.replace("_", "-")}'
+            # type inferred from default value
+            ...
+    
+    def resolve(self, cli_args) -> dict:
+        # CLI > env > yaml > py
+        ...
+```
+
+---
+
+## 5 — Naming Conventions
+
+### 5.1 — Engine Module Naming
+
+| Current | Proposed | Class |
+|---------|----------|-------|
+| `diffuser/`, `diffuser_visual_*` | **Archived** → `fmpcc/` | — |
+| `fm_ode.py` | `flow_matching_ode.py` | `FlowMatchingODE` |
+| `mf_ode.py` | `meanflow_ode.py` | `MeanFlowODE`, `MeanFlowEngine` |
+| `af_ode.py` | `alphaflow_ode.py` | `AlphaFlowODE`, `AlphaFlowEngine` |
+| `ddpm.py` | `gaussian_diffusion.py` | `GaussianDiffusion` |
+| `diffusion_config.pkl` | `engine_config.pkl` | — |
+| `'diffuser'` (Data_Analysis key) | `'ddpm'` | — |
+
+### 5.2 — Projection Variant Naming
+
+| Current | Proposed | Meaning |
+|---------|----------|---------|
+| `dpcc-r` | **`pcc-r`** | PCC with **r**eference trajectory selection |
+| `dpcc-c` | **`pcc-c`** | PCC with minimum projection **c**ost selection |
+| `dpcc-t` | **`pcc-t`** | PCC with **t**emporal consistency selection |
+| `dpcc-c-dt*` | **`pcc-c-dt*`** | PCC-c dt ablations |
+
+### 5.3 — Backbone / Conditioning Naming
+
+| Current | Proposed | What It Is |
+|---------|----------|------------|
+| `VisualUNet` | **`VisionTrajectoryUNet`** | ResNet vision encoder → conditioning → 1D temporal U-Net. Single-time engines (FM, DDPM). |
+| `VisualUNetTwoTime` | **`VisionTrajectoryUNetTwoTime`** | Same + two-time (h_mlp) U-Net. JVP-based engines (MF, AF). |
+| `visual/` (folder) | **`conditioning/`** | Handles vision encoding + backbone composition |
+
+### 5.4 — FiLM Conditioning Mode Naming
+
+| Current Tag | Proposed Code Name | Proposed Paper Name | Architecture |
+|-------------|--------------------|---------------------|-------------|
+| `film_mode='v1'` | **`ConcatCond`** | **Concat-Conditioned U-Net** | Visual latent concatenated with time embedding → single additive bias per block |
+| `film_mode='v2'` | **`AffineFiLM`** | **Affine-FiLM U-Net** | Visual latent → per-block γ scale + β shift (`γ·h + β`) |
+
+Config key: `film_mode` → `conditioning_mode`, values `'concat'` / `'affine'`.
+
+> **Note**: ConcatCond (v1) empirically outperforms AffineFiLM (v2). Likely ships as the main method in the paper. User's choice which framing.
+
+### 5.5 — Experiment Path Template
 
 ```
-logs/{env}/{engine}_{projector}/[backbone_bb]/[extra_tokens]/H{horizon}_D{nfe}/seed_{seed}/
+logs/{env}/{engine}_{projector}/[bb_{backbone}]/[cc_{conditioning}]/H{horizon}_D{nfe}/seed_{seed}/
 ```
 
 Examples:
 ```
-logs/visual_avoiding/fm_dpcc/H64_D10/seed_5/
-logs/uav_circle/mf_hardflow/bb_dit/dp_0.5/H64_D10/seed_7/
-logs/visual_aligning/af_dpcc/bb_sit/H64_D20/seed_9/
-logs/avoiding/ddpm_dpcc/K_20/H64/seed_5/
+logs/visual_avoiding/fm_pcc/H64_D10/seed_5/
+logs/visual_aligning/mf_pcc/cc_affine/H8_K2/seed_6/
+logs/uav_circle/mf_hardflow/bb_dit/H64_D10/seed_7/
 ```
 
-### 4.3 — Output File Naming (backward compatible)
+### 5.6 — Full Name Mapping (Quick Reference)
 
-These files MUST keep their existing names for analysis pipeline compatibility:
-
-| File | Content | Format |
-|------|---------|--------|
-| `state_best.pt` | Best checkpoint | PyTorch state dict |
-| `state_{step}.pt` | Step checkpoint | PyTorch state dict |
-| `losses.pkl` | Training loss history | Pickle |
-| `args.json` | Run arguments snapshot | JSON |
-| `model_config.pkl` | Model constructor kwargs | Pickle |
-| `diffusion_config.pkl` | Diffusion constructor kwargs | Pickle |
-| `seeds_config.json` | Seed manifest | JSON |
+| Category | Current | Proposed | Alias? |
+|----------|---------|----------|--------|
+| Package | `diffuser/`, `diffuser_visual_*` | `fmpcc/` | N/A (archived) |
+| Engine key | `'diffusion'`, `'diffuser'` | `'ddpm'` | ✅ `ENGINE_ALIASES` |
+| Projector key | `'dpcc'` | `'pcc'` | ✅ `PROJECTOR_ALIASES` |
+| Projector variants | `'dpcc-r/c/t'` | `'pcc-r/c/t'` | ✅ `PROJECTOR_ALIASES` |
+| Conditioning mode | `film_mode='v1'` | `conditioning_mode='concat'` | ✅ `CONDITIONING_ALIASES` |
+| Conditioning mode | `film_mode='v2'` | `conditioning_mode='affine'` | ✅ `CONDITIONING_ALIASES` |
+| Backbone class | `VisualUNet` | `VisionTrajectoryUNet` | N/A |
+| Backbone class | `VisualUNetTwoTime` | `VisionTrajectoryUNetTwoTime` | N/A |
+| Config file | `diffusion_config.pkl` | `engine_config.pkl` | Loader reads both |
+| Projector file | `dpcc_projection.py` | `pcc_projection.py` | N/A |
+| Checkpoint | *(none)* | `state_latest.pt` | N/A (new) |
+| Manifest | *(none)* | `checkpoint_manifest.json` | N/A (new) |
 
 ---
 
-## 5 — Backward Compatibility Strategy
+## 6 — Checkpoint Tracking
 
-### 5.1 — Output Format Preservation
+### Current Status
 
-> **Hard constraint**: existing `Data_Analysis/`, `Results_and_Data_Analysis_Colab_T4/`, and Colab notebooks must work without modification.
+| What | How It Works Now | Problem |
+|------|-----------------|---------|
+| `state_best.pt` | Saved when `test_loss < best_test_loss`. Contains `'step'` key inside dict. | Must `torch.load()` to read the step — needs GPU memory. |
+| `state_{step}.pt` | Periodic saves. "Latest" inferred by scanning filenames. | After `clean_weights.py` pruning, surviving highest may be much older than training frontier. |
+| `state_latest.pt` | **Does not exist.** | `clean_weights.py`: *"The trainers have no state_latest.pt file."* |
 
-Strategy:
-- **Checkpoint files**: same names, same internal structure (`state_best.pt`, `losses.pkl`, etc.)
-- **NPZ result files**: same array keys and shapes
-- **Config pickle files**: same constructor kwargs (but now generated from unified registry)
-- **Eval output structure**: `eval_results/` folder with same per-seed, per-K layout
+### Proposed
 
-### 5.2 — Migration Path
+#### A. `state_latest.pt` — hard-saved every `log_freq` steps
 
+```python
+def save_latest(self):
+    savepath = os.path.join(self.logdir, 'state_latest.pt')
+    _atomic_torch_save(self._checkpoint_payload(), savepath)
 ```
-Phase 1: Build `fmpcc/` alongside old folders (both coexist)
-Phase 2: Validate output parity — run same configs, diff outputs
-Phase 3: Move old folders to `Archived_Codes/`
-Phase 4: Update Slurm scripts to point to new `scripts/train.py`
+
+- Survives `clean_weights.py` pruning (not matched by `state_\d+.pt` regex)
+- Resume logic checks `state_latest.pt` first, falls back to scanning numbered files
+
+#### B. `checkpoint_manifest.json` — lightweight metadata, no GPU needed
+
+```json
+{
+  "latest_step": 95000,
+  "latest_file": "state_latest.pt",
+  "latest_timestamp": "2026-09-07T12:34:56Z",
+  "best_step": 82000,
+  "best_file": "state_best.pt",
+  "best_test_loss": 0.00342,
+  "best_timestamp": "2026-09-07T11:15:23Z",
+  "periodic_checkpoints": [
+    {"step": 10000, "file": "state_10000.pt"},
+    {"step": 20000, "file": "state_20000.pt"}
+  ],
+  "total_train_steps": 100000,
+  "engine": "mf",
+  "seed": 6
+}
 ```
 
 ---
 
-## 6 — What Gets Merged vs. Deduplicated
+## 7 — Backward Compatibility
 
-### 6.1 — Code That Is Currently Copy-Pasted Across Folders
-
-| Component | Current Copies | Action |
-|-----------|---------------|--------|
-| `helpers.py` (sinusoidal embeddings, norms) | 8+ copies | → `fmpcc/models/backbones/helpers.py` |
-| `unet1d_temporal_cond.py` | 8+ copies | → `fmpcc/models/backbones/unet1d.py` |
-| `diffusion.py` (FlowMatchingODE) | 6+ copies | → `fmpcc/models/engines/fm_ode.py` |
-| `utils/config.py` (Config class) | 8+ copies | → `fmpcc/utils/config.py` |
-| `utils/training.py` (Trainer) | 8+ copies | → `fmpcc/utils/training.py` |
-| `sampling/` (Policy, guides) | 8+ copies | → `fmpcc/sampling/` |
-| `datasets/` (sequence dataset) | 8+ copies | → `fmpcc/datasets/` |
-
-### 6.2 — Code That Is Genuinely Different Per-Variant
-
-| Component | Unique Per | How Handled |
-|-----------|-----------|-------------|
-| Visual conditioning wrappers | Env (visual vs state) | Conditional composition in registry |
-| Two-time trainer vs one-time | Engine (mf/af vs fm/ddpm) | Trainer subclass selected by registry |
-| FiLM U-Net vs plain U-Net | Env (visual vs state) | Separate backbone files, registry selects |
-| MPC constraint parameters | Env (avoiding vs UAV physics) | Per-env config files in `fmpcc/configs/` |
+- **Output files**: same names, same internal structure (`state_best.pt`, `losses.pkl`, NPZ arrays)
+- **Alias tables**: all renames backed by `ENGINE_ALIASES`, `PROJECTOR_ALIASES`, `CONDITIONING_ALIASES`
+- **Old checkpoints**: loader inspects `engine` key, accepts missing key with warning
+- **Data_Analysis**: accepts both old and new variant spellings
 
 ---
 
-## 7 — Implementation Approach
+## 8 — Open Questions
 
-### Phase 1: Scaffold & Registry (Week 1)
-- [ ] Create `rebuild/unified-api` branch
-- [ ] Build `fmpcc/` package skeleton
-- [ ] Port `engine_registry.py` → generalised `registry.py` (engines + projectors + envs)
-- [ ] Port `utils/config.py` (single canonical copy)
-- [ ] Implement unified CLI arg parser in `scripts/train.py`
-
-### Phase 2: Port Models & Engines (Week 2)
-- [ ] Port all backbone architectures (deduplicate)
-- [ ] Port all 4 engine implementations
-- [ ] Port visual conditioning layer
-- [ ] Port projector implementations (DPCC, HardFlow)
-
-### Phase 3: Port Environments & Datasets (Week 3)
-- [ ] Port dataset loaders (D3IL, UAV)
-- [ ] Port environment-specific configs
-- [ ] Port sampling / policy code
-
-### Phase 4: Port Training & Eval (Week 4)
-- [ ] Unify `train.py` — one script, registry-driven
-- [ ] Unify `eval.py` — one script, registry-driven
-- [ ] Port `load_results.py` with backward-compat output
-
-### Phase 5: Validation & Migration (Week 5)
-- [ ] Run parity tests: old code vs new code, same config → same output
-- [ ] Update Slurm scripts
-- [ ] Archive old generation folders
-- [ ] Update documentation
-
----
-
-## 8 — Risks & Mitigations
-
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| **Subtle behavioral drift** during deduplication | Silent metric regression | Phase 5 parity tests: load same checkpoint, run same eval, diff NPZ outputs bit-for-bit |
-| **model_config.pkl format** differs between engine arms (U-Net kwargs vs Engine kwargs) | Checkpoint loading breaks | Registry-aware checkpoint loader that inspects `engine` key before unpickling |
-| **DDPM K is train-time** | Cannot sweep K at eval time for DDPM | Preserve existing behavior: K in folder name, separate training runs per K |
-| **FiLM visual conditioning** wiring differs between envs | Wrong image encoder selected | Registry encodes `visual: True/False` per env, auto-selects wrapper |
-| **HardFlow requires velocity field** | DDPM arm crash | `supports_hardflow=False` in DDPM registry row, validation gate at build time |
-
----
-
-## 9 — Open Questions for Discussion
-
-**Q1**: Should we keep the `config/*.py` Python config files (current approach) or migrate to pure YAML configs? YAML is more declarative but Python configs allow computed defaults (e.g., `af_alpha_end_step = n_train_steps`).
-
-**Q2**: The `mix_uav` and `mix_visual_aligning` folders already implement a partial version of this registry pattern. Should we **build on top of `mix_uav`** as the starting point, or start fresh and cherry-pick?
-
-**Q3**: Should the UAV 4 sub-cases be modeled as 4 separate `env` keys (`uav_circle`, `uav_lemniscate`, `uav_helix`, `uav_random`) or as one `env=uav` with a `--uav-sub` flag? The latter is cleaner but the former keeps the path structure flatter.
-
-**Q4**: Should we also unify the D3IL baseline models (from `d3il_visual_aligning_baseline_test/`) into this same framework, or keep them as a separate external comparison?
-
-**Q5**: Branch naming — `rebuild/unified-api` is proposed. Any preference?
-
----
-
-## 10 — Success Criteria
-
-1. **Single `train.py`** can launch any cell in the 4-axis experiment matrix
-2. **Single `eval.py`** can evaluate any trained checkpoint
-3. **Output files** are format-identical to current pipeline outputs
-4. **`Data_Analysis/`** scripts work without modification on new outputs
-5. **All existing checkpoints** can be loaded by the new code (backward-compat loader)
-6. **Zero code duplication** across model/engine/env variants
-7. **Comprehensive registry validation** — invalid combos fail fast with clear error messages
+| # | Question | Impact |
+|---|----------|--------|
+| Q1 | ConcatCond as **main** + AffineFiLM as **ablation**, or both equal? | Paper framing |
+| Q2 | Build on `mix_visual_aligning` or fresh scaffold + cherry-pick? | Implementation |
+| Q3 | UAV sub-cases: 4 env keys or `--uav-sub` flag? | CLI design |
+| Q4 | Include D3IL baselines in unified framework? | Scope |
+| Q5 | Branch naming — `rebuild/unified-api`? | Git |

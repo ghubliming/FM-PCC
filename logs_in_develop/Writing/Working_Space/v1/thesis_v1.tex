@@ -1,0 +1,610 @@
+% =============================================================================
+%  FM-PCC MASTER'S THESIS -- v1
+%  TUM, School of CIT, Chair I6
+% -----------------------------------------------------------------------------
+%  WHAT THIS FILE IS
+%  Chapters 1-4 (Introduction, Background, Related Work, Method) are FILLED at
+%  *abstract density*: every section carries a summary that states what it will
+%  argue and in what order, in the thesis's own voice -- not finished prose.
+%  Chapters 5-8 (Setup, Results, Discussion, Conclusion) are left as the bone.
+%  Nothing there is settled and nothing there is written.
+%
+%  BASIS: derives from DPCC (Diffusion Predictive Control with Constraints,
+%  L4DC 2025), which builds on Diffuser's temporal U-Net and the D3IL
+%  environments. DPCC is both the codebase this work starts from and the
+%  baseline it is measured against.
+%
+%  GOVERNED BY
+%    ../TARGET_20260905_thesis_claim_ladder.md   -- what must be proved
+%    ../../Auxiliary/Methodology_Sources/        -- the apparatus, per section
+%    ../../Auxiliary/NOTES_tum_formatting_rules.md
+%    Data_Analysis/DA_Result_Curated_MD/NOTEBOOK_20260829_key_headlines.md
+%
+%  STRUCTURE DELTA vs. Bone/thesis_bone_broad.tex -- see README.md in this folder.
+%
+%  BUILD: pdflatex thesis_v1.tex  (twice, so the ToC fills in)
+% =============================================================================
+
+\newif\ifstandalone
+\standalonetrue   % set false once merged into a copy of the TUM template
+
+\documentclass[headsepline,footsepline,footinclude=false,oneside,fontsize=11pt,paper=a4,listof=totoc,bibliography=totoc]{scrbook}
+
+% -----------------------------------------------------------------------------
+% Metadata (same macro names as the TUM template's main.tex)
+% -----------------------------------------------------------------------------
+\newcommand*{\getUniversity}{Technische Universität München}
+\newcommand*{\getFaculty}{Informatics}
+\newcommand*{\getDegree}{Informatics}
+\newcommand*{\getSchool}{Computation, Information and Technology}
+
+% FIXED TITLE -- verbatim, no hyphens, no subtitle.
+\newcommand*{\getTitle}{Flow Matching Predictive Control with Constraints}
+\newcommand*{\getTitleGer}{Flow-Matching-basierte prädiktive Regelung unter Nebenbedingungen} % TODO: confirm
+
+\newcommand*{\getAuthor}{TODO: Author}
+\newcommand*{\getDoctype}{Master's Thesis in \getDegree}
+\newcommand*{\getSupervisor}{TODO: Supervisor}
+\newcommand*{\getAdvisor}{TODO: Advisor}
+\newcommand*{\getKeywords}{flow matching;predictive control;constrained sampling;imitation learning}
+\newcommand*{\getSubmissionDate}{TODO: Submission date}
+\newcommand*{\getSubmissionLocation}{Munich}
+
+% -----------------------------------------------------------------------------
+\ifstandalone
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+  \usepackage[sc]{mathpazo}
+  \usepackage[ngerman,american]{babel}
+  \usepackage[autostyle]{csquotes}
+  \usepackage{amsmath,amssymb}
+  \usepackage{graphicx}
+  \usepackage{booktabs}
+  \usepackage{xcolor}
+  \usepackage[printonlyused]{acronym}
+  \usepackage[final]{microtype}
+  \usepackage{hyperref}
+  \hypersetup{hidelinks}
+  \setkomafont{disposition}{\normalfont\bfseries}
+  \linespread{1.05}
+  \newcommand{\printbibliography}{}
+\else
+  \RequirePackage[l2tabu,orthodox]{nag}
+  \input{settings}
+  \usepackage{xcolor}
+\fi
+
+% -----------------------------------------------------------------------------
+% Notation (kept identical to Bone/thesis_bone.tex -- do not diverge)
+% -----------------------------------------------------------------------------
+\newcommand{\vect}[1]{\boldsymbol{#1}}
+\newcommand{\matr}[1]{\boldsymbol{#1}}
+\newcommand{\trans}{^{\textrm{T}}}
+\newcommand{\sidx}[1]{_{\textrm{#1}}}
+\newcommand{\Id}[1]{\textbf{Id}_{#1}}
+\newcommand{\unitvec}[1]{\textbf{e}_{#1}}
+
+% Drafting aids -- REMOVE BOTH BEFORE SUBMISSION
+\newcommand{\hole}[1]{\textcolor{red}{\textbf{[HOLE:} #1\textbf{]}}}
+\newcommand{\srcnote}[1]{\textcolor{gray}{\footnotesize\textsf{[src: #1]}}}
+
+\begin{document}
+
+\pagenumbering{alph}
+\ifstandalone
+  \begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\scshape\LARGE \getUniversity\par}
+    \vspace{0.5cm}
+    {\scshape\large School of \getSchool\par}
+    \vspace{2.5cm}
+    {\huge\bfseries \getTitle\par}
+    \vspace{1cm}
+    {\Large \getDoctype\par}
+    \vfill
+    {\large \getAuthor\par}
+    \vspace{1cm}
+    {\large Supervisor: \getSupervisor\par}
+    {\large Advisor: \getAdvisor\par}
+    \vspace{1cm}
+    {\large \getSubmissionLocation, \getSubmissionDate\par}
+  \end{titlepage}
+  \chapter*{Abstract}
+\else
+  \input{pages/title}
+  \input{pages/disclaimer}
+  \input{pages/acknowledgments}
+  \input{pages/abstract}
+\fi
+
+% -----------------------------------------------------------------------------
+% ABSTRACT -- v1 sketch. Rewrite last, once Results is settled.
+% -----------------------------------------------------------------------------
+\ifstandalone
+Predictive control with a generative planner has to pay for its samples. Diffusion
+Predictive Control couples a denoising planner to a per-step projection that enforces
+dynamics and safety constraints, and inherits diffusion's step budget: the number of
+network evaluations is fixed at training time and cannot be reduced afterwards. This
+thesis replaces that engine with deterministic ODE transport --- flow matching and its
+few-step variants --- while holding the backbone, the projector, the data and the
+evaluation harness fixed, so that the step budget becomes an inference-time choice.
+
+Across a state-based manipulator benchmark, a vision-conditioned variant of it, and an
+aerial embodiment built for this work, the resulting system is evaluated against the
+diffusion baseline under a strict definition of improvement: Pareto dominance at equal
+success and equal constraint satisfaction. \hole{Headline numbers -- write last, after
+Results is settled and the powered runs land.}
+
+The thesis makes three further contributions beyond the engine swap. First, a
+correctness condition for evaluating in-loop guided samplers: a step budget below a
+computable threshold reduces the guided sampler to sample-then-project, so that a
+substantial class of published-style comparisons measures nothing. Second, a measured
+regime split between the two constraint-enforcement arms, with a mechanism that explains
+it: projecting a predicted clean endpoint is cheaper per solve than projecting an
+off-manifold iterate, and the advantage appears exactly where the guided sampler becomes
+well-defined. Third, negative results are retained rather than discarded --- an
+additional engine that does not improve on its predecessor, and a benchmark defect
+diagnosed by this work's own instrumentation.
+\fi
+
+\microtypesetup{protrusion=false}
+\tableofcontents{}
+\microtypesetup{protrusion=true}
+
+% =============================================================================
+\mainmatter{}
+% =============================================================================
+
+\chapter{Introduction}\label{ch:introduction}
+
+\section{Motivation}\label{sec:intro:motivation}
+
+A robot that plans with a generative model buys expressiveness with computation. Diffusion
+planners represent multi-modal demonstration data well and, when paired with a constrained
+projection step, can respect dynamics and safety at deployment. The price is the sampling
+loop: producing one plan costs tens to hundreds of network evaluations, and in a
+receding-horizon controller that cost is paid again at every timestep.
+
+The section argues that this cost is not incidental but \emph{structural}, and that the
+structure is what makes it addressable. In a diffusion model the number of steps is a
+property of the trained noise schedule; reducing it after training degrades the sample.
+In a deterministic transport model the same quantity is a property of the ODE solver, and
+is chosen at inference. The motivation of this thesis is therefore not ``make the planner
+faster'' but ``move the step budget from training time to inference time, and then find out
+what it costs.''
+
+A second motivation follows from the first. Once the budget is cheap, the constraint
+machinery --- not the generative model --- becomes the dominant cost, and the question of
+\emph{how} constraints are enforced stops being a footnote.
+
+\section{Problem Statement}\label{sec:intro:problem}
+
+The object of study is a closed-loop controller in which, at each timestep, a conditional
+generative model proposes a trajectory over a fixed horizon, a constraint mechanism makes
+that trajectory admissible, and the first action is executed. The thesis holds this
+architecture fixed and varies exactly two things: the generative engine, and the
+constraint mechanism.
+
+Stating it this way exposes the methodological demand the rest of the thesis has to meet.
+A claim that one engine beats another is only meaningful if the backbone, parameter count,
+data, normalisation, horizon, seeds, projector and harness are all held constant. A claim
+that one constraint arm beats another is only meaningful if both arms see the same feasible
+set, the same solver, the same activation threshold and the same candidate budget. Most of
+the engineering behind this thesis exists to make those two sentences true, and the section
+says so plainly rather than leaving it to the reader to infer.
+
+\section{Research Questions}\label{sec:intro:rqs}
+
+\begin{description}
+  \item[RQ1 --- Engine.] Under an identical backbone, projector, dataset and harness, does
+    replacing the diffusion engine with deterministic ODE transport improve the
+    quality--cost frontier of constrained predictive control, and does the improvement
+    order the engine family?
+  \item[RQ2 --- Budget.] How far can the number of function evaluations be reduced before
+    plan quality degrades, and what mechanism explains why the flow family can follow that
+    ladder down while diffusion cannot?
+  \item[RQ3 --- Constraints.] Given one fixed feasible set, which constraint-enforcement
+    arm --- per-step projection of the iterate, or in-loop trajectory optimisation on a
+    predicted endpoint --- should be used, and under what condition is the comparison even
+    well-posed?
+  \item[RQ4 --- Transfer.] Do the answers to RQ1--RQ3 survive a change of observation
+    modality (state $\rightarrow$ vision) and a change of embodiment (manipulator
+    $\rightarrow$ aerial), or are they properties of one benchmark?
+\end{description}
+
+\srcnote{TARGET \S7 maps each RQ to its evidence sections. RQ2 is the ``argue the mechanism
+before any table'' item.}
+
+\section{Contributions}\label{sec:intro:contributions}
+
+The section lists six contributions and is explicit that two of them are negative or
+methodological rather than performance claims.
+
+\begin{enumerate}
+  \item \textbf{An architecture-matched engine substitution.} Deterministic transport
+    engines are placed inside the DPCC control stack with the backbone, parameter count and
+    constraint machinery held fixed, so that the engine is the only moving part. The
+    resulting comparison is reported under Pareto dominance rather than a single metric.
+  \item \textbf{A correctness condition for evaluating in-loop guided samplers.} A guided
+    sampler that is only active near the end of its own integration performs no guidance at
+    all when the step budget is small: the sole active step is terminal, and what executes is
+    sample-then-project. The condition is a computable function of the step budget and the
+    activation threshold, and it disqualifies a class of comparisons that otherwise look
+    valid. This thesis derives it, instruments it, and enforces it in every table.
+  \item \textbf{A measured regime split between constraint arms, with a mechanism.} The two
+    arms are shown to swap places as a function of the same quantity, and the swap is
+    explained by where in the transport each arm poses its optimisation problem, not by
+    solver differences.
+  \item \textbf{Removal of the candidate-selection machinery.} The projector's selection
+    rules are shown not to earn their computation, and the system ships with the redundancy
+    removed rather than retained ``just in case''.
+  \item \textbf{Two constructed benchmark environments} --- a vision-conditioned
+    manipulation task and an aerial task with four scenes, expert data, constraint geometry
+    and a low-level controller --- together with their construction documented as
+    methodology.
+  \item \textbf{Retained negative results.} An additional engine variant that does not
+    improve on its predecessor is reported as a clean negative rather than omitted, and a
+    defect in this work's own benchmark geometry, found by its own instrumentation, is
+    reported with the correction and its limits.
+\end{enumerate}
+
+\section{Scope and Terminology}\label{sec:intro:scope}
+
+A short section, placed before the background because the rest of the thesis is unreadable
+without it. It fixes the vocabulary that recurs in every chapter:
+
+\begin{itemize}
+  \item \textbf{Step budget $K$ / NFE.} The number of generative network evaluations spent
+    producing one plan. For the transport family this is a solver setting; for diffusion it
+    is fixed by training. \emph{$K$ is never the planner's candidate fan} --- a distinct
+    quantity, also swept, and a persistent source of confusion.
+  \item \textbf{Arms.} Arm~A is the unguided plan (no constraint enforcement). Arm~B is
+    per-step projection of the iterate. Arm~C is in-loop trajectory optimisation on a
+    predicted endpoint.
+  \item \textbf{Genuine steps.} The number of sampler steps at which arm~C performs
+    non-terminal guided work; formalised in Chapter~\ref{ch:method}. Zero genuine steps
+    means arm~C is not arm~C.
+  \item \textbf{Tightened geometry.} A stricter constraint margin applied to an otherwise
+    identical feasible set; an experimental factor, not a formatting suffix.
+  \item \textbf{``Better''.} Pareto dominance --- equal success \emph{and} equal constraint
+    satisfaction, with strictly fewer evaluations \emph{and} lower wall-clock. Anything else
+    is named a trade-off.
+\end{itemize}
+
+\section{Outline}\label{sec:intro:outline}
+
+\hole{Write last. One paragraph, one sentence per chapter.}
+
+% =============================================================================
+\chapter{Background}\label{ch:background}
+% =============================================================================
+
+\emph{Chapter summary.} This chapter builds the argument of RQ2 before any experiment is
+described, as the target requires. It moves from behaviour cloning of trajectories, through
+the two generative families, to the mechanism that separates them on step count, and closes
+on the control-theoretic side that the constraint arms instantiate.
+
+\section{Learning Trajectory Policies from Demonstration}\label{sec:bg:il}
+
+Establishes the setting: a dataset of expert trajectories, a conditional model over
+horizon-length trajectory segments rather than single actions, and receding-horizon
+execution. The section makes two points that later chapters lean on. First, planning over a
+horizon rather than emitting one action is what makes constraint enforcement possible at
+all --- a per-action policy has nothing to project. Second, multi-modality in the
+demonstrations is the reason a generative model is used instead of a regressor, and it is
+also why a mean-seeking failure mode is a real risk when the sampler is truncated.
+
+\section{Diffusion Generative Models}\label{sec:bg:diffusion}
+
+Forward noising process, learned reverse denoiser, and the sampling loop, presented only to
+the depth the thesis needs. The section's purpose is to isolate one property: the reverse
+process is defined \emph{relative to a training-time noise schedule}, so the number of
+reverse steps is not free. This is stated here and used in \ref{sec:bg:fewstep}; it is the
+reason the baseline cannot follow the step ladder downward.
+
+\section{Flow Matching}\label{sec:bg:fm}
+
+Continuous-time transport between a simple prior and the data distribution, learned by
+regressing a velocity field along a prescribed interpolation path, and sampled by
+integrating an ODE. The section derives the training objective, notes that the conditional
+formulation makes the target available in closed form without simulation, and observes that
+sampling is now an ODE integration --- so the step count is a solver parameter and the
+sample is deterministic given the initial noise.
+
+Determinism is worth its own remark: it removes a source of run-to-run variance from the
+plan, which matters for a controller that replans every timestep, and it changes what
+``the same plan'' means when comparing arms.
+
+\section{Few-Step Generative Models}\label{sec:bg:fewstep}
+
+\textbf{The load-bearing section of the background.} It answers RQ2's mechanism half before
+any number appears.
+
+Naive flow matching still needs enough integration steps for the ODE solution to be
+accurate. The few-step family removes that requirement by changing \emph{what the network
+predicts}: instead of the instantaneous velocity at a point, the network is trained to
+predict the \emph{average} velocity over an interval, so that a single evaluation can
+traverse the whole interval. The section presents this target, its identity with the
+instantaneous field in the limit, and the practical consequence that the training objective
+now requires a directional derivative of the network --- a Jacobian-vector product ---
+which constrains what may appear inside the differentiated closure.
+
+A second variant is presented as a \emph{curriculum} on the same objective: rather than
+regressing the analytic average-velocity target directly, it bootstraps a target from the
+network's own output and anneals a scalar that interpolates between the two regimes. The
+section presents it neutrally here; Chapter~\ref{ch:method} explains why the distinction is
+a training-path difference and nothing else, and the results chapter reports that it does
+not pay off.
+
+The section closes with the comparison that the whole thesis turns on: \emph{for the
+transport family the step budget is a solver argument, for diffusion it is a trained
+property.} Everything in the results chapter about cheap plans is a consequence of that one
+asymmetry, and it should be argued, not measured.
+
+\section{Model Predictive Control and Constrained Sampling}\label{sec:bg:mpc}
+
+Two threads. The first is standard receding-horizon control: an optimisation over a finite
+horizon, executed one step at a time, re-solved each timestep. The second is the family of
+methods that make a \emph{learned} plan admissible --- soft guidance by gradient, hard
+projection onto a feasible set, and in-loop trajectory optimisation interleaved with the
+sampler. The section sets up the vocabulary for the three arms and states the constrained
+projection problem in the form the method chapter instantiates: a nonlinear program over the
+horizon, with dynamics rows, box bounds, and geometric inequalities.
+
+It also makes explicit that arms~B and~C solve \emph{the same feasible set with the same
+solver}. Only the point at which the problem is posed differs. That framing is what makes
+the later mechanism claim a claim about algorithms rather than about implementations.
+
+% =============================================================================
+\chapter{Related Work}\label{ch:related}
+% =============================================================================
+
+\emph{Chapter summary.} Four bodies of work converge on this thesis; the chapter treats each
+as a line the thesis extends or corrects, and closes by stating precisely which gap is left.
+
+\section{Diffusion-Based Planners and Policies}\label{sec:rel:diffusion}
+
+Trajectory-level diffusion planning and its policy-level descendants, up to the
+constrained-projection variant that this work starts from. The section is careful about a
+dual role that recurs throughout: the immediate predecessor is simultaneously the
+\emph{codebase} inherited and the \emph{baseline} measured against. Both roles are declared
+here so no later table looks like a straw man.
+
+\section{Flow Matching for Robot Control}\label{sec:rel:fm}
+
+Transport-based generative models applied to control and manipulation, including
+few-step variants and their reported step budgets. The section positions this thesis
+against them on one axis: most report the engine improvement \emph{without} a hard
+constraint mechanism, so the interaction between a cheap sampler and an expensive projector
+--- the interaction this thesis finds to be decisive --- is not visible in them.
+
+\section{Safety Filters and Hard-Constrained Sampling}\label{sec:rel:safety}
+
+Projection-based safety filters, control-barrier approaches, and samplers that interleave
+optimisation with generation. This is where arm~C's ancestry is set out, and where the
+thesis's degeneracy contribution is positioned: the activation-threshold convention these
+methods use has a low-budget regime in which the method reduces to its own baseline, and
+that regime is not, to the author's knowledge, characterised in the literature.
+
+\section{Accelerating Generative Planners}\label{sec:rel:accel}
+
+Distillation, consistency-style objectives, solver improvements, and caching. The section
+distinguishes these from the present approach: they accelerate a model \emph{post hoc},
+whereas the few-step objective changes what is learned, and --- more importantly for a
+controller --- leaves the budget adjustable at deployment rather than baking in a new one.
+
+\section{Positioning of This Thesis}\label{sec:rel:positioning}
+
+One page. The gap in one sentence: \emph{the engine question and the constraint question have
+been studied separately, and the interaction between them --- which is where the cost
+actually lives in a receding-horizon controller --- has not been measured under matched
+conditions.} The section then states what this thesis adds that is not a combination of the
+above: the genuine-step condition, the regime split with its mechanism, and the removal of
+the selection machinery.
+
+% =============================================================================
+\chapter{Method}\label{ch:method}
+% =============================================================================
+
+\emph{Chapter summary.} The chapter is written as a sequence of deltas from the inherited
+system. It states what was taken unchanged, what was replaced, and what was added, and it
+keeps those three categories visibly separate --- both because it is honest and because the
+validity of every comparison depends on the first category being large.
+
+\section{Starting Point: Diffusion Predictive Control}\label{sec:method:dpcc}
+
+A compact but complete description of the inherited system: temporal U-Net backbone,
+diffusion engine, per-step projection onto a feasible set defined by dynamics and geometry,
+a candidate fan with selection rules, and receding-horizon execution. Presented at the level
+of detail needed to see exactly where the substitution is made.
+
+The section ends with a table of provenance --- inherited, modified, new --- at file
+granularity, which is the honest form of the ``we build on X'' sentence and feeds
+\ref{app:repro}. \srcnote{TARGET \S5.3}
+
+\section{Problem Formalisation}\label{sec:method:formalisation}
+
+Notation, once, for the whole thesis: state and observation, the horizon-length trajectory
+variable, the conditional generative model, the feasible set as the intersection of dynamics
+rows, box bounds and geometric inequalities, and the closed-loop map. The constrained
+sampling problem is stated in the form both arms attack, so that the difference between the
+arms is visible as a difference in \emph{where} the problem is posed rather than in what is
+being solved.
+
+\section{System Overview}\label{sec:method:overview}
+
+One figure and one page. The pipeline observation $\rightarrow$ conditional plan
+$\rightarrow$ constraint mechanism $\rightarrow$ executed action, with the two swappable
+blocks marked and everything else marked as held fixed. The figure is referenced throughout
+the results chapter; it should be drawn once and drawn well.
+
+\section{Generative Engine}\label{sec:method:engine}
+
+The substitution itself. Three engines are instantiated behind one interface: naive flow
+matching, the average-velocity few-step objective, and the bootstrapped-curriculum variant.
+The section gives each one's training target, states what changes in the sampler for each,
+and --- the point of the section --- shows that \emph{nothing outside the target and the
+integration loop changes}.
+
+Two sub-points carry real weight:
+
+\begin{itemize}
+  \item \textbf{The curriculum variant is a training-path difference, not a new objective.}
+    Its scalar interpolation parameter appears only in training and at one setting the two
+    targets coincide branch for branch. This has a consequence the thesis must state, because
+    it invalidated a set of earlier runs: a checkpoint trained at that setting \emph{is} the
+    predecessor engine, whatever the directory is called.
+  \item \textbf{The Jacobian-vector product constrains the architecture.} The few-step target
+    differentiates through the network, so every component inside the differentiated closure
+    must be forward-mode friendly. This is not a performance detail --- it determines how the
+    visual encoder may be attached (\ref{sec:method:backbone}).
+\end{itemize}
+
+\hole{Per TARGET \S8 kill criterion 1, the curriculum variant is now presented as an
+\emph{ablation and a negative result}, not as the top rung of an engine ladder. Keep it in
+this section --- it is a legitimate arm of the mechanism story --- but do not promise a win.
+The engine claim the thesis defends is the average-velocity objective.}
+
+\section{Backbone and Conditioning}\label{sec:method:backbone}
+
+Where the matched-architecture discipline is spelled out. One temporal U-Net at one
+parameter count is used by every engine, including the baseline's. For the vision-conditioned
+task, perception is a vendored encoder producing a fixed-width latent, and the generative
+backbone never sees an image --- so the latent is a clean interface boundary and the
+``same backbone'' claim is verifiable rather than asserted.
+
+The section then explains the one non-obvious construction this forces: because the few-step
+target needs a Jacobian-vector product, the encoder is evaluated \emph{once, outside} the
+differentiated closure and its output captured as a constant inside it. Without this the
+objective and the visual observation are incompatible. \srcnote{Methodology\_Sources/AUX\_visual\_aligning\_env.md \S3.1}
+
+Transformer-style backbones are declared out of scope with a reason rather than by omission:
+using them properly requires spatial features and cross-attention rather than a pooled
+latent, which is a different architecture and would break the parameter match.
+
+\section{Constraint Enforcement I: Per-Step Projection}\label{sec:method:proj}
+
+Arm~B, inherited. The nonlinear program, the solver, the activation threshold that decides
+at which points of the transport the projection is applied, and the candidate fan. The
+section notes what is projected --- the current iterate --- and flags that this point is
+off-manifold at early transport times, which is the fact the mechanism argument later uses.
+
+\section{Constraint Enforcement II: In-Loop Trajectory Optimisation}\label{sec:method:hardflow}
+
+Arm~C. The same feasible set and the same solver, but the optimisation is posed on the
+\emph{predicted clean endpoint} implied by the current iterate and velocity, and the result
+is pulled back into the transport before the next step. The section makes the structural
+comparison to arm~B explicit --- identical constraints, identical solver, different
+linearisation point --- because that is what licenses attributing any cost difference to the
+algorithm.
+
+The section also accounts honestly for what arm~C spends: it evaluates the network an extra
+time per guided step to form the endpoint estimate, so the two arms are \emph{not}
+evaluation-matched even when their step budgets are equal. This is stated here so that no
+results table has to carry the caveat.
+
+\section{When the Guided Sampler Is Not Guided}\label{sec:method:degenerate}
+
+\textbf{A short section carrying one of the thesis's contributions.} The activation
+convention that gates arm~C admits a regime in which the only active step is the terminal
+one. At the terminal time the lookahead vanishes, the pull-back becomes a full snap rather
+than a damped correction, and no subsequent step exists for the network to react to. What
+executes is projection applied to a finished sample --- arm~B's algorithm with a different
+solver.
+
+The section defines the genuine-step count as a function of the budget and the threshold,
+derives the boundary, and states the reporting rule the thesis enforces without exception:
+rows below the boundary are tagged and excluded from every claim; rows with a single genuine
+step are marked as carrying no attributable signal. The rule is applied to this work's own
+earlier measurements, several of which it invalidates --- which the thesis says so, in this
+section, rather than quietly dropping them.
+
+\section{Candidate Selection}\label{sec:method:selection}
+
+The projector's fan-and-select machinery, described and then examined. The section gives the
+three selection rules, and establishes analytically what the ablation later confirms
+empirically: at a fan of one the three rules are the \emph{same computation}, so evaluating
+all three is pure waste. This is stated as a proof obligation discharged here, so that the
+results chapter only has to handle the fan-greater-than-one case.
+
+\section{Closed-Loop Deployment}\label{sec:method:deployment}
+
+How a plan becomes a command, for both embodiments, in one section --- because the parallel
+is the substance of RQ4.
+
+For the manipulator, the model emits a Cartesian delta, the eval adds it to the current
+observation, and inverse kinematics closes the loop inside every timestep. For the aerial
+platform, the model emits a position delta which is accumulated into a running setpoint, and
+a cascaded PID converts the setpoint into rotor commands. In both cases the generative model
+replans at every timestep and never emits an actuator command.
+
+Two properties deserve to be named rather than left implicit. The setpoint recursion is a
+free-running integrator driven by the model's own past outputs, so plan error accumulates ---
+which is the structural reason the aerial task is the fragile one. And the observation fed
+back to the model contains that commanded setpoint alongside the measured state, so the
+model conditions on its own history.
+\srcnote{Methodology\_Sources/AUX\_uav\_control\_stack.md}
+
+% =============================================================================
+% CHAPTERS 5-8: BONE ONLY -- DELIBERATELY NOT WRITTEN
+% Nothing here is settled. Do not fill these in until the run queue in
+% Data_Analysis/DA_Result_Curated_MD/NOTEBOOK_20260829_key_headlines.md clears.
+% =============================================================================
+
+\chapter{Experimental Setup}\label{ch:setup}
+\section{Tasks and Environments}\label{sec:setup:tasks}
+\section{Datasets}\label{sec:setup:data}
+\section{Baselines}\label{sec:setup:baselines}
+\section{Metrics}\label{sec:setup:metrics}
+\section{Training and Evaluation Protocol}\label{sec:setup:protocol}
+
+\chapter{Results}\label{ch:results}
+\section{State-Based Manipulation}\label{sec:res:state}
+\section{Few-Step Engines}\label{sec:res:fewstep}
+\section{Constraint Arms}\label{sec:res:constraints}
+\section{Visual Observations}\label{sec:res:visual}
+\section{Aerial Trajectory Planning}\label{sec:res:uav}
+\section{Ablations}\label{sec:res:ablations}
+\section{Summary of Findings}\label{sec:res:summary}
+
+\chapter{Discussion}\label{ch:discussion}
+\section{Interpretation}\label{sec:disc:interpretation}
+\section{Negative and Inconclusive Results}\label{sec:disc:negative}
+\section{Threats to Validity}\label{sec:disc:threats}
+\section{Limitations}\label{sec:disc:limitations}
+
+\chapter{Conclusion}\label{ch:conclusion}
+\section{Summary}\label{sec:conc:summary}
+\section{Answers to the Research Questions}\label{sec:conc:rqs}
+\section{Future Work}\label{sec:conc:future}
+
+% =============================================================================
+\appendix{}
+
+\chapter{Derivations}\label{app:derivations}
+\chapter{Extended Results}\label{app:results}
+\chapter{Reproducibility}\label{app:repro}
+
+\microtypesetup{protrusion=false}
+
+\addchap{Abbreviations}
+\begin{acronym}
+  \itemsep-.25\baselineskip
+  \acro{TUM}[TUM]{Technical University of Munich}
+  \acro{FMPCC}[FM-PCC]{Flow Matching Predictive Control with Constraints}
+  \acro{MPC}[MPC]{Model Predictive Control}
+  \acro{NFE}[NFE]{Number of Function Evaluations}
+  \acro{ODE}[ODE]{Ordinary Differential Equation}
+  \acro{JVP}[JVP]{Jacobian-Vector Product}
+  \acro{NLP}[NLP]{Nonlinear Program}
+  % TODO: extend as the text grows
+\end{acronym}
+
+\listoffigures{}
+\listoftables{}
+
+\microtypesetup{protrusion=true}
+\printbibliography{}
+
+\end{document}
