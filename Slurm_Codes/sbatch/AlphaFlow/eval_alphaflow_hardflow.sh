@@ -81,16 +81,49 @@ if [ -f "$HOME/FMPCC/.wandb_api_key" ]; then
 fi
 
 # 4) HardFlow-arm knobs (all optional; defaults come from the YAML `hardflow:` block).
-#    HFFM_BATCH          candidate fan (mpc); 1 = faithful (‑r/‑c/‑t collapse), 4 = DPCC‑parity
+#    HFFM_BATCH          candidate fan (mpc) for the -r/-c/-t arms.
+#                        🔴 B4_PARITY (2026-08-20): DEFAULT IS NOW 4, was 1. arms A/B run
+#                        plan-block batch_size=4 and BOTH arms loop serially over candidates
+#                        around their CPU solve, so a 1-vs-4 fan is a 4x compute discount for
+#                        arm C that reads as a HardFlow SPEEDUP. Every historic result whose
+#                        folder carries the `B1` token was produced by the old default here.
+#                        Bare `hardflow_new` is pinned to 1 by resolve_hf_batch_size()
+#                        regardless of this value — that arm IS the faithful batch-1 control.
+#                        Set HFFM_BATCH=1 only to deliberately reproduce an old B1 run.
+#    FMPCC_MPC_BATCH     candidate fan (mpc) for arms A/B (`diffuser`, `dpcc-*`) — the SECOND,
+#                        independent fan. It was a hardcoded 4 in the plan block of
+#                        config/avoiding-d3il.py and therefore unsettable; HFFM_BATCH above has
+#                        only ever moved arm C. Keep the two EQUAL unless the mismatch IS the
+#                        experiment: both arms loop SERIALLY over candidates around their CPU
+#                        solve (projection.py scipy SLSQP / hardflow_projection.py IPOPT), so an
+#                        unequal fan scales one arm's projection wall-time and voids the timing
+#                        comparison — the B4_PARITY confound.
+#                        FMPCC_MPC_BATCH=1 HFFM_BATCH=1 -> a single candidate in EVERY arm, i.e.
+#                        MPC candidate selection switched OFF (dpcc-r/-c/-t and
+#                        hardflow_new-r/-c/-t then all collapse to index 0 — do not run the trio).
+#                        A value != 4 auto-tags the results path (FMPCC_RUN_MSG=mpc<N>) because
+#                        batch_size is not one of the folder-name tokens.
 #    HFFM_ACT_THRESHOLD  fraction of late steps the NLP is active (0.5 == DPCC threshold 0.5)
 #    HFFM_FLOW_STEPS     matched K for EVERY arm (drives plan-block flow_steps_v3 AND flow_steps)
-# ⚠️ plan_fm_v3_alphaflow.batch_size is 4, so arms A/B run a 4-candidate fan. HFFM_BATCH=1
-# reproduces the Gen3v6 fix_3 confound (B batched + selected, C batch-1). Use 4 for any
-# arm-B-vs-arm-C claim; 1 is the upstream-faithful headline only.
+# ✅ Gen3v7 was ALREADY on 4 here — it never produced a B1 run. Kept as-is; only the
+# rationale above was rewritten to match the repo-wide B4_PARITY rule.
 export HFFM_BATCH="${HFFM_BATCH:-4}"
 export HFFM_ACT_THRESHOLD="${HFFM_ACT_THRESHOLD:-0.5}"
+
+# ── [HFK1c 2026-08-30] HardFlow degeneracy guard knobs ────────────────────────────────────
+# A DEGENERATE arm (n_genuine == 0) runs NO HardFlow arithmetic — it is Pi_S(Euler sample)
+# = sample-then-project, == DPCC modulo solver/variable-scope — so the eval now DROPS it and
+# writes an HF_DEGENERATE_SKIPPED.txt sentinel instead of burning GPU on an uncitable row.
+#   FMPCC_HF_ALLOW_DEGENERATE=1  run it anyway. Only supported use: the projector-only
+#                                control, A=0.0 at K>=5 (terminal-only at any K).
+#   FMPCC_HF_MIN_GENUINE=2       also block THIN (one guided step); 0 disables the guard.
+# See logs_in_develop/aggregated_hardflow_lowK/AUDIT_20260830_*.md
+export FMPCC_HF_ALLOW_DEGENERATE="${FMPCC_HF_ALLOW_DEGENERATE:-}"
+export FMPCC_HF_MIN_GENUINE="${FMPCC_HF_MIN_GENUINE:-}"
+
+export FMPCC_MPC_BATCH="${FMPCC_MPC_BATCH:-4}"
 # export HFFM_FLOW_STEPS=2   # uncomment to force a specific matched K
-echo "[ hardflow ] HFFM_BATCH=$HFFM_BATCH  HFFM_ACT_THRESHOLD=$HFFM_ACT_THRESHOLD  HFFM_FLOW_STEPS=${HFFM_FLOW_STEPS:-<plan flow_steps>}"
+echo "[ hardflow ] HFFM_BATCH=$HFFM_BATCH (arm C)  FMPCC_MPC_BATCH=$FMPCC_MPC_BATCH (arms A/B)  HFFM_ACT_THRESHOLD=$HFFM_ACT_THRESHOLD  HFFM_FLOW_STEPS=${HFFM_FLOW_STEPS:-<plan flow_steps>}"
 
 # 5) Pre-flight gates. H1 pins the h=0 query, H3 the sigma=1.0 init noise, H4 that the h=0
 #    anchor was actually trained (af_ratio_fm > 0). All three fail SILENTLY at run time if
@@ -99,6 +132,7 @@ cd "$REPO"
 python FM_v3_alphaflow_test/gates_hardflow_alphaflow.py
 
 # 6) Run the unified Gen3v7 evaluation (reads config/alphaflow_projection_eval.yaml by default).
-python FM_v3_alphaflow_test/eval_flow_matching_v3_alphaflow.py
+# "$@" forwards submit.sh script args to the eval, e.g. --config <a pruned projection yaml>
+python FM_v3_alphaflow_test/eval_flow_matching_v3_alphaflow.py "$@"
 
 echo "Evaluation completed successfully."

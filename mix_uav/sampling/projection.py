@@ -179,6 +179,11 @@ class Projector:
         
         projection_costs = np.ones(batch_size, dtype=np.float32)
         sol_np = np.zeros((batch_size, self.horizon * self.transition_dim), dtype=np.float32)
+        # [SolverSwap 2026-08-27] ADD-ON, behaviour-neutral: record per-solve scipy
+        # convergence so a caller can COUNT failures. DPCC itself still silently keeps
+        # `res.x` on non-convergence — that is unchanged here on purpose, so arm B's
+        # numbers do not move. Read by HardFlowNLP._solve_slsqp for `nlp_failures`.
+        self.last_solve_success = []
         for i in range(batch_size):
             # Cost
             cost_fun = lambda x: 0.5 * x @ Q @ x + r_np_double[i] @ x # + (A_double @ x - b_double) @ (A_double @ x - b_double)
@@ -209,8 +214,21 @@ class Projector:
                 self._cost_exploded_count = getattr(self, '_cost_exploded_count', 0) + 1
                 print(f'[ projector ] solve backstop hit ({_PROJ_SOLVE_BACKSTOP_S:.0f}s) '
                       f'— kept unprojected trajectory (batch {i}).', flush=True)
+                # 🔴 [SolverSwap FIX 2026-08-30] This append is REQUIRED and must stay
+                # BEFORE the `continue`. Without it the backstop path recorded nothing,
+                # so `HardFlowNLP._solve_slsqp`'s
+                #     n_bad = sum(1 for ok in last_solve_success if not ok)
+                # counted soft non-convergence but was BLIND to the hard failures — a
+                # timed-out solve whose trajectory is kept UNPROJECTED at cost=inf, which
+                # is the most severe outcome this loop can produce. `nlp_failures` therefore
+                # under-reported exactly the failures that matter most.
+                # It also keeps the list index-aligned with the batch: one entry per
+                # element, so last_solve_success[i] really is element i for any future
+                # caller that indexes rather than counts.
+                self.last_solve_success.append(False)
                 continue
 
+            self.last_solve_success.append(bool(res.success))
             sol_np[i] = res.x
             projection_costs[i] = 0.5 * sol_np[i] @ Q @ sol_np[i] + r_np[i] @ sol_np[i] + 0.5 * trajectory_np[i] @ Q @ trajectory_np[i]
 

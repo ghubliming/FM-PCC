@@ -1,0 +1,5208 @@
+{
+  "n_candidates": 24,
+  "n_units": 518,
+  "candidates": {
+    "1": {
+      "name": "H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2",
+      "display_name": "H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/(Bf_U8_Legacy_complex_struct)H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv2/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": [],
+      "snapshots": {
+        "latest": "20260705_165238",
+        "first": "20260705_104449",
+        "count": 2,
+        "per_seed": {
+          "6": "20260705_165238"
+        },
+        "n_seeds_stamped": 1
+      },
+      "legacy": false,
+      "legacy_kind": "",
+      "has_projector": true,
+      "bridge_manifest": ""
+    },
+    "2": {
+      "name": "H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2",
+      "display_name": "H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/(legacy_correcct_besides_bounds_for_comapre)H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv2/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": [],
+      "snapshots": {
+        "latest": "20260701_124103",
+        "first": "20260701_124103",
+        "count": 1,
+        "per_seed": {
+          "6": "20260701_124103"
+        },
+        "n_seeds_stamped": 1
+      },
+      "legacy": false,
+      "legacy_kind": "",
+      "has_projector": true,
+      "bridge_manifest": ""
+    },
+    "3": {
+      "name": "H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2",
+      "display_name": "H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv2/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": [],
+      "snapshots": {
+        "latest": "20260712_000657",
+        "first": "20260705_165350",
+        "count": 2,
+        "per_seed": {
+          "6": "20260712_000657"
+        },
+        "n_seeds_stamped": 1
+      },
+      "legacy": false,
+      "legacy_kind": "",
+      "has_projector": true,
+      "bridge_manifest": ""
+    },
+    "4": {
+      "name": "H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1",
+      "display_name": "H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps900_bs64_filmv1/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": [],
+      "snapshots": {
+        "latest": "20260712_120358",
+        "first": "20260701_140346",
+        "count": 3,
+        "per_seed": {
+          "6": "20260712_120358"
+        },
+        "n_seeds_stamped": 1
+      },
+      "legacy": false,
+      "legacy_kind": "",
+      "has_projector": true,
+      "bridge_manifest": ""
+    },
+    "5": {
+      "name": "H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf",
+      "display_name": "H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_af/H8_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Eaf_tslogit_normal_afschconstant_AFAFconst0p05/H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": [],
+      "snapshots": {
+        "latest": "20260831_020427",
+        "first": "20260831_020427",
+        "count": 1,
+        "per_seed": {
+          "6": "20260831_020427"
+        },
+        "n_seeds_stamped": 1
+      },
+      "legacy": false,
+      "legacy_kind": "",
+      "has_projector": true,
+      "bridge_manifest": ""
+    },
+    "6": {
+      "name": "H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf",
+      "display_name": "H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_af/H8_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Eaf_tslogit_normal_afschsigmoid/H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": [],
+      "snapshots": {
+        "latest": "20260802_205904",
+        "first": "20260802_205904",
+        "count": 1,
+        "per_seed": {
+          "6": "20260802_205904"
+        },
+        "n_seeds_stamped": 1
+      },
+      "legacy": false,
+      "legacy_kind": "",
+      "has_projector": true,
+      "bridge_manifest": ""
+    },
+    "7": {
+      "name": "H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf",
+      "display_name": "H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_af/H8_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Eaf_tslogit_normal_afschsigmoid/H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": [],
+      "snapshots": {
+        "latest": "20260805_001511",
+        "first": "20260804_103728",
+        "count": 2,
+        "per_seed": {
+          "6": "20260805_001511"
+        },
+        "n_seeds_stamped": 1
+      },
+      "legacy": false,
+      "legacy_kind": "",
+      "has_projector": true,
+      "bridge_manifest": ""
+    },
+    "8": {
+      "name": "H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv2_Eaf",
+      "display_name": "H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv2_Eaf",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_af/H8_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv2_Eaf_tslogit_normal_afschsigmoid/H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv2_Eaf",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": [],
+      "snapshots": {
+        "latest": "20260811_075845",
+        "first": "20260811_075845",
+        "count": 1,
+        "per_seed": {
+          "6": "20260811_075845"
+        },
+        "n_seeds_stamped": 1
+      },
+      "legacy": false,
+      "legacy_kind": "",
+      "has_projector": true,
+      "bridge_manifest": ""
+    },
+    "9": {
+      "name": "H8_K100_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4_filmv1_Ediffusion",
+      "display_name": "H8_K100_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4_filmv1_Ediffusion",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_diffusion/H8_K100_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv1_Ediffusion/H8_K100_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4_filmv1_Ediffusion",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": [],
+      "snapshots": {
+        "latest": "20260807_022558",
+        "first": "20260807_022558",
+        "count": 1,
+        "per_seed": {
+          "6": "20260807_022558"
+        },
+        "n_seeds_stamped": 1
+      },
+      "legacy": false,
+      "legacy_kind": "",
+      "has_projector": true,
+      "bridge_manifest": ""
+    },
+    "10": {
+      "name": "H8_K20_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4_filmv1_Ediffusion",
+      "display_name": "H8_K20_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4_filmv1_Ediffusion",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_diffusion/H8_K20_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv1_Ediffusion/H8_K20_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4_filmv1_Ediffusion",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": [],
+      "snapshots": {
+        "latest": "20260809_152309",
+        "first": "20260809_152309",
+        "count": 1,
+        "per_seed": {
+          "6": "20260809_152309"
+        },
+        "n_seeds_stamped": 1
+      },
+      "legacy": false,
+      "legacy_kind": "",
+      "has_projector": true,
+      "bridge_manifest": ""
+    },
+    "11": {
+      "name": "H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm",
+      "display_name": "H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_fm/H8_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Efm/H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": [],
+      "snapshots": {
+        "latest": "20260807_013907",
+        "first": "20260807_013907",
+        "count": 1,
+        "per_seed": {
+          "6": "20260807_013907"
+        },
+        "n_seeds_stamped": 1
+      },
+      "legacy": false,
+      "legacy_kind": "",
+      "has_projector": true,
+      "bridge_manifest": ""
+    },
+    "12": {
+      "name": "H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm",
+      "display_name": "H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_fm/H8_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Efm/H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": [],
+      "snapshots": {
+        "latest": "20260902_182224",
+        "first": "20260831_143309",
+        "count": 3,
+        "per_seed": {
+          "6": "20260902_182224"
+        },
+        "n_seeds_stamped": 1
+      },
+      "legacy": false,
+      "legacy_kind": "",
+      "has_projector": true,
+      "bridge_manifest": ""
+    },
+    "13": {
+      "name": "H8_K20_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm",
+      "display_name": "H8_K20_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_fm/H8_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Efm/H8_K20_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": [],
+      "snapshots": {
+        "latest": "20260809_160914",
+        "first": "20260809_160914",
+        "count": 1,
+        "per_seed": {
+          "6": "20260809_160914"
+        },
+        "n_seeds_stamped": 1
+      },
+      "legacy": false,
+      "legacy_kind": "",
+      "has_projector": true,
+      "bridge_manifest": ""
+    },
+    "14": {
+      "name": "H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_Bdit_Emf",
+      "display_name": "H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_Bdit_Emf",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_Bdit_Emf_tslogit_normal_TB80pct/H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_Bdit_Emf",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": [],
+      "snapshots": {
+        "latest": "20260823_004343",
+        "first": "20260823_004343",
+        "count": 1,
+        "per_seed": {
+          "6": "20260823_004343"
+        },
+        "n_seeds_stamped": 1
+      },
+      "legacy": false,
+      "legacy_kind": "",
+      "has_projector": true,
+      "bridge_manifest": ""
+    },
+    "15": {
+      "name": "H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_Bmf_dit_Emf",
+      "display_name": "H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_Bmf_dit_Emf",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_Bmf_dit_Emf_tslogit_normal_VPTrue_VLR0.1_VCadaln/H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_Bmf_dit_Emf",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": [],
+      "snapshots": {
+        "latest": "20260825_184214",
+        "first": "20260825_184214",
+        "count": 1,
+        "per_seed": {
+          "6": "20260825_184214"
+        },
+        "n_seeds_stamped": 1
+      },
+      "legacy": false,
+      "legacy_kind": "",
+      "has_projector": true,
+      "bridge_manifest": ""
+    },
+    "16": {
+      "name": "H8_K100_Meuler_T0.1_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf",
+      "display_name": "H8_K100_Meuler_T0.1_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Emf_tslogit_normal/H8_K100_Meuler_T0.1_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": [],
+      "snapshots": {
+        "latest": "20260830_095703",
+        "first": "20260830_095703",
+        "count": 1,
+        "per_seed": {
+          "6": "20260830_095703"
+        },
+        "n_seeds_stamped": 1
+      },
+      "legacy": false,
+      "legacy_kind": "",
+      "has_projector": true,
+      "bridge_manifest": ""
+    },
+    "17": {
+      "name": "H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf",
+      "display_name": "H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Emf_tslogit_normal/H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": [],
+      "snapshots": {
+        "latest": "20260802_082013",
+        "first": "20260802_082013",
+        "count": 1,
+        "per_seed": {
+          "6": "20260802_082013"
+        },
+        "n_seeds_stamped": 1
+      },
+      "legacy": false,
+      "legacy_kind": "",
+      "has_projector": true,
+      "bridge_manifest": ""
+    },
+    "18": {
+      "name": "H8_K10_Meuler_T0.4_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf",
+      "display_name": "H8_K10_Meuler_T0.4_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Emf_tslogit_normal/H8_K10_Meuler_T0.4_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": [],
+      "snapshots": {
+        "latest": "20260901_133614",
+        "first": "20260901_133614",
+        "count": 1,
+        "per_seed": {
+          "6": "20260901_133614"
+        },
+        "n_seeds_stamped": 1
+      },
+      "legacy": false,
+      "legacy_kind": "",
+      "has_projector": true,
+      "bridge_manifest": ""
+    },
+    "19": {
+      "name": "H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf",
+      "display_name": "H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Emf_tslogit_normal/H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": [],
+      "snapshots": {
+        "latest": "20260831_143257",
+        "first": "20260831_143257",
+        "count": 1,
+        "per_seed": {
+          "6": "20260831_143257"
+        },
+        "n_seeds_stamped": 1
+      },
+      "legacy": false,
+      "legacy_kind": "",
+      "has_projector": true,
+      "bridge_manifest": ""
+    },
+    "20": {
+      "name": "H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf",
+      "display_name": "H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Emf_tslogit_normal/H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": [],
+      "snapshots": {
+        "latest": "20260804_225021",
+        "first": "20260804_104636",
+        "count": 3,
+        "per_seed": {
+          "6": "20260804_225021"
+        },
+        "n_seeds_stamped": 1
+      },
+      "legacy": false,
+      "legacy_kind": "",
+      "has_projector": true,
+      "bridge_manifest": ""
+    },
+    "21": {
+      "name": "H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv2_Emf",
+      "display_name": "H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv2_Emf",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv2_Emf_tslogit_normal/H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv2_Emf",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": [],
+      "snapshots": {
+        "latest": "20260811_035053",
+        "first": "20260811_035053",
+        "count": 1,
+        "per_seed": {
+          "6": "20260811_035053"
+        },
+        "n_seeds_stamped": 1
+      },
+      "legacy": false,
+      "legacy_kind": "",
+      "has_projector": true,
+      "bridge_manifest": ""
+    },
+    "22": {
+      "name": "H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2",
+      "display_name": "H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2",
+      "seeds": [
+        6
+      ],
+      "missing_seeds": [],
+      "snapshots": {
+        "latest": "20260717_011450",
+        "first": "20260707_010430",
+        "count": 2,
+        "per_seed": {
+          "6": "20260717_011450"
+        },
+        "n_seeds_stamped": 1
+      },
+      "legacy": false,
+      "legacy_kind": "",
+      "has_projector": true,
+      "bridge_manifest": ""
+    },
+    "23": {
+      "name": "d3il_baseline_ddpm_encdec_vision",
+      "display_name": "d3il_baseline_ddpm_encdec_vision",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline/d3il_baseline_ddpm_encdec_vision",
+      "seeds": [
+        42
+      ],
+      "missing_seeds": [],
+      "snapshots": {
+        "latest": "20260701_013505",
+        "first": "20260701_013505",
+        "count": 1,
+        "per_seed": {
+          "42": "20260701_013505"
+        },
+        "n_seeds_stamped": 1
+      },
+      "legacy": true,
+      "legacy_kind": "d3il_visual_aligning_baseline",
+      "has_projector": false,
+      "bridge_manifest": "/data/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline/_bridge_manifest.json"
+    },
+    "24": {
+      "name": "d3il_baseline_ddpm_encdec_vision__Bf_U3",
+      "display_name": "d3il_baseline_ddpm_encdec_vision__Bf_U3",
+      "path": "/data/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline_Bf_U3/d3il_baseline_ddpm_encdec_vision__Bf_U3",
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        42
+      ],
+      "missing_seeds": [],
+      "snapshots": {
+        "latest": "20260620_215600",
+        "first": "20260620_130306",
+        "count": 6,
+        "per_seed": {
+          "0": "20260620_170326",
+          "1": "20260620_135000",
+          "2": "20260620_175026",
+          "3": "20260620_130306",
+          "4": "20260620_210858",
+          "42": "20260620_215600"
+        },
+        "n_seeds_stamped": 6
+      },
+      "legacy": true,
+      "legacy_kind": "d3il_visual_aligning_baseline",
+      "has_projector": false,
+      "bridge_manifest": "/data/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline_Bf_U3/_bridge_manifest.json"
+    }
+  },
+  "units": [
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "json",
+      "legacy": false
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_bounds_only",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_bounds_only",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_bounds_only",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_bounds_only",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_bounds_only",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_bounds_only",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_bounds_only",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_bounds_only",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_bounds_only",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_bounds_only",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_bounds_only",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 1,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 2,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 2,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 2,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 2,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 2,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 2,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 2,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c",
+      "source": "json",
+      "legacy": false
+    },
+    {
+      "Candidate": 2,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 2,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 2,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 2,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 2,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c",
+      "source": "json",
+      "legacy": false
+    },
+    {
+      "Candidate": 3,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "geo_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "geo_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "geo_free-model_free",
+      "source": "json",
+      "legacy": false
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 4,
+      "seed": 6,
+      "split": "train",
+      "geo": "dynamics_only",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free-model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "model_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 5,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 6,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "json",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "hardflow_new-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "hardflow_new-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "hardflow_new-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free-model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "hardflow_new-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "hardflow_new-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "hardflow_new-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "model_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 7,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free-model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "model_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 8,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 9,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 9,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "json",
+      "legacy": false
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 10,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "post_processing",
+      "source": "json",
+      "legacy": false
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 11,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "json",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "hardflow_sls-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "hardflow_sls-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "hardflow_sls-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free-model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "hardflow_sls-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "hardflow_sls-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "hardflow_sls-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "model_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 12,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 13,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 13,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 13,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 13,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 13,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 13,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 13,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-bounds_free",
+      "source": "json",
+      "legacy": false
+    },
+    {
+      "Candidate": 13,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 13,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 13,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free-model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "model_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 14,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free-model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "model_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 15,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 16,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 16,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 16,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 16,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 16,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 16,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 16,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 16,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 16,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 16,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 16,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 16,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 16,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 16,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "hardflow_sls-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 16,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "hardflow_sls-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 16,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "hardflow_sls-t",
+      "source": "json",
+      "legacy": false
+    },
+    {
+      "Candidate": 16,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 16,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 16,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 17,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 17,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "json",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "hardflow_sls-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "hardflow_sls-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "hardflow_sls-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free-model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "hardflow_sls-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "hardflow_sls-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "hardflow_sls-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "model_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 18,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "hardflow_sls-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "hardflow_sls-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "hardflow_sls-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free-model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "hardflow_sls-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "hardflow_sls-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "hardflow_sls-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "model_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 19,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "hardflow_new-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "hardflow_new-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "hardflow_new-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free-model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "hardflow_new-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "hardflow_new-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "hardflow_new-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "model_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 20,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free-model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "model_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 21,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "model_free",
+      "source": "json",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "test",
+      "geo": "combined_5",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "geo_free-model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "diffuser",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt0p25",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt0p5",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt2p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-c-dt4p0",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-r",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "dpcc-t",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free-bounds_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "geo_free-model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "gradient",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "model_free",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 22,
+      "seed": 6,
+      "split": "train",
+      "geo": "combined_5-tightened",
+      "variant": "post_processing",
+      "source": "npz",
+      "legacy": false
+    },
+    {
+      "Candidate": 23,
+      "seed": 42,
+      "split": "test",
+      "geo": "none",
+      "variant": "d3il_baseline",
+      "source": "npz",
+      "legacy": true
+    },
+    {
+      "Candidate": 24,
+      "seed": 0,
+      "split": "test",
+      "geo": "none",
+      "variant": "d3il_baseline",
+      "source": "npz",
+      "legacy": true
+    },
+    {
+      "Candidate": 24,
+      "seed": 1,
+      "split": "test",
+      "geo": "none",
+      "variant": "d3il_baseline",
+      "source": "npz",
+      "legacy": true
+    },
+    {
+      "Candidate": 24,
+      "seed": 2,
+      "split": "test",
+      "geo": "none",
+      "variant": "d3il_baseline",
+      "source": "npz",
+      "legacy": true
+    },
+    {
+      "Candidate": 24,
+      "seed": 3,
+      "split": "test",
+      "geo": "none",
+      "variant": "d3il_baseline",
+      "source": "npz",
+      "legacy": true
+    },
+    {
+      "Candidate": 24,
+      "seed": 4,
+      "split": "test",
+      "geo": "none",
+      "variant": "d3il_baseline",
+      "source": "npz",
+      "legacy": true
+    },
+    {
+      "Candidate": 24,
+      "seed": 42,
+      "split": "test",
+      "geo": "none",
+      "variant": "d3il_baseline",
+      "source": "npz",
+      "legacy": true
+    }
+  ]
+}

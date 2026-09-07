@@ -1,9 +1,19 @@
 #!/usr/bin/env python3
-"""clean_weights.py — safely prune periodic training checkpoints, keep only the best.
+"""clean_weights.py — safely prune periodic training checkpoints, keep best + latest.
 
 Deletes:   .../<run>/<seed>/state_<epoch>.pt   (periodic snapshots, e.g. state_80000.pt)
-Keeps:     .../<run>/<seed>/state_best.pt      (best; each .pt bundles model + ema)
-           everything else (state_best.pt, *.pth baselines, *.pkl, gifs, plans, ...)
+           — EXCEPT the highest-numbered checkpoint per directory (see "latest" below).
+Keeps:     .../<run>/<seed>/state_best.pt      (best validation; bundles model + ema)
+           .../<run>/<seed>/state_<max>.pt     (highest epoch = de-facto "latest")
+           everything else (*.pth baselines, *.pkl, gifs, plans, ...)
+
+Why keep the latest?
+    The trainers have no state_latest.pt file. At resume time,
+    find_latest_checkpoint_step() scans for the highest-numbered state_<digits>.pt.
+    Deleting ALL numbered checkpoints made training un-resumable; only state_best.pt
+    survived (the last *validation improvement*, potentially much older than where
+    training actually reached). Keeping the highest-numbered file preserves both
+    eval/deploy (state_best.pt) AND training-resume capability.
 
 Safety
 ------
@@ -11,6 +21,7 @@ Safety
 * Best-gated: a directory is pruned ONLY if it contains a state_best.pt. Directories
   with numbered checkpoints but NO state_best.pt (crashed / still-running jobs) are
   SKIPPED and reported, so a run never loses its only weights.
+* Latest-kept: the highest-numbered checkpoint in each directory is always preserved.
 * Tight match: only files matching  state_<digits>.pt  are ever removed.
 * Full audit log written to  <root>/_clean_weights_runlogs/clean_weights_<ts>.log
   with BEFORE (sizes + free disk), the DELETE/SKIP manifest, and AFTER (freed bytes).
@@ -87,11 +98,17 @@ def is_excluded(fp: Path, root: Path, anc: list[Path], globs: list[str]) -> bool
     return False
 
 
+def _epoch_from_name(name: str) -> int:
+    """Extract the epoch number from a state_<digits>.pt filename."""
+    return int(name.replace("state_", "").replace(".pt", ""))
+
+
 def scan(root: Path, runlogs_dir: Path, anc: list[Path], globs: list[str]):
     """Single walk: total size, per-top-level sizes, and periodic-checkpoint candidates.
 
     Returns (total_bytes, per_top {name: bytes}, to_delete [(path, size, mtime)],
-             nobest_dirs set[Path], excluded [(path, size)]).
+             nobest_dirs set[Path], excluded [(path, size)],
+             kept_latest [(path, size, epoch)]).
     """
     total = 0
     per_top: dict[str, int] = {}
@@ -127,22 +144,43 @@ def scan(root: Path, runlogs_dir: Path, anc: list[Path], globs: list[str]):
             if PERIODIC_RE.match(name):
                 candidates.append((fp, st.st_size))
 
+    # ---- group candidates by parent dir, keep the highest-numbered per dir ----
+    from collections import defaultdict
+    by_dir: dict[str, list[tuple[Path, int]]] = defaultdict(list)
+    for fp, size in candidates:
+        by_dir[str(fp.parent)].append((fp, size))
+
     to_delete: list[tuple[Path, int, float]] = []
     nobest_dirs: set[Path] = set()
     excluded: list[tuple[Path, int]] = []
-    for fp, size in candidates:
-        if is_excluded(fp, root, anc, globs):
-            excluded.append((fp, size))
-        elif str(fp.parent) in has_best:
-            to_delete.append((fp, size, fp.stat().st_mtime))
-        else:
-            nobest_dirs.add(fp.parent)
+    kept_latest: list[tuple[Path, int, int]] = []   # (path, size, epoch)
 
-    return total, per_top, to_delete, nobest_dirs, excluded
+    for dirpath_s, dir_cands in by_dir.items():
+        # Find the highest-numbered checkpoint in this directory
+        max_epoch = -1
+        max_fp: Path | None = None
+        max_sz = 0
+        for fp, size in dir_cands:
+            epoch = _epoch_from_name(fp.name)
+            if epoch > max_epoch:
+                max_epoch, max_fp, max_sz = epoch, fp, size
+
+        for fp, size in dir_cands:
+            if is_excluded(fp, root, anc, globs):
+                excluded.append((fp, size))
+            elif dirpath_s not in has_best:
+                nobest_dirs.add(fp.parent)
+            elif fp == max_fp:
+                # This is the highest-numbered checkpoint — keep it (de-facto latest)
+                kept_latest.append((fp, size, max_epoch))
+            else:
+                to_delete.append((fp, size, fp.stat().st_mtime))
+
+    return total, per_top, to_delete, nobest_dirs, excluded, kept_latest
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Prune periodic checkpoints, keep state_best.pt.")
+    ap = argparse.ArgumentParser(description="Prune periodic checkpoints, keep state_best.pt + latest.")
     ap.add_argument("--root", type=Path, default=DEFAULT_ROOT,
                     help=f"logs root to scan (default: {DEFAULT_ROOT})")
     ap.add_argument("--apply", action="store_true",
@@ -176,7 +214,7 @@ def main() -> int:
         print(" excl : " + ", ".join(args.exclude))
 
     # ---- BEFORE scan --------------------------------------------------------
-    total_before, per_top, to_delete, nobest_dirs, excluded = scan(
+    total_before, per_top, to_delete, nobest_dirs, excluded, kept_latest = scan(
         root, runlogs_dir, anc, globs)
     free_before = shutil.disk_usage(root).free
     reclaimable = sum(sz for _, sz, _ in to_delete)
@@ -198,6 +236,10 @@ def main() -> int:
     w("per-top-level folder:")
     for name in sorted(per_top, key=lambda k: -per_top[k]):
         w(f"  {human(per_top[name]):>10}  {name}")
+    w()
+    w("== KEPT LATEST (highest-numbered checkpoint per dir) ==")
+    for fp, sz, ep in sorted(kept_latest):
+        w(f"KEEP-LATEST {human(sz):>10}  epoch={ep}  {fp}")
     w()
     w("== DELETE MANIFEST (file | size | mtime) ==")
     for fp, sz, mt in sorted(to_delete):
@@ -247,6 +289,10 @@ def main() -> int:
     # ---- console summary ----------------------------------------------------
     print()
     print(f"BEFORE  total {human(total_before)} | free disk {human(free_before)}")
+    if kept_latest:
+        kept_bytes = sum(sz for _, sz, _ in kept_latest)
+        print(f"Kept as latest (highest epoch)  : {len(kept_latest)} file(s), "
+              f"{human(kept_bytes)}")
     print(f"Periodic checkpoints to delete : {len(to_delete)}")
     if excluded:
         excl_bytes = sum(sz for _, sz in excluded)

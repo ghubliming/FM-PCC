@@ -1,0 +1,14 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+[ fix_16 ] SAFE_EPS_MODE='legacy' SAFE_EPS_FRAC='1e-3' EVAL_TAG='fix16legacy'
+[ hardflow ] guard: FMPCC_HF_MIN_GENUINE='<default 1>' FMPCC_HF_ALLOW_DEGENERATE='<unset>' HFFM_ACT_THRESHOLD='<config default>'
+================================================================================
+UAV-MIX K SWEEP  Wed Sep  2 18:22:19 UTC 2026   engine=mf  scene=pillars  seeds=[6]  K=[1 2 5]  proj=fm_only  record=none
+================================================================================
+  eval   engine=mf scene=pillars K=1  → Job 25316
+  eval   engine=mf scene=pillars K=2  → Job 25317
+  eval   engine=mf scene=pillars K=5  → Job 25318
+--------------------------------------------------------------------------------
+Submitted 3 eval jobs (one per K).
+Results: logs/UAV_MIX/uav-<scene>/plans/mix_uav_mf/<train-id>/Emf_K<k>_.../<seed>/<variant>/results.json
+Repeat for every arm with the SAME K list, then compare at matched K.
+================================================================================

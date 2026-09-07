@@ -5,18 +5,21 @@
 Stdlib only, on a synthetic tree — so unlike the pandas-based DA / viewer tests
 this one runs in the AI-coding container as well as on the cluster.
 
-It covers the four places the feature lives, and in particular that they agree:
+It covers the six places the feature lives, and in particular that they agree:
 
   DA_VA_v2/discovery.py                      scan_snapshot_timestamps + formatters
   DA_Code_v3/multi_candidate_discovery.py    the sibling copy (generation pattern)
+  DA_UAV_v1/discovery.py                     the UAV fork of DA_VA_v2 (Gen15)
   Visualizer/index.html                      _fmt_stamp, exec'd standalone
   Visualizer_VA_v2/index.html                the same function, inherited via
                                              build_from_dav3.py
+  Visualizer_UAV_v1/index.html               inherited again via build_from_va2.py
 
 A drift between the pipeline formatter and the page formatter would show up as
 two different renderings of the same run in the CSV and in the Path Audit Map,
 which is exactly the confusion the column exists to remove.
 """
+import importlib
 import os
 import re
 import shutil
@@ -35,6 +38,30 @@ sys.path.insert(0, HERE)
 
 import discovery as va2                                              # noqa: E402
 import multi_candidate_discovery as dav3                             # noqa: E402
+
+# Every DA generation ships its own top-level `config`, imported by bare name, so
+# two copies of `discovery` cannot sit in sys.modules at once. Load the UAV fork
+# with its own siblings, then put DA_VA_v2's back exactly as it was.
+_SHARED = ('config', 'discovery', 'utils', 'data_loader', 'aggregator', 'reporter')
+
+
+def load_discovery(folder, label):
+    stashed = {k: sys.modules.pop(k) for k in _SHARED if k in sys.modules}
+    sys.path.insert(0, folder)
+    try:
+        mod = importlib.import_module('discovery')
+        got = os.path.dirname(os.path.abspath(mod.__file__))
+        if got != folder:
+            sys.exit(f'{label}: imported {mod.__file__}, expected it under {folder}')
+        return mod
+    finally:
+        sys.path.remove(folder)
+        for k in _SHARED:
+            sys.modules.pop(k, None)
+        sys.modules.update(stashed)
+
+
+uav = load_discovery(os.path.join(ROOT, 'Data_Analysis', 'DA_UAV_v1'), 'DA_UAV_v1')
 
 failures = []
 
@@ -122,11 +149,16 @@ try:
     eq('a seed list with nothing stamped yields empty',
        va2.scan_snapshot_timestamps(multi, [8])['latest'], '')
 
-    print('\nDA_VA_v2 and DA_Code_v3 copies agree')
+    print('\nDA_VA_v2, DA_Code_v3 and DA_UAV_v1 copies agree')
     for path in (multi, none, wide):
         name = os.path.basename(path)
-        eq(f'{name}: identical scan result',
+        eq(f'{name}: DA_Code_v3 identical scan result',
            dav3.scan_snapshot_timestamps(path), va2.scan_snapshot_timestamps(path))
+        eq(f'{name}: DA_UAV_v1 identical scan result',
+           uav.scan_snapshot_timestamps(path), va2.scan_snapshot_timestamps(path))
+    eq('DA_UAV_v1 honours an explicit seed list the same way',
+       uav.scan_snapshot_timestamps(multi, [6])['latest'],
+       va2.scan_snapshot_timestamps(multi, [6])['latest'])
 
     print('\nformatters')
     eq('compact stamp -> human stamp',
@@ -136,6 +168,11 @@ try:
     eq('unparseable passes through', va2.format_snapshot_ts('whenever'), 'whenever')
     eq('DA_Code_v3 formats identically',
        dav3.format_snapshot_ts('20260506_034806'), va2.format_snapshot_ts('20260506_034806'))
+    eq('DA_UAV_v1 formats identically',
+       uav.format_snapshot_ts('20260506_034806'), va2.format_snapshot_ts('20260506_034806'))
+    eq('DA_UAV_v1 sorts per-seed strings identically',
+       uav.snapshot_by_seed_str(uav.scan_snapshot_timestamps(wide)['per_seed']),
+       va2.snapshot_by_seed_str(va2.scan_snapshot_timestamps(wide)['per_seed']))
     eq('per-seed string sorts seeds numerically, not lexicographically',
        va2.snapshot_by_seed_str(va2.scan_snapshot_timestamps(wide)['per_seed']),
        '6:20260101_000000 | 10:20260102_120000')
@@ -143,7 +180,8 @@ try:
 
     print('\nthe HTML pages format stamps the same way')
     pages = [os.path.join(ROOT, 'Data_Analysis', 'Visualizer', 'index.html'),
-             os.path.join(ROOT, 'Data_Analysis', 'Visualizer_VA_v2', 'index.html')]
+             os.path.join(ROOT, 'Data_Analysis', 'Visualizer_VA_v2', 'index.html'),
+             os.path.join(ROOT, 'Data_Analysis', 'Visualizer_UAV_v1', 'index.html')]
     samples = ['20260506_034806', '', 'nan', 'None', 'whenever', '2026-05-06 03:48:06']
     for page in pages:
         label = os.path.basename(os.path.dirname(page))

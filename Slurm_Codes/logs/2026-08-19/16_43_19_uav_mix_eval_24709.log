@@ -1,0 +1,54 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Wed Aug 19 14:43:25 UTC 2026  |  uav_mix_eval  |  ID 24709  |  NODE i6-gpu-1
+ENGINE: mf   SCENE: corridor   SEEDS: 6   N_TRIALS: 10   K: 2
+GIT REV:   73df781
+================================================================================
+[ env-select ] config/uav.py controller='pid_stopgo' -> conda env 'FMPCC'
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=1  MUJOCO_EGL_DEVICE_ID=1
+--------------------------------------------------------------------------------
+[ uav_mix_eval ] seed 1/1: engine=mf scene=corridor seed=6  Wed Aug 19 14:43:25 UTC 2026
+[ uav_mix_eval ] python mix_uav_test/eval_mix_uav.py --engine mf --scene corridor --seed 6 --n-trials 10 --projection fm_only --record none --flow-steps 2
+[ eval ] Gen15 UAV Mix-ML — engine: mf  (MeanFlow (Gen3v6, arXiv 2505.13447))
+[ eval ] K override from --flow-steps: 2
+[ eval ] seed=6  (source: --seed CLI)
+[ eval ] n_trials=10  (source: --n-trials CLI)
+[ eval ] HardFlow arm: +3 variants ['hardflow_new', 'hardflow_new-c', 'hardflow_new-t'] (from config/uav_mix.py, NOT the shared yaml)
+
+[ utils/serialization ] Loading model from logs/UAV_MIX/uav-corridor/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/6
+
+
+                    [ utils/normalization ] Constant data in dimension 1 | max = min = 0.0
+
+                    [ utils/normalization ] Constant data in dimension 2 | max = min = 0.0
+
+                    [ utils/normalization ] Constant data in dimension 0 | max = min = 0.0
+[ datasets/buffer ] Fields:
+    observations: (500, 360, 6)
+    actions: (500, 360, 3)
+    rewards: (500, 360, 1)
+    terminals: (500, 360, 1)
+    normed_observations: (500, 360, 6)
+    normed_actions: (500, 360, 3)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/mix_uav_test/eval_mix_uav.py", line 1831, in <module>
+    main()
+  File "/data/home/llim/FMPCC/FM-PCC/mix_uav_test/eval_mix_uav.py", line 1814, in main
+    summaries[_s] = eval_scene(_s, args)
+  File "/data/home/llim/FMPCC/FM-PCC/mix_uav_test/eval_mix_uav.py", line 1704, in eval_scene
+    model_fm, dataset, parsed, horizon = build_experiment(
+  File "/data/home/llim/FMPCC/FM-PCC/mix_uav_test/eval_mix_uav.py", line 197, in build_experiment
+    experiment = utils.load_diffusion(args.savepath, epoch=ep, device=device, override_args=args)
+  File "/data/home/llim/FMPCC/FM-PCC/mix_uav/utils/serialization.py", line 103, in load_diffusion
+    trainer.load(epoch)
+  File "/data/home/llim/FMPCC/FM-PCC/mix_uav/utils/training_twotime.py", line 492, in load
+    data = torch.load(loadpath)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/serialization.py", line 998, in load
+    with _open_file_like(f, 'rb') as opened_file:
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/serialization.py", line 445, in _open_file_like
+    return _open_file(name_or_buffer, mode)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torch/serialization.py", line 426, in __init__
+    super().__init__(open(name, mode))
+FileNotFoundError: [Errno 2] No such file or directory: 'logs/UAV_MIX/uav-corridor/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/6/state_-1.pt'
+JOB END: Wed Aug 19 14:43:29 UTC 2026

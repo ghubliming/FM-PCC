@@ -1,0 +1,345 @@
+==============================================================================
+DA_VA_v2 — VISUAL ALIGNING CROSS-CANDIDATE SUMMARY
+==============================================================================
+Generated: 2026-09-01 09:31:12
+parent_path: logs/aligning-d3il-visual/plans,logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline,logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline_Bf_U3
+source: auto
+diagnostics_scan: True
+units_loaded: 458
+units_failed: 0
+
+CANDIDATES
+------------------------------------------------------------------------------
+  1: H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2
+      /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/(Bf_U8_Legacy_complex_struct)H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv2/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2
+      seeds=[6]
+      last run 2026-07-05 16:52:38   (2 config snapshot(s) over 1 seed(s))
+  2: H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2
+      /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/(legacy_correcct_besides_bounds_for_comapre)H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv2/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2
+      seeds=[6]
+      last run 2026-07-01 12:41:03   (1 config snapshot(s) over 1 seed(s))
+  3: H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2
+      /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv2/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2
+      seeds=[6]
+      last run 2026-07-12 00:06:57   (2 config snapshot(s) over 1 seed(s))
+  4: H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1
+      /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps900_bs64_filmv1/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1
+      seeds=[6]
+      last run 2026-07-12 12:03:58   (3 config snapshot(s) over 1 seed(s))
+  5: H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf
+      /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_af/H8_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Eaf_tslogit_normal_afschconstant_AFAFconst0p05/H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf
+      seeds=[6]
+      last run 2026-08-31 02:04:27   (1 config snapshot(s) over 1 seed(s))
+  6: H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf
+      /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_af/H8_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Eaf_tslogit_normal_afschsigmoid/H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf
+      seeds=[6]
+      last run 2026-08-02 20:59:04   (1 config snapshot(s) over 1 seed(s))
+  7: H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf
+      /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_af/H8_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Eaf_tslogit_normal_afschsigmoid/H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf
+      seeds=[6]
+      last run 2026-08-05 00:15:11   (2 config snapshot(s) over 1 seed(s))
+  8: H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv2_Eaf
+      /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_af/H8_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv2_Eaf_tslogit_normal_afschsigmoid/H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv2_Eaf
+      seeds=[6]
+      last run 2026-08-11 07:58:45   (1 config snapshot(s) over 1 seed(s))
+  9: H8_K100_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4_filmv1_Ediffusion
+      /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_diffusion/H8_K100_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv1_Ediffusion/H8_K100_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4_filmv1_Ediffusion
+      seeds=[6]
+      last run 2026-08-07 02:25:58   (1 config snapshot(s) over 1 seed(s))
+  10: H8_K20_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4_filmv1_Ediffusion
+      /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_diffusion/H8_K20_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv1_Ediffusion/H8_K20_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4_filmv1_Ediffusion
+      seeds=[6]
+      last run 2026-08-09 15:23:09   (1 config snapshot(s) over 1 seed(s))
+  11: H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm
+      /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_fm/H8_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Efm/H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm
+      seeds=[6]
+      last run 2026-08-07 01:39:07   (1 config snapshot(s) over 1 seed(s))
+  12: H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm
+      /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_fm/H8_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Efm/H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm
+      seeds=[6]
+      last run 2026-08-31 14:33:09   (1 config snapshot(s) over 1 seed(s))
+  13: H8_K20_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm
+      /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_fm/H8_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Efm/H8_K20_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm
+      seeds=[6]
+      last run 2026-08-09 16:09:14   (1 config snapshot(s) over 1 seed(s))
+  14: H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_Bdit_Emf
+      /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_Bdit_Emf_tslogit_normal_TB80pct/H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_Bdit_Emf
+      seeds=[6]
+      last run 2026-08-23 00:43:43   (1 config snapshot(s) over 1 seed(s))
+  15: H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_Bmf_dit_Emf
+      /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_Bmf_dit_Emf_tslogit_normal_VPTrue_VLR0.1_VCadaln/H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_Bmf_dit_Emf
+      seeds=[6]
+      last run 2026-08-25 18:42:14   (1 config snapshot(s) over 1 seed(s))
+  16: H8_K100_Meuler_T0.1_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf
+      /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Emf_tslogit_normal/H8_K100_Meuler_T0.1_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf
+      seeds=[6]
+      last run 2026-08-30 09:57:03   (1 config snapshot(s) over 1 seed(s))
+  17: H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf
+      /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Emf_tslogit_normal/H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf
+      seeds=[6]
+      last run 2026-08-02 08:20:13   (1 config snapshot(s) over 1 seed(s))
+  18: H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf
+      /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Emf_tslogit_normal/H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf
+      seeds=[6]
+      last run 2026-08-31 14:32:57   (1 config snapshot(s) over 1 seed(s))
+  19: H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf
+      /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Emf_tslogit_normal/H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf
+      seeds=[6]
+      last run 2026-08-04 22:50:21   (3 config snapshot(s) over 1 seed(s))
+  20: H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv2_Emf
+      /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv2_Emf_tslogit_normal/H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv2_Emf
+      seeds=[6]
+      last run 2026-08-11 03:50:53   (1 config snapshot(s) over 1 seed(s))
+  21: H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2
+      /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2
+      seeds=[6]
+      last run 2026-07-17 01:14:50   (2 config snapshot(s) over 1 seed(s))
+  22: d3il_baseline_ddpm_encdec_vision
+      /data/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline/d3il_baseline_ddpm_encdec_vision
+      seeds=[42]
+      last run 2026-07-01 01:35:05   (1 config snapshot(s) over 1 seed(s))
+  23: d3il_baseline_ddpm_encdec_vision__Bf_U3
+      /data/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline_Bf_U3/d3il_baseline_ddpm_encdec_vision__Bf_U3
+      seeds=[0, 1, 2, 3, 4, 42]
+      last run 2026-06-20 21:56:00   (6 config snapshot(s) over 6 seed(s))
+      per seed: 0:20260620_170326 | 1:20260620_135000 | 2:20260620_175026 | 3:20260620_130306 | 4:20260620_210858 | 42:20260620_215600
+
+RANKING (goal + constraint success, mask=all, all geos pooled)
+------------------------------------------------------------------------------
+  1. Candidate 6 — H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf
+      goal+constraint   4.55%   goal   6.21%   collision-free  23.64%     8660.7 ms/replan
+      major arms: diffuser 0.0%, dpcc-r 9.1%
+  2. Candidate 19 — H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf
+      goal+constraint   2.02%   goal   2.54%   collision-free  49.39%       62.3 ms/replan
+      major arms: diffuser 1.7%, dpcc-c 1.7%, dpcc-r 3.3%, dpcc-t 3.3%, hardflow_new-c 5.0%, hardflow_new-r 0.0%, hardflow_new-t 1.7%
+  3. Candidate 20 — H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv2_Emf
+      goal+constraint   1.15%   goal   1.25%   collision-free  34.27%       50.0 ms/replan
+      major arms: diffuser 1.7%, dpcc-c 0.0%, dpcc-r 1.7%, dpcc-t 0.0%
+  4. Candidate 16 — H8_K100_Meuler_T0.1_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf
+      goal+constraint   0.53%   goal   2.11%   collision-free  19.74%     1157.4 ms/replan
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-r 0.0%, dpcc-t 0.0%, hardflow_sls-c 0.0%, hardflow_sls-r 0.0%, hardflow_sls-t 0.0%
+  5. Candidate 7 — H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf
+      goal+constraint   0.44%   goal   1.14%   collision-free  44.82%       62.8 ms/replan
+      major arms: diffuser 1.7%, dpcc-c 0.0%, dpcc-r 0.0%, dpcc-t 0.0%, hardflow_new-c 0.0%, hardflow_new-r 1.7%, hardflow_new-t 0.0%
+  6. Candidate 14 — H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_Bdit_Emf
+      goal+constraint   0.31%   goal   1.15%   collision-free  35.73%       48.3 ms/replan
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-r 0.0%, dpcc-t 1.7%
+  7. Candidate 23 — d3il_baseline_ddpm_encdec_vision__Bf_U3   [LEGACY d3il_visual_aligning_baseline]   [no projector: ranked on goal success only]
+      goal+constraint   0.29%   goal   0.29%   collision-free    nan%        nan ms/replan
+  8. Candidate 1 — H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2
+      goal+constraint   0.00%   goal   0.00%   collision-free   0.00%      629.7 ms/replan
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-r 0.0%, dpcc-t 0.0%
+  9. Candidate 2 — H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2
+      goal+constraint   0.00%   goal   0.00%   collision-free  50.00%     5327.7 ms/replan
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-t 0.0%
+  10. Candidate 3 — H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2
+      goal+constraint   0.00%   goal   0.00%   collision-free  11.67%     3641.7 ms/replan
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-r 0.0%, dpcc-t 0.0%
+  11. Candidate 4 — H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1
+      goal+constraint   0.00%   goal   0.00%   collision-free  24.85%     1736.3 ms/replan
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-r 0.0%, dpcc-t 0.0%
+  12. Candidate 5 — H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf
+      goal+constraint   0.00%   goal   0.00%   collision-free  28.44%       53.5 ms/replan
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-r 0.0%, dpcc-t 0.0%
+  13. Candidate 8 — H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv2_Eaf
+      goal+constraint   0.00%   goal   0.00%   collision-free  25.94%       58.5 ms/replan
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-r 0.0%, dpcc-t 0.0%
+  14. Candidate 9 — H8_K100_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4_filmv1_Ediffusion
+      goal+constraint   0.00%   goal   0.00%   collision-free  29.12%     5021.1 ms/replan
+      major arms: diffuser 0.0%, dpcc-r 0.0%
+  15. Candidate 10 — H8_K20_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4_filmv1_Ediffusion
+      goal+constraint   0.00%   goal   0.00%   collision-free  18.52%     1182.0 ms/replan
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-r 0.0%, dpcc-t 0.0%
+  16. Candidate 11 — H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm
+      goal+constraint   0.00%   goal   0.00%   collision-free  11.82%     4563.1 ms/replan
+      major arms: diffuser 0.0%, dpcc-r 0.0%
+  17. Candidate 12 — H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm
+      goal+constraint   0.00%   goal   0.00%   collision-free   6.88%      411.5 ms/replan
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-r 0.0%, dpcc-t 0.0%
+  18. Candidate 13 — H8_K20_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm
+      goal+constraint   0.00%   goal   0.00%   collision-free   7.00%      688.5 ms/replan
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-r 0.0%, dpcc-t 0.0%
+  19. Candidate 15 — H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_Bmf_dit_Emf
+      goal+constraint   0.00%   goal   0.31%   collision-free  47.81%       47.7 ms/replan
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-r 0.0%, dpcc-t 0.0%
+  20. Candidate 17 — H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf
+      goal+constraint   0.00%   goal   1.67%   collision-free  19.09%     7940.7 ms/replan
+      major arms: diffuser 0.0%, dpcc-r 0.0%
+  21. Candidate 18 — H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf
+      goal+constraint   0.00%   goal   0.53%   collision-free  44.21%      270.5 ms/replan
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-r 0.0%, dpcc-t 0.0%, hardflow_sls-c 0.0%, hardflow_sls-r 0.0%, hardflow_sls-t 0.0%
+  22. Candidate 21 — H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2
+      goal+constraint   0.00%   goal   0.00%   collision-free  21.94%     1008.1 ms/replan
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-r 0.0%, dpcc-t 0.0%
+  23. Candidate 22 — d3il_baseline_ddpm_encdec_vision   [LEGACY d3il_visual_aligning_baseline]   [no projector: ranked on goal success only]
+      goal+constraint   0.00%   goal   0.00%   collision-free    nan%       22.7 ms/replan
+
+DATA QUALITY (units with a problem)
+------------------------------------------------------------------------------
+  149 of 458 units flagged:
+    cand5/seed6/train/combined_5-tightened/bounds_free: frozen=1/10 cb_tripped=0 complete=1.0
+    cand5/seed6/train/combined_5-tightened/diffuser: frozen=1/10 cb_tripped=0 complete=1.0
+    cand5/seed6/train/combined_5-tightened/dpcc-c: frozen=1/10 cb_tripped=0 complete=1.0
+    cand5/seed6/train/combined_5-tightened/dpcc-c-dt0p25: frozen=1/10 cb_tripped=0 complete=1.0
+    cand5/seed6/train/combined_5-tightened/dpcc-c-dt0p5: frozen=1/10 cb_tripped=0 complete=1.0
+    cand5/seed6/train/combined_5-tightened/dpcc-c-dt2p0: frozen=1/10 cb_tripped=0 complete=1.0
+    cand5/seed6/train/combined_5-tightened/dpcc-c-dt4p0: frozen=1/10 cb_tripped=0 complete=1.0
+    cand5/seed6/train/combined_5-tightened/dpcc-r: frozen=1/10 cb_tripped=0 complete=1.0
+    cand5/seed6/train/combined_5-tightened/dpcc-t: frozen=1/10 cb_tripped=0 complete=1.0
+    cand5/seed6/train/combined_5-tightened/geo_free: frozen=1/10 cb_tripped=0 complete=1.0
+    cand5/seed6/train/combined_5-tightened/geo_free-bounds_free: frozen=1/10 cb_tripped=0 complete=1.0
+    cand5/seed6/train/combined_5-tightened/geo_free-model_free: frozen=1/10 cb_tripped=0 complete=1.0
+    cand5/seed6/train/combined_5-tightened/gradient: frozen=1/10 cb_tripped=0 complete=1.0
+    cand5/seed6/train/combined_5-tightened/model_free: frozen=1/10 cb_tripped=0 complete=1.0
+    cand5/seed6/train/combined_5-tightened/model_free-bounds_free: frozen=1/10 cb_tripped=0 complete=1.0
+    cand5/seed6/train/combined_5-tightened/post_processing: frozen=1/10 cb_tripped=0 complete=1.0
+    cand7/seed6/train/combined_5-tightened/bounds_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand7/seed6/train/combined_5-tightened/diffuser: frozen=4/30 cb_tripped=0 complete=1.0
+    cand7/seed6/train/combined_5-tightened/dpcc-c: frozen=4/30 cb_tripped=0 complete=1.0
+    cand7/seed6/train/combined_5-tightened/dpcc-c-dt0p25: frozen=4/30 cb_tripped=0 complete=1.0
+    cand7/seed6/train/combined_5-tightened/dpcc-c-dt0p5: frozen=4/30 cb_tripped=0 complete=1.0
+    cand7/seed6/train/combined_5-tightened/dpcc-c-dt2p0: frozen=4/30 cb_tripped=0 complete=1.0
+    cand7/seed6/train/combined_5-tightened/dpcc-c-dt4p0: frozen=4/30 cb_tripped=0 complete=1.0
+    cand7/seed6/train/combined_5-tightened/dpcc-r: frozen=4/30 cb_tripped=0 complete=1.0
+    cand7/seed6/train/combined_5-tightened/dpcc-t: frozen=4/30 cb_tripped=0 complete=1.0
+    cand7/seed6/train/combined_5-tightened/geo_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand7/seed6/train/combined_5-tightened/geo_free-bounds_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand7/seed6/train/combined_5-tightened/geo_free-model_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand7/seed6/train/combined_5-tightened/gradient: frozen=4/30 cb_tripped=0 complete=1.0
+    cand7/seed6/train/combined_5-tightened/hardflow_new-c: frozen=4/30 cb_tripped=0 complete=1.0
+    cand7/seed6/train/combined_5-tightened/hardflow_new-r: frozen=4/30 cb_tripped=0 complete=1.0
+    cand7/seed6/train/combined_5-tightened/hardflow_new-t: frozen=4/30 cb_tripped=0 complete=1.0
+    cand7/seed6/train/combined_5-tightened/model_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand7/seed6/train/combined_5-tightened/model_free-bounds_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand7/seed6/train/combined_5-tightened/post_processing: frozen=4/30 cb_tripped=0 complete=1.0
+    cand8/seed6/train/combined_5-tightened/bounds_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand8/seed6/train/combined_5-tightened/diffuser: frozen=4/30 cb_tripped=0 complete=1.0
+    cand8/seed6/train/combined_5-tightened/dpcc-c: frozen=4/30 cb_tripped=0 complete=1.0
+    cand8/seed6/train/combined_5-tightened/dpcc-c-dt0p25: frozen=4/30 cb_tripped=0 complete=1.0
+    cand8/seed6/train/combined_5-tightened/dpcc-c-dt0p5: frozen=4/30 cb_tripped=0 complete=1.0
+    cand8/seed6/train/combined_5-tightened/dpcc-c-dt2p0: frozen=4/30 cb_tripped=0 complete=1.0
+    cand8/seed6/train/combined_5-tightened/dpcc-c-dt4p0: frozen=4/30 cb_tripped=0 complete=1.0
+    cand8/seed6/train/combined_5-tightened/dpcc-r: frozen=4/30 cb_tripped=0 complete=1.0
+    cand8/seed6/train/combined_5-tightened/dpcc-t: frozen=4/30 cb_tripped=0 complete=1.0
+    cand8/seed6/train/combined_5-tightened/geo_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand8/seed6/train/combined_5-tightened/geo_free-bounds_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand8/seed6/train/combined_5-tightened/geo_free-model_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand8/seed6/train/combined_5-tightened/gradient: frozen=4/30 cb_tripped=0 complete=1.0
+    cand8/seed6/train/combined_5-tightened/model_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand8/seed6/train/combined_5-tightened/model_free-bounds_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand8/seed6/train/combined_5-tightened/post_processing: frozen=4/30 cb_tripped=0 complete=1.0
+    cand10/seed6/train/combined_5/dpcc-c: frozen=0/30 cb_tripped=2 complete=1.0
+    cand10/seed6/train/combined_5/dpcc-r: frozen=0/30 cb_tripped=1 complete=1.0
+    cand10/seed6/train/combined_5/dpcc-t: frozen=0/30 cb_tripped=1 complete=1.0
+    cand13/seed6/train/combined_5/bounds_free: frozen=0/30 cb_tripped=3 complete=1.0
+    cand14/seed6/train/combined_5-tightened/bounds_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand14/seed6/train/combined_5-tightened/diffuser: frozen=4/30 cb_tripped=0 complete=1.0
+    cand14/seed6/train/combined_5-tightened/dpcc-c: frozen=4/30 cb_tripped=0 complete=1.0
+    cand14/seed6/train/combined_5-tightened/dpcc-c-dt0p25: frozen=4/30 cb_tripped=0 complete=1.0
+    cand14/seed6/train/combined_5-tightened/dpcc-c-dt0p5: frozen=4/30 cb_tripped=0 complete=1.0
+    cand14/seed6/train/combined_5-tightened/dpcc-c-dt2p0: frozen=4/30 cb_tripped=0 complete=1.0
+    cand14/seed6/train/combined_5-tightened/dpcc-c-dt4p0: frozen=4/30 cb_tripped=0 complete=1.0
+    cand14/seed6/train/combined_5-tightened/dpcc-r: frozen=4/30 cb_tripped=0 complete=1.0
+    cand14/seed6/train/combined_5-tightened/dpcc-t: frozen=4/30 cb_tripped=0 complete=1.0
+    cand14/seed6/train/combined_5-tightened/geo_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand14/seed6/train/combined_5-tightened/geo_free-bounds_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand14/seed6/train/combined_5-tightened/geo_free-model_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand14/seed6/train/combined_5-tightened/gradient: frozen=4/30 cb_tripped=0 complete=1.0
+    cand14/seed6/train/combined_5-tightened/model_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand14/seed6/train/combined_5-tightened/model_free-bounds_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand14/seed6/train/combined_5-tightened/post_processing: frozen=4/30 cb_tripped=0 complete=1.0
+    cand15/seed6/train/combined_5-tightened/bounds_free: frozen=1/10 cb_tripped=0 complete=1.0
+    cand15/seed6/train/combined_5-tightened/diffuser: frozen=1/10 cb_tripped=0 complete=1.0
+    cand15/seed6/train/combined_5-tightened/dpcc-c: frozen=1/10 cb_tripped=0 complete=1.0
+    cand15/seed6/train/combined_5-tightened/dpcc-c-dt0p25: frozen=1/10 cb_tripped=0 complete=1.0
+    cand15/seed6/train/combined_5-tightened/dpcc-c-dt0p5: frozen=1/10 cb_tripped=0 complete=1.0
+    cand15/seed6/train/combined_5-tightened/dpcc-c-dt2p0: frozen=1/10 cb_tripped=0 complete=1.0
+    cand15/seed6/train/combined_5-tightened/dpcc-c-dt4p0: frozen=1/10 cb_tripped=0 complete=1.0
+    cand15/seed6/train/combined_5-tightened/dpcc-r: frozen=1/10 cb_tripped=0 complete=1.0
+    cand15/seed6/train/combined_5-tightened/dpcc-t: frozen=1/10 cb_tripped=0 complete=1.0
+    cand15/seed6/train/combined_5-tightened/geo_free: frozen=1/10 cb_tripped=0 complete=1.0
+    cand15/seed6/train/combined_5-tightened/geo_free-bounds_free: frozen=1/10 cb_tripped=0 complete=1.0
+    cand15/seed6/train/combined_5-tightened/geo_free-model_free: frozen=1/10 cb_tripped=0 complete=1.0
+    cand15/seed6/train/combined_5-tightened/gradient: frozen=1/10 cb_tripped=0 complete=1.0
+    cand15/seed6/train/combined_5-tightened/model_free: frozen=1/10 cb_tripped=0 complete=1.0
+    cand15/seed6/train/combined_5-tightened/model_free-bounds_free: frozen=1/10 cb_tripped=0 complete=1.0
+    cand15/seed6/train/combined_5-tightened/post_processing: frozen=1/10 cb_tripped=0 complete=1.0
+    cand16/seed6/train/combined_5/dpcc-c: frozen=0/10 cb_tripped=1 complete=1.0
+    cand16/seed6/train/combined_5/dpcc-c-dt0p25: frozen=0/10 cb_tripped=1 complete=1.0
+    cand16/seed6/train/combined_5/dpcc-c-dt0p5: frozen=0/10 cb_tripped=2 complete=1.0
+    cand16/seed6/train/combined_5/dpcc-t: frozen=0/10 cb_tripped=1 complete=1.0
+    cand18/seed6/train/combined_5/bounds_free: frozen=0/10 cb_tripped=1 complete=1.0
+    cand18/seed6/train/combined_5-tightened/bounds_free: frozen=1/10 cb_tripped=0 complete=1.0
+    cand18/seed6/train/combined_5-tightened/diffuser: frozen=1/10 cb_tripped=0 complete=1.0
+    cand18/seed6/train/combined_5-tightened/dpcc-c: frozen=1/10 cb_tripped=0 complete=1.0
+    cand18/seed6/train/combined_5-tightened/dpcc-c-dt0p25: frozen=1/10 cb_tripped=0 complete=1.0
+    cand18/seed6/train/combined_5-tightened/dpcc-c-dt0p5: frozen=1/10 cb_tripped=0 complete=1.0
+    cand18/seed6/train/combined_5-tightened/dpcc-c-dt2p0: frozen=1/10 cb_tripped=0 complete=1.0
+    cand18/seed6/train/combined_5-tightened/dpcc-c-dt4p0: frozen=1/10 cb_tripped=0 complete=1.0
+    cand18/seed6/train/combined_5-tightened/dpcc-r: frozen=1/10 cb_tripped=0 complete=1.0
+    cand18/seed6/train/combined_5-tightened/dpcc-t: frozen=1/10 cb_tripped=0 complete=1.0
+    cand18/seed6/train/combined_5-tightened/geo_free: frozen=1/10 cb_tripped=0 complete=1.0
+    cand18/seed6/train/combined_5-tightened/geo_free-bounds_free: frozen=1/10 cb_tripped=0 complete=1.0
+    cand18/seed6/train/combined_5-tightened/geo_free-model_free: frozen=1/10 cb_tripped=0 complete=1.0
+    cand18/seed6/train/combined_5-tightened/gradient: frozen=1/10 cb_tripped=0 complete=1.0
+    cand18/seed6/train/combined_5-tightened/hardflow_sls-c: frozen=1/10 cb_tripped=0 complete=1.0
+    cand18/seed6/train/combined_5-tightened/hardflow_sls-r: frozen=1/10 cb_tripped=0 complete=1.0
+    cand18/seed6/train/combined_5-tightened/hardflow_sls-t: frozen=1/10 cb_tripped=0 complete=1.0
+    cand18/seed6/train/combined_5-tightened/model_free: frozen=1/10 cb_tripped=0 complete=1.0
+    cand18/seed6/train/combined_5-tightened/model_free-bounds_free: frozen=1/10 cb_tripped=0 complete=1.0
+    cand18/seed6/train/combined_5-tightened/post_processing: frozen=1/10 cb_tripped=0 complete=1.0
+    cand19/seed6/train/combined_5-tightened/bounds_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand19/seed6/train/combined_5-tightened/diffuser: frozen=4/30 cb_tripped=0 complete=1.0
+    cand19/seed6/train/combined_5-tightened/dpcc-c: frozen=4/30 cb_tripped=0 complete=1.0
+    cand19/seed6/train/combined_5-tightened/dpcc-c-dt0p25: frozen=4/30 cb_tripped=0 complete=1.0
+    cand19/seed6/train/combined_5-tightened/dpcc-c-dt0p5: frozen=4/30 cb_tripped=0 complete=1.0
+    cand19/seed6/train/combined_5-tightened/dpcc-c-dt2p0: frozen=4/30 cb_tripped=0 complete=1.0
+    cand19/seed6/train/combined_5-tightened/dpcc-c-dt4p0: frozen=4/30 cb_tripped=0 complete=1.0
+    cand19/seed6/train/combined_5-tightened/dpcc-r: frozen=4/30 cb_tripped=0 complete=1.0
+    cand19/seed6/train/combined_5-tightened/dpcc-t: frozen=4/30 cb_tripped=0 complete=1.0
+    cand19/seed6/train/combined_5-tightened/geo_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand19/seed6/train/combined_5-tightened/geo_free-bounds_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand19/seed6/train/combined_5-tightened/geo_free-model_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand19/seed6/train/combined_5-tightened/gradient: frozen=4/30 cb_tripped=0 complete=1.0
+    cand19/seed6/train/combined_5-tightened/hardflow_new-c: frozen=4/30 cb_tripped=0 complete=1.0
+    cand19/seed6/train/combined_5-tightened/hardflow_new-r: frozen=4/30 cb_tripped=0 complete=1.0
+    cand19/seed6/train/combined_5-tightened/hardflow_new-t: frozen=4/30 cb_tripped=0 complete=1.0
+    cand19/seed6/train/combined_5-tightened/model_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand19/seed6/train/combined_5-tightened/model_free-bounds_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand19/seed6/train/combined_5-tightened/post_processing: frozen=4/30 cb_tripped=0 complete=1.0
+    cand20/seed6/train/combined_5-tightened/bounds_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand20/seed6/train/combined_5-tightened/diffuser: frozen=4/30 cb_tripped=0 complete=1.0
+    cand20/seed6/train/combined_5-tightened/dpcc-c: frozen=4/30 cb_tripped=0 complete=1.0
+    cand20/seed6/train/combined_5-tightened/dpcc-c-dt0p25: frozen=4/30 cb_tripped=0 complete=1.0
+    cand20/seed6/train/combined_5-tightened/dpcc-c-dt0p5: frozen=4/30 cb_tripped=0 complete=1.0
+    cand20/seed6/train/combined_5-tightened/dpcc-c-dt2p0: frozen=4/30 cb_tripped=0 complete=1.0
+    cand20/seed6/train/combined_5-tightened/dpcc-c-dt4p0: frozen=4/30 cb_tripped=0 complete=1.0
+    cand20/seed6/train/combined_5-tightened/dpcc-r: frozen=4/30 cb_tripped=0 complete=1.0
+    cand20/seed6/train/combined_5-tightened/dpcc-t: frozen=4/30 cb_tripped=0 complete=1.0
+    cand20/seed6/train/combined_5-tightened/geo_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand20/seed6/train/combined_5-tightened/geo_free-bounds_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand20/seed6/train/combined_5-tightened/geo_free-model_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand20/seed6/train/combined_5-tightened/gradient: frozen=4/30 cb_tripped=0 complete=1.0
+    cand20/seed6/train/combined_5-tightened/model_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand20/seed6/train/combined_5-tightened/model_free-bounds_free: frozen=4/30 cb_tripped=0 complete=1.0
+    cand20/seed6/train/combined_5-tightened/post_processing: frozen=4/30 cb_tripped=0 complete=1.0
+    cand21/seed6/test/combined_5/dpcc-c: frozen=0/30 cb_tripped=2 complete=1.0
+    cand21/seed6/test/combined_5/dpcc-r: frozen=0/30 cb_tripped=1 complete=1.0
+    cand21/seed6/test/combined_5/dpcc-t: frozen=0/30 cb_tripped=1 complete=1.0
+
+NOTES
+------------------------------------------------------------------------------
+  LatestSnapshot / Latest_Snapshot  newest config_snapshot marker,
+    i.e. when that folder was last (re)run. Per SEED in the units /
+    *_raw files, newest over all seeds in the aggregated ones.
+  mask=all      every rollout
+  mask=unfrozen D1 box-obstacle-conflict rollouts removed
+  total_violations is NaN for visual runs — that eval records
+    per-family maxima, never a cumulative sum. Use
+    constraint_exec_total_viol_count / max_viol_depth_m instead.
+  legacy=1 units come from a `_`-prefixed bridged tree (e.g. the
+    D3IL baseline via bridge_d3il_va_to_da_va_v2.py), not from a
+    Gen14-shaped eval. has_projector=0 means every constraint_*
+    column is absent BY DESIGN — that pipeline runs no projector,
+    so it can only be compared on goal success / distance / time.
+==============================================================================

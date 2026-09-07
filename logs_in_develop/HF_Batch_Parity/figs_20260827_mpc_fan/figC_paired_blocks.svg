@@ -1,0 +1,193 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="584" viewBox="0 0 880 584" role="img">
+<rect x="0" y="0" width="880" height="584" fill="var(--fig-bg,#ffffff)"/>
+<text x="24" y="30" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="15.5" fill="var(--fig-ink,#1b1f24)" text-anchor="start" font-weight="650" letter-spacing="0">Figure C — Paired per-block effect of fan 4 → fan 1 on safety</text>
+<text x="24" y="50" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11.5" fill="var(--fig-mute,#5b6570)" text-anchor="start" font-weight="400" letter-spacing="0">One dot per (seed × scenario) block, n = 15, 2 trials each. x = change in successful episodes within that block. Exact two-sided Wilcoxon signed-rank.</text>
+<line x1="228.00" y1="90.00" x2="228.00" y2="520.00" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="1" stroke-dasharray="2 4"/>
+<text x="228.0" y="84" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">-2</text>
+<line x1="333.00" y1="90.00" x2="333.00" y2="520.00" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="1" stroke-dasharray="2 4"/>
+<text x="333.0" y="84" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">-1</text>
+<line x1="438.00" y1="90.00" x2="438.00" y2="520.00" stroke="var(--fig-mute,#5b6570)" stroke-width="1.3" stroke-linecap="butt" opacity="1"/>
+<text x="438.0" y="84" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">0</text>
+<line x1="543.00" y1="90.00" x2="543.00" y2="520.00" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="1" stroke-dasharray="2 4"/>
+<text x="543.0" y="84" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">+1</text>
+<line x1="648.00" y1="90.00" x2="648.00" y2="520.00" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="1" stroke-dasharray="2 4"/>
+<text x="648.0" y="84" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">+2</text>
+<text x="438.0" y="66" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">Δ successful episodes in block  (fan 1 − fan 4)</text>
+<text x="210" y="120" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11" fill="var(--fig-ink,#1b1f24)" text-anchor="end" font-weight="600" letter-spacing="0">dpcc-t</text>
+<text x="210" y="134" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="end" font-weight="400" letter-spacing="0">DPCC Gen0</text>
+<line x1="228.00" y1="120.00" x2="648.00" y2="120.00" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="0.6"/>
+<circle cx="228.00" cy="120.00" r="4.1" fill="var(--fig-f4,#b4472e)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="333.00" cy="120.00" r="4.1" fill="var(--fig-f4,#b4472e)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="120.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="109.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="228.00" cy="109.50" r="4.1" fill="var(--fig-f4,#b4472e)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="228.00" cy="99.00" r="4.1" fill="var(--fig-f4,#b4472e)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="543.00" cy="120.00" r="4.1" fill="var(--fig-f1,#1f6f8b)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="228.00" cy="88.50" r="4.1" fill="var(--fig-f4,#b4472e)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="333.00" cy="109.50" r="4.1" fill="var(--fig-f4,#b4472e)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="99.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="228.00" cy="78.00" r="4.1" fill="var(--fig-f4,#b4472e)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="333.00" cy="99.00" r="4.1" fill="var(--fig-f4,#b4472e)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="228.00" cy="67.50" r="4.1" fill="var(--fig-f4,#b4472e)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="543.00" cy="109.50" r="4.1" fill="var(--fig-f1,#1f6f8b)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="88.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<line x1="291.00" y1="138.00" x2="410.00" y2="138.00" stroke="var(--fig-ink,#1b1f24)" stroke-width="1.4" stroke-linecap="round" opacity="1"/>
+<line x1="291.00" y1="134.00" x2="291.00" y2="142.00" stroke="var(--fig-ink,#1b1f24)" stroke-width="1.2" stroke-linecap="butt" opacity="1"/>
+<line x1="410.00" y1="134.00" x2="410.00" y2="142.00" stroke="var(--fig-ink,#1b1f24)" stroke-width="1.2" stroke-linecap="butt" opacity="1"/>
+<circle cx="347.00" cy="138.00" r="3.2" fill="var(--fig-ink,#1b1f24)" opacity="1"/>
+<text x="666" y="115" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="10.5" fill="var(--fig-ink,#1b1f24)" text-anchor="start" font-weight="600" letter-spacing="0">20/30 → 7/30</text>
+<text x="666" y="130" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="10.5" fill="var(--fig-f4,#b4472e)" text-anchor="start" font-weight="650" letter-spacing="0">-13 episodes</text>
+<text x="666" y="144" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="10" fill="var(--fig-ink,#1b1f24)" text-anchor="start" font-weight="650" letter-spacing="0">p = 0.0156  ✓</text>
+<text x="210" y="182" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11" fill="var(--fig-ink,#1b1f24)" text-anchor="end" font-weight="600" letter-spacing="0">dpcc-c</text>
+<text x="210" y="196" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="end" font-weight="400" letter-spacing="0">DPCC Gen0</text>
+<line x1="228.00" y1="182.00" x2="648.00" y2="182.00" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="0.6"/>
+<circle cx="438.00" cy="182.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="228.00" cy="182.00" r="4.1" fill="var(--fig-f4,#b4472e)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="333.00" cy="182.00" r="4.1" fill="var(--fig-f4,#b4472e)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="333.00" cy="171.50" r="4.1" fill="var(--fig-f4,#b4472e)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="228.00" cy="171.50" r="4.1" fill="var(--fig-f4,#b4472e)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="228.00" cy="161.00" r="4.1" fill="var(--fig-f4,#b4472e)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="171.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="333.00" cy="161.00" r="4.1" fill="var(--fig-f4,#b4472e)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="161.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="543.00" cy="182.00" r="4.1" fill="var(--fig-f1,#1f6f8b)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="333.00" cy="150.50" r="4.1" fill="var(--fig-f4,#b4472e)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="228.00" cy="150.50" r="4.1" fill="var(--fig-f4,#b4472e)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="150.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="140.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="129.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<line x1="312.00" y1="200.00" x2="410.00" y2="200.00" stroke="var(--fig-ink,#1b1f24)" stroke-width="1.4" stroke-linecap="round" opacity="1"/>
+<line x1="312.00" y1="196.00" x2="312.00" y2="204.00" stroke="var(--fig-ink,#1b1f24)" stroke-width="1.2" stroke-linecap="butt" opacity="1"/>
+<line x1="410.00" y1="196.00" x2="410.00" y2="204.00" stroke="var(--fig-ink,#1b1f24)" stroke-width="1.2" stroke-linecap="butt" opacity="1"/>
+<circle cx="361.00" cy="200.00" r="3.2" fill="var(--fig-ink,#1b1f24)" opacity="1"/>
+<text x="666" y="177" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="10.5" fill="var(--fig-ink,#1b1f24)" text-anchor="start" font-weight="600" letter-spacing="0">18/30 → 7/30</text>
+<text x="666" y="192" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="10.5" fill="var(--fig-f4,#b4472e)" text-anchor="start" font-weight="650" letter-spacing="0">-11 episodes</text>
+<text x="666" y="206" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="10" fill="var(--fig-ink,#1b1f24)" text-anchor="start" font-weight="650" letter-spacing="0">p = 0.0234  ✓</text>
+<text x="210" y="244" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11" fill="var(--fig-ink,#1b1f24)" text-anchor="end" font-weight="600" letter-spacing="0">dpcc-c-tightened</text>
+<text x="210" y="258" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="end" font-weight="400" letter-spacing="0">DPCC Gen0</text>
+<line x1="228.00" y1="244.00" x2="648.00" y2="244.00" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="0.6"/>
+<circle cx="333.00" cy="244.00" r="4.1" fill="var(--fig-f4,#b4472e)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="244.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="233.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="333.00" cy="233.50" r="4.1" fill="var(--fig-f4,#b4472e)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="223.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="212.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="202.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="191.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="181.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="170.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="160.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="149.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="139.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="128.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="118.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<line x1="403.00" y1="262.00" x2="438.00" y2="262.00" stroke="var(--fig-ink,#1b1f24)" stroke-width="1.4" stroke-linecap="round" opacity="1"/>
+<line x1="403.00" y1="258.00" x2="403.00" y2="266.00" stroke="var(--fig-ink,#1b1f24)" stroke-width="1.2" stroke-linecap="butt" opacity="1"/>
+<line x1="438.00" y1="258.00" x2="438.00" y2="266.00" stroke="var(--fig-ink,#1b1f24)" stroke-width="1.2" stroke-linecap="butt" opacity="1"/>
+<circle cx="424.00" cy="262.00" r="3.2" fill="var(--fig-ink,#1b1f24)" opacity="1"/>
+<text x="666" y="239" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="10.5" fill="var(--fig-ink,#1b1f24)" text-anchor="start" font-weight="600" letter-spacing="0">30/30 → 28/30</text>
+<text x="666" y="254" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="10.5" fill="var(--fig-f4,#b4472e)" text-anchor="start" font-weight="650" letter-spacing="0">-2 episodes</text>
+<text x="666" y="268" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="start" font-weight="400" letter-spacing="0">p = 0.50</text>
+<text x="210" y="306" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11" fill="var(--fig-ink,#1b1f24)" text-anchor="end" font-weight="600" letter-spacing="0">dpcc-t-tightened</text>
+<text x="210" y="320" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="end" font-weight="400" letter-spacing="0">DPCC Gen0</text>
+<line x1="228.00" y1="306.00" x2="648.00" y2="306.00" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="0.6"/>
+<circle cx="333.00" cy="306.00" r="4.1" fill="var(--fig-f4,#b4472e)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="306.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="295.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="333.00" cy="295.50" r="4.1" fill="var(--fig-f4,#b4472e)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="285.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="274.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="264.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="253.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="243.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="232.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="222.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="211.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="201.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="190.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="180.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<line x1="403.00" y1="324.00" x2="438.00" y2="324.00" stroke="var(--fig-ink,#1b1f24)" stroke-width="1.4" stroke-linecap="round" opacity="1"/>
+<line x1="403.00" y1="320.00" x2="403.00" y2="328.00" stroke="var(--fig-ink,#1b1f24)" stroke-width="1.2" stroke-linecap="butt" opacity="1"/>
+<line x1="438.00" y1="320.00" x2="438.00" y2="328.00" stroke="var(--fig-ink,#1b1f24)" stroke-width="1.2" stroke-linecap="butt" opacity="1"/>
+<circle cx="424.00" cy="324.00" r="3.2" fill="var(--fig-ink,#1b1f24)" opacity="1"/>
+<text x="666" y="301" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="10.5" fill="var(--fig-ink,#1b1f24)" text-anchor="start" font-weight="600" letter-spacing="0">30/30 → 28/30</text>
+<text x="666" y="316" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="10.5" fill="var(--fig-f4,#b4472e)" text-anchor="start" font-weight="650" letter-spacing="0">-2 episodes</text>
+<text x="666" y="330" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="start" font-weight="400" letter-spacing="0">p = 0.50</text>
+<text x="210" y="368" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11" fill="var(--fig-ink,#1b1f24)" text-anchor="end" font-weight="600" letter-spacing="0">dpcc-c-tightened</text>
+<text x="210" y="382" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="end" font-weight="400" letter-spacing="0">AlphaFlow</text>
+<line x1="228.00" y1="368.00" x2="648.00" y2="368.00" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="0.6"/>
+<circle cx="648.00" cy="368.00" r="4.1" fill="var(--fig-f1,#1f6f8b)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="648.00" cy="357.50" r="4.1" fill="var(--fig-f1,#1f6f8b)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="648.00" cy="347.00" r="4.1" fill="var(--fig-f1,#1f6f8b)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="648.00" cy="336.50" r="4.1" fill="var(--fig-f1,#1f6f8b)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="648.00" cy="326.00" r="4.1" fill="var(--fig-f1,#1f6f8b)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="648.00" cy="315.50" r="4.1" fill="var(--fig-f1,#1f6f8b)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="648.00" cy="305.00" r="4.1" fill="var(--fig-f1,#1f6f8b)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="648.00" cy="294.50" r="4.1" fill="var(--fig-f1,#1f6f8b)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="648.00" cy="284.00" r="4.1" fill="var(--fig-f1,#1f6f8b)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="368.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="357.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="347.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="648.00" cy="273.50" r="4.1" fill="var(--fig-f1,#1f6f8b)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="648.00" cy="263.00" r="4.1" fill="var(--fig-f1,#1f6f8b)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="648.00" cy="252.50" r="4.1" fill="var(--fig-f1,#1f6f8b)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<line x1="564.00" y1="386.00" x2="648.00" y2="386.00" stroke="var(--fig-ink,#1b1f24)" stroke-width="1.4" stroke-linecap="round" opacity="1"/>
+<line x1="564.00" y1="382.00" x2="564.00" y2="390.00" stroke="var(--fig-ink,#1b1f24)" stroke-width="1.2" stroke-linecap="butt" opacity="1"/>
+<line x1="648.00" y1="382.00" x2="648.00" y2="390.00" stroke="var(--fig-ink,#1b1f24)" stroke-width="1.2" stroke-linecap="butt" opacity="1"/>
+<circle cx="606.00" cy="386.00" r="3.2" fill="var(--fig-ink,#1b1f24)" opacity="1"/>
+<text x="666" y="363" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="10.5" fill="var(--fig-ink,#1b1f24)" text-anchor="start" font-weight="600" letter-spacing="0">6/30 → 30/30</text>
+<text x="666" y="378" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="10.5" fill="var(--fig-f1,#1f6f8b)" text-anchor="start" font-weight="650" letter-spacing="0">+24 episodes</text>
+<text x="666" y="392" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="10" fill="var(--fig-ink,#1b1f24)" text-anchor="start" font-weight="650" letter-spacing="0">p = 0.0005  ✓</text>
+<text x="210" y="430" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11" fill="var(--fig-ink,#1b1f24)" text-anchor="end" font-weight="600" letter-spacing="0">dpcc-t-tightened</text>
+<text x="210" y="444" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="end" font-weight="400" letter-spacing="0">AlphaFlow</text>
+<line x1="228.00" y1="430.00" x2="648.00" y2="430.00" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="0.6"/>
+<circle cx="438.00" cy="430.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="419.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="409.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="398.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="388.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="377.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="367.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="356.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="346.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="335.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="325.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="543.00" cy="430.00" r="4.1" fill="var(--fig-f1,#1f6f8b)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="314.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="304.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="293.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<line x1="438.00" y1="448.00" x2="459.00" y2="448.00" stroke="var(--fig-ink,#1b1f24)" stroke-width="1.4" stroke-linecap="round" opacity="1"/>
+<line x1="438.00" y1="444.00" x2="438.00" y2="452.00" stroke="var(--fig-ink,#1b1f24)" stroke-width="1.2" stroke-linecap="butt" opacity="1"/>
+<line x1="459.00" y1="444.00" x2="459.00" y2="452.00" stroke="var(--fig-ink,#1b1f24)" stroke-width="1.2" stroke-linecap="butt" opacity="1"/>
+<circle cx="445.00" cy="448.00" r="3.2" fill="var(--fig-ink,#1b1f24)" opacity="1"/>
+<text x="666" y="425" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="10.5" fill="var(--fig-ink,#1b1f24)" text-anchor="start" font-weight="600" letter-spacing="0">29/30 → 30/30</text>
+<text x="666" y="440" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="10.5" fill="var(--fig-f1,#1f6f8b)" text-anchor="start" font-weight="650" letter-spacing="0">+1 episodes</text>
+<text x="666" y="454" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="start" font-weight="400" letter-spacing="0">p = 1.00</text>
+<text x="210" y="492" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11" fill="var(--fig-ink,#1b1f24)" text-anchor="end" font-weight="600" letter-spacing="0">dpcc-r-tightened</text>
+<text x="210" y="506" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="end" font-weight="400" letter-spacing="0">AlphaFlow</text>
+<line x1="228.00" y1="492.00" x2="648.00" y2="492.00" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="0.6"/>
+<circle cx="438.00" cy="492.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="481.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="471.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="460.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="450.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="439.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="429.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="418.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="408.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="397.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="387.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="376.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="366.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="355.50" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<circle cx="438.00" cy="345.00" r="4.1" fill="var(--fig-acc,#8a8f98)" opacity="0.95" stroke="var(--fig-bg,#ffffff)" stroke-width="1"/>
+<line x1="438.00" y1="510.00" x2="438.00" y2="510.00" stroke="var(--fig-ink,#1b1f24)" stroke-width="1.4" stroke-linecap="round" opacity="1"/>
+<line x1="438.00" y1="506.00" x2="438.00" y2="514.00" stroke="var(--fig-ink,#1b1f24)" stroke-width="1.2" stroke-linecap="butt" opacity="1"/>
+<line x1="438.00" y1="506.00" x2="438.00" y2="514.00" stroke="var(--fig-ink,#1b1f24)" stroke-width="1.2" stroke-linecap="butt" opacity="1"/>
+<circle cx="438.00" cy="510.00" r="3.2" fill="var(--fig-ink,#1b1f24)" opacity="1"/>
+<text x="666" y="487" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="10.5" fill="var(--fig-ink,#1b1f24)" text-anchor="start" font-weight="600" letter-spacing="0">30/30 → 30/30</text>
+<text x="666" y="502" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="10.5" fill="var(--fig-mute,#5b6570)" text-anchor="start" font-weight="650" letter-spacing="0">+0 episodes</text>
+<text x="666" y="516" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="start" font-weight="400" letter-spacing="0">p = 1.00</text>
+<text x="24" y="542" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="start" font-weight="400" letter-spacing="0">Black bar = mean Δ with 95 % bootstrap CI (20 000 paired block resamples). Only the two untightened DPCC arms and the two AlphaFlow -c arms clear α = 0.05.</text>
+<text x="24" y="560" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="start" font-weight="400" letter-spacing="0">The tightened DPCC loss (−2/30) sits far below this design's minimum detectable effect (~8/30 at 80 % power) — it is unresolved, not absent.</text>
+</svg>

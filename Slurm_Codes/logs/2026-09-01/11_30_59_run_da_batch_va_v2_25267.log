@@ -1,0 +1,257 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+[ DA_VA_v2 ] auto-scan found 3 root(s):
+[ DA_VA_v2 ]   logs/aligning-d3il-visual/plans
+[ DA_VA_v2 ]   logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline
+[ DA_VA_v2 ]   logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline_Bf_U3
+[2026-09-01 09:31:00] DA_VA_v2 - INFO - ======================================================================
+[2026-09-01 09:31:00] DA_VA_v2 - INFO - DA_VA_v2 — visual-aligning batch analysis
+[2026-09-01 09:31:00] DA_VA_v2 - INFO - ======================================================================
+[2026-09-01 09:31:00] DA_VA_v2 - INFO - Start:  2026-09-01 09:31:00
+[2026-09-01 09:31:00] DA_VA_v2 - INFO - Parent: logs/aligning-d3il-visual/plans,logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline,logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline_Bf_U3
+[2026-09-01 09:31:00] DA_VA_v2 - INFO - Output: Data_Analysis/analysis_results/batch_va2_20260901_093100
+[2026-09-01 09:31:00] DA_VA_v2 - INFO - Manifest: /data/home/llim/FMPCC/FM-PCC/Data_Analysis/analysis_results/results_manifest.json
+[2026-09-01 09:31:00] DA_VA_v2 - INFO - [1/5] Discovering candidates
+[2026-09-01 09:31:00] discovery - INFO - Candidate 1: H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2  seeds=[6]
+[2026-09-01 09:31:00] discovery - INFO - Candidate 2: H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2  seeds=[6]
+[2026-09-01 09:31:00] discovery - INFO - Candidate 3: H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2  seeds=[6]
+[2026-09-01 09:31:00] discovery - INFO - Candidate 4: H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1  seeds=[6]
+[2026-09-01 09:31:00] discovery - INFO - Candidate 5: H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf  seeds=[6]
+[2026-09-01 09:31:00] discovery - INFO - Candidate 6: H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf  seeds=[6]
+[2026-09-01 09:31:00] discovery - INFO - Candidate 7: H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf  seeds=[6]
+[2026-09-01 09:31:00] discovery - INFO - Candidate 8: H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv2_Eaf  seeds=[6]
+[2026-09-01 09:31:00] discovery - INFO - Candidate 9: H8_K100_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4_filmv1_Ediffusion  seeds=[6]
+[2026-09-01 09:31:00] discovery - INFO - Candidate 10: H8_K20_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4_filmv1_Ediffusion  seeds=[6]
+[2026-09-01 09:31:00] discovery - INFO - Candidate 11: H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm  seeds=[6]
+[2026-09-01 09:31:00] discovery - INFO - Candidate 12: H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm  seeds=[6]
+[2026-09-01 09:31:00] discovery - INFO - Candidate 13: H8_K20_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm  seeds=[6]
+[2026-09-01 09:31:00] discovery - INFO - Candidate 14: H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_Bdit_Emf  seeds=[6]
+[2026-09-01 09:31:00] discovery - INFO - Candidate 15: H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_Bmf_dit_Emf  seeds=[6]
+[2026-09-01 09:31:00] discovery - INFO - Candidate 16: H8_K100_Meuler_T0.1_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf  seeds=[6]
+[2026-09-01 09:31:00] discovery - INFO - Candidate 17: H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf  seeds=[6]
+[2026-09-01 09:31:00] discovery - INFO - Candidate 18: H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf  seeds=[6]
+[2026-09-01 09:31:00] discovery - INFO - Candidate 19: H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf  seeds=[6]
+[2026-09-01 09:31:00] discovery - INFO - Candidate 20: H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv2_Emf  seeds=[6]
+[2026-09-01 09:31:00] discovery - INFO - Candidate 21: H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2  seeds=[6]
+[2026-09-01 09:31:00] discovery - INFO - Candidate 22: d3il_baseline_ddpm_encdec_vision  seeds=[42]  [legacy: d3il_visual_aligning_baseline]
+[2026-09-01 09:31:00] discovery - INFO - Candidate 23: d3il_baseline_ddpm_encdec_vision__Bf_U3  seeds=[0, 1, 2, 3, 4, 42]  [legacy: d3il_visual_aligning_baseline]
+[2026-09-01 09:31:00] discovery - INFO - Total candidates discovered: 23
+[2026-09-01 09:31:00] DA_VA_v2 - INFO - 
+=== Candidates Discovered ===
+Total: 23
+
+  1: H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/(Bf_U8_Legacy_complex_struct)H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv2/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2
+      Seeds: [6]
+      Last run: 2026-07-05 16:52:38  (2 config snapshot(s) over 1 seed(s))
+
+  2: H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/(legacy_correcct_besides_bounds_for_comapre)H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv2/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2
+      Seeds: [6]
+      Last run: 2026-07-01 12:41:03  (1 config snapshot(s) over 1 seed(s))
+
+  3: H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv2/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2
+      Seeds: [6]
+      Last run: 2026-07-12 00:06:57  (2 config snapshot(s) over 1 seed(s))
+
+  4: H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps900_bs64_filmv1/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1
+      Seeds: [6]
+      Last run: 2026-07-12 12:03:58  (3 config snapshot(s) over 1 seed(s))
+
+  5: H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_af/H8_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Eaf_tslogit_normal_afschconstant_AFAFconst0p05/H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf
+      Seeds: [6]
+      Last run: 2026-08-31 02:04:27  (1 config snapshot(s) over 1 seed(s))
+
+  6: H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_af/H8_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Eaf_tslogit_normal_afschsigmoid/H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf
+      Seeds: [6]
+      Last run: 2026-08-02 20:59:04  (1 config snapshot(s) over 1 seed(s))
+
+  7: H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_af/H8_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Eaf_tslogit_normal_afschsigmoid/H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf
+      Seeds: [6]
+      Last run: 2026-08-05 00:15:11  (2 config snapshot(s) over 1 seed(s))
+
+  8: H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv2_Eaf
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_af/H8_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv2_Eaf_tslogit_normal_afschsigmoid/H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv2_Eaf
+      Seeds: [6]
+      Last run: 2026-08-11 07:58:45  (1 config snapshot(s) over 1 seed(s))
+
+  9: H8_K100_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4_filmv1_Ediffusion
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_diffusion/H8_K100_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv1_Ediffusion/H8_K100_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4_filmv1_Ediffusion
+      Seeds: [6]
+      Last run: 2026-08-07 02:25:58  (1 config snapshot(s) over 1 seed(s))
+
+  10: H8_K20_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4_filmv1_Ediffusion
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_diffusion/H8_K20_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv1_Ediffusion/H8_K20_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4_filmv1_Ediffusion
+      Seeds: [6]
+      Last run: 2026-08-09 15:23:09  (1 config snapshot(s) over 1 seed(s))
+
+  11: H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_fm/H8_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Efm/H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm
+      Seeds: [6]
+      Last run: 2026-08-07 01:39:07  (1 config snapshot(s) over 1 seed(s))
+
+  12: H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_fm/H8_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Efm/H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm
+      Seeds: [6]
+      Last run: 2026-08-31 14:33:09  (1 config snapshot(s) over 1 seed(s))
+
+  13: H8_K20_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_fm/H8_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Efm/H8_K20_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm
+      Seeds: [6]
+      Last run: 2026-08-09 16:09:14  (1 config snapshot(s) over 1 seed(s))
+
+  14: H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_Bdit_Emf
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_Bdit_Emf_tslogit_normal_TB80pct/H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_Bdit_Emf
+      Seeds: [6]
+      Last run: 2026-08-23 00:43:43  (1 config snapshot(s) over 1 seed(s))
+
+  15: H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_Bmf_dit_Emf
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_Bmf_dit_Emf_tslogit_normal_VPTrue_VLR0.1_VCadaln/H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_Bmf_dit_Emf
+      Seeds: [6]
+      Last run: 2026-08-25 18:42:14  (1 config snapshot(s) over 1 seed(s))
+
+  16: H8_K100_Meuler_T0.1_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Emf_tslogit_normal/H8_K100_Meuler_T0.1_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf
+      Seeds: [6]
+      Last run: 2026-08-30 09:57:03  (1 config snapshot(s) over 1 seed(s))
+
+  17: H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Emf_tslogit_normal/H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf
+      Seeds: [6]
+      Last run: 2026-08-02 08:20:13  (1 config snapshot(s) over 1 seed(s))
+
+  18: H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Emf_tslogit_normal/H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf
+      Seeds: [6]
+      Last run: 2026-08-31 14:32:57  (1 config snapshot(s) over 1 seed(s))
+
+  19: H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Emf_tslogit_normal/H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf
+      Seeds: [6]
+      Last run: 2026-08-04 22:50:21  (3 config snapshot(s) over 1 seed(s))
+
+  20: H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv2_Emf
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv2_Emf_tslogit_normal/H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv2_Emf
+      Seeds: [6]
+      Last run: 2026-08-11 03:50:53  (1 config snapshot(s) over 1 seed(s))
+
+  21: H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2
+      Seeds: [6]
+      Last run: 2026-07-17 01:14:50  (2 config snapshot(s) over 1 seed(s))
+
+  22: d3il_baseline_ddpm_encdec_vision
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline/d3il_baseline_ddpm_encdec_vision
+      Seeds: [42]
+      Last run: 2026-07-01 01:35:05  (1 config snapshot(s) over 1 seed(s))
+      LEGACY (bridged): kind=d3il_visual_aligning_baseline  projector=no
+
+  23: d3il_baseline_ddpm_encdec_vision__Bf_U3
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline_Bf_U3/d3il_baseline_ddpm_encdec_vision__Bf_U3
+      Seeds: [0, 1, 2, 3, 4, 42]
+      Last run: 2026-06-20 21:56:00  (6 config snapshot(s) over 6 seed(s))
+      LEGACY (bridged): kind=d3il_visual_aligning_baseline  projector=no
+
+[2026-09-01 09:31:00] DA_VA_v2 - INFO - [2/5] Enumerating result units
+[2026-09-01 09:31:00] DA_VA_v2 - INFO -   Candidate 1 (H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussia): 24 units
+[2026-09-01 09:31:00] DA_VA_v2 - INFO -   Candidate 2 (H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussia): 12 units
+[2026-09-01 09:31:00] DA_VA_v2 - INFO -   Candidate 3 (H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussia): 19 units
+[2026-09-01 09:31:00] DA_VA_v2 - INFO -   Candidate 4 (H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussia): 26 units
+[2026-09-01 09:31:00] DA_VA_v2 - INFO -   Candidate 5 (H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diff): 32 units
+[2026-09-01 09:31:00] DA_VA_v2 - INFO -   Candidate 6 (H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_di): 2 units
+[2026-09-01 09:31:00] DA_VA_v2 - INFO -   Candidate 7 (H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diff): 38 units
+[2026-09-01 09:31:00] DA_VA_v2 - INFO -   Candidate 8 (H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diff): 32 units
+[2026-09-01 09:31:00] DA_VA_v2 - INFO -   Candidate 9 (H8_K100_T0.5_Dmix_visual_aligning.models.visual_gaussian_dif): 2 units
+[2026-09-01 09:31:00] DA_VA_v2 - INFO -   Candidate 10 (H8_K20_T0.5_Dmix_visual_aligning.models.visual_gaussian_diff): 6 units
+[2026-09-01 09:31:00] DA_VA_v2 - INFO -   Candidate 11 (H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_di): 2 units
+[2026-09-01 09:31:00] DA_VA_v2 - INFO -   Candidate 12 (H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visual_fm_dif): 16 units
+[2026-09-01 09:31:00] DA_VA_v2 - INFO -   Candidate 13 (H8_K20_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_dif): 10 units
+[2026-09-01 09:31:00] DA_VA_v2 - INFO -   Candidate 14 (H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diff): 32 units
+[2026-09-01 09:31:00] DA_VA_v2 - INFO -   Candidate 15 (H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diff): 32 units
+[2026-09-01 09:31:00] DA_VA_v2 - INFO -   Candidate 16 (H8_K100_Meuler_T0.1_Dmix_visual_aligning.models.visual_mf_di): 19 units
+[2026-09-01 09:31:00] DA_VA_v2 - INFO -   Candidate 17 (H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_di): 2 units
+[2026-09-01 09:31:00] DA_VA_v2 - INFO -   Candidate 18 (H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visual_mf_dif): 38 units
+[2026-09-01 09:31:00] DA_VA_v2 - INFO -   Candidate 19 (H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diff): 38 units
+[2026-09-01 09:31:00] DA_VA_v2 - INFO -   Candidate 20 (H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diff): 32 units
+[2026-09-01 09:31:00] DA_VA_v2 - INFO -   Candidate 21 (H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian): 37 units
+[2026-09-01 09:31:00] DA_VA_v2 - INFO -   Candidate 22 (d3il_baseline_ddpm_encdec_vision): 1 units
+[2026-09-01 09:31:00] DA_VA_v2 - INFO -   Candidate 23 (d3il_baseline_ddpm_encdec_vision__Bf_U3): 6 units
+[2026-09-01 09:31:00] discovery - INFO - Discovery manifest written: Data_Analysis/analysis_results/batch_va2_20260901_093100/logs/discovery_manifest.json
+[2026-09-01 09:31:00] DA_VA_v2 - INFO - [3/5] Loading 458 units
+[2026-09-01 09:31:00] DA_VA_v2 - INFO -   25/458 units processed
+[2026-09-01 09:31:00] DA_VA_v2 - INFO -   50/458 units processed
+[2026-09-01 09:31:01] DA_VA_v2 - INFO -   75/458 units processed
+[2026-09-01 09:31:01] DA_VA_v2 - INFO -   100/458 units processed
+[2026-09-01 09:31:01] DA_VA_v2 - INFO -   125/458 units processed
+[2026-09-01 09:31:01] DA_VA_v2 - INFO -   150/458 units processed
+[2026-09-01 09:31:02] DA_VA_v2 - INFO -   175/458 units processed
+[2026-09-01 09:31:02] DA_VA_v2 - INFO -   200/458 units processed
+[2026-09-01 09:31:02] DA_VA_v2 - INFO -   225/458 units processed
+[2026-09-01 09:31:03] DA_VA_v2 - INFO -   250/458 units processed
+[2026-09-01 09:31:03] DA_VA_v2 - INFO -   275/458 units processed
+[2026-09-01 09:31:03] DA_VA_v2 - INFO -   300/458 units processed
+[2026-09-01 09:31:03] DA_VA_v2 - INFO -   325/458 units processed
+[2026-09-01 09:31:04] DA_VA_v2 - INFO -   350/458 units processed
+[2026-09-01 09:31:04] DA_VA_v2 - INFO -   375/458 units processed
+[2026-09-01 09:31:04] DA_VA_v2 - INFO -   400/458 units processed
+[2026-09-01 09:31:05] DA_VA_v2 - INFO -   425/458 units processed
+[2026-09-01 09:31:05] DA_VA_v2 - INFO -   450/458 units processed
+[2026-09-01 09:31:05] DA_VA_v2 - INFO -   458/458 units processed
+[2026-09-01 09:31:05] data_loader - INFO - Loading log written: Data_Analysis/analysis_results/batch_va2_20260901_093100/logs/loading.log
+[2026-09-01 09:31:05] DA_VA_v2 - INFO -   loaded=458 failed=0 skipped=0
+[2026-09-01 09:31:05] DA_VA_v2 - INFO - [4/5] Aggregating
+[2026-09-01 09:31:05] aggregator - INFO - Aggregating 458 units...
+[2026-09-01 09:31:08] aggregator - INFO -   dropped 11167 all-NaN metric rows (metrics a unit never measured)
+[2026-09-01 09:31:09] aggregator - INFO -   dropped 10767 all-NaN metric rows (metrics a unit never measured)
+[2026-09-01 09:31:10] aggregator - INFO - per_rollout=11842 rows, units_long=42877 rows, agg_long=42687 rows
+[2026-09-01 09:31:10] aggregator - INFO - 
+=== Cross-candidate ranking ===
+  1. Candidate 6 (H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visu): 4.5% goal+constraint, 8660.7 ms/replan
+  2. Candidate 19 (H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual): 2.0% goal+constraint, 62.3 ms/replan
+  3. Candidate 20 (H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual): 1.1% goal+constraint, 50.0 ms/replan
+  4. Candidate 16 (H8_K100_Meuler_T0.1_Dmix_visual_aligning.models.visu): 0.5% goal+constraint, 1157.4 ms/replan
+  5. Candidate 7 (H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual): 0.4% goal+constraint, 62.8 ms/replan
+  6. Candidate 14 (H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual): 0.3% goal+constraint, 48.3 ms/replan
+  7. Candidate 23 (d3il_baseline_ddpm_encdec_vision__Bf_U3): 0.3% goal+constraint, nan ms/replan
+  8. Candidate 1 (H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual): 0.0% goal+constraint, 629.7 ms/replan
+  9. Candidate 2 (H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual): 0.0% goal+constraint, 5327.7 ms/replan
+  10. Candidate 3 (H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual): 0.0% goal+constraint, 3641.7 ms/replan
+  11. Candidate 4 (H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual): 0.0% goal+constraint, 1736.3 ms/replan
+  12. Candidate 5 (H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual): 0.0% goal+constraint, 53.5 ms/replan
+  13. Candidate 8 (H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual): 0.0% goal+constraint, 58.5 ms/replan
+  14. Candidate 9 (H8_K100_T0.5_Dmix_visual_aligning.models.visual_gaus): 0.0% goal+constraint, 5021.1 ms/replan
+  15. Candidate 10 (H8_K20_T0.5_Dmix_visual_aligning.models.visual_gauss): 0.0% goal+constraint, 1182.0 ms/replan
+  16. Candidate 11 (H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visu): 0.0% goal+constraint, 4563.1 ms/replan
+  17. Candidate 12 (H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visua): 0.0% goal+constraint, 411.5 ms/replan
+  18. Candidate 13 (H8_K20_Meuler_T0.5_Dmix_visual_aligning.models.visua): 0.0% goal+constraint, 688.5 ms/replan
+  19. Candidate 15 (H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual): 0.0% goal+constraint, 47.7 ms/replan
+  20. Candidate 17 (H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visu): 0.0% goal+constraint, 7940.7 ms/replan
+  21. Candidate 18 (H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visua): 0.0% goal+constraint, 270.5 ms/replan
+  22. Candidate 21 (H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_): 0.0% goal+constraint, 1008.1 ms/replan
+  23. Candidate 22 (d3il_baseline_ddpm_encdec_vision): 0.0% goal+constraint, 22.7 ms/replan
+[2026-09-01 09:31:10] DA_VA_v2 - INFO - [5/5] Writing reports
+[2026-09-01 09:31:10] reporter - INFO - per_rollout_detail.csv: 11842 rows, 10.2 MB
+[2026-09-01 09:31:11] reporter - INFO - va2_units_long.csv: 44456 rows, 24.8 MB
+[2026-09-01 09:31:11] reporter - INFO - va2_aggregated_long.csv: 42687 rows, 23.9 MB
+[2026-09-01 09:31:11] reporter - INFO - data_quality.csv: 458 rows, 0.4 MB
+[2026-09-01 09:31:11] reporter - INFO - run_config.csv: 446 rows, 0.4 MB
+[2026-09-01 09:31:11] reporter - INFO - candidates_multidimensional_raw.csv: 21507 rows, 10.9 MB
+[2026-09-01 09:31:12] reporter - INFO - candidates_multidimensional_aggregated.csv: 21412 rows, 11.2 MB
+[2026-09-01 09:31:12] reporter - INFO - candidates_ranking.csv: 23 rows, 0.0 MB
+[2026-09-01 09:31:12] reporter - INFO - candidates_detailed.csv: 23 rows, 0.0 MB
+[2026-09-01 09:31:12] reporter - INFO - candidates_per_variant.csv: 906 rows, 0.3 MB
+[2026-09-01 09:31:12] reporter - INFO - Summary written: Data_Analysis/analysis_results/batch_va2_20260901_093100/candidates_summary.txt
+[2026-09-01 09:31:12] reporter - INFO - 11 report files written to Data_Analysis/analysis_results/batch_va2_20260901_093100
+[2026-09-01 09:31:12] DA_VA_v2 - INFO - ======================================================================
+[2026-09-01 09:31:12] DA_VA_v2 - INFO - COMPLETE in 11.8s — Data_Analysis/analysis_results/batch_va2_20260901_093100
+[2026-09-01 09:31:12] DA_VA_v2 - INFO -   per_rollout_detail.csv               every rollout, wide
+[2026-09-01 09:31:12] DA_VA_v2 - INFO -   va2_units_long.csv                   per seed/geo/variant/mask
+[2026-09-01 09:31:12] DA_VA_v2 - INFO -   va2_aggregated_long.csv              pooled over seeds
+[2026-09-01 09:31:12] DA_VA_v2 - INFO -   candidates_multidimensional_*.csv    DA_Code_v3 visualizer
+[2026-09-01 09:31:12] DA_VA_v2 - INFO -   data_quality.csv                     frozen / circuit breaker
+[2026-09-01 09:31:12] DA_VA_v2 - INFO - ======================================================================
+DA_VA_v2 batch analysis completed.

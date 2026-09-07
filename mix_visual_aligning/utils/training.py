@@ -2,15 +2,66 @@ import os, pickle
 import copy
 import numpy as np
 import torch
+import sys
 from tqdm.auto import tqdm
 from diffusers.optimization import get_cosine_schedule_with_warmup
 
 from .arrays import batch_to_device
 
+# ---------------------------------------------------------------------------- #
+# Batch-log hygiene. tqdm renders ONCE on construction and again on close, so
+# `mininterval=1e10` alone does NOT keep a bar out of a non-interactive log --
+# it only suppresses the redraws in between. Nothing here called close(), so the
+# bar was closed by __del__ instead, leaving two carriage-return frames per epoch
+# in every sbatch job log (100 epochs = 200 frames), which bloats the file and
+# breaks grep on the training curve.
+#
+# Under sbatch stderr is not a TTY, so the bar is disabled outright and the same
+# `logs` dict is emitted as ONE plain greppable line at the same log_freq cadence.
+# Interactive runs are unchanged. Force a bar anyway with FMPCC_TQDM=1.
+# ---------------------------------------------------------------------------- #
+_TQDM_OFF = os.environ.get('FMPCC_TQDM', '') != '1' and not sys.stderr.isatty()
+
+
+def _fmt_logs(logs):
+    out = []
+    for k, v in logs.items():
+        out.append(f"{k}={v:.5g}" if isinstance(v, float) else f"{k}={v}")
+    return "  ".join(out)
+
+
 def cycle(dl):
     while True:
         for data in dl:
             yield data
+
+
+def _atomic_torch_save(payload, savepath):
+    """A checkpoint write that cannot destroy the previous checkpoint.
+
+    🔴 Fix_10. `torch.save` opens the DESTINATION path and writes in place. When the volume
+    fills mid-write, the result is a truncated archive sitting exactly where a known-good
+    checkpoint used to be -- the old one is already gone. That is how job 24838 ended up with
+    a savepath holding state_best.pt and nothing else after an ENOSPC: every write target was
+    also the only copy.
+
+    Writing to a sibling temp file and os.replace()-ing it in makes the swap atomic on POSIX.
+    If the disk is full the TEMP write fails and the existing checkpoint is untouched -- the
+    run dies with its last checkpoint still valid and resumable, which is the whole point.
+    Costs one checkpoint of transient space; that is the price of not losing the run.
+    """
+    tmp = f'{savepath}.tmp.{os.getpid()}'
+    try:
+        torch.save(payload, tmp)
+        os.replace(tmp, savepath)
+    except BaseException:
+        # Never leave a partial temp behind to eat the space we are already short of.
+        try:
+            if os.path.exists(tmp):
+                os.remove(tmp)
+        except OSError:
+            pass
+        raise
 
 class EMA():
     '''
@@ -46,6 +97,7 @@ class Trainer(object):
         step_start_ema=2000,
         update_ema_every=10,
         log_freq=1000,
+        save_freq=None,
         train_device='cuda',
         results_folder='./results',
     ):
@@ -57,7 +109,14 @@ class Trainer(object):
 
         self.step_start_ema = step_start_ema
         self.log_freq = log_freq
-        self.save_freq = n_train_steps // 5
+        # Resume granularity. The inherited default is n_train_steps // 5 — FIVE saves for a
+        # whole run — so a wall-clock kill discards up to 20 % of the training. Job 24838 lost
+        # 84k steps that way: it died at step 83999 with the newest periodic save at 80000, and
+        # a run killed before the FIRST periodic save keeps nothing at all but state_0.pt.
+        # Pass save_freq (CLI --save-every, env MIX_SAVE_EVERY) to checkpoint more often. It
+        # changes only how many state_<step>.pt files land on disk — never a path key, never
+        # the LR schedule — so a run started at one cadence resumes correctly at another.
+        self.save_freq = int(save_freq) if save_freq else max(1, int(n_train_steps) // 5)
 
         self.n_train_steps = n_train_steps
         self.n_steps_per_epoch = n_steps_per_epoch
@@ -114,7 +173,7 @@ class Trainer(object):
     #-----------------------------------------------------------------------------#
 
     def train_epoch(self, n_train_steps, epoch=0):        
-        progress_bar = tqdm(total=n_train_steps, mininterval=1e10)
+        progress_bar = tqdm(total=n_train_steps, mininterval=1e10, disable=_TQDM_OFF)
         progress_bar.set_description(f"Epoch {epoch}")
 
         for step in range(n_train_steps):
@@ -179,6 +238,9 @@ class Trainer(object):
             if (self.step + 1) % self.log_freq == 0 or step == n_train_steps - 1:
                 progress_bar.update(step - progress_bar.n + 1)
                 progress_bar.set_postfix(**logs)
+                if _TQDM_OFF:
+                    print(f"[ train ] epoch {epoch} step {self.step + 1}/"
+                          f"{self.n_train_steps}  " + _fmt_logs(logs), flush=True)
 
             self.step += 1
 
@@ -194,6 +256,29 @@ class Trainer(object):
             self.train_epoch(steps_this_epoch, epoch)
             remaining_steps -= steps_this_epoch
             epoch += 1
+
+        # ── Gen14 U12 ── SAVE THE MODEL THE SCHEDULE ACTUALLY ENDS ON.
+        #
+        # 🔴 The periodic save fires on `self.step % self.save_freq == 0` inside
+        # train_epoch, and self.step only ever reaches n_train_steps - 1 there. So the
+        # newest NUMERIC checkpoint is the last multiple of save_freq strictly below
+        # n_train_steps — at the default save_freq = n_train_steps // 5 that is step 80000
+        # of 100000. `--epoch latest` (Gen14 U12) has therefore always deployed a model 20%
+        # short of the end of training, and no MIX_SAVE_EVERY cadence can fix it: the last
+        # multiple of ANY frequency is < n_train_steps. This makes `latest` mean what it
+        # says. Gen3v7 flagged the same defect as "step 1b" and never closed it
+        # (DA_20260901_AF_UNet_alpha_clamp_T1_negative.md §4.3).
+        #
+        # Fires ONLY on a completed run: the early return at the top of this method means
+        # there are steps left to do, and that run's periodic saves still stand. Costs one
+        # extra state_<n_train_steps>.pt per completed run. Overwriting is safe — save() is
+        # atomic (Fix_10) and would write identical weights.
+        if self.step >= self.n_train_steps:
+            _last_periodic = (int(self.n_train_steps) - 1) // self.save_freq * self.save_freq
+            print(f'[ utils/training ] final checkpoint: step {self.step} '
+                  f'(the periodic save only reaches {_last_periodic}); '
+                  f'"latest" now resolves to the end of the schedule', flush=True)
+            self.save(self.step)
 
     def test(self, n_test=100):
         self.model.eval()   # Set the model to evaluation mode
@@ -230,7 +315,7 @@ class Trainer(object):
             'test_a0_losses': self.test_a0_losses,
         }
         savepath = os.path.join(self.logdir, f'state_{epoch}.pt')
-        torch.save(data, savepath)
+        _atomic_torch_save(data, savepath)
         # print(f'Saved model to {savepath}', flush=True)
 
     def save_best(self):
@@ -248,7 +333,7 @@ class Trainer(object):
             'test_a0_losses': self.test_a0_losses,
         }
         savepath = os.path.join(self.logdir, f'state_best.pt')
-        torch.save(data, savepath)
+        _atomic_torch_save(data, savepath)
         # print(f'Saved best model to {savepath}', flush=True)
 
     def save_losses(self):

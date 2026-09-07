@@ -39,6 +39,9 @@ python scripts/train.py --seeds 6 7 8 9 --auto-resume
 ## To monitor whichever one you started most recently
 tail -f Slurm_Codes/logs/latest.log
 
+## submit with Dependency
+./Slurm_Codes/submit_after.sh XXXXX 
+
 ---
 # Cheat Sheet
 
@@ -93,8 +96,20 @@ python tools/clean_weights/clean_weights.py --apply
 
 ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/DA/run_da_batch_va_v2.sh
 
+Slurm_Codes/submit.sh Slurm_Codes/sbatch/DA/run_da_batch_uav.sh
+
 - Local Fallback 
 cd ~/FMPCC/FM-PCC
 nohup bash Slurm_Codes/sbatch/DA/run_da_batch_avoiding_combined.sh \
       > ~/da_avoiding_combined_manual.log 2>&1 &
 tail -f ~/da_avoiding_combined_manual.log
+
+cd ~/FMPCC/FM-PCC
+nohup bash Slurm_Codes/sbatch/DA/run_da_batch_va_v2.sh \
+      > ~/da_va_v2_manual.log 2>&1 &
+tail -f ~/da_va_v2_manual.log
+
+cd ~/FMPCC/FM-PCC
+nohup bash Slurm_Codes/sbatch/DA/run_da_batch_uav.sh \
+      > ~/da_uav_manual.log 2>&1 &minimizer refurnishing sudsy clod gabfest
+tail -f ~/da_uav_manual.log

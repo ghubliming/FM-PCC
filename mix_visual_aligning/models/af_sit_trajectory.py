@@ -267,6 +267,17 @@ class AFSiTTrajectory(nn.Module):
         num_heads: int = 4,
         mlp_ratio: float = 4.0,
         patch_size: int = 1,
+        # ── Gen14 U8 ── visual conditioning. 0 = state-only (byte-identical to pre-U8).
+        # >0 = the 128-D dual-cam latent is PREPENDED as one token (not summed into adaLN's `c`
+        # — see logs_in_develop/Gen14/U8/DECISION_Gen14_U8_injection_choice.md §2/§4.1).
+        cond_dim: int = 0,
+        # ── Gen14 U9 ── WHERE the visual latent enters. 'token' == U8, bit-identical.
+        #   'token' : prepended as one sequence token (U8, the shipped design point)
+        #   'adaln' : summed into adaLN's `c` — the transformer analogue of VisualUNet v1's
+        #             cond_mlp-into-`t`, the best-scoring mechanism this generation has
+        #   'both'  : token AND modulation
+        # Same graft as mf_dit_official_trajectory.py; keep the two in step.
+        vis_cond_mode: str = 'token',
         **unused,  # tolerate UNet-/iMF-only kwargs threaded by the engine
     ):
         super().__init__()
@@ -281,8 +292,38 @@ class AFSiTTrajectory(nn.Module):
         self.noise_labels_embedder = TimestepEmbedder(hidden_size)
         self.noise_labels_next_embedder = TimestepEmbedder(hidden_size)
 
+
+        # ── Gen14 U8 ── visual token (Option 2). Prepended to the patch sequence rather than
+        # summed into `c`: diffusion_policy — the upstream of THIS repo's vision encoder —
+        # conditions its transformer on obs tokens and reserves modulation (FiLM) for its U-Net,
+        # which is the design point our VisualUNet already occupies.
+        self.use_visual = cond_dim > 0
+        self.cond_dim = cond_dim
+        self.num_visual_tokens = 1 if self.use_visual else 0
+        # ── Gen14 U9 ── in 'adaln' the latent claims no sequence position. num_tokens on
+        # the NEXT line picks this up, so the FROZEN sin-cos pos_embed is built one row
+        # shorter and the strip in forward() follows automatically. G-B6 covers all modes.
+        self.vis_cond_mode = str(vis_cond_mode)
+        if self.vis_cond_mode not in ('token', 'adaln', 'both'):
+            raise ValueError(
+                f"[ AFSiTTrajectory ] vis_cond_mode='{self.vis_cond_mode}' is not one "
+                "of 'token' | 'adaln' | 'both'.")
+        if self.use_visual and self.vis_cond_mode == 'adaln':
+            self.num_visual_tokens = 0
+        self.num_tokens = self.num_visual_tokens + self.num_patches
+        if self.use_visual:
+            self.vis_projector = nn.Linear(cond_dim, hidden_size)
+            self.vis_token = nn.Parameter(torch.zeros(1, 1, hidden_size))
+            # ── Gen14 U9 ── no sequence token in 'adaln', so vis_token would be a dead
+            # parameter in every checkpoint. Remove it so the state_dict states the mode.
+            if self.vis_cond_mode == 'adaln':
+                del self.vis_token
+
         # FROZEN sin-cos pos-embed (requires_grad=False, as α-Flow's SiT).
-        self.pos_embed = nn.Parameter(torch.zeros(1, self.num_patches, hidden_size), requires_grad=False)
+        # Gen14 U8: sized over num_tokens = num_visual_tokens + num_patches, so the prepended
+        # visual token gets its own position (mirrors diffusion_policy's separate `cond_pos_emb`,
+        # in the simplest form that keeps ONE table). Still frozen — α-Flow's choice is preserved.
+        self.pos_embed = nn.Parameter(torch.zeros(1, self.num_tokens, hidden_size), requires_grad=False)
 
         self.blocks = nn.ModuleList([
             SiTBlock(hidden_size, num_heads, mlp_ratio) for _ in range(depth)
@@ -303,7 +344,7 @@ class AFSiTTrajectory(nn.Module):
         self.apply(_basic_init)
 
         # frozen 1-D sin-cos pos-embed
-        pos_embed = get_1d_sincos_pos_embed(self.pos_embed.shape[-1], self.num_patches)
+        pos_embed = get_1d_sincos_pos_embed(self.pos_embed.shape[-1], self.num_tokens)
         self.pos_embed.data.copy_(torch.from_numpy(pos_embed).float().unsqueeze(0))
 
         # patch-embed proj xavier (α-Flow inits the conv proj xavier; kept explicit)
@@ -341,6 +382,41 @@ class AFSiTTrajectory(nn.Module):
         b = x.shape[0]
         return x.reshape(b, self.num_patches * self.patch_size, self.transition_dim)
 
+    @staticmethod
+    def _pool_cond(cond):
+        """Gen14 U9 — (B, cond_dim) out of whatever the wrapper handed down.
+
+        Mirrors the window pooling inside _prepend_visual so the two conditioning paths
+        can never disagree about what 'the latent' is. At window_size=1 it is a no-op.
+        """
+        if cond is None:
+            raise ValueError(
+                '[ AFSiTTrajectory ] vis_cond_mode needs a visual latent but got None — '
+                'the wrapper must resolve cond -> (B, cond_dim).')
+        return cond.mean(dim=1) if cond.ndim == 3 else cond
+
+    def _prepend_visual(self, x, cond):
+        """Gen14 U8 — prepend the visual token. No-op (and `cond` ignored) when state-only.
+
+        `cond` is the (B, cond_dim) latent already encoded upstream by VisualDiTTwoTime, so
+        inside the MeanFlow / alpha-Flow JVP it is a captured CONSTANT: its forward-mode tangent
+        is zero by construction and the ResNets never enter the differentiated function.
+        """
+        if not self.use_visual:
+            return x
+        if cond is None:
+            raise ValueError(
+                f"[ {type(self).__name__} ] cond_dim>0 but no visual latent reached the backbone. "
+                "The wrapper (VisualDiTTwoTime) must resolve cond -> (B, cond_dim) and pass it as "
+                "`cond`; training image-blind is exactly what this guard prevents.")
+        if cond.ndim == 3:                 # (B, T_win, C) -> pool the window
+            cond = cond.mean(dim=1)
+        # ── Gen14 U9 ── the guards above still run in 'adaln'; only the concat is skipped.
+        if self.vis_cond_mode == 'adaln':
+            return x
+        vis = self.vis_token + self.vis_projector(cond)[:, None]   # (B, 1, D)
+        return torch.cat([vis, x], dim=1)
+
     # ── contract: matches Flow_matcher_U_Net_v2.forward ────────────────────────────
 
     def forward(self, x, cond, time, returns=None, use_dropout=True, force_dropout=False,
@@ -357,13 +433,20 @@ class AFSiTTrajectory(nn.Module):
         h_b = self._as_batched(h, b, dev, default=0.0)
         t_abs = r_abs + h_b                              # endpoint time (tangent 0 under JVP) → t
 
-        x = self.x_embedder(x) + self.pos_embed         # (B, num_patches, D)
+        x = self.x_embedder(x)                          # (B, num_patches, D)
+        x = self._prepend_visual(x, cond)               # Gen14 U8 — no-op when state-only
+        x = x + self.pos_embed                          # (B, num_tokens, D)
         # c = noise_labels(t) + noise_labels_next(r), matching α-Flow's dit.py:199 (y dropped).
         c = self.noise_labels_embedder(t_abs) + self.noise_labels_next_embedder(r_abs)
+        # ── Gen14 U9 ── vision into the MODULATION path. Fully skipped in 'token', so that
+        # mode stays BIT-IDENTICAL to U8 (G-B9 asserts it).
+        if self.use_visual and self.vis_cond_mode in ('adaln', 'both'):
+            c = c + self.vis_projector(self._pool_cond(cond))
 
         for block in self.blocks:
             x = block(x, c)
 
+        x = x[:, self.num_visual_tokens:]               # Gen14 U8 — strip the visual position
         u = self._unpatchify(self.final_layer_u(x, c))
         if not return_v:
             return u

@@ -99,6 +99,13 @@ RESUME_FLAG=""
 if [ "${AUTO_RESUME:-1}" = "1" ]; then RESUME_FLAG="--auto-resume"; fi
 echo "[ train ] seeds='$TRAIN_SEEDS'  resume='$RESUME_FLAG'  extra='$*'"
 
+# ── H8+8 (U10): horizon / backbone come from the ENV, read by config/avoiding-d3il.py ──
+#   MF_HORIZON=16 MF_BACKBONE=unet ./Slurm_Codes/submit.sh <this script>
+# submit.sh passes --export=ALL, so both reach this job unchanged. They MUST match at eval
+# time (the checkpoint dir is …/H{horizon}_…_bb{backbone}_…), which is why the eval carries
+# a hard horizon guard. Printed here so every training log states what it trained.
+echo "[ train ] MF_HORIZON=${MF_HORIZON:-8 (default)}  MF_BACKBONE=${MF_BACKBONE:-mf_dit (default)}"
+
 python FM_v3_meanflow_test/train_flow_matching_v3_meanflow.py \
     --seeds $TRAIN_SEEDS \
     $RESUME_FLAG \

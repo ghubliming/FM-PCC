@@ -56,6 +56,7 @@ No torch/MuJoCo in the Docker dev env — this is cluster-only; here it is synta
 """
 
 import os
+import re
 import sys
 import json
 import time
@@ -68,10 +69,16 @@ sys.path.insert(0, _REPO)
 
 import mix_uav.utils as utils
 from mix_uav.sampling.policies import Policy
+from diffuser.utils import provenance   # U10.1 — env-override provenance (shared)
 # Gen15 U2 — the HardFlow arm. Imported lazily-tolerant: casadi lives in the cluster env, so a
 # machine without it can still run every DPCC variant. The ImportError only fires if a
 # `hardflow*` variant is actually requested.
-from mix_uav.sampling.hardflow_projection import HardFlowPolicy, resolve_activation_threshold
+from mix_uav.sampling.hardflow_projection import (
+    HardFlowPolicy, resolve_activation_threshold, resolve_hf_batch_size,
+    hardflow_step_budget,          # HFK1 (2026-08-24)
+    hardflow_guard, hardflow_skip_note,   # HFK1c (2026-08-30) — the degeneracy guard
+    # [SolverSwap] artifact naming — keeps an SLSQP run from overwriting IPOPT data.
+    artifact_variant_label, resolve_nlp_backend)
 from mix_uav.models import engine_registry
 import mix_uav_test.eval_artifacts as artifacts
 from uav_expert_data_collect.dataset_writer import DATASET_HZ   # authoritative 33 Hz source
@@ -79,6 +86,12 @@ from uav_expert_data_collect.dataset_writer import DATASET_HZ   # authoritative 
 # Selected ML engine for this process. Set once from --engine in main(); every consumer reads
 # it through the registry, so nothing below branches on the value itself.
 ENGINE = engine_registry.DEFAULT_ENGINE
+
+# ── Gen15 U6 ── checkpoint selector for this process. None => use the plan block's value
+# (which config/uav_mix.py resolves from UAV_MIX_EPOCH). Set once from --epoch in main(),
+# same pattern as ENGINE above; _load_base_cfg injects the resolved value into the cfg dict
+# so build_experiment AND _uav_eval_tag read one number.
+EPOCH_OVERRIDE = None
 
 def _uav_eval_tag(config, controller, engine=None):
     """Eval-parameter folder name — mirrors args_to_watch_fm_visual_plan style.
@@ -106,7 +119,54 @@ def _uav_eval_tag(config, controller, engine=None):
     thresh = config.get('diffusion_timestep_threshold', 0.5)
     parts  = [f'E{engine or ENGINE}', f'K{k}', f'mpc{mpc_b}', controller]
     parts.append(f'T{thresh:g}')
+    # 🔴 Gen15 U6 — WHICH CHECKPOINT produced these rows. Absent at the shipped 'best', so
+    # every results folder that exists today keeps its exact name; present for anything else,
+    # so a `--epoch latest` pass lands BESIDE the `best` one instead of silently overwriting
+    # it. Those are different models: on the af arm `best` is chosen on a test_loss that
+    # scales with alpha and therefore prefers a MID-CURRICULUM checkpoint (Gen3v7 DA
+    # 2026-09-01 §3.1). Appended before the free-form run tag so that stays last.
+    _ep = config.get('diffusion_epoch', 'best')
+    if str(_ep) != 'best':
+        parts.append(f'EP{_ep}')
+    # 🔴 Gen15 Fix_16 — optional run tag, appended last. Two evals that differ ONLY in an
+    # environment knob (e.g. FMPCC_SAFE_EPS_MODE=scaled vs legacy) produce an identical
+    # folder name and the second SILENTLY OVERWRITES the first. Set FMPCC_UAV_EVAL_TAG to
+    # keep A/B runs side by side. Sanitised to [A-Za-z0-9._-] so it cannot escape the path.
+    run_tag = os.environ.get('FMPCC_UAV_EVAL_TAG', '').strip()
+    if run_tag:
+        parts.append(re.sub(r'[^A-Za-z0-9._-]+', '-', run_tag).strip('-'))
     return '_'.join(parts)
+
+
+def _report_degenerate_dims(dataset, config):
+    """🔴 Gen15 Fix_16 — say out loud which channels carry no data, and what they can command.
+
+    A dimension with `min == max` has no scale and no gradient signal; the normalizer has to
+    invent a width for it, and that width becomes BOTH the channel's physical output scale and
+    the `action_bounds:'auto'` cap the projector derives from `mins`/`maxs`. Before this fix a
+    single terse `Constant data in dimension 2` line was the only trace, and the +/-1 m ceiling
+    it implied was invisible. Print the actual numbers so the next reader does not have to
+    reverse-engineer them from the artifacts.
+    """
+    try:
+        norms = dataset.normalizer.normalizers
+    except Exception:
+        return
+    for key in ('actions', 'observations'):
+        n = norms.get(key)
+        dims = list(getattr(n, 'degenerate_dims', []) or [])
+        if not dims:
+            continue
+        eps_map = getattr(n, 'degenerate_eps', {}) or {}
+        for i in dims:
+            w = eps_map.get(i, float('nan'))
+            print(f'[ eval ] Fix_16 DEGENERATE {key}[{i}]: constant in the expert data — '
+                  f'no training signal for this channel. Widened by eps={w:.3e}; a saturated '
+                  f'model output on it commands +/-{w:.3e} data-units/step.')
+        if key == 'actions' and config.get('action_bounds', 'auto') == 'auto':
+            lb = np.asarray(n.mins, dtype=float); ub = np.asarray(n.maxs, dtype=float)
+            print(f'[ eval ] Fix_16 projector action_bounds=auto → lb={np.round(lb, 6)} '
+                  f'ub={np.round(ub, 6)}  (degenerate dims now bounded, not +/-1)')
 
 
 SCENES = ['empty', 'corridor', 's_curve', 'pillars']
@@ -144,6 +204,135 @@ SCENE_MAX_EPISODE_LENGTH = {
 # snapshot from before a `snapshot_configs` fix persist forever across job re-runs.
 _SNAPSHOTTED_DIRS = set()
 
+# ── Div_Abort: divergence detection + episode abort ──────────────────────────
+# A quadrotor that has lost control does not merely fail the task — it flies an ABNORMAL
+# ROUTE: it leaves the volume every expert trajectory of its scene lives in, and it gets
+# there fast. Nothing in the loop stopped that, so the episode burned its whole step budget
+# while the drone tumbled. This guard ends such an episode on the step the flight is provably
+# lost and records WHEN / WHERE / WHY into every artifact.
+#
+# What this guard is NOT
+#   • NOT what keeps the plots readable. `p_des` excursions used to autoscale the
+#     `*_mpc_foresight.svg` into two near-empty panels dominated by one hike. That is fixed
+#     independently by `eval_artifacts.view_window()`, which scales every panel to the FLOWN
+#     PATH and lets `p_des` widen it by at most VIEW_MAX_GROW core spans — a commanded point
+#     at -600 m can no longer shrink a plot, aborted or not. Aborting is about not burning
+#     800 steps of compute on a dead aircraft, and about scoring it as the miss it is.
+#   • NOT a constraint check. Leaving the declared workspace box is a NORMAL, measured
+#     violation (`_exec_constraint_violations`). That box also SHRINKS per geo ablation, so
+#     it is deliberately NOT used here: the envelope below is a fixed physical property of
+#     the SCENE, identical across every projection variant, so an abort can never be an
+#     artefact of which ablation happens to be running.
+#   • Does NOT look at `p_des`. The commanded-point lead (`|p_des - p| > 5 m`) was tried and
+#     REMOVED — it is direction-blind. `p_des` 5 m BELOW the drone means required thrust has
+#     gone negative (saturation → free fall); 5 m ABOVE means an ordinary lagging climb the
+#     drone recovers from at max climb accel; 5 m sideways means a 64° tilt, aggressive but
+#     upright and flying. The old check aborted all three identically. Loss of control is now
+#     read off the AIRCRAFT state only.
+#
+# What the abort DOES do for the plots: the clamp above rescues `p_des` excursions, but it
+# cannot rescue a DRONE excursion — the flown path IS the core the window scales to, so a
+# fly-away sets a huge percentile band and compresses the real flight anyway. Ending the
+# episode on the step the aircraft is lost keeps the core band on the arena. That is why
+# `off_route` and `overspeed` fire INDEPENDENTLY (OR, not AND): either one on its own is
+# already a sign the rollout has failed, and either one on its own already wrecks the SVG.
+#
+# Env overrides (all optional; the defaults are what the cluster runs):
+#   FMPCC_UAV_DIVERGENCE_ABORT=0  → disable entirely (exact pre-Div_Abort behaviour)
+#   FMPCC_UAV_DIV_SLACK_M         → how far outside its scene envelope counts as abnormal
+#   FMPCC_UAV_DIV_SPEED_MS        → what counts as "very fast"
+#   FMPCC_UAV_DIV_MAP_XY_M / _MAP_Z_M → the hard off-the-world bound
+DIVERGENCE_ABORT = os.environ.get('FMPCC_UAV_DIVERGENCE_ABORT', '1').lower() not in ('0', 'false', 'no')
+
+# Per-scene FLIGHT ENVELOPE — the box containing every expert trajectory of that scene.
+# Sources: d3il/environments/d3il/models/mj/robot/quadrotor/scenes/scene_<scene>.xml (floor
+# plane spans ±10 m; walls are 1.5 m tall) and uav_expert_data_collect/generator.py (altitude
+# drawn U(0.90, 1.30) at the start, U(0.70, 1.10) at the goal):
+#   empty     start/goal drawn in U(-1.8, 1.8) on x and y; no walls, no obstacles.
+#   corridor  path spans x = ±2.8; wall inner faces at y = ∓0.45.
+#   pillars   path spans x = ±3.2; outermost trained channel centred y = ±1.11.
+#   s_curve   path spans x = ±3.2; wall corridor band |y| <= 1.25.
+SCENE_FLIGHT_ENVELOPE = {
+    'empty':    ((-1.8, -1.80, 0.70), (1.8, 1.80, 1.30)),
+    'corridor': ((-2.8, -0.45, 0.70), (2.8, 0.45, 1.30)),
+    'pillars':  ((-3.2, -1.11, 0.70), (3.2, 1.11, 1.30)),
+    's_curve':  ((-3.2, -1.25, 0.70), (3.2, 1.25, 1.30)),
+}
+# Unknown scene → the union of the four above, so a new scene can never abort spuriously
+# before someone measures its real envelope and adds a row.
+SCENE_FLIGHT_ENVELOPE_DEFAULT = ((-3.6, -1.80, 0.70), (3.6, 1.80, 1.30))
+
+# `off_route`: how far outside its scene envelope the drone has to be. 2.0 m is wider than the
+# whole corridor/s_curve wall gap, and puts the ceiling trigger at z = 3.30 m — 1.8 m clear of
+# the tallest wall (1.5 m) and 2.0 m above any altitude the expert ever flies. Fires ALONE.
+DIV_ENVELOPE_SLACK_M = float(os.environ.get('FMPCC_UAV_DIV_SLACK_M', '2.0'))
+# `overspeed`: the expert covers <= 8 m of path in 6-22 s — ~0.4-0.9 m/s mean, well under
+# 2 m/s peak. Fires ALONE, so it is set above every speed the arena can produce innocently:
+# a free fall from the top of the altitude draw (1.30 m) lands at sqrt(2*9.81*1.30) = 5.05 m/s,
+# so 6.0 m/s cannot be reached by merely dropping out of cruise — it takes powered divergence.
+# ~3x the expert peak. THIS is the threshold to sanity-check first on the cluster (§5).
+DIV_SPEED_MAX_MS = float(os.environ.get('FMPCC_UAV_DIV_SPEED_MS', '6.0'))
+# Hard off-the-world bound: the MuJoCo floor plane is 10 x 10 m. Fires on POSITION ALONE (no
+# speed term) — a drone that coasts out over the void and slows down is still gone.
+DIV_MAP_XY_M = float(os.environ.get('FMPCC_UAV_DIV_MAP_XY_M', '10.0'))
+DIV_MAP_Z_M = float(os.environ.get('FMPCC_UAV_DIV_MAP_Z_M', '10.0'))
+
+
+def _flight_envelope(scene):
+    """(lb, ub) of the box every EXPERT trajectory of `scene` stays inside.
+
+    A fixed physical property of the scene. Deliberately independent of `geo_config`: its
+    `workspace_bounds` shrink per geo ablation (`geo_bounds_only`, tightened `combined_*`),
+    which would make the same flight abort under one variant and survive under another.
+    """
+    lb, ub = SCENE_FLIGHT_ENVELOPE.get(scene, SCENE_FLIGHT_ENVELOPE_DEFAULT)
+    return np.array(lb, dtype=float), np.array(ub, dtype=float)
+
+
+def _check_divergence(p, v, envelope_lb, envelope_ub, quat=None):
+    """First lost-the-aircraft condition this state trips → (reason, detail); else (None, '').
+
+    Reads the AIRCRAFT state only — p, v, attitude. Never `p_des`. `reason` is a short
+    greppable tag that lands in results.json / the npz / the eval log / the foresight SVG;
+    `detail` is the human sentence.
+    """
+    if not (np.all(np.isfinite(p)) and np.all(np.isfinite(v))):
+        return 'nan_state', 'non-finite p / v — the integrator blew up'
+
+    if (np.any(np.abs(np.asarray(p, dtype=float)[:2]) > DIV_MAP_XY_M)
+            or p[2] > DIV_MAP_Z_M or p[2] < -0.5):
+        return 'off_map', (f'p={np.round(p, 2).tolist()} is off the map — the floor plane '
+                           f'spans ±{DIV_MAP_XY_M:.0f} m and the ceiling trigger is '
+                           f'{DIV_MAP_Z_M:.0f} m; the drone has left the world')
+
+    # off_route: somewhere no expert trajectory of this scene ever goes — too far from the
+    # walls / pillars the route is defined by. Independent of speed: a drone that drifts far
+    # off-route slowly has still failed, and its trace still sets the plot scale.
+    lo = np.asarray(envelope_lb, dtype=float) - DIV_ENVELOPE_SLACK_M
+    hi = np.asarray(envelope_ub, dtype=float) + DIV_ENVELOPE_SLACK_M
+    off_route = [ax for ax, c, l, h in zip('xyz', p, lo, hi) if c < l or c > h]
+    if off_route:
+        return 'off_route', (f'p={np.round(p, 2).tolist()} is outside the scene flight envelope '
+                             f'{np.round(lo, 2).tolist()}..{np.round(hi, 2).tolist()} on '
+                             f'{"/".join(off_route)} (expert envelope ⊕ '
+                             f'{DIV_ENVELOPE_SLACK_M:.1f} m) — too far off the trained route')
+
+    # overspeed: independent of position. A speed no expert ever flies is itself the failure
+    # signature, and by the time it shows up the trace is already leaving the arena.
+    speed = float(np.linalg.norm(v))
+    if speed > DIV_SPEED_MAX_MS:
+        return 'overspeed', (f'|v|={speed:.2f} m/s > {DIV_SPEED_MAX_MS:.1f} m/s — the expert '
+                             f'cruises at 0.4-0.9 m/s and a free fall from cruise altitude '
+                             f'lands at 5.05 m/s; this is powered divergence')
+
+    if quat is not None:
+        q = np.asarray(quat, dtype=float).reshape(-1)
+        if q.size == 4 and np.all(np.isfinite(q)):
+            cos_tilt = 1.0 - 2.0 * (q[1] * q[1] + q[2] * q[2])   # body z-axis · world z
+            if cos_tilt < 0.0:
+                return 'inverted', f'body z-axis · world z = {cos_tilt:.2f} < 0 — the drone is upside down'
+    return None, ''
+
 
 def parse_args():
     p = argparse.ArgumentParser(description='Closed-loop UAV Mix-ML evaluation.')
@@ -169,7 +358,18 @@ def parse_args():
                         'SCENE_MAX_EPISODE_LENGTH defaults). Mirrors DPCC avoiding max_episode_length. '
                         'Episodes early-stop on goal-reach; goal-path scenes that never reach run the '
                         'full budget. Default: per-scene value.')
-    p.add_argument('--epoch', type=str, default='latest', help="Checkpoint epoch ('latest' or int).")
+    # ── Gen15 U6 ── default is now None, meaning "take the plan block's value", which
+    # config/uav_mix.py resolves from UAV_MIX_EPOCH. Before U6 this flag existed but was
+    # (a) unreachable from Slurm (the sbatch never passed it) and (b) NOT part of the results
+    # folder name, so a `latest` run silently OVERWROTE the `best` run of the same weights.
+    # Both are fixed: the sbatch forwards it, and `_uav_eval_tag` emits '_EP<sel>'.
+    p.add_argument('--epoch', type=str, default=None,
+                   help="Checkpoint to load: 'best' (lowest val loss; the shipped default), "
+                        "'latest' (newest state_<step>.pt), or an int step. Applies to the "
+                        "loader AND the results folder name ('_EP<sel>'). Env fallback: "
+                        "UAV_MIX_EPOCH. Use 'latest' on the af arm to deploy the model the "
+                        "alpha schedule actually produced -- 'best' is chosen on a test_loss "
+                        "that scales with alpha and prefers a MID-CURRICULUM checkpoint.")
     p.add_argument('--projection', type=str, default='fm_only',
                    help="Projection variant for the output subfolder. 'fm_only' (state-only FM, no DPCC); "
                         "DPCC variants (dpcc-c, …) slot in here when Phase-3 lands.")
@@ -189,12 +389,55 @@ def build_experiment(scene, seed, epoch, device, flow_steps=None):
     p.dataset = f'uav-{scene}'            # → data branch + output path segregation
     args = p.parse_args(experiment=engine_registry.experiment_name(ENGINE), seed=seed)
 
-    ep = epoch if epoch == 'latest' else int(epoch)
+    ep = epoch if epoch in ('latest', 'best') else int(epoch)
     # CONFIG-OVERRIDES-PKL (2026-07-13): pass parsed config args so same-named pickled
     # diffusion kwargs are overridden by the current config (warn-on-change). See
     # logs_in_develop/config_override_pkl/CHANGELOG_config_overrides_pkl.md
     experiment = utils.load_diffusion(args.savepath, epoch=ep, device=device, override_args=args)
     diffusion = experiment.diffusion
+
+    # ── Gen15 U6 ── say WHICH weights are about to be rolled out. `trainer.step` is read back
+    # out of the checkpoint file itself, so this is the file's own claim about where in
+    # training it came from — not the config's. (`latest` -> -1 is already caught inside
+    # load_diffusion, guarded there since 2026-08-19.)
+    _ckpt_step = getattr(getattr(experiment, 'trainer', None), 'step', None)
+    print(f'[ eval ] checkpoint = state_{experiment.epoch}.pt  (trained to step {_ckpt_step})')
+    # Stash on the parsed args: eval_scene's provenance.write() receives `parsed`, not the
+    # experiment, and the RESOLVED epoch is the only thing that identifies the weights.
+    args._u6_ckpt_epoch, args._u6_ckpt_step = experiment.epoch, _ckpt_step
+
+    # 🔴 THE ONE CHECK THAT SEPARATES alpha-FLOW FROM MeanFlow AT DEPLOYMENT. af_diffusion.py
+    # routes `alpha <= 0` into Gen3v6's MeanFlow JVP body UNMODIFIED (line 568), so a
+    # checkpoint taken from the alpha=0 tail IS a MeanFlow model however the folder is named —
+    # which is what EVERY Gen15 af run has been until U6. Printing alpha at the loaded step
+    # puts that in the EVAL log, not only in a training log from a different job hours before.
+    # _get_ratio is a staticmethod precisely so schedule questions need no training loop; the
+    # alpha values come from the TRAIN-time diffusion_config.pkl.
+    if _ckpt_step is not None and hasattr(diffusion, 'af_alpha_end'):
+        try:
+            _a = diffusion._get_ratio(
+                diffusion.af_alpha_scheduler, diffusion.af_alpha_init, diffusion.af_alpha_end,
+                diffusion.af_alpha_init_step, diffusion.af_alpha_end_step,
+                diffusion.af_alpha_gamma, diffusion.af_alpha_clamp, int(_ckpt_step))
+        except Exception as _e:
+            print(f'[ eval ] alpha at step {_ckpt_step}: unavailable ({type(_e).__name__})')
+        else:
+            print(f'[ eval ] alpha(step {_ckpt_step}) = {_a:.4f}  '
+                  f'[{diffusion.af_alpha_scheduler} {diffusion.af_alpha_init} -> '
+                  f'{diffusion.af_alpha_end} over {diffusion.af_alpha_end_step} steps, '
+                  f'clamp {diffusion.af_alpha_clamp}]')
+            print('[ eval ]   ' + (
+                '🔴 alpha = 0 -> these weights were trained on the MeanFlow target '
+                '(af_diffusion.py:568). This is an alpha-Flow CURRICULUM endpoint, not the '
+                'alpha-Flow objective. Set UAV_MIX_AF_ALPHA_END>0 and retrain to change that.'
+                if _a <= 0.0 else
+                'alpha-Flow objective ACTIVE at this checkpoint.'))
+    _bone = getattr(diffusion, 'imf_backbone', None) or getattr(
+        getattr(diffusion, 'model', None), 'imf_backbone', None)
+    if _bone:
+        print(f'[ eval ] ml bone = {_bone}  '
+              f'(U6 default is \'unet\', the 4.0 M arm matched to fm/mf; '
+              f'\'sit\' is ~9.4 M and NOT parameter-matched)')
 
     # 🔴 Gen15 — pin K onto the LOADED model. This is one of the two halves of the Gen11 K bug:
     # `override_args` here is the TRAIN block's args, which carry no `flow_steps_v3`, so the
@@ -225,11 +468,29 @@ def _apply_geo_entry(cfg, scene, entry):
     applied (or the dynamics-only global fallback if entry is None), plus its geo_tag (Fix_1).
     Shared by load_pcc_config (single-match) and eval_scene's multi-match loop (Fix_6)."""
     cfg = dict(cfg)
+    # [Gen15 U7] Reset both optional per-entry keys on EVERY call, so a base cfg that has been
+    # through one entry can never leak that entry's suffix/pad into the next (or into the
+    # entry-is-None fallback). Set before the branch, overwritten inside it.
+    cfg['geo_tag_suffix']     = ''
+    cfg['planning_inflation'] = None
     if entry is not None:
         cfg['constraint_types']      = list(entry.get('constraint_types', cfg['constraint_types']))
         cfg['workspace_bounds']      = entry.get('workspace_bounds', None)
         cfg['halfspace_constraints'] = entry.get('halfspace_constraints', [])
         cfg['obstacle_constraints']  = entry.get('obstacle_constraints', [])
+        # [Gen15 U7] Two OPTIONAL per-entry keys, both absent from every pre-U7 entry so their
+        # behaviour there is byte-identical:
+        #   geo_tag_suffix     — inserted into geo_tag so a second entry for the SAME scene with
+        #                        the SAME constraint_types lands in its own output folder
+        #                        instead of silently overwriting the first (see below).
+        #   planning_inflation — the offset the PROJECTOR applies to spatial surfaces, decoupled
+        #                        from `inflation`, which stays the PHYSICAL body radius used by
+        #                        `_exec_constraint_violations` to score collisions. Planner pad
+        #                        and body radius are different design objects; conflating them
+        #                        means loosening the planner also loosens the scoring, which
+        #                        would make any such A/B meaningless.
+        cfg['geo_tag_suffix']     = str(entry.get('geo_tag_suffix', '') or '')
+        cfg['planning_inflation'] = entry.get('planning_inflation', None)
         print(f"[ eval ] E9 geo '{scene}' ← variant '{entry['name']}': "
               f"constraint_types={cfg['constraint_types']} "
               f"(bounds={cfg['workspace_bounds'] is not None}, "
@@ -239,12 +500,20 @@ def _apply_geo_entry(cfg, scene, entry):
 
     # E9 fix1: `geo_tag` — a second, swappable output-path axis mirroring the old avoiding-task
     # `results/halfspace_<halfspace_variant>/` folder level. Encodes WHICH geometry/constraint
-    # combo produced a run (resolved geo entry name + its actually-active constraint_types),
-    # so re-running the same scene under a different constraint_types subset (e.g. an ablation
-    # like obstacles-only vs the full stack) lands in a DIFFERENT folder instead of overwriting
-    # the previous run. `empty` (constraint_types=[]) tags as '<scene>_unconstrained'.
+    # combo produced a run, so re-running the same scene under a different constraint_types
+    # subset (e.g. obstacles-only vs the full stack) lands in a DIFFERENT folder instead of
+    # overwriting the previous run. `empty` (constraint_types=[]) tags as '<scene>_unconstrained'.
+    #
+    # 🔴 [Gen15 U7] The docstring above USED TO claim this encoded the "resolved geo entry name
+    # + its actually-active constraint_types". It never encoded the name. Two entries for the
+    # same scene that declare the same constraint_types — exactly what an A/B on the GEOMETRY
+    # (not the families) looks like — therefore produced the SAME geo_tag and the second run
+    # silently overwrote the first. Opt-in `geo_tag_suffix` fixes it without touching any
+    # existing tag: every pre-U7 entry omits the key, so its geo_tag is byte-identical.
     _ctypes = cfg.get('constraint_types') or []
-    cfg['geo_tag'] = f'{scene}_unconstrained' if not _ctypes else f"{scene}_{'+'.join(sorted(_ctypes))}"
+    _sfx    = cfg.get('geo_tag_suffix') or ''
+    cfg['geo_tag'] = (f'{scene}{_sfx}_unconstrained' if not _ctypes
+                      else f"{scene}{_sfx}_{'+'.join(sorted(_ctypes))}")
     return cfg
 
 
@@ -291,6 +560,12 @@ def _load_base_cfg(scene, seed):
     cfg['flow_steps_v3']                = int(os.environ.get(
         'UAV_MIX_FLOW_STEPS', getattr(plan_args, 'flow_steps_v3', 20)))
     cfg['engine']                       = ENGINE
+    # ── Gen15 U6 ── same treatment, same reason, for the checkpoint selector: `_uav_eval_tag`
+    # reads it off this dict, and build_experiment loads from it, so both halves of the run
+    # are named by ONE value. CLI --epoch (EPOCH_OVERRIDE) wins over the plan block, which
+    # config/uav_mix.py has already resolved from UAV_MIX_EPOCH.
+    cfg['diffusion_epoch'] = (EPOCH_OVERRIDE if EPOCH_OVERRIDE is not None
+                              else getattr(plan_args, 'diffusion_epoch', 'best'))
 
     # ── Gen15 U2: the HardFlow arm is declared in Gen15's OWN config, never in the yaml ──────
     # `config/uav_projection.yaml` is SHARED READ-ONLY with Gen11 (init plan §1.9 / drift-scan
@@ -299,6 +574,18 @@ def _load_base_cfg(scene, seed):
     # from `plan_mix_uav_<engine>` instead. The CONSTRAINTS still come from the shared yaml —
     # which is the half that has to match for the comparison to mean anything.
     cfg['hardflow'] = dict(getattr(plan_args, 'hardflow', {}) or {})
+    # [HFK1c 2026-08-30 / R4] `HFFM_ACT_THRESHOLD` is the per-job override for A, and until now
+    # it was wired into Slurm_Codes/sbatch/{MeanFlow,AlphaFlow,mix_visual_aligning} but NOT the
+    # UAV path — `config/uav_mix.py` hardcoded 0.5, so A was the one HardFlow knob this
+    # generation could not sweep. It has to be settable here because the supported way to
+    # recover the projector-only control is `A=0.0 at K>=5` (terminal-only at ANY K), which is
+    # the clean replacement for the low-K degenerate rows this guard now blocks. Same env name
+    # and same polarity as the sibling generations. See AUDIT_20260830 §6.
+    _hf_env_A = os.environ.get('HFFM_ACT_THRESHOLD')
+    if _hf_env_A not in (None, ''):
+        cfg['hardflow']['activation_threshold'] = _hf_env_A
+        print(f'[ eval ][hardflow] HFFM_ACT_THRESHOLD={_hf_env_A} → overriding '
+              f'activation_threshold for this job')
     _hf_variants = list(getattr(plan_args, 'hardflow_variants', []) or [])
     if not engine_registry.get(ENGINE)['supports_hardflow']:
         # e.g. the `diffusion` arm: HardFlow's NLP needs v = f(x, t) and a DDPM has no velocity
@@ -310,11 +597,75 @@ def _load_base_cfg(scene, seed):
     if os.environ.get('UAV_MIX_HF_OFF'):
         _hf_variants = []
         print('[ eval ] UAV_MIX_HF_OFF set → HardFlow arm disabled for this run')
+    # [HFK1c 2026-08-30] Degeneracy guard. Same principle as the `supports_hardflow` drop
+    # above — drop the arm at config time rather than crash (or, worse, silently produce an
+    # uncitable row) inside the sampler hours into a job. A DEGENERATE arm runs no HardFlow
+    # arithmetic at all, so there is nothing for it to measure; see
+    # logs_in_develop/aggregated_hardflow_lowK/AUDIT_20260830_*.md
+    if _hf_variants:
+        # Resolve A through the SAME fallback chain the policy build uses (line ~1633), or
+        # the guard would judge a different arm than the one that runs.
+        _hf_A = resolve_activation_threshold(cfg['hardflow'].get(
+            'activation_threshold', cfg.get('diffusion_timestep_threshold', 0.5)))
+        _hf_ok, _hf_reason, _hf_tier, _, _hf_ngen, _ = hardflow_guard(
+            int(cfg['flow_steps_v3']), _hf_A)
+        if not _hf_ok:
+            print(f'[ eval ][hardflow][BLOCKED] dropping {len(_hf_variants)} HardFlow '
+                  f'variant(s) {_hf_variants}: {_hf_reason}')
+            cfg['hardflow_skipped'] = {'variants': list(_hf_variants),
+                                       'reason': _hf_reason,
+                                       'tier': _hf_tier,
+                                       'n_genuine': int(_hf_ngen),
+                                       'K': int(cfg['flow_steps_v3']),
+                                       'A': float(_hf_A)}
+            _hf_variants = []
     if _hf_variants:
         _existing = list(cfg.get('projection_variants') or [])
         cfg['projection_variants'] = _existing + [v for v in _hf_variants if v not in _existing]
         print(f'[ eval ] HardFlow arm: +{len(_hf_variants)} variants {_hf_variants} '
               f'(from config/uav_mix.py, NOT the shared yaml)')
+
+    # ── [Gen15 U9 2026-09-06] UAV_MIX_VARIANTS — explicit variant subset ────────────────
+    # A K-sweep job runs len(projection_variants) x n_trials rollouts, and at K>=3 the
+    # HardFlow arm re-enables, taking the set from 10 to 17. Both pillars K=5 jobs in the
+    # Fix_16 A/B died at the 24 h wall at 17 variants, and there was no way to trim the set
+    # without editing the shared yaml (which would silently change every other job too).
+    #
+    # This is the read-only, per-job counterpart to UAV_MIX_HF_OFF above: it filters the
+    # ALREADY-ASSEMBLED list (yaml base + config/uav_mix.py HardFlow arm), so it can select
+    # from both families at once and can never invent a variant the eval does not implement.
+    #
+    #   UAV_MIX_VARIANTS='diffuser,dpcc-r,dpcc-c,dpcc-t,hardflow_new,hardflow_new-r,hardflow_new-c,hardflow_new-t'
+    #
+    # 🔴 MATCHED COMPARISON: whatever you keep must keep BOTH sides of the question. Dropping
+    # every `dpcc-*` row to run HardFlow alone leaves nothing at that K to compare HardFlow
+    # against, and comparing across K violates the matched-budget rule. The guard below
+    # refuses that specific mistake; everything else is the caller's judgement.
+    _var_env = (os.environ.get('UAV_MIX_VARIANTS') or '').strip()
+    if _var_env:
+        _avail = list(cfg.get('projection_variants') or [])
+        _want = [v.strip() for v in _var_env.split(',') if v.strip()]
+        _unknown = [v for v in _want if v not in _avail]
+        if _unknown:
+            print(f'[ ERROR ] UAV_MIX_VARIANTS names {len(_unknown)} variant(s) that do not '
+                  f'exist for this job: {_unknown}')
+            print(f'          available at K={cfg["flow_steps_v3"]}: {_avail}')
+            if any('hardflow' in v for v in _unknown) and not _hf_variants:
+                print('          (the HardFlow arm is OFF for this job -- see the BLOCKED/'
+                      'UAV_MIX_HF_OFF line above. Raise K or drop the hardflow_* names.)')
+            raise SystemExit(2)
+        _kept_hf  = [v for v in _want if 'hardflow' in v]
+        _kept_pcc = [v for v in _want if 'hardflow' not in v and v != 'diffuser']
+        if _kept_hf and not _kept_pcc:
+            print('[ ERROR ] UAV_MIX_VARIANTS keeps HardFlow variants but no dpcc-* row. '
+                  'HardFlow-vs-DPCC needs both arms at the SAME K -- comparing against a '
+                  'dpcc row from a different K breaks the matched-budget rule. Add at least '
+                  'one dpcc-* variant, or set UAV_MIX_HF_OFF=1 to run the DPCC side alone.')
+            raise SystemExit(2)
+        cfg['projection_variants'] = _want
+        print(f'[ eval ] UAV_MIX_VARIANTS -> running {len(_want)}/{len(_avail)} variants: {_want}')
+        print(f'[ eval ]   dropped {len(_avail) - len(_want)}: '
+              f'{[v for v in _avail if v not in _want]}')
 
     cfg['control_hz']                   = float(getattr(plan_args, 'control_hz', DATASET_HZ))
     cfg['behavior_log']                 = bool(getattr(plan_args, 'behavior_log', True))
@@ -322,6 +673,27 @@ def _load_base_cfg(scene, seed):
     # E8 (Epoch8) — observation layout + tracker selection. Defaults = E7 (p_des / pid).
     cfg['cond_mode']                    = str(getattr(plan_args, 'cond_mode', 'p_des'))
     cfg['controller']                   = str(getattr(plan_args, 'controller', 'pid'))
+    # ── [Gen15 U10 2026-09-07] UAV_MIX_CONTROLLER — per-job tracker override ────────────
+    # `controller` lives in a SHARED base dict in config/uav_mix.py (~line 271/308), so the
+    # only way to try a different tracker was to edit it there -- which switches every Gen15
+    # run at once, including anything already queued. This makes it per-job, like the other
+    # UAV_MIX_* knobs.
+    #
+    # It is a RESULTS-PATH key (`Emf_K3_mpc4_<controller>_T0.5`), so a controller A/B lands in
+    # two separate folders and cannot collide. See _uav_eval_tag().
+    #
+    # 🔴 'mjpc' additionally needs the FMPCC_mjx conda env (mujoco>=3 / mjx, which conflicts
+    # with the mujoco==2.3.7 pin the rest of the repo needs). eval_mix_uav.sh reads this same
+    # variable to pick the env -- keep the two in sync.
+    _ctrl_env = (os.environ.get('UAV_MIX_CONTROLLER') or '').strip()
+    if _ctrl_env:
+        _valid = ('pid', 'pid_stopgo', 'pid_const_v', 'mjpc')
+        if _ctrl_env not in _valid:
+            print(f"[ ERROR ] UAV_MIX_CONTROLLER='{_ctrl_env}' must be one of {_valid}")
+            raise SystemExit(2)
+        if _ctrl_env != cfg['controller']:
+            print(f"[ U10 ] controller: '{cfg['controller']}' (config) -> '{_ctrl_env}' (env override)")
+        cfg['controller'] = _ctrl_env
     # U6: MJX predictive-sampling params (replaces gRPC mjpc_task_id/planner_steps).
     cfg['mjx_n_samples']                = int(getattr(plan_args, 'mjx_n_samples', 16))
     cfg['mjx_horizon']                  = float(getattr(plan_args, 'mjx_horizon', 0.3))
@@ -469,6 +841,12 @@ def _realized_homotopy(scene, obs_traj):
     return None                                             # single-class scenes (s_curve, empty)
 
 
+# [Gen15 U7] Slack a scene must leave around the expert route for the constraint metrics to be
+# winnable at all. Default 0.30 m = the best measured `track_err_mean` median across scenes
+# (DA_20260903 Part II section II.3); raise to be stricter, 0 restores the old bare pass/fail.
+_GEO_SLACK_PROBE_M = float(os.environ.get('FMPCC_GEO_SLACK_PROBE_M', '0.30'))
+
+
 def _warn_expert_route_infeasibility(scene, config, homotopies, n_samples=200):
     """Fix_12: cheap sanity gate, run once per geo entry BEFORE any rollout.
 
@@ -486,10 +864,30 @@ def _warn_expert_route_infeasibility(scene, config, homotopies, n_samples=200):
     if not ({'geo_bounds', 'halfspace', 'obstacles'} & ctypes):
         return
     import uav_expert_data_collect.generator as gen
-    _infl = config.get('inflation') or {}
+    # [Gen15 U7] Probe the PLANNING offset (which `planning_inflation` may override), not the
+    # physical body radius — the projector is what the expert route has to fit inside.
+    _infl = config.get('planning_inflation') or config.get('inflation') or {}
     margin = float(_infl.get('r_drone', 0.0)) + float(_infl.get('margin_base', 0.0))
     probe_cfg = dict(config, inflation={'r_drone': margin, 'margin_base': 0.0})
     rng = np.random.default_rng(0)                         # deterministic probe routes
+
+    def _slack_m(obs_like, hi=1.0, tol=0.005):
+        # [Gen15 U7] How far the expert route could be displaced and still satisfy the planning
+        # set: bisect the extra offset at which it first violates. A PASS at `margin` says only
+        # that a PERFECT tracker fits; this says by how much — the number that has to beat the
+        # policy's measured `track_err` for the scene to be winnable at all.
+        if not _exec_constraint_violations(obs_like, probe_cfg)[0]:
+            return 0.0                                     # already infeasible at margin
+        lo = 0.0
+        while hi - lo > tol:
+            mid = 0.5 * (lo + hi)
+            c = dict(config, inflation={'r_drone': margin + mid, 'margin_base': 0.0})
+            if _exec_constraint_violations(obs_like, c)[0]:
+                lo = mid
+            else:
+                hi = mid
+        return lo
+
     for h in homotopies:
         traj_fn, _init, dur = gen._build_traj_and_init(scene, h, rng)
         ts = np.linspace(0.0, dur, n_samples)
@@ -499,8 +897,24 @@ def _warn_expert_route_infeasibility(scene, config, homotopies, n_samples=200):
             obs_like.append(np.concatenate([p, p, np.zeros(3)]))   # p in cols 3:6
         ok, n_bad, total = _exec_constraint_violations(obs_like, probe_cfg)
         if ok:
-            print(f'[ eval ] {scene} feasibility check: homotopy={h} expert route OK '
-                  f'under planning margin {margin:.2f} m')
+            # 🔴 [Gen15 U7] A bare PASS was the whole check until now, and it is not enough:
+            # `corridor` L/R passed at EXACTLY 0.000 m of slack (channels at y=±0.12, planning
+            # band [-0.12,+0.12]) while the policy's measured track_err is ~0.30-0.49 m. A
+            # zero-slack pass is a guaranteed-violating rollout, and it reported as "OK".
+            slack = _slack_m(obs_like)
+            need  = _GEO_SLACK_PROBE_M
+            tag = 'OK' if slack >= need else 'NEAR-ZERO SLACK'
+            print(f'[ eval ] {scene} feasibility check: homotopy={h} expert route {tag} '
+                  f'under planning margin {margin:.2f} m — slack {slack:.3f} m '
+                  f'(need >= {need:.2f} m to absorb the policy tracking error)')
+            if slack < need:
+                print(f'[ eval ] WARNING {scene} homotopy={h}: the expert route clears the '
+                      f'PLANNING set by only {slack:.3f} m. Any rollout whose tracking error '
+                      f'exceeds that violates the constraints even when it flies the trained '
+                      f'route perfectly in expectation — success+constraints is bounded near 0 '
+                      f'for reasons that have nothing to do with the engine. Widen the geometry '
+                      f'or lower `planning_inflation` (see Gen15/U7).')
+            continue
         else:
             print(f'[ eval ] WARNING {scene} homotopy={h}: expert route violates the '
                   f'PLANNING constraint set at {n_bad}/{n_samples} samples '
@@ -544,7 +958,8 @@ def plot_geo_constraints(geo_name, config, out_dir, is_tightened=False, basename
     from mpl_toolkits.mplot3d.art3d import Poly3DCollection as _P3C
 
     ctypes = config.get('constraint_types', [])
-    _infl = config.get('inflation') or {}
+    # [Gen15 U7] draw the offset the PROJECTOR actually enforced, not the physical body pad
+    _infl = config.get('planning_inflation') or config.get('inflation') or {}
     inflation_base = float(_infl.get('r_drone', 0.0)) + float(_infl.get('margin_base', 0.0))
     enlarge = float(config.get('enlarge_constraints') or 0.0) if is_tightened else 0.0
     margin = inflation_base + enlarge          # the TRUE enforced offset (matches setup_dpcc_projector)
@@ -552,19 +967,47 @@ def plot_geo_constraints(geo_name, config, out_dir, is_tightened=False, basename
     has_bounds = 'geo_bounds' in ctypes and config.get('workspace_bounds') is not None
     ws_lb = ws_ub = lb_d = ub_d = None
     _Z_DISP = (0.0, 2.0)        # UAV flight band default display when z is unconstrained
+
+    # Gen15 Fix_2: these two are resolved HERE, before the display-bounds block, because that
+    # block now frames an unbounded axis from the geometry that actually lives on it.
+    halfspace_list = config.get('halfspace_constraints', []) if 'halfspace' in ctypes else []
+    obstacle_list  = config.get('obstacle_constraints', [])  if 'obstacles' in ctypes else []
+
+    def _geo_extent(axis):
+        """(min, max) over every drawn feature on `axis` (0=x, 1=y), or None if nothing is
+        drawn there. Used to frame an axis the workspace box does not bound. Halfspaces use
+        their RAW endpoints — x_active only shortens a segment, so this stays a superset."""
+        vals = []
+        for hs in halfspace_list:
+            _triple, _xa = _normalize_halfspace(hs)
+            vals += [float(_triple[0][axis]), float(_triple[1][axis])]
+        for obs in obstacle_list:
+            _c = float(obs['center'][axis]); _r = float(obs['radius']) + margin
+            vals += [_c - _r, _c + _r]
+        return (min(vals), max(vals)) if vals else None
+
     if has_bounds:
         ws_lb = np.array(config['workspace_bounds']['lb'], dtype=float)
         ws_ub = np.array(config['workspace_bounds']['ub'], dtype=float)
         ws_lb = ws_lb + margin; ws_ub = ws_ub - margin
         lb_d = ws_lb.copy(); ub_d = ws_ub.copy()
-        lb_d[np.isinf(lb_d)] = _Z_DISP[0]; ub_d[np.isinf(ub_d)] = _Z_DISP[1]
-        # y may be ±inf too (e.g. a scene relying purely on halfspace walls for y) — clamp display
-        for _i, _fallback in ((0, (-3.5, 3.5)), (1, (-2.0, 2.0))):
-            if np.isinf(lb_d[_i]): lb_d[_i] = _fallback[0]
-            if np.isinf(ub_d[_i]): ub_d[_i] = _fallback[1]
-
-    halfspace_list = config.get('halfspace_constraints', []) if 'halfspace' in ctypes else []
-    obstacle_list  = config.get('obstacle_constraints', [])  if 'obstacles' in ctypes else []
+        # 🔴 Gen15 Fix_2 — CLAMP PER AXIS, NEVER WITH A BOOLEAN MASK. This used to read
+        #     lb_d[np.isinf(lb_d)] = _Z_DISP[0]; ub_d[np.isinf(ub_d)] = _Z_DISP[1]
+        # which stamps the *z* flight band (0.0, 2.0) onto ANY infinite axis. corridor declares
+        # y = ±inf deliberately ('y handled by the wall halfspaces', config/uav_projection.yaml),
+        # so its y frame became [0.0, 2.0] — the walls at y = ±0.45 and the cap balls at y = ∓0.5
+        # fell outside _ylim(), and every drawn object appeared shoved to the bottom edge under a
+        # bounds rectangle floating over empty space. The mask also made the x/y fallback loop
+        # that followed it DEAD CODE: nothing is inf after the mask, so np.isinf never fires.
+        # Display only — setup_dpcc_projector keeps the ±inf rows (−inf + margin = −inf) and SLSQP
+        # reads them as unbounded, so no evaluated number was ever affected. See
+        # logs_in_develop/Gen15/fix_2/.
+        for _i, _fb in ((0, (-3.6, 3.6)), (1, (-2.0, 2.0)), (2, _Z_DISP)):
+            # Prefer the real geometry on an unbounded axis; the constants are a last resort
+            # (they frame corridor's ±0.45 walls inside a ±2 m box, which is legible but poor).
+            _geo = _geo_extent(_i) if _i < 2 else None
+            if np.isinf(lb_d[_i]): lb_d[_i] = (_geo[0] - 0.35) if _geo else _fb[0]
+            if np.isinf(ub_d[_i]): ub_d[_i] = (_geo[1] + 0.35) if _geo else _fb[1]
 
     def _xlim(): return (lb_d[0]-0.3, ub_d[0]+0.3) if lb_d is not None else (-3.5, 3.5)
     def _ylim(): return (lb_d[1]-0.3, ub_d[1]+0.3) if lb_d is not None else (-2.0, 2.0)
@@ -755,7 +1198,10 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
     tightening   = float(config.get('enlarge_constraints') or 0.0)
     enlarge      = tightening if is_tightened else 0.0
     # E9 inflation: always-on offset so the drone body (not just its center) clears geometry.
-    _infl = config.get('inflation') or {}
+    # [Gen15 U7] `planning_inflation` overrides it for the PROJECTOR only. `inflation` remains
+    # the physical body radius that `_exec_constraint_violations` scores collisions against, so
+    # widening the planner's tube never widens the yardstick it is measured with.
+    _infl = config.get('planning_inflation') or config.get('inflation') or {}
     inflation_base = float(_infl.get('r_drone', 0.0)) + float(_infl.get('margin_base', 0.0))
     margin = inflation_base + enlarge                 # total spatial offset (surfaces only)
     ctypes = config.get('constraint_types', [])
@@ -1039,6 +1485,22 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     # stopped on. `empty` has a random ill-defined goal → never early-stops (runs full budget).
     goal_reached_latch = False
     steps_run = n_fm     # overwritten at an early break; == full budget on a miss
+    # Div_Abort: divergence/abort bookkeeping for THIS rollout. Every field is persisted
+    # (results.json `divergence` group, npz `divergence_*`, eval log, foresight SVG) so a
+    # lost flight can be read back — WHEN (step/time/physics step), WHERE (p/p_des/v) and
+    # WHY (reason/detail/thresholds) — without re-running anything.
+    arena_lb, arena_ub = _flight_envelope(scene)
+    divergence = {
+        'enabled': bool(DIVERGENCE_ABORT),
+        'aborted': False, 'reason': None, 'detail': '',
+        'step': -1, 'time_s': float('nan'), 'physics_step': -1, 'executed_steps': 0,
+        'p': None, 'p_des': None, 'v': None,
+        'speed': float('nan'), 'p_des_lead': float('nan'),
+        'arena_lb': [float(c) for c in arena_lb], 'arena_ub': [float(c) for c in arena_ub],
+        'thresholds': {'envelope_slack_m': DIV_ENVELOPE_SLACK_M,
+                       'speed_max_ms': DIV_SPEED_MAX_MS,
+                       'map_xy_m': DIV_MAP_XY_M, 'map_z_m': DIV_MAP_Z_M},
+    }
 
     for k in range(n_fm):
         p = data.qpos[:3].copy()
@@ -1160,6 +1622,41 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
                 print(f'[ eval ] frame render failed ({exc}); stopping capture')
                 renderer = None     # stop capturing for THIS rollout; eval_scene still owns/frees it
 
+        # ── Div_Abort: stop the episode the step the flight is provably lost ──
+        # Checked AFTER the physics decimation (so it reads the freshly integrated state) and
+        # only while the goal has NOT been latched — a rollout that already reached the goal
+        # exits through the normal break below and is never re-labelled an abort.
+        if DIVERGENCE_ABORT and not goal_reached_latch:
+            _p_now = data.qpos[:3].copy()
+            _v_now = data.qvel[:3].copy()
+            _reason, _detail = _check_divergence(_p_now, _v_now, arena_lb, arena_ub,
+                                                 quat=data.qpos[3:7])
+            if _reason is not None:
+                divergence.update({
+                    'aborted': True, 'reason': _reason, 'detail': _detail,
+                    'step': int(k), 'time_s': float(k / DATASET_HZ),
+                    'physics_step': int(n_phys), 'executed_steps': int(k + 1),
+                    'p': [float(c) for c in _p_now],
+                    'p_des': [float(c) for c in np.asarray(p_des, dtype=float).reshape(-1)],
+                    'v': [float(c) for c in _v_now],
+                    'speed': float(np.linalg.norm(_v_now)),
+                    'p_des_lead': float(np.linalg.norm(
+                        np.asarray(p_des, dtype=float).reshape(-1) - _p_now)),
+                })
+                blog.note(f'DIVERGENCE ABORT  reason={_reason}  step={k}/{n_fm}  '
+                          f't={k / DATASET_HZ:.3f}s  p={np.round(_p_now, 3).tolist()}  '
+                          f'p_des={np.round(np.asarray(p_des, dtype=float), 3).tolist()}  '
+                          f'|v|={np.linalg.norm(_v_now):.2f}m/s  |  {_detail}')
+                print(f'[ eval ] {scene} variant={variant} trial_seed={trial_seed}: '
+                      f'⚠ DIVERGENCE ABORT at FM step {k}/{n_fm} (t={k / DATASET_HZ:.2f}s) — '
+                      f'reason={_reason}: {_detail}', flush=True)
+                # U_13 step accounting: an abort is a MISS, and a miss costs the FULL budget
+                # (DPCC convention). Charging it the truncated count would make a lost flight
+                # look like a fast one in steps_mean. The true executed count lives in
+                # divergence['executed_steps'].
+                steps_run = n_fm
+                break
+
         # U_13: DPCC avoiding-style early termination (aux_repo/dpcc/scripts/eval.py:264) —
         # stop the instant the goal is reached (goal-path scenes) or the fixed budget is
         # exhausted. `steps_run` (the FM step count at stop) is the deterministic time-to-goal
@@ -1187,6 +1684,12 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     else:
         goal_reached = bool(goal_dist < goal_radius)
     safe = bool(contact_frac <= limit and airborne)       # contact-free + airborne
+    # Div_Abort: a rollout that flew away is NOT "safe" whatever contact_frac/min_z say — it
+    # may well have left the arena without ever touching an obstacle or dropping to the floor,
+    # and on `empty` (where success == safe) that would have been scored a SUCCESS. Force the
+    # physical-safety axis false so every downstream success flag collapses to 0.
+    if divergence['aborted']:
+        safe = False
     # Scene-aware success (Fix2_metrics): fixed-route scenes must REACH the goal AND be safe;
     # `empty` has a RANDOM goal the unconditioned FM can't be expected to hit, so there
     # success = stable/safe flight only. A goal-path drone that flies around without reaching
@@ -1221,6 +1724,11 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
         'goal_dist': f'{goal_dist:.3f}m', 'safe': safe, 'min_z': f'{min_z:.3f}',
         'contact_frac': f'{contact_frac:.3f}',
     }
+    if divergence['aborted']:
+        behaviour['result'] = f'ABORT({divergence["reason"]})'
+        behaviour['abort_when'] = f'step {divergence["step"]}/{n_fm} (t={divergence["time_s"]:.3f}s)'
+        behaviour['abort_where'] = f'p={divergence["p"]} p_des={divergence["p_des"]}'
+        behaviour['abort_why'] = divergence['detail']
     blog_summary = blog.summary_dict()
     if log_dir is not None:
         blog.save(os.path.join(log_dir, f'rollout_{episode_id}.log'), behaviour=behaviour)
@@ -1288,6 +1796,10 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
         },
         # U_13: actual FM steps executed (deterministic time-to-goal on success, full budget
         # on a miss) — was the random round(dur*HZ) budget. `max_episode_length` = the budget.
+        # Div_Abort: WHEN/WHERE/WHY this flight was declared lost (all-False group when it
+        # was not). `n_fm_steps` below is charged the FULL budget for an abort (miss
+        # convention); `divergence['executed_steps']` is what actually ran.
+        'divergence': divergence,
         'n_fm_steps': steps_run, 'max_episode_length': n_fm, 'decim': decim, 'dt': dt,
         # ── heavy (npz / gif only; stripped from results.json) ──
         'obs_traj': np.asarray(obs_traj),
@@ -1346,6 +1858,7 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
                   f'(false-positive constant channel; UAV has no goal dims)')
             model_fm.goal_dim = 0
         traj_dim = int(dataset.observation_dim + dataset.action_dim)
+        _report_degenerate_dims(dataset, config)
         projector = setup_dpcc_projector(
             parsed, config,
             dataset.normalizer.normalizers['observations'],
@@ -1440,9 +1953,52 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     _seed_str   = os.path.basename(parsed.savepath)
     seed_dir    = os.path.join(scene_root, 'plans', _model_dir, eval_params_dir, _seed_str)
     geo_dir     = os.path.join(seed_dir, config.get('geo_tag', scene))
-    out_dir     = os.path.join(geo_dir, variant)
+    # [SolverSwap] 🔴 The output folder carries the NLP backend, so an SLSQP run lands
+    # BESIDE the IPOPT corpus instead of overwriting it. Under 'ipopt' the label is the
+    # old name unchanged, so nothing already on disk moves. Isolating the DIRECTORY
+    # isolates the npz, the eval log, the plots and the diagnostics in one move.
+    variant_out = artifact_variant_label(variant, resolve_nlp_backend())
+    out_dir     = os.path.join(geo_dir, variant_out)
     diag_dir    = os.path.join(out_dir, 'diagnostics')
     os.makedirs(out_dir, exist_ok=True)
+
+    # ── U10.1 RUN PROVENANCE ──────────────────────────────────────────────────────────
+    # Gen15 builds its output path BY HAND from the train savepath (see the note above),
+    # so no Parser.mkdir runs here and neither args.json nor a config snapshot lands with
+    # the results. Meanwhile UAV_MIX_FLOW_STEPS and UAV_MIX_HF_OFF silently reshape the
+    # run — the latter DELETES the HardFlow arm, which is invisible in the path.
+    # Written at seed_dir (not out_dir) so one record covers every geometry/variant under
+    # this eval-params folder; identical configs de-duplicate. Never fatal.
+    provenance.write(
+        seed_dir, role='eval',
+        yaml_path=os.path.join(_REPO, 'config', 'uav_projection.yaml'),
+        resolved={
+            'engine': ENGINE,
+            'scene': scene,
+            'flow_steps_v3': config.get('flow_steps_v3'),
+            'diffusion_timestep_threshold': config.get('diffusion_timestep_threshold'),
+            'projection_variants': config.get('projection_variants'),
+            'hardflow': config.get('hardflow'),
+            'hardflow_arm_disabled_by_env': bool(os.environ.get('UAV_MIX_HF_OFF')),
+            'constraint_types': config.get('constraint_types'),
+            'geo_tag': config.get('geo_tag'),
+            'n_trials': config.get('n_trials'),
+            'model_savepath': parsed.savepath,
+            'eval_params_dir': eval_params_dir,
+            'seed': _seed_str,
+            # ── Gen15 U6 ── WHICH WEIGHTS produced these rows, and on which backbone.
+            # The selector alone is not enough: 'latest' is a REQUEST whose answer depends on
+            # what happened to be on disk when the job ran, so two evals of the "same"
+            # checkpoint months apart can resolve it differently. Record request and answer.
+            # `imf_backbone` is here because U6 flipped the af default from 'sit' to 'unet',
+            # and every pre-U6 af row in the corpus is a ~9.4 M SiT — a fact the numbers
+            # themselves do not carry.
+            'diffusion_epoch': config.get('diffusion_epoch'),
+            'checkpoint_epoch_resolved': getattr(parsed, '_u6_ckpt_epoch', None),
+            'checkpoint_step': getattr(parsed, '_u6_ckpt_step', None),
+            'imf_backbone': getattr(parsed, 'imf_backbone', None),
+            'af_alpha_end': getattr(parsed, 'af_alpha_end', None),
+        })
 
     # E9 U2: constraint-geometry schematic (constraint_overview.png + .svg), mirroring
     # visual-aligning's `plot_geo_constraints` call site — once per geo_dir, before any
@@ -1460,6 +2016,15 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
         _basename = 'constraint_overview_tightened' if _is_this_tightened else 'constraint_overview'
         plot_geo_constraints(config.get('geo_tag', scene), config, geo_dir,
                              is_tightened=_is_this_tightened, basename=_basename)
+        # [HFK1c 2026-08-30] If the degeneracy guard dropped the HardFlow arm, leave the record
+        # HERE, beside the variant folders — a reader browsing the results tree must be able to
+        # see that the arm was deliberately SKIPPED, not that it was never configured or that it
+        # crashed. Mirrors the PROJECTION_CB_TRIPPED.txt / DIVERGENCE_ABORT.txt sentinel pattern.
+        _hf_skip = config.get('hardflow_skipped')
+        if _hf_skip:
+            with open(os.path.join(geo_dir, 'HF_DEGENERATE_SKIPPED.txt'), 'w') as _f:
+                _f.write(hardflow_skip_note(', '.join(_hf_skip['variants']),
+                                            _hf_skip['K'], _hf_skip['A'], _hf_skip['reason']))
 
     # Write config snapshot at the eval-tag-aware seed dir (once per PROCESS, on first
     # variant/geo_tag — Fix_8). setup.py's mkdir() no longer auto-snapshots during eval
@@ -1494,6 +2059,13 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     record = (args.record != 'none')
     renderer = _make_overhead_renderer(mujoco, mj_model) if record else None
     batch_size = int(config.get('mpc_batch_size', config.get('batch_size', 4)))
+    # 🔴 B4_PARITY (2026-08-20) — arm C's fan comes from the variant NAME. Gen15 already gave
+    # every arm the same `mpc_batch_size` (so it never had the Gen3v6/v7/Gen12 timing
+    # confound), but that also made bare `hardflow_new` byte-identical to `hardflow_new-r`
+    # at B=4 — both select index 0 — i.e. duplicated compute under two names. The bare name
+    # now means what it says upstream: the faithful batch-1 control.
+    if _is_hardflow(variant):
+        batch_size = resolve_hf_batch_size(variant, batch_size)
 
     # U_13: FIXED episode budget for every trial of this scene — CLI --max-episode-length
     # wins, else the yaml `max_episode_length` (scalar-all or per-scene dict), else the
@@ -1542,6 +2114,11 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     # Fix_10 (2/2): summary mirrors rollout_one's grouped schema — same group names, `_rate`/
     # `_mean` suffixes inside each group instead of flat top-level keys.
     succ = np.mean([r['success']['strict'] for r in rollouts])
+    # HFK1 (2026-08-24) — (n_active, n_genuine) for this arm; (0, 0) for the non-HardFlow arms,
+    # which have no in-loop NLP and therefore no notion of a genuine step.
+    _hf_budget = (hardflow_step_budget(int(config['flow_steps_v3']),
+                                       float(getattr(policy.sampler, 'activation_threshold', 0.0)))
+                  if _is_hardflow(variant) else (0, 0))
     summary = {
         'scene': scene, 'seed': args.seed, 'n_trials': len(rollouts), 'variant': variant,
         'physical': {
@@ -1583,6 +2160,17 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
         },
         'track_err_mean': float(np.mean([r['track_err_mean'] for r in rollouts])),
         'projection': variant,
+        # Div_Abort: variant-level rollup. n_aborted > 0 means some trials were cut short
+        # because the drone lost control — those rows are misses by construction (safe forced
+        # False) and their constraint counts cover fewer steps, so a DA comparing violation
+        # COUNTS across variants must account for them.
+        'divergence': {
+            'n_aborted_trials': int(sum(1 for r in rollouts if r.get('divergence', {}).get('aborted'))),
+            'aborted_trials': [i for i, r in enumerate(rollouts) if r.get('divergence', {}).get('aborted')],
+            'reasons': {i: r['divergence']['reason'] for i, r in enumerate(rollouts)
+                        if r.get('divergence', {}).get('aborted')},
+            'enabled': bool(DIVERGENCE_ABORT),
+        },
         # Fix_15.3: variant-level projection-circuit-breaker rollup. `n_tripped_trials` > 0 means
         # the sustained-slowness breaker (projection.py Fix_15.2) OPENED on some trials, which ran
         # (partly) UNPROJECTED — treat this variant as "projection broken for this geometry", not a
@@ -1593,21 +2181,38 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
             'tripped_trials': [i for i, r in enumerate(rollouts) if r.get('projection_health', {}).get('cb_tripped')],
         },
         # ── Gen15 U2 — HardFlow accounting. ⚠️ FAIRNESS: `hardflow_new` evaluates the network
-        # TWICE per ODE step (reference step + terminal predict), so an arm-C run at K costs
-        # 2K network evals while a DPCC arm at K costs K. Comparing the two at "the same K" is
-        # therefore comparing HALF the generation budget on the DPCC side. Record the real
-        # count so the DA can normalise; `nfe_per_plan` is the number to quote.
+        # twice per ACTIVE ODE step (reference step + terminal predict), so an arm-C run costs
+        # K + n_active - 1 network evals against a DPCC arm's K. Comparing at "the same K" is
+        # therefore comparing a smaller generation budget on the DPCC side — EXCEPT at K=1,
+        # where the two are now equal (HFK1 2026-08-24 removed the terminal lookahead call,
+        # whose weight (1 - tau) was exactly zero). Record the real count so the DA can
+        # normalise; `nfe_per_plan` is the number to quote.
+        #
+        # ⚠️ HFK1 (2026-08-24): `n_genuine` is the honest "is this HardFlow at all?" field.
+        # A step is genuinely HardFlow only if it is active AND non-terminal — at the terminal
+        # step tau=1 kills the endpoint lookahead, the damped pull-back and the feedback alike.
+        # n_genuine == 0 => this row is Pi_S(Euler sample): sample-then-project, == DPCC modulo
+        # solver/variable-scope, and it must NOT be reported as a HardFlow result. Always true
+        # at K=1; also at K=2 under the shipped A=0.5.
+        # See logs_in_develop/aggregated_hardflow_lowK/
         'hardflow': ({
             'is_hardflow': True,
             'nfe_total': int(getattr(policy.sampler, 'nfe', 0)),
             'nlp_solves_total': int(getattr(policy.nlp, 'n_solves', 0)),
             'nlp_failures_total': int(getattr(policy.nlp, 'n_failures', 0)),
+            # [SolverSwap] 'slsqp' (DPCC scipy) or 'ipopt' (original CasADi). Read off
+            # the live NLP object so it reflects what RAN, env override included.
+            'nlp_backend': str(getattr(policy.nlp, 'nlp_backend', 'n/a')),
+            'nlp_backend_slsqp': float(getattr(policy.nlp, 'nlp_backend', '') == 'slsqp'),
             # one 'plan' = one outer FM/MPC step; summed over all rollouts of this variant.
             'nfe_per_plan': (float(getattr(policy.sampler, 'nfe', 0))
                              / max(sum(int(r['n_fm_steps']) for r in rollouts), 1)),
             'activation_threshold': float(getattr(policy.sampler, 'activation_threshold', 0.0)),
             'init_noise_scale': float(getattr(policy.sampler, 'init_noise_scale', 0.0)),
             'two_time': bool(getattr(policy.sampler, 'two_time', False)),
+            'n_active': int(_hf_budget[0]),
+            'n_genuine': int(_hf_budget[1]),
+            'is_degenerate': bool(_hf_budget[1] == 0),
         } if _is_hardflow(variant) else {'is_hardflow': False}),
     }
 
@@ -1615,9 +2220,9 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     json_rollouts = artifacts.json_safe_rollouts(rollouts)
     with open(os.path.join(out_dir, 'results.json'), 'w') as f:
         json.dump({'summary': summary, 'rollouts': json_rollouts}, f, indent=2)
-    npz_path = artifacts.save_npz(out_dir, variant, rollouts, vars(args))
-    artifacts.write_eval_log(out_dir, variant, summary, rollouts)
-    artifacts.plot_overview(out_dir, variant, scene, rollouts)
+    npz_path = artifacts.save_npz(out_dir, variant_out, rollouts, vars(args))
+    artifacts.write_eval_log(out_dir, variant_out, summary, rollouts)
+    artifacts.plot_overview(out_dir, variant_out, scene, rollouts)
 
     # Fix_15.3: drop a greppable sentinel in the variant dir when the projection circuit breaker
     # tripped, so a tripped (UNPROJECTED, invalid-constraint) result is obvious from the file tree
@@ -1636,6 +2241,47 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
         print(f'[ eval ] {scene} variant={variant}: ⚠ PROJECTION CIRCUIT-BREAKER TRIPPED on '
               f'{_ph["n_tripped_trials"]}/{len(rollouts)} trials ({_ph["total_skipped_steps"]} '
               f'steps skipped) — results marked UNPROJECTED. See PROJECTION_CB_TRIPPED.txt.', flush=True)
+
+    # [HFK1c 2026-08-30] A DEGENERATE HardFlow row can only reach this point under an explicit
+    # FMPCC_HF_ALLOW_DEGENERATE=1 opt-in. Mark it in the file tree too, so the row is
+    # identifiable without opening results.json — same reasoning as the CB sentinel above.
+    _hfs = summary.get('hardflow') or {}
+    if _hfs.get('is_hardflow') and _hfs.get('is_degenerate'):
+        with open(os.path.join(out_dir, 'HF_DEGENERATE.txt'), 'w') as _f:
+            _f.write(f"DEGENERATE HardFlow arm — {scene} variant={variant}\n")
+            _f.write(f"K={config['flow_steps_v3']}  A={_hfs.get('activation_threshold')}  "
+                     f"n_active={_hfs.get('n_active')}  n_genuine=0\n\n")
+            _f.write("NO HardFlow arithmetic ran: every NLP solve is the terminal tau=1 solve,\n")
+            _f.write("so this row is Pi_S(Euler sample) = sample-then-project, == DPCC modulo\n")
+            _f.write("solver/variable-scope. It is a valid SOLVER comparison; it is NOT a\n")
+            _f.write("HardFlow result and must not carry a HardFlow claim.\n\n")
+            _f.write("It exists because FMPCC_HF_ALLOW_DEGENERATE=1 was set for this job.\n")
+            _f.write("See logs_in_develop/aggregated_hardflow_lowK/\n")
+        print(f'[ eval ] {scene} variant={variant}: ⚠ DEGENERATE HardFlow arm (n_genuine=0) — '
+              f'ran under FMPCC_HF_ALLOW_DEGENERATE=1. NOT a HardFlow result. '
+              f'See HF_DEGENERATE.txt.', flush=True)
+
+    # Div_Abort: greppable sentinel when any trial of this variant lost control, mirroring the
+    # PROJECTION_CB_TRIPPED.txt convention — visible from the file tree without opening artifacts.
+    _dv = summary['divergence']
+    if _dv['n_aborted_trials'] > 0:
+        with open(os.path.join(out_dir, 'DIVERGENCE_ABORT.txt'), 'w') as _f:
+            _f.write(f"DIVERGENCE ABORT — {scene} variant={variant}\n")
+            _f.write(f"aborted_trials={_dv['aborted_trials']} "
+                     f"({_dv['n_aborted_trials']}/{len(rollouts)})\n\n")
+            for _i in _dv['aborted_trials']:
+                _d = rollouts[_i]['divergence']
+                _f.write(f"  trial {_i}: reason={_d['reason']}  step={_d['step']}/"
+                         f"{rollouts[_i]['max_episode_length']}  t={_d['time_s']:.3f}s\n")
+                _f.write(f"            p={_d['p']}  p_des={_d['p_des']}  "
+                         f"|v|={_d['speed']:.2f} m/s  |p_des-p|={_d['p_des_lead']:.2f} m\n")
+                _f.write(f"            why: {_d['detail']}\n")
+            _f.write("\nThese rollouts were STOPPED early (the drone had lost control). They are\n")
+            _f.write("scored as misses (physical.safe forced False) and their step count is charged\n")
+            _f.write("the full budget; constraint counts cover only the steps actually flown.\n")
+        print(f'[ eval ] {scene} variant={variant}: ⚠ DIVERGENCE ABORT on '
+              f'{_dv["n_aborted_trials"]}/{len(rollouts)} trials {_dv["aborted_trials"]} — '
+              f'see DIVERGENCE_ABORT.txt', flush=True)
 
     _steps_tg = summary['steps']['to_goal_mean']
     print(f'[ eval ] {scene} variant={variant} (B={batch_size}, proj={"on" if projector else "off"}, '
@@ -1674,8 +2320,12 @@ def eval_scene(scene, args):
     # loaded diffusion object (Gen11 built the model first and K never reached it — see the
     # module docstring). _load_base_cfg needs only (scene, seed), so the reorder is safe.
     base_cfg = _load_base_cfg(scene, args.seed)
+    # U6: base_cfg['diffusion_epoch'] — NOT args.epoch. The two differ whenever the selector
+    # came from UAV_MIX_EPOCH rather than the CLI, and loading a different checkpoint than the
+    # one the folder name claims is the exact failure this token was added to prevent.
     model_fm, dataset, parsed, horizon = build_experiment(
-        scene, args.seed, args.epoch, args.device, flow_steps=base_cfg['flow_steps_v3'])
+        scene, args.seed, base_cfg['diffusion_epoch'], args.device,
+        flow_steps=base_cfg['flow_steps_v3'])
     homotopies = gen.HOMOTOPY_CLASSES[scene]
     mj_model = mujoco.MjModel.from_xml_path(gen.SCENE_XMLS[scene])
 
@@ -1738,7 +2388,7 @@ def eval_scene(scene, args):
 
 
 def main():
-    global ENGINE
+    global ENGINE, EPOCH_OVERRIDE
     args, remaining = parse_args()
 
     # Publish the engine selection to module scope BEFORE anything resolves a config block or
@@ -1746,6 +2396,31 @@ def main():
     ENGINE = args.engine
     _row = engine_registry.get(ENGINE)
     print(f'[ eval ] Gen15 UAV Mix-ML — engine: {ENGINE}  ({_row["label"]})')
+
+    # ── Gen15 U6 ── publish the checkpoint selector to module scope, same as ENGINE above.
+    # Validation is delegated to config/uav_mix._uav_epoch so the CLI form and the
+    # UAV_MIX_EPOCH env form cannot disagree about what is legal — a typo dies here instead of
+    # becoming a 'state_<garbage>.pt' FileNotFoundError minutes into a GPU allocation.
+    if args.epoch is not None:
+        from config.uav_mix import _uav_epoch as _uav_epoch_validate
+        try:
+            EPOCH_OVERRIDE = _uav_epoch_validate(args.epoch)
+        except ValueError as _e:
+            raise SystemExit(f'[ eval ] ERROR: {_e}  (source: cli --epoch)')
+        print(f'[ eval ] checkpoint selector = {EPOCH_OVERRIDE!r}  (source: cli --epoch)')
+    elif os.environ.get('UAV_MIX_EPOCH', '').strip():
+        print(f"[ eval ] checkpoint selector = "
+              f"{os.environ['UAV_MIX_EPOCH'].strip()!r}  (source: env UAV_MIX_EPOCH)")
+    else:
+        print("[ eval ] checkpoint selector = 'best'  (config default; no _EP fragment)")
+    if ENGINE == 'af' and EPOCH_OVERRIDE in (None, 'best') and \
+            not os.environ.get('UAV_MIX_EPOCH', '').strip():
+        print("[ eval ]   ⚠  af arm on 'best': state_best.pt is chosen on an alpha-weighted "
+              "test_loss and")
+        print("[ eval ]      therefore prefers a MID-CURRICULUM model. If this checkpoint was "
+              "trained with")
+        print("[ eval ]      UAV_MIX_AF_ALPHA_END, 'best' discards the very thing the floor "
+              "produced. Use --epoch latest.")
 
     # --flow-steps K overrides the plan block for this process. Exported via the environment so
     # _load_base_cfg picks it up without threading an extra argument through eval_scene.

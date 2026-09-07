@@ -1,0 +1,141 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu Sep  3 12:38:45 UTC 2026  |  uav_mix_eval  |  ID 25321  |  NODE i6-gpu-1
+ENGINE: mf   SCENE: pillars   SEEDS: 6   N_TRIALS:    K: 5
+FIX_16:  SAFE_EPS_MODE=scaled  SAFE_EPS_FRAC=1e-3  EVAL_TAG=fix16scaled
+GIT REV:   def8fdf
+================================================================================
+[ env-select ] config/uav.py controller='pid_stopgo' -> conda env 'FMPCC'
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=5  MUJOCO_EGL_DEVICE_ID=5
+--------------------------------------------------------------------------------
+[ uav_mix_eval ] seed 1/1: engine=mf scene=pillars seed=6  Thu Sep  3 12:38:45 UTC 2026
+[ uav_mix_eval ] python mix_uav_test/eval_mix_uav.py --engine mf --scene pillars --seed 6  --projection fm_only --record none --flow-steps 5
+[ eval ] Gen15 UAV Mix-ML — engine: mf  (MeanFlow (Gen3v6, arXiv 2505.13447))
+[ eval ] K override from --flow-steps: 5
+[ eval ] seed=6  (source: --seed CLI)
+[ eval ] n_trials=10  (source: /data/home/llim/FMPCC/FM-PCC/config/uav_projection.yaml)
+[ eval ] HardFlow arm: +7 variants ['hardflow_new', 'hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t', 'hardflow_new-r-geo_free', 'hardflow_new-c-geo_free', 'hardflow_new-t-geo_free'] (from config/uav_mix.py, NOT the shared yaml)
+
+[ utils/serialization ] Loading model from logs/UAV_MIX/uav-pillars/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/6
+
+[ utils/normalization ] Constant data in actions[2] | max = min = 9.89530235095265e-13 → Fix_16 widened by eps=3.086e-05 (mode=scaled). unnormalize scale for this channel = 3.086e-05 data-units per unit output.
+[ utils/normalization ] ⚠ Fix_16: ALL dimensions constant — no reference scale; falling back to eps=1.0.
+[ utils/normalization ] Constant data in rewards[0] | max = min = 0.0 → Fix_16 widened by eps=1.000e+00 (mode=scaled). unnormalize scale for this channel = 1.000e+00 data-units per unit output.
+[ datasets/buffer ] Fields:
+    observations: (475, 560, 6)
+    actions: (475, 560, 3)
+    rewards: (475, 560, 1)
+    terminals: (475, 560, 1)
+    normed_observations: (475, 560, 6)
+    normed_actions: (475, 560, 3)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=4.021e-07)
+[ utils/training ] Restored loss history from checkpoint at step 96000
+[ eval ] engine=mf  NFE budget K=5 pinned on the loaded model (flow_steps_v3 / ode_inference_steps_v3)
+[ eval ] E9 geo 'pillars' ← variant 'pillars': constraint_types=['dynamics', 'geo_bounds', 'obstacles', 'bounds'] (bounds=True, hs=0, obs=6)
+[ eval ] cond_mode=pos_only  (source: train checkpoint args)
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles]: variants=['diffuser', 'dpcc-r', 'dpcc-r-tightened', 'dpcc-c', 'dpcc-c-tightened', 'dpcc-t', 'dpcc-t-tightened', 'dpcc-r-geo_free', 'dpcc-c-geo_free', 'dpcc-t-geo_free', 'hardflow_new', 'hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t', 'hardflow_new-r-geo_free', 'hardflow_new-c-geo_free', 'hardflow_new-t-geo_free']  constraints=['dynamics', 'geo_bounds', 'obstacles', 'bounds']  batch_size=4
+[ eval ] pillars feasibility check: homotopy=(L,L,L) expert route OK under planning margin 0.33 m
+[ eval ] pillars feasibility check: homotopy=(L,R,L) expert route OK under planning margin 0.33 m
+[ eval ] pillars feasibility check: homotopy=(R,L,R) expert route OK under planning margin 0.33 m
+[ eval ] pillars feasibility check: homotopy=(R,R,R) expert route OK under planning margin 0.33 m
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 1/17: 'diffuser'  (n_trials=10)
+[ provenance ] wrote logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K5_mpc4_pid_stopgo_T0.5_fix16scaled/6/run_provenance.json
+[ geo ] Constraint overview → logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K5_mpc4_pid_stopgo_T0.5_fix16scaled/6/pillars_bounds+dynamics+geo_bounds+obstacles/constraint_overview.png (+ .svg)
+[ eval ] pillars variant=diffuser: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ utils/normalization ] ⚠ Fix_16: sample out of range on observations — clipping to [-1,1] | (-1.0122, 0.3240). Further occurrences silent; see `_clip_events` / `_clip_max`.
+[ utils/normalization ] ⚠ Fix_16: sample out of range on actions — clipping to [-1,1] | (-1.0011, 0.0326). Further occurrences silent; see `_clip_events` / `_clip_max`.
+[ eval ] pillars variant=diffuser: trial 1/10 done  (21.9s elapsed this variant, ~196.7s to go)
+[ eval ] pillars variant=diffuser: trial 2/10 done  (43.3s elapsed this variant, ~173.2s to go)
+[ eval ] pillars variant=diffuser: trial 3/10 done  (65.6s elapsed this variant, ~153.2s to go)
+[ eval ] pillars variant=diffuser: trial 4/10 done  (86.6s elapsed this variant, ~129.9s to go)
+[ eval ] pillars variant=diffuser: trial 5/10 done  (108.0s elapsed this variant, ~108.0s to go)
+[ eval ] pillars variant=diffuser: trial 6/10 done  (129.1s elapsed this variant, ~86.1s to go)
+[ eval ] pillars variant=diffuser: trial 7/10 done  (151.0s elapsed this variant, ~64.7s to go)
+[ eval ] pillars variant=diffuser: trial 8/10 done  (172.4s elapsed this variant, ~43.1s to go)
+[ eval ] pillars variant=diffuser: trial 9/10 done  (204.4s elapsed this variant, ~22.7s to go)
+[ eval ] pillars variant=diffuser: trial 10/10 done  (226.3s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=diffuser (B=4, proj=off, sel=random): success=0.900  success_relaxed=1.000  safe=1.000  goal_reached=0.900  steps_to_goal=424/634  track_err=0.446  → logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K5_mpc4_pid_stopgo_T0.5_fix16scaled/6/pillars_bounds+dynamics+geo_bounds+obstacles/diffuser/
+[ eval ] pillars variant=diffuser TIMING: fm_ms=44.5 proj_ms=0.0 total_ms=44.5 (p95=45.2) budget=30.3ms → real_time_OVER×4454
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 2/17: 'dpcc-r'  (n_trials=10)
+[ eval ] Fix_16 DEGENERATE actions[2]: constant in the expert data — no training signal for this channel. Widened by eps=3.086e-05; a saturated model output on it commands +/-3.086e-05 data-units/step.
+[ eval ] Fix_16 projector action_bounds=auto → lb=[ 3.5000e-05 -3.9716e-02 -3.1000e-05] ub=[4.4061e-02 3.9704e-02 3.1000e-05]  (degenerate dims now bounded, not +/-1)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K5_mpc4_pid_stopgo_T0.5_fix16scaled/6/run_provenance.json
+[ eval ] pillars variant=dpcc-r: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=dpcc-r trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 277/634 (t=8.39s) — reason=inverted: body z-axis · world z = -0.10 < 0 — the drone is upside down
+[ eval ] pillars variant=dpcc-r: trial 1/10 done  (498.3s elapsed this variant, ~4485.0s to go)
+[ eval ] pillars variant=dpcc-r trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 448/634 (t=13.58s) — reason=inverted: body z-axis · world z = -0.10 < 0 — the drone is upside down
+[ eval ] pillars variant=dpcc-r: trial 2/10 done  (1528.9s elapsed this variant, ~6115.7s to go)
+[ eval ] pillars variant=dpcc-r: trial 3/10 done  (2357.2s elapsed this variant, ~5500.1s to go)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+[ eval ] pillars variant=dpcc-r: trial 4/10 done  (4095.0s elapsed this variant, ~6142.6s to go)
+[ eval ] pillars variant=dpcc-r: trial 5/10 done  (4969.6s elapsed this variant, ~4969.6s to go)
+[ eval ] pillars variant=dpcc-r: trial 6/10 done  (5682.4s elapsed this variant, ~3788.3s to go)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ eval ] pillars variant=dpcc-r: trial 7/10 done  (6609.6s elapsed this variant, ~2832.7s to go)
+[ eval ] pillars variant=dpcc-r: trial 8/10 done  (7577.5s elapsed this variant, ~1894.4s to go)
+[ eval ] pillars variant=dpcc-r: trial 9/10 done  (8468.9s elapsed this variant, ~941.0s to go)
+[ eval ] pillars variant=dpcc-r: trial 10/10 done  (9347.5s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=dpcc-r: ⚠ DIVERGENCE ABORT on 2/10 trials [0, 1] — see DIVERGENCE_ABORT.txt
+[ eval ] pillars variant=dpcc-r (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.600  steps_to_goal=454/634  track_err=0.556  → logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K5_mpc4_pid_stopgo_T0.5_fix16scaled/6/pillars_bounds+dynamics+geo_bounds+obstacles/dpcc-r/
+[ eval ] pillars variant=dpcc-r TIMING: fm_ms=45.1 proj_ms=1912.0 total_ms=1957.1 (p95=10412.5) budget=30.3ms → real_time_OVER×4720
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 3/17: 'dpcc-r-tightened'  (n_trials=10)
+[ eval ] Fix_16 DEGENERATE actions[2]: constant in the expert data — no training signal for this channel. Widened by eps=3.086e-05; a saturated model output on it commands +/-3.086e-05 data-units/step.
+[ eval ] Fix_16 projector action_bounds=auto → lb=[ 3.5000e-05 -3.9716e-02 -3.1000e-05] ub=[4.4061e-02 3.9704e-02 3.1000e-05]  (degenerate dims now bounded, not +/-1)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K5_mpc4_pid_stopgo_T0.5_fix16scaled/6/run_provenance.json
+[ geo ] Constraint overview → logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K5_mpc4_pid_stopgo_T0.5_fix16scaled/6/pillars_bounds+dynamics+geo_bounds+obstacles/constraint_overview_tightened.png (+ .svg)
+[ eval ] pillars variant=dpcc-r-tightened: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+[ eval ] pillars variant=dpcc-r-tightened: trial 1/10 done  (1007.6s elapsed this variant, ~9068.2s to go)
+[ eval ] pillars variant=dpcc-r-tightened: trial 2/10 done  (1880.7s elapsed this variant, ~7522.8s to go)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ eval ] pillars variant=dpcc-r-tightened: trial 3/10 done  (2738.2s elapsed this variant, ~6389.2s to go)
+[ eval ] pillars variant=dpcc-r-tightened: trial 4/10 done  (3720.4s elapsed this variant, ~5580.6s to go)
+[ eval ] pillars variant=dpcc-r-tightened: trial 5/10 done  (4520.8s elapsed this variant, ~4520.8s to go)
+[ eval ] pillars variant=dpcc-r-tightened: trial 6/10 done  (5496.1s elapsed this variant, ~3664.1s to go)
+[ eval ] pillars variant=dpcc-r-tightened: trial 7/10 done  (6286.5s elapsed this variant, ~2694.2s to go)
+[ eval ] pillars variant=dpcc-r-tightened: trial 8/10 done  (7261.3s elapsed this variant, ~1815.3s to go)
+[ eval ] pillars variant=dpcc-r-tightened: trial 9/10 done  (8218.5s elapsed this variant, ~913.2s to go)
+[ eval ] pillars variant=dpcc-r-tightened: trial 10/10 done  (9257.0s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=dpcc-r-tightened (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.900  steps_to_goal=487/634  track_err=0.530  → logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K5_mpc4_pid_stopgo_T0.5_fix16scaled/6/pillars_bounds+dynamics+geo_bounds+obstacles/dpcc-r-tightened/
+[ eval ] pillars variant=dpcc-r-tightened TIMING: fm_ms=45.0 proj_ms=1810.7 total_ms=1855.7 (p95=8528.2) budget=30.3ms → real_time_OVER×5017
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 4/17: 'dpcc-c'  (n_trials=10)
+[ eval ] Fix_16 DEGENERATE actions[2]: constant in the expert data — no training signal for this channel. Widened by eps=3.086e-05; a saturated model output on it commands +/-3.086e-05 data-units/step.
+[ eval ] Fix_16 projector action_bounds=auto → lb=[ 3.5000e-05 -3.9716e-02 -3.1000e-05] ub=[4.4061e-02 3.9704e-02 3.1000e-05]  (degenerate dims now bounded, not +/-1)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K5_mpc4_pid_stopgo_T0.5_fix16scaled/6/run_provenance.json
+[ eval ] pillars variant=dpcc-c: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=dpcc-c: trial 1/10 done  (869.2s elapsed this variant, ~7823.1s to go)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+[ eval ] pillars variant=dpcc-c: trial 2/10 done  (1692.3s elapsed this variant, ~6769.0s to go)
+[ eval ] pillars variant=dpcc-c: trial 3/10 done  (2369.6s elapsed this variant, ~5529.1s to go)
+[ eval ] pillars variant=dpcc-c: trial 4/10 done  (3159.8s elapsed this variant, ~4739.7s to go)
+[ eval ] pillars variant=dpcc-c: trial 5/10 done  (3909.8s elapsed this variant, ~3909.8s to go)
+[ eval ] pillars variant=dpcc-c trial_seed=10005: ⚠ DIVERGENCE ABORT at FM step 301/634 (t=9.12s) — reason=inverted: body z-axis · world z = -0.01 < 0 — the drone is upside down
+[ eval ] pillars variant=dpcc-c: trial 6/10 done  (4416.1s elapsed this variant, ~2944.0s to go)
+[ eval ] pillars variant=dpcc-c: trial 7/10 done  (5171.2s elapsed this variant, ~2216.2s to go)
+[ eval ] pillars variant=dpcc-c: trial 8/10 done  (6027.9s elapsed this variant, ~1507.0s to go)
+[ eval ] pillars variant=dpcc-c trial_seed=10008: ⚠ DIVERGENCE ABORT at FM step 503/634 (t=15.24s) — reason=off_route: p=[5.22, -0.5, 0.79] is outside the scene flight envelope [-5.2, -3.11, -1.3]..[5.2, 3.11, 3.3] on x (expert envelope ⊕ 2.0 m) — too far off the trained route
+[ eval ] pillars variant=dpcc-c: trial 9/10 done  (7040.8s elapsed this variant, ~782.3s to go)
+[ eval ] pillars variant=dpcc-c: trial 10/10 done  (7956.9s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=dpcc-c: ⚠ DIVERGENCE ABORT on 2/10 trials [5, 8] — see DIVERGENCE_ABORT.txt
+[ eval ] pillars variant=dpcc-c (B=4, proj=on, sel=minimum_projection_cost): success=0.100  success_relaxed=0.100  safe=0.100  goal_reached=0.800  steps_to_goal=450/634  track_err=0.586  → logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K5_mpc4_pid_stopgo_T0.5_fix16scaled/6/pillars_bounds+dynamics+geo_bounds+obstacles/dpcc-c/
+[ eval ] pillars variant=dpcc-c TIMING: fm_ms=44.7 proj_ms=1750.6 total_ms=1795.3 (p95=8396.4) budget=30.3ms → real_time_OVER×4404
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 5/17: 'dpcc-c-tightened'  (n_trials=10)
+[ eval ] Fix_16 DEGENERATE actions[2]: constant in the expert data — no training signal for this channel. Widened by eps=3.086e-05; a saturated model output on it commands +/-3.086e-05 data-units/step.
+[ eval ] Fix_16 projector action_bounds=auto → lb=[ 3.5000e-05 -3.9716e-02 -3.1000e-05] ub=[4.4061e-02 3.9704e-02 3.1000e-05]  (degenerate dims now bounded, not +/-1)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K5_mpc4_pid_stopgo_T0.5_fix16scaled/6/run_provenance.json
+[ eval ] pillars variant=dpcc-c-tightened: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ eval ] pillars variant=dpcc-c-tightened: trial 1/10 done  (915.2s elapsed this variant, ~8237.1s to go)
+[ eval ] pillars variant=dpcc-c-tightened trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 447/634 (t=13.55s) — reason=inverted: body z-axis · world z = -0.02 < 0 — the drone is upside down
+[ eval ] pillars variant=dpcc-c-tightened: trial 2/10 done  (1764.7s elapsed this variant, ~7058.6s to go)
+slurmstepd-i6-gpu-1: error: *** JOB 25321 ON i6-gpu-1 CANCELLED AT 2026-09-03T20:38:44 DUE TO TIME LIMIT ***
+JOB END: Thu Sep  3 20:38:44 UTC 2026

@@ -121,6 +121,50 @@ unset MIX_FILM_MODE
 export "MIX_FILM_MODE_${ENGINE_UC}=$FILM_MODE"
 echo "[ eval ] film_mode = $FILM_MODE  (MIX_FILM_MODE_${ENGINE_UC}; must match the checkpoint)"
 
+# ── Gen14 U8 ── ML BONE. Same knob as the train script; MUST match the checkpoint.
+#   MIX_BONE_MF=mf_dit ./Slurm_Codes/submit.sh <this script> mf 6 all
+#
+# 🔴 The bone is baked into diffusion_loadpath ('..._B{bone}_E<arm>'), and a DiT path
+# carries NO '_film..' fragment, so evaluating a DiT checkpoint without this set resolves to
+# the U-Net directory (or to nothing). The backbone itself is always rebuilt from the
+# train-time model_config.pkl, so the architecture cannot diverge from the weights — the
+# failure mode is a wrong/missing PATH, not wrong math. eval_mix_visual_aligning.py prints
+# the bone it read out of the pkl and warns if the eval config disagrees.
+eval "ML_BONE=\${MIX_BONE_${ENGINE_UC}:-\${MIX_BONE:-unet}}"
+case "$ENGINE" in
+    mf) VALID_BONES="unet mf_dit dit" ;;
+    af) VALID_BONES="unet sit dit" ;;
+    *)  VALID_BONES="unet" ;;
+esac
+if ! echo " $VALID_BONES " | grep -q " $ML_BONE "; then
+    echo "[ eval ] ERROR: ml_bone '$ML_BONE' is not valid for engine '$ENGINE' (want: $VALID_BONES)"
+    exit 1
+fi
+unset MIX_BONE
+export "MIX_BONE_${ENGINE_UC}=$ML_BONE"
+echo "[ eval ] ml_bone = $ML_BONE  (MIX_BONE_${ENGINE_UC}; must match the checkpoint)"
+
+# ── Gen14 U10 ── alpha-FLOW SCHEDULE (af arm only). Like film_mode and ml_bone above, a
+# non-default schedule is a CHECKPOINT-PATH key ('_AF<tag>', config: _mix_af_alpha_keys),
+# so this job MUST see the same MIX_AF_ALPHA_* env the training job saw. If it does not,
+# diffusion_loadpath resolves to the DEFAULT (alpha annealed to 0) tree — which either dies
+# on a missing checkpoint or, worse, silently evaluates the wrong model under the right name.
+# The pipeline exports these for you; set them by hand only when running this script alone.
+if [ "$ENGINE" = "af" ]; then
+    _AF_A=""
+    for _v in MIX_AF_ALPHA_SCHED MIX_AF_ALPHA_INIT MIX_AF_ALPHA_END MIX_AF_ALPHA_CLAMP MIX_AF_ALPHA_GAMMA; do
+        eval "_val=\${$_v:-}"
+        if [ -n "$_val" ]; then _AF_A="$_AF_A $_v=$_val"; fi
+    done
+    if [ -n "$_AF_A" ]; then
+        echo "[ eval ] alpha schedule:$_AF_A  (must match the checkpoint)"
+    else
+        echo "[ eval ] alpha schedule = SHIPPED DEFAULT -> resolving the alpha->0 checkpoint tree."
+        echo "[ eval ]   ⚠  If you trained with MIX_AF_ALPHA_*, set the SAME values here or this"
+        echo "[ eval ]      job will look in the wrong directory."
+    fi
+fi
+
 # ── Gen14 U6 ── $4 = NFE override (flow_steps_v3), fm/mf/af only. Blank -> config default
 # (mf/af: 2, fm: 100). Changes BOTH the sampler and the results folder, so a sweep lands in
 # sibling H8_K<N>_... directories instead of overwriting. Also changes the projection budget:
@@ -142,9 +186,170 @@ else
     echo "[ eval ] NFE: config default for engine=$ENGINE"
 fi
 
-# $SEEDS and $FLOW_ARG are intentionally unquoted: $SEEDS must word-split into separate
-# --seeds arguments, and $FLOW_ARG must vanish entirely when empty.
-python mix_visual_aligning_test/eval_mix_visual_aligning.py \
-    --engine "$ENGINE" --seeds $SEEDS --record "$RECORD_MODE" --eval-on-train $FLOW_ARG
+# ── Gen14 U11 ── MIX_PROJ_T: PROJECTION THRESHOLD (arm B, DPCC) — SWEEPABLE ───────────────
+# T = the fraction of the LATE ODE over which the projector runs. The sampler projects on
+# every step from int((1 - T) * K) to the end, so solves/replan ~= T*K.
+#
+#   T=0.5  K=100 -> 50 solves   (shipped; ~15 s/step, 50 h for 30 rollouts, NEVER finished)
+#   T=0.1  K=100 -> 10 solves
+#   T=0.05 K=100 ->  5 solves
+#
+# 🔴 SWEEP FORM. MIX_PROJ_T takes a SPACE-SEPARATED LIST and this job runs one full eval
+#    pass per value, sequentially, in the same allocation:
+#      MIX_PROJ_T="0.1 0.05"  -> two passes, T=0.1 then T=0.05
+#    Each pass writes its OWN results dir (T is a plan path key), so the passes cannot
+#    collide with each other or with the existing T0.5 run. `set -e` is relaxed around the
+#    loop so a failure in pass 1 does not silently discard pass 2 — each pass reports its
+#    own exit status and the job fails at the end if any pass failed.
+#
+# ✅ Cannot overwrite anything: results land in H8_K<K>_Meuler_T<T>_..., and the CHECKPOINT
+#    path is untouched (T is eval-only) — same weights, no retraining.
+# 🔴 Set it here, NOT in config/visual_aligning_eval.yaml: that YAML is read once at config
+#    import and feeds every block in the file, so an edit re-points every later eval.
+#
+# HardFlow (arm C) INHERITS this value when `hardflow.activation_threshold: null` (the
+# default), so arms B and C stay matched. HFFM_ACT_THRESHOLD overrides arm C alone.
+PROJ_T_LIST="${MIX_PROJ_T:-}"
+if [ -n "$PROJ_T_LIST" ]; then
+    for _t in $PROJ_T_LIST; do
+        if ! awk -v t="$_t" 'BEGIN{exit !(t+0==t && t>=0 && t<=1)}' </dev/null; then
+            echo "[ eval ] ERROR: MIX_PROJ_T entry '$_t' must be a number in [0, 1] (a FRACTION"
+            echo "         of the late ODE, not a step count)."
+            exit 1
+        fi
+    done
+    echo "[ eval ] projection threshold sweep: T = $PROJ_T_LIST   (config default 0.5)"
+    for _t in $PROJ_T_LIST; do
+        if [ -n "$FLOW_STEPS" ]; then
+            awk -v t="$_t" -v k="$FLOW_STEPS" 'BEGIN{
+                n = k - int((1-t)*k); if (n < 1) n = 1;
+                printf "[ eval ]   T=%-6s -> %2d projector call(s)/replan  -> dir H8_K%d_Meuler_T%s_...\n", t, n, k, t }'
+        else
+            echo "[ eval ]   T=$_t -> dir H8_K<K>_Meuler_T${_t}_..."
+        fi
+    done
+else
+    echo "[ eval ] projection threshold T = config default (0.5), single pass"
+    if [ -n "$FLOW_STEPS" ] && [ "$FLOW_STEPS" -ge 50 ] 2>/dev/null; then
+        echo "[ eval ]   ⚠  WARNING: K=$FLOW_STEPS at T=0.5 means ~$((FLOW_STEPS/2)) SLSQP solves per replan."
+        echo "[ eval ]      Every K>=50 projected cell in this tree has hit the 24 h wall and"
+        echo "[ eval ]      truncated (mf K100 died at 11/30, needing 50 h). Set MIX_PROJ_T=0.1"
+        echo "[ eval ]      or 0.05 unless you have deliberately raised --time."
+    fi
+fi
 
+# ── Gen14 U11 ── arm C on/off and its NLP backend, for this job only ─────────────────────
+# HFFM_VARIANTS   enables arm C without editing config/visual_aligning_eval.yaml
+#                 (shipped `hardflow_variants: []` = arm C OFF).
+# FMPCC_HF_NLP_BACKEND  slsqp (default) | ipopt. On slsqp the artifacts are renamed
+#                 hardflow_new-* -> hardflow_sls-* (hardflow_projection.artifact_variant_label),
+#                 so an SLSQP run can never overwrite the IPOPT corpus.
+if [ -n "${HFFM_VARIANTS:-}" ]; then
+    echo "[ eval ] arm C ENABLED: HFFM_VARIANTS='$HFFM_VARIANTS'"
+    echo "[ eval ]   NLP backend = ${FMPCC_HF_NLP_BACKEND:-slsqp (default)}"
+    if [ "${FMPCC_HF_NLP_BACKEND:-slsqp}" = "slsqp" ]; then
+        echo "[ eval ]   -> artifacts written as hardflow_sls-*  (IPOPT corpus untouched)"
+    else
+        echo "[ eval ]   ⚠  ipopt writes hardflow_new-* — the SAME names as the existing corpus."
+        echo "[ eval ]      Different T means a different results dir, so this is safe here,"
+        echo "[ eval ]      but do not re-run ipopt at T=0.5 without FORCE/overwrite intent."
+    fi
+    if [ -n "${HFFM_ACT_THRESHOLD:-}" ]; then
+        echo "[ eval ]   arm C threshold OVERRIDE = $HFFM_ACT_THRESHOLD (arms B and C deliberately UNMATCHED)"
+    else
+        echo "[ eval ]   arm C threshold inherits arm B's T (arms B and C matched)"
+    fi
+else
+    echo "[ eval ] arm C (HardFlow) OFF — set HFFM_VARIANTS to enable"
+fi
+
+# ── Gen14 U12 ── MIX_EPOCH: WHICH CHECKPOINT gets rolled out ──────────────────────────────
+#   best    (default) state_best.pt — the lowest test_loss ever recorded
+#   latest            the newest state_<step>.pt
+#   <step>            an explicit step, e.g. 100000
+#
+# 🔴 WHY THE af ARM MUST NOT USE 'best'. alpha-Flow's test loss carries an alpha-weighted
+# term, so its minimum sits MID-HOMOTOPY: state_best.pt is a model caught INSIDE the
+# curriculum, not the one the schedule ends on. Gen3v7 measured the gap — the same training
+# run went from 0/2 to 2/2 goals at K=1 purely by evaluating 'latest' instead of 'best'
+# (DA_20260901_AF_UNet_alpha_clamp_T1_negative.md §4). Setting MIX_AF_ALPHA_END (U10) and
+# then evaluating 'best' floors alpha and throws away the checkpoint the floor produced.
+#
+# ✅ EVAL-ONLY, cannot overwrite anything: it picks among files already in the checkpoint
+#    tree, and a non-default selector adds an '_EP<sel>' fragment to the RESULTS folder
+#    (config: _mix_epoch_keys), so a 'latest' pass lands beside the 'best' one instead of
+#    on top of it. The checkpoint path is untouched — same weights, no retraining.
+EPOCH_SEL="${MIX_EPOCH:-}"
+if [ -n "$EPOCH_SEL" ]; then
+    case "$EPOCH_SEL" in
+        best|latest) ;;
+        ''|*[!0-9]*)
+            echo "[ eval ] ERROR: MIX_EPOCH='$EPOCH_SEL' must be 'best', 'latest', or a"
+            echo "         non-negative step number (it names state_<sel>.pt)."
+            exit 1 ;;
+    esac
+    EPOCH_ARG="--epoch $EPOCH_SEL"
+    if [ "$EPOCH_SEL" = "best" ]; then
+        echo "[ eval ] checkpoint = best (explicit) -> no _EP fragment; shipped path shape"
+    else
+        echo "[ eval ] checkpoint = $EPOCH_SEL  -> results dir gains '_EP${EPOCH_SEL}'"
+    fi
+else
+    EPOCH_ARG=""
+    echo "[ eval ] checkpoint = best (config default) -> no _EP fragment"
+    if [ "$ENGINE" = "af" ]; then
+        echo "[ eval ]   ⚠  af arm on 'best': state_best.pt is chosen on an alpha-weighted"
+        echo "[ eval ]      test_loss and therefore prefers a MID-CURRICULUM model. Set"
+        echo "[ eval ]      MIX_EPOCH=latest to deploy the endpoint of the alpha schedule."
+    fi
+fi
+
+# $SEEDS, $FLOW_ARG and $EPOCH_ARG are intentionally unquoted: $SEEDS must word-split into
+# separate --seeds arguments, and the two *_ARG must vanish entirely when empty.
+run_eval () {                      # $1 = threshold ("" -> config default)
+    local targ=()
+    if [ -n "$1" ]; then targ=(--proj-threshold "$1"); fi
+    python mix_visual_aligning_test/eval_mix_visual_aligning.py \
+        --engine "$ENGINE" --seeds $SEEDS --record "$RECORD_MODE" --eval-on-train \
+        $FLOW_ARG $EPOCH_ARG "${targ[@]}"
+}
+
+# Relax `set -e` around the sweep so one failing threshold does not throw away the others;
+# the exit status is re-raised at the end so the job still fails loudly.
+FAILED=""
+if [ -n "$PROJ_T_LIST" ]; then
+    set +e
+    for T in $PROJ_T_LIST; do
+        echo "================================================================================"
+        echo "[ eval ] PASS  T = $T   ($(date))"
+        echo "================================================================================"
+        # 🔴 UNSET the env form for the child: with --proj-threshold given, a lingering
+        # MIX_PROJ_T list ("0.1 0.05") would fail the eval's float() and kill the pass. The
+        # CLI flag is the single source of truth inside the loop.
+        #
+        # `env -u`, NOT `MIX_PROJ_T=` (job 25215): the assignment form does not unset — it
+        # exports the EMPTY STRING, so the config's `os.environ.get(...) is not None` was
+        # True and float('') killed BOTH passes at import. The readers now also treat blank
+        # as absent, so this is belt-and-braces; keep both.
+        MIX_PROJ_T_SAVED="$MIX_PROJ_T"
+        unset MIX_PROJ_T                 # a real unset, so the child sees no variable at all
+        run_eval "$T"
+        rc=$?
+        MIX_PROJ_T="$MIX_PROJ_T_SAVED"   # restore for the next iteration's bookkeeping
+        if [ $rc -ne 0 ]; then
+            echo "[ eval ] ❌ PASS T=$T FAILED (exit $rc)"
+            FAILED="$FAILED T=$T"
+        else
+            echo "[ eval ] ✅ PASS T=$T done"
+        fi
+    done
+    set -e
+else
+    run_eval ""
+fi
+
+if [ -n "$FAILED" ]; then
+    echo "[ eval ] one or more passes failed:$FAILED"
+    exit 1
+fi
 echo "Job completed successfully."

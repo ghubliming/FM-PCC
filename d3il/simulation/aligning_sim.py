@@ -107,6 +107,18 @@ class Aligning_Sim(BaseSim):
                         if hasattr(agent, 'record_step_info'):
                             agent.record_step_info(info)
 
+                        # Div_Abort: the agent's divergence guard fired — the commanded EE
+                        # position ran away (see check_align_divergence in the eval scripts).
+                        # End the episode HERE instead of burning the rest of the step budget
+                        # on a lost rollout. `info` from the step above is what the post-loop
+                        # metric assignments use, so the rollout still records normally; the
+                        # agent's own `divergence` group says when/where/why it stopped.
+                        # getattr default keeps every agent without the attribute unaffected.
+                        if getattr(agent, 'abort_episode', False):
+                            print(f'[ Div_Abort ] context {context} rollout {i}: episode aborted '
+                                  f'early (agent flagged divergence).', flush=True)
+                            break
+
                         des_robot_pos = pred_action[:3]
 
                         robot_pos, bp_image, inhand_image = obs
@@ -136,6 +148,19 @@ class Aligning_Sim(BaseSim):
                         obs, reward, done, info = env.step(pred_action)
                         if hasattr(agent, 'record_step_info'):
                             agent.record_step_info(info)
+
+                        # Div_Abort: the agent's divergence guard fired — the commanded EE
+                        # position ran away (see check_align_divergence in the eval scripts).
+                        # End the episode HERE instead of burning the rest of the step budget
+                        # on a lost rollout. `info` from the step above is what the post-loop
+                        # metric assignments use, so the rollout still records normally; the
+                        # agent's own `divergence` group says when/where/why it stopped.
+                        # getattr default keeps every agent without the attribute unaffected.
+                        if getattr(agent, 'abort_episode', False):
+                            print(f'[ Div_Abort ] context {context} rollout {i}: episode aborted '
+                                  f'early (agent flagged divergence).', flush=True)
+                            break
+
                         # Non-visual GIF capture: reuse the visual path's exact
                         # pipeline — get RGB from cam, swap to BGR (matches
                         # aligning.py:212), transpose+/255 (matches visual

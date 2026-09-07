@@ -1,0 +1,73 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Fri Aug 14 21:52:56 UTC 2026  |  gates_mix_uav  |  ID 24578  |  NODE i6-gpu-1
+DEVICE: cuda   GATES: <all>
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+GIT REV:   5eaea24
+================================================================================
+[ uav_mix_gates ] python mix_uav_test/gates_mix_uav.py --device cuda 
+
+── G0: every arm builds ────────────────────────────────────────────
+  ✓ fm  Flow Matching (Gen11 FMv3ODE)              params=3,955,177 (3.96 M)  diffusion=FlowMatchingODE
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+  ✓ mf  MeanFlow (Gen3v6, arXiv 2505.13447)        params=3,969,222 (3.97 M)  diffusion=MeanFlowODE
+[ AFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+  ✓ af  alpha-Flow (Gen3v7, arXiv 2510.20771)      params=3,969,222 (3.97 M)  diffusion=AlphaFlowODE
+
+── G1: fm parity vs Gen11 ──────────────────────────────────────────
+  ⊘ SKIPPED — needs --gen11-savepath and --gen15-savepath (a trained Gen11 run and the matching Gen15 `fm` run)
+
+── G2: path collision + Gen11 isolation ────────────────────────────
+  ✓ (a) 16 knob combinations → 16 distinct exp_names
+  ✓ (b) logbase=logs/UAV_MIX (Gen11 keeps logs/UAV_FM)
+  ✓ (c) config/uav.py unmodified vs HEAD
+
+── G3: backbone identity ───────────────────────────────────────────
+  fm  velocity-net params: 3,955,177 (3.96 M)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+  mf  velocity-net params: 3,969,042 (3.97 M)
+[ AFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+  af  velocity-net params: 3,969,042 (3.97 M)
+  ✓ arms within 0.4% of the fm baseline (h_mlp + dual v-head account for the delta; a width defect would be ~60x)
+
+── G4: two-time (t, h) domain ──────────────────────────────────────
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+  ✓ mf: all 4 (t, h) queries inside [0,1] with t+h ≤ 1
+[ AFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+  ✓ af: all 4 (t, h) queries inside [0,1] with t+h ≤ 1
+
+── G5: projector sees full trajectory ──────────────────────────────
+  ✓ fm: projector called 5x with full 9-D trajectory
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+  ✓ mf: projector called 5x with full 9-D trajectory
+[ AFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+  ✓ af: projector called 5x with full 9-D trajectory
+
+── G6: per-plan wall clock ─────────────────────────────────────────
+  control budget at 33 Hz: 30.3 ms per replan (device=cuda; CPU numbers are indicative only)
+  fm  (Flow Matching (Gen11 FMv3ODE) K=1:    8.55 ms  K=2:   16.65 ms  K=5:   43.02 ms  K=10:   87.17 ms  K=20:  174.77 ms
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+  mf  (MeanFlow (Gen3v6, arXiv 2505) K=1:    8.81 ms  K=2:   17.71 ms  K=5:   43.77 ms  K=10:   87.21 ms  K=20:  174.39 ms
+[ AFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+  af  (alpha-Flow (Gen3v7, arXiv 25) K=1:    8.81 ms  K=2:   17.55 ms  K=5:   43.72 ms  K=10:   87.20 ms  K=20:  182.72 ms
+
+========================================================================
+  G0  PASS  every arm builds
+  G1  SKIP  fm parity vs Gen11
+  G2  PASS  path collision + Gen11 isolation
+  G3  PASS  backbone identity
+  G4  PASS  two-time (t, h) domain
+  G5  PASS  projector sees full trajectory
+  G6  PASS  per-plan wall clock
+========================================================================
+skipped: G1
+all requested gates passed
+Job completed successfully. All requested gates passed.
+JOB END: Fri Aug 14 21:53:08 UTC 2026

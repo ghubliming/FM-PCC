@@ -1,0 +1,50 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Fri Aug 21 20:48:57 UTC 2026
+JOB NAME:  gates_mix_visual_avoiding
+JOB ID:    24854
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   afc525f
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=1  MUJOCO_EGL_DEVICE_ID=1
+[ gates ] running: a7
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+
+=== A7: four arms, one visual training step ===
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /u/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+[ VisualUNet ] MultiImageObsEncoder initialized — LATENT_DIM=64 (1 cam x 64), imagenet_norm=True | 6D = [act(0:2) | des_xy(2:4) | c_xy(4:6)]  ·  1 camera (agentview_image)
+  ok   diffusion loss=1.2329  grads=finite  (cameras=1, traj_dim=6)
+[ VisualUNet ] MultiImageObsEncoder initialized — LATENT_DIM=64 (1 cam x 64), imagenet_norm=True | 6D = [act(0:2) | des_xy(2:4) | c_xy(4:6)]  ·  1 camera (agentview_image)
+  ok   fm        loss=2.2672  grads=finite  (cameras=1, traj_dim=6)
+[ VisualUNetTwoTime ] MultiImageObsEncoder initialized — LATENT_DIM=64 (1 cam x 64), imagenet_norm=True | 6D = [act(0:2) | des_xy(2:4) | c_xy(4:6)]  ·  1 camera (agentview_image)
+[ MFTrajectoryModel ] backbone=unet  vision=True  unet_width(freq_dim)=32  params=15.2M
+  ok   mf        loss=1.9998  grads=finite  (cameras=1, traj_dim=6)
+[ VisualUNetTwoTime ] MultiImageObsEncoder initialized — LATENT_DIM=64 (1 cam x 64), imagenet_norm=True | 6D = [act(0:2) | des_xy(2:4) | c_xy(4:6)]  ·  1 camera (agentview_image)
+[ AFTrajectoryModel ] backbone=unet  vision=True  unet_width(freq_dim)=32  params=15.2M
+  ok   af        loss=2.0000  grads=finite  (cameras=1, traj_dim=6)
+  A7 PASS
+
+============================================================
+  A7: PASS
+============================================================
+Job completed successfully.

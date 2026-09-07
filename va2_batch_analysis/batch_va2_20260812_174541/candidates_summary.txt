@@ -1,0 +1,49 @@
+==============================================================================
+DA_VA_v2 — VISUAL ALIGNING CROSS-CANDIDATE SUMMARY
+==============================================================================
+Generated: 2026-08-12 17:45:43
+parent_path: logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline,logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline_Bf_U3
+source: auto
+diagnostics_scan: True
+units_loaded: 7
+units_failed: 0
+
+CANDIDATES
+------------------------------------------------------------------------------
+  1: d3il_baseline_ddpm_encdec_vision
+      /u/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline/d3il_baseline_ddpm_encdec_vision
+      seeds=[42]
+      last run 2026-07-01 01:35:05   (1 config snapshot(s) over 1 seed(s))
+  2: d3il_baseline_ddpm_encdec_vision__Bf_U3
+      /u/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline_Bf_U3/d3il_baseline_ddpm_encdec_vision__Bf_U3
+      seeds=[0, 1, 2, 3, 4, 42]
+      last run 2026-06-20 21:56:00   (6 config snapshot(s) over 6 seed(s))
+      per seed: 0:20260620_170326 | 1:20260620_135000 | 2:20260620_175026 | 3:20260620_130306 | 4:20260620_210858 | 42:20260620_215600
+
+RANKING (goal + constraint success, mask=all, all geos pooled)
+------------------------------------------------------------------------------
+  1. Candidate 2 — d3il_baseline_ddpm_encdec_vision__Bf_U3   [LEGACY d3il_visual_aligning_baseline]   [no projector: ranked on goal success only]
+      goal+constraint   0.29%   goal   0.29%   collision-free    nan%        nan ms/replan
+  2. Candidate 1 — d3il_baseline_ddpm_encdec_vision   [LEGACY d3il_visual_aligning_baseline]   [no projector: ranked on goal success only]
+      goal+constraint   0.00%   goal   0.00%   collision-free    nan%       22.7 ms/replan
+
+DATA QUALITY (units with a problem)
+------------------------------------------------------------------------------
+  none — no frozen rollouts, no circuit-breaker trips.
+
+NOTES
+------------------------------------------------------------------------------
+  LatestSnapshot / Latest_Snapshot  newest config_snapshot marker,
+    i.e. when that folder was last (re)run. Per SEED in the units /
+    *_raw files, newest over all seeds in the aggregated ones.
+  mask=all      every rollout
+  mask=unfrozen D1 box-obstacle-conflict rollouts removed
+  total_violations is NaN for visual runs — that eval records
+    per-family maxima, never a cumulative sum. Use
+    constraint_exec_total_viol_count / max_viol_depth_m instead.
+  legacy=1 units come from a `_`-prefixed bridged tree (e.g. the
+    D3IL baseline via bridge_d3il_va_to_da_va_v2.py), not from a
+    Gen14-shaped eval. has_projector=0 means every constraint_*
+    column is absent BY DESIGN — that pipeline runs no projector,
+    so it can only be compared on goal success / distance / time.
+==============================================================================

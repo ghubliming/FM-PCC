@@ -1,0 +1,482 @@
+% =============================================================================
+%  FM-PCC MASTER'S THESIS -- STRUCTURAL BONE
+%  Technische Universitaet Muenchen (TUM), School of CIT, Chair I6
+% -----------------------------------------------------------------------------
+%  PURPOSE OF THIS FILE
+%    Title page + table of contents + the full chapter/section skeleton.
+%    NO prose content. Every chapter body is a placeholder comment block that
+%    states (a) what the chapter must deliver and (b) its page budget.
+%
+%  BASIS OF THE WORK
+%    The thesis derives from DPCC (Diffusion Predictive Control with
+%    Constraints, L4DC 2025), which itself builds on Diffuser's temporal U-Net
+%    and the D3IL environments. DPCC therefore plays two roles at once -- the
+%    code this work started from, and the baseline it is measured against.
+%    The skeleton keeps those roles in separate chapters on purpose:
+%    \ref{sec:method:dpcc} (what was inherited, what is new) vs.
+%    \ref{sec:setup:baselines} (what it is compared to).
+%    See `Auxiliary/NOTES_dpcc_lineage.md`.
+%
+%  RELATION TO THE OFFICIAL TEMPLATE
+%    The official TUM template lives at
+%      logs_in_develop/Writing/Template_DONT_CHANGE/
+%    and MUST NOT be modified. This bone deliberately duplicates the template's
+%    document class options and the \getXxx metadata macros verbatim, so that
+%    the skeleton can later be transplanted into a *copy* of the template
+%    (Working_Space/<thesis>/main.tex) with zero structural rework.
+%
+%    Two build modes, switched by \standalonetrue / \standalonefalse below:
+%      standalone (default) -- compiles here in Bone/ with a minimal preamble,
+%                              no bibliography, no external page/ files.
+%      template mode        -- \input{settings} + \input{pages/...} from a copy
+%                              of the template. Flip the switch after copying.
+%
+%  BUILD (standalone):  pdflatex thesis_bone.tex && pdflatex thesis_bone.tex
+%                       (twice, so the ToC is populated)
+%  NOTE: no LaTeX toolchain is installed in this dev container -- compile on a
+%        machine with TeX Live, in Overleaf, or on TUM ShareLaTeX.
+% =============================================================================
+
+\newif\ifstandalone
+\standalonetrue   % TODO: set to \standalonefalse once merged into a template copy
+
+\documentclass[headsepline,footsepline,footinclude=false,oneside,fontsize=11pt,paper=a4,listof=totoc,bibliography=totoc]{scrbook}
+% TODO: decide one-sided vs two-sided with the advisor before final print.
+%       Two-sided variant (template default alternative):
+%       [headsepline,footsepline,footinclude=false,fontsize=11pt,paper=a4,listof=totoc,bibliography=totoc,BCOR=12mm,DIV=12]
+
+% -----------------------------------------------------------------------------
+% Thesis metadata (identical macro names as Template_DONT_CHANGE/main.tex)
+% -----------------------------------------------------------------------------
+\newcommand*{\getUniversity}{Technische Universität München}
+\newcommand*{\getFaculty}{Informatics}
+\newcommand*{\getDegree}{Informatics}
+\newcommand*{\getSchool}{Computation, Information and Technology}
+
+% FIXED TITLE -- do not paraphrase, do not hyphenate, do not add a subtitle.
+% Noted limitation (accepted): the name reads as flow-matching-only, while the
+% thesis also covers visual conditioning, UAV embodiment, and further generative
+% engines (MeanFlow, alpha-Flow, diffusion). Chapter 1 must therefore state
+% early that "Flow Matching" here names the *framework family*, not the single
+% engine, so the scope in Chapters 5--6 does not surprise the reader.
+\newcommand*{\getTitle}{Flow Matching Predictive Control with Constraints}
+% TODO(advisor): confirm the German rendering; the registration form needs both.
+%   German orthography requires hyphens in the compound, so the "no dashes" rule
+%   of the English title cannot carry over literally.
+\newcommand*{\getTitleGer}{Flow-Matching-basierte prädiktive Regelung unter Nebenbedingungen}
+
+\newcommand*{\getAuthor}{TODO: Author}
+\newcommand*{\getDoctype}{Master's Thesis in \getDegree}
+\newcommand*{\getSupervisor}{TODO: Prof. Dr. (Themensteller)}
+\newcommand*{\getAdvisor}{TODO: Advisor (Betreuer)}
+\newcommand*{\getKeywords}{flow matching;predictive control;constrained sampling;imitation learning;trajectory optimization}
+\newcommand*{\getSubmissionDate}{TODO: Submission date}
+\newcommand*{\getSubmissionLocation}{Munich}
+
+% -----------------------------------------------------------------------------
+% Preamble
+% -----------------------------------------------------------------------------
+\ifstandalone
+  % Minimal, self-contained preamble. Mirrors the fonts/colors of the template
+  % but drops pdfx (PDF/A) and biblatex so the bone compiles with no .bib and
+  % no external assets. The real build uses \input{settings} instead.
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+  \usepackage[sc]{mathpazo}
+  \usepackage[ngerman,american]{babel}
+  \usepackage[autostyle]{csquotes}
+  \usepackage{amsmath,amssymb}
+  \usepackage{graphicx}
+  \usepackage{booktabs}
+  \usepackage{caption}
+  \usepackage[printonlyused]{acronym}
+  \usepackage[final]{microtype}
+  \usepackage{hyperref}
+  \hypersetup{hidelinks}
+  \setkomafont{disposition}{\normalfont\bfseries}
+  \linespread{1.05}
+  \BeforeTOCHead[toc]{{\cleardoublepage\pdfbookmark[0]{\contentsname}{toc}}}
+  \newcommand{\printbibliography}{} % no-op in standalone mode
+\else
+  \RequirePackage[l2tabu,orthodox]{nag}
+  \input{settings}   % TODO: adapt citation style to `alpha` (biblatex/biber) per I6 guidelines
+\fi
+
+% -----------------------------------------------------------------------------
+% Notation macros -- TUM I6 math-notation rules
+%   scalars: lowercase italic | vectors: \vect | matrices: \matr
+%   functions/units/static indices: upright text | transpose: upright T
+% Use these everywhere; never hand-roll \mathbf/\bf in the chapters.
+% -----------------------------------------------------------------------------
+\newcommand{\vect}[1]{\boldsymbol{#1}}                 % v  -> \vect{v}
+\newcommand{\matr}[1]{\boldsymbol{#1}}                 % M  -> \matr{M}
+\newcommand{\trans}{^{\textrm{T}}}                     % transpose
+\newcommand{\sidx}[1]{_{\textrm{#1}}}                  % static index: x_min
+\newcommand{\Id}[1]{\textbf{Id}_{#1}}                  % identity matrix
+\newcommand{\unitvec}[1]{\textbf{e}_{#1}}              % unit vector
+
+\begin{document}
+
+% =============================================================================
+%  FRONT MATTER
+% =============================================================================
+\pagenumbering{alph}
+\ifstandalone
+  \begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\scshape\LARGE \getUniversity\par}
+    \vspace{0.5cm}
+    {\scshape\large School of \getSchool\par}
+    \vspace{2.5cm}
+    {\huge\bfseries \getTitle\par}
+    \vspace{1cm}
+    {\Large \getTitleGer\par}
+    \vspace{2.5cm}
+    {\Large \getDoctype\par}
+    \vspace{1.5cm}
+    \begin{tabular}{ll}
+      Author            & \getAuthor            \\
+      Supervisor        & \getSupervisor        \\
+      Advisor           & \getAdvisor           \\
+      Submission Date   & \getSubmissionDate    \\
+    \end{tabular}
+    \vfill
+    {\large \getSubmissionLocation\par}
+  \end{titlepage}
+\else
+  \input{pages/cover}
+\fi
+
+\frontmatter{}
+
+\ifstandalone
+  % Placeholders standing in for the template's pages/*.tex
+  \chapter*{Disclaimer}
+  % TODO: template file pages/disclaimer.tex -- declaration of independent work.
+
+  \chapter*{Acknowledgments}
+  % TODO: template file pages/acknowledgments.tex.
+
+  \chapter*{Abstract}
+  % TODO: ~250 words, written LAST. One paragraph per move:
+  %   (1) problem: generative planners are stochastic and slow, and MPC-style
+  %       safety filtering degrades sample quality;
+  %   (2) approach: deterministic flow matching as the generative engine plus
+  %       an explicit constraint arm;
+  %   (3) evidence: D3IL aligning/avoiding + UAV MuJoCo, matched-backbone
+  %       comparison against diffusion DPCC;
+  %   (4) headline result: <numbers, filled from the final DA tables>;
+  %   (5) takeaway.
+  % NOTE: the German abstract ("Zusammenfassung") is optional at I6 -- confirm.
+\else
+  \input{pages/title}
+  \input{pages/disclaimer}
+  % \input{pages/software_used}
+  \input{pages/acknowledgments}
+  \input{pages/abstract}
+\fi
+
+\microtypesetup{protrusion=false}
+\tableofcontents{}
+\microtypesetup{protrusion=true}
+
+% =============================================================================
+%  MAIN MATTER
+%  Page budget targets an I6 Master's thesis of 60--80 pages (excl. appendix).
+%  Guiding rule: spend the pages where the *contribution* lives (Ch. 4--6),
+%  not on background that a reader can look up.
+% =============================================================================
+\mainmatter{}
+
+% -----------------------------------------------------------------------------
+\chapter{Introduction}\label{ch:introduction}
+% BUDGET ~6 pages. Must answer: what problem, why it matters, what is claimed,
+% what evidence backs the claim, how the document is organised.
+
+\section{Motivation}\label{sec:intro:motivation}
+% Generative planners (diffusion policies) work but are stochastic and need
+% many network evaluations; safety-critical control needs determinism, hard
+% constraint satisfaction, and a real-time budget.
+
+\section{Problem Statement}\label{sec:intro:problem}
+% Formulate the gap precisely: constrained receding-horizon trajectory
+% generation from demonstrations, with a per-step compute budget.
+
+\section{Research Questions}\label{sec:intro:questions}
+% RQ1: Can a deterministic flow-matching engine replace the stochastic
+%      diffusion engine of DPCC without loss of task success or constraint
+%      satisfaction, at a matched backbone and parameter count?
+% RQ2: Do few-step engines (MeanFlow, alpha-Flow) reduce the number of
+%      function evaluations at equal success and constraint satisfaction?
+% RQ3: Does a trajectory-optimization constraint arm (HardFlow) dominate the
+%      per-step projection arm (DPCC) on the accuracy/latency trade-off?
+% RQ4: Do the above results transfer across observation modality (state vs.
+%      visual) and across embodiment (manipulator vs. UAV)?
+% TODO(advisor): lock the RQ set before drafting Chapter 4.
+
+\section{Contributions}\label{sec:intro:contributions}
+% One bullet per contribution; each must map to exactly one evaluation section.
+
+\section{Scope and Terminology}\label{sec:intro:scope}
+% Load-bearing section, forced by the thesis title.
+% The title names "Flow Matching Predictive Control with Constraints", but the
+% work is broader than the literal reading in three directions. Say so here,
+% once, so Chapters 5--6 do not read as scope creep:
+%   (i)  ENGINE -- "flow matching" denotes the deterministic ODE-transport
+%        family. Diffusion is the reference point, and MeanFlow / alpha-Flow are
+%        few-step members of the same family, not separate topics.
+%   (ii) OBSERVATION -- both state-based and visually conditioned variants.
+%   (iii) EMBODIMENT -- manipulation and aerial trajectory planning.
+% Also fix the short name used throughout (\ac{FMPCC}) and state what is
+% explicitly out of scope (cross-ref \ref{sec:disc:limitations}).
+
+\section{Outline}\label{sec:intro:outline}
+% One sentence per chapter.
+
+% -----------------------------------------------------------------------------
+\chapter{Background}\label{ch:background}
+% BUDGET ~14 pages. Only what is strictly needed to follow Chapters 4--6.
+% Everything here is textbook/prior work -- no own contribution.
+
+\section{Learning Trajectory Policies from Demonstration}\label{sec:bg:il}
+\subsection{Behaviour Cloning and Multi-Modality}\label{sec:bg:il:bc}
+\subsection{Trajectory-Level Prediction and Receding-Horizon Execution}\label{sec:bg:il:horizon}
+
+\section{Denoising Diffusion Generative Models}\label{sec:bg:diffusion}
+\subsection{Forward and Reverse Process}\label{sec:bg:diffusion:process}
+\subsection{Diffusion for Planning and Control}\label{sec:bg:diffusion:planning}
+
+\section{Flow Matching}\label{sec:bg:fm}
+\subsection{Continuous Normalising Flows and the Probability Path}\label{sec:bg:fm:path}
+\subsection{Conditional Flow Matching}\label{sec:bg:fm:cfm}
+\subsection{ODE Sampling and Solver Choice}\label{sec:bg:fm:ode}
+
+\section{Few-Step Generative Models}\label{sec:bg:fewstep}
+\subsection{Average-Velocity Fields and the MeanFlow Identity}\label{sec:bg:fewstep:meanflow}
+\subsection{Bootstrapped Targets and Homotopy Annealing}\label{sec:bg:fewstep:alphaflow}
+
+\section{Model Predictive Control and Constrained Sampling}\label{sec:bg:mpc}
+\subsection{Receding-Horizon Optimal Control}\label{sec:bg:mpc:mpc}
+\subsection{Constraint Projection onto Feasible Sets}\label{sec:bg:mpc:projection}
+\subsection{Terminal-Time Constraint Enforcement as Trajectory Optimization}\label{sec:bg:mpc:trajopt}
+
+% -----------------------------------------------------------------------------
+\chapter{Related Work}\label{ch:related}
+% BUDGET ~8 pages. Organise by the gap this thesis closes, not chronologically.
+% Every subsection ends with one sentence: "what is missing / how we differ".
+
+\section{Diffusion-Based Planners and Policies}\label{sec:rel:diffusion}
+\section{Flow Matching for Robot Control}\label{sec:rel:flow}
+\section{Safety Filters and Hard-Constrained Generative Sampling}\label{sec:rel:safety}
+\section{Accelerating Generative Planners}\label{sec:rel:speed}
+\section{Positioning of This Thesis}\label{sec:rel:positioning}
+% Explicit table: method x (deterministic? hard constraints? few-step?
+% visual? real robot/embodiment?) -- one row per related system, last row ours.
+
+% -----------------------------------------------------------------------------
+\chapter{Method}\label{ch:method}
+% BUDGET ~16 pages. THIS IS THE CORE. Enough detail to reproduce.
+% The dual-path story: a generative "brain" proposing trajectories and a
+% constraint "brake" making them admissible.
+
+\section{Starting Point: Diffusion Predictive Control}\label{sec:method:dpcc}
+% The thesis does not start from scratch: it is a copy-modify derivation of
+% DPCC, which in turn inherits Diffuser's temporal U-Net and the D3IL
+% environments. Two things must be done here, early and explicitly:
+%   (1) summarise DPCC just enough that Chapters 4--6 are readable -- the
+%       diffusion planner plus the per-step constraint projection;
+%   (2) DELINEATE. State plainly which components are inherited (backbone,
+%       environments, constraint-projection machinery, data pipeline) and which
+%       are this thesis's own (the deterministic flow-matching engine, the
+%       few-step engines, the alternative constraint arm, visual conditioning,
+%       the UAV embodiment, the evaluation framework). An examiner will look
+%       for this boundary; drawing it yourself, once and precisely, is far
+%       better than leaving it to be inferred.
+% Do NOT relitigate the comparison here -- that belongs to
+% \ref{sec:setup:baselines} and Chapter \ref{ch:results}.
+
+\section{Problem Formalisation}\label{sec:method:formal}
+% Notation, state/action spaces, horizon, constraint sets, the objective.
+% Fix ALL symbols here; later chapters may not introduce new ones.
+
+\section{System Overview}\label{sec:method:overview}
+% Architecture figure (vector graphic, TikZ) + a walk-through of one control
+% step from observation to executed action.
+
+\section{Generative Engine}\label{sec:method:engine}
+\subsection{Flow-Matching Velocity Training}\label{sec:method:engine:fm}
+\subsection{Time-Prior and Loss Weighting}\label{sec:method:engine:time}
+\subsection{Average-Velocity Engine}\label{sec:method:engine:mf}
+\subsection{Bootstrapped Annealed Engine}\label{sec:method:engine:af}
+\subsection{Unified Multi-Engine Interface}\label{sec:method:engine:mix}
+% The single backbone / switchable-head design that makes the comparison fair.
+
+\section{Backbone and Conditioning}\label{sec:method:backbone}
+\subsection{Temporal U-Net}\label{sec:method:backbone:unet}
+\subsection{Transformer Variants}\label{sec:method:backbone:transformer}
+\subsection{Visual Conditioning}\label{sec:method:backbone:visual}
+
+\section{Constraint Enforcement}\label{sec:method:constraints}
+\subsection{Constraint Model and Feasible Set}\label{sec:method:constraints:sets}
+\subsection{Per-Step Projection Arm}\label{sec:method:constraints:projection}
+\subsection{Terminal-Time Trajectory-Optimization Arm}\label{sec:method:constraints:hardflow}
+\subsection{Projection Thresholding and Activation Schedules}\label{sec:method:constraints:schedule}
+
+\section{Closed-Loop Deployment}\label{sec:method:closedloop}
+\subsection{Receding-Horizon Replanning}\label{sec:method:closedloop:replan}
+\subsection{Low-Level Tracking}\label{sec:method:closedloop:tracking}
+
+\section{Algorithm Summary}\label{sec:method:algorithm}
+% One boxed pseudocode listing for training, one for closed-loop inference.
+
+% -----------------------------------------------------------------------------
+\chapter{Experimental Setup}\label{ch:setup}
+% BUDGET ~10 pages. Everything a reader needs to judge -- and reproduce -- the
+% numbers in Chapter 6. Keep interpretation OUT of this chapter.
+
+\section{Tasks and Environments}\label{sec:setup:envs}
+\subsection{Manipulation Benchmarks}\label{sec:setup:envs:d3il}
+\subsection{Aerial Trajectory Planning}\label{sec:setup:envs:uav}
+
+\section{Datasets and Preprocessing}\label{sec:setup:data}
+\subsection{Demonstration Data and State Representation}\label{sec:setup:data:state}
+\subsection{Normalisation}\label{sec:setup:data:norm}
+
+\section{Baselines}\label{sec:setup:baselines}
+% NOTE the dual role of DPCC: it is both the ancestor of this codebase
+% (\ref{sec:method:dpcc}) and the reference baseline. Because the two systems
+% share a backbone and a data pipeline, the comparison is unusually well
+% controlled -- say so, it is a strength of the setup, not a caveat.
+% Baseline hierarchy, stated explicitly and defended:
+%   diffusion DPCC = THE reference; naive flow matching = the second bar that
+%   few-step engines must clear; the projection arm = the bar the
+%   trajectory-optimization arm must clear.
+
+\section{Metrics}\label{sec:setup:metrics}
+\subsection{Task Success and Constraint Satisfaction}\label{sec:setup:metrics:sc}
+\subsection{Computational Cost}\label{sec:setup:metrics:cost}
+\subsection{Trajectory Quality}\label{sec:setup:metrics:quality}
+\subsection{Dominance Criterion}\label{sec:setup:metrics:pareto}
+% Define "better" ONCE, formally: at equal success and constraint satisfaction,
+% strictly fewer function evaluations AND lower wall-clock per step. Anything
+% else is reported as a trade-off, never as "best".
+
+\section{Training and Evaluation Protocol}\label{sec:setup:protocol}
+\subsection{Hyperparameters}\label{sec:setup:protocol:hparams}
+\subsection{Seeds and Statistical Reporting}\label{sec:setup:protocol:seeds}
+\subsection{Compute Environment}\label{sec:setup:protocol:compute}
+
+% -----------------------------------------------------------------------------
+\chapter{Results}\label{ch:results}
+% BUDGET ~16 pages. Report evidence. Interpretation is deferred to Chapter 7,
+% except for a single "reading" sentence under each table.
+% Every table carries backbone + parameter count, so no comparison is confounded.
+
+\section{State-Based Manipulation}\label{sec:res:state}
+\subsection{Flow Matching versus Diffusion at Matched Backbone}\label{sec:res:state:fm}
+\subsection{Solver and Step-Count Sensitivity}\label{sec:res:state:solver}
+
+\section{Few-Step Engines}\label{sec:res:fewstep}
+\subsection{Success and Constraint Satisfaction versus Function Evaluations}\label{sec:res:fewstep:nfe}
+\subsection{Annealing and Checkpoint Selection}\label{sec:res:fewstep:anneal}
+
+\section{Constraint Arms}\label{sec:res:constraints}
+\subsection{Projection versus Trajectory Optimization}\label{sec:res:constraints:arms}
+\subsection{Solver Backend and Latency}\label{sec:res:constraints:backend}
+\subsection{Degenerate Low-Step Regimes}\label{sec:res:constraints:degenerate}
+% Flag configurations where the constraint arm is provably inactive; exclude
+% them from the claims rather than silently averaging them in.
+
+\section{Visual Observations}\label{sec:res:visual}
+\subsection{Aligning}\label{sec:res:visual:aligning}
+\subsection{Avoiding}\label{sec:res:visual:avoiding}
+
+\section{Aerial Trajectory Planning}\label{sec:res:uav}
+\subsection{Closed-Loop Tracking}\label{sec:res:uav:tracking}
+\subsection{Constraint Geometries}\label{sec:res:uav:geometries}
+
+\section{Ablations}\label{sec:res:ablation}
+\subsection{Time Prior}\label{sec:res:ablation:time}
+\subsection{Backbone Capacity}\label{sec:res:ablation:capacity}
+\subsection{Constraint Activation Threshold}\label{sec:res:ablation:threshold}
+
+\section{Summary of Findings}\label{sec:res:summary}
+% One table: RQ -> evidence -> verdict.
+
+% -----------------------------------------------------------------------------
+\chapter{Discussion}\label{ch:discussion}
+% BUDGET ~8 pages. Say what the numbers MEAN, and be explicit about what they
+% do not support. Negative and mixed outcomes belong here, not hidden.
+
+\section{Interpretation of the Main Results}\label{sec:disc:interpretation}
+\section{Why Determinism Helps}\label{sec:disc:determinism}
+\section{Cost of Constraint Satisfaction}\label{sec:disc:cost}
+\section{Negative and Inconclusive Results}\label{sec:disc:negative}
+\section{Threats to Validity}\label{sec:disc:validity}
+\subsection{Internal Validity}\label{sec:disc:validity:internal}
+\subsection{External Validity}\label{sec:disc:validity:external}
+\subsection{Construct Validity}\label{sec:disc:validity:construct}
+\section{Limitations}\label{sec:disc:limitations}
+
+% -----------------------------------------------------------------------------
+\chapter{Conclusion}\label{ch:conclusion}
+% BUDGET ~4 pages.
+
+\section{Summary}\label{sec:concl:summary}
+\section{Answers to the Research Questions}\label{sec:concl:answers}
+% Answer RQ1--RQ4 in order, in one paragraph each, referencing the evidence.
+\section{Future Work}\label{sec:concl:future}
+
+% =============================================================================
+%  APPENDIX
+% =============================================================================
+\appendix{}
+
+\chapter{Derivations}\label{app:derivations}
+% Anything that would interrupt Chapter 4.
+
+\chapter{Extended Results}\label{app:results}
+% Full per-seed tables; the main text keeps only aggregates.
+
+\chapter{Reproducibility}\label{app:repro}
+% Exact commands, configuration files, checkpoints, and the contents of the
+% storage medium handed to the advisor.
+% Include the provenance table: which files are upstream (DPCC, Diffuser, D3IL,
+% HardFlow, MeanFlow, ...), which were modified, which are new. Licence notices
+% belong here too.
+
+\microtypesetup{protrusion=false}
+
+\addchap{Abbreviations}
+\begin{acronym}
+  \itemsep-.25\baselineskip
+  \acro{TUM}[TUM]{Technical University of Munich}
+  \acro{AF}[AF]{$\alpha$-Flow}
+  \acro{CFG}[CFG]{Classifier-Free Guidance}
+  \acro{CFM}[CFM]{Conditional Flow Matching}
+  \acro{DDPM}[DDPM]{Denoising Diffusion Probabilistic Model}
+  \acro{DiT}[DiT]{Diffusion Transformer}
+  \acro{DPCC}[DPCC]{Diffusion Predictive Control with Constraints}
+  \acro{FM}[FM]{Flow Matching}
+  \acro{FMPCC}[FM-PCC]{Flow Matching Predictive Control with Constraints}
+  \acro{IL}[IL]{Imitation Learning}
+  \acro{MF}[MF]{MeanFlow}
+  \acro{MPC}[MPC]{Model Predictive Control}
+  \acro{NFE}[NFE]{Number of Function Evaluations}
+  \acro{NLP}[NLP]{Nonlinear Program}
+  \acro{ODE}[ODE]{Ordinary Differential Equation}
+  \acro{PID}[PID]{Proportional-Integral-Derivative}
+  \acro{RK4}[RK4]{Fourth-Order Runge--Kutta}
+  \acro{SDE}[SDE]{Stochastic Differential Equation}
+  \acro{SLSQP}[SLSQP]{Sequential Least-Squares Quadratic Programming}
+  \acro{UAV}[UAV]{Unmanned Aerial Vehicle}
+  % TODO: prune to the acronyms actually used; `printonlyused` hides the rest.
+\end{acronym}
+
+\listoffigures{}
+\listoftables{}
+\microtypesetup{protrusion=true}
+\printbibliography{}
+
+\end{document}

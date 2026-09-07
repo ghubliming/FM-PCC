@@ -17,6 +17,14 @@ HARDFLOW_VARIANTS = [
     'hardflow_new',
     'hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t',
     'hardflow_new-r-tightened', 'hardflow_new-c-tightened', 'hardflow_new-t-tightened',
+    # [SolverSwap 2026-08-27] The SLSQP-backend twins. A run on the new default writes
+    # `hardflow_sls-*` so it lands BESIDE the `hardflow_new-*` (IPOPT) corpus instead of
+    # overwriting it. Discovery here is an explicit allow-list, so an unregistered name is
+    # INVISIBLE rather than an error — these lines are what make the swap runs loadable.
+    # 🔴 Never pool `hardflow_new-*` with `hardflow_sls-*`: different solver.
+    'hardflow_sls',
+    'hardflow_sls-r', 'hardflow_sls-c', 'hardflow_sls-t',
+    'hardflow_sls-r-tightened', 'hardflow_sls-c-tightened', 'hardflow_sls-t-tightened',
 ]
 
 DEFAULT_PROJECTION_VARIANTS = [
@@ -48,6 +56,8 @@ MAJOR_VARIANTS = [
     # given candidate lacks, so DPCC-only candidates are unaffected.
     'hardflow_new', 'hardflow_new-c',
     'hardflow_new-c-tightened',   # U5: headline matched-margin arm vs dpcc-c-tightened
+    # [SolverSwap] the same headline arms on the SLSQP backend.
+    'hardflow_sls', 'hardflow_sls-c', 'hardflow_sls-c-tightened',
 ]
 
 AUXILIARY_VARIANTS = [v for v in DEFAULT_PROJECTION_VARIANTS if v not in MAJOR_VARIANTS]
@@ -87,6 +97,11 @@ HARDFLOW_METRICS = [
     'activation_threshold',
     'batch_size',
     'flow_steps',
+    # [SolverSwap 2026-08-27] WHICH NLP solver arm C used. The npz carries the
+    # string as `nlp_backend` and this float twin (1.0 = DPCC scipy SLSQP,
+    # 0.0 = the original CasADi IPOPT); generic loaders coerce npz scalars to
+    # float, so the twin is the one that survives. Never pool rows that disagree.
+    'nlp_backend_slsqp',
 ]
 
 # Plot styling
@@ -119,6 +134,7 @@ METRIC_LABELS = {
     'nlp_failures': 'NLP Failures',
     'nfe': 'Network Fn Evals',
     'activation_threshold': 'Activation Threshold (DPCC polarity)',
+    'nlp_backend_slsqp': 'NLP Backend (1 = DPCC SLSQP, 0 = IPOPT)',
     'batch_size': 'MPC Candidates',
     'flow_steps': 'Flow Steps (K)',
 }
@@ -136,6 +152,7 @@ METRIC_TYPES = {
     'nlp_failures': 'continuous',
     'nfe': 'continuous',
     'activation_threshold': 'continuous',
+    'nlp_backend_slsqp': 'continuous',
     'batch_size': 'continuous',
     'flow_steps': 'continuous',
 }

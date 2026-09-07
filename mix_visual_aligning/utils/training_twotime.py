@@ -3,10 +3,33 @@ import copy
 import math
 import numpy as np
 import torch
+import sys
 from tqdm.auto import tqdm
 from diffusers.optimization import get_cosine_schedule_with_warmup
 
 from .arrays import batch_to_device
+
+# ---------------------------------------------------------------------------- #
+# Batch-log hygiene. tqdm renders ONCE on construction and again on close, so
+# `mininterval=1e10` alone does NOT keep a bar out of a non-interactive log --
+# it only suppresses the redraws in between. Nothing here called close(), so the
+# bar was closed by __del__ instead, leaving two carriage-return frames per epoch
+# in every sbatch job log (100 epochs = 200 frames), which bloats the file and
+# breaks grep on the training curve.
+#
+# Under sbatch stderr is not a TTY, so the bar is disabled outright and the same
+# `logs` dict is emitted as ONE plain greppable line at the same log_freq cadence.
+# Interactive runs are unchanged. Force a bar anyway with FMPCC_TQDM=1.
+# ---------------------------------------------------------------------------- #
+_TQDM_OFF = os.environ.get('FMPCC_TQDM', '') != '1' and not sys.stderr.isatty()
+
+
+def _fmt_logs(logs):
+    out = []
+    for k, v in logs.items():
+        out.append(f"{k}={v:.5g}" if isinstance(v, float) else f"{k}={v}")
+    return "  ".join(out)
+
 
 # ── Gen3v7 — extra per-step metrics from AlphaFlowODE._build_info ─────────────────────
 # Tracked generically (train + test) and persisted as training_<key>_losses /
@@ -30,6 +53,34 @@ def cycle(dl):
     while True:
         for data in dl:
             yield data
+
+
+def _atomic_torch_save(payload, savepath):
+    """A checkpoint write that cannot destroy the previous checkpoint.
+
+    🔴 Fix_10. `torch.save` opens the DESTINATION path and writes in place. When the volume
+    fills mid-write, the result is a truncated archive sitting exactly where a known-good
+    checkpoint used to be -- the old one is already gone. That is how job 24838 ended up with
+    a savepath holding state_best.pt and nothing else after an ENOSPC: every write target was
+    also the only copy.
+
+    Writing to a sibling temp file and os.replace()-ing it in makes the swap atomic on POSIX.
+    If the disk is full the TEMP write fails and the existing checkpoint is untouched -- the
+    run dies with its last checkpoint still valid and resumable, which is the whole point.
+    Costs one checkpoint of transient space; that is the price of not losing the run.
+    """
+    tmp = f'{savepath}.tmp.{os.getpid()}'
+    try:
+        torch.save(payload, tmp)
+        os.replace(tmp, savepath)
+    except BaseException:
+        # Never leave a partial temp behind to eat the space we are already short of.
+        try:
+            if os.path.exists(tmp):
+                os.remove(tmp)
+        except OSError:
+            pass
+        raise
 
 class EMA():
     '''
@@ -67,7 +118,12 @@ class Trainer(object):
         step_start_ema=2000,
         update_ema_every=10,
         log_freq=1000,
+        save_freq=None,
         train_device='cuda',
+        # ── Gen14 U9 ── encoder learning-rate scale. 1.0 == pre-U9, and at 1.0 the
+        # optimiser below is constructed EXACTLY as before (one param group), so old
+        # checkpoints resume unchanged. See the block at self.optimizer for why.
+        vis_lr_scale=1.0,
         results_folder='./results',
     ):
         super().__init__()
@@ -78,7 +134,14 @@ class Trainer(object):
 
         self.step_start_ema = step_start_ema
         self.log_freq = log_freq
-        self.save_freq = n_train_steps // 5
+        # Resume granularity. The inherited default is n_train_steps // 5 — FIVE saves for a
+        # whole run — so a wall-clock kill discards up to 20 % of the training. Job 24838 lost
+        # 84k steps that way: it died at step 83999 with the newest periodic save at 80000, and
+        # a run killed before the FIRST periodic save keeps nothing at all but state_0.pt.
+        # Pass save_freq (CLI --save-every, env MIX_SAVE_EVERY) to checkpoint more often. It
+        # changes only how many state_<step>.pt files land on disk — never a path key, never
+        # the LR schedule — so a run started at one cadence resumes correctly at another.
+        self.save_freq = int(save_freq) if save_freq else max(1, int(n_train_steps) // 5)
 
         self.n_train_steps = n_train_steps
         self.n_steps_per_epoch = n_steps_per_epoch
@@ -138,6 +201,68 @@ class Trainer(object):
         self.current_test_a0_loss = None
 
         self.optimizer = torch.optim.Adam(diffusion_model.parameters(), lr=train_lr)
+        # ── Gen14 U9 ── OPTIONAL two-group LR: the vision encoder at train_lr*vis_lr_scale,
+        # everything else at train_lr.
+        #
+        # 🔴 WHY THIS IS A REBUILD AND NOT AN EDIT OF THE LINE ABOVE. At vis_lr_scale==1.0
+        # nothing here runs, so the optimiser object, its param-group count and its
+        # state_dict layout are byte-for-byte the pre-U9 ones. That matters because
+        # _restore_optimizer_state() calls optimizer.load_state_dict() on checkpoints
+        # written before U9: a checkpoint saved with ONE group cannot be loaded into an
+        # optimiser with TWO, and this pipeline auto-resumes near the 24 h wall routinely.
+        # Paying one throwaway Adam construction keeps that guarantee free of conditionals.
+        #
+        # Motivation: 22.36 M of the 26.4 M trainable parameters are the dual ResNet-18,
+        # fitted to 900 episodes. use_group_norm=True also strips the pretrained
+        # BatchNorms, so an ImageNet-initialised encoder arrives DECALIBRATED — it needs
+        # some adaptation, just not at the full rate. Hence a scale, not a freeze;
+        # vis_lr_scale=0.0 is the hard-freeze extreme and is still reachable.
+        self.vis_lr_scale = float(vis_lr_scale)
+        self.vis_param_group = False
+        if self.vis_lr_scale != 1.0:
+            # 🔴 RESOLVE THE ENCODER THROUGH THE WRAPPER'S OWN HELPER (job 25043, 2026-08-25).
+            # The first version of this reached for `diffusion_model.model.velocity_net` and
+            # died, because `.model` is the ENGINE (MeanFlowEngine / AlphaFlowEngine) and
+            # `velocity_net` lives one level further down on the trajectory model. That is the
+            # SAME engine-vs-trajectory-model confusion that broke G-B2/G-B3 in U8 and that
+            # `gates_mix_visual._vnet()` exists to absorb; hard-coding the chain here repeated
+            # it. `VisualMeanFlow._visual_backbone()` / `VisualAlphaFlow._visual_backbone()`
+            # (visual_mf_diffusion.py:39, visual_af_diffusion.py:38) are the single source of
+            # truth for that walk, so ask them; the explicit chain stays only as a fallback.
+            enc, probed = None, []
+            _bb = getattr(diffusion_model, '_visual_backbone', None)
+            if callable(_bb):
+                try:
+                    enc = getattr(_bb(), 'obs_encoder', None)
+                    probed.append('_visual_backbone().obs_encoder')
+                except Exception as e:                    # a wrapper whose walk does not apply
+                    probed.append(f'_visual_backbone() raised {type(e).__name__}')
+            if enc is None:
+                node = diffusion_model
+                for step in ('model', 'model', 'velocity_net'):
+                    node = getattr(node, step, None)
+                    if node is None:
+                        break
+                enc = getattr(node, 'obs_encoder', None) if node is not None else None
+                probed.append('model.model.velocity_net.obs_encoder')
+            if enc is None:
+                raise ValueError(
+                    f'[ utils/training ] vis_lr_scale={self.vis_lr_scale} but no obs_encoder '
+                    f'could be resolved on {type(diffusion_model).__name__}. Tried: '
+                    f'{", ".join(probed)}. If this is a STATE-ONLY run (if_vision=False) there '
+                    'is no encoder to scale and vis_lr_scale must stay 1.0. Refusing to train '
+                    'with a silently ignored encoder LR — that is exactly the class of bug '
+                    'that produces a null result nobody can explain.')
+            vis_ids = {id(q) for q in enc.parameters()}
+            vis_p = [q for q in diffusion_model.parameters() if id(q) in vis_ids]
+            rest_p = [q for q in diffusion_model.parameters() if id(q) not in vis_ids]
+            self.optimizer = torch.optim.Adam(
+                [{'params': rest_p, 'lr': train_lr},
+                 {'params': vis_p, 'lr': train_lr * self.vis_lr_scale}])
+            self.vis_param_group = True
+            print(f'[ utils/training ] U9 vis_lr_scale={self.vis_lr_scale} — '
+                  f'{len(rest_p)} trunk tensors @ {train_lr:g}, '
+                  f'{len(vis_p)} encoder tensors @ {train_lr * self.vis_lr_scale:g}')
         self.lr_scheduler = get_cosine_schedule_with_warmup(
             optimizer=self.optimizer,
             num_warmup_steps=lr_warmup_steps,
@@ -165,7 +290,7 @@ class Trainer(object):
     #-----------------------------------------------------------------------------#
 
     def train_epoch(self, n_train_steps, epoch=0):        
-        progress_bar = tqdm(total=n_train_steps, mininterval=1e10)
+        progress_bar = tqdm(total=n_train_steps, mininterval=1e10, disable=_TQDM_OFF)
         progress_bar.set_description(f"Epoch {epoch}")
 
         for step in range(n_train_steps):
@@ -264,11 +389,18 @@ class Trainer(object):
                 if 'a0_loss' in infos:
                     logs["a0_loss_test"] = self.current_test_a0_loss
             logs["lr"] = self.lr_scheduler.get_last_lr()[0]
+            # ── Gen14 U9 ── get_last_lr()[0] is the TRUNK group. With a split the encoder
+            # rate would otherwise be invisible in every log and every lr_history plot.
+            if self.vis_param_group:
+                logs["lr_vis"] = self.lr_scheduler.get_last_lr()[1]
             logs["step"] = self.step
 
             if (self.step + 1) % self.log_freq == 0 or step == n_train_steps - 1:
                 progress_bar.update(step - progress_bar.n + 1)
                 progress_bar.set_postfix(**logs)
+                if _TQDM_OFF:
+                    print(f"[ train ] epoch {epoch} step {self.step + 1}/"
+                          f"{self.n_train_steps}  " + _fmt_logs(logs), flush=True)
 
             self.step += 1
 
@@ -287,6 +419,29 @@ class Trainer(object):
             # U9: lets callers flush losses to W&B per epoch instead of only at the end
             if on_epoch_end is not None:
                 on_epoch_end(epoch)
+
+        # ── Gen14 U12 ── SAVE THE MODEL THE SCHEDULE ACTUALLY ENDS ON.
+        #
+        # 🔴 The periodic save fires on `self.step % self.save_freq == 0` inside
+        # train_epoch, and self.step only ever reaches n_train_steps - 1 there. So the
+        # newest NUMERIC checkpoint is the last multiple of save_freq strictly below
+        # n_train_steps — at the default save_freq = n_train_steps // 5 that is step 80000
+        # of 100000. `--epoch latest` (Gen14 U12) has therefore always deployed a model 20%
+        # short of the end of training, and no MIX_SAVE_EVERY cadence can fix it: the last
+        # multiple of ANY frequency is < n_train_steps. This makes `latest` mean what it
+        # says. Gen3v7 flagged the same defect as "step 1b" and never closed it
+        # (DA_20260901_AF_UNet_alpha_clamp_T1_negative.md §4.3).
+        #
+        # Fires ONLY on a completed run: the early return at the top of this method means
+        # there are steps left to do, and that run's periodic saves still stand. Costs one
+        # extra state_<n_train_steps>.pt per completed run. Overwriting is safe — save() is
+        # atomic (Fix_10) and would write identical weights.
+        if self.step >= self.n_train_steps:
+            _last_periodic = (int(self.n_train_steps) - 1) // self.save_freq * self.save_freq
+            print(f'[ utils/training_twotime ] final checkpoint: step {self.step} '
+                  f'(the periodic save only reaches {_last_periodic}); '
+                  f'"latest" now resolves to the end of the schedule', flush=True)
+            self.save(self.step)
 
     def test(self, n_test=100):
         self.model.eval()   # Set the model to evaluation mode
@@ -371,7 +526,7 @@ class Trainer(object):
             syncs to storage bucket if a bucket is specified
         '''
         savepath = os.path.join(self.logdir, f'state_{epoch}.pt')
-        torch.save(self._checkpoint_payload(), savepath)
+        _atomic_torch_save(self._checkpoint_payload(), savepath)
         # print(f'Saved model to {savepath}', flush=True)
 
     def save_best(self):
@@ -380,7 +535,7 @@ class Trainer(object):
             syncs to storage bucket if a bucket is specified
         '''
         savepath = os.path.join(self.logdir, f'state_best.pt')
-        torch.save(self._checkpoint_payload(), savepath)
+        _atomic_torch_save(self._checkpoint_payload(), savepath)
         # print(f'Saved best model to {savepath}', flush=True)
 
     def save_losses(self):

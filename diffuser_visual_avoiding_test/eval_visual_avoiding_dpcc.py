@@ -162,7 +162,7 @@ def _warn_pkl_config_mismatch(diffusion, args):
             )
 
 
-def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest',
+def load_diffusion_with_override(*loadpath, target_class=None, epoch='best',
                                  device='cuda:0', seed=None, override_args=None):
     import inspect
     print(f'\n[ eval loading ] {os.path.join(*loadpath)}\n')

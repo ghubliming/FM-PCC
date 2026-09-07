@@ -1,0 +1,14 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+UAV-MIX K-SWEEP PIPELINE START: Thu Aug 27 17:14:37 UTC 2026
+  engine=af  scene=pillars  seed=6  n_trials=10
+  projection=fm_only  record=none  K list=1 2 5
+================================================================================
+Step 1: train submitted — Job 25135
+Step 2.1: eval scheduled (afterok:25135) K=1 — Job 25136
+Step 2.2: eval scheduled (afterok:25135) K=2 — Job 25137
+Step 2.3: eval scheduled (afterok:25135) K=5 — Job 25138
+--------------------------------------------------------------------------------
+Submitted: 1 train + 3 eval job(s), all gated on train 25135
+Outputs: logs/UAV_MIX/uav-pillars/mix_uav_af/.../6/  (+ plans/ per K)
+================================================================================

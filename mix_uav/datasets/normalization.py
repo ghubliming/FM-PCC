@@ -1,6 +1,37 @@
+import os
+
 import numpy as np
 import scipy.interpolate as interpolate
 import pdb
+
+#-----------------------------------------------------------------------------#
+#-------------- Gen15 Fix_16 — degenerate (constant) dimensions --------------#
+#-----------------------------------------------------------------------------#
+# A dimension whose data is CONSTANT (min == max) carries no scale information and no
+# gradient signal. `SafeLimitsNormalizer` has to widen it to avoid 0/0 = NaN, and the
+# width it picks silently becomes that channel's physical output scale:
+#
+#     unnormalize(y) = (y+1)/2 * (maxs-mins) + mins = y*eps + c
+#
+# With the inherited `eps=1` and c=0 that is the IDENTITY — the model's raw normalized
+# output is emitted verbatim in data units, and `LimitsNormalizer`'s clip to [-1,1]
+# becomes a +/-1 *data-unit* ceiling. On D3IL/maze (actions O(1)) that is harmless. On the
+# UAV (actions O(0.02 m), and `pillars` has dz == 0 exactly) it gives the vertical action
+# ~23x the gain of every other channel, and makes the projector's `action_bounds:'auto'`
+# cap for that channel +/-1 m — i.e. no cap at all.
+#
+# See logs_in_develop/Gen15/Study/STUDY_20260901_mf_unguided_failure_uav_pillars.md.
+#
+# FIX: derive the widening from the scale of the NON-constant dimensions instead of using a
+# fixed 1.0. `normalize()` is UNCHANGED for any eps (constant data always maps to the
+# midpoint 0), so this is CHECKPOINT-COMPATIBLE — no retrain is required.
+#
+#   FMPCC_SAFE_EPS_MODE = 'scaled' (default) | 'legacy'   ('legacy' restores eps=1.0 exactly,
+#                                                          for A/B against pre-fix runs)
+#   FMPCC_SAFE_EPS_FRAC = fraction of the median non-constant half-width (default 1e-3)
+SAFE_EPS_MODE = os.environ.get('FMPCC_SAFE_EPS_MODE', 'scaled').strip().lower()
+SAFE_EPS_FRAC = float(os.environ.get('FMPCC_SAFE_EPS_FRAC', '1e-3'))
+SAFE_EPS_FLOOR = 1e-8
 
 POINTMASS_KEYS = ['observations', 'actions', 'next_observations', 'deltas']
 
@@ -21,9 +52,20 @@ class DatasetNormalizer:
 
         self.normalizers = {}
         for key, val in dataset.items():
+            # Gen15 Fix_16 — forward the field name when the normalizer accepts one, so the
+            # degenerate-dimension diagnostic can say `actions[2]` and not just `2`. Falls
+            # back to the original call for any normalizer that does not take `key`.
+            try:
+                self.normalizers[key] = normalizer(val, key=key)
+                continue
+            except TypeError:
+                pass
+            except Exception:
+                print(f'[ utils/normalization ] Skipping {key} | {normalizer}')
+                continue
             try:
                 self.normalizers[key] = normalizer(val)
-            except:
+            except Exception:
                 print(f'[ utils/normalization ] Skipping {key} | {normalizer}')
 
     def __repr__(self):
@@ -91,10 +133,13 @@ class Normalizer:
         parent class, subclass by defining the `normalize` and `unnormalize` methods
     '''
 
-    def __init__(self, X):
+    def __init__(self, X, key=None):
         self.X = X.astype(np.float32)
         self.mins = X.min(axis=0)
         self.maxs = X.max(axis=0)
+        # Gen15 Fix_16 — the field this normalizer belongs to ('observations'/'actions'),
+        # so diagnostics can name the offending channel instead of a bare index.
+        self.key = key
 
     def __repr__(self):
         return (
@@ -166,7 +211,20 @@ class LimitsNormalizer(Normalizer):
             x : [ -1, 1 ]
         '''
         if x.max() > 1 + eps or x.min() < -1 - eps:
-            # print(f'[ datasets/mujoco ] Warning: sample out of range | ({x.min():.4f}, {x.max():.4f})')
+            # 🔴 Gen15 Fix_16 — this clip used to be SILENT (the warning was commented out).
+            # It is not cosmetic: a saturating channel is clipped to the dimension's own
+            # `maxs`, and for a widened constant dimension that is a full data-unit ceiling.
+            # A whole eval batch could sit on that ceiling for >50% of its steps and no log
+            # line anywhere said so. Warn ONCE per normalizer (batch logs must stay quiet —
+            # see Slurm logging rules) and keep running counters for the caller to report.
+            self._clip_events = getattr(self, '_clip_events', 0) + 1
+            self._clip_max = max(getattr(self, '_clip_max', 0.0),
+                                 float(max(abs(x.max()), abs(x.min()))))
+            if self._clip_events == 1:
+                print(f'[ utils/normalization ] ⚠ Fix_16: sample out of range on '
+                      f'{self.key or "?"} — clipping to [-1,1] | '
+                      f'({float(x.min()):.4f}, {float(x.max()):.4f}). '
+                      f'Further occurrences silent; see `_clip_events` / `_clip_max`.')
             x = np.clip(x, -1, 1)
 
         ## [ -1, 1 ] --> [ 0, 1 ]
@@ -179,19 +237,54 @@ class SafeLimitsNormalizer(LimitsNormalizer):
         functions like LimitsNormalizer, but can handle data for which a dimension is constant
     '''
 
-    def __init__(self, *args, eps=1, **kwargs):
+    def __init__(self, *args, eps=None, **kwargs):
         super().__init__(*args, **kwargs)
-        for i in range(len(self.mins)):
-            if self.mins[i] == self.maxs[i]:
-                print(f'''
-                    [ utils/normalization ] Constant data in dimension {i} | '''
-                    f'''max = min = {self.maxs[i]}'''
-                )
-                # Widen ONLY this constant dimension so it maps to the midpoint (0)
-                # instead of 0/0=NaN. Must index [i] — adjusting the whole mins/maxs
-                # array would corrupt every other (non-constant) dimension's scale.
-                self.mins[i] -= eps
-                self.maxs[i] += eps
+
+        const = np.asarray(self.mins == self.maxs).reshape(-1)
+        self.degenerate_dims = [int(i) for i in np.nonzero(const)[0]]
+        self.degenerate_eps = {}
+        if not self.degenerate_dims:
+            return
+
+        width = self._resolve_eps(const, eps)
+        for i in self.degenerate_dims:
+            # Widen ONLY this constant dimension so it maps to the midpoint (0)
+            # instead of 0/0=NaN. Must index [i] — adjusting the whole mins/maxs
+            # array would corrupt every other (non-constant) dimension's scale.
+            self.mins[i] -= width
+            self.maxs[i] += width
+            self.degenerate_eps[i] = float(width)
+            print(f'[ utils/normalization ] Constant data in '
+                  f'{self.key or "?"}[{i}] | max = min = {self.maxs[i] - width} '
+                  f'→ Fix_16 widened by eps={width:.3e} (mode={SAFE_EPS_MODE}). '
+                  f'unnormalize scale for this channel = {width:.3e} data-units per unit output.')
+
+    def _resolve_eps(self, const, eps):
+        '''Gen15 Fix_16 — pick the widening for a constant dimension.
+
+        `normalize()` maps constant data to the midpoint 0 for ANY eps, so this choice does
+        not change the training signal and does not invalidate a checkpoint. What it DOES set
+        is the physical scale of that channel at `unnormalize` time, and therefore:
+          • how large a command an unconstrained model output becomes, and
+          • the `action_bounds:'auto'` cap the projector derives from `mins`/`maxs`.
+
+        Default ('scaled'): a small fraction of the MEDIAN half-width of the non-constant
+        dimensions, so the degenerate channel is quieter than every real one instead of
+        louder. 'legacy' restores the inherited eps=1.0 byte-for-byte for A/B.
+        '''
+        if eps is not None:
+            return float(eps)
+        if SAFE_EPS_MODE == 'legacy':
+            return 1.0
+        halfw = (np.asarray(self.maxs) - np.asarray(self.mins))[~const] / 2.0
+        halfw = halfw[np.isfinite(halfw) & (halfw > 0)]
+        if halfw.size == 0:
+            # Every dimension is constant — there is no scale to reference. Fall back to the
+            # inherited behaviour rather than invent one, and say so.
+            print('[ utils/normalization ] ⚠ Fix_16: ALL dimensions constant — '
+                  'no reference scale; falling back to eps=1.0.')
+            return 1.0
+        return max(float(np.median(halfw)) * SAFE_EPS_FRAC, SAFE_EPS_FLOOR)
 
 #-----------------------------------------------------------------------------#
 #------------------------------- CDF normalizer ------------------------------#

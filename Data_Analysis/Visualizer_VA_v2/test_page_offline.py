@@ -165,8 +165,10 @@ check('all four native CSVs read',
 document.getElementById('mask-select').value = 'all'
 document.getElementById('seed-mode-select').value = 'standard'
 document.getElementById('mode-select').value = 'candidate'
-document.getElementById('fig-width').value = '11.0'
-document.getElementById('width-zoom').value = '1.0'
+document.getElementById('fig-width-main').value = '11.0'
+document.getElementById('fig-width-pareto').value = '14.0'
+document.getElementById('width-zoom-main').value = '1.0'
+document.getElementById('width-zoom-pareto').value = '1.0'
 document.getElementById('batch-select').value = BATCH.name
 
 print('\n[populate + derive]')
@@ -414,6 +416,194 @@ check('the axes note never explains marks it did not draw',
       ('(G) = goal not always reached' not in _xlab) or bool(_fmap),
       _xlab[:90] or '(no note)')
 document.getElementById('metric-select').value = 'n_success_and_constraints'
+run(ns['trigger_plot'](None))
+
+# ── U18: the Pareto sub-plot ─────────────────────────────────────────────────
+# The panel makes exactly one claim — "these points are comparable, and THESE are the
+# cheapest of them" — so the tests are about that claim: the eligibility rule, the
+# non-dominance of the front, and that nothing imperfect goes unnamed.
+print('\n[U18 pareto plot — own figure, own controls]')
+_p_env = envs[0]
+document.getElementById('env-select').value = _p_env
+document.getElementById('mode-select').value = 'candidate'
+document.set_checks('var-check', variants[:5])
+document.set_checks('cand-check', cands)
+document.getElementById('pareto-band').value = '0.05'
+
+document.getElementById('pareto-on').checked = False
+run(ns['trigger_plot'](None))
+check('pareto off -> the main figure is one axes and nothing else',
+      len(ns['current_fig'].axes) == 1, f'{len(ns["current_fig"].axes)} axes')
+check('pareto off -> no pareto figure and the section is hidden',
+      ns['pareto_fig'] is None
+      and document.getElementById('pareto-section').style.display == 'none')
+
+document.getElementById('pareto-on').checked = True
+# U18.1 regression. Two bugs are pinned here, both from the sub-plot era:
+#   (a) 'hspace' in gridspec_kw marked the GridSpec locally modified, which makes matplotlib
+#       call EVERY axes on it "not compatible with tight_layout" — it warned loudly and then
+#       adjusted nothing, so the right-hand legends ran off the canvas;
+#   (b) one shared figure gave both rows a single left/right margin, so the bar chart lost
+#       width to a legend that belongs to the panel.
+# Both are answered by the same thing: the Pareto is its own figure now.
+import warnings as _warnings
+with _warnings.catch_warnings(record=True) as _wcaught:
+    _warnings.simplefilter('always')
+    run(ns['trigger_plot'](None))
+_tl_warn = [str(w.message) for w in _wcaught if 'tight_layout' in str(w.message)]
+check('drawing the pareto raises no tight_layout warning', not _tl_warn,
+      '; '.join(_tl_warn[:1])[:120])
+_main_axes = ns['current_fig'].axes
+check('the main plot stays a ONE-axes figure — the pareto is not in it',
+      len(_main_axes) == 1, f'{len(_main_axes)} axes')
+_p_fig = ns['pareto_fig']
+check('pareto on -> its OWN figure in its OWN section',
+      _p_fig is not None and _p_fig is not ns['current_fig']
+      and len(_p_fig.axes) == 1
+      and document.getElementById('pareto-section').style.display == 'block')
+check('the pareto figure is displayed into #pareto-area',
+      any(t == 'pareto-area' for _, t in displayed),
+      f'targets: {sorted({t for _, t in displayed})}')
+check('no gridspec on either figure carries locally-modified subplot params',
+      not any(a.get_subplotspec().get_gridspec().locally_modified_subplot_params()
+              for f in (ns['current_fig'], _p_fig) for a in f.axes))
+check('tight_layout ran on the pareto — its right-hand legends are inside the canvas',
+      _p_fig.axes[0].get_position().x1 < 0.98,
+      f'pareto axes right edge = {_p_fig.axes[0].get_position().x1:.3f}')
+check('the main plot no longer pays for the pareto legends',
+      _main_axes[0].get_position().x1 >= _p_fig.axes[0].get_position().x1 - 1e-9,
+      f'main x1={_main_axes[0].get_position().x1:.3f} '
+      f'vs pareto x1={_p_fig.axes[0].get_position().x1:.3f}')
+# U18.2: each plot is sized from ITS OWN FigWidth store. The sidebar shows one number box
+# and a 'which plot' selector, so the failure to guard against is the box writing to — or
+# being read by — the plot the user was not pointing at.
+check('the main figure takes its width from fig-width-main, not the pareto store',
+      abs(ns['current_fig'].get_size_inches()[0] - 11.0) < 1e-6,
+      f"main figwidth = {ns['current_fig'].get_size_inches()[0]}")
+check('the pareto figure takes its width from fig-width-pareto',
+      abs(_p_fig.get_size_inches()[0] - 14.0) < 1e-6,
+      f'pareto figwidth = {_p_fig.get_size_inches()[0]}')
+document.getElementById('fig-width-pareto').value = '9.0'
+run(ns['trigger_plot'](None))
+check('resizing the pareto leaves the main plot exactly where it was',
+      abs(ns['pareto_fig'].get_size_inches()[0] - 9.0) < 1e-6
+      and abs(ns['current_fig'].get_size_inches()[0] - 11.0) < 1e-6,
+      f"pareto={ns['pareto_fig'].get_size_inches()[0]} "
+      f"main={ns['current_fig'].get_size_inches()[0]}")
+check('an unset / junk FigWidth store falls back to 10 rather than a 0-inch canvas',
+      abs(ns['_fig_width']('nope') - 10.0) < 1e-6,
+      f"_fig_width('nope') = {ns['_fig_width']('nope')}")
+document.getElementById('fig-width-pareto').value = '14.0'
+run(ns['trigger_plot'](None))
+_main_axes = ns['current_fig'].axes
+_p_fig = ns['pareto_fig']
+
+_pts, _sc_metric = ns['_pareto_points'](_p_env, variants[:5], cands)
+if not _pts:
+    print(f'  SKIP  no {ns["PARETO_X"][0]}/{ns["PARETO_Y"][0]} pair at {_p_env}')
+    _p_ax = _p_fig.axes[0] if _p_fig is not None else None
+    check('an empty pareto says so instead of drawing an empty box',
+          _p_ax is not None and any('NO PARETO' in t.get_text() for t in _p_ax.texts))
+else:
+    check('pareto uses the strict goal+constraint score',
+          _sc_metric in ns['PARETO_SC_METRICS'], f'{_sc_metric}')
+    # a point must be the SAME number the matrices print for that facet
+    _rec, _, _ = ns['_summary_stats'](_p_env, 'standard', ())
+    _bad = []
+    for _pt in _pts[:40]:
+        for _m, _k in ((ns['PARETO_X'][0], 'x'), (ns['PARETO_Y'][0], 'y')):
+            _st = ns['_cell_stats'](_rec, _m, _pt['cand'], _pt['var'])
+            if _st is None or abs(_st[0] - _pt[_k]) > 1e-9:
+                _bad.append(f"CAND_{_pt['cand']}/{_pt['var']}/{_m}")
+    check('every point matches the Result Matrices', not _bad, '; '.join(_bad[:3]))
+    # the whole selection, no silent drop: a facet with both cost metrics IS a point
+    _want = sum(1 for _c in cands for _v in variants[:5]
+                if ns['_cell_stats'](_rec, ns['PARETO_X'][0], _c, _v) is not None
+                and ns['_cell_stats'](_rec, ns['PARETO_Y'][0], _c, _v) is not None)
+    check('one point per plottable (candidate, variant)', len(_pts) == _want,
+          f'{len(_pts)} points vs {_want} facets')
+
+    # eligibility: "similar goal+constraints" means within the band of the BEST
+    _band = ns['_pareto_band']()
+    _known = [p['sc'] for p in _pts if p['sc'] is not None]
+    _best = max(_known) if _known else None
+    for _pt in _pts:
+        _pt['in'] = True if _best is None else (
+            _pt['sc'] is not None and _pt['sc'] >= _best - _band - ns['PARETO_TOL'])
+    _inside = [p for p in _pts if p['in']]
+    check('only the most-S+C points are compared',
+          _best is None or all(p['sc'] >= _best - _band - 1e-12 for p in _inside),
+          f'{len(_inside)} of {len(_pts)} within {_band:.2f} of {_best}'
+          if _best is not None else 'no S+C metric — everything compared, correctly')
+    check('a point with no S+C score is never silently compared',
+          _best is None or all(p['sc'] is not None for p in _inside))
+
+    # the front is a front: strictly better in x, strictly better in y, and nobody
+    # eligible dominates a member of it
+    _front = ns['_pareto_front'](_inside)
+    check('front is strictly improving in both axes',
+          all(_front[i]['x'] <= _front[i + 1]['x'] and _front[i]['y'] > _front[i + 1]['y']
+              for i in range(len(_front) - 1)), f'{len(_front)} vertices')
+    _dominated = [f"CAND_{f['cand']}/{f['var']}" for f in _front
+                  for q in _inside
+                  if q['x'] <= f['x'] and q['y'] <= f['y'] and (q['x'] < f['x'] or q['y'] < f['y'])]
+    check('no eligible point dominates a front member', not _dominated, _dominated[:3])
+    check('an excluded point can never reach the front',
+          all(f['in'] for f in _front))
+
+    # the two keys: colour is shared with the main plot, shape is unique per candidate
+    _cols = dict(zip(sorted({p['var'] for p in _pts}),
+                     ns['_variant_colors'](sorted({p['var'] for p in _pts}))))
+    check('pareto colours ARE the main plot\'s variant colours',
+          all(_cols[v] == ns['_variant_colors']([v])[0] for v in _cols),
+          f'{len(_cols)} variants')
+    _marks, _repeat = ns['_candidate_markers']({p['cand'] for p in _pts})
+    check('one shape per candidate (or the points get labelled)',
+          _repeat or len(set(_marks.values())) == len(_marks),
+          f'{len(_marks)} candidates, {len(set(_marks.values()))} shapes'
+          + (' — more candidates than shapes, labels drawn' if _repeat else ''))
+    # the type tag is what makes a shape legend readable at all
+    _tags = {c: ns['_cand_tag'](c) for c in list(_marks)[:6]}
+    check('shape legend names the config, not just the ID', all(_tags.values()),
+          '; '.join(f'CAND_{c}={t}' for c, t in list(_tags.items())[:3]))
+
+    # nothing imperfect goes unnamed
+    _p_ax = _p_fig.axes[0]
+    _legend_text = " ".join(t.get_text() for lg in _p_ax.get_children()
+                            if hasattr(lg, 'get_texts') for t in lg.get_texts())
+    _flagged = [p for p in _pts if p['sc'] is None or p['sc'] < 1.0 - ns['PARETO_TOL']]
+    _named = [p for p in _flagged[:ns['PARETO_MAX_LEGEND']]
+              if f"CAND_{p['cand']} · {p['var']}" in _legend_text]
+    check('every sub-1.000 point is named in the legend',
+          len(_named) == min(len(_flagged), ns['PARETO_MAX_LEGEND']),
+          f'{len(_flagged)} imperfect points, {len(_named)} named'
+          if _flagged else 'none imperfect — the legend says so')
+    check('a perfect selection states that too',
+          bool(_flagged) or '= 1.000' in _legend_text)
+    check('the panel states the comparison rule it applied',
+          ('compared:' in _p_ax.get_title()) or (_best is None),
+          _p_ax.get_title().replace('\n', ' | ')[:110])
+    check('the axes say which direction is better',
+          'faster' in _p_ax.get_xlabel() and 'fewer' in _p_ax.get_ylabel(),
+          f'x={_p_ax.get_xlabel()[:40]!r}')
+
+    # a band of 0 is the strictest reading: ONLY the top score is comparable
+    document.getElementById('pareto-band').value = '0'
+    run(ns['trigger_plot'](None))
+    _strict = [p for p in _pts
+               if _best is not None and p['sc'] is not None and p['sc'] >= _best - ns['PARETO_TOL']]
+    check('band 0 narrows the comparison to the top score alone',
+          _best is None or len(_strict) <= len(_inside),
+          f'{len(_strict)} at exactly {_best}' if _best is not None else '')
+    document.getElementById('pareto-band').value = '0.05'
+
+# the panel must never be able to cost the user the main plot
+document.set_checks('cand-check', ['no-such-candidate'])
+run(ns['trigger_plot'](None))
+check('a pareto with nothing to draw does not break the page',
+      'NO DATA' in document.getElementById('plot-area').innerHTML or len(displayed) > 0)
+document.set_checks('cand-check', cands)
+document.set_checks('var-check', variants[:5])
 run(ns['trigger_plot'](None))
 
 # ── U13: seed coverage in the plot legend ────────────────────────────────────

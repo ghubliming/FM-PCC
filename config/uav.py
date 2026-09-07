@@ -200,7 +200,7 @@ base = {
         # (via exp_name), so this diffusion_loadpath is vestigial for that script; kept for
         # API parity / external tooling. Default path only — the live load is exp_name-driven.
         'diffusion_loadpath': 'f:flow_matching_v3_uav/H{horizon}_D{diffusion}',
-        'diffusion_epoch': 'latest',
+        'diffusion_epoch': 'best',
 
         # ── Eval control ──────────────────────────────────────────────────────
         # flow_steps_v3: ODE Euler steps at inference (eval only — never in train folder name).

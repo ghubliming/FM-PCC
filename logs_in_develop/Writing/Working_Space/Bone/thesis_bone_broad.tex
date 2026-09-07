@@ -1,0 +1,196 @@
+% =============================================================================
+%  FM-PCC MASTER'S THESIS -- BROAD BONE
+%  TUM, School of CIT, Chair I6
+% -----------------------------------------------------------------------------
+%  Title page + table of contents + chapters and top-level sections only.
+%  No subsections, no page budgets, no per-section specs -- this is the coarse
+%  view, for agreeing the overall shape before committing to detail.
+%
+%  BASIS: the work derives from DPCC (Diffusion Predictive Control with
+%  Constraints, L4DC 2025), which itself builds on Diffuser's temporal U-Net and
+%  the D3IL environments. DPCC is both the codebase this thesis starts from and
+%  the baseline it is measured against -- see `Auxiliary/NOTES_dpcc_lineage.md`.
+%
+%  Sibling file `thesis_bone.tex` holds the detailed skeleton (subsections,
+%  page budgets, what-each-chapter-must-deliver notes). Both share the same
+%  metadata block and the same standalone/template switch.
+%
+%  BUILD: pdflatex thesis_bone_broad.tex  (twice, so the ToC fills in)
+% =============================================================================
+
+\newif\ifstandalone
+\standalonetrue   % set false once merged into a copy of the TUM template
+
+\documentclass[headsepline,footsepline,footinclude=false,oneside,fontsize=11pt,paper=a4,listof=totoc,bibliography=totoc]{scrbook}
+
+% -----------------------------------------------------------------------------
+% Metadata (same macro names as the TUM template's main.tex)
+% -----------------------------------------------------------------------------
+\newcommand*{\getUniversity}{Technische Universität München}
+\newcommand*{\getFaculty}{Informatics}
+\newcommand*{\getDegree}{Informatics}
+\newcommand*{\getSchool}{Computation, Information and Technology}
+
+% FIXED TITLE -- verbatim, no hyphens, no subtitle.
+\newcommand*{\getTitle}{Flow Matching Predictive Control with Constraints}
+\newcommand*{\getTitleGer}{Flow-Matching-basierte prädiktive Regelung unter Nebenbedingungen} % TODO: confirm
+
+\newcommand*{\getAuthor}{TODO: Author}
+\newcommand*{\getDoctype}{Master's Thesis in \getDegree}
+\newcommand*{\getSupervisor}{TODO: Supervisor}
+\newcommand*{\getAdvisor}{TODO: Advisor}
+\newcommand*{\getKeywords}{flow matching;predictive control;constrained sampling;imitation learning}
+\newcommand*{\getSubmissionDate}{TODO: Submission date}
+\newcommand*{\getSubmissionLocation}{Munich}
+
+% -----------------------------------------------------------------------------
+\ifstandalone
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+  \usepackage[sc]{mathpazo}
+  \usepackage[ngerman,american]{babel}
+  \usepackage[autostyle]{csquotes}
+  \usepackage{amsmath,amssymb}
+  \usepackage{graphicx}
+  \usepackage{booktabs}
+  \usepackage[printonlyused]{acronym}
+  \usepackage[final]{microtype}
+  \usepackage{hyperref}
+  \hypersetup{hidelinks}
+  \setkomafont{disposition}{\normalfont\bfseries}
+  \linespread{1.05}
+  \newcommand{\printbibliography}{}
+\else
+  \RequirePackage[l2tabu,orthodox]{nag}
+  \input{settings}
+\fi
+
+\begin{document}
+
+\pagenumbering{alph}
+\ifstandalone
+  \begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\scshape\LARGE \getUniversity\par}
+    \vspace{0.5cm}
+    {\scshape\large School of \getSchool\par}
+    \vspace{2.5cm}
+    {\huge\bfseries \getTitle\par}
+    \vspace{1cm}
+    {\Large \getTitleGer\par}
+    \vspace{2.5cm}
+    {\Large \getDoctype\par}
+    \vspace{1.5cm}
+    \begin{tabular}{ll}
+      Author          & \getAuthor          \\
+      Supervisor      & \getSupervisor      \\
+      Advisor         & \getAdvisor         \\
+      Submission Date & \getSubmissionDate  \\
+    \end{tabular}
+    \vfill
+    {\large \getSubmissionLocation\par}
+  \end{titlepage}
+\else
+  \input{pages/cover}
+\fi
+
+\frontmatter{}
+
+\ifstandalone
+  \chapter*{Abstract}
+\else
+  \input{pages/title}
+  \input{pages/disclaimer}
+  \input{pages/acknowledgments}
+  \input{pages/abstract}
+\fi
+
+\microtypesetup{protrusion=false}
+\tableofcontents{}
+\microtypesetup{protrusion=true}
+
+% =============================================================================
+\mainmatter{}
+
+\chapter{Introduction}\label{ch:introduction}
+\section{Motivation}
+\section{Problem Statement}
+\section{Research Questions}
+\section{Contributions}
+\section{Scope and Terminology}
+\section{Outline}
+
+\chapter{Background}\label{ch:background}
+\section{Learning Trajectory Policies from Demonstration}
+\section{Diffusion Generative Models}
+\section{Flow Matching}
+\section{Few-Step Generative Models}
+\section{Model Predictive Control and Constrained Sampling}
+
+\chapter{Related Work}\label{ch:related}
+\section{Diffusion-Based Planners and Policies}
+\section{Flow Matching for Robot Control}
+\section{Safety Filters and Hard-Constrained Sampling}
+\section{Accelerating Generative Planners}
+\section{Positioning of This Thesis}
+
+\chapter{Method}\label{ch:method}
+\section{Starting Point: Diffusion Predictive Control}
+\section{Problem Formalisation}
+\section{System Overview}
+\section{Generative Engine}
+\section{Backbone and Conditioning}
+\section{Constraint Enforcement}
+\section{Closed-Loop Deployment}
+
+\chapter{Experimental Setup}\label{ch:setup}
+\section{Tasks and Environments}
+\section{Datasets}
+\section{Baselines}
+\section{Metrics}
+\section{Training and Evaluation Protocol}
+
+\chapter{Results}\label{ch:results}
+\section{State-Based Manipulation}
+\section{Few-Step Engines}
+\section{Constraint Arms}
+\section{Visual Observations}
+\section{Aerial Trajectory Planning}
+\section{Ablations}
+\section{Summary of Findings}
+
+\chapter{Discussion}\label{ch:discussion}
+\section{Interpretation}
+\section{Negative and Inconclusive Results}
+\section{Threats to Validity}
+\section{Limitations}
+
+\chapter{Conclusion}\label{ch:conclusion}
+\section{Summary}
+\section{Answers to the Research Questions}
+\section{Future Work}
+
+% =============================================================================
+\appendix{}
+
+\chapter{Derivations}\label{app:derivations}
+\chapter{Extended Results}\label{app:results}
+\chapter{Reproducibility}\label{app:repro}
+
+\microtypesetup{protrusion=false}
+
+\addchap{Abbreviations}
+\begin{acronym}
+  \itemsep-.25\baselineskip
+  \acro{TUM}[TUM]{Technical University of Munich}
+  \acro{FMPCC}[FM-PCC]{Flow Matching Predictive Control with Constraints}
+  % TODO: extend as the text grows
+\end{acronym}
+
+\listoffigures{}
+\listoftables{}
+\microtypesetup{protrusion=true}
+\printbibliography{}
+
+\end{document}

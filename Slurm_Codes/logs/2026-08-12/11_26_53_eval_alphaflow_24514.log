@@ -1,0 +1,58 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Wed Aug 12 09:26:54 UTC 2026
+JOB NAME:  eval_alphaflow
+JOB ID:    24514
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   ff4e3fb
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=5  MUJOCO_EGL_DEVICE_ID=5
+[ eval ] NFE budgets to evaluate: 1 2 5 10
+================================================================================
+[ eval ] K = 1   (Wed Aug 12 09:26:55 UTC 2026)
+================================================================================
+pybullet build time: Nov 28 2023 23:45:17
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=1  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_alphaflow/models/af_diffusion.py
+
+[ eval ] config: config/alphaflow_projection_eval.yaml
+[ eval ] resolved  cfg=config/alphaflow_projection_eval.yaml  dpcc_threshold=0.5  hf_act_threshold=0.5  hf_batch=1  hf_candidate_cost=prox
+[ eval ] Overriding flow_steps_v3 / flow_steps (K) from config to: 1
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K1_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE/6
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/6
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ AFTrajectoryModel ] backbone=sit  unet_width(freq_dim)=256  params=10.0M
+[ utils/training ] ⚠️  Pre-fix_6 checkpoint: no optimizer state stored. Adam moments restart cold; fast-forwarding the LR schedule instead.
+[ utils/training ] LR schedule fast-forwarded to step 68000 (lr=1.182e-04)
+[ utils/training ] Restored loss history from checkpoint at step 68000
+[ utils/training ] Recovered best_test_loss=0.713988 from restored history (69 points)
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 1 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K1_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE/6)
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-right-hard - diffuser (6) - K=1----------------------------
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_f84511de-962f-11f1-9463-d85ed34e311e.xml' with default provider at slot 1
+
+slurmstepd-i6-gpu-1: error: *** JOB 24514 ON i6-gpu-1 CANCELLED AT 2026-08-12T09:27:05 ***
+================================================================================
+JOB END:   Wed Aug 12 09:27:05 UTC 2026
+================================================================================

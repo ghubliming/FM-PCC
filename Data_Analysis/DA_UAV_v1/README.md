@@ -114,6 +114,7 @@ columns, which is what makes "success vs K, per engine" drawable at all:
 | `mpc_batch` | eval tag `mpc{n}` | `4` |
 | `controller` | eval tag (may contain `_`) | `pid_stopgo` |
 | `threshold` | eval tag `T{f}` | `0.5` |
+| `run_tag` | eval tag trailing `_{tag}` (`FMPCC_UAV_EVAL_TAG`) | `fix16scaled` |
 | `backbone`, `data_proportion`, `alpha_init/end`, `train_K`, `horizon`, `diffusion_cls` | model folder | `unet`, `0.5`, … |
 | `generation` | `logs/UAV_MIX` vs `logs/UAV_FM` | `Gen15` |
 
@@ -121,6 +122,13 @@ Candidates get a display name built from them (`corridor|mf|K4|bbunet|dp0.5`)
 instead of the bare eval tag, so a K sweep is readable straight off the
 candidate list. `candidate_axes.csv` prints the parse next to the raw folder
 name — **read it first**; it is where a mis-parse shows up.
+
+> 🔴 **`run_tag` is an experiment axis, not decoration.** `eval_mix_uav.py` appends
+> `FMPCC_UAV_EVAL_TAG` to the eval folder so two runs differing only in an env knob
+> cannot overwrite each other. Two folders that differ only in `run_tag` are two ARMS
+> of an A/B and are never pooled: it is a key in `K_SWEEP_KEYS` and it goes into the
+> display name (`pillars|mf|K1|bbunet|dp0.5|@fix16scaled`). See
+> `logs_in_develop/DA_Code/DA_UAV_v1/CHANGELOG_20260903_run_tag_axis.md`.
 
 > 🔴 `K{n}` in the folder is truthful only because `_load_base_cfg` injects
 > `flow_steps_v3` into the config from the plan block. In Gen11 that key was
@@ -315,4 +323,4 @@ Note the environment split: this container has no scientific Python, so only
 `discovery.py` and `test_discovery_offline.py` run here. The full pipeline runs
 on the cluster (`FMPCC` env).
 
-Changelog: `logs_in_develop/Gen15/U4/`.
+Changelog: `logs_in_develop/DA_Code/DA_UAV_v1/`.

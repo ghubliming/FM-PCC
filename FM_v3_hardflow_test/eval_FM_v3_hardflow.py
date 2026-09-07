@@ -27,9 +27,14 @@ import yaml
 
 import flow_matcher_v3_hardflow.utils as utils
 from flow_matcher_v3_hardflow.sampling.policies import Policy
+from diffuser.utils import provenance   # U10.1 — env-override provenance (shared)
 from flow_matcher_v3_hardflow.sampling.projection import Projector
 from flow_matcher_v3_hardflow.sampling.hardflow_projection import (
-    HardFlowPolicy, resolve_activation_threshold)
+    HardFlowPolicy, resolve_activation_threshold, resolve_hf_batch_size,
+    hardflow_step_budget,          # HFK1 (2026-08-24)
+    hardflow_guard, hardflow_skip_note,   # HFK1c (2026-08-30) — the degeneracy guard
+    # [SolverSwap] artifact naming — keeps an SLSQP run from overwriting IPOPT data.
+    artifact_variant_label, resolve_nlp_backend)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import hf_paths  # noqa: E402  (fix_5 FMv3ODE-style output paths)
 from d3il.environments.d3il.envs.gym_avoiding_env.gym_avoiding.envs.avoiding import ObstacleAvoidanceEnv
@@ -63,7 +68,12 @@ hf_act_threshold = resolve_activation_threshold(
                                     hardflow_cfg.get('activation', 1.0))))
 # U4.2: candidate fan + selection. batch_size>1 fans candidates; selection rule comes
 # from the variant suffix (hardflow_new-c/-r/-t), like DPCC.
-hf_batch_size = int(os.environ.get('HFFM_BATCH', hardflow_cfg.get('batch_size', 1)))
+# 🔴 B4_PARITY (2026-08-20) — the run-level arm-C fan. Default is 4 (was 1), i.e. the DPCC
+# arms' `batch_size`, because both arms loop serially over candidates around their CPU solve
+# and a mismatched fan makes arm-B-vs-arm-C wall-clock comparisons void. This is the fan the
+# SELECTION variants (-r/-c/-t) get; bare `hardflow_new` is pinned to 1 by
+# resolve_hf_batch_size(). A yaml with no `hardflow.batch_size` key now also lands on 4.
+hf_batch_size = int(os.environ.get('HFFM_BATCH', hardflow_cfg.get('batch_size', 4)))
 hf_candidate_cost = hardflow_cfg.get('candidate_cost', 'prox')
 # [Gen12fix8] DPCC threshold was ORPHANED CONFIG. `diffusion_timestep_threshold` exists in
 # config/hardflow_projection_eval.yaml (copied verbatim from config/projection_eval.yaml) but
@@ -80,8 +90,39 @@ dpcc_threshold = float(os.environ.get('DPCC_THRESHOLD',
 # single tidy control entry. CLI `--flow-steps N` still overrides the block's K.
 flow_steps_cli = args_cli.flow_steps
 
+# ── MPC CANDIDATE FAN, arms A/B — the SECOND fan, until now unsettable (Gen3v6 sync) ─────
+# Gen12 has TWO independent candidate fans and only one of them used to be reachable:
+#   arms A/B (`diffuser`, `dpcc-*`) -> args.batch_size, from the plan_fm_v3_hardflow block.
+#                                      Was a hardcoded 4; config/avoiding-d3il.py now reads
+#                                      FMPCC_MPC_BATCH.
+#   arm C    (`hardflow_new-*`)     -> hf_batch_size above (HFFM_BATCH / hardflow.batch_size),
+#                                      with bare `hardflow_new` pinned to 1 by
+#                                      resolve_hf_batch_size().
+# Read here to build the path tag and to report it — the VALUE is consumed by the config
+# module, which is why this has to happen before the first Parser().parse_args().
+mpc_batch = int(os.environ.get('FMPCC_MPC_BATCH', 4))
+if mpc_batch < 1:
+    raise ValueError(f'FMPCC_MPC_BATCH must be >= 1, got {mpc_batch}')
+if mpc_batch != hf_batch_size:
+    print(f'[ eval ] ⚠️  arms A/B fan (mpc={mpc_batch}) != arm-C fan (HFFM_BATCH={hf_batch_size}) '
+          f'-- both arms solve SERIALLY per candidate, so avg_time is not comparable across arms '
+          f'(B4_PARITY). Set FMPCC_MPC_BATCH=HFFM_BATCH unless the mismatch is the experiment.')
+# 🔴 PATH COLLISION GUARD — hf_paths.eval_name()'s `mpc<N>` token has ALWAYS described arm C
+# only (it is fed hf_batch_size); arms A/B were an invisible constant 4. So an mpc=1 arms-A/B
+# run would land in the very same `K…_mpc1_n…` directory as the historic B1 runs, whose DPCC
+# arms ran at 4 — different controllers, one folder. Gen12 builds savepath itself and never
+# applies config's custom_msg, so the tag is applied to the eval-name below instead. A
+# non-default fan auto-tags itself; an explicit FMPCC_RUN_MSG always wins.
+if mpc_batch != 4 and not os.environ.get('FMPCC_RUN_MSG'):
+    os.environ['FMPCC_RUN_MSG'] = f'mpc{mpc_batch}'
+    print(f'[ eval ] non-default mpc fan -> auto-tagged results path with '
+          f'FMPCC_RUN_MSG=mpc{mpc_batch} (set it yourself to override)')
+run_msg = hf_paths.sanitize_msg(os.environ.get('FMPCC_RUN_MSG', ''))
+print(f'[ eval ] mpc fan: arms A/B={mpc_batch}, arm C={hf_batch_size}'
+      + (f'  |  run_msg={run_msg}' if run_msg else ''))
 
-def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', device='cuda:0'):
+
+def load_diffusion_with_override(*loadpath, target_class=None, epoch='best', device='cuda:0'):
     """Gen3v2's interceptor: the pickled config names the class that TRAINED the
     checkpoint (`flow_matcher_v3.models.diffusion.GaussianDiffusion`). Gen12 is a
     sibling package, so without this the loaded object would come from the ORIGINAL
@@ -120,6 +161,14 @@ def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', d
     return utils.DiffusionExperiment(dataset, trainer.model.model, trainer.model, trainer, epoch, losses)
 
 
+# [SolverSwap 2026-08-28] PLOT artifacts also have to carry the backend, not just the npz.
+# `nlp_backend_run` is a process-level constant (resolve_nlp_backend reads the env once), so
+# the per-variant plots go through artifact_variant_label like the npz does, and the combined
+# `all.png` grid takes a backend tag. Under 'ipopt' the tag is EMPTY and every legacy filename
+# stays byte-identical, so nothing already on disk moves or is overwritten.
+nlp_backend_run = resolve_nlp_backend()
+backend_tag = '' if nlp_backend_run == 'ipopt' else f'_{nlp_backend_run}'
+
 for exp in exps:
     for halfspace_variant in halfspace_variants:
         robot_name = exp.split('-')[0]
@@ -142,6 +191,10 @@ for exp in exps:
         figs_all_seeds, axes_all_seeds = zip(*[plt.subplots(1, 1, figsize=(9, 10)) for _ in range(len(projection_variants))])
         figs_all_seeds = list(figs_all_seeds)
         axes_all_seeds = list(axes_all_seeds)
+        # [SolverSwap] which variants THIS pass actually wrote. A second pass (other
+        # backend) skips the arms it already has, leaving their all-seeds figures blank —
+        # saving those would overwrite the good ones from the first pass.
+        ran_variant_idx = set()
         for seed in seeds:
             args = Parser().parse_args(experiment='plan_fm_v3_hardflow', seed=seed)
             # checkpoint_dir + eval K come from the plan block (config/avoiding-d3il.py);
@@ -201,6 +254,31 @@ for exp in exps:
             args.savepath = hf_paths.eval_root(args.logbase, args.dataset, _train_name, _eval_name, seed)
             os.makedirs(args.savepath, exist_ok=True)
             print(f'[ eval ] savepath: {args.savepath}')
+
+            # ── U10.1 RUN PROVENANCE ──────────────────────────────────────────────────
+            # Gen12 builds savepath itself via hf_paths (not Parser.mkdir), so it gets
+            # neither args.json nor a config snapshot here — the env-resolved knobs
+            # (HFFM_ACT_THRESHOLD, HFFM_BATCH, DPCC_THRESHOLD, FORCE_OVERWRITE) survived
+            # only as the eval-name tokens. Written after savepath is final. Never fatal.
+            provenance.write(
+                args.savepath, role='eval',
+                yaml_path=args_cli.config,
+                resolved={
+                    'horizon': int(getattr(args, 'horizon', -1)),
+                    'flow_steps_K': int(flow_steps),
+                    'hf_act_threshold': float(hf_act_threshold),
+                    'hf_batch_size': int(hf_batch_size),
+                    'mpc_batch_arms_ab': int(mpc_batch),
+                    'run_msg': run_msg,
+                    'dpcc_threshold': float(dpcc_threshold),
+                    'force_overwrite': bool(FORCE_OVERWRITE),
+                    'checkpoint_dir': checkpoint_dir,
+                    'diffusion_loadpath': getattr(args, 'diffusion_loadpath', None),
+                    'train_name': _train_name,
+                    'eval_name': _eval_name,
+                    'seed': int(seed),
+                    'n_trials': n_trials,
+                })
             if 'pointmaze' in exp or 'antmaze' in exp:
                 minari_dataset = minari.load_dataset(exp, download=True)
                 env = minari_dataset.recover_environment(eval_env=True) if 'pointmaze' in exp else minari_dataset.recover_environment()
@@ -303,16 +381,47 @@ for exp in exps:
                 # PLAN §3.6: refuse to clobber a finished dir.
                 save_path = (f'{args.savepath}/results/halfspace_{halfspace_variant}'
                              if 'avoiding' in exp else f'{args.savepath}/results')
-                npz_path = f'{save_path}/{variant}.npz'
+                # [SolverSwap] 🔴 artifact name carries the backend so an SLSQP run lands BESIDE
+                # the IPOPT corpus instead of overwriting it (the clobber guard below would
+                # otherwise just skip, or FORCE_OVERWRITE would destroy it). Resolved from the
+                # module because the policy does not exist yet; asserted against the live NLP
+                # once it does. IPOPT keeps the old name exactly, so nothing on disk moves.
+                nlp_backend_planned = resolve_nlp_backend()
+                variant_out = artifact_variant_label(variant, nlp_backend_planned)
+                npz_path = f'{save_path}/{variant_out}.npz'
                 if os.path.exists(npz_path) and not FORCE_OVERWRITE:
                     print(f'[ eval ] {npz_path} already exists — skipping. '
                           'Set FORCE_OVERWRITE=1 to re-run it.')
                     continue
                 os.makedirs(save_path, exist_ok=True)
+                # [HFK1c 2026-08-30] Degeneracy guard — a DEGENERATE arm (n_genuine == 0) runs no
+                # HardFlow arithmetic at all, so it produces a row no claim can cite. Skip the variant
+                # and leave a sentinel; the sweep continues. Opt in with FMPCC_HF_ALLOW_DEGENERATE=1
+                # (the supported use is the A=0.0 projector control at matched K).
+                # See logs_in_develop/aggregated_hardflow_lowK/AUDIT_20260830_*.md
+                if is_hardflow:
+                    _hf_ok, _hf_why = hardflow_guard(flow_steps, hf_act_threshold)[:2]
+                    if not _hf_ok:
+                        print(f'[hardflow][BLOCKED] skipping variant {variant}: {_hf_why}')
+                        os.makedirs(save_path, exist_ok=True)
+                        with open(os.path.join(save_path, 'HF_DEGENERATE_SKIPPED.txt'), 'w') as _f:
+                            _f.write(hardflow_skip_note(variant, flow_steps, hf_act_threshold, _hf_why))
+                        continue
+                ran_variant_idx.add(variant_idx)
 
                 if is_hardflow:
                     # ---------------- arm C ----------------
-                    batch_size = hf_batch_size
+                    # 🔴 B4_PARITY (2026-08-20) — the candidate fan is resolved PER VARIANT, not per run:
+                    #   `hardflow_new`          -> 1              faithful upstream batch-1 control
+                    #   `hardflow_new-r/-c/-t`  -> hf_batch_size  (default 4 == args.batch_size, arms A/B)
+                    # Before this, EVERY arm-C variant took the yaml's `hardflow.batch_size` (which defaulted
+                    # to 1) while arms A/B took args.batch_size (4). Both arms loop SERIALLY over candidates
+                    # around their CPU solve, so that was a 4x compute discount for arm C — and it read as a
+                    # HardFlow speedup in every timing table. See logs_in_develop/HF_Batch_Parity/.
+                    batch_size = resolve_hf_batch_size(variant, hf_batch_size)
+                    if batch_size != args.batch_size:
+                        print(f'[ hardflow ] ⚠️  arm-C fan B={batch_size} != DPCC-arm fan B={args.batch_size} '
+                              f'for {variant!r} — wall-clock is NOT comparable across arms for this variant.')
                     # U4.2 + U5: DPCC-parity selection from the variant suffix. Strip the
                     # '-tightened' marker FIRST so the selection suffix composes with it —
                     # hardflow_new-c-tightened -> minimum_projection_cost AND enlarged
@@ -325,6 +434,19 @@ for exp in exps:
                     hf_selection = 'random'
                     if _sel_base.endswith('-t'): hf_selection = 'temporal_consistency'
                     elif _sel_base.endswith('-c'): hf_selection = 'minimum_projection_cost'
+                    # 🔴 B4_PARITY follow-up — `-c` IS NOT TRUSTWORTHY AT B>1 (open, not fixed here).
+                    # Pooled over the five 08-11..08-19 avoiding batches, 750 arm-C cells that DID run at
+                    # B=4:  -r  S&C 0.707 / succ 0.917 / 67.7 steps /   0 timeouts
+                    #       -t  S&C 0.707 / succ 0.883 / 71.2 steps /   5 timeouts
+                    #       -c  S&C 0.443 / succ 0.540 / 138.5 steps / 370 timeouts  (49%)
+                    # `candidate_costs` is Σ_k ||x1_proj − x1_ref||², so argmin picks the candidate the NLP
+                    # barely had to touch — on `avoiding` that is the candidate that barely MOVES, which
+                    # stalls the episode. DPCC's own -c does not degenerate this way. Until the ranking key
+                    # is fixed, treat arm-C `-c` numbers at B>1 as suspect. See logs_in_develop/HF_Batch_Parity/.
+                    if hf_selection == 'minimum_projection_cost' and batch_size > 1:
+                        print(f'[ hardflow ] 🔴 {variant}: `-c` selection at B={batch_size} is a KNOWN-BAD arm '
+                              f'(49% timeouts across 750 B=4 cells). Reported for completeness; do not cite '
+                              f'without re-checking. See logs_in_develop/HF_Batch_Parity/.')
                     policy = HardFlowPolicy(
                         model=fm_model, normalizer=dataset.normalizer, horizon=args.horizon,
                         transition_dim=trajectory_dim, action_dim=action_dim,
@@ -493,31 +615,50 @@ for exp in exps:
                 print(f'Average computation time per step: {np.mean(avg_time):.3f}')
                 # PLAN §5: compute must be reported alongside success, per arm.
                 # U4/U4.2: also report the activation threshold and selection for arm C.
+                # [SolverSwap] the solver is now selectable, so it must be IN the log.
+                nlp_backend_used = str(getattr(getattr(policy, 'nlp', None), 'nlp_backend', 'n/a'))
+                # [SolverSwap] the filename was chosen before the policy existed. If the two ever
+                # disagree the run is about to write an SLSQP result into an IPOPT filename —
+                # fail loudly rather than corrupt the corpus.
+                assert not is_hardflow or nlp_backend_used == nlp_backend_planned, (
+                    f'nlp_backend mismatch: artifact named for {nlp_backend_planned!r} but the '
+                    f'NLP ran {nlp_backend_used!r} — refusing to mislabel {npz_path}')
                 hf_report = (f'  act_thr={hf_act_threshold:g}  sel={hf_selection}'
+                             f'  nlp_backend={nlp_backend_used}'
                              if is_hardflow else '')
                 print(f'Compute: K={flow_steps}  batch={batch_size}  '
                       f'NFE={nfe_total}  NLP solves={nlp_solves_total}  '
                       f'NLP failures={nlp_failures_total}{hf_report}')
                 if variant == 'diffuser': print(f'Tracking error: {np.max(pos_tracking_errors):.3f}')
                 if config['write_to_file']:
-                    np.savez(npz_path, n_success=n_success, n_success_and_constraints=n_success_and_constraints, n_steps=n_steps, n_violations=n_violations, total_violations=total_violations, avg_time=avg_time, collision_free_completed=collision_free_completed, args=args, obs_all=np.array(obs_all, dtype=object), act_all=np.array(act_all, dtype=object), sampled_trajectories_all=np.array(sampled_trajectories_all, dtype=object), flow_steps=flow_steps, batch_size=batch_size, nfe=nfe_total, nlp_solves=nlp_solves_total, nlp_failures=nlp_failures_total, variant=variant, activation_threshold=hf_act_threshold, dpcc_threshold=dpcc_threshold, trajectory_selection=(hf_selection if is_hardflow else 'n/a'), hardflow_cfg=json.dumps(hardflow_cfg))
+                    # HFK1 (2026-08-24) — record the degeneracy verdict instead of leaving a
+                    # DA to re-derive it. hf_n_genuine == 0 => this row is Pi_S(Euler sample),
+                    # i.e. sample-then-project (== DPCC modulo solver), NOT HardFlow. Always
+                    # true at K=1; also at K=2 under the shipped A=0.5. See
+                    # logs_in_develop/aggregated_hardflow_lowK/
+                    _hf_budget = (hardflow_step_budget(flow_steps, hf_act_threshold)
+                                  if is_hardflow and flow_steps else (0, 0))
+                    np.savez(npz_path, n_success=n_success, n_success_and_constraints=n_success_and_constraints, n_steps=n_steps, n_violations=n_violations, total_violations=total_violations, avg_time=avg_time, collision_free_completed=collision_free_completed, args=args, obs_all=np.array(obs_all, dtype=object), act_all=np.array(act_all, dtype=object), sampled_trajectories_all=np.array(sampled_trajectories_all, dtype=object), flow_steps=flow_steps, batch_size=batch_size, nfe=nfe_total, nlp_solves=nlp_solves_total, nlp_failures=nlp_failures_total, nlp_backend=str(nlp_backend_used), nlp_backend_slsqp=float(nlp_backend_used == 'slsqp'), variant=variant, activation_threshold=hf_act_threshold, dpcc_threshold=dpcc_threshold, hf_n_active=int(_hf_budget[0]), hf_n_genuine=int(_hf_budget[1]), hf_degenerate=bool(is_hardflow and _hf_budget[1] == 0), trajectory_selection=(hf_selection if is_hardflow else 'n/a'), hardflow_cfg=json.dumps(hardflow_cfg))
                     # [Gen12fix8] dpcc_threshold recorded. The results dir name
                     # (hf_paths.eval_name) encodes only the HF activation threshold, so with
                     # DPCC's threshold now independently settable a run could otherwise be
                     # silently mislabeled (folder says thres0.1 while arms A/B ran at 0.5).
                     # Keep the two equal unless you deliberately want them to differ.
-                fig.savefig(f'{save_path}/{variant}.png')
+                fig.savefig(f'{save_path}/{variant_out}.png')
                 plt.close(fig)
                 ax_all[0, variant_idx].set_title(variant)
                 env.close()
             if save_path is not None:
-                fig_all.savefig(f'{save_path}/all.png')
-        variant_idx = 0
+                fig_all.savefig(f'{save_path}/all{backend_tag}.png')
         # fix_5: eval knobs already live in the eval-name folder; all_seeds sits beside
         # the per-seed dirs at <train>/<eval>/all_seeds/halfspace_<hv>/.
         path = f'{os.path.dirname(args.savepath)}/all_seeds/{halfspace_variant}'
         os.makedirs(path, exist_ok=True)
-        for fig, ax in zip(figs_all_seeds, axes_all_seeds):
+        for variant_idx, (fig, ax) in enumerate(zip(figs_all_seeds, axes_all_seeds)):
+            if variant_idx not in ran_variant_idx:
+                print(f'[ eval ] all_seeds: {projection_variants[variant_idx]!r} not run in this pass (backend={nlp_backend_run}) -- leaving the existing figure alone.')
+                plt.close(fig)
+                continue
             ax.set_xlim(ax_limits[0])
             ax.set_ylim(ax_limits[1])
             ax.set_facecolor([1, 1, 0.9])
@@ -527,6 +668,6 @@ for exp in exps:
                 for constraint in obstacle_constraints:
                     ax.add_patch(matplotlib.patches.Circle(constraint['center'], constraint['radius'], color='b', alpha=0.2))
                     ax.add_patch(matplotlib.patches.Circle(constraint['center'], constraint['radius'] + enlarge_constraints, color='b', alpha=0.1, linestyle='--'))
-            fig.savefig(f'{path}/{projection_variants[variant_idx]}.png', bbox_inches='tight')
-            fig.savefig(f'{path}/{projection_variants[variant_idx]}.pdf', bbox_inches='tight', format='pdf')
-            variant_idx += 1
+            fig.savefig(f'{path}/{artifact_variant_label(projection_variants[variant_idx], nlp_backend_run)}.png', bbox_inches='tight')
+            fig.savefig(f'{path}/{artifact_variant_label(projection_variants[variant_idx], nlp_backend_run)}.pdf', bbox_inches='tight', format='pdf')
+            plt.close(fig)

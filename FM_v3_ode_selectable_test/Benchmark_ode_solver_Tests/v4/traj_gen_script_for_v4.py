@@ -51,7 +51,7 @@ def main():
 
     # 1. Load normalizer by initializing a dummy model container
     print(f"Loading normalizer from dataset '{args.dataset}' (seed {args.diffusion_seed})...")
-    fm_exp = utils_serialization.load_diffusion(args.loadbase, args.dataset, args.diffusion_loadpath, str(args.diffusion_seed), epoch="latest", device=args.device)
+    fm_exp = utils_serialization.load_diffusion(args.loadbase, args.dataset, args.diffusion_loadpath, str(args.diffusion_seed), epoch="best", device=args.device)
     normalizer = fm_exp.dataset.normalizer
 
     # 2. Load configurations for constraints

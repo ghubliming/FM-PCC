@@ -1,0 +1,1789 @@
+==============================================================================
+DA_UAV_v1 — GEN15 UAV MIX-ML CROSS-CANDIDATE SUMMARY
+==============================================================================
+Generated: 2026-09-03 20:41:45
+parent_path: logs/UAV_MIX,logs/UAV_FM
+source: auto
+diagnostics_scan: True
+units_loaded: 1024
+units_failed: 0
+units_without_timing: 21
+
+BATCH SHAPE
+------------------------------------------------------------------------------
+  scenes         corridor, empty, pillars, s_curve
+  engines        af, diffusion, fm, mf
+  K values       1.0, 10.0, 2.0, 20.0, 5.0, nan
+  controllers    mjpc, pid_const_v, pid_stopgo, pid_stopgo_anchorP
+  generations    Gen11, Gen15
+  candidates     71
+  WARNING 28 candidate(s) have no parsable eval tag — their scene/engine/K columns are blank:
+    C1  H8_Dmodels.diffusion.FlowMatchingODE_condp_des
+    C2  K20_mpc4_pid_stopgo_T0.5
+    C3  H8_Dmodels.diffusion.FlowMatchingODE
+    C4  H8_Dmodels.diffusion.FlowMatchingODE
+    C5  H8_Dmodels.diffusion.FlowMatchingODE
+    C6  H8_Dmodels.diffusion.FlowMatchingODE_condp_des
+    C7  K20_mpc4_pid_stopgo_T0.5
+    C8  H8_Dmodels.diffusion.FlowMatchingODE
+    C9  K20_mpc4_pid_stopgo_T0.5
+    C10  H8_Dmodels.diffusion.FlowMatchingODE
+    C11  H8_Dmodels.diffusion.FlowMatchingODE
+    C12  H8_Dmodels.diffusion.FlowMatchingODE
+    C13  H8_Dmodels.diffusion.FlowMatchingODE(12D_PID_with_anchor_P)
+    C14  H8_Dmodels.diffusion.FlowMatchingODE_9D
+    C15  H8_Dmodels.diffusion.FlowMatchingODE_9D(pid_stop_go)
+    C16  K20_mpc4_pid_stopgo_T0.5
+    C17  K20_mpc4_mjpc_T0.5
+    C18  K20_mpc4_pid_const_v_T0.5
+    C19  K20_mpc4_pid_stopgo_T0.5
+    C20  H8_Dmodels.diffusion.FlowMatchingODE
+    C21  H8_Dmodels.diffusion.FlowMatchingODE
+    C22  K20_mpc4_pid_stopgo_T0.5
+    C23  H8_Dmodels.diffusion.FlowMatchingODE
+    C24  K20_mpc4_pid_stopgo_T0.5
+    C25  K20_mpc4_pid_stopgo_anchorP_T0.5
+    C26  H8_Dmodels.diffusion.FlowMatchingODE
+    C27  H8_Dmodels.diffusion.FlowMatchingODE
+    C28  K20_mpc4_pid_stopgo_T0.5
+
+CANDIDATES
+------------------------------------------------------------------------------
+  1: corridor|Gen11
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-corridor/plans(Bf_DC-FIX)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_condp_des
+      scene=corridor  engine=?  K=None  mpc=None  ctrl=?  T=None
+      seeds=[6]
+      last run 2026-06-28 14:20:52   (2 config snapshot(s) over 1 seed(s))
+  2: corridor|K20|Gen11
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-corridor/plans(Bf_U8)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5
+      scene=corridor  engine=?  K=20  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-07-02 05:32:07   (1 config snapshot(s) over 1 seed(s))
+  3: corridor|Gen11
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-corridor/plans(E6)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE
+      scene=corridor  engine=?  K=None  mpc=None  ctrl=?  T=None
+      seeds=[6]
+      last run unknown (no config_snapshot marker)
+  4: corridor|Gen11
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-corridor/plans(E7_U1)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE
+      scene=corridor  engine=?  K=None  mpc=None  ctrl=?  T=None
+      seeds=[6]
+      last run unknown (no config_snapshot marker)
+  5: corridor|Gen11
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-corridor/plans(E7_U3)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE
+      scene=corridor  engine=?  K=None  mpc=None  ctrl=?  T=None
+      seeds=[6]
+      last run unknown (no config_snapshot marker)
+  6: corridor|Gen11
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-corridor/plans(E7_U4_fix3)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_condp_des
+      scene=corridor  engine=?  K=None  mpc=None  ctrl=?  T=None
+      seeds=[6]
+      last run 2026-06-28 10:08:59   (1 config snapshot(s) over 1 seed(s))
+  7: corridor|K20|Gen11
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-corridor/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5
+      scene=corridor  engine=?  K=20  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-07-08 16:11:14   (1 config snapshot(s) over 1 seed(s))
+  8: empty|Gen11
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-empty/plans(Bf_DC-FIX)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE
+      scene=empty  engine=?  K=None  mpc=None  ctrl=?  T=None
+      seeds=[6]
+      last run 2026-06-28 19:14:49   (1 config snapshot(s) over 1 seed(s))
+  9: empty|K20|Gen11
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-empty/plans(Bf_U8)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5
+      scene=empty  engine=?  K=20  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-07-03 09:32:41   (1 config snapshot(s) over 1 seed(s))
+  10: empty|Gen11
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-empty/plans(E6)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE
+      scene=empty  engine=?  K=None  mpc=None  ctrl=?  T=None
+      seeds=[6]
+      last run unknown (no config_snapshot marker)
+  11: empty|Gen11
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-empty/plans(E7U3)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE
+      scene=empty  engine=?  K=None  mpc=None  ctrl=?  T=None
+      seeds=[6]
+      last run unknown (no config_snapshot marker)
+  12: pillars|Gen11
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-pillars/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE
+      scene=pillars  engine=?  K=None  mpc=None  ctrl=?  T=None
+      seeds=[6]
+      last run 2026-06-28 20:32:15   (11 config snapshot(s) over 1 seed(s))
+  13: pillars|Gen11
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-pillars/plans(Bf_DC-FIX)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE(12D_PID_with_anchor_P)
+      scene=pillars  engine=?  K=None  mpc=None  ctrl=?  T=None
+      seeds=[6]
+      last run 2026-06-28 20:32:16   (1 config snapshot(s) over 1 seed(s))
+  14: pillars|Gen11
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-pillars/plans(Bf_DC-FIX)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D
+      scene=pillars  engine=?  K=None  mpc=None  ctrl=?  T=None
+      seeds=[6]
+      last run 2026-06-29 17:40:35   (3 config snapshot(s) over 1 seed(s))
+  15: pillars|Gen11
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-pillars/plans(Bf_DC-FIX)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D(pid_stop_go)
+      scene=pillars  engine=?  K=None  mpc=None  ctrl=?  T=None
+      seeds=[6]
+      last run 2026-06-29 15:23:55   (1 config snapshot(s) over 1 seed(s))
+  16: pillars|K20|Gen11
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-pillars/plans(Bf_Fix14)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5
+      scene=pillars  engine=?  K=20  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-07-06 17:32:05   (2 config snapshot(s) over 1 seed(s))
+  17: pillars|K20|Gen11
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-pillars/plans(Bf_U8)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_mjpc_T0.5
+      scene=pillars  engine=?  K=20  mpc=4  ctrl=mjpc  T=0.5
+      seeds=[6]
+      last run 2026-07-02 15:06:59   (1 config snapshot(s) over 1 seed(s))
+  18: pillars|K20|Gen11
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-pillars/plans(Bf_U8)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_const_v_T0.5
+      scene=pillars  engine=?  K=20  mpc=4  ctrl=pid_const_v  T=0.5
+      seeds=[6]
+      last run 2026-07-02 20:07:54   (1 config snapshot(s) over 1 seed(s))
+  19: pillars|K20|Gen11
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-pillars/plans(Bf_U8)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5
+      scene=pillars  engine=?  K=20  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-07-04 20:52:53   (1 config snapshot(s) over 1 seed(s))
+  20: pillars|Gen11
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-pillars/plans(E7_U3)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE
+      scene=pillars  engine=?  K=None  mpc=None  ctrl=?  T=None
+      seeds=[6]
+      last run unknown (no config_snapshot marker)
+  21: pillars|Gen11
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-pillars/plans(U1)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE
+      scene=pillars  engine=?  K=None  mpc=None  ctrl=?  T=None
+      seeds=[6]
+      last run unknown (no config_snapshot marker)
+  22: pillars|K20|Gen11
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-pillars/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5
+      scene=pillars  engine=?  K=20  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-07-10 21:33:43   (1 config snapshot(s) over 1 seed(s))
+  23: s_curve|Gen11
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-s_curve/plans(Bf_DC-FIX)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE
+      scene=s_curve  engine=?  K=None  mpc=None  ctrl=?  T=None
+      seeds=[6]
+      last run 2026-06-28 17:14:38   (1 config snapshot(s) over 1 seed(s))
+  24: s_curve|K20|Gen11
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-s_curve/plans(Bf_DC-FIX)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5
+      scene=s_curve  engine=?  K=20  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run unknown (no config_snapshot marker)
+  25: s_curve|K20|Gen11
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-s_curve/plans(Bf_DC-FIX)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_anchorP_T0.5
+      scene=s_curve  engine=?  K=20  mpc=4  ctrl=pid_stopgo_anchorP  T=0.5
+      seeds=[6]
+      last run unknown (no config_snapshot marker)
+  26: s_curve|Gen11
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-s_curve/plans(no_GIF)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE
+      scene=s_curve  engine=?  K=None  mpc=None  ctrl=?  T=None
+      seeds=[6]
+      last run unknown (no config_snapshot marker)
+  27: s_curve|Gen11
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-s_curve/plans(with_gif_parts)/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE
+      scene=s_curve  engine=?  K=None  mpc=None  ctrl=?  T=None
+      seeds=[6]
+      last run unknown (no config_snapshot marker)
+  28: s_curve|K20|Gen11
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_FM/uav-s_curve/plans/flow_matching_v3_uav/H8_Dmodels.diffusion.FlowMatchingODE_9D/K20_mpc4_pid_stopgo_T0.5
+      scene=s_curve  engine=?  K=20  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-07-09 10:11:09   (2 config snapshot(s) over 1 seed(s))
+  29: corridor|af|K1|bbsit
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-corridor/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit/Eaf_K1_mpc4_pid_stopgo_T0.5
+      scene=corridor  engine=af  K=1  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-23 13:30:49   (1 config snapshot(s) over 1 seed(s))
+  30: corridor|af|K2|bbsit
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-corridor/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit/Eaf_K2_mpc4_pid_stopgo_T0.5
+      scene=corridor  engine=af  K=2  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-23 16:57:03   (1 config snapshot(s) over 1 seed(s))
+  31: corridor|af|K5|bbsit
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-corridor/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit/Eaf_K5_mpc4_pid_stopgo_T0.5
+      scene=corridor  engine=af  K=5  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-23 18:59:36   (1 config snapshot(s) over 1 seed(s))
+  32: corridor|fm|K10
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-corridor/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5
+      scene=corridor  engine=fm  K=10  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-19 21:25:38   (2 config snapshot(s) over 1 seed(s))
+  33: corridor|fm|K1
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-corridor/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K1_mpc4_pid_stopgo_T0.5
+      scene=corridor  engine=fm  K=1  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-19 14:43:56   (1 config snapshot(s) over 1 seed(s))
+  34: corridor|fm|K20
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-corridor/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5
+      scene=corridor  engine=fm  K=20  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-19 23:20:44   (1 config snapshot(s) over 1 seed(s))
+  35: corridor|fm|K2
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-corridor/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K2_mpc4_pid_stopgo_T0.5
+      scene=corridor  engine=fm  K=2  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-19 18:25:30   (1 config snapshot(s) over 1 seed(s))
+  36: corridor|fm|K5
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-corridor/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K5_mpc4_pid_stopgo_T0.5
+      scene=corridor  engine=fm  K=5  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-19 19:33:52   (1 config snapshot(s) over 1 seed(s))
+  37: corridor|mf|K10|bbunet|dp0.5
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-corridor/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K10_mpc4_pid_stopgo_T0.5
+      scene=corridor  engine=mf  K=10  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-20 17:12:18   (2 config snapshot(s) over 1 seed(s))
+  38: corridor|mf|K1|bbunet|dp0.5
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-corridor/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K1_mpc4_pid_stopgo_T0.5
+      scene=corridor  engine=mf  K=1  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-20 10:49:02   (1 config snapshot(s) over 1 seed(s))
+  39: corridor|mf|K20|bbunet|dp0.5
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-corridor/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K20_mpc4_pid_stopgo_T0.5
+      scene=corridor  engine=mf  K=20  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-20 22:08:31   (1 config snapshot(s) over 1 seed(s))
+  40: corridor|mf|K2|bbunet|dp0.5
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-corridor/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K2_mpc4_pid_stopgo_T0.5
+      scene=corridor  engine=mf  K=2  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-20 10:49:04   (1 config snapshot(s) over 1 seed(s))
+  41: corridor|mf|K5|bbunet|dp0.5
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-corridor/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K5_mpc4_pid_stopgo_T0.5
+      scene=corridor  engine=mf  K=5  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-20 16:45:30   (1 config snapshot(s) over 1 seed(s))
+  42: pillars|af|K1|bbsit
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit/Eaf_K1_mpc4_pid_stopgo_T0.5
+      scene=pillars  engine=af  K=1  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-29 05:19:44   (1 config snapshot(s) over 1 seed(s))
+  43: pillars|af|K2|bbsit
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit/Eaf_K2_mpc4_pid_stopgo_T0.5
+      scene=pillars  engine=af  K=2  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-29 06:43:23   (1 config snapshot(s) over 1 seed(s))
+  44: pillars|af|K5|bbsit
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0_bbsit/Eaf_K5_mpc4_pid_stopgo_T0.5
+      scene=pillars  engine=af  K=5  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-29 08:14:33   (1 config snapshot(s) over 1 seed(s))
+  45: pillars|fm|K10
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5
+      scene=pillars  engine=fm  K=10  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-18 13:03:46   (1 config snapshot(s) over 1 seed(s))
+  46: pillars|fm|K1
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K1_mpc4_pid_stopgo_T0.5
+      scene=pillars  engine=fm  K=1  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-27 17:25:55   (1 config snapshot(s) over 1 seed(s))
+  47: pillars|fm|K20
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5
+      scene=pillars  engine=fm  K=20  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-27 23:40:36   (1 config snapshot(s) over 1 seed(s))
+  48: pillars|fm|K2
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K2_mpc4_pid_stopgo_T0.5
+      scene=pillars  engine=fm  K=2  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-27 20:31:40   (1 config snapshot(s) over 1 seed(s))
+  49: pillars|fm|K5
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K5_mpc4_pid_stopgo_T0.5
+      scene=pillars  engine=fm  K=5  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-27 23:40:31   (1 config snapshot(s) over 1 seed(s))
+  50: pillars|mf|K10|bbunet|dp0.5
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K10_mpc4_pid_stopgo_T0.5
+      scene=pillars  engine=mf  K=10  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-16 20:58:37   (1 config snapshot(s) over 1 seed(s))
+  51: pillars|mf|K1|bbunet|dp0.5
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K1_mpc4_pid_stopgo_T0.5
+      scene=pillars  engine=mf  K=1  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-28 13:49:08   (1 config snapshot(s) over 1 seed(s))
+  52: pillars|mf|bbunet|dp0.5
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K1_mpc4_pid_stopgo_T0.5_fix16legacy
+      scene=pillars  engine=mf  K=None  mpc=None  ctrl=?  T=None
+      seeds=[6]
+      last run 2026-09-03 00:44:11   (1 config snapshot(s) over 1 seed(s))
+  53: pillars|mf|bbunet|dp0.5
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K1_mpc4_pid_stopgo_T0.5_fix16scaled
+      scene=pillars  engine=mf  K=None  mpc=None  ctrl=?  T=None
+      seeds=[6]
+      last run 2026-09-03 10:54:14   (1 config snapshot(s) over 1 seed(s))
+  54: pillars|mf|K2|bbunet|dp0.5
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K2_mpc4_pid_stopgo_T0.5
+      scene=pillars  engine=mf  K=2  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-28 15:29:51   (1 config snapshot(s) over 1 seed(s))
+  55: pillars|mf|bbunet|dp0.5
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K2_mpc4_pid_stopgo_T0.5_fix16legacy
+      scene=pillars  engine=mf  K=None  mpc=None  ctrl=?  T=None
+      seeds=[6]
+      last run 2026-09-03 01:48:09   (1 config snapshot(s) over 1 seed(s))
+  56: pillars|mf|bbunet|dp0.5
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K2_mpc4_pid_stopgo_T0.5_fix16scaled
+      scene=pillars  engine=mf  K=None  mpc=None  ctrl=?  T=None
+      seeds=[6]
+      last run 2026-09-03 12:19:28   (1 config snapshot(s) over 1 seed(s))
+  57: pillars|mf|K5|bbunet|dp0.5
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K5_mpc4_pid_stopgo_T0.5
+      scene=pillars  engine=mf  K=5  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-28 17:13:43   (1 config snapshot(s) over 1 seed(s))
+  58: pillars|mf|bbunet|dp0.5
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K5_mpc4_pid_stopgo_T0.5_fix16legacy
+      scene=pillars  engine=mf  K=None  mpc=None  ctrl=?  T=None
+      seeds=[6]
+      last run 2026-09-03 02:53:50   (1 config snapshot(s) over 1 seed(s))
+  59: pillars|mf|bbunet|dp0.5
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K5_mpc4_pid_stopgo_T0.5_fix16scaled
+      scene=pillars  engine=mf  K=None  mpc=None  ctrl=?  T=None
+      seeds=[6]
+      last run 2026-09-03 12:38:50   (1 config snapshot(s) over 1 seed(s))
+  60: s_curve|diffusion|K20
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-s_curve/plans(Bf_U5)/mix_uav_diffusion/H8_Dmodels.ddpm_diffusion.GaussianDiffusion_9D_K20/Ediffusion_K20_mpc4_pid_stopgo_T0.5
+      scene=s_curve  engine=diffusion  K=20  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-26 09:32:27   (1 config snapshot(s) over 1 seed(s))
+  61: s_curve|fm|K10
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-s_curve/plans(Bf_U5)/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K10_mpc4_pid_stopgo_T0.5
+      scene=s_curve  engine=fm  K=10  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-26 19:45:32   (2 config snapshot(s) over 1 seed(s))
+  62: s_curve|fm|K1
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-s_curve/plans(Bf_U5)/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K1_mpc4_pid_stopgo_T0.5
+      scene=s_curve  engine=fm  K=1  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-26 14:40:00   (1 config snapshot(s) over 1 seed(s))
+  63: s_curve|fm|K20
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-s_curve/plans(Bf_U5)/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5
+      scene=s_curve  engine=fm  K=20  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-25 20:31:52   (1 config snapshot(s) over 1 seed(s))
+  64: s_curve|fm|K2
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-s_curve/plans(Bf_U5)/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K2_mpc4_pid_stopgo_T0.5
+      scene=s_curve  engine=fm  K=2  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-26 15:28:12   (1 config snapshot(s) over 1 seed(s))
+  65: s_curve|fm|K5
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-s_curve/plans(Bf_U5)/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K5_mpc4_pid_stopgo_T0.5
+      scene=s_curve  engine=fm  K=5  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-26 16:24:35   (1 config snapshot(s) over 1 seed(s))
+  66: s_curve|mf|K10|bbunet|dp0.5
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-s_curve/plans(Bf_U5)/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K10_mpc4_pid_stopgo_T0.5
+      scene=s_curve  engine=mf  K=10  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-27 06:19:38   (2 config snapshot(s) over 1 seed(s))
+  67: s_curve|mf|K1|bbunet|dp0.5
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-s_curve/plans(Bf_U5)/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K1_mpc4_pid_stopgo_T0.5
+      scene=s_curve  engine=mf  K=1  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-27 01:33:05   (1 config snapshot(s) over 1 seed(s))
+  68: s_curve|mf|K20|bbunet|dp0.5
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-s_curve/plans(Bf_U5)/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K20_mpc4_pid_stopgo_T0.5
+      scene=s_curve  engine=mf  K=20  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-25 21:54:37   (1 config snapshot(s) over 1 seed(s))
+  69: s_curve|mf|K2|bbunet|dp0.5
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-s_curve/plans(Bf_U5)/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K2_mpc4_pid_stopgo_T0.5
+      scene=s_curve  engine=mf  K=2  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-27 01:58:22   (1 config snapshot(s) over 1 seed(s))
+  70: s_curve|mf|K5|bbunet|dp0.5
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-s_curve/plans(Bf_U5)/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K5_mpc4_pid_stopgo_T0.5
+      scene=s_curve  engine=mf  K=5  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-27 02:26:56   (1 config snapshot(s) over 1 seed(s))
+  71: s_curve|diffusion|K20
+      /data/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-s_curve/plans/mix_uav_diffusion/H8_Dmodels.ddpm_diffusion.GaussianDiffusion_9D_K20/Ediffusion_K20_mpc4_pid_stopgo_T0.5
+      scene=s_curve  engine=diffusion  K=20  mpc=4  ctrl=pid_stopgo  T=0.5
+      seeds=[6]
+      last run 2026-08-28 23:40:46   (1 config snapshot(s) over 1 seed(s))
+
+RANKING (success + constraint, mask=all, all geos pooled)
+------------------------------------------------------------------------------
+  1. Candidate 9 — empty|K20|Gen11   [PARETO FRONT]
+      success+constraint 100.00%   success 100.00%   collision-free    nan%      117.4 ms/replan
+      gen   92.2 ms   proj   25.2 ms   over-budget 100.0%   cb-tripped   0.0%   NFE~20.0
+      major arms: diffuser 100.0%, dpcc-c 100.0%, dpcc-r 100.0%, dpcc-t 100.0%
+  2. Candidate 34 — corridor|fm|K20
+      success+constraint  63.91%   success  64.35%   collision-free  63.91%      460.0 ms/replan
+      gen  185.7 ms   proj  274.3 ms   over-budget 100.0%   cb-tripped   0.0%   NFE~29.1
+      major arms: diffuser 40.0%, dpcc-c 100.0%, dpcc-c-tightened 100.0%, dpcc-r 100.0%, dpcc-r-tightened 100.0%, dpcc-t 100.0%, dpcc-t-tightened 100.0%, hardflow_new 100.0%, hardflow_new-c 100.0%, hardflow_new-t 100.0%
+  3. Candidate 31 — corridor|af|K5|bbsit
+      success+constraint  51.74%   success  63.48%   collision-free  51.74%      166.2 ms/replan
+      gen   33.0 ms   proj  133.2 ms   over-budget  95.8%   cb-tripped   0.0%   NFE~8.5
+      major arms: diffuser 30.0%, dpcc-c 100.0%, dpcc-c-tightened 30.0%, dpcc-r 100.0%, dpcc-r-tightened 30.0%, dpcc-t 100.0%, dpcc-t-tightened 30.0%, hardflow_new-c 100.0%, hardflow_new-t 100.0%
+  4. Candidate 32 — corridor|fm|K10
+      success+constraint  51.74%   success  61.74%   collision-free  51.74%      259.7 ms/replan
+      gen   92.6 ms   proj  167.1 ms   over-budget 100.0%   cb-tripped   0.0%   NFE~16.5
+      major arms: diffuser 0.0%, dpcc-c 100.0%, dpcc-c-tightened 60.0%, dpcc-r 100.0%, dpcc-r-tightened 70.0%, dpcc-t 100.0%, dpcc-t-tightened 70.0%, hardflow_new 100.0%, hardflow_new-c 100.0%, hardflow_new-t 100.0%
+  5. Candidate 36 — corridor|fm|K5
+      success+constraint  40.00%   success  59.13%   collision-free  40.00%      183.7 ms/replan
+      gen   48.3 ms   proj  135.4 ms   over-budget 100.0%   cb-tripped   0.0%   NFE~8.5
+      major arms: diffuser 0.0%, dpcc-c 90.0%, dpcc-c-tightened 30.0%, dpcc-r 90.0%, dpcc-r-tightened 30.0%, dpcc-t 90.0%, dpcc-t-tightened 30.0%, hardflow_new 100.0%, hardflow_new-c 100.0%, hardflow_new-t 100.0%
+  6. Candidate 37 — corridor|mf|K10|bbunet|dp0.5
+      success+constraint  32.17%   success  44.35%   collision-free  32.17%      336.4 ms/replan
+      gen   97.3 ms   proj  239.1 ms   over-budget 100.0%   cb-tripped   0.0%   NFE~16.5
+      major arms: diffuser 0.0%, dpcc-c 60.0%, dpcc-c-tightened 30.0%, dpcc-r 80.0%, dpcc-r-tightened 20.0%, dpcc-t 80.0%, dpcc-t-tightened 20.0%, hardflow_new 100.0%, hardflow_new-c 100.0%, hardflow_new-t 90.0%
+  7. Candidate 39 — corridor|mf|K20|bbunet|dp0.5
+      success+constraint  29.50%   success  42.50%   collision-free  29.50%      421.6 ms/replan
+      gen  179.0 ms   proj  242.6 ms   over-budget 100.0%   cb-tripped   0.0%   NFE~20.0
+      major arms: diffuser 0.0%, dpcc-c 90.0%, dpcc-c-tightened 40.0%, dpcc-r 70.0%, dpcc-r-tightened 10.0%, dpcc-t 80.0%, dpcc-t-tightened 50.0%
+  8. Candidate 30 — corridor|af|K2|bbsit   [PARETO FRONT]
+      success+constraint  26.96%   success  39.57%   collision-free  26.96%       92.6 ms/replan
+      gen   13.2 ms   proj   79.4 ms   over-budget  43.2%   cb-tripped   0.0%   NFE~3.3
+      major arms: diffuser 0.0%, dpcc-c 80.0%, dpcc-c-tightened 30.0%, dpcc-r 40.0%, dpcc-r-tightened 10.0%, dpcc-t 70.0%, dpcc-t-tightened 20.0%, hardflow_new-c 70.0%, hardflow_new-t 90.0%
+  9. Candidate 41 — corridor|mf|K5|bbunet|dp0.5
+      success+constraint  23.91%   success  36.52%   collision-free  23.91%      241.1 ms/replan
+      gen   49.2 ms   proj  191.8 ms   over-budget 100.0%   cb-tripped   0.0%   NFE~8.5
+      major arms: diffuser 0.0%, dpcc-c 60.0%, dpcc-c-tightened 0.0%, dpcc-r 50.0%, dpcc-r-tightened 0.0%, dpcc-t 50.0%, dpcc-t-tightened 0.0%, hardflow_new 50.0%, hardflow_new-c 80.0%, hardflow_new-t 80.0%
+  10. Candidate 29 — corridor|af|K1|bbsit
+      success+constraint  14.78%   success  25.22%   collision-free  14.78%      135.4 ms/replan
+      gen    7.6 ms   proj  127.7 ms   over-budget  46.5%   cb-tripped   0.0%   NFE~1.9
+      major arms: diffuser 0.0%, dpcc-c 40.0%, dpcc-c-tightened 30.0%, dpcc-r 20.0%, dpcc-r-tightened 0.0%, dpcc-t 40.0%, dpcc-t-tightened 20.0%, hardflow_new-c 20.0%, hardflow_new-t 40.0%
+  11. Candidate 40 — corridor|mf|K2|bbunet|dp0.5
+      success+constraint  13.04%   success  17.83%   collision-free  13.04%      251.6 ms/replan
+      gen   19.8 ms   proj  231.8 ms   over-budget  77.9%   cb-tripped   0.0%   NFE~3.3
+      major arms: diffuser 0.0%, dpcc-c 80.0%, dpcc-c-tightened 50.0%, dpcc-r 10.0%, dpcc-r-tightened 0.0%, dpcc-t 20.0%, dpcc-t-tightened 0.0%, hardflow_new 10.0%, hardflow_new-c 50.0%, hardflow_new-t 20.0%
+  12. Candidate 38 — corridor|mf|K1|bbunet|dp0.5
+      success+constraint  10.43%   success  17.39%   collision-free  10.43%      233.6 ms/replan
+      gen   11.0 ms   proj  222.5 ms   over-budget  71.2%   cb-tripped   0.0%   NFE~1.9
+      major arms: diffuser 0.0%, dpcc-c 80.0%, dpcc-c-tightened 10.0%, dpcc-r 0.0%, dpcc-r-tightened 0.0%, dpcc-t 30.0%, dpcc-t-tightened 0.0%, hardflow_new 10.0%, hardflow_new-c 50.0%, hardflow_new-t 40.0%
+  13. Candidate 7 — corridor|K20|Gen11
+      success+constraint   9.41%   success  17.65%   collision-free  50.00%      200.2 ms/replan
+      gen   90.8 ms   proj  109.4 ms   over-budget 100.0%   cb-tripped   0.0%   NFE~20.0
+      major arms: diffuser 0.0%, dpcc-c 30.0%, dpcc-c-tightened 0.0%, dpcc-r 30.0%, dpcc-r-tightened 0.0%, dpcc-t 30.0%, dpcc-t-tightened 0.0%
+  14. Candidate 2 — corridor|K20|Gen11
+      success+constraint   8.57%   success   8.57%   collision-free    nan%      120.1 ms/replan
+      gen   93.1 ms   proj   27.0 ms   over-budget 100.0%   cb-tripped   0.0%   NFE~20.0
+      major arms: diffuser 0.0%, dpcc-c 20.0%, dpcc-r 20.0%, dpcc-t 20.0%
+  15. Candidate 28 — s_curve|K20|Gen11
+      success+constraint   1.20%   success   1.92%   collision-free   0.00%      296.1 ms/replan
+      gen   85.7 ms   proj  210.4 ms   over-budget 100.0%   cb-tripped   0.0%   NFE~20.0
+      major arms: diffuser 0.0%, dpcc-c 6.7%, dpcc-c-tightened 0.0%, dpcc-r 5.0%, dpcc-r-tightened 0.0%, dpcc-t 6.7%, dpcc-t-tightened 0.0%
+  16. Candidate 69 — s_curve|mf|K2|bbunet|dp0.5   [PARETO FRONT]
+      success+constraint   1.00%   success   9.00%   collision-free  71.00%       38.0 ms/replan
+      gen   18.4 ms   proj   19.6 ms   over-budget  22.5%   cb-tripped   0.0%   NFE~2.0
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-c-tightened 0.0%, dpcc-r 0.0%, dpcc-r-tightened 0.0%, dpcc-t 0.0%, dpcc-t-tightened 0.0%
+  17. Candidate 35 — corridor|fm|K2
+      success+constraint   0.87%   success  30.00%   collision-free   0.87%      124.2 ms/replan
+      gen   19.0 ms   proj  105.2 ms   over-budget  74.6%   cb-tripped   0.0%   NFE~3.3
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-c-tightened 0.0%, dpcc-r 0.0%, dpcc-r-tightened 0.0%, dpcc-t 0.0%, dpcc-t-tightened 0.0%, hardflow_new 10.0%, hardflow_new-c 0.0%, hardflow_new-t 0.0%
+  18. Candidate 16 — pillars|K20|Gen11
+      success+constraint   0.00%   success   0.00%   collision-free   0.00%     1914.7 ms/replan
+      gen   85.6 ms   proj 1829.1 ms   over-budget 100.0%   cb-tripped   0.0%   NFE~20.0
+      major arms: diffuser 0.0%, dpcc-r 0.0%, dpcc-r-tightened 0.0%
+  19. Candidate 17 — pillars|K20|Gen11
+      success+constraint   0.00%   success   0.00%   collision-free    nan%      111.9 ms/replan
+      gen   87.8 ms   proj   24.1 ms   over-budget 100.0%   cb-tripped   0.0%   NFE~20.0
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-r 0.0%, dpcc-t 0.0%
+  20. Candidate 18 — pillars|K20|Gen11
+      success+constraint   0.00%   success   0.00%   collision-free    nan%      109.0 ms/replan
+      gen   85.2 ms   proj   23.8 ms   over-budget 100.0%   cb-tripped   0.0%   NFE~20.0
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-r 0.0%, dpcc-t 0.0%
+  21. Candidate 19 — pillars|K20|Gen11
+      success+constraint   0.00%   success   0.00%   collision-free    nan%      743.1 ms/replan
+      gen   86.9 ms   proj  656.2 ms   over-budget 100.0%   cb-tripped   0.0%   NFE~20.0
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-r 0.0%, dpcc-t 0.0%
+  22. Candidate 22 — pillars|K20|Gen11
+      success+constraint   0.00%   success   2.14%   collision-free   0.00%      920.2 ms/replan
+      gen   88.3 ms   proj  831.9 ms   over-budget 100.0%   cb-tripped   0.0%   NFE~20.0
+      major arms: diffuser 0.0%
+  23. Candidate 24 — s_curve|K20|Gen11
+      success+constraint   0.00%   success   0.00%   collision-free    nan%      108.3 ms/replan
+      gen   85.8 ms   proj   22.5 ms   over-budget 100.0%   cb-tripped   0.0%   NFE~20.0
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-r 0.0%, dpcc-t 0.0%
+  24. Candidate 25 — s_curve|K20|Gen11
+      success+constraint   0.00%   success   0.00%   collision-free    nan%      105.9 ms/replan
+      gen   85.5 ms   proj   20.4 ms   over-budget 100.0%   cb-tripped   0.0%   NFE~20.0
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-r 0.0%, dpcc-t 0.0%
+  25. Candidate 33 — corridor|fm|K1
+      success+constraint   0.00%   success   3.04%   collision-free   0.00%      187.4 ms/replan
+      gen   10.7 ms   proj  176.7 ms   over-budget  62.1%   cb-tripped   0.0%   NFE~1.9
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-c-tightened 0.0%, dpcc-r 0.0%, dpcc-r-tightened 0.0%, dpcc-t 0.0%, dpcc-t-tightened 0.0%, hardflow_new 0.0%, hardflow_new-c 0.0%, hardflow_new-t 0.0%
+  26. Candidate 42 — pillars|af|K1|bbsit
+      success+constraint   0.00%   success  11.76%   collision-free   0.00%       53.2 ms/replan
+      gen    6.7 ms   proj   46.4 ms   over-budget  14.3%   cb-tripped   0.0%   NFE~1.9
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-c-tightened 0.0%, dpcc-r 0.0%, dpcc-r-tightened 0.0%, dpcc-t 0.0%, dpcc-t-tightened 0.0%, hardflow_sls 0.0%, hardflow_sls-c 0.0%, hardflow_sls-t 0.0%
+  27. Candidate 43 — pillars|af|K2|bbsit
+      success+constraint   0.00%   success   5.29%   collision-free   0.00%       56.2 ms/replan
+      gen   12.5 ms   proj   43.7 ms   over-budget  50.0%   cb-tripped   0.0%   NFE~4.0
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-c-tightened 0.0%, dpcc-r 0.0%, dpcc-r-tightened 0.0%, dpcc-t 0.0%, dpcc-t-tightened 0.0%, hardflow_sls 0.0%, hardflow_sls-c 0.0%, hardflow_sls-t 0.0%
+  28. Candidate 44 — pillars|af|K5|bbsit
+      success+constraint   0.00%   success   1.18%   collision-free   0.00%      650.0 ms/replan
+      gen   35.3 ms   proj  614.7 ms   over-budget  87.0%   cb-tripped   0.0%   NFE~12.7
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-c-tightened 0.0%, dpcc-r 0.0%, dpcc-r-tightened 0.0%, dpcc-t 0.0%, dpcc-t-tightened 0.0%, hardflow_sls 0.0%, hardflow_sls-c 0.0%, hardflow_sls-t 0.0%
+  29. Candidate 45 — pillars|fm|K10
+      success+constraint   0.00%   success   0.00%   collision-free   0.00%     2014.1 ms/replan
+      gen   94.9 ms   proj 1919.3 ms   over-budget 100.0%   cb-tripped   8.7%   NFE~14.5
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-c-tightened 0.0%, dpcc-r 0.0%, dpcc-r-tightened 0.0%, dpcc-t 0.0%, dpcc-t-tightened 0.0%, hardflow_new 0.0%, hardflow_new-c 0.0%, hardflow_new-t 0.0%
+  30. Candidate 46 — pillars|fm|K1
+      success+constraint   0.00%   success   0.00%   collision-free   0.00%      143.5 ms/replan
+      gen   10.6 ms   proj  132.9 ms   over-budget  42.8%   cb-tripped   0.0%   NFE~1.7
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-c-tightened 0.0%, dpcc-r 0.0%, dpcc-r-tightened 0.0%, dpcc-t 0.0%, dpcc-t-tightened 0.0%, hardflow_new 0.0%, hardflow_new-c 0.0%, hardflow_new-t 0.0%
+  31. Candidate 47 — pillars|fm|K20
+      success+constraint   0.00%   success   5.00%   collision-free   0.00%     5869.2 ms/replan
+      gen  177.9 ms   proj 5691.3 ms   over-budget  68.1%   cb-tripped  37.5%   NFE~20.0
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-r 0.0%, dpcc-r-tightened 0.0%
+  32. Candidate 48 — pillars|fm|K2
+      success+constraint   0.00%   success   1.76%   collision-free   0.00%      132.3 ms/replan
+      gen   19.3 ms   proj  113.0 ms   over-budget  63.4%   cb-tripped   0.0%   NFE~3.3
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-c-tightened 0.0%, dpcc-r 0.0%, dpcc-r-tightened 0.0%, dpcc-t 0.0%, dpcc-t-tightened 0.0%, hardflow_new 0.0%, hardflow_new-c 0.0%, hardflow_new-t 0.0%
+  33. Candidate 49 — pillars|fm|K5
+      success+constraint   0.00%   success   1.18%   collision-free   0.00%      666.4 ms/replan
+      gen   50.9 ms   proj  615.5 ms   over-budget  84.1%   cb-tripped   0.0%   NFE~11.9
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-c-tightened 0.0%, dpcc-r 0.0%, dpcc-r-tightened 0.0%, dpcc-t 0.0%, dpcc-t-tightened 0.0%, hardflow_sls 0.0%, hardflow_sls-c 0.0%, hardflow_sls-t 0.0%
+  34. Candidate 50 — pillars|mf|K10|bbunet|dp0.5
+      success+constraint   0.00%   success   2.90%   collision-free   0.00%      779.2 ms/replan
+      gen  100.9 ms   proj  678.3 ms   over-budget 100.0%   cb-tripped   0.0%   NFE~16.5
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-c-tightened 0.0%, dpcc-r 0.0%, dpcc-r-tightened 0.0%, dpcc-t 0.0%, dpcc-t-tightened 0.0%, hardflow_new 0.0%, hardflow_new-c 0.0%, hardflow_new-t 0.0%
+  35. Candidate 51 — pillars|mf|K1|bbunet|dp0.5
+      success+constraint   0.00%   success   9.41%   collision-free   0.00%       66.8 ms/replan
+      gen    9.9 ms   proj   56.9 ms   over-budget  30.4%   cb-tripped   0.0%   NFE~2.0
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-c-tightened 0.0%, dpcc-r 0.0%, dpcc-r-tightened 0.0%, dpcc-t 0.0%, dpcc-t-tightened 0.0%, hardflow_sls 0.0%, hardflow_sls-c 0.0%, hardflow_sls-t 0.0%
+  36. Candidate 54 — pillars|mf|K2|bbunet|dp0.5
+      success+constraint   0.00%   success  18.24%   collision-free   0.00%       70.5 ms/replan
+      gen   18.8 ms   proj   51.8 ms   over-budget  64.0%   cb-tripped   0.0%   NFE~3.9
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-c-tightened 0.0%, dpcc-r 0.0%, dpcc-r-tightened 0.0%, dpcc-t 0.0%, dpcc-t-tightened 0.0%, hardflow_sls 0.0%, hardflow_sls-c 0.0%, hardflow_sls-t 0.0%
+  37. Candidate 57 — pillars|mf|K5|bbunet|dp0.5
+      success+constraint   0.00%   success  20.00%   collision-free   1.18%      636.3 ms/replan
+      gen   53.5 ms   proj  582.9 ms   over-budget  73.3%   cb-tripped   0.0%   NFE~12.4
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-c-tightened 0.0%, dpcc-r 0.0%, dpcc-r-tightened 0.0%, dpcc-t 0.0%, dpcc-t-tightened 0.0%, hardflow_sls 0.0%, hardflow_sls-c 0.0%, hardflow_sls-t 0.0%
+  38. Candidate 60 — s_curve|diffusion|K20
+      success+constraint   0.00%   success   0.00%   collision-free  10.00%     1645.9 ms/replan
+      gen  166.7 ms   proj 1479.3 ms   over-budget  49.3%   cb-tripped   0.0%   NFE~20.0
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-c-tightened 0.0%, dpcc-r 0.0%, dpcc-r-tightened 0.0%, dpcc-t 0.0%, dpcc-t-tightened 0.0%
+  39. Candidate 61 — s_curve|fm|K10
+      success+constraint   0.00%   success   1.00%   collision-free   4.00%      509.0 ms/replan
+      gen   95.1 ms   proj  413.9 ms   over-budget  37.2%   cb-tripped   0.0%   NFE~10.0
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-c-tightened 0.0%, dpcc-r 0.0%, dpcc-r-tightened 0.0%, dpcc-t 0.0%, dpcc-t-tightened 0.0%
+  40. Candidate 62 — s_curve|fm|K1
+      success+constraint   0.00%   success   8.00%   collision-free   0.00%       48.9 ms/replan
+      gen   11.2 ms   proj   37.7 ms   over-budget  11.1%   cb-tripped   0.0%   NFE~1.0
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-c-tightened 0.0%, dpcc-r 0.0%, dpcc-r-tightened 0.0%, dpcc-t 0.0%, dpcc-t-tightened 0.0%
+  41. Candidate 63 — s_curve|fm|K20
+      success+constraint   0.00%   success   4.00%   collision-free  15.00%     1286.1 ms/replan
+      gen  170.9 ms   proj 1115.2 ms   over-budget  32.7%   cb-tripped   0.0%   NFE~20.0
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-c-tightened 0.0%, dpcc-r 0.0%, dpcc-r-tightened 0.0%, dpcc-t 0.0%, dpcc-t-tightened 0.0%
+  42. Candidate 64 — s_curve|fm|K2
+      success+constraint   0.00%   success   1.00%   collision-free   1.00%       58.8 ms/replan
+      gen   21.0 ms   proj   37.8 ms   over-budget  36.7%   cb-tripped   0.0%   NFE~2.0
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-c-tightened 0.0%, dpcc-r 0.0%, dpcc-r-tightened 0.0%, dpcc-t 0.0%, dpcc-t-tightened 0.0%
+  43. Candidate 65 — s_curve|fm|K5
+      success+constraint   0.00%   success   0.00%   collision-free   2.00%      297.9 ms/replan
+      gen   51.1 ms   proj  246.8 ms   over-budget  37.6%   cb-tripped   0.0%   NFE~5.0
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-c-tightened 0.0%, dpcc-r 0.0%, dpcc-r-tightened 0.0%, dpcc-t 0.0%, dpcc-t-tightened 0.0%
+  44. Candidate 66 — s_curve|mf|K10|bbunet|dp0.5
+      success+constraint   0.00%   success   2.61%   collision-free  62.61%     1485.5 ms/replan
+      gen   98.0 ms   proj 1387.5 ms   over-budget  33.0%   cb-tripped   0.0%   NFE~14.5
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-c-tightened 0.0%, dpcc-r 0.0%, dpcc-r-tightened 0.0%, dpcc-t 0.0%, dpcc-t-tightened 0.0%, hardflow_new 0.0%, hardflow_new-c 0.0%, hardflow_new-t 0.0%
+  45. Candidate 67 — s_curve|mf|K1|bbunet|dp0.5   [PARETO FRONT]
+      success+constraint   0.00%   success  11.00%   collision-free  62.00%       31.4 ms/replan
+      gen    9.6 ms   proj   21.8 ms   over-budget   5.1%   cb-tripped   0.0%   NFE~1.0
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-c-tightened 0.0%, dpcc-r 0.0%, dpcc-r-tightened 0.0%, dpcc-t 0.0%, dpcc-t-tightened 0.0%
+  46. Candidate 68 — s_curve|mf|K20|bbunet|dp0.5
+      success+constraint   0.00%   success   2.00%   collision-free  82.00%     2008.6 ms/replan
+      gen  200.7 ms   proj 1807.9 ms   over-budget  24.6%   cb-tripped   0.0%   NFE~20.0
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-c-tightened 0.0%, dpcc-r 0.0%, dpcc-r-tightened 0.0%, dpcc-t 0.0%, dpcc-t-tightened 0.0%
+  47. Candidate 70 — s_curve|mf|K5|bbunet|dp0.5
+      success+constraint   0.00%   success   2.00%   collision-free  69.00%      443.0 ms/replan
+      gen   44.5 ms   proj  398.5 ms   over-budget  25.8%   cb-tripped   0.0%   NFE~5.0
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-c-tightened 0.0%, dpcc-r 0.0%, dpcc-r-tightened 0.0%, dpcc-t 0.0%, dpcc-t-tightened 0.0%
+  48. Candidate 71 — s_curve|diffusion|K20
+      success+constraint   0.00%   success   0.00%   collision-free   0.00%     3377.5 ms/replan
+      gen  176.4 ms   proj 3201.1 ms   over-budget  59.5%   cb-tripped   0.0%   NFE~20.0
+      major arms: diffuser 0.0%, dpcc-c 0.0%, dpcc-c-tightened 0.0%, dpcc-r 0.0%, dpcc-r-tightened 0.0%, dpcc-t 0.0%, dpcc-t-tightened 0.0%
+
+  Pareto note: "FRONT" means not dominated on (success+constraint up,
+  ms/replan down) within THIS batch. A candidate off the front that is
+  cheaper OR more accurate but not both is a TRADE-OFF, not a loss, and
+  neither is "best" — say non-dominated, or name the axis.
+
+K SWEEP (mask=all, pooled over seeds)
+------------------------------------------------------------------------------
+  success+constraint:
+    corridor//bounds_free                          K20=30%
+    corridor//diffuser                             K20=0%  K20=0%
+    corridor//dpcc-c                               K20=30%  K20=20%
+    corridor//dpcc-c-tightened                     K20=0%
+    corridor//dpcc-r                               K20=30%  K20=20%
+    corridor//dpcc-r-tightened                     K20=0%
+    corridor//dpcc-t                               K20=30%  K20=20%
+    corridor//dpcc-t-tightened                     K20=0%
+    corridor//geo_free                             K20=10%
+    corridor//geo_free-bounds_free                 K20=0%
+    corridor//geo_free-model_free                  K20=0%
+    corridor//gradient                             K20=0%  K20=0%
+    corridor//gradient-tightened                   K20=0%
+    corridor//model_free                           K20=0%  K20=0%
+    corridor//model_free-tightened                 K20=0%
+    corridor//post_processing                      K20=20%  K20=0%
+    corridor//post_processing-tightened            K20=10%
+    corridor/af/bounds_free                        K1=0%  K2=70%  K5=100%
+    corridor/af/bounds_free-tightened              K1=10%  K2=10%  K5=30%
+    corridor/af/diffuser                           K1=0%  K2=0%  K5=30%
+    corridor/af/dpcc-c                             K1=40%  K2=80%  K5=100%
+    corridor/af/dpcc-c-tightened                   K1=30%  K2=30%  K5=30%
+    corridor/af/dpcc-r                             K1=20%  K2=40%  K5=100%
+    corridor/af/dpcc-r-tightened                   K1=0%  K2=10%  K5=30%
+    corridor/af/dpcc-t                             K1=40%  K2=70%  K5=100%
+    corridor/af/dpcc-t-tightened                   K1=20%  K2=20%  K5=30%
+    corridor/af/geo_free                           K1=40%  K2=30%  K5=100%
+    corridor/af/geo_free-bounds_free               K1=10%  K2=30%  K5=100%
+    corridor/af/geo_free-model_free                K1=0%  K2=0%  K5=20%
+    corridor/af/gradient                           K1=0%  K2=0%  K5=0%
+    corridor/af/gradient-tightened                 K1=0%  K2=0%  K5=0%
+    corridor/af/hardflow_new-c                     K1=20%  K2=70%  K5=100%
+    corridor/af/hardflow_new-r                     K1=20%  K2=20%  K5=100%
+    corridor/af/hardflow_new-t                     K1=40%  K2=90%  K5=100%
+    corridor/af/model_free                         K1=0%  K2=0%  K5=10%
+    corridor/af/model_free-bounds_free             K1=0%  K2=0%  K5=10%
+    corridor/af/model_free-bounds_free-tightened   K1=0%  K2=0%  K5=0%
+    corridor/af/model_free-tightened               K1=0%  K2=0%  K5=0%
+    corridor/af/post_processing                    K1=20%  K2=40%  K5=70%
+    corridor/af/post_processing-tightened          K1=30%  K2=10%  K5=30%
+    corridor/fm/bounds_free                        K1=0%  K2=0%  K5=90%  K10=100%  K20=100%
+    corridor/fm/bounds_free-tightened              K1=0%  K2=0%  K5=30%  K10=60%  K20=100%
+    corridor/fm/diffuser                           K1=0%  K2=0%  K5=0%  K10=0%  K20=40%
+    corridor/fm/dpcc-c                             K1=0%  K2=0%  K5=90%  K10=100%  K20=100%
+    corridor/fm/dpcc-c-tightened                   K1=0%  K2=0%  K5=30%  K10=60%  K20=100%
+    corridor/fm/dpcc-r                             K1=0%  K2=0%  K5=90%  K10=100%  K20=100%
+    corridor/fm/dpcc-r-tightened                   K1=0%  K2=0%  K5=30%  K10=70%  K20=100%
+    corridor/fm/dpcc-t                             K1=0%  K2=0%  K5=90%  K10=100%  K20=100%
+    corridor/fm/dpcc-t-tightened                   K1=0%  K2=0%  K5=30%  K10=70%  K20=100%
+    corridor/fm/geo_free                           K1=0%  K2=0%  K5=20%  K10=40%  K20=100%
+    corridor/fm/geo_free-bounds_free               K1=0%  K2=0%  K5=10%  K10=60%  K20=100%
+    corridor/fm/geo_free-model_free                K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/gradient                           K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/gradient-tightened                 K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/hardflow_new                       K1=0%  K2=10%  K5=100%  K10=100%  K20=100%
+    corridor/fm/hardflow_new-c                     K1=0%  K2=0%  K5=100%  K10=100%  K20=100%
+    corridor/fm/hardflow_new-t                     K1=0%  K2=0%  K5=100%  K10=100%  K20=100%
+    corridor/fm/model_free                         K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/model_free-bounds_free             K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/model_free-bounds_free-tightened   K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/model_free-tightened               K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/post_processing                    K1=0%  K2=10%  K5=80%  K10=100%  K20=100%
+    corridor/fm/post_processing-tightened          K1=0%  K2=0%  K5=30%  K10=30%  K20=30%
+    corridor/mf/bounds_free                        K1=0%  K2=20%  K5=70%  K10=50%  K20=60%
+    corridor/mf/bounds_free-tightened              K1=0%  K2=0%  K5=10%  K10=10%  K20=20%
+    corridor/mf/diffuser                           K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/dpcc-c                             K1=80%  K2=80%  K5=60%  K10=60%  K20=90%
+    corridor/mf/dpcc-c-tightened                   K1=10%  K2=50%  K5=0%  K10=30%  K20=40%
+    corridor/mf/dpcc-r                             K1=0%  K2=10%  K5=50%  K10=80%  K20=70%
+    corridor/mf/dpcc-r-tightened                   K1=0%  K2=0%  K5=0%  K10=20%  K20=10%
+    corridor/mf/dpcc-t                             K1=30%  K2=20%  K5=50%  K10=80%  K20=80%
+    corridor/mf/dpcc-t-tightened                   K1=0%  K2=0%  K5=0%  K10=20%  K20=50%
+    corridor/mf/geo_free                           K1=10%  K2=20%  K5=30%  K10=50%  K20=60%
+    corridor/mf/geo_free-bounds_free               K1=0%  K2=10%  K5=30%  K10=50%  K20=80%
+    corridor/mf/geo_free-model_free                K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/gradient                           K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/gradient-tightened                 K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/hardflow_new                       K1=10%  K2=10%  K5=50%  K10=100%
+    corridor/mf/hardflow_new-c                     K1=50%  K2=50%  K5=80%  K10=100%
+    corridor/mf/hardflow_new-t                     K1=40%  K2=20%  K5=80%  K10=90%
+    corridor/mf/model_free                         K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/model_free-bounds_free             K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/model_free-bounds_free-tightened   K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/model_free-tightened               K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/post_processing                    K1=10%  K2=10%  K5=30%  K10=0%  K20=30%
+    corridor/mf/post_processing-tightened          K1=0%  K2=0%  K5=10%  K10=0%  K20=0%
+    empty//diffuser                                K20=100%
+    empty//dpcc-c                                  K20=100%
+    empty//dpcc-r                                  K20=100%
+    empty//dpcc-t                                  K20=100%
+    empty//gradient                                K20=100%
+    empty//model_free                              K20=100%
+    empty//post_processing                         K20=100%
+    pillars//bounds_free                           K20=0%  K20=0%
+    pillars//bounds_free-tightened                 K20=0%
+    pillars//diffuser                              K20=0%  K20=0%*  K20=0%  K20=0%
+    pillars//dpcc-c                                K20=0%*
+    pillars//dpcc-r                                K20=0%*  K20=0%
+    pillars//dpcc-r-tightened                      K20=0%
+    pillars//dpcc-t                                K20=0%*
+    pillars//geo_free                              K20=0%  K20=0%
+    pillars//geo_free-bounds_free                  K20=0%  K20=0%
+    pillars//geo_free-model_free                   K20=0%  K20=0%
+    pillars//gradient                              K20=0%  K20=0%*  K20=0%  K20=0%
+    pillars//gradient-tightened                    K20=0%  K20=0%  K20=0%
+    pillars//model_free                            K20=0%  K20=0%*  K20=0%  K20=0%
+    pillars//model_free-bounds_free                K20=0%
+    pillars//model_free-bounds_free-tightened      K20=0%
+    pillars//model_free-tightened                  K20=0%  K20=0%  K20=0%
+    pillars//post_processing                       K20=0%  K20=0%*  K20=0%  K20=0%
+    pillars//post_processing-tightened             K20=0%  K20=0%  K20=0%
+    pillars/af/diffuser                            K1=0%  K2=0%  K5=0%
+    pillars/af/dpcc-c                              K1=0%  K2=0%  K5=0%
+    pillars/af/dpcc-c-geo_free                     K1=0%  K2=0%  K5=0%
+    pillars/af/dpcc-c-tightened                    K1=0%  K2=0%  K5=0%
+    pillars/af/dpcc-r                              K1=0%  K2=0%  K5=0%
+    pillars/af/dpcc-r-geo_free                     K1=0%  K2=0%  K5=0%
+    pillars/af/dpcc-r-tightened                    K1=0%  K2=0%  K5=0%
+    pillars/af/dpcc-t                              K1=0%  K2=0%  K5=0%
+    pillars/af/dpcc-t-geo_free                     K1=0%  K2=0%  K5=0%
+    pillars/af/dpcc-t-tightened                    K1=0%  K2=0%  K5=0%
+    pillars/af/hardflow_sls                        K1=0%  K2=0%  K5=0%
+    pillars/af/hardflow_sls-c                      K1=0%  K2=0%  K5=0%
+    pillars/af/hardflow_sls-c-geo_free             K1=0%  K2=0%  K5=0%
+    pillars/af/hardflow_sls-r                      K1=0%  K2=0%  K5=0%
+    pillars/af/hardflow_sls-r-geo_free             K1=0%  K2=0%  K5=0%
+    pillars/af/hardflow_sls-t                      K1=0%  K2=0%  K5=0%
+    pillars/af/hardflow_sls-t-geo_free             K1=0%  K2=0%  K5=0%
+    pillars/fm/bounds_free                         K10=0%
+    pillars/fm/bounds_free-tightened               K10=0%
+    pillars/fm/diffuser                            K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    pillars/fm/dpcc-c                              K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    pillars/fm/dpcc-c-geo_free                     K1=0%  K2=0%  K5=0%
+    pillars/fm/dpcc-c-tightened                    K1=0%  K2=0%  K5=0%  K10=0%
+    pillars/fm/dpcc-r                              K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    pillars/fm/dpcc-r-geo_free                     K1=0%  K2=0%  K5=0%
+    pillars/fm/dpcc-r-tightened                    K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    pillars/fm/dpcc-t                              K1=0%  K2=0%  K5=0%  K10=0%
+    pillars/fm/dpcc-t-geo_free                     K1=0%  K2=0%  K5=0%
+    pillars/fm/dpcc-t-tightened                    K1=0%  K2=0%  K5=0%  K10=0%
+    pillars/fm/geo_free                            K10=0%
+    pillars/fm/geo_free-bounds_free                K10=0%
+    pillars/fm/geo_free-model_free                 K10=0%
+    pillars/fm/gradient                            K10=0%
+    pillars/fm/gradient-tightened                  K10=0%
+    pillars/fm/hardflow_new                        K1=0%  K2=0%  K10=0%
+    pillars/fm/hardflow_new-c                      K1=0%  K2=0%  K10=0%
+    pillars/fm/hardflow_new-c-geo_free             K1=0%  K2=0%
+    pillars/fm/hardflow_new-r                      K1=0%  K2=0%
+    pillars/fm/hardflow_new-r-geo_free             K1=0%  K2=0%
+    pillars/fm/hardflow_new-t                      K1=0%  K2=0%  K10=0%
+    pillars/fm/hardflow_new-t-geo_free             K1=0%  K2=0%
+    pillars/fm/hardflow_sls                        K5=0%
+    pillars/fm/hardflow_sls-c                      K5=0%
+    pillars/fm/hardflow_sls-c-geo_free             K5=0%
+    pillars/fm/hardflow_sls-r                      K5=0%
+    pillars/fm/hardflow_sls-r-geo_free             K5=0%
+    pillars/fm/hardflow_sls-t                      K5=0%
+    pillars/fm/hardflow_sls-t-geo_free             K5=0%
+    pillars/fm/model_free                          K10=0%
+    pillars/fm/model_free-bounds_free              K10=0%
+    pillars/fm/model_free-bounds_free-tightened    K10=0%
+    pillars/fm/model_free-tightened                K10=0%
+    pillars/fm/post_processing                     K10=0%
+    pillars/fm/post_processing-tightened           K10=0%
+    pillars/mf/bounds_free                         K10=0%
+    pillars/mf/bounds_free-tightened               K10=0%
+    pillars/mf/diffuser                            K1=0%  K2=0%  K5=0%  K10=0%
+    pillars/mf/dpcc-c                              K1=0%  K2=0%  K5=0%  K10=0%
+    pillars/mf/dpcc-c-geo_free                     K1=0%  K2=0%  K5=0%
+    pillars/mf/dpcc-c-tightened                    K1=0%  K2=0%  K5=0%  K10=0%
+    pillars/mf/dpcc-r                              K1=0%  K2=0%  K5=0%  K10=0%
+    pillars/mf/dpcc-r-geo_free                     K1=0%  K2=0%  K5=0%
+    pillars/mf/dpcc-r-tightened                    K1=0%  K2=0%  K5=0%  K10=0%
+    pillars/mf/dpcc-t                              K1=0%  K2=0%  K5=0%  K10=0%
+    pillars/mf/dpcc-t-geo_free                     K1=0%  K2=0%  K5=0%
+    pillars/mf/dpcc-t-tightened                    K1=0%  K2=0%  K5=0%  K10=0%
+    pillars/mf/geo_free                            K10=0%
+    pillars/mf/geo_free-bounds_free                K10=0%
+    pillars/mf/geo_free-model_free                 K10=0%
+    pillars/mf/gradient                            K10=0%
+    pillars/mf/gradient-tightened                  K10=0%
+    pillars/mf/hardflow_new                        K10=0%
+    pillars/mf/hardflow_new-c                      K10=0%
+    pillars/mf/hardflow_new-t                      K10=0%
+    pillars/mf/hardflow_sls                        K1=0%  K2=0%  K5=0%
+    pillars/mf/hardflow_sls-c                      K1=0%  K2=0%  K5=0%
+    pillars/mf/hardflow_sls-c-geo_free             K1=0%  K2=0%  K5=0%
+    pillars/mf/hardflow_sls-r                      K1=0%  K2=0%  K5=0%
+    pillars/mf/hardflow_sls-r-geo_free             K1=0%  K2=0%  K5=0%
+    pillars/mf/hardflow_sls-t                      K1=0%  K2=0%  K5=0%
+    pillars/mf/hardflow_sls-t-geo_free             K1=0%  K2=0%  K5=0%
+    pillars/mf/model_free                          K10=0%
+    pillars/mf/model_free-bounds_free              K10=0%
+    pillars/mf/model_free-bounds_free-tightened    K10=0%
+    pillars/mf/model_free-tightened                K10=0%
+    pillars/mf/post_processing                     K10=0%
+    pillars/mf/post_processing-tightened           K10=0%
+    s_curve//bounds_free                           K20=0%  K20=0%
+    s_curve//diffuser                              K20=0%  K20=0%  K20=0%  K20=0%  K20=0%*  K20=0%
+    s_curve//dpcc-c                                K20=10%  K20=10%  K20=0%*  K20=0%
+    s_curve//dpcc-c-tightened                      K20=0%
+    s_curve//dpcc-r                                K20=0%  K20=10%  K20=10%  K20=0%*  K20=0%
+    s_curve//dpcc-r-tightened                      K20=0%
+    s_curve//dpcc-t                                K20=10%  K20=10%  K20=0%*  K20=0%
+    s_curve//dpcc-t-tightened                      K20=0%
+    s_curve//geo_free                              K20=0%  K20=0%
+    s_curve//geo_free-bounds_free                  K20=0%  K20=0%
+    s_curve//geo_free-model_free                   K20=0%  K20=0%
+    s_curve//gradient                              K20=0%  K20=0%  K20=0%  K20=0%  K20=0%*  K20=0%
+    s_curve//gradient-tightened                    K20=0%  K20=0%  K20=0%
+    s_curve//model_free                            K20=0%  K20=0%  K20=0%  K20=0%  K20=0%*  K20=0%
+    s_curve//model_free-tightened                  K20=0%  K20=0%  K20=0%
+    s_curve//post_processing                       K20=0%  K20=0%  K20=0%  K20=0%  K20=0%*  K20=0%
+    s_curve//post_processing-tightened             K20=0%  K20=0%  K20=0%
+    s_curve/diffusion/bounds_free                  K20=0%
+    s_curve/diffusion/bounds_free-tightened        K20=0%
+    s_curve/diffusion/diffuser                     K20=0%*
+    s_curve/diffusion/dpcc-c                       K20=0%*
+    s_curve/diffusion/dpcc-c-tightened             K20=0%*
+    s_curve/diffusion/dpcc-r                       K20=0%*
+    s_curve/diffusion/dpcc-r-geo_free              K20=0%
+    s_curve/diffusion/dpcc-r-tightened             K20=0%*
+    s_curve/diffusion/dpcc-t                       K20=0%*
+    s_curve/diffusion/dpcc-t-tightened             K20=0%*
+    s_curve/diffusion/geo_free                     K20=0%
+    s_curve/diffusion/geo_free-bounds_free         K20=0%
+    s_curve/diffusion/geo_free-model_free          K20=0%
+    s_curve/diffusion/gradient                     K20=0%
+    s_curve/diffusion/gradient-tightened           K20=0%
+    s_curve/diffusion/model_free                   K20=0%
+    s_curve/diffusion/model_free-bounds_free       K20=0%
+    s_curve/diffusion/model_free-bounds_free-tightened K20=0%
+    s_curve/diffusion/model_free-tightened         K20=0%
+    s_curve/diffusion/post_processing              K20=0%
+    s_curve/diffusion/post_processing-tightened    K20=0%
+    s_curve/fm/bounds_free                         K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/bounds_free-tightened               K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/diffuser                            K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/dpcc-c                              K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/dpcc-c-tightened                    K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/dpcc-r                              K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/dpcc-r-tightened                    K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/dpcc-t                              K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/dpcc-t-tightened                    K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/geo_free                            K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/geo_free-bounds_free                K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/geo_free-model_free                 K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/gradient                            K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/gradient-tightened                  K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/model_free                          K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/model_free-bounds_free              K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/model_free-bounds_free-tightened    K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/model_free-tightened                K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/post_processing                     K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/post_processing-tightened           K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/bounds_free                         K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/bounds_free-tightened               K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/diffuser                            K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/dpcc-c                              K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/dpcc-c-tightened                    K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/dpcc-r                              K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/dpcc-r-tightened                    K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/dpcc-t                              K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/dpcc-t-tightened                    K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/geo_free                            K1=0%  K2=20%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/geo_free-bounds_free                K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/geo_free-model_free                 K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/gradient                            K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/gradient-tightened                  K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/hardflow_new                        K10=0%
+    s_curve/mf/hardflow_new-c                      K10=0%
+    s_curve/mf/hardflow_new-t                      K10=0%
+    s_curve/mf/model_free                          K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/model_free-bounds_free              K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/model_free-bounds_free-tightened    K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/model_free-tightened                K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/post_processing                     K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/post_processing-tightened           K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+  success:
+    corridor//bounds_free                          K20=30%
+    corridor//diffuser                             K20=0%  K20=0%
+    corridor//dpcc-c                               K20=30%  K20=20%
+    corridor//dpcc-c-tightened                     K20=0%
+    corridor//dpcc-r                               K20=30%  K20=20%
+    corridor//dpcc-r-tightened                     K20=40%
+    corridor//dpcc-t                               K20=30%  K20=20%
+    corridor//dpcc-t-tightened                     K20=40%
+    corridor//geo_free                             K20=30%
+    corridor//geo_free-bounds_free                 K20=30%
+    corridor//geo_free-model_free                  K20=0%
+    corridor//gradient                             K20=0%  K20=0%
+    corridor//gradient-tightened                   K20=0%
+    corridor//model_free                           K20=0%  K20=0%
+    corridor//model_free-tightened                 K20=0%
+    corridor//post_processing                      K20=20%  K20=0%
+    corridor//post_processing-tightened            K20=20%
+    corridor/af/bounds_free                        K1=40%  K2=70%  K5=100%
+    corridor/af/bounds_free-tightened              K1=10%  K2=30%  K5=50%
+    corridor/af/diffuser                           K1=0%  K2=30%  K5=60%
+    corridor/af/dpcc-c                             K1=70%  K2=100%  K5=100%
+    corridor/af/dpcc-c-tightened                   K1=30%  K2=30%  K5=40%
+    corridor/af/dpcc-r                             K1=50%  K2=50%  K5=100%
+    corridor/af/dpcc-r-tightened                   K1=10%  K2=10%  K5=40%
+    corridor/af/dpcc-t                             K1=50%  K2=80%  K5=100%
+    corridor/af/dpcc-t-tightened                   K1=20%  K2=20%  K5=40%
+    corridor/af/geo_free                           K1=50%  K2=30%  K5=100%
+    corridor/af/geo_free-bounds_free               K1=20%  K2=30%  K5=100%
+    corridor/af/geo_free-model_free                K1=0%  K2=20%  K5=50%
+    corridor/af/gradient                           K1=0%  K2=0%  K5=0%
+    corridor/af/gradient-tightened                 K1=0%  K2=0%  K5=0%
+    corridor/af/hardflow_new-c                     K1=80%  K2=100%  K5=100%
+    corridor/af/hardflow_new-r                     K1=20%  K2=20%  K5=100%
+    corridor/af/hardflow_new-t                     K1=70%  K2=90%  K5=100%
+    corridor/af/model_free                         K1=0%  K2=30%  K5=50%
+    corridor/af/model_free-bounds_free             K1=0%  K2=30%  K5=40%
+    corridor/af/model_free-bounds_free-tightened   K1=0%  K2=20%  K5=50%
+    corridor/af/model_free-tightened               K1=0%  K2=60%  K5=40%
+    corridor/af/post_processing                    K1=30%  K2=50%  K5=70%
+    corridor/af/post_processing-tightened          K1=30%  K2=10%  K5=30%
+    corridor/fm/bounds_free                        K1=0%  K2=70%  K5=100%  K10=100%  K20=100%
+    corridor/fm/bounds_free-tightened              K1=0%  K2=50%  K5=40%  K10=100%  K20=100%
+    corridor/fm/diffuser                           K1=0%  K2=30%  K5=90%  K10=40%  K20=40%
+    corridor/fm/dpcc-c                             K1=0%  K2=70%  K5=100%  K10=100%  K20=100%
+    corridor/fm/dpcc-c-tightened                   K1=0%  K2=20%  K5=60%  K10=80%  K20=100%
+    corridor/fm/dpcc-r                             K1=0%  K2=20%  K5=100%  K10=100%  K20=100%
+    corridor/fm/dpcc-r-tightened                   K1=10%  K2=20%  K5=80%  K10=90%  K20=100%
+    corridor/fm/dpcc-t                             K1=0%  K2=50%  K5=100%  K10=100%  K20=100%
+    corridor/fm/dpcc-t-tightened                   K1=20%  K2=50%  K5=70%  K10=90%  K20=100%
+    corridor/fm/geo_free                           K1=0%  K2=0%  K5=90%  K10=80%  K20=100%
+    corridor/fm/geo_free-bounds_free               K1=0%  K2=0%  K5=80%  K10=100%  K20=100%
+    corridor/fm/geo_free-model_free                K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/gradient                           K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/gradient-tightened                 K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/hardflow_new                       K1=0%  K2=70%  K5=100%  K10=100%  K20=100%
+    corridor/fm/hardflow_new-c                     K1=0%  K2=80%  K5=100%  K10=100%  K20=100%
+    corridor/fm/hardflow_new-t                     K1=10%  K2=70%  K5=100%  K10=100%  K20=100%
+    corridor/fm/model_free                         K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/model_free-bounds_free             K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/model_free-bounds_free-tightened   K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/model_free-tightened               K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/post_processing                    K1=0%  K2=50%  K5=100%  K10=100%  K20=100%
+    corridor/fm/post_processing-tightened          K1=30%  K2=40%  K5=50%  K10=40%  K20=40%
+    corridor/mf/bounds_free                        K1=20%  K2=20%  K5=80%  K10=90%  K20=80%
+    corridor/mf/bounds_free-tightened              K1=0%  K2=0%  K5=20%  K10=20%  K20=70%
+    corridor/mf/diffuser                           K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/dpcc-c                             K1=80%  K2=80%  K5=80%  K10=90%  K20=100%
+    corridor/mf/dpcc-c-tightened                   K1=20%  K2=50%  K5=40%  K10=60%  K20=50%
+    corridor/mf/dpcc-r                             K1=30%  K2=20%  K5=70%  K10=90%  K20=100%
+    corridor/mf/dpcc-r-tightened                   K1=0%  K2=0%  K5=30%  K10=40%  K20=30%
+    corridor/mf/dpcc-t                             K1=40%  K2=50%  K5=70%  K10=90%  K20=100%
+    corridor/mf/dpcc-t-tightened                   K1=10%  K2=10%  K5=30%  K10=40%  K20=100%
+    corridor/mf/geo_free                           K1=30%  K2=30%  K5=60%  K10=90%  K20=90%
+    corridor/mf/geo_free-bounds_free               K1=10%  K2=30%  K5=50%  K10=90%  K20=90%
+    corridor/mf/geo_free-model_free                K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/gradient                           K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/gradient-tightened                 K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/hardflow_new                       K1=20%  K2=20%  K5=80%  K10=100%
+    corridor/mf/hardflow_new-c                     K1=60%  K2=50%  K5=100%  K10=100%
+    corridor/mf/hardflow_new-t                     K1=40%  K2=30%  K5=90%  K10=100%
+    corridor/mf/model_free                         K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/model_free-bounds_free             K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/model_free-bounds_free-tightened   K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/model_free-tightened               K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/post_processing                    K1=30%  K2=20%  K5=30%  K10=20%  K20=30%
+    corridor/mf/post_processing-tightened          K1=10%  K2=0%  K5=10%  K10=0%  K20=10%
+    empty//diffuser                                K20=100%
+    empty//dpcc-c                                  K20=100%
+    empty//dpcc-r                                  K20=100%
+    empty//dpcc-t                                  K20=100%
+    empty//gradient                                K20=100%
+    empty//model_free                              K20=100%
+    empty//post_processing                         K20=100%
+    pillars//bounds_free                           K20=0%  K20=0%
+    pillars//bounds_free-tightened                 K20=0%
+    pillars//diffuser                              K20=0%  K20=0%*  K20=0%  K20=0%
+    pillars//dpcc-c                                K20=0%*
+    pillars//dpcc-r                                K20=0%  K20=0%*  K20=0%
+    pillars//dpcc-r-tightened                      K20=0%
+    pillars//dpcc-t                                K20=0%*
+    pillars//geo_free                              K20=0%  K20=0%
+    pillars//geo_free-bounds_free                  K20=0%  K20=0%
+    pillars//geo_free-model_free                   K20=0%  K20=0%
+    pillars//gradient                              K20=0%  K20=0%*  K20=0%  K20=0%
+    pillars//gradient-tightened                    K20=0%  K20=0%  K20=0%
+    pillars//model_free                            K20=0%  K20=0%*  K20=0%  K20=0%
+    pillars//model_free-bounds_free                K20=0%
+    pillars//model_free-bounds_free-tightened      K20=0%
+    pillars//model_free-tightened                  K20=0%  K20=0%  K20=10%
+    pillars//post_processing                       K20=0%  K20=0%*  K20=0%  K20=10%
+    pillars//post_processing-tightened             K20=0%  K20=0%  K20=10%
+    pillars/af/diffuser                            K1=0%  K2=0%  K5=0%
+    pillars/af/dpcc-c                              K1=20%  K2=0%  K5=0%
+    pillars/af/dpcc-c-geo_free                     K1=0%  K2=0%  K5=0%
+    pillars/af/dpcc-c-tightened                    K1=10%  K2=0%  K5=0%
+    pillars/af/dpcc-r                              K1=0%  K2=0%  K5=0%
+    pillars/af/dpcc-r-geo_free                     K1=0%  K2=0%  K5=0%
+    pillars/af/dpcc-r-tightened                    K1=0%  K2=0%  K5=0%
+    pillars/af/dpcc-t                              K1=50%  K2=20%  K5=0%
+    pillars/af/dpcc-t-geo_free                     K1=0%  K2=0%  K5=0%
+    pillars/af/dpcc-t-tightened                    K1=40%  K2=30%  K5=10%
+    pillars/af/hardflow_sls                        K1=10%  K2=0%  K5=0%
+    pillars/af/hardflow_sls-c                      K1=0%  K2=0%  K5=0%
+    pillars/af/hardflow_sls-c-geo_free             K1=0%  K2=0%  K5=0%
+    pillars/af/hardflow_sls-r                      K1=0%  K2=0%  K5=0%
+    pillars/af/hardflow_sls-r-geo_free             K1=0%  K2=0%  K5=0%
+    pillars/af/hardflow_sls-t                      K1=70%  K2=40%  K5=10%
+    pillars/af/hardflow_sls-t-geo_free             K1=0%  K2=0%  K5=0%
+    pillars/fm/bounds_free                         K10=0%
+    pillars/fm/bounds_free-tightened               K10=0%
+    pillars/fm/diffuser                            K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    pillars/fm/dpcc-c                              K1=0%  K2=0%  K5=10%  K10=0%  K20=20%
+    pillars/fm/dpcc-c-geo_free                     K1=0%  K2=0%  K5=0%
+    pillars/fm/dpcc-c-tightened                    K1=0%  K2=20%  K5=0%  K10=0%
+    pillars/fm/dpcc-r                              K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    pillars/fm/dpcc-r-geo_free                     K1=0%  K2=0%  K5=0%
+    pillars/fm/dpcc-r-tightened                    K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    pillars/fm/dpcc-t                              K1=0%  K2=0%  K5=0%  K10=0%
+    pillars/fm/dpcc-t-geo_free                     K1=0%  K2=0%  K5=0%
+    pillars/fm/dpcc-t-tightened                    K1=0%  K2=0%  K5=0%  K10=0%
+    pillars/fm/geo_free                            K10=0%
+    pillars/fm/geo_free-bounds_free                K10=0%
+    pillars/fm/geo_free-model_free                 K10=0%
+    pillars/fm/gradient                            K10=0%
+    pillars/fm/gradient-tightened                  K10=0%
+    pillars/fm/hardflow_new                        K1=0%  K2=10%  K10=0%
+    pillars/fm/hardflow_new-c                      K1=0%  K2=0%  K10=0%
+    pillars/fm/hardflow_new-c-geo_free             K1=0%  K2=0%
+    pillars/fm/hardflow_new-r                      K1=0%  K2=0%
+    pillars/fm/hardflow_new-r-geo_free             K1=0%  K2=0%
+    pillars/fm/hardflow_new-t                      K1=0%  K2=0%  K10=0%
+    pillars/fm/hardflow_new-t-geo_free             K1=0%  K2=0%
+    pillars/fm/hardflow_sls                        K5=0%
+    pillars/fm/hardflow_sls-c                      K5=0%
+    pillars/fm/hardflow_sls-c-geo_free             K5=0%
+    pillars/fm/hardflow_sls-r                      K5=0%
+    pillars/fm/hardflow_sls-r-geo_free             K5=0%
+    pillars/fm/hardflow_sls-t                      K5=10%
+    pillars/fm/hardflow_sls-t-geo_free             K5=0%
+    pillars/fm/model_free                          K10=0%
+    pillars/fm/model_free-bounds_free              K10=0%
+    pillars/fm/model_free-bounds_free-tightened    K10=0%
+    pillars/fm/model_free-tightened                K10=0%
+    pillars/fm/post_processing                     K10=0%
+    pillars/fm/post_processing-tightened           K10=0%
+    pillars/mf/bounds_free                         K10=0%
+    pillars/mf/bounds_free-tightened               K10=0%
+    pillars/mf/diffuser                            K1=0%  K2=0%  K5=0%  K10=0%
+    pillars/mf/dpcc-c                              K1=10%  K2=10%  K5=0%  K10=0%
+    pillars/mf/dpcc-c-geo_free                     K1=0%  K2=10%  K5=40%
+    pillars/mf/dpcc-c-tightened                    K1=20%  K2=0%  K5=0%  K10=0%
+    pillars/mf/dpcc-r                              K1=30%  K2=20%  K5=0%  K10=0%
+    pillars/mf/dpcc-r-geo_free                     K1=0%  K2=30%  K5=20%
+    pillars/mf/dpcc-r-tightened                    K1=20%  K2=0%  K5=0%  K10=0%
+    pillars/mf/dpcc-t                              K1=0%  K2=10%  K5=0%  K10=0%
+    pillars/mf/dpcc-t-geo_free                     K1=0%  K2=40%  K5=30%
+    pillars/mf/dpcc-t-tightened                    K1=0%  K2=0%  K5=0%  K10=0%
+    pillars/mf/geo_free                            K10=0%
+    pillars/mf/geo_free-bounds_free                K10=0%
+    pillars/mf/geo_free-model_free                 K10=0%
+    pillars/mf/gradient                            K10=0%
+    pillars/mf/gradient-tightened                  K10=0%
+    pillars/mf/hardflow_new                        K10=0%
+    pillars/mf/hardflow_new-c                      K10=0%
+    pillars/mf/hardflow_new-t                      K10=67%
+    pillars/mf/hardflow_sls                        K1=10%  K2=30%  K5=20%
+    pillars/mf/hardflow_sls-c                      K1=0%  K2=0%  K5=10%
+    pillars/mf/hardflow_sls-c-geo_free             K1=20%  K2=40%  K5=70%
+    pillars/mf/hardflow_sls-r                      K1=20%  K2=0%  K5=0%
+    pillars/mf/hardflow_sls-r-geo_free             K1=0%  K2=50%  K5=60%
+    pillars/mf/hardflow_sls-t                      K1=20%  K2=30%  K5=10%
+    pillars/mf/hardflow_sls-t-geo_free             K1=10%  K2=40%  K5=80%
+    pillars/mf/model_free                          K10=0%
+    pillars/mf/model_free-bounds_free              K10=0%
+    pillars/mf/model_free-bounds_free-tightened    K10=0%
+    pillars/mf/model_free-tightened                K10=0%
+    pillars/mf/post_processing                     K10=0%
+    pillars/mf/post_processing-tightened           K10=0%
+    s_curve//bounds_free                           K20=0%  K20=0%
+    s_curve//diffuser                              K20=0%  K20=0%  K20=0%  K20=0%  K20=0%*  K20=0%
+    s_curve//dpcc-c                                K20=10%  K20=10%  K20=0%*  K20=0%
+    s_curve//dpcc-c-tightened                      K20=0%
+    s_curve//dpcc-r                                K20=0%  K20=10%  K20=10%  K20=0%*  K20=0%
+    s_curve//dpcc-r-tightened                      K20=0%  K20=0%
+    s_curve//dpcc-t                                K20=10%  K20=10%  K20=0%*  K20=0%
+    s_curve//dpcc-t-tightened                      K20=0%
+    s_curve//geo_free                              K20=10%  K20=10%
+    s_curve//geo_free-bounds_free                  K20=10%  K20=10%
+    s_curve//geo_free-model_free                   K20=0%  K20=0%
+    s_curve//gradient                              K20=0%  K20=0%  K20=0%  K20=0%  K20=0%  K20=0%*  K20=0%
+    s_curve//gradient-tightened                    K20=0%  K20=0%  K20=0%
+    s_curve//model_free                            K20=0%  K20=0%  K20=0%  K20=0%  K20=0%*  K20=0%
+    s_curve//model_free-tightened                  K20=0%  K20=0%  K20=0%
+    s_curve//post_processing                       K20=0%  K20=0%  K20=0%  K20=0%  K20=0%*  K20=0%
+    s_curve//post_processing-tightened             K20=0%  K20=0%  K20=0%
+    s_curve/diffusion/bounds_free                  K20=0%
+    s_curve/diffusion/bounds_free-tightened        K20=0%
+    s_curve/diffusion/diffuser                     K20=0%*
+    s_curve/diffusion/dpcc-c                       K20=0%*
+    s_curve/diffusion/dpcc-c-tightened             K20=0%*
+    s_curve/diffusion/dpcc-r                       K20=0%*
+    s_curve/diffusion/dpcc-r-geo_free              K20=0%
+    s_curve/diffusion/dpcc-r-tightened             K20=0%*
+    s_curve/diffusion/dpcc-t                       K20=0%*
+    s_curve/diffusion/dpcc-t-tightened             K20=0%*
+    s_curve/diffusion/geo_free                     K20=0%
+    s_curve/diffusion/geo_free-bounds_free         K20=0%
+    s_curve/diffusion/geo_free-model_free          K20=0%
+    s_curve/diffusion/gradient                     K20=0%
+    s_curve/diffusion/gradient-tightened           K20=0%
+    s_curve/diffusion/model_free                   K20=0%
+    s_curve/diffusion/model_free-bounds_free       K20=0%
+    s_curve/diffusion/model_free-bounds_free-tightened K20=0%
+    s_curve/diffusion/model_free-tightened         K20=0%
+    s_curve/diffusion/post_processing              K20=0%
+    s_curve/diffusion/post_processing-tightened    K20=0%
+    s_curve/fm/bounds_free                         K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/bounds_free-tightened               K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/diffuser                            K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/dpcc-c                              K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/dpcc-c-tightened                    K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/dpcc-r                              K1=0%  K2=20%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/dpcc-r-tightened                    K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/dpcc-t                              K1=20%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/dpcc-t-tightened                    K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/geo_free                            K1=60%  K2=0%  K5=0%  K10=20%  K20=40%
+    s_curve/fm/geo_free-bounds_free                K1=60%  K2=0%  K5=0%  K10=0%  K20=40%
+    s_curve/fm/geo_free-model_free                 K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/gradient                            K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/gradient-tightened                  K1=20%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/model_free                          K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/model_free-bounds_free              K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/model_free-bounds_free-tightened    K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/model_free-tightened                K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/post_processing                     K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/post_processing-tightened           K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/bounds_free                         K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/bounds_free-tightened               K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/diffuser                            K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/dpcc-c                              K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/dpcc-c-tightened                    K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/dpcc-r                              K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/dpcc-r-tightened                    K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/dpcc-t                              K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/dpcc-t-tightened                    K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/geo_free                            K1=40%  K2=40%  K5=20%  K10=20%  K20=20%
+    s_curve/mf/geo_free-bounds_free                K1=20%  K2=20%  K5=20%  K10=40%  K20=20%
+    s_curve/mf/geo_free-model_free                 K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/gradient                            K1=80%  K2=60%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/gradient-tightened                  K1=80%  K2=60%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/hardflow_new                        K10=0%
+    s_curve/mf/hardflow_new-c                      K10=0%
+    s_curve/mf/hardflow_new-t                      K10=0%
+    s_curve/mf/model_free                          K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/model_free-bounds_free              K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/model_free-bounds_free-tightened    K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/model_free-tightened                K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/post_processing                     K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/post_processing-tightened           K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+  ms/replan:
+    corridor//bounds_free                          K20=227.2
+    corridor//diffuser                             K20=89.9  K20=93.99
+    corridor//dpcc-c                               K20=250.8  K20=140.1
+    corridor//dpcc-c-tightened                     K20=352.5
+    corridor//dpcc-r                               K20=251.3  K20=138.3
+    corridor//dpcc-r-tightened                     K20=295.8
+    corridor//dpcc-t                               K20=251  K20=139.1
+    corridor//dpcc-t-tightened                     K20=397.7
+    corridor//geo_free                             K20=147.1
+    corridor//geo_free-bounds_free                 K20=138.6
+    corridor//geo_free-model_free                  K20=132.9
+    corridor//gradient                             K20=98.93  K20=99.9
+    corridor//gradient-tightened                   K20=98.67
+    corridor//model_free                           K20=190.8  K20=123.1
+    corridor//model_free-tightened                 K20=186.7
+    corridor//post_processing                      K20=115  K20=106.3
+    corridor//post_processing-tightened            K20=178.1
+    corridor/af/bounds_free                        K1=80.68  K2=60.9  K5=146.2
+    corridor/af/bounds_free-tightened              K1=158.1  K2=118.2  K5=270.3
+    corridor/af/diffuser                           K1=6.382  K2=12.26  K5=30.12
+    corridor/af/dpcc-c                             K1=43.95  K2=33.64  K5=169.2
+    corridor/af/dpcc-c-tightened                   K1=141.5  K2=121.3  K5=339.3
+    corridor/af/dpcc-r                             K1=68.77  K2=91.74  K5=169.5
+    corridor/af/dpcc-r-tightened                   K1=160  K2=154.5  K5=333.7
+    corridor/af/dpcc-t                             K1=82.44  K2=47.02  K5=169.3
+    corridor/af/dpcc-t-tightened                   K1=137.2  K2=126.3  K5=313.7
+    corridor/af/geo_free                           K1=40.94  K2=48.36  K5=63.72
+    corridor/af/geo_free-bounds_free               K1=46.72  K2=52.93  K5=58.09
+    corridor/af/geo_free-model_free                K1=13.08  K2=17.71  K5=46.47
+    corridor/af/gradient                           K1=8.369  K2=14.03  K5=35.82
+    corridor/af/gradient-tightened                 K1=8.253  K2=13.98  K5=35.82
+    corridor/af/hardflow_new-c                     K1=287.7  K2=139  K5=380.9
+    corridor/af/hardflow_new-r                     K1=1312  K2=571.9  K5=382.3
+    corridor/af/hardflow_new-t                     K1=173.9  K2=163.9  K5=383.4
+    corridor/af/model_free                         K1=29.67  K2=27.95  K5=72.22
+    corridor/af/model_free-bounds_free             K1=27.23  K2=25.19  K5=66.16
+    corridor/af/model_free-bounds_free-tightened   K1=26.72  K2=27.79  K5=71.85
+    corridor/af/model_free-tightened               K1=29.15  K2=31.16  K5=78.08
+    corridor/af/post_processing                    K1=91.11  K2=70.47  K5=78.3
+    corridor/af/post_processing-tightened          K1=140  K2=160.4  K5=128.4
+    corridor/fm/bounds_free                        K1=89.08  K2=53.51  K5=145.5  K10=217.3  K20=382.7
+    corridor/fm/bounds_free-tightened              K1=121.4  K2=111.5  K5=261.2  K10=258.2  K20=385.2
+    corridor/fm/diffuser                           K1=9.133  K2=17.64  K5=44.08  K10=85.68  K20=171.9
+    corridor/fm/dpcc-c                             K1=107.2  K2=69.06  K5=167  K10=241.9  K20=415.5
+    corridor/fm/dpcc-c-tightened                   K1=140.9  K2=100.2  K5=264.9  K10=279  K20=417.1
+    corridor/fm/dpcc-r                             K1=204.7  K2=100.6  K5=164.7  K10=241.8  K20=414.4
+    corridor/fm/dpcc-r-tightened                   K1=148.7  K2=137.3  K5=280.5  K10=281.2  K20=416.8
+    corridor/fm/dpcc-t                             K1=118  K2=78.89  K5=163.8  K10=240.8  K20=415.5
+    corridor/fm/dpcc-t-tightened                   K1=133.4  K2=147.1  K5=280.7  K10=285.6  K20=417.4
+    corridor/fm/geo_free                           K1=27.92  K2=35.59  K5=77.08  K10=164.1  K20=283
+    corridor/fm/geo_free-bounds_free               K1=25.35  K2=34.61  K5=71.66  K10=131.9  K20=263.4
+    corridor/fm/geo_free-model_free                K1=19  K2=27.46  K5=71.13  K10=128.3  K20=253.8
+    corridor/fm/gradient                           K1=10.82  K2=19.19  K5=49.04  K10=93.92  K20=188.2
+    corridor/fm/gradient-tightened                 K1=10.79  K2=19.21  K5=49.03  K10=93.95  K20=189
+    corridor/fm/hardflow_new                       K1=946.6  K2=513.8  K5=474.7  K10=719.8  K20=1360
+    corridor/fm/hardflow_new-c                     K1=612.3  K2=296.7  K5=492.9  K10=756.4  K20=1377
+    corridor/fm/hardflow_new-t                     K1=1101  K2=630.4  K5=477.5  K10=725.4  K20=1402
+    corridor/fm/model_free                         K1=68.22  K2=72.35  K5=123.1  K10=188.6  K20=347.2
+    corridor/fm/model_free-bounds_free             K1=54.1  K2=60.35  K5=107.5  K10=172.8  K20=321.5
+    corridor/fm/model_free-bounds_free-tightened   K1=56.68  K2=64.11  K5=110.9  K10=173  K20=331.7
+    corridor/fm/model_free-tightened               K1=66.6  K2=75.48  K5=123.6  K10=208  K20=355.7
+    corridor/fm/post_processing                    K1=101.5  K2=78.87  K5=70.72  K10=111.9  K20=196
+    corridor/fm/post_processing-tightened          K1=136.5  K2=111.7  K5=153.4  K10=173.7  K20=274.6
+    corridor/mf/bounds_free                        K1=89.12  K2=95.88  K5=215.4  K10=258.7  K20=503
+    corridor/mf/bounds_free-tightened              K1=103.4  K2=125.6  K5=308  K10=560.3  K20=640.4
+    corridor/mf/diffuser                           K1=9.502  K2=18.18  K5=44.59  K10=89.39  K20=181.9
+    corridor/mf/dpcc-c                             K1=58.87  K2=64.81  K5=224.7  K10=339.4  K20=452.8
+    corridor/mf/dpcc-c-tightened                   K1=111.7  K2=92.02  K5=324.7  K10=482.5  K20=953.6
+    corridor/mf/dpcc-r                             K1=90.51  K2=111.6  K5=238.3  K10=297.7  K20=454.5
+    corridor/mf/dpcc-r-tightened                   K1=130  K2=145.8  K5=364.3  K10=511.8  K20=840
+    corridor/mf/dpcc-t                             K1=80.08  K2=93.8  K5=269.7  K10=297.1  K20=453.5
+    corridor/mf/dpcc-t-tightened                   K1=122.3  K2=123.4  K5=316.3  K10=554.1  K20=460
+    corridor/mf/geo_free                           K1=43.18  K2=52.54  K5=98.05  K10=167.6  K20=328.2
+    corridor/mf/geo_free-bounds_free               K1=47.39  K2=41.82  K5=114.2  K10=152.2  K20=303.1
+    corridor/mf/geo_free-model_free                K1=21.01  K2=30.1  K5=77.53  K10=144.3  K20=285.2
+    corridor/mf/gradient                           K1=11.27  K2=19.94  K5=50.18  K10=98.45  K20=198
+    corridor/mf/gradient-tightened                 K1=11.28  K2=19.93  K5=50.18  K10=98.19  K20=198.5
+    corridor/mf/hardflow_new                       K1=1615  K2=1240  K5=851  K10=779.8
+    corridor/mf/hardflow_new-c                     K1=1016  K2=459.6  K5=480.5  K10=772.3
+    corridor/mf/hardflow_new-t                     K1=1216  K2=2392  K5=501.1  K10=783.3
+    corridor/mf/model_free                         K1=107.4  K2=113  K5=193  K10=261.2  K20=423.6
+    corridor/mf/model_free-bounds_free             K1=82.58  K2=90.29  K5=164.1  K10=217.5  K20=382.9
+    corridor/mf/model_free-bounds_free-tightened   K1=85.75  K2=93.04  K5=165.8  K10=219.4  K20=381.7
+    corridor/mf/model_free-tightened               K1=107.8  K2=115.5  K5=197.2  K10=261.4  K20=433
+    corridor/mf/post_processing                    K1=92.97  K2=110.3  K5=134.5  K10=187.2  K20=267.9
+    corridor/mf/post_processing-tightened          K1=119.8  K2=139.2  K5=160.9  K10=203.9  K20=290
+    empty//diffuser                                K20=91.92
+    empty//dpcc-c                                  K20=139.7
+    empty//dpcc-r                                  K20=139.7
+    empty//dpcc-t                                  K20=139.5
+    empty//gradient                                K20=97.89
+    empty//model_free                              K20=112.1
+    empty//post_processing                         K20=100.9
+    pillars//bounds_free                           K20=6650  K20=4054
+    pillars//bounds_free-tightened                 K20=6490
+    pillars//diffuser                              K20=84.17  K20=85.51*  K20=82.63  K20=86.22
+    pillars//dpcc-c                                K20=131.7*
+    pillars//dpcc-r                                K20=7704  K20=131.8*  K20=7192
+    pillars//dpcc-r-tightened                      K20=8036
+    pillars//dpcc-t                                K20=131.8*
+    pillars//geo_free                              K20=139.5  K20=141.1
+    pillars//geo_free-bounds_free                  K20=130  K20=131.8
+    pillars//geo_free-model_free                   K20=107.1  K20=112.6
+    pillars//gradient                              K20=99.43  K20=89.23*  K20=93.71  K20=97.56
+    pillars//gradient-tightened                    K20=99.15  K20=93.82  K20=97.49
+    pillars//model_free                            K20=384.7  K20=104.2*  K20=381.1  K20=255
+    pillars//model_free-bounds_free                K20=244
+    pillars//model_free-bounds_free-tightened      K20=254.6
+    pillars//model_free-tightened                  K20=411.6  K20=410.6  K20=270.1
+    pillars//post_processing                       K20=709.7  K20=94.6*  K20=696.1  K20=306.6
+    pillars//post_processing-tightened             K20=893.5  K20=878.5  K20=341.4
+    pillars/af/diffuser                            K1=6.207  K2=12.06  K5=29.64
+    pillars/af/dpcc-c                              K1=57.84  K2=50.56  K5=1499
+    pillars/af/dpcc-c-geo_free                     K1=17.65  K2=23.47  K5=63.46
+    pillars/af/dpcc-c-tightened                    K1=99.42  K2=62  K5=1569
+    pillars/af/dpcc-r                              K1=118.1  K2=76.74  K5=1683
+    pillars/af/dpcc-r-geo_free                     K1=17.7  K2=23.48  K5=63.31
+    pillars/af/dpcc-r-tightened                    K1=99.99  K2=101.2  K5=1660
+    pillars/af/dpcc-t                              K1=75.09  K2=129  K5=1595
+    pillars/af/dpcc-t-geo_free                     K1=17.65  K2=23.57  K5=63.43
+    pillars/af/dpcc-t-tightened                    K1=83.74  K2=99.63  K5=1633
+    pillars/af/hardflow_sls                        K1=19.92  K2=24.78  K5=106
+    pillars/af/hardflow_sls-c                      K1=79.04  K2=71.9  K5=228
+    pillars/af/hardflow_sls-c-geo_free             K1=19.03  K2=25.05  K5=78.51
+    pillars/af/hardflow_sls-r                      K1=96.86  K2=102.7  K5=317.4
+    pillars/af/hardflow_sls-r-geo_free             K1=19.07  K2=24.92  K5=78.58
+    pillars/af/hardflow_sls-t                      K1=57.16  K2=80.25  K5=305.1
+    pillars/af/hardflow_sls-t-geo_free             K1=19.16  K2=24.98  K5=78.44
+    pillars/fm/bounds_free                         K10=3622
+    pillars/fm/bounds_free-tightened               K10=2873
+    pillars/fm/diffuser                            K1=9.003  K2=17.78  K5=42.59  K10=88.77  K20=166.9
+    pillars/fm/dpcc-c                              K1=125  K2=137.4  K5=1209  K10=4136  K20=7070
+    pillars/fm/dpcc-c-geo_free                     K1=20.78  K2=29.55  K5=76.72
+    pillars/fm/dpcc-c-tightened                    K1=173.2  K2=189.2  K5=1438  K10=4658
+    pillars/fm/dpcc-r                              K1=131.3  K2=171.7  K5=1444  K10=3136  K20=6766
+    pillars/fm/dpcc-r-geo_free                     K1=21.2  K2=30.07  K5=76.72
+    pillars/fm/dpcc-r-tightened                    K1=161.6  K2=159.7  K5=1659  K10=3426  K20=9474
+    pillars/fm/dpcc-t                              K1=193.6  K2=160  K5=1629  K10=4130
+    pillars/fm/dpcc-t-geo_free                     K1=20.8  K2=29.55  K5=76.56
+    pillars/fm/dpcc-t-tightened                    K1=243.8  K2=172.9  K5=1543  K10=3618
+    pillars/fm/geo_free                            K10=141.5
+    pillars/fm/geo_free-bounds_free                K10=131.6
+    pillars/fm/geo_free-model_free                 K10=111.1
+    pillars/fm/gradient                            K10=98.25
+    pillars/fm/gradient-tightened                  K10=98.33
+    pillars/fm/hardflow_new                        K1=73.9  K2=87.23  K10=5956
+    pillars/fm/hardflow_new-c                      K1=332.6  K2=268.7  K10=5967
+    pillars/fm/hardflow_new-c-geo_free             K1=78.42  K2=84.7
+    pillars/fm/hardflow_new-r                      K1=258.8  K2=227.8
+    pillars/fm/hardflow_new-r-geo_free             K1=78.05  K2=84.83
+    pillars/fm/hardflow_new-t                      K1=439.5  K2=313.2  K10=2521
+    pillars/fm/hardflow_new-t-geo_free             K1=78.55  K2=85.32
+    pillars/fm/hardflow_sls                        K5=185
+    pillars/fm/hardflow_sls-c                      K5=587.4
+    pillars/fm/hardflow_sls-c-geo_free             K5=97.18
+    pillars/fm/hardflow_sls-r                      K5=530.4
+    pillars/fm/hardflow_sls-r-geo_free             K5=97.01
+    pillars/fm/hardflow_sls-t                      K5=539.1
+    pillars/fm/hardflow_sls-t-geo_free             K5=97.47
+    pillars/fm/model_free                          K10=258.2
+    pillars/fm/model_free-bounds_free              K10=248.6
+    pillars/fm/model_free-bounds_free-tightened    K10=246.9
+    pillars/fm/model_free-tightened                K10=286.1
+    pillars/fm/post_processing                     K10=267.4
+    pillars/fm/post_processing-tightened           K10=304.6
+    pillars/mf/bounds_free                         K10=1226
+    pillars/mf/bounds_free-tightened               K10=982.5
+    pillars/mf/diffuser                            K1=9.718  K2=18.36  K5=44.54  K10=89.15
+    pillars/mf/dpcc-c                              K1=85.38  K2=96.65  K5=1470  K10=1805
+    pillars/mf/dpcc-c-geo_free                     K1=20.59  K2=29.49  K5=78.55
+    pillars/mf/dpcc-c-tightened                    K1=103.3  K2=118  K5=1458  K10=1309
+    pillars/mf/dpcc-r                              K1=84.71  K2=90.59  K5=1485  K10=1318
+    pillars/mf/dpcc-r-geo_free                     K1=20.63  K2=29.47  K5=78.53
+    pillars/mf/dpcc-r-tightened                    K1=109.3  K2=91.24  K5=1567  K10=1376
+    pillars/mf/dpcc-t                              K1=108.9  K2=111.6  K5=1549  K10=1972
+    pillars/mf/dpcc-t-geo_free                     K1=20.65  K2=29.48  K5=78.61
+    pillars/mf/dpcc-t-tightened                    K1=174.1  K2=157.3  K5=1648  K10=2009
+    pillars/mf/geo_free                            K10=150.3
+    pillars/mf/geo_free-bounds_free                K10=141.2
+    pillars/mf/geo_free-model_free                 K10=145.4
+    pillars/mf/gradient                            K10=100.2
+    pillars/mf/gradient-tightened                  K10=100.3
+    pillars/mf/hardflow_new                        K10=939.8
+    pillars/mf/hardflow_new-c                      K10=925.7
+    pillars/mf/hardflow_new-t                      K10=1653
+    pillars/mf/hardflow_sls                        K1=26.97  K2=39.18  K5=119.1
+    pillars/mf/hardflow_sls-c                      K1=103.1  K2=89.61  K5=304.2
+    pillars/mf/hardflow_sls-c-geo_free             K1=22.19  K2=31.17  K5=100.4
+    pillars/mf/hardflow_sls-r                      K1=104.1  K2=93.13  K5=261.2
+    pillars/mf/hardflow_sls-r-geo_free             K1=22.18  K2=31.17  K5=100.7
+    pillars/mf/hardflow_sls-t                      K1=97.96  K2=111.2  K5=373.7
+    pillars/mf/hardflow_sls-t-geo_free             K1=22.22  K2=31.24  K5=100.4
+    pillars/mf/model_free                          K10=333.5
+    pillars/mf/model_free-bounds_free              K10=296.9
+    pillars/mf/model_free-bounds_free-tightened    K10=302
+    pillars/mf/model_free-tightened                K10=356.7
+    pillars/mf/post_processing                     K10=157.2
+    pillars/mf/post_processing-tightened           K10=233.2
+    s_curve//bounds_free                           K20=848.5  K20=603.3
+    s_curve//diffuser                              K20=84.49  K20=84.39  K20=83.47  K20=83.44  K20=84.58*  K20=85.55
+    s_curve//dpcc-c                                K20=144.5  K20=146.2  K20=123.6*  K20=939.1
+    s_curve//dpcc-c-tightened                      K20=1010
+    s_curve//dpcc-r                                K20=1014  K20=155.8  K20=129.5  K20=124.3*  K20=854.7
+    s_curve//dpcc-r-tightened                      K20=1054  K20=819.4
+    s_curve//dpcc-t                                K20=165.6  K20=148.5  K20=124*  K20=1092
+    s_curve//dpcc-t-tightened                      K20=1325
+    s_curve//geo_free                              K20=162.8  K20=174.4
+    s_curve//geo_free-bounds_free                  K20=139.1  K20=158.7
+    s_curve//geo_free-model_free                   K20=127.8  K20=128.5
+    s_curve//gradient                              K20=91.47  K20=90.96  K20=91.59  K20=90.38  K20=87.49  K20=89.13*  K20=91.65
+    s_curve//gradient-tightened                    K20=91.49  K20=90.66  K20=91.39
+    s_curve//model_free                            K20=229  K20=130.3  K20=226.9  K20=117.4  K20=111.4*  K20=208.7
+    s_curve//model_free-tightened                  K20=244.9  K20=231.8  K20=224
+    s_curve//post_processing                       K20=167.4  K20=100.1  K20=167.2  K20=94.65  K20=92.73*  K20=154.9
+    s_curve//post_processing-tightened             K20=178  K20=182.9  K20=158.8
+    s_curve/diffusion/bounds_free                  K20=1604
+    s_curve/diffusion/bounds_free-tightened        K20=2378
+    s_curve/diffusion/diffuser                     K20=176.5*
+    s_curve/diffusion/dpcc-c                       K20=4516*
+    s_curve/diffusion/dpcc-c-tightened             K20=4091*
+    s_curve/diffusion/dpcc-r                       K20=3735*
+    s_curve/diffusion/dpcc-r-geo_free              K20=300.1
+    s_curve/diffusion/dpcc-r-tightened             K20=5016*
+    s_curve/diffusion/dpcc-t                       K20=4133*
+    s_curve/diffusion/dpcc-t-tightened             K20=5035*
+    s_curve/diffusion/geo_free                     K20=318
+    s_curve/diffusion/geo_free-bounds_free         K20=278.7
+    s_curve/diffusion/geo_free-model_free          K20=257.6
+    s_curve/diffusion/gradient                     K20=199.5
+    s_curve/diffusion/gradient-tightened           K20=200.3
+    s_curve/diffusion/model_free                   K20=374.7
+    s_curve/diffusion/model_free-bounds_free       K20=327.5
+    s_curve/diffusion/model_free-bounds_free-tightened K20=336.7
+    s_curve/diffusion/model_free-tightened         K20=371.2
+    s_curve/diffusion/post_processing              K20=214
+    s_curve/diffusion/post_processing-tightened    K20=280.4
+    s_curve/fm/bounds_free                         K1=81.93  K2=144.6  K5=266.2  K10=492.3  K20=1554
+    s_curve/fm/bounds_free-tightened               K1=84.93  K2=107.5  K5=276.8  K10=484.9  K20=1833
+    s_curve/fm/diffuser                            K1=11.34  K2=21.24  K5=49.57  K10=92.3  K20=167.4
+    s_curve/fm/dpcc-c                              K1=64.36  K2=76.42  K5=651.3  K10=987.5  K20=3047
+    s_curve/fm/dpcc-c-tightened                    K1=66.36  K2=76.45  K5=692.1  K10=1089  K20=3750
+    s_curve/fm/dpcc-r                              K1=57.01  K2=76.32  K5=694.3  K10=1205  K20=2420
+    s_curve/fm/dpcc-r-tightened                    K1=68.43  K2=80.2  K5=724.1  K10=1061  K20=3397
+    s_curve/fm/dpcc-t                              K1=98.37  K2=84.03  K5=719.8  K10=1540  K20=3169
+    s_curve/fm/dpcc-t-tightened                    K1=77.61  K2=56.02  K5=947.6  K10=1626  K20=3695
+    s_curve/fm/geo_free                            K1=23.85  K2=33.82  K5=89.79  K10=163.6  K20=281.4
+    s_curve/fm/geo_free-bounds_free                K1=21.56  K2=31.44  K5=82.79  K10=152.7  K20=261.4
+    s_curve/fm/geo_free-model_free                 K1=20.8  K2=31.49  K5=73.31  K10=135.7  K20=222.8
+    s_curve/fm/gradient                            K1=12.69  K2=22.27  K5=55.13  K10=99.47  K20=190.8
+    s_curve/fm/gradient-tightened                  K1=12.65  K2=22.44  K5=53.64  K10=108.4  K20=184.1
+    s_curve/fm/model_free                          K1=31.73  K2=40.61  K5=106.3  K10=180.3  K20=294.6
+    s_curve/fm/model_free-bounds_free              K1=26.98  K2=35.66  K5=97.6  K10=163.3  K20=273.7
+    s_curve/fm/model_free-bounds_free-tightened    K1=29.88  K2=37.66  K5=96.44  K10=162.5  K20=276.5
+    s_curve/fm/model_free-tightened                K1=35.52  K2=41.98  K5=110.5  K10=175.7  K20=299.7
+    s_curve/fm/post_processing                     K1=73.83  K2=87.46  K5=92.98  K10=132.6  K20=197.5
+    s_curve/fm/post_processing-tightened           K1=79.1  K2=67.59  K5=77.96  K10=127.4  K20=207.5
+    s_curve/mf/bounds_free                         K1=40.54  K2=51.98  K5=481.5  K10=910.3  K20=2500
+    s_curve/mf/bounds_free-tightened               K1=38.34  K2=44.62  K5=448.4  K10=739.2  K20=2150
+    s_curve/mf/diffuser                            K1=13.49  K2=21.06  K5=46.29  K10=89.69  K20=202.1
+    s_curve/mf/dpcc-c                              K1=40  K2=48.29  K5=1152  K10=1777  K20=4977
+    s_curve/mf/dpcc-c-tightened                    K1=46.74  K2=48.07  K5=1202  K10=1939  K20=5466
+    s_curve/mf/dpcc-r                              K1=41.69  K2=47.49  K5=1099  K10=1778  K20=5105
+    s_curve/mf/dpcc-r-tightened                    K1=44.92  K2=46.5  K5=1234  K10=1922  K20=5306
+    s_curve/mf/dpcc-t                              K1=50.18  K2=49.66  K5=1126  K10=1969  K20=5686
+    s_curve/mf/dpcc-t-tightened                    K1=43.16  K2=52.44  K5=1270  K10=2033  K20=5677
+    s_curve/mf/geo_free                            K1=20.69  K2=29.51  K5=78.02  K10=147.6  K20=330.8
+    s_curve/mf/geo_free-bounds_free                K1=18.5  K2=27.32  K5=71.87  K10=138.2  K20=311.3
+    s_curve/mf/geo_free-model_free                 K1=19.62  K2=31.84  K5=67.63  K10=127.7  K20=281.2
+    s_curve/mf/gradient                            K1=10.64  K2=19.52  K5=48.68  K10=95.29  K20=201
+    s_curve/mf/gradient-tightened                  K1=10.65  K2=19.47  K5=48.56  K10=95.15  K20=212.8
+    s_curve/mf/hardflow_new                        K10=5322
+    s_curve/mf/hardflow_new-c                      K10=8765
+    s_curve/mf/hardflow_new-t                      K10=5481
+    s_curve/mf/model_free                          K1=27.37  K2=33.87  K5=88.82  K10=155.2  K20=355.5
+    s_curve/mf/model_free-bounds_free              K1=22.34  K2=29.68  K5=76.96  K10=143.6  K20=304.3
+    s_curve/mf/model_free-bounds_free-tightened    K1=22.57  K2=31.07  K5=77.86  K10=143.5  K20=335
+    s_curve/mf/model_free-tightened                K1=28.1  K2=33.57  K5=91.14  K10=157  K20=331.8
+    s_curve/mf/post_processing                     K1=43.41  K2=48.23  K5=77.11  K10=119.8  K20=211.8
+    s_curve/mf/post_processing-tightened           K1=44.06  K2=46.17  K5=72.9  K10=116.4  K20=227.8
+  cb-tripped rate:
+    corridor//bounds_free                          K20=0%
+    corridor//diffuser                             K20=0%  K20=0%
+    corridor//dpcc-c                               K20=0%  K20=0%
+    corridor//dpcc-c-tightened                     K20=0%
+    corridor//dpcc-r                               K20=0%  K20=0%
+    corridor//dpcc-r-tightened                     K20=0%
+    corridor//dpcc-t                               K20=0%  K20=0%
+    corridor//dpcc-t-tightened                     K20=0%
+    corridor//geo_free                             K20=0%
+    corridor//geo_free-bounds_free                 K20=0%
+    corridor//geo_free-model_free                  K20=0%
+    corridor//gradient                             K20=0%  K20=0%
+    corridor//gradient-tightened                   K20=0%
+    corridor//model_free                           K20=0%  K20=0%
+    corridor//model_free-tightened                 K20=0%
+    corridor//post_processing                      K20=0%  K20=0%
+    corridor//post_processing-tightened            K20=0%
+    corridor/af/bounds_free                        K1=0%  K2=0%  K5=0%
+    corridor/af/bounds_free-tightened              K1=0%  K2=0%  K5=0%
+    corridor/af/diffuser                           K1=0%  K2=0%  K5=0%
+    corridor/af/dpcc-c                             K1=0%  K2=0%  K5=0%
+    corridor/af/dpcc-c-tightened                   K1=0%  K2=0%  K5=0%
+    corridor/af/dpcc-r                             K1=0%  K2=0%  K5=0%
+    corridor/af/dpcc-r-tightened                   K1=0%  K2=0%  K5=0%
+    corridor/af/dpcc-t                             K1=0%  K2=0%  K5=0%
+    corridor/af/dpcc-t-tightened                   K1=0%  K2=0%  K5=0%
+    corridor/af/geo_free                           K1=0%  K2=0%  K5=0%
+    corridor/af/geo_free-bounds_free               K1=0%  K2=0%  K5=0%
+    corridor/af/geo_free-model_free                K1=0%  K2=0%  K5=0%
+    corridor/af/gradient                           K1=0%  K2=0%  K5=0%
+    corridor/af/gradient-tightened                 K1=0%  K2=0%  K5=0%
+    corridor/af/hardflow_new-c                     K1=0%  K2=0%  K5=0%
+    corridor/af/hardflow_new-r                     K1=0%  K2=0%  K5=0%
+    corridor/af/hardflow_new-t                     K1=0%  K2=0%  K5=0%
+    corridor/af/model_free                         K1=0%  K2=0%  K5=0%
+    corridor/af/model_free-bounds_free             K1=0%  K2=0%  K5=0%
+    corridor/af/model_free-bounds_free-tightened   K1=0%  K2=0%  K5=0%
+    corridor/af/model_free-tightened               K1=0%  K2=0%  K5=0%
+    corridor/af/post_processing                    K1=0%  K2=0%  K5=0%
+    corridor/af/post_processing-tightened          K1=0%  K2=0%  K5=0%
+    corridor/fm/bounds_free                        K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/bounds_free-tightened              K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/diffuser                           K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/dpcc-c                             K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/dpcc-c-tightened                   K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/dpcc-r                             K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/dpcc-r-tightened                   K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/dpcc-t                             K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/dpcc-t-tightened                   K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/geo_free                           K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/geo_free-bounds_free               K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/geo_free-model_free                K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/gradient                           K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/gradient-tightened                 K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/hardflow_new                       K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/hardflow_new-c                     K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/hardflow_new-t                     K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/model_free                         K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/model_free-bounds_free             K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/model_free-bounds_free-tightened   K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/model_free-tightened               K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/post_processing                    K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/fm/post_processing-tightened          K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/bounds_free                        K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/bounds_free-tightened              K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/diffuser                           K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/dpcc-c                             K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/dpcc-c-tightened                   K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/dpcc-r                             K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/dpcc-r-tightened                   K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/dpcc-t                             K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/dpcc-t-tightened                   K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/geo_free                           K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/geo_free-bounds_free               K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/geo_free-model_free                K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/gradient                           K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/gradient-tightened                 K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/hardflow_new                       K1=0%  K2=0%  K5=0%  K10=0%
+    corridor/mf/hardflow_new-c                     K1=0%  K2=0%  K5=0%  K10=0%
+    corridor/mf/hardflow_new-t                     K1=0%  K2=0%  K5=0%  K10=0%
+    corridor/mf/model_free                         K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/model_free-bounds_free             K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/model_free-bounds_free-tightened   K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/model_free-tightened               K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/post_processing                    K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    corridor/mf/post_processing-tightened          K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    empty//diffuser                                K20=0%
+    empty//dpcc-c                                  K20=0%
+    empty//dpcc-r                                  K20=0%
+    empty//dpcc-t                                  K20=0%
+    empty//gradient                                K20=0%
+    empty//model_free                              K20=0%
+    empty//post_processing                         K20=0%
+    pillars//bounds_free                           K20=0%  K20=0%
+    pillars//bounds_free-tightened                 K20=0%
+    pillars//diffuser                              K20=0%  K20=0%*  K20=0%  K20=0%
+    pillars//dpcc-c                                K20=0%*
+    pillars//dpcc-r                                K20=0%*  K20=0%
+    pillars//dpcc-t                                K20=0%*
+    pillars//geo_free                              K20=0%  K20=0%
+    pillars//geo_free-bounds_free                  K20=0%  K20=0%
+    pillars//geo_free-model_free                   K20=0%  K20=0%
+    pillars//gradient                              K20=0%  K20=0%*  K20=0%  K20=0%
+    pillars//gradient-tightened                    K20=0%  K20=0%  K20=0%
+    pillars//model_free                            K20=0%  K20=0%*  K20=0%  K20=0%
+    pillars//model_free-bounds_free                K20=0%
+    pillars//model_free-bounds_free-tightened      K20=0%
+    pillars//model_free-tightened                  K20=0%  K20=0%  K20=0%
+    pillars//post_processing                       K20=0%  K20=0%*  K20=0%  K20=0%
+    pillars//post_processing-tightened             K20=0%  K20=0%  K20=0%
+    pillars/af/diffuser                            K1=0%  K2=0%  K5=0%
+    pillars/af/dpcc-c                              K1=0%  K2=0%  K5=0%
+    pillars/af/dpcc-c-geo_free                     K1=0%  K2=0%  K5=0%
+    pillars/af/dpcc-c-tightened                    K1=0%  K2=0%  K5=0%
+    pillars/af/dpcc-r                              K1=0%  K2=0%  K5=0%
+    pillars/af/dpcc-r-geo_free                     K1=0%  K2=0%  K5=0%
+    pillars/af/dpcc-r-tightened                    K1=0%  K2=0%  K5=0%
+    pillars/af/dpcc-t                              K1=0%  K2=0%  K5=0%
+    pillars/af/dpcc-t-geo_free                     K1=0%  K2=0%  K5=0%
+    pillars/af/dpcc-t-tightened                    K1=0%  K2=0%  K5=0%
+    pillars/af/hardflow_sls                        K1=0%  K2=0%  K5=0%
+    pillars/af/hardflow_sls-c                      K1=0%  K2=0%  K5=0%
+    pillars/af/hardflow_sls-c-geo_free             K1=0%  K2=0%  K5=0%
+    pillars/af/hardflow_sls-r                      K1=0%  K2=0%  K5=0%
+    pillars/af/hardflow_sls-r-geo_free             K1=0%  K2=0%  K5=0%
+    pillars/af/hardflow_sls-t                      K1=0%  K2=0%  K5=0%
+    pillars/af/hardflow_sls-t-geo_free             K1=0%  K2=0%  K5=0%
+    pillars/fm/bounds_free                         K10=0%
+    pillars/fm/bounds_free-tightened               K10=33%
+    pillars/fm/diffuser                            K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    pillars/fm/dpcc-c                              K1=0%  K2=0%  K5=0%  K10=0%  K20=30%
+    pillars/fm/dpcc-c-geo_free                     K1=0%  K2=0%  K5=0%
+    pillars/fm/dpcc-c-tightened                    K1=0%  K2=0%  K5=0%  K10=33%
+    pillars/fm/dpcc-r                              K1=0%  K2=0%  K5=0%  K10=33%  K20=60%
+    pillars/fm/dpcc-r-geo_free                     K1=0%  K2=0%  K5=0%
+    pillars/fm/dpcc-r-tightened                    K1=0%  K2=0%  K5=0%  K10=33%  K20=60%
+    pillars/fm/dpcc-t                              K1=0%  K2=0%  K5=0%  K10=33%
+    pillars/fm/dpcc-t-geo_free                     K1=0%  K2=0%  K5=0%
+    pillars/fm/dpcc-t-tightened                    K1=0%  K2=0%  K5=0%  K10=33%
+    pillars/fm/geo_free                            K10=0%
+    pillars/fm/geo_free-bounds_free                K10=0%
+    pillars/fm/geo_free-model_free                 K10=0%
+    pillars/fm/gradient                            K10=0%
+    pillars/fm/gradient-tightened                  K10=0%
+    pillars/fm/hardflow_new                        K1=0%  K2=0%  K10=0%
+    pillars/fm/hardflow_new-c                      K1=0%  K2=0%  K10=0%
+    pillars/fm/hardflow_new-c-geo_free             K1=0%  K2=0%
+    pillars/fm/hardflow_new-r                      K1=0%  K2=0%
+    pillars/fm/hardflow_new-r-geo_free             K1=0%  K2=0%
+    pillars/fm/hardflow_new-t                      K1=0%  K2=0%  K10=0%
+    pillars/fm/hardflow_new-t-geo_free             K1=0%  K2=0%
+    pillars/fm/hardflow_sls                        K5=0%
+    pillars/fm/hardflow_sls-c                      K5=0%
+    pillars/fm/hardflow_sls-c-geo_free             K5=0%
+    pillars/fm/hardflow_sls-r                      K5=0%
+    pillars/fm/hardflow_sls-r-geo_free             K5=0%
+    pillars/fm/hardflow_sls-t                      K5=0%
+    pillars/fm/hardflow_sls-t-geo_free             K5=0%
+    pillars/fm/model_free                          K10=0%
+    pillars/fm/model_free-bounds_free              K10=0%
+    pillars/fm/model_free-bounds_free-tightened    K10=0%
+    pillars/fm/model_free-tightened                K10=0%
+    pillars/fm/post_processing                     K10=0%
+    pillars/fm/post_processing-tightened           K10=0%
+    pillars/mf/bounds_free                         K10=0%
+    pillars/mf/bounds_free-tightened               K10=0%
+    pillars/mf/diffuser                            K1=0%  K2=0%  K5=0%  K10=0%
+    pillars/mf/dpcc-c                              K1=0%  K2=0%  K5=0%  K10=0%
+    pillars/mf/dpcc-c-geo_free                     K1=0%  K2=0%  K5=0%
+    pillars/mf/dpcc-c-tightened                    K1=0%  K2=0%  K5=0%  K10=0%
+    pillars/mf/dpcc-r                              K1=0%  K2=0%  K5=0%  K10=0%
+    pillars/mf/dpcc-r-geo_free                     K1=0%  K2=0%  K5=0%
+    pillars/mf/dpcc-r-tightened                    K1=0%  K2=0%  K5=0%  K10=0%
+    pillars/mf/dpcc-t                              K1=0%  K2=0%  K5=0%  K10=0%
+    pillars/mf/dpcc-t-geo_free                     K1=0%  K2=0%  K5=0%
+    pillars/mf/dpcc-t-tightened                    K1=0%  K2=0%  K5=0%  K10=0%
+    pillars/mf/geo_free                            K10=0%
+    pillars/mf/geo_free-bounds_free                K10=0%
+    pillars/mf/geo_free-model_free                 K10=0%
+    pillars/mf/gradient                            K10=0%
+    pillars/mf/gradient-tightened                  K10=0%
+    pillars/mf/hardflow_new                        K10=0%
+    pillars/mf/hardflow_new-c                      K10=0%
+    pillars/mf/hardflow_new-t                      K10=0%
+    pillars/mf/hardflow_sls                        K1=0%  K2=0%  K5=0%
+    pillars/mf/hardflow_sls-c                      K1=0%  K2=0%  K5=0%
+    pillars/mf/hardflow_sls-c-geo_free             K1=0%  K2=0%  K5=0%
+    pillars/mf/hardflow_sls-r                      K1=0%  K2=0%  K5=0%
+    pillars/mf/hardflow_sls-r-geo_free             K1=0%  K2=0%  K5=0%
+    pillars/mf/hardflow_sls-t                      K1=0%  K2=0%  K5=0%
+    pillars/mf/hardflow_sls-t-geo_free             K1=0%  K2=0%  K5=0%
+    pillars/mf/model_free                          K10=0%
+    pillars/mf/model_free-bounds_free              K10=0%
+    pillars/mf/model_free-bounds_free-tightened    K10=0%
+    pillars/mf/model_free-tightened                K10=0%
+    pillars/mf/post_processing                     K10=0%
+    pillars/mf/post_processing-tightened           K10=0%
+    s_curve//bounds_free                           K20=0%  K20=0%
+    s_curve//diffuser                              K20=0%  K20=0%  K20=0%  K20=0%  K20=0%*  K20=0%
+    s_curve//dpcc-c                                K20=0%  K20=0%  K20=0%*  K20=0%
+    s_curve//dpcc-c-tightened                      K20=0%
+    s_curve//dpcc-r                                K20=0%  K20=0%  K20=0%  K20=0%*  K20=0%
+    s_curve//dpcc-r-tightened                      K20=0%
+    s_curve//dpcc-t                                K20=0%  K20=0%  K20=0%*  K20=0%
+    s_curve//dpcc-t-tightened                      K20=0%
+    s_curve//geo_free                              K20=0%  K20=0%
+    s_curve//geo_free-bounds_free                  K20=0%  K20=0%
+    s_curve//geo_free-model_free                   K20=0%  K20=0%
+    s_curve//gradient                              K20=0%  K20=0%  K20=0%  K20=0%  K20=0%*  K20=0%
+    s_curve//gradient-tightened                    K20=0%  K20=0%  K20=0%
+    s_curve//model_free                            K20=0%  K20=0%  K20=0%  K20=0%  K20=0%*  K20=0%
+    s_curve//model_free-tightened                  K20=0%  K20=0%  K20=0%
+    s_curve//post_processing                       K20=0%  K20=0%  K20=0%  K20=0%  K20=0%*  K20=0%
+    s_curve//post_processing-tightened             K20=0%  K20=0%  K20=0%
+    s_curve/diffusion/bounds_free                  K20=0%
+    s_curve/diffusion/bounds_free-tightened        K20=0%
+    s_curve/diffusion/diffuser                     K20=0%*
+    s_curve/diffusion/dpcc-c                       K20=0%*
+    s_curve/diffusion/dpcc-c-tightened             K20=0%*
+    s_curve/diffusion/dpcc-r                       K20=0%*
+    s_curve/diffusion/dpcc-r-geo_free              K20=0%
+    s_curve/diffusion/dpcc-r-tightened             K20=0%*
+    s_curve/diffusion/dpcc-t                       K20=0%*
+    s_curve/diffusion/dpcc-t-tightened             K20=0%*
+    s_curve/diffusion/geo_free                     K20=0%
+    s_curve/diffusion/geo_free-bounds_free         K20=0%
+    s_curve/diffusion/geo_free-model_free          K20=0%
+    s_curve/diffusion/gradient                     K20=0%
+    s_curve/diffusion/gradient-tightened           K20=0%
+    s_curve/diffusion/model_free                   K20=0%
+    s_curve/diffusion/model_free-bounds_free       K20=0%
+    s_curve/diffusion/model_free-bounds_free-tightened K20=0%
+    s_curve/diffusion/model_free-tightened         K20=0%
+    s_curve/diffusion/post_processing              K20=0%
+    s_curve/diffusion/post_processing-tightened    K20=0%
+    s_curve/fm/bounds_free                         K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/bounds_free-tightened               K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/diffuser                            K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/dpcc-c                              K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/dpcc-c-tightened                    K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/dpcc-r                              K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/dpcc-r-tightened                    K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/dpcc-t                              K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/dpcc-t-tightened                    K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/geo_free                            K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/geo_free-bounds_free                K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/geo_free-model_free                 K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/gradient                            K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/gradient-tightened                  K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/model_free                          K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/model_free-bounds_free              K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/model_free-bounds_free-tightened    K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/model_free-tightened                K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/post_processing                     K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/fm/post_processing-tightened           K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/bounds_free                         K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/bounds_free-tightened               K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/diffuser                            K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/dpcc-c                              K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/dpcc-c-tightened                    K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/dpcc-r                              K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/dpcc-r-tightened                    K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/dpcc-t                              K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/dpcc-t-tightened                    K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/geo_free                            K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/geo_free-bounds_free                K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/geo_free-model_free                 K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/gradient                            K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/gradient-tightened                  K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/hardflow_new                        K10=0%
+    s_curve/mf/hardflow_new-c                      K10=0%
+    s_curve/mf/hardflow_new-t                      K10=0%
+    s_curve/mf/model_free                          K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/model_free-bounds_free              K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/model_free-bounds_free-tightened    K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/model_free-tightened                K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/post_processing                     K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+    s_curve/mf/post_processing-tightened           K1=0%  K2=0%  K5=0%  K10=0%  K20=0%
+  * = that K cell pools more than one candidate (see the `candidates` column in uav_k_sweep.csv)
+
+DATA QUALITY (units with a problem)
+------------------------------------------------------------------------------
+  30 of 1024 units flagged:
+    cand3/seed6/none/fm_only: NO TIMING
+    cand4/seed6/none/diffuser: NO TIMING
+    cand4/seed6/none/dpcc-c: NO TIMING
+    cand4/seed6/none/dpcc-r: NO TIMING
+    cand4/seed6/none/dpcc-t: NO TIMING
+    cand10/seed6/none/fm_only: NO TIMING
+    cand11/seed6/none/diffuser: NO TIMING
+    cand11/seed6/none/dpcc-c: NO TIMING
+    cand11/seed6/none/dpcc-r: NO TIMING
+    cand11/seed6/none/dpcc-t: NO TIMING
+    cand12/seed6/eval(legacy)/fm_only: NO TIMING
+    cand20/seed6/none/diffuser: NO TIMING
+    cand20/seed6/none/dpcc-c: NO TIMING
+    cand20/seed6/none/dpcc-r: NO TIMING
+    cand20/seed6/none/dpcc-t: NO TIMING
+    cand21/seed6/none/diffuser: NO TIMING
+    cand21/seed6/none/dpcc-c: NO TIMING
+    cand21/seed6/none/dpcc-r: NO TIMING
+    cand21/seed6/none/dpcc-t: NO TIMING
+    cand26/seed6/none/fm_only: NO TIMING
+    cand27/seed6/none/fm_only: NO TIMING
+    cand45/seed6/pillars_bounds+dynamics+geo_bounds+obstacles/bounds_free-tightened: cb_tripped=1/3  SENTINEL
+    cand45/seed6/pillars_bounds+dynamics+geo_bounds+obstacles/dpcc-c-tightened: cb_tripped=1/3  SENTINEL
+    cand45/seed6/pillars_bounds+dynamics+geo_bounds+obstacles/dpcc-r: cb_tripped=1/3  SENTINEL
+    cand45/seed6/pillars_bounds+dynamics+geo_bounds+obstacles/dpcc-r-tightened: cb_tripped=1/3  SENTINEL
+    cand45/seed6/pillars_bounds+dynamics+geo_bounds+obstacles/dpcc-t: cb_tripped=1/3  SENTINEL
+    cand45/seed6/pillars_bounds+dynamics+geo_bounds+obstacles/dpcc-t-tightened: cb_tripped=1/3  SENTINEL
+    cand47/seed6/pillars_bounds+dynamics+geo_bounds+obstacles/dpcc-c: cb_tripped=3/10  SENTINEL
+    cand47/seed6/pillars_bounds+dynamics+geo_bounds+obstacles/dpcc-r: cb_tripped=6/10  SENTINEL
+    cand47/seed6/pillars_bounds+dynamics+geo_bounds+obstacles/dpcc-r-tightened: cb_tripped=6/10  SENTINEL
+
+NOTES
+------------------------------------------------------------------------------
+  mask=all         every rollout
+  mask=proj_valid  rollouts whose projection circuit breaker never
+    opened. A tripped rollout ran (partly) UNPROJECTED (sustained
+    SLSQP slowness, projection.py Fix_15.2), so its constraint
+    numbers describe a policy the variant name does not name.
+  avg_time / fm_ms / proj_ms come from diagnostics/*.json ONLY —
+    eval_artifacts.save_npz never persists the timing group. A unit
+    with timing_missing=1 in data_quality.csv has no time axis.
+  n_steps early-stops on goal-reach and runs the FULL budget on a
+    miss (U_13), so it measures misses as much as speed. Read
+    steps_to_goal (reaching episodes only) for time-to-goal.
+  scene=empty has a RANDOM per-episode start/goal the state-only
+    policy is never told, so its goal_* columns are not a policy
+    failure — its success is stable/safe flight only.
+  hardflow_new* evaluates the network TWICE per ODE step, so at the
+    same K it spends 2x the generation budget of a DPCC arm. Quote
+    nfe_effective (uav_units_long.csv, n=1 rows), not K, when the
+    two are compared.
+  There is NO diffusion-DPCC UAV checkpoint from Gen11 (PLAN §1.5).
+    A Gen15 `diffusion`-engine candidate is the first one; without
+    it in the batch, the strongest available claim is "vs naive FM
+    + DPCC", never "beats DPCC".
+==============================================================================

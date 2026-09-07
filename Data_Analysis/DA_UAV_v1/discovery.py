@@ -52,6 +52,7 @@ import re
 from config import (
     CB_SENTINEL_NAME,
     ENGINE_LABELS,
+    EVAL_TAG_PREFIX_RE,
     EVAL_TAG_RE,
     EVAL_TAG_RE_GEN11,
     GEO_DIR_PREFIXES,
@@ -75,6 +76,8 @@ _SNAPSHOT_FILE_RE = re.compile(r'^snapshot_(\d{8}_\d{6})$')
 _SCENE_RE = re.compile(SCENE_DIR_RE)
 _EVAL_TAG_RE = re.compile(EVAL_TAG_RE)
 _EVAL_TAG_RE_GEN11 = re.compile(EVAL_TAG_RE_GEN11)
+_EVAL_TAG_PREFIX_RE = re.compile(EVAL_TAG_PREFIX_RE)
+_WARNED_UNPARSED_TAGS = set()
 _MODEL_PREFIX_RE = re.compile(MODEL_PREFIX_RE)
 _MODEL_TOKEN_RES = {name: re.compile(pattern)
                     for name, pattern in MODEL_TOKEN_RES.items()}
@@ -198,6 +201,11 @@ def _seed_dirs(candidate_path):
 def parse_eval_tag(name):
     """`Emf_K4_mpc4_pid_stopgo_T0.5` → engine/K/mpc_batch/controller/threshold.
 
+    A trailing `_{run_tag}` (`FMPCC_UAV_EVAL_TAG`, e.g.
+    `Emf_K1_mpc4_pid_stopgo_T0.5_fix16scaled`) is parsed into `run_tag` and is a
+    first-class axis — two runs that differ only in it are DIFFERENT experiments
+    and must never pool. Untagged folders get `run_tag == ''`.
+
     Falls back to the Gen11 spelling (no `E{engine}` token) so a Gen11 tree can
     sit in the same comparison; `engine` is then left empty for `parse_axes` to
     fill from the model folder. An unrecognised folder name yields empty fields
@@ -209,6 +217,23 @@ def parse_eval_tag(name):
     else:
         match = _EVAL_TAG_RE_GEN11.match(str(name or ''))
         if not match:
+            # A folder that is SHAPED like an eval tag but does not parse is a
+            # parser bug, and one that costs whole runs: every axis comes back
+            # empty, K is None, and the aggregator groupbys then drop the rows on
+            # the NaN key with no error. (Exactly how the six Fix_16 A/B runs went
+            # missing on 2026-09-03, before EVAL_TAG_RE learned the run-tag
+            # suffix.) A folder that is not eval-tag-shaped at all is the ordinary
+            # legacy case — a Gen11 MODEL folder used as the candidate — and stays
+            # quiet.
+            text = str(name or '')
+            if _EVAL_TAG_PREFIX_RE.match(text) and text not in _WARNED_UNPARSED_TAGS:
+                _WARNED_UNPARSED_TAGS.add(text)
+                logger.warning(
+                    f'  eval-tag folder {text!r} looks like an eval tag but does NOT '
+                    f'match EVAL_TAG_RE — every path-encoded axis (engine/K/mpc/'
+                    f'controller/threshold/run_tag) will be EMPTY for it, and rows '
+                    f'with no K are excluded from uav_k_sweep.csv. Fix EVAL_TAG_RE '
+                    f'in DA_UAV_v1/config.py rather than reading the run as missing.')
             return {}
         found = dict(match.groupdict())
         found['engine'] = ''
@@ -218,6 +243,7 @@ def parse_eval_tag(name):
         'mpc_batch': _int_or_none(found.get('mpc_batch')),
         'controller': found.get('controller', '') or '',
         'threshold': _float_or_none(found.get('threshold')),
+        'run_tag': found.get('run_tag', '') or '',
     }
     return out
 
@@ -282,6 +308,8 @@ def parse_axes(candidate_path):
         'mpc_batch': tag.get('mpc_batch'),
         'controller': tag.get('controller', ''),
         'threshold': tag.get('threshold'),
+        # Trailing `_{run_tag}` from FMPCC_UAV_EVAL_TAG. An A/B axis, not cosmetic.
+        'run_tag': tag.get('run_tag', ''),
         'eval_tag': parts[-1] if parts else '',
         'model_name': model.get('model_name', ''),
         'horizon': model.get('horizon', ''),
@@ -322,6 +350,10 @@ def display_name(axes, folder_name):
             bits.append(f'{prefix}{axes[field]}')
     if axes.get('generation') == 'Gen11':
         bits.append('Gen11')
+    # 🔴 Must be in the label. Without it the A and B arms of an A/B collapse to
+    # the same display name and read as one candidate in every by-name table.
+    if axes.get('run_tag'):
+        bits.append(f"@{axes['run_tag']}")
     return '|'.join(bits) if bits else folder_name
 
 
@@ -772,8 +804,8 @@ def _make_unit(candidate_idx, candidate_info, seed, split, geo_raw, variant_raw,
     # Path-encoded axes ride on every unit so the aggregator never has to look a
     # candidate back up to group by scene / engine / K.
     for field in ('scene', 'engine', 'engine_label', 'K', 'mpc_batch',
-                  'controller', 'threshold', 'backbone', 'data_proportion',
-                  'model_name', 'generation'):
+                  'controller', 'threshold', 'run_tag', 'backbone',
+                  'data_proportion', 'model_name', 'generation'):
         unit[field] = axes.get(field, '')
     return unit
 

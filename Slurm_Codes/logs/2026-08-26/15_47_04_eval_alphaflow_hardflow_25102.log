@@ -1,0 +1,2324 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu Aug 27 16:03:54 UTC 2026
+JOB NAME:  eval_alphaflow_hardflow
+JOB ID:    25102
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   20b5874
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=4  MUJOCO_EGL_DEVICE_ID=4
+[ hardflow ] HFFM_BATCH=1 (arm C)  FMPCC_MPC_BATCH=1 (arms A/B)  HFFM_ACT_THRESHOLD=0.5  HFFM_FLOW_STEPS=2
+
+-- H0: imports + casadi ----------------------------------------
+  casadi: available
+  HardFlowSampler / TrajectoryLayout / resolve_activation_threshold imported OK
+  resolve_activation_threshold(0.5) = 0.5
+  H0 -> PASS
+
+-- H1: HardFlow queries the α-Flow field at h==0 --------------
+  _predict_velocity called: 1 time(s)
+  h is a tensor           : True
+  h.shape == (B,)         : True  (got (4,))
+  h is all-zero (== h=0)  : True
+  H1 -> PASS  (u(x,t,0)=v is what makes the projection math == Gen12; α-Flow supervises it via af_ratio_fm, af_diffusion.py:694)
+
+-- H3: arm C init noise == α-Flow sampler sigma ------------
+  init_noise_scale        : 1.0 (expected 1.0, af_diffusion.py:260)
+  empirical std of x_init : 1.0001
+  draw shape              : (4096, 8, 6)  ok=True
+  H3 -> PASS  (0.5 here = arm C runs at half the trained noise scale, silently)
+
+-- H4: the h=0 anchor was trained (af_ratio_fm > 0) --------
+[ config/avoiding-d3il ] custom_msg="mpc1" -> results dirs end in "_msgmpc1"
+  plan_fm_v3_alphaflow.af_ratio_fm       = 0.5
+  flow_matching_v3_alphaflow.af_ratio_fm = 0.5
+  H4 -> PASS  (af_ratio_fm == 0 means u(x,t,0)=v was never supervised)
+
+============================================================
+GATES: ALL PASS  (4/4)
+pybullet build time: Nov 28 2023 23:45:17
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=2  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_alphaflow/models/af_diffusion.py
+
+[ eval ] config: config/alphaflow_projection_eval.yaml
+[ eval ] resolved  cfg=config/alphaflow_projection_eval.yaml  dpcc_threshold=0.5  hf_act_threshold=0.5  hf_batch=1  hf_candidate_cost=prox
+[ eval ] mpc fan: arms A/B=1, arm C=1
+[ config/avoiding-d3il ] custom_msg="mpc1" -> results dirs end in "_msgmpc1"
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/6
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/6
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ AFTrajectoryModel ] backbone=sit  unet_width(freq_dim)=256  params=10.0M
+[ utils/training ] ⚠️  Pre-fix_6 checkpoint: no optimizer state stored. Adam moments restart cold; fast-forwarding the LR schedule instead.
+[ utils/training ] LR schedule fast-forwarded to step 68000 (lr=1.182e-04)
+[ utils/training ] Restored loss history from checkpoint at step 68000
+[ utils/training ] Recovered best_test_loss=0.713988 from restored history (69 points)
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 2 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/6)
+[ provenance ] wrote logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/6/run_provenance.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-right-hard - diffuser (6) - K=2----------------------------
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_ec30d010-a230-11f1-b69c-d85ed34e311e.xml' with default provider at slot 1
+
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 59.50 +- 0.50
+Avg number of constraint violations: 20.00 +- 6.00
+Avg total violation: 3.190 +- 0.825
+Average computation time per step: 0.012
+Tracking error: 0.023
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r (6) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 65.50 +- 0.50
+Avg number of constraint violations: 1.50 +- 1.50
+Avg total violation: 0.014 +- 0.014
+Average computation time per step: 0.014
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r-tightened (6) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 65.00 +- 1.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.014
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c (6) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 65.50 +- 0.50
+Avg number of constraint violations: 1.50 +- 1.50
+Avg total violation: 0.014 +- 0.014
+Average computation time per step: 0.014
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c-tightened (6) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 65.00 +- 1.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.014
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t (6) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 65.50 +- 0.50
+Avg number of constraint violations: 1.50 +- 1.50
+Avg total violation: 0.014 +- 0.014
+Average computation time per step: 0.014
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t-tightened (6) - K=2----------------------------
+/data/home/llim/FMPCC/FM-PCC/FM_v3_alphaflow_test/eval_flow_matching_v3_alphaflow.py:531: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`). Consider using `matplotlib.pyplot.close()`.
+  fig_all, ax_all = plt.subplots(min(n_trials, plot_how_many), len(projection_variants), figsize=(10 * len(projection_variants), 10 * min(n_trials, plot_how_many)), squeeze=False)
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 65.00 +- 1.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.014
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r (6) - K=2----------------------------
+/data/home/llim/FMPCC/FM-PCC/FM_v3_alphaflow_test/eval_flow_matching_v3_alphaflow.py:510: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`). Consider using `matplotlib.pyplot.close()`.
+  fig, ax = plt.subplots(min(n_trials, plot_how_many), 6, figsize=(30, 5 * min(n_trials, plot_how_many)), squeeze=False)
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 65.00 +- 1.00
+Avg number of constraint violations: 1.50 +- 1.50
+Avg total violation: 0.014 +- 0.014
+Average computation time per step: 0.031
+[hardflow] NFE=264  NLP solves=132  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c (6) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 65.00 +- 1.00
+Avg number of constraint violations: 1.50 +- 1.50
+Avg total violation: 0.014 +- 0.014
+Average computation time per step: 0.030
+[hardflow] NFE=264  NLP solves=132  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t (6) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 65.00 +- 1.00
+Avg number of constraint violations: 1.50 +- 1.50
+Avg total violation: 0.014 +- 0.014
+Average computation time per step: 0.030
+[hardflow] NFE=264  NLP solves=132  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r-tightened (6) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 64.50 +- 0.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.031
+[hardflow] NFE=262  NLP solves=131  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c-tightened (6) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 64.50 +- 0.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.031
+[hardflow] NFE=262  NLP solves=131  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t-tightened (6) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 64.50 +- 0.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.031
+[hardflow] NFE=262  NLP solves=131  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=2  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_alphaflow/models/af_diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb1_3a35cd1a-a231-11f1-b69c-d85ed34e311e.xml' with default provider at slot 1
+
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/7
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/7
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ AFTrajectoryModel ] backbone=sit  unet_width(freq_dim)=256  params=10.0M
+[ utils/training ] ⚠️  Pre-fix_6 checkpoint: no optimizer state stored. Adam moments restart cold; fast-forwarding the LR schedule instead.
+[ utils/training ] LR schedule fast-forwarded to step 67000 (lr=1.250e-04)
+[ utils/training ] Restored loss history from checkpoint at step 67000
+[ utils/training ] Recovered best_test_loss=0.723507 from restored history (68 points)
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 2 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/7)
+[ provenance ] wrote logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/7/run_provenance.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-right-hard - diffuser (7) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 64.00 +- 4.00
+Avg number of constraint violations: 13.50 +- 13.50
+Avg total violation: 1.983 +- 1.976
+Average computation time per step: 0.011
+Tracking error: 0.017
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r (7) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 86.00 +- 23.00
+Avg number of constraint violations: 0.50 +- 0.50
+Avg total violation: 0.001 +- 0.001
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r-tightened (7) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 91.00 +- 16.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c (7) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 86.00 +- 23.00
+Avg number of constraint violations: 0.50 +- 0.50
+Avg total violation: 0.001 +- 0.001
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c-tightened (7) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 91.00 +- 16.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t (7) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 86.00 +- 23.00
+Avg number of constraint violations: 0.50 +- 0.50
+Avg total violation: 0.001 +- 0.001
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t-tightened (7) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 91.00 +- 16.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r (7) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 86.00 +- 23.00
+Avg number of constraint violations: 0.50 +- 0.50
+Avg total violation: 0.001 +- 0.001
+Average computation time per step: 0.029
+[hardflow] NFE=348  NLP solves=174  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c (7) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 86.00 +- 23.00
+Avg number of constraint violations: 0.50 +- 0.50
+Avg total violation: 0.001 +- 0.001
+Average computation time per step: 0.029
+[hardflow] NFE=348  NLP solves=174  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t (7) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 86.00 +- 23.00
+Avg number of constraint violations: 0.50 +- 0.50
+Avg total violation: 0.001 +- 0.001
+Average computation time per step: 0.029
+[hardflow] NFE=348  NLP solves=174  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r-tightened (7) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 91.00 +- 16.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.031
+[hardflow] NFE=368  NLP solves=184  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c-tightened (7) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 91.00 +- 16.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.031
+[hardflow] NFE=368  NLP solves=184  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t-tightened (7) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 91.00 +- 16.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.031
+[hardflow] NFE=368  NLP solves=184  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=2  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_alphaflow/models/af_diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb2_9f3bb3fa-a231-11f1-b69c-d85ed34e311e.xml' with default provider at slot 1
+
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/8
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/8
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ AFTrajectoryModel ] backbone=sit  unet_width(freq_dim)=256  params=10.0M
+[ utils/training ] ⚠️  Pre-fix_6 checkpoint: no optimizer state stored. Adam moments restart cold; fast-forwarding the LR schedule instead.
+[ utils/training ] LR schedule fast-forwarded to step 64000 (lr=1.461e-04)
+[ utils/training ] Restored loss history from checkpoint at step 64000
+[ utils/training ] Recovered best_test_loss=0.723114 from restored history (65 points)
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 2 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/8)
+[ provenance ] wrote logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/8/run_provenance.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-right-hard - diffuser (8) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 63.50 +- 3.50
+Avg number of constraint violations: 25.50 +- 1.50
+Avg total violation: 4.326 +- 0.518
+Average computation time per step: 0.011
+Tracking error: 0.023
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r (8) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.50 +- 7.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r-tightened (8) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 67.00 +- 7.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c (8) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.50 +- 7.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c-tightened (8) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 67.00 +- 7.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t (8) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.50 +- 7.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t-tightened (8) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 67.00 +- 7.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r (8) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.50 +- 7.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.029
+[hardflow] NFE=254  NLP solves=127  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c (8) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.50 +- 7.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.029
+[hardflow] NFE=254  NLP solves=127  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t (8) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.50 +- 7.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.029
+[hardflow] NFE=254  NLP solves=127  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r-tightened (8) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 68.50 +- 5.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.031
+[hardflow] NFE=278  NLP solves=139  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c-tightened (8) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 68.50 +- 5.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.031
+[hardflow] NFE=278  NLP solves=139  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t-tightened (8) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 68.50 +- 5.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.031
+[hardflow] NFE=278  NLP solves=139  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=2  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_alphaflow/models/af_diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb3_edeb6c66-a231-11f1-b69c-d85ed34e311e.xml' with default provider at slot 1
+
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/9
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/9
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ AFTrajectoryModel ] backbone=sit  unet_width(freq_dim)=256  params=10.0M
+[ utils/training ] ⚠️  Pre-fix_6 checkpoint: no optimizer state stored. Adam moments restart cold; fast-forwarding the LR schedule instead.
+[ utils/training ] LR schedule fast-forwarded to step 71000 (lr=9.860e-05)
+[ utils/training ] Restored loss history from checkpoint at step 71000
+[ utils/training ] Recovered best_test_loss=0.718138 from restored history (72 points)
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 2 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/9)
+[ provenance ] wrote logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/9/run_provenance.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-right-hard - diffuser (9) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 63.00 +- 3.00
+Avg number of constraint violations: 12.50 +- 12.50
+Avg total violation: 2.062 +- 2.052
+Average computation time per step: 0.011
+Tracking error: 0.027
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r (9) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 65.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r-tightened (9) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 66.50 +- 1.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c (9) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 65.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c-tightened (9) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 66.50 +- 1.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t (9) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 65.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t-tightened (9) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 66.50 +- 1.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r (9) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 65.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.029
+[hardflow] NFE=264  NLP solves=132  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c (9) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 65.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.029
+[hardflow] NFE=264  NLP solves=132  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t (9) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 65.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.029
+[hardflow] NFE=264  NLP solves=132  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r-tightened (9) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 67.00 +- 2.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.031
+[hardflow] NFE=272  NLP solves=136  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c-tightened (9) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 67.00 +- 2.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.031
+[hardflow] NFE=272  NLP solves=136  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t-tightened (9) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 67.00 +- 2.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.031
+[hardflow] NFE=272  NLP solves=136  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=2  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_alphaflow/models/af_diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb4_3cf78448-a232-11f1-b69c-d85ed34e311e.xml' with default provider at slot 1
+
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/10
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/10
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ AFTrajectoryModel ] backbone=sit  unet_width(freq_dim)=256  params=10.0M
+[ utils/training ] ⚠️  Pre-fix_6 checkpoint: no optimizer state stored. Adam moments restart cold; fast-forwarding the LR schedule instead.
+[ utils/training ] LR schedule fast-forwarded to step 71000 (lr=9.860e-05)
+[ utils/training ] Restored loss history from checkpoint at step 71000
+[ utils/training ] Recovered best_test_loss=0.718334 from restored history (72 points)
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 2 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/10)
+[ provenance ] wrote logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/10/run_provenance.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-right-hard - diffuser (10) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 64.00 +- 4.00
+Avg number of constraint violations: 25.50 +- 0.50
+Avg total violation: 4.205 +- 0.086
+Average computation time per step: 0.011
+Tracking error: 0.021
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r (10) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 68.50 +- 4.50
+Avg number of constraint violations: 2.00 +- 2.00
+Avg total violation: 0.010 +- 0.010
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r-tightened (10) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 66.00 +- 12.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c (10) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 68.50 +- 4.50
+Avg number of constraint violations: 2.00 +- 2.00
+Avg total violation: 0.010 +- 0.010
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c-tightened (10) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 66.00 +- 12.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t (10) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 68.50 +- 4.50
+Avg number of constraint violations: 2.00 +- 2.00
+Avg total violation: 0.010 +- 0.010
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t-tightened (10) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 66.00 +- 12.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r (10) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 68.00 +- 4.00
+Avg number of constraint violations: 2.00 +- 2.00
+Avg total violation: 0.012 +- 0.012
+Average computation time per step: 0.031
+[hardflow] NFE=276  NLP solves=138  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c (10) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 68.00 +- 4.00
+Avg number of constraint violations: 2.00 +- 2.00
+Avg total violation: 0.012 +- 0.012
+Average computation time per step: 0.031
+[hardflow] NFE=276  NLP solves=138  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t (10) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 68.00 +- 4.00
+Avg number of constraint violations: 2.00 +- 2.00
+Avg total violation: 0.012 +- 0.012
+Average computation time per step: 0.031
+[hardflow] NFE=276  NLP solves=138  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r-tightened (10) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 58.00 +- 4.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.030
+[hardflow] NFE=236  NLP solves=118  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c-tightened (10) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 58.00 +- 4.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.030
+[hardflow] NFE=236  NLP solves=118  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t-tightened (10) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 58.00 +- 4.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.030
+[hardflow] NFE=236  NLP solves=118  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=2  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_alphaflow/models/af_diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb5_8c8064d0-a232-11f1-b69c-d85ed34e311e.xml' with default provider at slot 1
+
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/6
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ AFTrajectoryModel ] backbone=sit  unet_width(freq_dim)=256  params=10.0M
+[ utils/training ] ⚠️  Pre-fix_6 checkpoint: no optimizer state stored. Adam moments restart cold; fast-forwarding the LR schedule instead.
+[ utils/training ] LR schedule fast-forwarded to step 68000 (lr=1.182e-04)
+[ utils/training ] Restored loss history from checkpoint at step 68000
+[ utils/training ] Recovered best_test_loss=0.713988 from restored history (69 points)
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 2 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/6)
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/6/run_provenance.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-left-hard - diffuser (6) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 59.50 +- 0.50
+Avg number of constraint violations: 10.50 +- 10.50
+Avg total violation: 1.254 +- 1.233
+Average computation time per step: 0.011
+Tracking error: 0.023
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r (6) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 132.50 +- 2.50
+Avg number of constraint violations: 34.00 +- 9.00
+Avg total violation: 0.201 +- 0.096
+Average computation time per step: 0.056
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r-tightened (6) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 69.00 +- 14.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c (6) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 132.50 +- 2.50
+Avg number of constraint violations: 34.00 +- 9.00
+Avg total violation: 0.201 +- 0.096
+Average computation time per step: 0.056
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c-tightened (6) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 69.00 +- 14.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t (6) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 132.50 +- 2.50
+Avg number of constraint violations: 34.00 +- 9.00
+Avg total violation: 0.201 +- 0.096
+Average computation time per step: 0.056
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t-tightened (6) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 69.00 +- 14.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r (6) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged solve at tau=1.000. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 114.00 +- 2.00
+Avg number of constraint violations: 38.50 +- 15.50
+Avg total violation: 0.906 +- 0.112
+Average computation time per step: 0.052
+[hardflow] NFE=460  NLP solves=230  NLP failures=10  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c (6) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged solve at tau=1.000. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 114.00 +- 2.00
+Avg number of constraint violations: 38.50 +- 15.50
+Avg total violation: 0.906 +- 0.112
+Average computation time per step: 0.052
+[hardflow] NFE=460  NLP solves=230  NLP failures=10  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t (6) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged solve at tau=1.000. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 114.00 +- 2.00
+Avg number of constraint violations: 38.50 +- 15.50
+Avg total violation: 0.906 +- 0.112
+Average computation time per step: 0.052
+[hardflow] NFE=460  NLP solves=230  NLP failures=10  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r-tightened (6) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 69.00 +- 14.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.031
+[hardflow] NFE=280  NLP solves=140  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c-tightened (6) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 69.00 +- 14.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.032
+[hardflow] NFE=280  NLP solves=140  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t-tightened (6) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 69.00 +- 14.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.032
+[hardflow] NFE=280  NLP solves=140  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=2  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_alphaflow/models/af_diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb6_1734db74-a233-11f1-b69c-d85ed34e311e.xml' with default provider at slot 1
+
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/7
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ AFTrajectoryModel ] backbone=sit  unet_width(freq_dim)=256  params=10.0M
+[ utils/training ] ⚠️  Pre-fix_6 checkpoint: no optimizer state stored. Adam moments restart cold; fast-forwarding the LR schedule instead.
+[ utils/training ] LR schedule fast-forwarded to step 67000 (lr=1.250e-04)
+[ utils/training ] Restored loss history from checkpoint at step 67000
+[ utils/training ] Recovered best_test_loss=0.723507 from restored history (68 points)
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 2 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/7)
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/7/run_provenance.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-left-hard - diffuser (7) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 64.00 +- 4.00
+Avg number of constraint violations: 30.00 +- 8.00
+Avg total violation: 8.541 +- 5.961
+Average computation time per step: 0.011
+Tracking error: 0.017
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r (7) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 76.00 +- 22.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r-tightened (7) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 80.50 +- 25.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c (7) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 76.00 +- 22.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c-tightened (7) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 80.50 +- 25.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t (7) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 76.00 +- 22.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t-tightened (7) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 80.50 +- 25.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r (7) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 76.00 +- 22.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.029
+[hardflow] NFE=308  NLP solves=154  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c (7) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 76.00 +- 22.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.029
+[hardflow] NFE=308  NLP solves=154  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t (7) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 76.00 +- 22.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.030
+[hardflow] NFE=308  NLP solves=154  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r-tightened (7) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 80.50 +- 25.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.031
+[hardflow] NFE=326  NLP solves=163  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c-tightened (7) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 80.50 +- 25.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.031
+[hardflow] NFE=326  NLP solves=163  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t-tightened (7) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 80.50 +- 25.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.031
+[hardflow] NFE=326  NLP solves=163  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=2  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_alphaflow/models/af_diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb7_72d5d4a6-a233-11f1-b69c-d85ed34e311e.xml' with default provider at slot 1
+
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/8
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ AFTrajectoryModel ] backbone=sit  unet_width(freq_dim)=256  params=10.0M
+[ utils/training ] ⚠️  Pre-fix_6 checkpoint: no optimizer state stored. Adam moments restart cold; fast-forwarding the LR schedule instead.
+[ utils/training ] LR schedule fast-forwarded to step 64000 (lr=1.461e-04)
+[ utils/training ] Restored loss history from checkpoint at step 64000
+[ utils/training ] Recovered best_test_loss=0.723114 from restored history (65 points)
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 2 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/8)
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/8/run_provenance.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-left-hard - diffuser (8) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 63.50 +- 3.50
+Avg number of constraint violations: 19.00 +- 3.00
+Avg total violation: 2.050 +- 0.255
+Average computation time per step: 0.011
+Tracking error: 0.023
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r (8) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 85.50 +- 31.50
+Avg number of constraint violations: 18.50 +- 18.50
+Avg total violation: 0.169 +- 0.169
+Average computation time per step: 0.019
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r-tightened (8) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 58.50 +- 4.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c (8) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 85.50 +- 31.50
+Avg number of constraint violations: 18.50 +- 18.50
+Avg total violation: 0.169 +- 0.169
+Average computation time per step: 0.019
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c-tightened (8) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 58.50 +- 4.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t (8) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 85.50 +- 31.50
+Avg number of constraint violations: 18.50 +- 18.50
+Avg total violation: 0.169 +- 0.169
+Average computation time per step: 0.019
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t-tightened (8) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 58.50 +- 4.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r (8) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 83.50 +- 29.50
+Avg number of constraint violations: 13.50 +- 13.50
+Avg total violation: 0.136 +- 0.136
+Average computation time per step: 0.033
+[hardflow] NFE=338  NLP solves=169  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c (8) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 83.50 +- 29.50
+Avg number of constraint violations: 13.50 +- 13.50
+Avg total violation: 0.136 +- 0.136
+Average computation time per step: 0.033
+[hardflow] NFE=338  NLP solves=169  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t (8) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 83.50 +- 29.50
+Avg number of constraint violations: 13.50 +- 13.50
+Avg total violation: 0.136 +- 0.136
+Average computation time per step: 0.034
+[hardflow] NFE=338  NLP solves=169  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r-tightened (8) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 58.50 +- 4.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.030
+[hardflow] NFE=238  NLP solves=119  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c-tightened (8) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 58.50 +- 4.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.030
+[hardflow] NFE=238  NLP solves=119  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t-tightened (8) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 58.50 +- 4.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.030
+[hardflow] NFE=238  NLP solves=119  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=2  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_alphaflow/models/af_diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb8_cbb75658-a233-11f1-b69c-d85ed34e311e.xml' with default provider at slot 1
+
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/9
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ AFTrajectoryModel ] backbone=sit  unet_width(freq_dim)=256  params=10.0M
+[ utils/training ] ⚠️  Pre-fix_6 checkpoint: no optimizer state stored. Adam moments restart cold; fast-forwarding the LR schedule instead.
+[ utils/training ] LR schedule fast-forwarded to step 71000 (lr=9.860e-05)
+[ utils/training ] Restored loss history from checkpoint at step 71000
+[ utils/training ] Recovered best_test_loss=0.718138 from restored history (72 points)
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 2 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/9)
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/9/run_provenance.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-left-hard - diffuser (9) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 63.00 +- 3.00
+Avg number of constraint violations: 27.50 +- 6.50
+Avg total violation: 7.307 +- 4.788
+Average computation time per step: 0.011
+Tracking error: 0.027
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r (9) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 64.50 +- 10.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r-tightened (9) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 69.00 +- 14.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c (9) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 64.50 +- 10.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c-tightened (9) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 69.00 +- 14.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t (9) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 64.50 +- 10.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t-tightened (9) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 69.00 +- 14.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r (9) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 70.50 +- 16.50
+Avg number of constraint violations: 1.50 +- 1.50
+Avg total violation: 0.021 +- 0.021
+Average computation time per step: 0.031
+[hardflow] NFE=286  NLP solves=143  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c (9) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 70.50 +- 16.50
+Avg number of constraint violations: 1.50 +- 1.50
+Avg total violation: 0.021 +- 0.021
+Average computation time per step: 0.031
+[hardflow] NFE=286  NLP solves=143  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t (9) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 70.50 +- 16.50
+Avg number of constraint violations: 1.50 +- 1.50
+Avg total violation: 0.021 +- 0.021
+Average computation time per step: 0.031
+[hardflow] NFE=286  NLP solves=143  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r-tightened (9) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 69.00 +- 14.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.031
+[hardflow] NFE=280  NLP solves=140  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c-tightened (9) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 69.00 +- 14.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.032
+[hardflow] NFE=280  NLP solves=140  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t-tightened (9) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 69.00 +- 14.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.031
+[hardflow] NFE=280  NLP solves=140  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=2  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_alphaflow/models/af_diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb9_1ec7cb2a-a234-11f1-b69c-d85ed34e311e.xml' with default provider at slot 1
+
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/10
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ AFTrajectoryModel ] backbone=sit  unet_width(freq_dim)=256  params=10.0M
+[ utils/training ] ⚠️  Pre-fix_6 checkpoint: no optimizer state stored. Adam moments restart cold; fast-forwarding the LR schedule instead.
+[ utils/training ] LR schedule fast-forwarded to step 71000 (lr=9.860e-05)
+[ utils/training ] Restored loss history from checkpoint at step 71000
+[ utils/training ] Recovered best_test_loss=0.718334 from restored history (72 points)
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 2 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/10)
+[ provenance ] wrote logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/10/run_provenance_2.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-left-hard - diffuser (10) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 64.00 +- 4.00
+Avg number of constraint violations: 19.50 +- 1.50
+Avg total violation: 2.294 +- 0.134
+Average computation time per step: 0.011
+Tracking error: 0.021
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r (10) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.50 +- 8.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r-tightened (10) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 60.00 +- 5.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.014
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c (10) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.50 +- 8.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.014
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c-tightened (10) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 60.00 +- 5.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.014
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t (10) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.50 +- 8.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t-tightened (10) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 60.00 +- 5.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.014
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r (10) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.50 +- 8.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.030
+[hardflow] NFE=254  NLP solves=127  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c (10) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.50 +- 8.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.030
+[hardflow] NFE=254  NLP solves=127  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t (10) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.50 +- 8.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.030
+[hardflow] NFE=254  NLP solves=127  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r-tightened (10) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 60.00 +- 5.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.031
+[hardflow] NFE=244  NLP solves=122  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c-tightened (10) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 60.00 +- 5.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.031
+[hardflow] NFE=244  NLP solves=122  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t-tightened (10) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 60.00 +- 5.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.031
+[hardflow] NFE=244  NLP solves=122  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=2  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_alphaflow/models/af_diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb10_697b6802-a234-11f1-b69c-d85ed34e311e.xml' with default provider at slot 1
+
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/6
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ AFTrajectoryModel ] backbone=sit  unet_width(freq_dim)=256  params=10.0M
+[ utils/training ] ⚠️  Pre-fix_6 checkpoint: no optimizer state stored. Adam moments restart cold; fast-forwarding the LR schedule instead.
+[ utils/training ] LR schedule fast-forwarded to step 68000 (lr=1.182e-04)
+[ utils/training ] Restored loss history from checkpoint at step 68000
+[ utils/training ] Recovered best_test_loss=0.713988 from restored history (69 points)
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 2 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/6)
+[ provenance ] wrote logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/6/run_provenance_2.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - both-hard - diffuser (6) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 59.50 +- 0.50
+Avg number of constraint violations: 1.00 +- 1.00
+Avg total violation: 0.018 +- 0.005
+Average computation time per step: 0.011
+Tracking error: 0.023
+------------------------Running avoiding-d3il - both-hard - dpcc-r (6) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 59.50 +- 5.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - dpcc-r-tightened (6) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 59.00 +- 5.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - dpcc-c (6) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 59.50 +- 5.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - dpcc-c-tightened (6) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 59.00 +- 5.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - dpcc-t (6) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 59.50 +- 5.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - dpcc-t-tightened (6) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 59.00 +- 5.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r (6) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 59.00 +- 5.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.029
+[hardflow] NFE=240  NLP solves=120  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c (6) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 59.00 +- 5.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.029
+[hardflow] NFE=240  NLP solves=120  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t (6) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 59.00 +- 5.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.029
+[hardflow] NFE=240  NLP solves=120  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r-tightened (6) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 59.00 +- 5.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.029
+[hardflow] NFE=240  NLP solves=120  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c-tightened (6) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 59.00 +- 5.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.029
+[hardflow] NFE=240  NLP solves=120  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t-tightened (6) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 59.00 +- 5.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.029
+[hardflow] NFE=240  NLP solves=120  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=2  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_alphaflow/models/af_diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb11_b30cb19c-a234-11f1-b69c-d85ed34e311e.xml' with default provider at slot 1
+
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/7
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ AFTrajectoryModel ] backbone=sit  unet_width(freq_dim)=256  params=10.0M
+[ utils/training ] ⚠️  Pre-fix_6 checkpoint: no optimizer state stored. Adam moments restart cold; fast-forwarding the LR schedule instead.
+[ utils/training ] LR schedule fast-forwarded to step 67000 (lr=1.250e-04)
+[ utils/training ] Restored loss history from checkpoint at step 67000
+[ utils/training ] Recovered best_test_loss=0.723507 from restored history (68 points)
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 2 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/7)
+[ provenance ] wrote logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/7/run_provenance_2.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - both-hard - diffuser (7) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 64.00 +- 4.00
+Avg number of constraint violations: 12.50 +- 12.50
+Avg total violation: 2.865 +- 2.851
+Average computation time per step: 0.011
+Tracking error: 0.017
+------------------------Running avoiding-d3il - both-hard - dpcc-r (7) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 83.00 +- 29.00
+Avg number of constraint violations: 1.00 +- 1.00
+Avg total violation: 0.079 +- 0.079
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - dpcc-r-tightened (7) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 78.50 +- 24.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - dpcc-c (7) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 83.00 +- 29.00
+Avg number of constraint violations: 1.00 +- 1.00
+Avg total violation: 0.079 +- 0.079
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - dpcc-c-tightened (7) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 78.50 +- 24.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - dpcc-t (7) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 83.00 +- 29.00
+Avg number of constraint violations: 1.00 +- 1.00
+Avg total violation: 0.079 +- 0.079
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - dpcc-t-tightened (7) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 78.50 +- 24.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r (7) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged solve at tau=1.000. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 82.50 +- 28.50
+Avg number of constraint violations: 1.50 +- 1.50
+Avg total violation: 0.094 +- 0.094
+Average computation time per step: 0.036
+[hardflow] NFE=334  NLP solves=167  NLP failures=2  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c (7) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged solve at tau=1.000. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 82.50 +- 28.50
+Avg number of constraint violations: 1.50 +- 1.50
+Avg total violation: 0.094 +- 0.094
+Average computation time per step: 0.035
+[hardflow] NFE=334  NLP solves=167  NLP failures=2  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t (7) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged solve at tau=1.000. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 82.50 +- 28.50
+Avg number of constraint violations: 1.50 +- 1.50
+Avg total violation: 0.094 +- 0.094
+Average computation time per step: 0.035
+[hardflow] NFE=334  NLP solves=167  NLP failures=2  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r-tightened (7) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 75.50 +- 21.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.030
+[hardflow] NFE=306  NLP solves=153  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c-tightened (7) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 75.50 +- 21.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.029
+[hardflow] NFE=306  NLP solves=153  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t-tightened (7) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 75.50 +- 21.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.029
+[hardflow] NFE=306  NLP solves=153  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=2  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_alphaflow/models/af_diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb12_140233dc-a235-11f1-b69c-d85ed34e311e.xml' with default provider at slot 1
+
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/8
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ AFTrajectoryModel ] backbone=sit  unet_width(freq_dim)=256  params=10.0M
+[ utils/training ] ⚠️  Pre-fix_6 checkpoint: no optimizer state stored. Adam moments restart cold; fast-forwarding the LR schedule instead.
+[ utils/training ] LR schedule fast-forwarded to step 64000 (lr=1.461e-04)
+[ utils/training ] Restored loss history from checkpoint at step 64000
+[ utils/training ] Recovered best_test_loss=0.723114 from restored history (65 points)
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 2 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/8)
+[ provenance ] wrote logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/8/run_provenance_2.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - both-hard - diffuser (8) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 63.50 +- 3.50
+Avg number of constraint violations: 1.00 +- 1.00
+Avg total violation: 0.015 +- 0.001
+Average computation time per step: 0.011
+Tracking error: 0.023
+------------------------Running avoiding-d3il - both-hard - dpcc-r (8) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 64.50 +- 3.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - dpcc-r-tightened (8) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 63.00 +- 9.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - dpcc-c (8) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 64.50 +- 3.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - dpcc-c-tightened (8) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 63.00 +- 9.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - dpcc-t (8) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 64.50 +- 3.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - dpcc-t-tightened (8) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 63.00 +- 9.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r (8) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 64.50 +- 3.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.029
+[hardflow] NFE=262  NLP solves=131  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c (8) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 64.50 +- 3.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.029
+[hardflow] NFE=262  NLP solves=131  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t (8) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 64.50 +- 3.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.029
+[hardflow] NFE=262  NLP solves=131  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r-tightened (8) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 63.00 +- 9.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.030
+[hardflow] NFE=256  NLP solves=128  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c-tightened (8) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 63.00 +- 9.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.030
+[hardflow] NFE=256  NLP solves=128  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t-tightened (8) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 63.00 +- 9.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.030
+[hardflow] NFE=256  NLP solves=128  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=2  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_alphaflow/models/af_diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb13_5eed043a-a235-11f1-b69c-d85ed34e311e.xml' with default provider at slot 1
+
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/9
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ AFTrajectoryModel ] backbone=sit  unet_width(freq_dim)=256  params=10.0M
+[ utils/training ] ⚠️  Pre-fix_6 checkpoint: no optimizer state stored. Adam moments restart cold; fast-forwarding the LR schedule instead.
+[ utils/training ] LR schedule fast-forwarded to step 71000 (lr=9.860e-05)
+[ utils/training ] Restored loss history from checkpoint at step 71000
+[ utils/training ] Recovered best_test_loss=0.718138 from restored history (72 points)
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 2 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/9)
+[ provenance ] wrote logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/9/run_provenance_2.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - both-hard - diffuser (9) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 63.00 +- 3.00
+Avg number of constraint violations: 10.00 +- 10.00
+Avg total violation: 2.037 +- 2.024
+Average computation time per step: 0.011
+Tracking error: 0.027
+------------------------Running avoiding-d3il - both-hard - dpcc-r (9) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.00 +- 1.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - dpcc-r-tightened (9) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 58.50 +- 4.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - dpcc-c (9) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.00 +- 1.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - dpcc-c-tightened (9) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 58.50 +- 4.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - dpcc-t (9) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.00 +- 1.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - dpcc-t-tightened (9) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 58.50 +- 4.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r (9) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 58.50 +- 4.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.028
+[hardflow] NFE=238  NLP solves=119  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c (9) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 58.50 +- 4.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.028
+[hardflow] NFE=238  NLP solves=119  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t (9) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 58.50 +- 4.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.028
+[hardflow] NFE=238  NLP solves=119  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r-tightened (9) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 58.50 +- 4.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.028
+[hardflow] NFE=238  NLP solves=119  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c-tightened (9) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 58.50 +- 4.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.028
+[hardflow] NFE=238  NLP solves=119  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t-tightened (9) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 58.50 +- 4.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.028
+[hardflow] NFE=238  NLP solves=119  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=2  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_alphaflow/models/af_diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb14_a93ff31c-a235-11f1-b69c-d85ed34e311e.xml' with default provider at slot 1
+
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/10
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ AFTrajectoryModel ] backbone=sit  unet_width(freq_dim)=256  params=10.0M
+[ utils/training ] ⚠️  Pre-fix_6 checkpoint: no optimizer state stored. Adam moments restart cold; fast-forwarding the LR schedule instead.
+[ utils/training ] LR schedule fast-forwarded to step 71000 (lr=9.860e-05)
+[ utils/training ] Restored loss history from checkpoint at step 71000
+[ utils/training ] Recovered best_test_loss=0.718334 from restored history (72 points)
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 2 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/10)
+[ provenance ] wrote logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgmpc1/10/run_provenance_3.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - both-hard - diffuser (10) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 64.00 +- 4.00
+Avg number of constraint violations: 1.00 +- 1.00
+Avg total violation: 0.016 +- 0.002
+Average computation time per step: 0.011
+Tracking error: 0.021
+------------------------Running avoiding-d3il - both-hard - dpcc-r (10) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 64.50 +- 3.50
+Avg number of constraint violations: 3.00 +- 3.00
+Avg total violation: 0.060 +- 0.060
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - dpcc-r-tightened (10) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.50 +- 8.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - dpcc-c (10) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 64.50 +- 3.50
+Avg number of constraint violations: 3.00 +- 3.00
+Avg total violation: 0.060 +- 0.060
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - dpcc-c-tightened (10) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.50 +- 8.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - dpcc-t (10) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 64.50 +- 3.50
+Avg number of constraint violations: 3.00 +- 3.00
+Avg total violation: 0.060 +- 0.060
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - dpcc-t-tightened (10) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.50 +- 8.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.013
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r (10) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged solve at tau=1.000. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 64.50 +- 3.50
+Avg number of constraint violations: 3.00 +- 3.00
+Avg total violation: 0.060 +- 0.060
+Average computation time per step: 0.030
+[hardflow] NFE=262  NLP solves=131  NLP failures=1  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c (10) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged solve at tau=1.000. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 64.50 +- 3.50
+Avg number of constraint violations: 3.00 +- 3.00
+Avg total violation: 0.060 +- 0.060
+Average computation time per step: 0.030
+[hardflow] NFE=262  NLP solves=131  NLP failures=1  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t (10) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged solve at tau=1.000. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 64.50 +- 3.50
+Avg number of constraint violations: 3.00 +- 3.00
+Avg total violation: 0.060 +- 0.060
+Average computation time per step: 0.030
+[hardflow] NFE=262  NLP solves=131  NLP failures=1  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r-tightened (10) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.50 +- 8.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.030
+[hardflow] NFE=254  NLP solves=127  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c-tightened (10) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.50 +- 8.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.030
+[hardflow] NFE=254  NLP solves=127  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t-tightened (10) - K=2----------------------------
+[hardflow][DEGENERATE] K=2 A=0.5: n_active=1, n_genuine=0 — every NLP solve is the terminal tau=1 solve, so this arm runs Pi_S(Euler sample): sample-then-project, == DPCC modulo solver/variable-scope, NOT HardFlow. The result is still SAFE and still worth having as a one-shot-projection comparison — just do NOT label it a HardFlow result.
+[hardflow][DEGENERATE] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.50 +- 8.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.030
+[hardflow] NFE=254  NLP solves=127  NLP failures=0  batch(mpc)=1  act_threshold=0.5
+Evaluation completed successfully.
+================================================================================
+JOB END:   Thu Aug 27 16:40:22 UTC 2026
+================================================================================

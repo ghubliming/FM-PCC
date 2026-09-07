@@ -34,6 +34,7 @@ import diffuser.utils as utils
 # gradient clipping, h-stratified metric plumbing). diffuser.utils.Trainer is the shared
 # DPCC one and has none of them — using it crashes on train(on_epoch_end=).
 from flow_matcher_v3_meanflow.utils.training import Trainer as MeanFlowTrainer
+from diffuser.utils import provenance   # U10.1 — env-override provenance (shared)
 
 
 class Parser(utils.Parser):
@@ -325,6 +326,37 @@ if __name__ == '__main__':
             args = parser.parse_args(experiment='flow_matching_v3_meanflow', seed=seed)
             device = getattr(args, 'device', 'cuda' if torch.cuda.is_available() else 'cpu')
             predict_epsilon = getattr(args, 'predict_epsilon', True)
+
+            # ── U10.1 RUN PROVENANCE ───────────────────────────────────────────────────
+            # args.json (written by Parser.save for train runs) already holds the RESOLVED
+            # values, so training is the better-covered half. This adds what args.json
+            # cannot say: which knobs came from the submit line versus a config default,
+            # the git commit + dirty flag, and the Slurm job id — the three things needed
+            # to reproduce a checkpoint months later. Since U10 the config snapshot alone
+            # is not enough: it copies avoiding-d3il.py verbatim, where the horizon and
+            # backbone now read `_mf_horizon` / `_mf_backbone` instead of literals.
+            provenance.write(
+                args.savepath, role='train',
+                resolved={
+                    'horizon': int(args.horizon),
+                    'imf_backbone': getattr(args, 'imf_backbone', None),
+                    'freq_dim': getattr(args, 'freq_dim', None),
+                    'mf_objective': getattr(args, 'mf_objective', None),
+                    't_schedule': getattr(args, 't_schedule', None),
+                    'meanflow_data_proportion': getattr(args, 'meanflow_data_proportion', None),
+                    'action_weight': getattr(args, 'action_weight', None),
+                    'loss_discount': getattr(args, 'loss_discount', None),
+                    'n_train_steps': getattr(args, 'n_train_steps', None),
+                    'batch_size': getattr(args, 'batch_size', None),
+                    'learning_rate': getattr(args, 'learning_rate', None),
+                    'max_path_length': getattr(args, 'max_path_length', None),
+                    'use_padding': getattr(args, 'use_padding', None),
+                    'dual_head': getattr(args, 'dual_head', None),
+                    'interval_cfg': getattr(args, 'interval_cfg', None),
+                    'seed': int(seed),
+                    'seeds_requested': list(seeds),
+                    'exp_name': getattr(args, 'exp_name', None),
+                })
 
             # Build dataset, model, diffusion, trainer using the standard FM-PCC pattern.
             dataset_config = utils.Config(

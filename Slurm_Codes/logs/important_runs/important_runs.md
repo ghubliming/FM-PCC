@@ -1230,6 +1230,34 @@ seed 78910 for UNET 24396 train -> 24415 seed 10
 24416 eval
 & rerun seed 6 24470
 
+- Sweep of HF thres  (for K in 5 10; do
+  for A in 0.0 0.1 0.25; do
+    HFFM_ACT_THRESHOLD=$A HFFM_FLOW_STEPS=$K \
+      ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/MeanFlow/eval_meanflow_hardflow.sh
+  done
+done)
+
+24507 - 24511
+
+---
+
+23561 rerun the mf_dit
+
+---
+20 trails
+24559 - 24560
+
+---
+U10 
+24633/4
+24650 rerun (been told last time is replan 1 not 8)
+
+---
+
+- Batch = 1 study 
+24991/2
+25104 seed 78910
+(25105 Fmv3ODE-in-Hardflow run, batch study)
 
 # Gen3v7 alpha flow 
 1st run 23758 seed 6 done, seed 7 kill at 80!!!!!(could resume later)
@@ -1256,6 +1284,23 @@ eval 24104 s78910+ 25399 s6
 
 unet validation 24348 KILLED try full seeds train
 -> 24385
+
+---
+24515 rerun ensure safety of all data
+
+24594/5 ntrail 20 run
+
+---
+
+25102 batch 1 run
+
+---
+
+refine 
+25251/3/4 (Success, but is mf downgraded)
+
+use af : 25279
+25280
 
 # Gen12 
 init pipeline run 23767 -> All killed, not run
@@ -1286,6 +1331,14 @@ vs 24198 0.05thres (K10, K20 run -> 24207)
 Ablation DPCC baseline 0.1thres 24215 / 0.05thres 24226
 - Claude Claim the diffusion_timestep_threshold: 1 for DPCC not working, lets see if ture, set it to 1, 24254, feels run it beofre but we rerun it again. --> Gen0F2
 
+---
+HF solver compare
+25121
+in real job 25161 FAIL
+25222 resub
+
+25237 thres hold both 0.5
+
 # Gen14 
 Test -> 24082
 faile fix2 24907
@@ -1311,11 +1364,97 @@ af/mf 24224/5
 
 20 run 24405 Diffu
 24409 FM
+(K20 ntrail20 run 25006)
 
 - FiLM v2 
 24417 mf
 14418 af
 
+- U8
+24815/6 FAIL 
+24834 rerun 835/6 Start FAIL Time/Space limit 84k
+24683 FAIL 
+24872
+
+- U9 
+25033 FAIL 
+25037 FAIL 
+255041
+
+- U10 af enable 
+25190 FAIL
+25239
+
+
+- U11 the K threshold 0.1/0.05 K100 mf test
+25191 FAIL
+25126
+
+---
+Flagship test K20
+Flagship — MeanFlow K20, T=0.2, arms B + C:
+25247+8(8 for fm) -> 25274 fm resume fail -> 25312 resubmit
+
+mf K10thres0.4 25273
+
 # Gen0 
 - Fix2
 thres test 24279 T
+
+---
+
+24639 see ntrial 20
+(FMv3ODE 24698 ntrail20)
+
+---
+25101 batch 1 run
+
+# Gen15
+test 24578
+mf_unet corridor 24579, 24583( mf eval at K=10 (chained to the train))
+
+scurve 24588 + 89
+
+24612 mf pillars
+
+--- 
+fm replica 24655/8/9
+
+---
+try more K mf 24707
+and fm (Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/eval_k_sweep.sh fm corridor "6" "1 2 5 10 20" 10 fm_only none) 24713
+
+---
+24744 fix the mf run ((checkpoint_epoch_best BUG fixed)
+
+---
+af corridor 
+24924/5
+
+---
+
+- U5 and pillars
+
+25126 af train + eval
+fm. eval: 25127-30
+mf, 25131-33
+diffu. 25134
+
+- Fix16 
+25294/5
+
+
+# Gen16 
+24850? NO logging? what happened? -> 24583/4 PASS
+24855 GO FAIL
+24859 rerun
+
+----
+
+Scurve Train dpcc,fm,mf
+25007-9
+
+Eval:
+25072/73/75
+
+25077-84(low K Arm)

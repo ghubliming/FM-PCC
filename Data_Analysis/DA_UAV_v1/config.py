@@ -89,13 +89,33 @@ SCENE_DIR_RE = r'^uav-(?P<scene>[a-zA-Z0-9_]+)$'
 # `_uav_eval_tag` in mix_uav_test/eval_mix_uav.py. The controller token can itself
 # contain underscores (`pid_const_v`, `pid_stopgo`), so it is matched greedily
 # between the fixed `mpc{n}_` head and the trailing `_T{thresh}`.
+#
+# 🔴 [Fix_16 DA, 2026-09-03] The tag may carry a TRAILING RUN TAG:
+#   E{engine}_K{flow_steps}_mpc{B}_{controller}_T{threshold}[_{run_tag}]
+# written by `FMPCC_UAV_EVAL_TAG` (eval_mix_uav.py:_uav_eval_tag), which exists so
+# two runs differing only in an env knob cannot overwrite each other's folder.
+# Before this group existed the regex did not match a tagged folder at all: `K`
+# came back None, and the axis groupbys in aggregator.py dropped those rows on the
+# NaN key — the six Fix_16 A/B runs vanished from candidates_detailed.csv and
+# uav_k_sweep.csv with no warning. `run_tag` is a real axis: see K_SWEEP_KEYS.
+# `.+` is safe at the end — the greedy `controller` backtracks past `_T{thresh}`.
+_RUN_TAG_SUFFIX = r'(?:_(?P<run_tag>.+))?'
+
+# "This folder is meant to BE an eval tag." Used only to tell the two silent
+# failure modes apart: a legacy candidate that is a MODEL folder and legitimately
+# has no K, versus an eval-tag folder whose spelling the full regex missed (which
+# is a parser bug and must be loud). Deliberately looser than EVAL_TAG_RE.
+EVAL_TAG_PREFIX_RE = r'^(?:E[A-Za-z0-9]+_)?K\d+_mpc\d+_'
+
 EVAL_TAG_RE = (r'^E(?P<engine>[A-Za-z0-9]+)_K(?P<K>\d+)_mpc(?P<mpc_batch>\d+)_'
-               r'(?P<controller>.+)_T(?P<threshold>[0-9]*\.?[0-9]+(?:[eE][+-]?[0-9]+)?)$')
+               r'(?P<controller>.+)_T(?P<threshold>[0-9]*\.?[0-9]+(?:[eE][+-]?[0-9]+)?)'
+               + _RUN_TAG_SUFFIX + r'$')
 
 # Gen11 wrote the same folder WITHOUT the `E{engine}` token. Accepted so a Gen11
 # tree can be read side by side with Gen15 (engine then comes from the model dir).
 EVAL_TAG_RE_GEN11 = (r'^K(?P<K>\d+)_mpc(?P<mpc_batch>\d+)_'
-                     r'(?P<controller>.+)_T(?P<threshold>[0-9]*\.?[0-9]+(?:[eE][+-]?[0-9]+)?)$')
+                     r'(?P<controller>.+)_T(?P<threshold>[0-9]*\.?[0-9]+(?:[eE][+-]?[0-9]+)?)'
+                     + _RUN_TAG_SUFFIX + r'$')
 
 # Model-identity folder: `mix_uav_<engine>/H{h}_D{diffusion}[_9D][_tokens]`.
 # Tokens are registry-driven (`engine_registry.ENGINES[*]['exp_name_tokens']`):
@@ -338,8 +358,16 @@ METRIC_LABELS = {
     'nfe_effective':                    'Network Evaluations per Plan (effective)',
     'nlp_solves_total':                 'HardFlow NLP Solves (total)',
     'nlp_failures_total':               'HardFlow NLP Failures (total)',
+    # [SolverSwap 2026-08-27] 1.0 = DPCC scipy SLSQP, 0.0 = original CasADi IPOPT.
+    'nlp_backend_slsqp':                'NLP Backend (1 = DPCC SLSQP, 0 = IPOPT)',
     'activation_threshold':             'HardFlow Activation Threshold',
     'init_noise_scale':                 'ODE Init Noise Scale',
+    # HFK1 (2026-08-24) — is this row HardFlow at all? n_genuine counts ODE steps that are
+    # ACTIVE and NON-TERMINAL; only those run HardFlow's lookahead / damping / feedback.
+    # 0 => sample-then-project (== DPCC modulo solver). See logs_in_develop/aggregated_hardflow_lowK/
+    'n_active':                         'HardFlow NLP-Active Steps',
+    'n_genuine':                        'Genuine HardFlow Steps (0 = degenerate)',
+    'hf_degenerate':                    'HardFlow DEGENERATE (1 = sample-then-project)',
 }
 
 # Rendered as percentages by the reporter/visualizer.
@@ -396,6 +424,8 @@ VARIANT_ORDER = [
     'dpcc-c', 'dpcc-c-tightened',
     'dpcc-t', 'dpcc-t-tightened',
     'hardflow_new', 'hardflow_new-c', 'hardflow_new-t',
+    # [SolverSwap] SLSQP-backend twins — a separate corpus, never pooled with the above.
+    'hardflow_sls', 'hardflow_sls-c', 'hardflow_sls-t',
     'gradient', 'gradient-tightened',
     'post_processing', 'post_processing-tightened',
     'model_free', 'model_free-tightened',
@@ -412,6 +442,8 @@ MAJOR_VARIANTS = [
     'dpcc-r', 'dpcc-c', 'dpcc-t',
     'dpcc-r-tightened', 'dpcc-c-tightened', 'dpcc-t-tightened',
     'hardflow_new', 'hardflow_new-c', 'hardflow_new-t',
+    # [SolverSwap] SLSQP-backend twins — headline arms on the new default backend.
+    'hardflow_sls', 'hardflow_sls-c', 'hardflow_sls-t',
 ]
 
 # Variants that run NO projector at all — their constraint columns describe the

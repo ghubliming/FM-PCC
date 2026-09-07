@@ -129,7 +129,147 @@ esac
 # Arm-specific ONLY. Any bare MIX_FILM_MODE on the submitting environment still rides along
 # via ALL, but the arm-specific variable takes precedence in _film_mode(), so $ENGINE gets
 # what was resolved here either way.
-EXPORT_OPTS="--export=ALL,MIX_FILM_MODE_${ENGINE_UC}=$FILM_MODE"
+# ── Gen14 U8 ── ML BONE, resolved and narrowed exactly like FILM_MODE above.
+eval "ML_BONE=\${MIX_BONE_${ENGINE_UC}:-\${MIX_BONE:-unet}}"
+case "$ENGINE" in
+    mf) VALID_BONES="unet mf_dit dit" ;;
+    af) VALID_BONES="unet sit dit" ;;
+    *)  VALID_BONES="unet" ;;
+esac
+if ! echo " $VALID_BONES " | grep -q " $ML_BONE "; then
+    echo "ERROR: ml_bone '$ML_BONE' is not valid for engine '$ENGINE' (want: $VALID_BONES). Set it via"
+    echo "       MIX_BONE_${ENGINE_UC}=<bone> (this arm) or MIX_BONE=<bone> (both two-time arms)."
+    exit 1
+fi
+
+# -- Gen14 U9 -- PERCEPTION-FIRST knobs, resolved and narrowed exactly like ML_BONE above.
+# 🔴 ALL THREE ARE PATH KEYS (config: _mix_u9_keys -> '_VP..' / '_VLR..' / '_VC..'), so they
+# MUST reach the EVAL as well as the train job. An eval that does not see them rebuilds
+# diffusion_loadpath for the DEFAULT tree and dies on a missing checkpoint after the GPU is
+# already allocated -- the same class of bug the MIX_TRAIN_STEPS note below describes.
+# Exported EXPLICITLY rather than left to --export=ALL for exactly that reason.
+#
+# At the defaults (0 / 1.0 / token) _mix_u9_keys() returns {} and the path is the pre-U9 one,
+# so a bare pipeline invocation is completely unaffected by any of this.
+eval "VIS_PRETRAINED=\${MIX_VIS_PRETRAINED_${ENGINE_UC}:-\${MIX_VIS_PRETRAINED:-0}}"
+eval "VIS_LR_SCALE=\${MIX_VIS_LR_SCALE_${ENGINE_UC}:-\${MIX_VIS_LR_SCALE:-1.0}}"
+eval "VIS_COND=\${MIX_VIS_COND_${ENGINE_UC}:-\${MIX_VIS_COND:-token}}"
+case "$VIS_PRETRAINED" in
+    0|1|true|false) ;;
+    *) echo "ERROR: MIX_VIS_PRETRAINED='$VIS_PRETRAINED' is not 0|1|true|false."; exit 1 ;;
+esac
+case "$VIS_COND" in
+    token|adaln|both) ;;
+    *) echo "ERROR: MIX_VIS_COND='$VIS_COND' is not token|adaln|both."; exit 1 ;;
+esac
+if [ "$VIS_COND" != "token" ] && [ "$ML_BONE" != "mf_dit" ] && [ "$ML_BONE" != "sit" ]; then
+    echo "ERROR: MIX_VIS_COND='$VIS_COND' needs an adaLN bone (mf_dit|sit), got '$ML_BONE'."
+    echo "       The RoPE bones have no adaLN pathway -- the knob would be silently ignored."
+    exit 1
+fi
+
+EXPORT_OPTS="--export=ALL,MIX_FILM_MODE_${ENGINE_UC}=$FILM_MODE,MIX_BONE_${ENGINE_UC}=$ML_BONE"
+EXPORT_OPTS="$EXPORT_OPTS,MIX_VIS_PRETRAINED_${ENGINE_UC}=$VIS_PRETRAINED"
+EXPORT_OPTS="$EXPORT_OPTS,MIX_VIS_LR_SCALE_${ENGINE_UC}=$VIS_LR_SCALE"
+EXPORT_OPTS="$EXPORT_OPTS,MIX_VIS_COND_${ENGINE_UC}=$VIS_COND"
+if [ "$VIS_PRETRAINED" = "0" ] && [ "$VIS_LR_SCALE" = "1.0" ] && [ "$VIS_COND" = "token" ]; then
+    echo "[ pipeline ] U9 knobs = ALL DEFAULT (pre-U9 behaviour; checkpoint path unchanged)"
+else
+    echo "[ pipeline ] U9: vis_pretrained=$VIS_PRETRAINED vis_lr_scale=$VIS_LR_SCALE vis_cond_mode=$VIS_COND"
+    echo "[ pipeline ]     🔴 PATH KEYS -- this run lands in its own tree, carried to BOTH stages."
+fi
+
+# ── Gen14 U10 ── alpha-FLOW SCHEDULE (af arm only), carried onto BOTH child stages ───────
+# 🔴 SAME CONTRACT AS MIX_TRAIN_STEPS BELOW, and for the same reason: a non-default alpha
+# schedule stamps '_AF<tag>' onto the CHECKPOINT path (config: _mix_af_alpha_keys), so an
+# eval that does not see the identical env resolves diffusion_loadpath to the DEFAULT
+# (alpha->0) tree and either dies on a missing checkpoint or — far worse — silently scores
+# the wrong model. Exported explicitly, never left to --export=ALL.
+#
+# Why you would set it: at the shipped default the sigmoid + clamp force alpha to EXACTLY 0
+# from ~71.2% of the budget on, so the af arm finishes on the MEANFLOW target. Gen14 U5 §3
+# measured that as test raw_mse_u 2.657 -> 8.504 at the snap.
+#
+#   MIX_AF_ALPHA_SCHED=constant MIX_AF_ALPHA_INIT=0.05 MIX_AF_ALPHA_END=0.05 \
+#     ./Slurm_Codes/submit.sh <this script> af "6"
+_AF_ALPHA_ANY=""
+for _v in MIX_AF_ALPHA_SCHED MIX_AF_ALPHA_INIT MIX_AF_ALPHA_END MIX_AF_ALPHA_CLAMP MIX_AF_ALPHA_GAMMA; do
+    eval "_val=\${$_v:-}"
+    if [ -n "$_val" ]; then
+        if [ "$ENGINE" != "af" ]; then
+            echo "ERROR: $_v is set but engine='$ENGINE'. The alpha schedule exists only on the af arm."
+            exit 1
+        fi
+        EXPORT_OPTS="$EXPORT_OPTS,$_v=$_val"
+        _AF_ALPHA_ANY="$_AF_ALPHA_ANY $_v=$_val"
+    fi
+done
+if [ -n "$_AF_ALPHA_ANY" ]; then
+    echo "[ pipeline ] alpha schedule:$_AF_ALPHA_ANY"
+    echo "[ pipeline ]     🔴 PATH KEY -- '_AF<tag>' tree, carried to BOTH stages."
+elif [ "$ENGINE" = "af" ]; then
+    echo "[ pipeline ] alpha schedule = SHIPPED DEFAULT (sigmoid 1.0 -> 0.0, clamp 0.005):"
+    echo "[ pipeline ]     ⚠  the last ~28.8% of this run trains the MEANFLOW target, not"
+    echo "[ pipeline ]        alpha-Flow's. Set MIX_AF_ALPHA_* to train alpha-Flow proper."
+fi
+
+# ── Training budget / resume / save cadence, carried onto BOTH child stages ──────────────
+# 🔴 MIX_TRAIN_STEPS MUST reach the EVAL, not just the train job. It is a checkpoint-path
+# key (config: _budget_tag -> '_TB<pct>pct'), so an eval that does not see it builds
+# diffusion_loadpath for the FULL-budget directory and dies on a missing checkpoint after
+# the GPU is already allocated. Same class of bug as the film_mode narrowing above, which is
+# why it is exported EXPLICITLY here rather than left to --export=ALL.
+#
+# MIX_SAVE_EVERY and MIX_AUTO_RESUME are train-only, but ride along harmlessly; the eval
+# script never reads them.
+if [ -n "$MIX_TRAIN_STEPS" ]; then
+    EXPORT_OPTS="$EXPORT_OPTS,MIX_TRAIN_STEPS=$MIX_TRAIN_STEPS"
+    _PCT=$(( 100 * MIX_TRAIN_STEPS / 100000 ))
+    echo "[ pipeline ] budget = $MIX_TRAIN_STEPS steps (${_PCT}% of 1e5)"
+    echo "[ pipeline ]          🔴 PATH KEY -- checkpoints land in a '..._TB${_PCT}pct' tree,"
+    echo "[ pipeline ]          separate from any full-budget run. Eval inherits the same tag."
+fi
+if [ -n "$MIX_SAVE_EVERY" ]; then
+    EXPORT_OPTS="$EXPORT_OPTS,MIX_SAVE_EVERY=$MIX_SAVE_EVERY"
+    echo "[ pipeline ] save_freq = $MIX_SAVE_EVERY steps"
+fi
+if [ -n "$MIX_AUTO_RESUME" ]; then
+    EXPORT_OPTS="$EXPORT_OPTS,MIX_AUTO_RESUME=$MIX_AUTO_RESUME"
+    echo "[ pipeline ] auto-resume = ON (train stage picks up the newest state_<step>.pt)"
+fi
+# ── Gen14 U12 ── MIX_EPOCH: which checkpoint the EVAL stage deploys. Train-stage-inert.
+# Exported EXPLICITLY rather than left to --export=ALL for the same reason as MIX_TRAIN_STEPS
+# above: it is a RESULTS-path key ('_EP<sel>'), and a stage that does not see it writes into
+# a differently-named directory than the one the submitter is expecting to read.
+if [ -n "${MIX_EPOCH:-}" ]; then
+    case "$MIX_EPOCH" in
+        best|latest) ;;
+        ''|*[!0-9]*)
+            echo "ERROR: MIX_EPOCH='$MIX_EPOCH' must be 'best', 'latest', or a step number."
+            exit 1 ;;
+    esac
+    EXPORT_OPTS="$EXPORT_OPTS,MIX_EPOCH=$MIX_EPOCH"
+    echo "[ pipeline ] eval checkpoint = $MIX_EPOCH"
+    if [ "$MIX_EPOCH" != "best" ]; then
+        echo "[ pipeline ]     🔴 RESULTS-PATH KEY -- the eval writes into an '_EP${MIX_EPOCH}'"
+        echo "[ pipeline ]     directory, so it cannot overwrite an existing 'best' rollout."
+    fi
+elif [ "$ENGINE" = "af" ]; then
+    echo "[ pipeline ] eval checkpoint = best (default)"
+    echo "[ pipeline ]     ⚠  on the af arm 'best' is chosen on an alpha-weighted test_loss and"
+    echo "[ pipeline ]        therefore prefers a MID-CURRICULUM model. If this run sets"
+    echo "[ pipeline ]        MIX_AF_ALPHA_END, set MIX_EPOCH=latest too or the floored alpha"
+    echo "[ pipeline ]        is trained and then discarded at eval."
+fi
+if [ "$ML_BONE" != "unet" ]; then
+    echo "[ pipeline ] ml_bone = $ML_BONE — VisualDiTTwoTime (visual latent as ONE PREPENDED"
+    echo "[ pipeline ]           TOKEN). RETRAIN into a separate '..._B${ML_BONE}_E${ENGINE}' tree;"
+    echo "[ pipeline ]           U-Net runs are untouched (their path has no _B fragment)."
+    echo "[ pipeline ]           film_mode is N/A on this bone and absent from the path."
+    echo "[ pipeline ]           🔴 Run \`gates_mix_visual.sh bone\` before trusting a DiT run."
+else
+    echo "[ pipeline ] ml_bone = unet (default, the Gen14 baseline bone)"
+fi
 if [ "$FILM_MODE" = "v2" ]; then
     echo "[ pipeline ] film_mode = v2 — TRUE FiLM backbone. This is a RETRAIN into a separate"
     echo "[ pipeline ]              '..._filmv2_E${ENGINE}' checkpoint tree; v1 runs are untouched."
@@ -139,7 +279,7 @@ else
     echo "[ pipeline ] film_mode = v1 (default, additive-bias FiLM)"
 fi
 
-echo "Launching Visual-Mix-ML (Gen14) Pipeline — engine=$ENGINE seeds='$SEEDS'${FLOW_STEPS:+ K=$FLOW_STEPS} film=$FILM_MODE ..."
+echo "Launching Visual-Mix-ML (Gen14) Pipeline — engine=$ENGINE seeds='$SEEDS'${FLOW_STEPS:+ K=$FLOW_STEPS} bone=$ML_BONE film=$FILM_MODE ..."
 
 # 1. Gates — ONE job, shared by every seed (seed-independent by construction).
 # G7 builds ALL FOUR arms at v2 regardless of MIX_FILM_MODE, so the gates are film-mode

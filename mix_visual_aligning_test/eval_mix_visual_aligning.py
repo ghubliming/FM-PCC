@@ -63,12 +63,17 @@ os.environ['D3IL_DIR'] = os.path.abspath('d3il/environments/d3il')
 
 import mix_visual_aligning.utils as utils
 from mix_visual_aligning.sampling.projection import Projector
+from diffuser.utils import provenance   # U10.1 — env-override provenance (shared)
 # ── Gen14 U7 ── HardFlow arm C. Ported from Gen3v7; hosts fm/mf/af only (resolve_engine_hf
 # refuses 'diffusion' — a DDPM chain has no velocity field for the NLP to integrate).
 from mix_visual_aligning.sampling.hardflow_projection import (
     build_hardflow_sampler,
     encode_visual_cond,
     resolve_activation_threshold,
+    hardflow_guard, hardflow_skip_note,   # HFK1c (2026-08-30) — the degeneracy guard
+    resolve_hf_batch_size,          # B4_PARITY (2026-08-20)
+    # [SolverSwap] artifact naming — keeps an SLSQP run from overwriting IPOPT data.
+    artifact_variant_label, resolve_nlp_backend,
 )
 # Gen14 — the arm dispatch table. Every engine-specific branch lives there, not here.
 from mix_visual_aligning.models.engine_registry import (
@@ -625,6 +630,215 @@ def plot_geo_constraints(geo_name, geo_config, out_dir, is_tightened=False):
 
 # ── UF-16.3: Constraint satisfaction / violation metrics ──────────────────────
 
+# ── Div_Abort: divergence detection + episode abort (visual-aligning setup) ──
+# The commanded end-effector position is a FREE-RUNNING integrator: aligning_sim does
+# `pred_action = agent.predict(...)[0] + des_robot_pos` every step, so des_c_pos accumulates
+# without any absolute clamp (only the per-step `max_action_delta` cap). A policy that keeps
+# pushing one direction therefore walks the command clean off the table while the real arm
+# saturates against its own limits, and the episode burns its full 400-step budget going
+# nowhere. Every artifact that AUTOSCALES to the data (the per-rollout `*_mpc_foresight.svg`
+# above all) then degenerates: the 0.6 x 0.9 m workspace collapses into a couple of pixel rows
+# next to one runaway hike. This guard stops such an episode at the step it is provably lost,
+# records WHEN / WHERE / WHY, and lets the plots draw the abort explicitly.
+#
+# THRESHOLDS ARE ALIGNING-SPECIFIC — roughly a tenth of the UAV family's, because this
+# workspace is roughly a tenth the size (x∈[0.20,0.80], y∈[±0.45], z∈[0.02,0.50] m). There is
+# no velocity or attitude state exposed by D3IL, so unlike the UAV guard this one watches only
+# position and command/state disagreement.
+#
+# NOT a constraint check: leaving the declared workspace box is a NORMAL, measured constraint
+# violation (`check_trajectory_constraints`). These bounds are the "we lost the arm" boundary
+# and sit well outside every planning surface on purpose.
+#
+# Env overrides: FMPCC_ALIGN_DIVERGENCE_ABORT=0 disables the guard entirely (old behaviour);
+# FMPCC_ALIGN_DIV_SLACK_M / FMPCC_ALIGN_DIV_SPEED_MS retune the two live thresholds.
+#
+# v2 (2026-08-27) — the guard now reads the ARM, never the command. Deleted:
+#   `des_runaway`       |des_c_pos - c_pos|_xy > 0.25 m. Direction-blind lead check on a
+#                       free-running integrator: a large lead is a SYMPTOM that the episode
+#                       may be lost, never a measurement that the arm is. Direction-blind:
+#                       its UAV twin `p_des_runaway` treated a lagging climb (recoverable)
+#                       and a thrust-saturated dive (fatal) as the same 5 m.
+#   `des_out_of_arena`  the same signal expressed as a bound instead of a lead — it bounds the
+#                       COMMANDED point, which is not the robot either.
+# A runaway command with a stationary arm is now simply a failed rollout that runs out its
+# budget. Its plots stay readable via align_view_window() below, which scales to the ACTUAL
+# arm path and lets des_c_pos widen the window by at most ALIGN_VIEW_MAX_GROW core spans.
+# See logs_in_develop/aggregated_divergence_abort/CHANGELOG_20260827_div_abort_v2_scene_envelope.md
+ALIGN_DIVERGENCE_ABORT = os.environ.get(
+    'FMPCC_ALIGN_DIVERGENCE_ABORT', '1').lower() not in ('0', 'false', 'no')
+ALIGN_DIV_SLACK_M = float(os.environ.get('FMPCC_ALIGN_DIV_SLACK_M', '0.15'))
+# The physical-table box, in the Franka frame — the "arm has left the building" bound, the
+# aligning twin of the UAV guard's `off_map`. Fires on POSITION ALONE.
+ALIGN_TABLE_LB = (-0.30, -1.20, -0.50)
+ALIGN_TABLE_UB = (1.60, 1.20, 1.50)
+# TASK ENVELOPE — the box the aligning task actually happens in: the WIDEST Cartesian surface
+# any shipped geo entry declares (x∈[0.30,0.70], y∈[±0.35], z∈[0.05,0.40] in
+# config/visual_aligning_eval.yaml), opened out to the reachable aligning area. A FIXED
+# property of the task, deliberately NOT `geo_config['workspace_bounds']`: the geo variants
+# SHRINK that box for ablations (`geo_bounds_only_1/2`, relaxed vs tight `combined_*`), and a
+# shrunken PLANNING box must never become an abort trigger — going outside it is exactly the
+# constraint violation the eval exists to measure. Keying off a fixed envelope means the same
+# motion aborts, or does not, identically under every variant.
+ALIGN_ROUTE_LB = (0.20, -0.45, 0.02)
+ALIGN_ROUTE_UB = (0.80, 0.45, 0.50)
+# `ee_overspeed`: TCP speed from a finite difference of c_pos across one control step
+# (RT_CONTROL_HZ). DISABLED BY DEFAULT (0 = off) and this is deliberate: unlike the UAV, where
+# a free fall from cruise altitude gives a hard physical constant to anchor the number to, the
+# arm has no such reference and no measured speed distribution in-repo. Shipping a guessed
+# threshold that fires ALONE is exactly the mistake `des_runaway` was. Measure `c_pos_history`
+# from a healthy cluster run first, then enable with FMPCC_ALIGN_DIV_SPEED_MS=<value>.
+ALIGN_DIV_SPEED_MS = float(os.environ.get('FMPCC_ALIGN_DIV_SPEED_MS', '0'))
+
+
+def align_route_envelope():
+    """(lb, ub) of the box the aligning task actually happens in, ⊕ ALIGN_DIV_SLACK_M."""
+    return (np.array(ALIGN_ROUTE_LB, dtype=float) - ALIGN_DIV_SLACK_M,
+            np.array(ALIGN_ROUTE_UB, dtype=float) + ALIGN_DIV_SLACK_M)
+
+
+def check_align_divergence(des, cpos, prev_cpos=None, dt=None):
+    """First lost-the-arm condition this step trips → (reason, detail); else (None, '').
+
+    Reads the ARM (`cpos`, and its finite-difference speed) — never the command's lead over
+    it. `des` is used only for the NaN check, because a non-finite command is an unambiguous
+    integrator blow-up rather than a judgement call about control authority.
+    `reason` is a short greppable tag that lands in the stats JSON / npz / foresight SVG.
+    """
+    des = np.asarray(des, dtype=float).reshape(-1)[:3]
+    cpos = np.asarray(cpos, dtype=float).reshape(-1)[:3]
+    if not (np.all(np.isfinite(des)) and np.all(np.isfinite(cpos))):
+        return 'nan_state', 'non-finite des_c_pos / c_pos — the command integrator blew up'
+
+    if np.any(cpos < np.array(ALIGN_TABLE_LB)) or np.any(cpos > np.array(ALIGN_TABLE_UB)):
+        return 'off_table', (f'c_pos={np.round(cpos, 3).tolist()} is off the table box '
+                             f'{list(ALIGN_TABLE_LB)}..{list(ALIGN_TABLE_UB)} — the arm has '
+                             f'left the physical workspace entirely')
+
+    lo, hi = align_route_envelope()
+    off_route = [ax for ax, c, l, h in zip('xyz', cpos, lo, hi) if c < l or c > h]
+    if off_route:
+        return 'ee_off_route', (f'c_pos={np.round(cpos, 3).tolist()} is outside the aligning '
+                                f'task envelope {np.round(lo, 3).tolist()}..'
+                                f'{np.round(hi, 3).tolist()} on {"/".join(off_route)} '
+                                f'(task box ⊕ {ALIGN_DIV_SLACK_M:.2f} m) — the EE is nowhere '
+                                f'the task ever goes')
+
+    if ALIGN_DIV_SPEED_MS > 0 and prev_cpos is not None and dt:
+        prev = np.asarray(prev_cpos, dtype=float).reshape(-1)[:3]
+        if np.all(np.isfinite(prev)):
+            speed = float(np.linalg.norm(cpos - prev)) / float(dt)
+            if speed > ALIGN_DIV_SPEED_MS:
+                return 'ee_overspeed', (f'|v_ee|={speed:.3f} m/s > {ALIGN_DIV_SPEED_MS:.3f} m/s '
+                                        f'(finite difference of c_pos over one control step)')
+    return None, ''
+
+
+# ── Div_Abort: robust plot windows ───────────────────────────────────────────
+# matplotlib autoscales to the DATA, so one runaway command — or one wild candidate in the
+# MPC fan — compresses the whole workspace into a couple of pixel rows. The window is instead
+# built from content that CANNOT run away (the enforced geometry + a robust percentile band of
+# the ACTUAL arm path) and may grow for the rest only up to a hard cap. Excursions are still
+# drawn (matplotlib clips them) and counted in a corner note, so nothing is hidden silently.
+ALIGN_VIEW_PCT = (2.0, 98.0)
+ALIGN_VIEW_MAX_GROW = 1.0
+
+
+def _align_finite_cat(arrays):
+    """Flatten `arrays` into one finite 1-D array, or None if nothing usable is left."""
+    out = []
+    for a in arrays:
+        if a is None:
+            continue
+        a = np.asarray(a, dtype=float).reshape(-1)
+        a = a[np.isfinite(a)]
+        if a.size:
+            out.append(a)
+    return np.concatenate(out) if out else None
+
+
+def align_view_window(core, extra=(), fixed=(), pad=0.05,
+                      pct=ALIGN_VIEW_PCT, max_grow=ALIGN_VIEW_MAX_GROW):
+    """(lo, hi) axis limits a runaway cannot destroy — see the note above.
+
+    core  — sets the scale (robust `pct` band): the actual executed arm path.
+    fixed — always fully visible: the enforced constraint geometry, box/target poses.
+    extra — may widen the window by at most `max_grow` core spans per side: des_c_pos and
+            the MPC candidate fan.
+    Returns None when nothing finite is available (caller leaves autoscale alone).
+    """
+    core_cat = _align_finite_cat(core)
+    fixed_cat = _align_finite_cat(fixed)
+    if core_cat is not None:
+        lo = float(np.percentile(core_cat, pct[0]))
+        hi = float(np.percentile(core_cat, pct[1]))
+    elif fixed_cat is not None:
+        lo, hi = float(fixed_cat.min()), float(fixed_cat.max())
+    else:
+        return None
+    if fixed_cat is not None:
+        lo, hi = min(lo, float(fixed_cat.min())), max(hi, float(fixed_cat.max()))
+    span = max(hi - lo, 1e-4)
+    ex = _align_finite_cat(extra)
+    if ex is not None:
+        lo = min(lo, max(float(ex.min()), lo - max_grow * span))
+        hi = max(hi, min(float(ex.max()), hi + max_grow * span))
+    if hi - lo < 1e-6:
+        lo, hi = lo - 0.05, hi + 0.05
+    return lo - pad, hi + pad
+
+
+def align_outside_note(ax, series, xlim, ylim):
+    """Corner note naming what the clamped window cuts off — keeps the clamp honest."""
+    msgs = []
+    for label, xs, ys in series:
+        xs = np.asarray(xs, dtype=float).reshape(-1)
+        ys = np.asarray(ys, dtype=float).reshape(-1)
+        if xs.size == 0 or xs.size != ys.size:
+            continue
+        bad = ((~np.isfinite(xs)) | (~np.isfinite(ys)) | (xs < xlim[0]) | (xs > xlim[1])
+               | (ys < ylim[0]) | (ys > ylim[1]))
+        n = int(bad.sum())
+        if n:
+            far = _align_finite_cat([np.abs(xs[bad]), np.abs(ys[bad])])
+            reach = f', max |coord| {float(far.max()):.2f} m' if far is not None else ''
+            msgs.append(f'{n} {label} pt(s) outside view{reach}')
+    if msgs:
+        ax.text(0.99, 0.01, 'view clamped: ' + '; '.join(msgs), transform=ax.transAxes,
+                fontsize=7, color='crimson', ha='right', va='bottom', zorder=16,
+                bbox=dict(boxstyle='round,pad=0.25', facecolor='white', alpha=0.75, lw=0))
+
+
+def align_geometry_anchors(geo_config, context_info=None):
+    """(xs, ys, zs) coordinates that must stay in frame: enforced surfaces + box/target poses."""
+    xs, ys, zs = [], [], []
+    gc = geo_config or {}
+    ct = list(gc.get('constraint_types', []))
+    ws = gc.get('workspace_bounds')
+    if 'geo_bounds' in ct and ws:
+        _lb, _ub = ws.get('lb', []), ws.get('ub', [])
+        for axis, acc in enumerate((xs, ys, zs)):
+            for _seq in (_lb, _ub):
+                if axis < len(_seq) and np.isfinite(float(_seq[axis])):
+                    acc.append(float(_seq[axis]))
+    if 'halfspace' in ct:
+        for hs in gc.get('halfspace_constraints', []):
+            _line = hs['line'] if isinstance(hs, dict) else hs[:2]
+            xs += [float(_line[0][0]), float(_line[1][0])]
+            ys += [float(_line[0][1]), float(_line[1][1])]
+    if 'obstacles' in ct:
+        for ob in gc.get('obstacle_constraints', []):
+            c, r = ob['center'], float(ob['radius'])
+            xs += [float(c[0]) - r, float(c[0]) + r]
+            ys += [float(c[1]) - r, float(c[1]) + r]
+    for key in ('box_init_xy', 'target_xy', 'final_box_xy'):
+        pt = (context_info or {}).get(key)
+        if pt is not None and len(pt) >= 2:
+            xs += [float(pt[0]) - 0.08, float(pt[0]) + 0.08]
+            ys += [float(pt[1]) - 0.08, float(pt[1]) + 0.08]
+    return xs, ys, zs
+
+
 def check_trajectory_constraints(c_pos_traj, act_traj, geo_config, enlarge=0.0):
     """
     Evaluate actual EE trajectory against all active geometric constraints.
@@ -919,6 +1133,17 @@ def _collect_per_rollout_arrays(agent):
         projection_cb_tripped=np.array([1 if s > 0 else 0 for s in agent.history_cb_skipped_steps],
                                        dtype=np.int32),
         projection_cb_skipped_steps=np.array(agent.history_cb_skipped_steps, dtype=np.int32),
+        # Div_Abort: rollouts STOPPED early because the command ran away. An aborted row
+        # covers fewer steps than a normal one, so downstream analysis must treat
+        # divergence_aborted==1 separately rather than averaging it in blind. `reason` is
+        # '' for a normal rollout; nan_state / off_table / ee_off_route / ee_overspeed
+        # otherwise.
+        divergence_aborted=np.array([1 if d.get('aborted') else 0
+                                     for d in agent.history_divergence], dtype=np.int32),
+        divergence_step=np.array([int(d.get('step', -1)) for d in agent.history_divergence],
+                                 dtype=np.int32),
+        divergence_reason=np.array([d.get('reason') or '' for d in agent.history_divergence],
+                                   dtype=object),
     )
 
 
@@ -1150,6 +1375,11 @@ class VisualAgentWrapper:
         self.history_dist_to_target      = []
         self.history_clamp_events        = []
         self._replan_count               = 0
+        # Div_Abort: per-rollout divergence record (None until the guard fires) + the flag
+        # Aligning_Sim polls to break out of `while not done`. See check_align_divergence.
+        self.abort_episode               = False
+        self.curr_rollout_divergence     = None
+        self.history_divergence          = []
         # UF-16.3: constraint metrics
         self.history_constraint_metrics  = []
         self._plan_post_viol_rates       = []
@@ -1188,6 +1418,8 @@ class VisualAgentWrapper:
         self.curr_rollout_clamp_events.clear()
         self._replan_count = 0
         self._plan_post_viol_rates.clear()   # UF-16.3
+        self.abort_episode = False               # Div_Abort
+        self.curr_rollout_divergence = None      # Div_Abort
         self.curr_rollout_cb_skipped_steps = 0   # Fix_15.3
         # REAL_TIME_RECORDING_UPDATE — fresh per-rollout timing recorder.
         self.rt_rec = RTRecorder(
@@ -1303,6 +1535,15 @@ class VisualAgentWrapper:
         self.master_rollout_history[f'rollout_{ridx}']['constraint_metrics'] = _cmetrics
         self.history_constraint_metrics.append(_cmetrics)
 
+        # Div_Abort: WHEN/WHERE/WHY this rollout was cut short (all-False group when it ran
+        # to a normal end). An aborted rollout is a genuine FAILURE — the env's own success
+        # flag is left untouched — but it covers FEWER steps than a normal one, so a DA
+        # comparing step counts or violation COUNTS must account for it.
+        _div = self.curr_rollout_divergence or {
+            'enabled': bool(ALIGN_DIVERGENCE_ABORT), 'aborted': False, 'reason': None,
+            'detail': '', 'step': -1}
+        self.master_rollout_history[f'rollout_{ridx}']['divergence'] = _div
+        self.history_divergence.append(_div)
         self.history_n_steps.append(self.step_counter)
         self.history_avg_time.append(avg_time)
         self.history_cb_skipped_steps.append(int(self.curr_rollout_cb_skipped_steps))   # Fix_15.3
@@ -1350,6 +1591,11 @@ class VisualAgentWrapper:
                       f'angle={ci["final_box_angle_deg"]:.1f}°'
                       f'  (dist_to_target: {ci["final_xy_dist"]:.4f} m)')
         print(f'  - Total Steps: {self.step_counter}')
+        if _div.get('aborted'):   # Div_Abort
+            print(f'  - ⚠ DIVERGENCE ABORT at step {_div["step"]}: {_div["reason"]} — '
+                  f'{_div["detail"]}')
+            print(f'    des_c_pos={_div["des_c_pos"]}  c_pos={_div["c_pos"]}  '
+                  f'|des-c_pos|={_div["lead"]:.3f} m  — EXCLUDE FROM METRICS')
         print(f'  - Success status: {success}')
         print(f'  - Final Mean Distance: {mean_dist:.6f} m')
         print(f'  - Environment Mode: {mode}')
@@ -1510,6 +1756,12 @@ class VisualAgentWrapper:
                     'note':          _contact_note,
                 },
                 'constraint': _nested_cm,
+                # Div_Abort: WHEN / WHERE / WHY this rollout was stopped early
+                # (`aborted: false` when it ran to a normal end). An aborted rollout is a
+                # genuine failure that covers FEWER steps than a normal one — its
+                # `timing.steps` and `constraint` counts are truncated by design.
+                'divergence': dict(data.get('divergence')
+                                   or {'aborted': False, 'reason': None, 'step': -1}),
             }
             if _cm:
                 _ex = _nested_cm['exec']
@@ -1718,7 +1970,10 @@ class VisualAgentWrapper:
                                 fontsize=12)
                 ax_xy.set_xlabel('X (m)', fontsize=11)
                 ax_xy.set_ylabel('Y (m)', fontsize=11)
-                ax_xy.set_aspect('equal', adjustable='datalim')
+                # Div_Abort: 'box' (not 'datalim') so the clamped x/y limits set below
+                # survive — with 'datalim' matplotlib re-expands the data limits to
+                # satisfy the aspect ratio and the clamp is silently undone.
+                ax_xy.set_aspect('equal', adjustable='box')
                 ax_xy.grid(True, alpha=0.3)
 
                 # UF-15.2 / UF-16: constraint geometry overlay — drawn behind trajectories.
@@ -1944,6 +2199,56 @@ class VisualAgentWrapper:
                                     _ocz + _or*np.outer(np.ones_like(_ou), np.cos(_ov)),
                                     color='tomato', alpha=0.30, linewidth=0)
 
+                # ── Div_Abort: clamp both panels + mark the abort ────────────
+                # Scale comes from the ACTUAL arm path and the enforced geometry; des_c_pos and
+                # the candidate fan may widen it only up to ALIGN_VIEW_MAX_GROW spans, so a
+                # runaway command can no longer flatten the workspace into a few pixels.
+                _core = c_arr if c_arr is not None else real_pos
+                _cand_all = (np.concatenate([np.asarray(c).reshape(-1, 3) for c in all_cands_list],
+                                            axis=0) if all_cands_list else np.zeros((0, 3)))
+                _gax, _gay, _gaz = align_geometry_anchors(_gc, _ci)
+                _vx = align_view_window([_core[:, 0]], extra=[real_pos[:, 0], _cand_all[:, 0]],
+                                        fixed=_gax)
+                _vy = align_view_window([_core[:, 1]], extra=[real_pos[:, 1], _cand_all[:, 1]],
+                                        fixed=_gay)
+                _vz = align_view_window([_core[:, 2]], extra=[real_pos[:, 2], _cand_all[:, 2]],
+                                        fixed=_gaz, pad=0.02)
+                if _vx:
+                    ax_xy.set_xlim(*_vx); ax_3d.set_xlim3d(*_vx)
+                if _vy:
+                    ax_xy.set_ylim(*_vy); ax_3d.set_ylim3d(*_vy)
+                if _vz:
+                    ax_3d.set_zlim3d(*_vz)
+                if _vx and _vy:
+                    align_outside_note(ax_xy,
+                                       [('des_c_pos', real_pos[:, 0], real_pos[:, 1]),
+                                        ('actual', _core[:, 0], _core[:, 1]),
+                                        ('candidate', _cand_all[:, 0], _cand_all[:, 1])],
+                                       _vx, _vy)
+
+                # ✖ = the arm's last actual position; the dotted leader points at the commanded
+                # des_c_pos it was chasing (typically far outside the window — that IS the failure).
+                _dv = data.get('divergence') or {}
+                if _dv.get('aborted'):
+                    _dp = np.asarray(_dv.get('c_pos'), dtype=float)
+                    _dd = np.asarray(_dv.get('des_c_pos') or _dv.get('c_pos'), dtype=float)
+                    ax_xy.plot([_dp[0], _dd[0]], [_dp[1], _dd[1]], color='darkred', ls=':',
+                               lw=1.4, alpha=0.9, zorder=15)
+                    ax_xy.scatter([_dp[0]], [_dp[1]], marker='X', s=260, color='darkred',
+                                  edgecolors='white', linewidths=1.2, zorder=16)
+                    ax_xy.annotate(f'ABORT step {_dv["step"]}\n{_dv["reason"]}',
+                                   xy=(_dp[0], _dp[1]), xytext=(6, 8), textcoords='offset points',
+                                   fontsize=8, color='darkred', fontweight='bold', zorder=16,
+                                   bbox=dict(boxstyle='round,pad=0.25', facecolor='white',
+                                             alpha=0.8, lw=0))
+                    ax_3d.scatter([_dp[0]], [_dp[1]], [_dp[2]], marker='X', s=180,
+                                  color='darkred', edgecolors='white', linewidths=1.0, zorder=16)
+                    fig_mpc.text(0.5, 0.925,
+                                 f'✖ DIVERGENCE ABORT — {_dv["reason"]} at step {_dv["step"]}:  '
+                                 f'{_dv["detail"]}',
+                                 color='white', backgroundcolor='darkred', fontsize=11,
+                                 fontweight='bold', ha='center', va='center')
+
                 fig_mpc.tight_layout()
                 _mpc_base = os.path.join(diag_path, f'rollout_{rollout_idx}_mpc_foresight')
                 # fig_mpc.savefig(f'{_mpc_base}.png', dpi=200, bbox_inches='tight')
@@ -2074,6 +2379,45 @@ class VisualAgentWrapper:
                 print(f'[ box-obstacle ] holding position for this rollout (context '
                       f'{self.ctx_box_obs_conflict["context_idx"]}) — see abort notice above.',
                       flush=True)
+            self.curr_rollout_act_magnitudes.append(0.0)
+            self.step_counter += 1
+            return np.zeros((1, 3), dtype=np.float64)
+
+        # ── Div_Abort: stop this rollout the step the command is provably lost ──
+        # Runs AFTER the per-step bookkeeping above (so the JSON/npz keep a real trace up to
+        # and including the abort step) and BEFORE any planning — spending a replan's SLSQP
+        # solves on a runaway command buys nothing. The EE holds position for the one step it
+        # takes Aligning_Sim to notice `abort_episode` and break the episode loop.
+        if ALIGN_DIVERGENCE_ABORT and not self.abort_episode:
+            # `curr_rollout_c_pos` was appended with THIS step's position by the bookkeeping
+            # above, so [-2] is the previous step — the finite difference for `ee_overspeed`.
+            _prev_cpos = (self.curr_rollout_c_pos[-2]
+                          if len(self.curr_rollout_c_pos) >= 2 else None)
+            _route_lb, _route_ub = align_route_envelope()
+            _reason, _detail = check_align_divergence(
+                des_robot_pos_np, robot_pos_np,
+                prev_cpos=_prev_cpos, dt=1.0 / float(RT_CONTROL_HZ))
+            if _reason is not None:
+                self.abort_episode = True
+                self.curr_rollout_divergence = {
+                    'enabled': True, 'aborted': True, 'reason': _reason, 'detail': _detail,
+                    'step': int(self.step_counter),
+                    # des_c_pos / lead are kept as DIAGNOSTICS only — neither is a trigger any
+                    # more (v2). The foresight SVG still draws the leader to the commanded point.
+                    'des_c_pos': [float(c) for c in np.asarray(des_robot_pos_np, dtype=float).reshape(-1)[:3]],
+                    'c_pos': [float(c) for c in np.asarray(robot_pos_np, dtype=float).reshape(-1)[:3]],
+                    'lead': float(np.linalg.norm(
+                        np.asarray(des_robot_pos_np, dtype=float).reshape(-1)[:2]
+                        - np.asarray(robot_pos_np, dtype=float).reshape(-1)[:2])),
+                    'route_lb': [float(c) for c in _route_lb],
+                    'route_ub': [float(c) for c in _route_ub],
+                    'table_lb': list(ALIGN_TABLE_LB), 'table_ub': list(ALIGN_TABLE_UB),
+                    'thresholds': {'route_slack_m': ALIGN_DIV_SLACK_M,
+                                   'ee_speed_ms': ALIGN_DIV_SPEED_MS},
+                }
+                print(f'[ Div_Abort ] rollout {self.rollout_counter}: ⚠ DIVERGENCE ABORT at step '
+                      f'{self.step_counter} — reason={_reason}: {_detail}', flush=True)
+        if self.abort_episode:
             self.curr_rollout_act_magnitudes.append(0.0)
             self.step_counter += 1
             return np.zeros((1, 3), dtype=np.float64)
@@ -2282,7 +2626,7 @@ class VisualAgentWrapper:
 
 # ── Model loading ─────────────────────────────────────────────────────────────
 
-def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', device='cuda:0', override_args=None):
+def load_diffusion_with_override(*loadpath, target_class=None, epoch='best', device='cuda:0', override_args=None):
     lp = os.path.join(*loadpath)
     print(f'\n[ eval loading ] Loading from {lp}\n')
     dataset_config   = utils.load_config(*loadpath, 'dataset_config.pkl')
@@ -2305,10 +2649,34 @@ def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', d
     # still resolves — where exp_name (built from the EVAL args) would label the results
     # folder with a film mode the weights do not have.
     _film_holder = model_config._dict.get('vis_config', model_config._dict.get('config'))
-    _film_pkl = getattr(_film_holder, 'film_mode', 'v1') or 'v1'
-    print(f"[ eval loading ] film_mode = {_film_pkl} (from train-time model_config.pkl; the "
-          f"backbone is rebuilt from the pkl, so it always matches the checkpoint)")
+
+    # ── Gen14 U8 ── which ML BONE produced this checkpoint. Read from the pkl's own
+    # constructor kwargs (the train script passes imf_backbone into model_config), so it is
+    # the bone that will actually be rebuilt, not what the eval config hopes for.
+    _bone_pkl = model_config._dict.get('imf_backbone', 'unet') or 'unet'
+    _is_dit = _bone_pkl != 'unet'
+    print(f"[ eval loading ] ml_bone = {_bone_pkl} "
+          f"({'VisualDiTTwoTime — visual latent as ONE PREPENDED TOKEN' if _is_dit else 'VisualUNetTwoTime / VisualUNet — FiLM'}) "
+          f"(from train-time model_config.pkl)")
     if override_args is not None:
+        _bone_cfg = getattr(override_args, 'ml_bone', _bone_pkl) or _bone_pkl
+        if _bone_cfg != _bone_pkl:
+            print(f"[ config->pkl ] WARNING  ml_bone: train-pkl={_bone_pkl!r} vs "
+                  f"eval-config={_bone_cfg!r} -- ARCHITECTURE key; KEEPING the train value to "
+                  f"protect the checkpoint. 🔴 The results folder is named from the EVAL "
+                  f"config, so it will read 'B{_bone_cfg}' while the weights are "
+                  f"'{_bone_pkl}'. Fix the config to match the checkpoint, or retrain.")
+
+    # 🔴 Gen14 U8 — FiLM is a U-NET concept. On a DiT/SiT bone there is no film_mode to
+    # report, and printing the 'v1' default would assert an architecture the weights do not
+    # have. Skip the whole breadcrumb rather than print a comfortable lie.
+    _film_pkl = getattr(_film_holder, 'film_mode', 'v1') or 'v1'
+    if _is_dit:
+        print("[ eval loading ] film_mode = n/a (transformer bone: no FiLM path exists)")
+    else:
+        print(f"[ eval loading ] film_mode = {_film_pkl} (from train-time model_config.pkl; the "
+              f"backbone is rebuilt from the pkl, so it always matches the checkpoint)")
+    if override_args is not None and not _is_dit:
         _film_cfg = getattr(override_args, 'film_mode', _film_pkl) or _film_pkl
         if _film_cfg != _film_pkl:
             print(f"[ config->pkl ] WARNING  film_mode: train-pkl={_film_pkl!r} vs "
@@ -2353,9 +2721,64 @@ def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', d
     model     = model_config()
     diffusion = diffusion_config(model).to(device)
     trainer   = trainer_config(diffusion_model=diffusion, dataset=dataset)
+    # ── Gen14 U12 ── resolve 'latest', and FAIL LOUDLY when it cannot be resolved.
+    #
+    # 🔴 utils.get_latest_epoch returns -1 when no NUMERIC state_<step>.pt matches, and the
+    # old code walked straight into `state_-1.pt` -> FileNotFoundError from inside torch.load,
+    # naming a file nobody ever asked for. Gen3v7 job 25253 died exactly this way and the
+    # cause (a tree holding only state_best.pt) took a manual `ls` on the cluster to find.
+    # A checkpoint tree can legitimately be in that state: /data filled up mid-run, or the
+    # job was killed before the first periodic save.
     if epoch == 'latest':
         epoch = utils.get_latest_epoch(loadpath)
+        if epoch < 0:
+            import glob as _glob
+            _have = sorted(_glob.glob1(lp, 'state_*.pt'))
+            raise SystemExit(
+                f"[ eval loading ] ERROR: --epoch latest found NO numeric state_<step>.pt in\n"
+                f"    {lp}\n"
+                f"  present: {_have if _have else '(nothing)'}\n"
+                f"  The periodic saves are missing, not the checkpoint: state_best.pt alone\n"
+                f"  cannot answer 'latest'. Either re-run with --epoch best / MIX_EPOCH=best\n"
+                f"  (⚠ on the af arm that deploys a MID-CURRICULUM model — see U12), or\n"
+                f"  retrain with MIX_SAVE_EVERY set so periodic checkpoints land on disk.")
     trainer.load(epoch)
+
+    # Breadcrumb: WHICH weights are about to be rolled out. `trainer.step` is read back out
+    # of the checkpoint itself (utils/training.py load()), so this is the file's own claim
+    # about where in training it came from, not the config's.
+    _ckpt_step = getattr(trainer, 'step', None)
+    print(f'[ eval loading ] checkpoint = state_{epoch}.pt  (trained to step {_ckpt_step})')
+
+    # ── Gen14 U12 ── the alpha breadcrumb, af arm only.
+    #
+    # 🔴 THE ONE CHECK THAT SEPARATES alpha-FLOW FROM MeanFlow AT DEPLOYMENT. af_diffusion
+    # routes `alpha <= 0` into Gen3v6's MeanFlow JVP body UNMODIFIED (af_diffusion.py:552),
+    # so a checkpoint taken from the alpha=0 tail IS a MeanFlow model however the folder is
+    # named. Printing alpha at the loaded step makes that visible in the eval log instead of
+    # only in the training log, which is usually a different job hours earlier.
+    # _get_ratio is a staticmethod for exactly this reason: schedule questions without a
+    # training loop. The alpha values here come from the TRAIN-time diffusion_config.pkl.
+    if _ckpt_step is not None and hasattr(diffusion, 'af_alpha_end'):
+        try:
+            _a = diffusion._get_ratio(
+                diffusion.af_alpha_scheduler, diffusion.af_alpha_init, diffusion.af_alpha_end,
+                diffusion.af_alpha_init_step, diffusion.af_alpha_end_step,
+                diffusion.af_alpha_gamma, diffusion.af_alpha_clamp, int(_ckpt_step))
+        except Exception as _e:
+            print(f'[ eval loading ] alpha at step {_ckpt_step}: unavailable ({type(_e).__name__})')
+        else:
+            _verdict = ('🔴 alpha = 0 -> these weights were trained on the MeanFlow target '
+                        '(af_diffusion.py:552). This is an alpha-Flow CURRICULUM endpoint, '
+                        'not the alpha-Flow objective.'
+                        if _a <= 0.0 else
+                        'alpha-Flow objective ACTIVE at this checkpoint.')
+            print(f'[ eval loading ] alpha(step {_ckpt_step}) = {_a:.4f}  '
+                  f'[schedule {diffusion.af_alpha_scheduler} '
+                  f'{diffusion.af_alpha_init} -> {diffusion.af_alpha_end} '
+                  f'over {diffusion.af_alpha_end_step} steps, clamp {diffusion.af_alpha_clamp}]')
+            print(f'[ eval loading ]   {_verdict}')
+
     return utils.DiffusionExperiment(dataset, trainer.model.model, trainer.model, trainer, epoch, None)
 
 # ── Parser & Main ─────────────────────────────────────────────────────────────
@@ -2402,11 +2825,67 @@ if __name__ == '__main__':
                              'BOTH the sampler and the results folder name. Omit to use the '
                              "config default (mf/af: 2, fm: 100). Not valid for 'diffusion', "
                              'whose NFE key is n_diffusion_steps.')
+    # ── Gen14 U11 ── --proj-threshold / MIX_PROJ_T: the PROJECTION budget knob.
+    #
+    # T = the fraction of the LATE ODE over which the projector runs. The sampler projects on
+    # every step from int((1 - T) * K) to the end, so solves per replan ~= T*K:
+    #     T=0.5  K=100 -> 50      T=0.1 K=100 -> 10      T=0.05 K=100 -> 5      T=0.5 K=2 -> 1
+    #
+    # 🔴 IT MUST BE APPLIED IN TWO PLACES OR THE RESULT IS MISLABELLED. This file loads
+    # `config/visual_aligning_eval.yaml` ITSELF (below) and that dict — not the config module —
+    # is what reaches setup_dpcc_projector via `_gc = dict(config)`. The config module's copy
+    # is what reaches `args`, and therefore exp_name and the results folder. Setting only one
+    # gives a run whose folder says T0.1 while the projector runs at 0.5, or the reverse.
+    # Both are set together below, from one resolved value, and asserted equal.
+    parser.add_argument('--proj-threshold', type=float, default=None, metavar='T',
+                        help='override diffusion_timestep_threshold (the DPCC projection '
+                             'budget) for this run. Applies to the projector, to HardFlow '
+                             '(which inherits it when hardflow.activation_threshold is null) '
+                             'AND to the results folder name. Env fallback: MIX_PROJ_T.')
+    # ── Gen14 U12 ── --epoch / MIX_EPOCH: WHICH CHECKPOINT gets rolled out.
+    #
+    # 🔴 Before U12 this was unreachable: 'diffusion_epoch': 'best' is inherited by all four
+    # mix plan blocks and no flag or env var could move it. `best` = state_best.pt, the
+    # lowest test_loss ever seen. On the af arm that loss carries an alpha-weighted term, so
+    # its minimum sits MID-HOMOTOPY: `best` deploys a model caught inside the curriculum,
+    # never the one the schedule ends on. Gen3v7 measured the gap — the same run went from
+    # 0/2 to 2/2 goals at K=1 purely by evaluating `latest` instead of `best`
+    # (DA_20260901_AF_UNet_alpha_clamp_T1_negative.md §4).
+    #
+    # Eval-only: it picks among files already on disk. The CHECKPOINT path is untouched;
+    # only the results folder moves, via the '_EP<sel>' fragment (config U12 block).
+    parser.add_argument('--epoch', type=str, default=None, metavar='SEL',
+                        help="which checkpoint to deploy: 'best' (default; lowest test_loss), "
+                             "'latest' (newest state_<step>.pt), or an explicit step number. "
+                             "Applies to the loader AND the results folder name ('_EP<sel>'). "
+                             "Env fallback: MIX_EPOCH. Use 'latest' on the af arm to deploy "
+                             "the model the alpha schedule actually produced.")
     args_cli, remaining = parser.parse_known_args()
     sys.argv = [sys.argv[0]] + remaining
 
     with open('config/visual_aligning_eval.yaml', 'r') as f:
         config = yaml.safe_load(f)
+
+    # Resolve T once: CLI > env > yaml. MIX_PROJ_T is read here too so the env form works
+    # identically whether it reaches us through the sbatch or through --export.
+    _T_SRC, _T_OVERRIDE = 'config/visual_aligning_eval.yaml', None
+    if args_cli.proj_threshold is not None:
+        _T_OVERRIDE, _T_SRC = float(args_cli.proj_threshold), 'cli --proj-threshold'
+    elif str(os.environ.get('MIX_PROJ_T') or '').strip():
+        # 🔴 `.strip()` truthiness, NOT `is not None` (job 25215): shell `VAR= cmd` exports
+        # the EMPTY STRING rather than unsetting, so `is not None` was True and float('')
+        # crashed. Blank is treated as absent, matching config's _env_or_none.
+        _raw_T = os.environ['MIX_PROJ_T'].strip()
+        try:
+            _T_OVERRIDE = float(_raw_T)
+        except ValueError:
+            raise SystemExit(f'[ eval ] ERROR: MIX_PROJ_T={_raw_T!r} is not a float. '
+                             f'(A space-separated sweep list belongs in the sbatch, which '
+                             f'passes one value per pass via --proj-threshold.)')
+        _T_SRC = 'env MIX_PROJ_T'
+    if _T_OVERRIDE is not None and not (0.0 <= _T_OVERRIDE <= 1.0):
+        raise SystemExit(f'[ eval ] ERROR: projection threshold {_T_OVERRIDE} must lie in '
+                         f'[0, 1] — it is a FRACTION of the late ODE, not a step count.')
 
     if args_cli.seed:
         seeds, _seed_src = [args_cli.seed], 'cli --seed'
@@ -2477,6 +2956,87 @@ if __name__ == '__main__':
               f'{max(int(args_cli.flow_steps) - int((1 - _thr) * int(args_cli.flow_steps)), 1)} '
               f'projector call(s) per replan at threshold T={_thr}')
 
+    # ── Gen14 U11 ── apply T to BOTH consumers, from the single resolved value above.
+    # Same timing rule as --flow-steps: the plan-block mutation has to happen BEFORE any
+    # Parser().parse_args(), because exp_name = watch(args_to_watch_mix_visual_plan) is
+    # resolved inside parse_args and 'diffusion_timestep_threshold' is one of its keys.
+    _plan_blk_T = importlib.import_module(Parser.config).base[EXPERIMENT]
+    if _T_OVERRIDE is not None:
+        _old_T = _plan_blk_T.get('diffusion_timestep_threshold',
+                                 config.get('diffusion_timestep_threshold', 0.5))
+        config['diffusion_timestep_threshold']      = _T_OVERRIDE   # -> projector + HardFlow
+        _plan_blk_T['diffusion_timestep_threshold'] = _T_OVERRIDE   # -> args, folder, snapshot
+        _k_now = (int(args_cli.flow_steps) if args_cli.flow_steps is not None
+                  else _plan_blk_T.get('flow_steps_v3'))
+        print(f'[ eval ] --proj-threshold: diffusion_timestep_threshold {_old_T} -> '
+              f'{_T_OVERRIDE}  (source: {_T_SRC})')
+        print(f'[ eval ]   applied to BOTH the projector config AND the results folder key T')
+        if isinstance(_k_now, int):
+            print(f'[ eval ]   projection budget: '
+                  f'{max(_k_now - int((1 - _old_T) * _k_now), 1)} -> '
+                  f'{max(_k_now - int((1 - _T_OVERRIDE) * _k_now), 1)} '
+                  f'projector call(s) per replan at K={_k_now}')
+        print(f'[ eval ]   HardFlow inherits it unless hardflow.activation_threshold or '
+              f'HFFM_ACT_THRESHOLD is set')
+    # 🔴 The guard that makes the two-place application safe: if these ever disagree the run
+    # is mislabelled, so fail here rather than write a folder that lies about its own setting.
+    _T_plan = _plan_blk_T.get('diffusion_timestep_threshold')
+    _T_yaml = config.get('diffusion_timestep_threshold', 0.5)
+    if _T_plan is not None and abs(float(_T_plan) - float(_T_yaml)) > 1e-12:
+        raise SystemExit(
+            f'[ eval ] ERROR: projection threshold disagrees between the config module '
+            f'({_T_plan}, drives the results folder name) and the eval yaml ({_T_yaml}, '
+            f'drives the actual projector). A run in this state would be mislabelled. '
+            f'Set --proj-threshold / MIX_PROJ_T rather than editing one of them by hand.')
+    print(f'[ eval ] projection threshold T = {_T_yaml}  (source: {_T_SRC})')
+
+    # ── Gen14 U12 ── --epoch / MIX_EPOCH, resolved once: CLI > env > config default.
+    #
+    # Same timing rule as --flow-steps (U6) and --proj-threshold (U11): the plan-block
+    # mutation MUST happen before any Parser().parse_args(), because exp_name is resolved
+    # inside parse_args and 'diffusion_epoch_tag' is one of args_to_watch_mix_visual_plan's
+    # keys. Set it later and the loader would honour the new checkpoint while the results
+    # folder still claimed the old one.
+    #
+    # Validation lives in the CONFIG module (_mix_epoch_keys), not here, so the CLI form and
+    # the env form can never disagree about what is legal or how the tag is spelled.
+    _EP_SRC, _ep_raw = 'config default', None
+    if args_cli.epoch is not None:
+        _ep_raw, _EP_SRC = args_cli.epoch.strip(), 'cli --epoch'
+    elif str(os.environ.get('MIX_EPOCH') or '').strip():
+        # `.strip()` truthiness, not `is not None` — shell `VAR= cmd` exports the EMPTY
+        # STRING rather than unsetting it (job 25215). Blank means absent, as in the config.
+        _ep_raw, _EP_SRC = os.environ['MIX_EPOCH'].strip(), 'env MIX_EPOCH'
+    _cfg_mod     = importlib.import_module(Parser.config)
+    _plan_blk_EP = _cfg_mod.base[EXPERIMENT]
+    if _ep_raw is not None:
+        try:
+            _ep_keys = _cfg_mod._mix_epoch_keys(_ep_raw)
+        except ValueError as _e:
+            raise SystemExit(f'[ eval ] ERROR: {_e}  (source: {_EP_SRC})')
+        _old_ep = _plan_blk_EP.get('diffusion_epoch', 'best')
+        # Pop first: an explicit --epoch best must REMOVE a tag the env may have set at
+        # config-import time, or the folder would carry '_EPlatest' for a `best` rollout.
+        _plan_blk_EP.pop('diffusion_epoch_tag', None)
+        _plan_blk_EP['diffusion_epoch'] = _ep_keys.get('diffusion_epoch', 'best')
+        _plan_blk_EP.update(_ep_keys)
+        print(f'[ eval ] --epoch: diffusion_epoch {_old_ep!r} -> '
+              f'{_plan_blk_EP["diffusion_epoch"]!r}  (source: {_EP_SRC})')
+    _ep_now = _plan_blk_EP.get('diffusion_epoch', 'best')
+    _ep_tag = _plan_blk_EP.get('diffusion_epoch_tag')
+    print(f'[ eval ] checkpoint selector = {_ep_now!r}  (source: {_EP_SRC})'
+          + (f'  -> results dir carries _EP{_ep_tag}' if _ep_tag is not None
+             else '  -> no _EP fragment (shipped path shape)'))
+    if ENGINE == 'af' and _ep_now == 'best':
+        print("[ eval ]   ⚠  af arm at 'best': state_best.pt is chosen on a test_loss that "
+              "scales with alpha, so it")
+        print("[ eval ]      structurally prefers a MID-CURRICULUM checkpoint rather than the "
+              "model the alpha")
+        print("[ eval ]      schedule actually produced. Pairing MIX_AF_ALPHA_END with 'best' "
+              "floors alpha and then")
+        print("[ eval ]      discards the checkpoint the floor produced. Use --epoch latest / "
+              "MIX_EPOCH=latest.")
+
     for _seed_i, seed in enumerate(seeds):
         # Fix_11: seed X/N — the outermost breadcrumb level (mirrors UAV's Fix_11).
         print(f'\n=== Evaluating seed {_seed_i + 1}/{len(seeds)} (seed={seed}) ===')
@@ -2486,6 +3046,9 @@ if __name__ == '__main__':
         assert_engine_matches(ENGINE, getattr(args, 'engine', None))
 
         diffusion_model = None
+        # Gen14 U12 — the RESOLVED checkpoint, for the provenance record below. 'latest' is
+        # a request; these two are the answer, and only the answer identifies the weights.
+        _ckpt_epoch_resolved = _ckpt_step_resolved = None
         if not args_cli.aggregate_only:
             exp = load_diffusion_with_override(
                 args.loadbase, args.dataset, args.diffusion_loadpath, str(args.seed),
@@ -2493,6 +3056,8 @@ if __name__ == '__main__':
                 device=args.device, override_args=args,
             )
             diffusion_model = exp.diffusion
+            _ckpt_epoch_resolved = exp.epoch
+            _ckpt_step_resolved  = getattr(getattr(exp, 'trainer', None), 'step', None)
             # Original DPCC always trains/evaluates with clip_denoised=False — the cosine schedule
             # amplifies x_0 prediction by ~9.4× at early timesteps, so clipping to ±1 corrupts the
             # denoising chain. FM ODE does not clamp at all (no cosine schedule), so False is correct here too.
@@ -2547,6 +3112,58 @@ if __name__ == '__main__':
         _base_results = (f'{args.savepath}/results_train_set'
                          if args_cli.eval_on_train else f'{args.savepath}/results')
         os.makedirs(_base_results, exist_ok=True)
+
+        # ── U10.1 RUN PROVENANCE ──────────────────────────────────────────────────────
+        # Gen7 has two env mechanisms the results path cannot express: HFFM_VARIANTS
+        # ADDS whole arms to the run, and MIX_FILM_MODE[_<ENGINE>] selects the FiLM
+        # architecture (config/aligning-d3il-visual.py — it raises on unknown values
+        # precisely because a silent fallback would train the wrong architecture into a
+        # directory whose name claims otherwise). Neither reaches args.json, which
+        # Parser.save writes for TRAIN only. Written next to the results. Never fatal.
+        #
+        # 🔴 Gen14 U11 — two fixes here. (a) `yaml_path` pointed at
+        # config/projection_eval.yaml, which this generation does NOT read; the file exists,
+        # so the record looked plausible while describing a config no visual-aligning run
+        # ever used. It now names the yaml actually loaded at the top of main(). (b) the
+        # projection budget — the single most consequential eval knob, and the one
+        # --proj-threshold/MIX_PROJ_T moves — was recorded nowhere. `t_override_source`
+        # distinguishes "T=0.1 because the submitter asked" from "T=0.5 because the yaml
+        # said so", which is invisible in the results path (both write a T token).
+        provenance.write(
+            _base_results, role='eval',
+            yaml_path='config/visual_aligning_eval.yaml',
+            resolved={
+                'projection_variants': list(projection_variants),
+                'hardflow_variants': _hf_variants,
+                'hardflow_variants_from_env': bool(os.environ.get('HFFM_VARIANTS')),
+                'diffusion_timestep_threshold': config.get('diffusion_timestep_threshold'),
+                't_override_source': _T_SRC,
+                # ── Gen14 U12 ── WHICH WEIGHTS produced these rows. The selector alone is
+                # not enough: 'latest' is a request whose answer depends on what happened to
+                # be on disk when the job ran, and two evals of the "same" checkpoint months
+                # apart can resolve it differently. Record the request, where it came from,
+                # and the step it actually resolved to.
+                'diffusion_epoch': getattr(args, 'diffusion_epoch', None),
+                'diffusion_epoch_source': _EP_SRC,
+                'checkpoint_epoch_resolved': _ckpt_epoch_resolved,
+                'checkpoint_step': _ckpt_step_resolved,
+                'flow_steps_v3': getattr(args, 'flow_steps_v3', None),
+                'n_diffusion_steps': getattr(args, 'n_diffusion_steps', None),
+                'projector_calls_per_replan': (
+                    max(int(getattr(args, 'flow_steps_v3', 0))
+                        - int((1 - float(config.get('diffusion_timestep_threshold', 0.5)))
+                              * int(getattr(args, 'flow_steps_v3', 0))), 1)
+                    if getattr(args, 'flow_steps_v3', None) else None),
+                'hf_nlp_backend': os.environ.get('FMPCC_HF_NLP_BACKEND', 'slsqp (default)'),
+                'engine': ENGINE,
+                'horizon': getattr(args, 'horizon', None),
+                'diffusion_loadpath': getattr(args, 'diffusion_loadpath', None),
+                'exp_name': getattr(args, 'exp_name', None),
+                'eval_on_train': bool(args_cli.eval_on_train),
+                'box_obs_guard': _BOX_OBS_GUARD,
+                'box_obs_max_overlap_m': _BOX_OBS_MAX_OVERLAP,
+                'box_half_side_m': _BOX_HALF_SIDE,
+            })
         generate_expert_reference(_base_results, n_rollouts=3)
         gc.collect()
         torch.cuda.empty_cache()
@@ -2637,15 +3254,22 @@ if __name__ == '__main__':
             variant = geo_variant
             if args_cli.eval_on_train:
                 variant   = f'{variant}_train_set'
-                save_path = f'{args.savepath}/results_train_set/{geo_name}/{variant}'
+            # [SolverSwap] 🔴 The artifact name carries the NLP backend, so an SLSQP run
+            # lands BESIDE the IPOPT corpus instead of overwriting it. Aligning keys its
+            # whole per-variant DIRECTORY on this name, so isolating it here isolates
+            # every artifact inside (npz, partial sidecar, png, logs). Under 'ipopt' the
+            # label is the old name unchanged, so nothing already on disk moves.
+            variant_out = artifact_variant_label(variant, resolve_nlp_backend())
+            if args_cli.eval_on_train:
+                save_path = f'{args.savepath}/results_train_set/{geo_name}/{variant_out}'
             else:
-                save_path = f'{args.savepath}/results/{geo_name}/{variant}'
+                save_path = f'{args.savepath}/results/{geo_name}/{variant_out}'
             os.makedirs(save_path, exist_ok=True)
 
             if args_cli.aggregate_only:
                 continue
 
-            log_f = open(os.path.join(save_path, f'eval_{variant}.log'), 'w')
+            log_f = open(os.path.join(save_path, f'eval_{variant_out}.log'), 'w')
             old_stdout, old_stderr = sys.stdout, sys.stderr
             sys.stdout = Tee(sys.stdout, log_f)
             sys.stderr = Tee(sys.stderr, log_f)
@@ -2698,6 +3322,29 @@ if __name__ == '__main__':
                 # `hf_sampler` path instead.
                 hf_sampler = None
                 is_hardflow = variant.startswith('hardflow')
+                # [HFK1c 2026-08-30] Degeneracy guard. A DEGENERATE arm (n_genuine == 0) runs no
+                # HardFlow arithmetic at all — it is Pi_S(Euler sample) = sample-then-project —
+                # so it yields a row no claim can cite. Skip the variant and leave a sentinel;
+                # the sweep continues, exactly like the `resolve_engine_hf` refusal below. Opt in
+                # with FMPCC_HF_ALLOW_DEGENERATE=1 (supported use: the A=0.0 projector control at
+                # matched K). See logs_in_develop/aggregated_hardflow_lowK/AUDIT_20260830_*.md
+                if is_hardflow:
+                    _hf_K = int(getattr(diffusion_model, 'flow_steps_v3', 2))
+                    # Resolve A exactly as the sampler build below does, or the guard would
+                    # judge a different arm than the one that runs.
+                    _hf_cfg_g = geo_config.get('hardflow', {}) or {}
+                    _hf_A = resolve_activation_threshold(
+                        os.environ.get('HFFM_ACT_THRESHOLD')
+                        or (_hf_cfg_g.get('activation_threshold')
+                            if _hf_cfg_g.get('activation_threshold') is not None
+                            else geo_config.get('diffusion_timestep_threshold', 0.5)))
+                    _hf_ok, _hf_why = hardflow_guard(_hf_K, _hf_A)[:2]
+                    if not _hf_ok:
+                        print(f'[hardflow][BLOCKED] skipping variant {variant!r}: {_hf_why}')
+                        os.makedirs(save_path, exist_ok=True)
+                        with open(os.path.join(save_path, 'HF_DEGENERATE_SKIPPED.txt'), 'w') as _f:
+                            _f.write(hardflow_skip_note(variant, _hf_K, _hf_A, _hf_why))
+                        continue
                 if is_hardflow and obs_normalizer is not None:
                     # Refuse the diffusion arm loudly, before the GPU is spent. DDPM has no
                     # velocity field, so `hardflow_new` — which integrates v = f(x, t) outside
@@ -2788,6 +3435,14 @@ if __name__ == '__main__':
                 # compared at equal candidate count.
                 if 'diffuser' in variant:
                     batch_size = 1
+                elif variant.startswith('hardflow'):
+                    # 🔴 B4_PARITY (2026-08-20) — arm C's fan comes from the variant NAME.
+                    # Gen14 already handed arm C the same pool as arm B (U7, correct), but
+                    # that made bare `hardflow_new` byte-identical to `hardflow_new-r` at
+                    # B=4 — both select index 0. The bare name is now the faithful
+                    # upstream batch-1 control instead of a duplicate.
+                    batch_size = resolve_hf_batch_size(
+                        variant, getattr(args, 'mpc_batch_size', 4))
                 else:
                     batch_size = getattr(args, 'mpc_batch_size', 4)
 
@@ -2806,7 +3461,9 @@ if __name__ == '__main__':
                     hf_sampler=hf_sampler,          # U7: arm C; None on every other variant
                     trajectory_selection=trajectory_selection,
                     eval_on_train=args_cli.eval_on_train,
-                    variant=variant,
+                    # [SolverSwap] the AGENT only uses this for naming (episode_id, realtime logs,
+                    # partial sidecar), so it gets the artifact label — otherwise those collide too.
+                    variant=variant_out,
                     max_action_delta=geo_config.get('max_action_delta', None),
                     mpc_foresight_stride=geo_config.get('mpc_foresight_stride', 6),
                     geo_config=geo_config,
@@ -2882,9 +3539,13 @@ if __name__ == '__main__':
                 # selected_idx_all. Only the aggregate scalars that need Aligning_Sim's return
                 # (success_rate/entropy/mode_encoding/n_success/mean_distance) are added here.
                 if geo_config.get('write_to_file', True):
+                    # [SolverSwap] which NLP solver arm C actually used ('n/a' for arms A/B).
+                    # Read off the live NLP object so it reflects what RAN, env override
+                    # included — recorded on every row so a DA can never pool the backends.
+                    nlp_backend_used = str(getattr(getattr(hf_sampler, 'nlp', None), 'nlp_backend', 'n/a'))
                     _npz_payload = _collect_per_rollout_arrays(agent)
                     np.savez(
-                        f'{save_path}/{variant}.npz',
+                        f'{save_path}/{variant_out}.npz',
                         success_rate=success_rate, entropy=entropy,
                         mode_encoding=mode_encoding.numpy(),
                         elapsed_seconds=elapsed, seed=seed,
@@ -2893,10 +3554,13 @@ if __name__ == '__main__':
                         mean_distance=mean_dist.flatten().numpy(),
                         complete=True,                                # C5: full/authoritative run
                         args=vars(args),
+                        nlp_backend=nlp_backend_used,
+                        # numeric twin — generic DA loaders coerce npz scalars to float.
+                        nlp_backend_slsqp=float(nlp_backend_used == 'slsqp'),
                         **_npz_payload,
                     )
                     # C5: variant finished → drop the now-redundant crash-safety sidecar.
-                    _partial = os.path.join(save_path, f'{variant}.partial.npz')
+                    _partial = os.path.join(save_path, f'{variant_out}.partial.npz')
                     if os.path.exists(_partial):
                         try:
                             os.remove(_partial)
@@ -2923,6 +3587,29 @@ if __name__ == '__main__':
                           f'{len(_cb_tripped_idx)}/{len(_cb_skips)} rollouts ({_tot_skipped} steps '
                           f'skipped) — results marked UNPROJECTED. See PROJECTION_CB_TRIPPED.txt.',
                           flush=True)
+
+                # Div_Abort: greppable sentinel + warning when any rollout of this variant was
+                # STOPPED early because the commanded EE position ran away, mirroring the
+                # PROJECTION_CB_TRIPPED.txt convention above — visible from the file tree without
+                # opening a single artifact. Artifacts are still written; they are just marked.
+                _divs = getattr(agent, 'history_divergence', [])
+                _div_idx = [i for i, d in enumerate(_divs) if d.get('aborted')]
+                if _div_idx:
+                    with open(os.path.join(save_path, 'DIVERGENCE_ABORT.txt'), 'w') as _f:
+                        _f.write(f"DIVERGENCE ABORT — aligning variant={variant}\n")
+                        _f.write(f"aborted_rollouts={_div_idx}  ({len(_div_idx)}/{len(_divs)})\n\n")
+                        for _i in _div_idx:
+                            _d = _divs[_i]
+                            _f.write(f"  rollout {_i}: reason={_d['reason']}  step={_d['step']}\n")
+                            _f.write(f"            des_c_pos={_d['des_c_pos']}  c_pos={_d['c_pos']}  "
+                                     f"|des-c_pos|={_d['lead']:.3f} m\n")
+                            _f.write(f"            why: {_d['detail']}\n")
+                        _f.write("\nThese rollouts were STOPPED early (the commanded position had run\n")
+                        _f.write("away). They are genuine failures and cover FEWER steps than a normal\n")
+                        _f.write("rollout, so step counts and violation COUNTS for them are truncated.\n")
+                    print(f'[ eval ] variant={variant}: ⚠ DIVERGENCE ABORT on '
+                          f'{len(_div_idx)}/{len(_divs)} rollouts {_div_idx} — '
+                          f'see DIVERGENCE_ABORT.txt', flush=True)
 
                 # ── Legacy PNG rollout grid (mirrors ddpm_encdec) ────────────
                 print(f'[ eval ] Generating PNG rollout grid for {variant}...')
@@ -2987,7 +3674,7 @@ if __name__ == '__main__':
                         axes[i, 5].set_title(f'MPC Foresight — {n_cands} candidates/step')
 
                     fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-                    fig.savefig(f'{save_path}/{variant}.png')
+                    fig.savefig(f'{save_path}/{variant_out}.png')
                     plt.close(fig)
 
                 # ── Aligning eval summary ────────────────────────────────────

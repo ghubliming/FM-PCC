@@ -79,6 +79,14 @@ class VisualUNetTwoTime(nn.Module):
                     'in_hand_image':   {'shape': [3, 96, 96], 'type': 'rgb'},
                 }
             }
+            # ── Gen14 U9 ── ImageNet initialisation of the ResNet-18 trunk.
+            # Default False == every pre-U9 run, byte-identical. Only the WEIGHTS change:
+            # architecture, LATENT_DIM, use_group_norm, imagenet_norm and share_rgb_model are
+            # all untouched, so cond_dim never moves and every U8 gate stays valid as written.
+            # 🔴 The encoder spec below is BYTE-IDENTICAL between visual_unet_twotime.py and
+            # visual_dit_twotime.py by design — drift silently breaks the U-Net-vs-DiT
+            # comparison this generation exists to make. Gate G-B8 asserts it on every run.
+            _vis_pretrained = bool(getattr(config, 'vis_pretrained', False))
             obs_encoder_cfg = OmegaConf.create({
                 '_target_': 'agents.models.vision.multi_image_obs_encoder.MultiImageObsEncoder',
                 'shape_meta': shape_meta,
@@ -86,6 +94,7 @@ class VisualUNetTwoTime(nn.Module):
                     '_target_': 'agents.models.vision.model_getter.get_resnet',
                     'input_shape': [3, 96, 96],
                     'output_size': 64,
+                    'pretrained': _vis_pretrained,
                 },
                 'resize_shape':    None,
                 'random_crop':     False,
@@ -97,6 +106,10 @@ class VisualUNetTwoTime(nn.Module):
             latent_dim = self.LATENT_DIM
             print(f'[ VisualUNetTwoTime ] MultiImageObsEncoder initialized — '
                   f'LATENT_DIM={self.LATENT_DIM}, imagenet_norm=True, share_rgb_model=False')
+            # ── Gen14 U9 ── say it out loud: a run whose encoder was ImageNet-initialised
+            # must be identifiable from the log alone, not only from the path key.
+            print(f'[ VisualUNetTwoTime ] vis_pretrained={_vis_pretrained}  (ImageNet ResNet-18 init)' if _vis_pretrained else
+                  f'[ VisualUNetTwoTime ] vis_pretrained=False  (random init — pre-U9 behaviour)')
         else:
             self.obs_encoder = None
             latent_dim = 0

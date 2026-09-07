@@ -1,0 +1,1723 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+[ DA_VA_v2 ] auto-scan found 4 root(s):
+[ DA_VA_v2 ]   logs/aligning-d3il-visual/plans
+[ DA_VA_v2 ]   logs/avoiding-d3il/plans
+[ DA_VA_v2 ]   logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline
+[ DA_VA_v2 ]   logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline_Bf_U3
+[2026-08-12 21:36:07] DA_VA_v2 - INFO - ======================================================================
+[2026-08-12 21:36:07] DA_VA_v2 - INFO - DA_VA_v2 — visual-aligning batch analysis
+[2026-08-12 21:36:07] DA_VA_v2 - INFO - ======================================================================
+[2026-08-12 21:36:07] DA_VA_v2 - INFO - Start:  2026-08-12 21:36:07
+[2026-08-12 21:36:07] DA_VA_v2 - INFO - Parent: logs/aligning-d3il-visual/plans,logs/avoiding-d3il/plans,logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline,logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline_Bf_U3
+[2026-08-12 21:36:07] DA_VA_v2 - INFO - Output: Data_Analysis/analysis_results/batch_va2_20260812_213606
+[2026-08-12 21:36:07] DA_VA_v2 - INFO - Manifest: /data/home/llim/FMPCC/FM-PCC/Data_Analysis/analysis_results/results_manifest.json
+[2026-08-12 21:36:07] DA_VA_v2 - INFO - [1/5] Discovering candidates
+[2026-08-12 21:36:07] discovery - INFO - Candidate 1: H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 2: H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 3: H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 4: H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 5: H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 6: H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 7: H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv2_Eaf  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 8: H8_K100_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4_filmv1_Ediffusion  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 9: H8_K20_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4_filmv1_Ediffusion  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 10: H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 11: H8_K20_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 12: H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 13: H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 14: H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv2_Emf  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 15: H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 16: H8_K10_Dmodels.GaussianDiffusion_aw10_thres0.5  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 17: H8_K1_T0.5_Dmodels.GaussianDiffusion  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 18: H8_K20_T1_Dmodels.GaussianDiffusion  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 19: X_H8_K20_T0.05_Dmodels.GaussianDiffusion  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 20: X_H8_K20_T0.1_Dmodels.GaussianDiffusion  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 21: X_H8_K20_T1_Dmodels.GaussianDiffusion  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 22: H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 23: H8_K20_T0.5_Dmodels.GaussianDiffusion_aw1  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 24: H8_K20_T1_Dmodels.GaussianDiffusion_aw10  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 25: H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 26: H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 27: H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 28: H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 29: H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 30: H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 31: H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 32: H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 33: H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 34: H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 35: H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 36: H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 37: H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 38: H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 39: H8_K20_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 40: H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 41: H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 42: H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 43: H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 44: H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 45: H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 46: H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 47: H8_K1_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 48: H8_K20_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 49: H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 50: H8_K5_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 51: H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 52: H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 53: H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 54: H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 55: H8_K10_Meuler_T0.5_Dmodels.diffusion.GaussianDiffusion  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 56: K10_thres0_mpc1_n2  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 57: K20_thres0.5_mpc1_n2  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 58: K20_thres0_mpc1_n2  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 59: K20_thres0_mpc4_n2  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 60: K2_thres0_mpc1_n2  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 61: K5_thres0_mpc1_n2  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 62: H8_K10_Dmodels.diffusion.FlowMatchingODE(UNORGNIZED)  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 63: K20_thres0.5_mpc4_n2  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 64: K20_thres0.05_mpc4_n2  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 65: K20_thres0.1_mpc4_n2  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 66: K20_thres0.5_mpc4_n2  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 67: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 68: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 69: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 70: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 71: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 72: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 73: (legacy_F2)H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 74: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 75: H8_K20_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 76: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 77: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 78: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 79: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 80: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 81: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 82: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 83: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 84: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 85: H8_K20_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 86: H8_K20_Mrk4_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 87: H8_K2_Mrk4_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 88: H8_K40_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 89: H8_K10_Meuler_Dflow_matcher_v3_imeanflow.models.iMFDiffusion  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 90: H8_K1_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 91: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 92: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 93: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 94: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 95: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 96: H8_K100_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 97: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 98: H8_K1_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 99: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 100: H8_K50_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 101: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 102: H8_K1_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 103: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 104: H8_K50_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 105: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 106: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 107: H8_K1_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 108: H8_K20_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 109: H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 110: H8_K5_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 111: H8_K10_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 112: H8_K1_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 113: H8_K20_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 114: H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 115: H8_K5_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 116: H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 117: H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 118: H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 119: H8_K10_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 120: H8_K1_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 121: H8_K20_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 122: H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 123: H8_K5_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 124: H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 125: H8_K1_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 126: H8_K20_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 127: H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 128: H8_K5_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 129: H8_K10_Meuler_T0.5_A0.1_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 130: H8_K10_Meuler_T0.5_A0.25_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 131: H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 132: H8_K10_Meuler_T0.5_A0_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 133: H8_K1_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 134: H8_K2_Meuler_T0,5_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 135: H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 136: H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[7]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 137: H8_K5_Meuler_T0.5_A0.1_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 138: H8_K5_Meuler_T0.5_A0.25_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 139: H8_K5_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 140: H8_K5_Meuler_T0.5_A0_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 141: H8_K10_Meuler_T0.05_Dmodels.diffusion.FlowMatchingODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 142: H8_K10_Meuler_T0.1_Dmodels.diffusion.FlowMatchingODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 143: H8_K20_Meuler_T0.05_Dmodels.diffusion.FlowMatchingODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 144: H8_K20_Meuler_T0.1_Dmodels.diffusion.FlowMatchingODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 145: H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 146: H8_K5_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE  seeds=[6]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 147: H8_K10_Dmodels.diffusion.GaussianDiffusion  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 148: H8_K10_Meuler_T1_Dmodels.diffusion.GaussianDiffusion  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 149: H8_K1_Meuler_T0.5_Dmodels.diffusion.GaussianDiffusion  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 150: H8_K20_Meuler_Dmodels.diffusion.GaussianDiffusion  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 151: H8_K5_Mmidpoint_Dmodels.diffusion.GaussianDiffusion  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 152: H8_K10_Meuler_Dmodels.diffusion.GaussianDiffusion  seeds=[6, 7, 8, 9, 10]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 153: d3il_baseline_ddpm_encdec_vision  seeds=[42]  [legacy: d3il_visual_aligning_baseline]
+[2026-08-12 21:36:07] discovery - INFO - Candidate 154: d3il_baseline_ddpm_encdec_vision__Bf_U3  seeds=[0, 1, 2, 3, 4, 42]  [legacy: d3il_visual_aligning_baseline]
+[2026-08-12 21:36:07] discovery - INFO - Total candidates discovered: 154
+[2026-08-12 21:36:07] DA_VA_v2 - INFO - 
+=== Candidates Discovered ===
+Total: 154
+
+  1: H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/(Bf_U8_Legacy_complex_struct)H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv2/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2
+      Seeds: [6]
+      Last run: 2026-07-05 16:52:38  (2 config snapshot(s) over 1 seed(s))
+
+  2: H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/(legacy_correcct_besides_bounds_for_comapre)H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv2/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2
+      Seeds: [6]
+      Last run: 2026-07-01 12:41:03  (1 config snapshot(s) over 1 seed(s))
+
+  3: H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv2/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2
+      Seeds: [6]
+      Last run: 2026-07-12 00:06:57  (2 config snapshot(s) over 1 seed(s))
+
+  4: H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/fm_visual_aligning/H8_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps900_bs64_filmv1/H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1
+      Seeds: [6]
+      Last run: 2026-07-12 12:03:58  (3 config snapshot(s) over 1 seed(s))
+
+  5: H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_af/H8_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Eaf_tslogit_normal_afschsigmoid/H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf
+      Seeds: [6]
+      Last run: 2026-08-02 20:59:04  (1 config snapshot(s) over 1 seed(s))
+
+  6: H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_af/H8_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Eaf_tslogit_normal_afschsigmoid/H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf
+      Seeds: [6]
+      Last run: 2026-08-05 00:15:11  (2 config snapshot(s) over 1 seed(s))
+
+  7: H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv2_Eaf
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_af/H8_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv2_Eaf_tslogit_normal_afschsigmoid/H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv2_Eaf
+      Seeds: [6]
+      Last run: 2026-08-11 07:58:45  (1 config snapshot(s) over 1 seed(s))
+
+  8: H8_K100_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4_filmv1_Ediffusion
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_diffusion/H8_K100_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv1_Ediffusion/H8_K100_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4_filmv1_Ediffusion
+      Seeds: [6]
+      Last run: 2026-08-07 02:25:58  (1 config snapshot(s) over 1 seed(s))
+
+  9: H8_K20_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4_filmv1_Ediffusion
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_diffusion/H8_K20_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv1_Ediffusion/H8_K20_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_mpc4_filmv1_Ediffusion
+      Seeds: [6]
+      Last run: 2026-08-09 15:23:09  (1 config snapshot(s) over 1 seed(s))
+
+  10: H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_fm/H8_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Efm/H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm
+      Seeds: [6]
+      Last run: 2026-08-07 01:39:07  (1 config snapshot(s) over 1 seed(s))
+
+  11: H8_K20_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_fm/H8_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Efm/H8_K20_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1_Efm
+      Seeds: [6]
+      Last run: 2026-08-09 16:09:14  (1 config snapshot(s) over 1 seed(s))
+
+  12: H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Emf_tslogit_normal/H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf
+      Seeds: [6]
+      Last run: 2026-08-02 08:20:13  (1 config snapshot(s) over 1 seed(s))
+
+  13: H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Emf_tslogit_normal/H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf
+      Seeds: [6]
+      Last run: 2026-08-04 22:50:21  (3 config snapshot(s) over 1 seed(s))
+
+  14: H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv2_Emf
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv2_Emf_tslogit_normal/H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv2_Emf
+      Seeds: [6]
+      Last run: 2026-08-11 03:50:53  (1 config snapshot(s) over 1 seed(s))
+
+  15: H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/aligning-d3il-visual/plans/visual_aligning_dpcc/H8_K20_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps1000_bs64_filmv2/H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps400_mpc4_filmv2
+      Seeds: [6]
+      Last run: 2026-07-17 01:14:50  (2 config snapshot(s) over 1 seed(s))
+
+  16: H8_K10_Dmodels.GaussianDiffusion_aw10_thres0.5
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/diffusion/H8_K10_Dmodels.GaussianDiffusion_aw10_thres0.5
+      Seeds: [6, 7, 8, 9, 10]
+      Last run: 2026-05-06 03:48:06  (20 config snapshot(s) over 5 seed(s))
+
+  17: H8_K1_T0.5_Dmodels.GaussianDiffusion
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/diffusion/H8_K1_Dmodels.GaussianDiffusion_aw10/H8_K1_T0.5_Dmodels.GaussianDiffusion
+      Seeds: [6, 7, 8, 9, 10]
+      Last run: 2026-05-21 12:17:37  (20 config snapshot(s) over 5 seed(s))
+
+  18: H8_K20_T1_Dmodels.GaussianDiffusion
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10/H8_K20_T1_Dmodels.GaussianDiffusion
+      Seeds: [6]
+      Last run: 2026-08-04 23:44:16  (3 config snapshot(s) over 1 seed(s))
+
+  19: X_H8_K20_T0.05_Dmodels.GaussianDiffusion
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10/X_H8_K20_T0.05_Dmodels.GaussianDiffusion
+      Seeds: [6]
+      Last run: 2026-08-04 13:54:35  (3 config snapshot(s) over 1 seed(s))
+
+  20: X_H8_K20_T0.1_Dmodels.GaussianDiffusion
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10/X_H8_K20_T0.1_Dmodels.GaussianDiffusion
+      Seeds: [6]
+      Last run: 2026-08-04 10:32:42  (3 config snapshot(s) over 1 seed(s))
+
+  21: X_H8_K20_T1_Dmodels.GaussianDiffusion
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10/X_H8_K20_T1_Dmodels.GaussianDiffusion
+      Seeds: [6]
+      Last run: 2026-08-04 16:28:21  (3 config snapshot(s) over 1 seed(s))
+
+  22: H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5
+      Seeds: [6, 7, 8, 9, 10]
+      Last run: 2026-05-09 09:18:17  (5 config snapshot(s) over 5 seed(s))
+
+  23: H8_K20_T0.5_Dmodels.GaussianDiffusion_aw1
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/diffusion/H8_K20_T0.5_Dmodels.GaussianDiffusion_aw1
+      Seeds: [6, 7, 8, 9, 10]
+      Last run: 2026-05-10 10:24:51  (20 config snapshot(s) over 5 seed(s))
+
+  24: H8_K20_T1_Dmodels.GaussianDiffusion_aw10
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/diffusion/H8_K20_T1_Dmodels.GaussianDiffusion_aw10
+      Seeds: [6, 7, 8, 9, 10]
+      Last run: 2026-05-09 15:32:38  (20 config snapshot(s) over 5 seed(s))
+
+  25: H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_U3)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbdit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [6]
+      Last run: 2026-07-24 03:07:10  (3 config snapshot(s) over 1 seed(s))
+
+  26: H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_U3)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbdit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [6]
+      Last run: 2026-07-24 02:11:35  (3 config snapshot(s) over 1 seed(s))
+
+  27: H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_U3)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbdit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [6]
+      Last run: 2026-07-24 02:19:53  (3 config snapshot(s) over 1 seed(s))
+
+  28: H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_U3)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbdit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [6]
+      Last run: 2026-07-24 02:36:49  (3 config snapshot(s) over 1 seed(s))
+
+  29: H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_U3)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [6]
+      Last run: 2026-07-27 20:31:38  (3 config snapshot(s) over 1 seed(s))
+
+  30: H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_U3)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [6]
+      Last run: 2026-07-27 19:37:01  (3 config snapshot(s) over 1 seed(s))
+
+  31: H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_U3)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [6]
+      Last run: 2026-07-27 19:47:07  (3 config snapshot(s) over 1 seed(s))
+
+  32: H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_U3)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [6]
+      Last run: 2026-07-27 20:03:25  (3 config snapshot(s) over 1 seed(s))
+
+  33: H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_U3)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbunet_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [6]
+      Last run: 2026-07-25 06:02:53  (3 config snapshot(s) over 1 seed(s))
+
+  34: H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_U3)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbunet_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [6]
+      Last run: 2026-07-25 02:51:01  (3 config snapshot(s) over 1 seed(s))
+
+  35: H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_U3)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbunet_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [6]
+      Last run: 2026-07-25 03:12:46  (3 config snapshot(s) over 1 seed(s))
+
+  36: H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_U3)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbunet_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [6]
+      Last run: 2026-07-25 04:03:48  (3 config snapshot(s) over 1 seed(s))
+
+  37: H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_fix4)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [6]
+      Last run: 2026-07-30 22:33:08  (3 config snapshot(s) over 1 seed(s))
+
+  38: H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_fix4)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [6]
+      Last run: 2026-07-30 21:12:56  (3 config snapshot(s) over 1 seed(s))
+
+  39: H8_K20_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_fix4)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K20_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [6]
+      Last run: 2026-07-30 23:58:52  (3 config snapshot(s) over 1 seed(s))
+
+  40: H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_fix4)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [6]
+      Last run: 2026-07-30 21:28:46  (3 config snapshot(s) over 1 seed(s))
+
+  41: H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow(Bf_fix4)/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [6]
+      Last run: 2026-07-30 21:51:18  (3 config snapshot(s) over 1 seed(s))
+
+  42: H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/(Unsafe)H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [7, 8, 9, 10]
+      Last run: 2026-08-01 16:41:20  (12 config snapshot(s) over 4 seed(s))
+
+  43: H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/(Unsafe)H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [7, 8, 9, 10]
+      Last run: 2026-08-01 12:38:28  (12 config snapshot(s) over 4 seed(s))
+
+  44: H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/(Unsafe)H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [6, 7, 8, 9, 10]
+      Last run: 2026-08-01 13:19:02  (15 config snapshot(s) over 5 seed(s))
+
+  45: H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/(Unsafe)H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [7, 8, 9, 10]
+      Last run: 2026-08-01 14:39:23  (12 config snapshot(s) over 4 seed(s))
+
+  46: H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [6, 7, 8, 9, 10]
+      Last run: 2026-08-12 14:39:07  (15 config snapshot(s) over 5 seed(s))
+
+  47: H8_K1_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K1_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [6, 7, 8, 9, 10]
+      Last run: 2026-08-12 10:08:42  (16 config snapshot(s) over 5 seed(s))
+
+  48: H8_K20_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K20_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [6, 7, 8, 9, 10]
+      Last run: 2026-08-12 19:30:16  (15 config snapshot(s) over 5 seed(s))
+
+  49: H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [6, 7, 8, 9, 10]
+      Last run: 2026-08-12 10:55:51  (15 config snapshot(s) over 5 seed(s))
+
+  50: H8_K5_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbsit_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K5_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [6, 7, 8, 9, 10]
+      Last run: 2026-08-12 12:26:44  (15 config snapshot(s) over 5 seed(s))
+
+  51: H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbunet_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [6]
+      Last run: 2026-08-09 01:16:56  (3 config snapshot(s) over 1 seed(s))
+
+  52: H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbunet_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [6]
+      Last run: 2026-08-08 22:16:37  (3 config snapshot(s) over 1 seed(s))
+
+  53: H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbunet_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [6, 7, 8, 9, 10]
+      Last run: 2026-08-08 22:39:53  (15 config snapshot(s) over 5 seed(s))
+
+  54: H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_aw10_bbunet_tslogit_normal_ai1.0_ae0.0_ag25.0_rf0.5/H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      Seeds: [6]
+      Last run: 2026-08-08 23:30:01  (3 config snapshot(s) over 1 seed(s))
+
+  55: H8_K10_Meuler_T0.5_Dmodels.diffusion.GaussianDiffusion
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_drifting/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/H8_K10_Meuler_T0.5_Dmodels.diffusion.GaussianDiffusion
+      Seeds: [6]
+      Last run: 2026-05-21 20:23:00  (4 config snapshot(s) over 1 seed(s))
+
+  56: K10_thres0_mpc1_n2
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_hardflow(Gen12_Bf_U5)/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K10_thres0_mpc1_n2
+      Seeds: [6]
+
+  57: K20_thres0.5_mpc1_n2
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_hardflow(Gen12_Bf_U5)/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres0.5_mpc1_n2
+      Seeds: [6]
+
+  58: K20_thres0_mpc1_n2
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_hardflow(Gen12_Bf_U5)/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres0_mpc1_n2
+      Seeds: [6]
+
+  59: K20_thres0_mpc4_n2
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_hardflow(Gen12_Bf_U5)/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres0_mpc4_n2
+      Seeds: [6]
+
+  60: K2_thres0_mpc1_n2
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_hardflow(Gen12_Bf_U5)/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K2_thres0_mpc1_n2
+      Seeds: [6]
+
+  61: K5_thres0_mpc1_n2
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_hardflow(Gen12_Bf_U5)/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K5_thres0_mpc1_n2
+      Seeds: [6]
+
+  62: H8_K10_Dmodels.diffusion.FlowMatchingODE(UNORGNIZED)
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_hardflow(Gen12_Bf_U5)/H8_K10_Dmodels.diffusion.FlowMatchingODE(UNORGNIZED)
+      Seeds: [6]
+
+  63: K20_thres0.5_mpc4_n2
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_hardflow(Gen12_bf_Fix6_wrong_batch_parallel)/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres0.5_mpc4_n2
+      Seeds: [6, 7, 8, 9, 10]
+
+  64: K20_thres0.05_mpc4_n2
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres0.05_mpc4_n2
+      Seeds: [6]
+
+  65: K20_thres0.1_mpc4_n2
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres0.1_mpc4_n2
+      Seeds: [6]
+
+  66: K20_thres0.5_mpc4_n2
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K20_thres0.5_mpc4_n2
+      Seeds: [6]
+
+  67: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(1e4_U5)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objmeanflow_jvp/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-06-16 18:04:46  (3 config snapshot(s) over 1 seed(s))
+
+  68: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(1e4_U5)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objmeanflow_jvp/H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-06-16 14:10:01  (3 config snapshot(s) over 1 seed(s))
+
+  69: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(1e4_beta_U4)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.5_b1.0_aw10_objmeanflow_jvp/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-06-14 21:32:29  (3 config snapshot(s) over 1 seed(s))
+
+  70: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(1e5_U5)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objmeanflow_jvp/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-06-17 07:38:31  (3 config snapshot(s) over 1 seed(s))
+
+  71: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(1e5_beta_U4)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.5_b1.0_aw10_objmeanflow_jvp/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-06-15 09:10:19  (3 config snapshot(s) over 1 seed(s))
+
+  72: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(1e5_beta_U4)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.5_b1.0_aw10_objmeanflow_jvp/H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-06-15 09:55:05  (3 config snapshot(s) over 1 seed(s))
+
+  73: (legacy_F2)H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(Bf_U3)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.5_b1.0_aw10/(legacy_F2)H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-05-31 15:09:06  (3 config snapshot(s) over 1 seed(s))
+
+  74: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(Bf_U3)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.5_b1.0_aw10/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-06-02 21:14:37  (3 config snapshot(s) over 1 seed(s))
+
+  75: H8_K20_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(Bf_U3)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.5_b1.0_aw10/H8_K20_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-06-01 15:48:15  (3 config snapshot(s) over 1 seed(s))
+
+  76: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(Bf_U3)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.5_b1.0_aw10/H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-06-01 16:38:55  (3 config snapshot(s) over 1 seed(s))
+
+  77: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(Bf_U3p2Final)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.5_b1.0_aw10/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-06-11 10:30:39  (3 config snapshot(s) over 1 seed(s))
+
+  78: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(Bf_U4)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.5_b1.0_aw10/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-06-11 15:16:13  (3 config snapshot(s) over 1 seed(s))
+
+  79: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(Bf_U9)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objmeanflow_jvp_bbdit/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-06-20 11:16:25  (3 config snapshot(s) over 1 seed(s))
+
+  80: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(Bf_U9)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objmeanflow_jvp_bbunet_tslogit_normal/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-06-29 07:25:23  (3 config snapshot(s) over 1 seed(s))
+
+  81: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(CFG_OFF_U9)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw1_objmeanflow_jvp_bbdit_tslogit_normal/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-07-13 14:57:43  (3 config snapshot(s) over 1 seed(s))
+
+  82: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(U6_DiT_1e4)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objmeanflow_jvp_bbdit/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-06-17 12:12:18  (3 config snapshot(s) over 1 seed(s))
+
+  83: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(aw1, 1e4train, dit)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw1_objmeanflow_jvp_bbdit_tslogit_normal/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-07-08 12:16:01  (3 config snapshot(s) over 1 seed(s))
+
+  84: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(cfgO_0_in_eval_DiT_1e5)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objmeanflow_jvp_bbdit/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-06-18 19:55:50  (3 config snapshot(s) over 1 seed(s))
+
+  85: H8_K20_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(cfgO_0_in_eval_DiT_1e5)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objmeanflow_jvp_bbdit/H8_K20_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-06-18 23:12:11  (3 config snapshot(s) over 1 seed(s))
+
+  86: H8_K20_Mrk4_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(cfgO_0_in_eval_DiT_1e5)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objmeanflow_jvp_bbdit/H8_K20_Mrk4_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-06-19 11:07:50  (3 config snapshot(s) over 1 seed(s))
+
+  87: H8_K2_Mrk4_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(cfgO_0_in_eval_DiT_1e5)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objmeanflow_jvp_bbdit/H8_K2_Mrk4_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-06-19 10:02:02  (3 config snapshot(s) over 1 seed(s))
+
+  88: H8_K40_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(cfgO_0_in_eval_DiT_1e5)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objmeanflow_jvp_bbdit/H8_K40_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-06-19 02:58:04  (3 config snapshot(s) over 1 seed(s))
+
+  89: H8_K10_Meuler_Dflow_matcher_v3_imeanflow.models.iMFDiffusion
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(incorrect)/H8_Dflow_matcher_v3_imeanflow.models.iMFDiffusion_a1.5_b1.0_aw10/H8_K10_Meuler_Dflow_matcher_v3_imeanflow.models.iMFDiffusion
+      Seeds: [6]
+      Last run: 2026-05-21 21:45:52  (4 config snapshot(s) over 1 seed(s))
+
+  90: H8_K1_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(incorrect)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.5_b1.0_aw10/H8_K1_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-05-29 22:26:57  (4 config snapshot(s) over 1 seed(s))
+
+  91: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(incorrect)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.5_b1.0_aw10/H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-05-30 09:58:57  (3 config snapshot(s) over 1 seed(s))
+
+  92: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(uniform_no_aux_U4_1e5)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1_b1.0_aw10_objmeanflow_jvp/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-06-15 18:31:30  (3 config snapshot(s) over 1 seed(s))
+
+  93: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(with_CFG_default_config_U9_DiT)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw1_objmeanflow_jvp_bbdit_tslogit_normal/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-07-09 15:21:10  (3 config snapshot(s) over 1 seed(s))
+
+  94: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(with_o4_cfg_DiT_1e5)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objmeanflow_jvp_bbdit/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-06-18 00:41:53  (3 config snapshot(s) over 1 seed(s))
+
+  95: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow(with_o4_cfg_DiT_1e5)/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objmeanflow_jvp_bbdit/H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-06-18 09:48:25  (3 config snapshot(s) over 1 seed(s))
+
+  96: H8_K100_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objimf_official_bbdit_tslogit_normal(setup1)/H8_K100_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-07-16 17:28:20  (3 config snapshot(s) over 1 seed(s))
+
+  97: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objimf_official_bbdit_tslogit_normal(setup1)/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-07-15 11:44:57  (3 config snapshot(s) over 1 seed(s))
+
+  98: H8_K1_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objimf_official_bbdit_tslogit_normal(setup1)/H8_K1_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-07-16 21:40:45  (3 config snapshot(s) over 1 seed(s))
+
+  99: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objimf_official_bbdit_tslogit_normal(setup1)/H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-07-14 22:52:55  (3 config snapshot(s) over 1 seed(s))
+
+  100: H8_K50_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objimf_official_bbdit_tslogit_normal(setup1)/H8_K50_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-07-16 00:47:56  (3 config snapshot(s) over 1 seed(s))
+
+  101: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objimf_official_bbdit_tslogit_normal(setup2)/H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-07-18 21:27:48  (3 config snapshot(s) over 1 seed(s))
+
+  102: H8_K1_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objimf_official_bbdit_tslogit_normal(setup2)/H8_K1_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-07-18 20:56:00  (3 config snapshot(s) over 1 seed(s))
+
+  103: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objimf_official_bbdit_tslogit_normal(setup2)/H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-07-18 17:08:03  (3 config snapshot(s) over 1 seed(s))
+
+  104: H8_K50_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objimf_official_bbdit_tslogit_normal(setup2)/H8_K50_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-07-19 00:07:11  (3 config snapshot(s) over 1 seed(s))
+
+  105: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objimf_official_bbdit_tslogit_normal(setup3_2e5)/H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-07-22 15:23:16  (3 config snapshot(s) over 1 seed(s))
+
+  106: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_imeanflow/H8_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE_a1.0_b1.0_aw10_objimf_official_bbdit_tslogit_normal(setup3_5e4)/H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      Seeds: [6]
+      Last run: 2026-07-21 16:10:37  (3 config snapshot(s) over 1 seed(s))
+
+  107: H8_K1_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow(Bf_Fix4)/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6]
+      Last run: 2026-07-30 11:33:39  (3 config snapshot(s) over 1 seed(s))
+
+  108: H8_K20_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow(Bf_Fix4)/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K20_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6]
+      Last run: 2026-07-30 13:06:57  (3 config snapshot(s) over 1 seed(s))
+
+  109: H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow(Bf_Fix4)/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6]
+      Last run: 2026-07-28 23:48:45  (3 config snapshot(s) over 1 seed(s))
+
+  110: H8_K5_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow(Bf_Fix4)/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K5_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6]
+      Last run: 2026-07-30 11:50:10  (3 config snapshot(s) over 1 seed(s))
+
+  111: H8_K10_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow(Bf_Fix5)/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K10_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6]
+      Last run: 2026-07-30 16:41:48  (3 config snapshot(s) over 1 seed(s))
+
+  112: H8_K1_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow(Bf_Fix5)/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6]
+      Last run: 2026-07-30 15:59:04  (3 config snapshot(s) over 1 seed(s))
+
+  113: H8_K20_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow(Bf_Fix5)/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K20_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6]
+      Last run: 2026-07-30 17:41:07  (3 config snapshot(s) over 1 seed(s))
+
+  114: H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow(Bf_Fix5)/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6]
+      Last run: 2026-07-30 16:01:00  (3 config snapshot(s) over 1 seed(s))
+
+  115: H8_K5_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow(Bf_Fix5)/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K5_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6]
+      Last run: 2026-07-30 16:22:43  (3 config snapshot(s) over 1 seed(s))
+
+  116: H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow(Bf_U3)/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbdit_tslogit_normal_dp0.5/H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6]
+      Last run: 2026-07-24 01:46:00  (3 config snapshot(s) over 1 seed(s))
+
+  117: H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow(Bf_U3)/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6]
+      Last run: 2026-07-27 21:55:07  (3 config snapshot(s) over 1 seed(s))
+
+  118: H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow(Bf_U3)/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6]
+      Last run: 2026-07-25 07:26:57  (3 config snapshot(s) over 1 seed(s))
+
+  119: H8_K10_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow/(Unsafe)H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K10_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6]
+      Last run: 2026-08-01 00:43:51  (3 config snapshot(s) over 1 seed(s))
+
+  120: H8_K1_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow/(Unsafe)H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6]
+      Last run: 2026-07-31 23:18:41  (3 config snapshot(s) over 1 seed(s))
+
+  121: H8_K20_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow/(Unsafe)H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K20_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6]
+      Last run: 2026-08-01 02:09:39  (3 config snapshot(s) over 1 seed(s))
+
+  122: H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow/(Unsafe)H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6, 7, 8, 9, 10]
+      Last run: 2026-08-02 00:02:08  (17 config snapshot(s) over 5 seed(s))
+
+  123: H8_K5_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow/(Unsafe)H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K5_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6]
+      Last run: 2026-07-31 23:59:32  (3 config snapshot(s) over 1 seed(s))
+
+  124: H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6, 7, 8, 9, 10]
+      Last run: 2026-08-12 15:25:28  (15 config snapshot(s) over 5 seed(s))
+
+  125: H8_K1_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6, 7, 8, 9, 10]
+      Last run: 2026-08-12 10:25:49  (15 config snapshot(s) over 5 seed(s))
+
+  126: H8_K20_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K20_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6, 7, 8, 9, 10]
+      Last run: 2026-08-12 20:33:42  (15 config snapshot(s) over 5 seed(s))
+
+  127: H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6, 7, 8, 9, 10]
+      Last run: 2026-08-12 11:19:08  (15 config snapshot(s) over 5 seed(s))
+
+  128: H8_K5_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbmf_dit_tslogit_normal_dp0.5/H8_K5_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6, 7, 8, 9, 10]
+      Last run: 2026-08-12 12:54:39  (15 config snapshot(s) over 5 seed(s))
+
+  129: H8_K10_Meuler_T0.5_A0.1_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K10_Meuler_T0.5_A0.1_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6]
+      Last run: 2026-08-11 23:27:00  (3 config snapshot(s) over 1 seed(s))
+
+  130: H8_K10_Meuler_T0.5_A0.25_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K10_Meuler_T0.5_A0.25_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6]
+      Last run: 2026-08-11 23:34:57  (3 config snapshot(s) over 1 seed(s))
+
+  131: H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6, 7, 8, 9, 10]
+      Last run: 2026-08-11 21:54:12  (27 config snapshot(s) over 5 seed(s))
+
+  132: H8_K10_Meuler_T0.5_A0_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K10_Meuler_T0.5_A0_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6]
+      Last run: 2026-08-11 23:09:55  (3 config snapshot(s) over 1 seed(s))
+
+  133: H8_K1_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6, 7, 8, 9, 10]
+      Last run: 2026-08-11 21:06:31  (27 config snapshot(s) over 5 seed(s))
+
+  134: H8_K2_Meuler_T0,5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K2_Meuler_T0,5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6]
+      Last run: 2026-08-06 21:10:22  (3 config snapshot(s) over 1 seed(s))
+
+  135: H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6, 7, 8, 9, 10]
+      Last run: 2026-08-11 21:14:36  (27 config snapshot(s) over 5 seed(s))
+
+  136: H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [7]
+      Last run: 2026-08-08 22:03:01  (1 config snapshot(s) over 1 seed(s))
+
+  137: H8_K5_Meuler_T0.5_A0.1_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K5_Meuler_T0.5_A0.1_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6]
+      Last run: 2026-08-11 22:48:59  (3 config snapshot(s) over 1 seed(s))
+
+  138: H8_K5_Meuler_T0.5_A0.25_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K5_Meuler_T0.5_A0.25_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6]
+      Last run: 2026-08-11 23:05:34  (3 config snapshot(s) over 1 seed(s))
+
+  139: H8_K5_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K5_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6, 7, 8, 9, 10]
+      Last run: 2026-08-11 21:29:30  (27 config snapshot(s) over 5 seed(s))
+
+  140: H8_K5_Meuler_T0.5_A0_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K5_Meuler_T0.5_A0_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      Seeds: [6]
+      Last run: 2026-08-11 22:48:53  (3 config snapshot(s) over 1 seed(s))
+
+  141: H8_K10_Meuler_T0.05_Dmodels.diffusion.FlowMatchingODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/H8_K10_Meuler_T0.05_Dmodels.diffusion.FlowMatchingODE
+      Seeds: [6]
+      Last run: 2026-08-03 23:10:42  (3 config snapshot(s) over 1 seed(s))
+
+  142: H8_K10_Meuler_T0.1_Dmodels.diffusion.FlowMatchingODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/H8_K10_Meuler_T0.1_Dmodels.diffusion.FlowMatchingODE
+      Seeds: [6]
+      Last run: 2026-08-03 22:14:26  (3 config snapshot(s) over 1 seed(s))
+
+  143: H8_K20_Meuler_T0.05_Dmodels.diffusion.FlowMatchingODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/H8_K20_Meuler_T0.05_Dmodels.diffusion.FlowMatchingODE
+      Seeds: [6]
+      Last run: 2026-08-04 08:15:44  (3 config snapshot(s) over 1 seed(s))
+
+  144: H8_K20_Meuler_T0.1_Dmodels.diffusion.FlowMatchingODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/H8_K20_Meuler_T0.1_Dmodels.diffusion.FlowMatchingODE
+      Seeds: [6]
+      Last run: 2026-08-04 08:48:16  (3 config snapshot(s) over 1 seed(s))
+
+  145: H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE
+      Seeds: [6, 7, 8, 9, 10]
+      Last run: 2026-07-03 01:15:54  (17 config snapshot(s) over 5 seed(s))
+
+  146: H8_K5_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/H8_K5_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE
+      Seeds: [6]
+      Last run: 2026-07-16 13:41:38  (3 config snapshot(s) over 1 seed(s))
+
+  147: H8_K10_Dmodels.diffusion.GaussianDiffusion
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/H8_K10_Dmodels.diffusion.GaussianDiffusion
+      Seeds: [6, 7, 8, 9, 10]
+
+  148: H8_K10_Meuler_T1_Dmodels.diffusion.GaussianDiffusion
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/H8_K10_Meuler_T1_Dmodels.diffusion.GaussianDiffusion
+      Seeds: [6, 7, 8, 9, 10]
+      Last run: 2026-05-08 19:44:33  (20 config snapshot(s) over 5 seed(s))
+
+  149: H8_K1_Meuler_T0.5_Dmodels.diffusion.GaussianDiffusion
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/H8_K1_Meuler_T0.5_Dmodels.diffusion.GaussianDiffusion
+      Seeds: [6, 7, 8, 9, 10]
+      Last run: 2026-05-20 21:09:46  (25 config snapshot(s) over 5 seed(s))
+
+  150: H8_K20_Meuler_Dmodels.diffusion.GaussianDiffusion
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/H8_K20_Meuler_Dmodels.diffusion.GaussianDiffusion
+      Seeds: [6, 7, 8, 9, 10]
+      Last run: 2026-05-07 18:52:38  (20 config snapshot(s) over 5 seed(s))
+
+  151: H8_K5_Mmidpoint_Dmodels.diffusion.GaussianDiffusion
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw1/H8_K5_Mmidpoint_Dmodels.diffusion.GaussianDiffusion
+      Seeds: [6, 7, 8, 9, 10]
+
+  152: H8_K10_Meuler_Dmodels.diffusion.GaussianDiffusion
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.GaussianDiffusion_a1.5_b1.0_aw10/H8_K10_Meuler_Dmodels.diffusion.GaussianDiffusion
+      Seeds: [6, 7, 8, 9, 10]
+      Last run: 2026-05-07 03:32:55  (20 config snapshot(s) over 5 seed(s))
+
+  153: d3il_baseline_ddpm_encdec_vision
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline/d3il_baseline_ddpm_encdec_vision
+      Seeds: [42]
+      Last run: 2026-07-01 01:35:05  (1 config snapshot(s) over 1 seed(s))
+      LEGACY (bridged): kind=d3il_visual_aligning_baseline  projector=no
+
+  154: d3il_baseline_ddpm_encdec_vision__Bf_U3
+      Path:  /data/home/llim/FMPCC/FM-PCC/logs/d3il_visual_aligning_baseline/_DA_VA_BRIDGE_d3il_baseline_Bf_U3/d3il_baseline_ddpm_encdec_vision__Bf_U3
+      Seeds: [0, 1, 2, 3, 4, 42]
+      Last run: 2026-06-20 21:56:00  (6 config snapshot(s) over 6 seed(s))
+      LEGACY (bridged): kind=d3il_visual_aligning_baseline  projector=no
+
+[2026-08-12 21:36:07] DA_VA_v2 - INFO - [2/5] Enumerating result units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 1 (H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussia): 24 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 2 (H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussia): 12 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 3 (H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussia): 19 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 4 (H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual_gaussia): 26 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 5 (H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_di): 2 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 6 (H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diff): 38 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 7 (H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diff): 32 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 8 (H8_K100_T0.5_Dmix_visual_aligning.models.visual_gaussian_dif): 2 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 9 (H8_K20_T0.5_Dmix_visual_aligning.models.visual_gaussian_diff): 6 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 10 (H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_di): 2 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 11 (H8_K20_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_dif): 10 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 12 (H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_di): 2 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 13 (H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diff): 38 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 14 (H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diff): 32 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 15 (H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_gaussian): 37 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 16 (H8_K10_Dmodels.GaussianDiffusion_aw10_thres0.5): 255 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 17 (H8_K1_T0.5_Dmodels.GaussianDiffusion): 255 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 18 (H8_K20_T1_Dmodels.GaussianDiffusion): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 19 (X_H8_K20_T0.05_Dmodels.GaussianDiffusion): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 20 (X_H8_K20_T0.1_Dmodels.GaussianDiffusion): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 21 (X_H8_K20_T1_Dmodels.GaussianDiffusion): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 22 (H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5): 255 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 23 (H8_K20_T0.5_Dmodels.GaussianDiffusion_aw1): 255 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 24 (H8_K20_T1_Dmodels.GaussianDiffusion_aw10): 255 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 25 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFl): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 26 (H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlo): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 27 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlo): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 28 (H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlo): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 29 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFl): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 30 (H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlo): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 31 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlo): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 32 (H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlo): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 33 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFl): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 34 (H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlo): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 35 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlo): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 36 (H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlo): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 37 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFl): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 38 (H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlo): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 39 (H8_K20_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFl): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 40 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlo): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 41 (H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlo): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 42 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFl): 156 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 43 (H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlo): 156 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 44 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlo): 195 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 45 (H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlo): 156 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 46 (H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models): 195 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 47 (H8_K1_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.): 195 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 48 (H8_K20_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models): 195 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 49 (H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.): 195 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 50 (H8_K5_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.): 195 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 51 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFl): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 52 (H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlo): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 53 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlo): 195 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 54 (H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlo): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 55 (H8_K10_Meuler_T0.5_Dmodels.diffusion.GaussianDiffusion): 51 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 56 (K10_thres0_mpc1_n2): 9 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 57 (K20_thres0.5_mpc1_n2): 9 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 58 (K20_thres0_mpc1_n2): 9 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 59 (K20_thres0_mpc4_n2): 9 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 60 (K2_thres0_mpc1_n2): 9 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 61 (K5_thres0_mpc1_n2): 9 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 62 (H8_K10_Dmodels.diffusion.FlowMatchingODE(UNORGNIZED)): 63 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 63 (K20_thres0.5_mpc4_n2): 120 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 64 (K20_thres0.05_mpc4_n2): 24 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 65 (K20_thres0.1_mpc4_n2): 24 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 66 (K20_thres0.5_mpc4_n2): 24 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 67 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFl): 51 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 68 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlo): 51 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 69 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFl): 51 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 70 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFl): 51 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 71 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFl): 51 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 72 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlo): 51 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 73 ((legacy_F2)H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.mode): 51 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 74 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFl): 51 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 75 (H8_K20_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFl): 51 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 76 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlo): 51 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 77 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFl): 51 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 78 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFl): 51 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 79 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFl): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 80 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFl): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 81 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFl): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 82 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFl): 51 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 83 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFl): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 84 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFl): 51 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 85 (H8_K20_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFl): 51 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 86 (H8_K20_Mrk4_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlow): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 87 (H8_K2_Mrk4_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowO): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 88 (H8_K40_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFl): 51 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 89 (H8_K10_Meuler_Dflow_matcher_v3_imeanflow.models.iMFDiffusion): 51 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 90 (H8_K1_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlo): 51 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 91 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlo): 51 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 92 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFl): 51 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 93 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFl): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 94 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFl): 51 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 95 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlo): 51 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 96 (H8_K100_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanF): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 97 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFl): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 98 (H8_K1_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlo): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 99 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlo): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 100 (H8_K50_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFl): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 101 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFl): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 102 (H8_K1_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlo): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 103 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlo): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 104 (H8_K50_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFl): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 105 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlo): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 106 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlo): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 107 (H8_K1_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowO): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 108 (H8_K20_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlow): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 109 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowO): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 110 (H8_K5_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowO): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 111 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlow): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 112 (H8_K1_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowO): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 113 (H8_K20_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlow): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 114 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowO): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 115 (H8_K5_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowO): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 116 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowO): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 117 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowO): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 118 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowO): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 119 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlow): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 120 (H8_K1_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowO): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 121 (H8_K20_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlow): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 122 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowO): 195 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 123 (H8_K5_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowO): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 124 (H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.): 195 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 125 (H8_K1_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.M): 195 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 126 (H8_K20_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.): 195 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 127 (H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.M): 195 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 128 (H8_K5_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.M): 195 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 129 (H8_K10_Meuler_T0.5_A0.1_B1_Dflow_matcher_v3_meanflow.models.): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 130 (H8_K10_Meuler_T0.5_A0.25_B1_Dflow_matcher_v3_meanflow.models): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 131 (H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.): 195 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 132 (H8_K10_Meuler_T0.5_A0_B1_Dflow_matcher_v3_meanflow.models.Me): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 133 (H8_K1_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.M): 195 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 134 (H8_K2_Meuler_T0,5_Dflow_matcher_v3_meanflow.models.MeanFlowO): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 135 (H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.M): 195 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 136 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowO): 0 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 137 (H8_K5_Meuler_T0.5_A0.1_B1_Dflow_matcher_v3_meanflow.models.M): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 138 (H8_K5_Meuler_T0.5_A0.25_B1_Dflow_matcher_v3_meanflow.models.): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 139 (H8_K5_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.M): 195 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 140 (H8_K5_Meuler_T0.5_A0_B1_Dflow_matcher_v3_meanflow.models.Mea): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 141 (H8_K10_Meuler_T0.05_Dmodels.diffusion.FlowMatchingODE): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 142 (H8_K10_Meuler_T0.1_Dmodels.diffusion.FlowMatchingODE): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 143 (H8_K20_Meuler_T0.05_Dmodels.diffusion.FlowMatchingODE): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 144 (H8_K20_Meuler_T0.1_Dmodels.diffusion.FlowMatchingODE): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 145 (H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE): 195 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 146 (H8_K5_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE): 39 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 147 (H8_K10_Dmodels.diffusion.GaussianDiffusion): 255 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 148 (H8_K10_Meuler_T1_Dmodels.diffusion.GaussianDiffusion): 255 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 149 (H8_K1_Meuler_T0.5_Dmodels.diffusion.GaussianDiffusion): 255 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 150 (H8_K20_Meuler_Dmodels.diffusion.GaussianDiffusion): 255 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 151 (H8_K5_Mmidpoint_Dmodels.diffusion.GaussianDiffusion): 255 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 152 (H8_K10_Meuler_Dmodels.diffusion.GaussianDiffusion): 255 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 153 (d3il_baseline_ddpm_encdec_vision): 1 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   Candidate 154 (d3il_baseline_ddpm_encdec_vision__Bf_U3): 6 units
+[2026-08-12 21:36:07] discovery - INFO - Discovery manifest written: Data_Analysis/analysis_results/batch_va2_20260812_213606/logs/discovery_manifest.json
+[2026-08-12 21:36:07] DA_VA_v2 - INFO - [3/5] Loading 11284 units
+[2026-08-12 21:36:07] DA_VA_v2 - INFO -   25/11284 units processed
+[2026-08-12 21:36:08] DA_VA_v2 - INFO -   50/11284 units processed
+[2026-08-12 21:36:08] DA_VA_v2 - INFO -   75/11284 units processed
+[2026-08-12 21:36:08] DA_VA_v2 - INFO -   100/11284 units processed
+[2026-08-12 21:36:08] DA_VA_v2 - INFO -   125/11284 units processed
+[2026-08-12 21:36:09] DA_VA_v2 - INFO -   150/11284 units processed
+[2026-08-12 21:36:09] DA_VA_v2 - INFO -   175/11284 units processed
+[2026-08-12 21:36:09] DA_VA_v2 - INFO -   200/11284 units processed
+[2026-08-12 21:36:09] DA_VA_v2 - INFO -   225/11284 units processed
+[2026-08-12 21:36:10] DA_VA_v2 - INFO -   250/11284 units processed
+[2026-08-12 21:36:10] DA_VA_v2 - INFO -   275/11284 units processed
+[2026-08-12 21:36:10] DA_VA_v2 - INFO -   300/11284 units processed
+[2026-08-12 21:36:10] DA_VA_v2 - INFO -   325/11284 units processed
+[2026-08-12 21:36:10] DA_VA_v2 - INFO -   350/11284 units processed
+[2026-08-12 21:36:10] DA_VA_v2 - INFO -   375/11284 units processed
+[2026-08-12 21:36:10] DA_VA_v2 - INFO -   400/11284 units processed
+[2026-08-12 21:36:11] DA_VA_v2 - INFO -   425/11284 units processed
+[2026-08-12 21:36:11] DA_VA_v2 - INFO -   450/11284 units processed
+[2026-08-12 21:36:11] DA_VA_v2 - INFO -   475/11284 units processed
+[2026-08-12 21:36:11] DA_VA_v2 - INFO -   500/11284 units processed
+[2026-08-12 21:36:11] DA_VA_v2 - INFO -   525/11284 units processed
+[2026-08-12 21:36:11] DA_VA_v2 - INFO -   550/11284 units processed
+[2026-08-12 21:36:11] DA_VA_v2 - INFO -   575/11284 units processed
+[2026-08-12 21:36:11] DA_VA_v2 - INFO -   600/11284 units processed
+[2026-08-12 21:36:11] DA_VA_v2 - INFO -   625/11284 units processed
+[2026-08-12 21:36:11] DA_VA_v2 - INFO -   650/11284 units processed
+[2026-08-12 21:36:11] DA_VA_v2 - INFO -   675/11284 units processed
+[2026-08-12 21:36:11] DA_VA_v2 - INFO -   700/11284 units processed
+[2026-08-12 21:36:11] DA_VA_v2 - INFO -   725/11284 units processed
+[2026-08-12 21:36:12] DA_VA_v2 - INFO -   750/11284 units processed
+[2026-08-12 21:36:12] DA_VA_v2 - INFO -   775/11284 units processed
+[2026-08-12 21:36:12] DA_VA_v2 - INFO -   800/11284 units processed
+[2026-08-12 21:36:12] DA_VA_v2 - INFO -   825/11284 units processed
+[2026-08-12 21:36:12] DA_VA_v2 - INFO -   850/11284 units processed
+[2026-08-12 21:36:12] DA_VA_v2 - INFO -   875/11284 units processed
+[2026-08-12 21:36:12] DA_VA_v2 - INFO -   900/11284 units processed
+[2026-08-12 21:36:12] DA_VA_v2 - INFO -   925/11284 units processed
+[2026-08-12 21:36:12] DA_VA_v2 - INFO -   950/11284 units processed
+[2026-08-12 21:36:12] DA_VA_v2 - INFO -   975/11284 units processed
+[2026-08-12 21:36:12] DA_VA_v2 - INFO -   1000/11284 units processed
+[2026-08-12 21:36:12] DA_VA_v2 - INFO -   1025/11284 units processed
+[2026-08-12 21:36:12] DA_VA_v2 - INFO -   1050/11284 units processed
+[2026-08-12 21:36:13] DA_VA_v2 - INFO -   1075/11284 units processed
+[2026-08-12 21:36:13] DA_VA_v2 - INFO -   1100/11284 units processed
+[2026-08-12 21:36:13] DA_VA_v2 - INFO -   1125/11284 units processed
+[2026-08-12 21:36:13] DA_VA_v2 - INFO -   1150/11284 units processed
+[2026-08-12 21:36:13] DA_VA_v2 - INFO -   1175/11284 units processed
+[2026-08-12 21:36:13] DA_VA_v2 - INFO -   1200/11284 units processed
+[2026-08-12 21:36:13] DA_VA_v2 - INFO -   1225/11284 units processed
+[2026-08-12 21:36:13] DA_VA_v2 - INFO -   1250/11284 units processed
+[2026-08-12 21:36:13] DA_VA_v2 - INFO -   1275/11284 units processed
+[2026-08-12 21:36:13] DA_VA_v2 - INFO -   1300/11284 units processed
+[2026-08-12 21:36:13] DA_VA_v2 - INFO -   1325/11284 units processed
+[2026-08-12 21:36:13] DA_VA_v2 - INFO -   1350/11284 units processed
+[2026-08-12 21:36:13] DA_VA_v2 - INFO -   1375/11284 units processed
+[2026-08-12 21:36:14] DA_VA_v2 - INFO -   1400/11284 units processed
+[2026-08-12 21:36:14] DA_VA_v2 - INFO -   1425/11284 units processed
+[2026-08-12 21:36:14] DA_VA_v2 - INFO -   1450/11284 units processed
+[2026-08-12 21:36:14] DA_VA_v2 - INFO -   1475/11284 units processed
+[2026-08-12 21:36:14] DA_VA_v2 - INFO -   1500/11284 units processed
+[2026-08-12 21:36:14] DA_VA_v2 - INFO -   1525/11284 units processed
+[2026-08-12 21:36:14] DA_VA_v2 - INFO -   1550/11284 units processed
+[2026-08-12 21:36:14] DA_VA_v2 - INFO -   1575/11284 units processed
+[2026-08-12 21:36:14] DA_VA_v2 - INFO -   1600/11284 units processed
+[2026-08-12 21:36:14] DA_VA_v2 - INFO -   1625/11284 units processed
+[2026-08-12 21:36:14] DA_VA_v2 - INFO -   1650/11284 units processed
+[2026-08-12 21:36:14] DA_VA_v2 - INFO -   1675/11284 units processed
+[2026-08-12 21:36:15] DA_VA_v2 - INFO -   1700/11284 units processed
+[2026-08-12 21:36:15] DA_VA_v2 - INFO -   1725/11284 units processed
+[2026-08-12 21:36:15] DA_VA_v2 - INFO -   1750/11284 units processed
+[2026-08-12 21:36:15] DA_VA_v2 - INFO -   1775/11284 units processed
+[2026-08-12 21:36:15] DA_VA_v2 - INFO -   1800/11284 units processed
+[2026-08-12 21:36:15] DA_VA_v2 - INFO -   1825/11284 units processed
+[2026-08-12 21:36:15] DA_VA_v2 - INFO -   1850/11284 units processed
+[2026-08-12 21:36:15] DA_VA_v2 - INFO -   1875/11284 units processed
+[2026-08-12 21:36:15] DA_VA_v2 - INFO -   1900/11284 units processed
+[2026-08-12 21:36:15] DA_VA_v2 - INFO -   1925/11284 units processed
+[2026-08-12 21:36:15] DA_VA_v2 - INFO -   1950/11284 units processed
+[2026-08-12 21:36:15] DA_VA_v2 - INFO -   1975/11284 units processed
+[2026-08-12 21:36:15] DA_VA_v2 - INFO -   2000/11284 units processed
+[2026-08-12 21:36:15] DA_VA_v2 - INFO -   2025/11284 units processed
+[2026-08-12 21:36:16] DA_VA_v2 - INFO -   2050/11284 units processed
+[2026-08-12 21:36:16] DA_VA_v2 - INFO -   2075/11284 units processed
+[2026-08-12 21:36:16] DA_VA_v2 - INFO -   2100/11284 units processed
+[2026-08-12 21:36:16] DA_VA_v2 - INFO -   2125/11284 units processed
+[2026-08-12 21:36:16] DA_VA_v2 - INFO -   2150/11284 units processed
+[2026-08-12 21:36:16] DA_VA_v2 - INFO -   2175/11284 units processed
+[2026-08-12 21:36:16] DA_VA_v2 - INFO -   2200/11284 units processed
+[2026-08-12 21:36:16] DA_VA_v2 - INFO -   2225/11284 units processed
+[2026-08-12 21:36:16] DA_VA_v2 - INFO -   2250/11284 units processed
+[2026-08-12 21:36:16] DA_VA_v2 - INFO -   2275/11284 units processed
+[2026-08-12 21:36:16] DA_VA_v2 - INFO -   2300/11284 units processed
+[2026-08-12 21:36:17] DA_VA_v2 - INFO -   2325/11284 units processed
+[2026-08-12 21:36:17] DA_VA_v2 - INFO -   2350/11284 units processed
+[2026-08-12 21:36:17] DA_VA_v2 - INFO -   2375/11284 units processed
+[2026-08-12 21:36:17] DA_VA_v2 - INFO -   2400/11284 units processed
+[2026-08-12 21:36:17] DA_VA_v2 - INFO -   2425/11284 units processed
+[2026-08-12 21:36:17] DA_VA_v2 - INFO -   2450/11284 units processed
+[2026-08-12 21:36:17] DA_VA_v2 - INFO -   2475/11284 units processed
+[2026-08-12 21:36:17] DA_VA_v2 - INFO -   2500/11284 units processed
+[2026-08-12 21:36:17] DA_VA_v2 - INFO -   2525/11284 units processed
+[2026-08-12 21:36:17] DA_VA_v2 - INFO -   2550/11284 units processed
+[2026-08-12 21:36:17] DA_VA_v2 - INFO -   2575/11284 units processed
+[2026-08-12 21:36:18] DA_VA_v2 - INFO -   2600/11284 units processed
+[2026-08-12 21:36:18] DA_VA_v2 - INFO -   2625/11284 units processed
+[2026-08-12 21:36:18] DA_VA_v2 - INFO -   2650/11284 units processed
+[2026-08-12 21:36:18] DA_VA_v2 - INFO -   2675/11284 units processed
+[2026-08-12 21:36:18] DA_VA_v2 - INFO -   2700/11284 units processed
+[2026-08-12 21:36:18] DA_VA_v2 - INFO -   2725/11284 units processed
+[2026-08-12 21:36:18] DA_VA_v2 - INFO -   2750/11284 units processed
+[2026-08-12 21:36:18] DA_VA_v2 - INFO -   2775/11284 units processed
+[2026-08-12 21:36:18] DA_VA_v2 - INFO -   2800/11284 units processed
+[2026-08-12 21:36:18] DA_VA_v2 - INFO -   2825/11284 units processed
+[2026-08-12 21:36:18] DA_VA_v2 - INFO -   2850/11284 units processed
+[2026-08-12 21:36:18] DA_VA_v2 - INFO -   2875/11284 units processed
+[2026-08-12 21:36:19] DA_VA_v2 - INFO -   2900/11284 units processed
+[2026-08-12 21:36:19] DA_VA_v2 - INFO -   2925/11284 units processed
+[2026-08-12 21:36:19] DA_VA_v2 - INFO -   2950/11284 units processed
+[2026-08-12 21:36:19] DA_VA_v2 - INFO -   2975/11284 units processed
+[2026-08-12 21:36:19] DA_VA_v2 - INFO -   3000/11284 units processed
+[2026-08-12 21:36:19] DA_VA_v2 - INFO -   3025/11284 units processed
+[2026-08-12 21:36:19] DA_VA_v2 - INFO -   3050/11284 units processed
+[2026-08-12 21:36:19] DA_VA_v2 - INFO -   3075/11284 units processed
+[2026-08-12 21:36:19] DA_VA_v2 - INFO -   3100/11284 units processed
+[2026-08-12 21:36:19] DA_VA_v2 - INFO -   3125/11284 units processed
+[2026-08-12 21:36:20] DA_VA_v2 - INFO -   3150/11284 units processed
+[2026-08-12 21:36:20] DA_VA_v2 - INFO -   3175/11284 units processed
+[2026-08-12 21:36:20] DA_VA_v2 - INFO -   3200/11284 units processed
+[2026-08-12 21:36:20] DA_VA_v2 - INFO -   3225/11284 units processed
+[2026-08-12 21:36:20] DA_VA_v2 - INFO -   3250/11284 units processed
+[2026-08-12 21:36:20] DA_VA_v2 - INFO -   3275/11284 units processed
+[2026-08-12 21:36:20] DA_VA_v2 - INFO -   3300/11284 units processed
+[2026-08-12 21:36:20] DA_VA_v2 - INFO -   3325/11284 units processed
+[2026-08-12 21:36:20] DA_VA_v2 - INFO -   3350/11284 units processed
+[2026-08-12 21:36:20] DA_VA_v2 - INFO -   3375/11284 units processed
+[2026-08-12 21:36:20] DA_VA_v2 - INFO -   3400/11284 units processed
+[2026-08-12 21:36:21] DA_VA_v2 - INFO -   3425/11284 units processed
+[2026-08-12 21:36:21] DA_VA_v2 - INFO -   3450/11284 units processed
+[2026-08-12 21:36:21] DA_VA_v2 - INFO -   3475/11284 units processed
+[2026-08-12 21:36:21] DA_VA_v2 - INFO -   3500/11284 units processed
+[2026-08-12 21:36:21] DA_VA_v2 - INFO -   3525/11284 units processed
+[2026-08-12 21:36:21] DA_VA_v2 - INFO -   3550/11284 units processed
+[2026-08-12 21:36:21] DA_VA_v2 - INFO -   3575/11284 units processed
+[2026-08-12 21:36:21] DA_VA_v2 - INFO -   3600/11284 units processed
+[2026-08-12 21:36:21] DA_VA_v2 - INFO -   3625/11284 units processed
+[2026-08-12 21:36:21] DA_VA_v2 - INFO -   3650/11284 units processed
+[2026-08-12 21:36:21] DA_VA_v2 - INFO -   3675/11284 units processed
+[2026-08-12 21:36:21] DA_VA_v2 - INFO -   3700/11284 units processed
+[2026-08-12 21:36:22] DA_VA_v2 - INFO -   3725/11284 units processed
+[2026-08-12 21:36:22] DA_VA_v2 - INFO -   3750/11284 units processed
+[2026-08-12 21:36:22] DA_VA_v2 - INFO -   3775/11284 units processed
+[2026-08-12 21:36:22] DA_VA_v2 - INFO -   3800/11284 units processed
+[2026-08-12 21:36:22] DA_VA_v2 - INFO -   3825/11284 units processed
+[2026-08-12 21:36:22] DA_VA_v2 - INFO -   3850/11284 units processed
+[2026-08-12 21:36:22] DA_VA_v2 - INFO -   3875/11284 units processed
+[2026-08-12 21:36:22] DA_VA_v2 - INFO -   3900/11284 units processed
+[2026-08-12 21:36:22] DA_VA_v2 - INFO -   3925/11284 units processed
+[2026-08-12 21:36:22] DA_VA_v2 - INFO -   3950/11284 units processed
+[2026-08-12 21:36:23] DA_VA_v2 - INFO -   3975/11284 units processed
+[2026-08-12 21:36:23] DA_VA_v2 - INFO -   4000/11284 units processed
+[2026-08-12 21:36:23] DA_VA_v2 - INFO -   4025/11284 units processed
+[2026-08-12 21:36:23] DA_VA_v2 - INFO -   4050/11284 units processed
+[2026-08-12 21:36:23] DA_VA_v2 - INFO -   4075/11284 units processed
+[2026-08-12 21:36:23] DA_VA_v2 - INFO -   4100/11284 units processed
+[2026-08-12 21:36:23] DA_VA_v2 - INFO -   4125/11284 units processed
+[2026-08-12 21:36:23] DA_VA_v2 - INFO -   4150/11284 units processed
+[2026-08-12 21:36:23] DA_VA_v2 - INFO -   4175/11284 units processed
+[2026-08-12 21:36:23] DA_VA_v2 - INFO -   4200/11284 units processed
+[2026-08-12 21:36:24] DA_VA_v2 - INFO -   4225/11284 units processed
+[2026-08-12 21:36:24] DA_VA_v2 - INFO -   4250/11284 units processed
+[2026-08-12 21:36:24] DA_VA_v2 - INFO -   4275/11284 units processed
+[2026-08-12 21:36:24] DA_VA_v2 - INFO -   4300/11284 units processed
+[2026-08-12 21:36:24] DA_VA_v2 - INFO -   4325/11284 units processed
+[2026-08-12 21:36:24] DA_VA_v2 - INFO -   4350/11284 units processed
+[2026-08-12 21:36:24] DA_VA_v2 - INFO -   4375/11284 units processed
+[2026-08-12 21:36:24] DA_VA_v2 - INFO -   4400/11284 units processed
+[2026-08-12 21:36:24] DA_VA_v2 - INFO -   4425/11284 units processed
+[2026-08-12 21:36:24] DA_VA_v2 - INFO -   4450/11284 units processed
+[2026-08-12 21:36:24] DA_VA_v2 - INFO -   4475/11284 units processed
+[2026-08-12 21:36:24] DA_VA_v2 - INFO -   4500/11284 units processed
+[2026-08-12 21:36:25] DA_VA_v2 - INFO -   4525/11284 units processed
+[2026-08-12 21:36:25] DA_VA_v2 - INFO -   4550/11284 units processed
+[2026-08-12 21:36:25] DA_VA_v2 - INFO -   4575/11284 units processed
+[2026-08-12 21:36:25] DA_VA_v2 - INFO -   4600/11284 units processed
+[2026-08-12 21:36:25] DA_VA_v2 - INFO -   4625/11284 units processed
+[2026-08-12 21:36:25] DA_VA_v2 - INFO -   4650/11284 units processed
+[2026-08-12 21:36:25] DA_VA_v2 - INFO -   4675/11284 units processed
+[2026-08-12 21:36:25] DA_VA_v2 - INFO -   4700/11284 units processed
+[2026-08-12 21:36:25] DA_VA_v2 - INFO -   4725/11284 units processed
+[2026-08-12 21:36:25] DA_VA_v2 - INFO -   4750/11284 units processed
+[2026-08-12 21:36:25] DA_VA_v2 - INFO -   4775/11284 units processed
+[2026-08-12 21:36:25] DA_VA_v2 - INFO -   4800/11284 units processed
+[2026-08-12 21:36:26] DA_VA_v2 - INFO -   4825/11284 units processed
+[2026-08-12 21:36:26] DA_VA_v2 - INFO -   4850/11284 units processed
+[2026-08-12 21:36:26] DA_VA_v2 - INFO -   4875/11284 units processed
+[2026-08-12 21:36:26] DA_VA_v2 - INFO -   4900/11284 units processed
+[2026-08-12 21:36:26] DA_VA_v2 - INFO -   4925/11284 units processed
+[2026-08-12 21:36:26] DA_VA_v2 - INFO -   4950/11284 units processed
+[2026-08-12 21:36:26] DA_VA_v2 - INFO -   4975/11284 units processed
+[2026-08-12 21:36:26] DA_VA_v2 - INFO -   5000/11284 units processed
+[2026-08-12 21:36:26] DA_VA_v2 - INFO -   5025/11284 units processed
+[2026-08-12 21:36:26] DA_VA_v2 - INFO -   5050/11284 units processed
+[2026-08-12 21:36:26] DA_VA_v2 - INFO -   5075/11284 units processed
+[2026-08-12 21:36:26] DA_VA_v2 - INFO -   5100/11284 units processed
+[2026-08-12 21:36:26] DA_VA_v2 - INFO -   5125/11284 units processed
+[2026-08-12 21:36:27] DA_VA_v2 - INFO -   5150/11284 units processed
+[2026-08-12 21:36:27] DA_VA_v2 - INFO -   5175/11284 units processed
+[2026-08-12 21:36:27] DA_VA_v2 - INFO -   5200/11284 units processed
+[2026-08-12 21:36:27] DA_VA_v2 - INFO -   5225/11284 units processed
+[2026-08-12 21:36:27] DA_VA_v2 - INFO -   5250/11284 units processed
+[2026-08-12 21:36:27] DA_VA_v2 - INFO -   5275/11284 units processed
+[2026-08-12 21:36:27] DA_VA_v2 - INFO -   5300/11284 units processed
+[2026-08-12 21:36:27] DA_VA_v2 - INFO -   5325/11284 units processed
+[2026-08-12 21:36:27] DA_VA_v2 - INFO -   5350/11284 units processed
+[2026-08-12 21:36:27] DA_VA_v2 - INFO -   5375/11284 units processed
+[2026-08-12 21:36:28] DA_VA_v2 - INFO -   5400/11284 units processed
+[2026-08-12 21:36:28] DA_VA_v2 - INFO -   5425/11284 units processed
+[2026-08-12 21:36:28] DA_VA_v2 - INFO -   5450/11284 units processed
+[2026-08-12 21:36:28] DA_VA_v2 - INFO -   5475/11284 units processed
+[2026-08-12 21:36:28] DA_VA_v2 - INFO -   5500/11284 units processed
+[2026-08-12 21:36:28] DA_VA_v2 - INFO -   5525/11284 units processed
+[2026-08-12 21:36:28] DA_VA_v2 - INFO -   5550/11284 units processed
+[2026-08-12 21:36:28] DA_VA_v2 - INFO -   5575/11284 units processed
+[2026-08-12 21:36:28] DA_VA_v2 - INFO -   5600/11284 units processed
+[2026-08-12 21:36:28] DA_VA_v2 - INFO -   5625/11284 units processed
+[2026-08-12 21:36:28] DA_VA_v2 - INFO -   5650/11284 units processed
+[2026-08-12 21:36:28] DA_VA_v2 - INFO -   5675/11284 units processed
+[2026-08-12 21:36:28] DA_VA_v2 - INFO -   5700/11284 units processed
+[2026-08-12 21:36:28] DA_VA_v2 - INFO -   5725/11284 units processed
+[2026-08-12 21:36:29] DA_VA_v2 - INFO -   5750/11284 units processed
+[2026-08-12 21:36:29] DA_VA_v2 - INFO -   5775/11284 units processed
+[2026-08-12 21:36:29] DA_VA_v2 - INFO -   5800/11284 units processed
+[2026-08-12 21:36:29] DA_VA_v2 - INFO -   5825/11284 units processed
+[2026-08-12 21:36:29] DA_VA_v2 - INFO -   5850/11284 units processed
+[2026-08-12 21:36:29] DA_VA_v2 - INFO -   5875/11284 units processed
+[2026-08-12 21:36:29] DA_VA_v2 - INFO -   5900/11284 units processed
+[2026-08-12 21:36:29] DA_VA_v2 - INFO -   5925/11284 units processed
+[2026-08-12 21:36:29] DA_VA_v2 - INFO -   5950/11284 units processed
+[2026-08-12 21:36:29] DA_VA_v2 - INFO -   5975/11284 units processed
+[2026-08-12 21:36:29] DA_VA_v2 - INFO -   6000/11284 units processed
+[2026-08-12 21:36:29] DA_VA_v2 - INFO -   6025/11284 units processed
+[2026-08-12 21:36:29] DA_VA_v2 - INFO -   6050/11284 units processed
+[2026-08-12 21:36:30] DA_VA_v2 - INFO -   6075/11284 units processed
+[2026-08-12 21:36:30] DA_VA_v2 - INFO -   6100/11284 units processed
+[2026-08-12 21:36:30] DA_VA_v2 - INFO -   6125/11284 units processed
+[2026-08-12 21:36:30] DA_VA_v2 - INFO -   6150/11284 units processed
+[2026-08-12 21:36:30] DA_VA_v2 - INFO -   6175/11284 units processed
+[2026-08-12 21:36:30] DA_VA_v2 - INFO -   6200/11284 units processed
+[2026-08-12 21:36:30] DA_VA_v2 - INFO -   6225/11284 units processed
+[2026-08-12 21:36:30] DA_VA_v2 - INFO -   6250/11284 units processed
+[2026-08-12 21:36:30] DA_VA_v2 - INFO -   6275/11284 units processed
+[2026-08-12 21:36:30] DA_VA_v2 - INFO -   6300/11284 units processed
+[2026-08-12 21:36:30] DA_VA_v2 - INFO -   6325/11284 units processed
+[2026-08-12 21:36:30] DA_VA_v2 - INFO -   6350/11284 units processed
+[2026-08-12 21:36:30] DA_VA_v2 - INFO -   6375/11284 units processed
+[2026-08-12 21:36:30] DA_VA_v2 - INFO -   6400/11284 units processed
+[2026-08-12 21:36:31] DA_VA_v2 - INFO -   6425/11284 units processed
+[2026-08-12 21:36:31] DA_VA_v2 - INFO -   6450/11284 units processed
+[2026-08-12 21:36:31] DA_VA_v2 - INFO -   6475/11284 units processed
+[2026-08-12 21:36:31] DA_VA_v2 - INFO -   6500/11284 units processed
+[2026-08-12 21:36:31] DA_VA_v2 - INFO -   6525/11284 units processed
+[2026-08-12 21:36:31] DA_VA_v2 - INFO -   6550/11284 units processed
+[2026-08-12 21:36:31] DA_VA_v2 - INFO -   6575/11284 units processed
+[2026-08-12 21:36:31] DA_VA_v2 - INFO -   6600/11284 units processed
+[2026-08-12 21:36:31] DA_VA_v2 - INFO -   6625/11284 units processed
+[2026-08-12 21:36:31] DA_VA_v2 - INFO -   6650/11284 units processed
+[2026-08-12 21:36:31] DA_VA_v2 - INFO -   6675/11284 units processed
+[2026-08-12 21:36:32] DA_VA_v2 - INFO -   6700/11284 units processed
+[2026-08-12 21:36:32] DA_VA_v2 - INFO -   6725/11284 units processed
+[2026-08-12 21:36:32] DA_VA_v2 - INFO -   6750/11284 units processed
+[2026-08-12 21:36:32] DA_VA_v2 - INFO -   6775/11284 units processed
+[2026-08-12 21:36:32] DA_VA_v2 - INFO -   6800/11284 units processed
+[2026-08-12 21:36:32] DA_VA_v2 - INFO -   6825/11284 units processed
+[2026-08-12 21:36:32] DA_VA_v2 - INFO -   6850/11284 units processed
+[2026-08-12 21:36:32] DA_VA_v2 - INFO -   6875/11284 units processed
+[2026-08-12 21:36:32] DA_VA_v2 - INFO -   6900/11284 units processed
+[2026-08-12 21:36:32] DA_VA_v2 - INFO -   6925/11284 units processed
+[2026-08-12 21:36:33] DA_VA_v2 - INFO -   6950/11284 units processed
+[2026-08-12 21:36:33] DA_VA_v2 - INFO -   6975/11284 units processed
+[2026-08-12 21:36:33] DA_VA_v2 - INFO -   7000/11284 units processed
+[2026-08-12 21:36:33] DA_VA_v2 - INFO -   7025/11284 units processed
+[2026-08-12 21:36:33] DA_VA_v2 - INFO -   7050/11284 units processed
+[2026-08-12 21:36:33] DA_VA_v2 - INFO -   7075/11284 units processed
+[2026-08-12 21:36:33] DA_VA_v2 - INFO -   7100/11284 units processed
+[2026-08-12 21:36:33] DA_VA_v2 - INFO -   7125/11284 units processed
+[2026-08-12 21:36:33] DA_VA_v2 - INFO -   7150/11284 units processed
+[2026-08-12 21:36:33] DA_VA_v2 - INFO -   7175/11284 units processed
+[2026-08-12 21:36:33] DA_VA_v2 - INFO -   7200/11284 units processed
+[2026-08-12 21:36:33] DA_VA_v2 - INFO -   7225/11284 units processed
+[2026-08-12 21:36:34] DA_VA_v2 - INFO -   7250/11284 units processed
+[2026-08-12 21:36:34] DA_VA_v2 - INFO -   7275/11284 units processed
+[2026-08-12 21:36:34] DA_VA_v2 - INFO -   7300/11284 units processed
+[2026-08-12 21:36:34] DA_VA_v2 - INFO -   7325/11284 units processed
+[2026-08-12 21:36:34] DA_VA_v2 - INFO -   7350/11284 units processed
+[2026-08-12 21:36:34] DA_VA_v2 - INFO -   7375/11284 units processed
+[2026-08-12 21:36:34] DA_VA_v2 - INFO -   7400/11284 units processed
+[2026-08-12 21:36:34] DA_VA_v2 - INFO -   7425/11284 units processed
+[2026-08-12 21:36:34] DA_VA_v2 - INFO -   7450/11284 units processed
+[2026-08-12 21:36:34] DA_VA_v2 - INFO -   7475/11284 units processed
+[2026-08-12 21:36:34] DA_VA_v2 - INFO -   7500/11284 units processed
+[2026-08-12 21:36:35] DA_VA_v2 - INFO -   7525/11284 units processed
+[2026-08-12 21:36:35] DA_VA_v2 - INFO -   7550/11284 units processed
+[2026-08-12 21:36:35] DA_VA_v2 - INFO -   7575/11284 units processed
+[2026-08-12 21:36:35] DA_VA_v2 - INFO -   7600/11284 units processed
+[2026-08-12 21:36:35] DA_VA_v2 - INFO -   7625/11284 units processed
+[2026-08-12 21:36:35] DA_VA_v2 - INFO -   7650/11284 units processed
+[2026-08-12 21:36:35] DA_VA_v2 - INFO -   7675/11284 units processed
+[2026-08-12 21:36:35] DA_VA_v2 - INFO -   7700/11284 units processed
+[2026-08-12 21:36:35] DA_VA_v2 - INFO -   7725/11284 units processed
+[2026-08-12 21:36:35] DA_VA_v2 - INFO -   7750/11284 units processed
+[2026-08-12 21:36:35] DA_VA_v2 - INFO -   7775/11284 units processed
+[2026-08-12 21:36:36] DA_VA_v2 - INFO -   7800/11284 units processed
+[2026-08-12 21:36:36] DA_VA_v2 - INFO -   7825/11284 units processed
+[2026-08-12 21:36:36] DA_VA_v2 - INFO -   7850/11284 units processed
+[2026-08-12 21:36:36] DA_VA_v2 - INFO -   7875/11284 units processed
+[2026-08-12 21:36:36] DA_VA_v2 - INFO -   7900/11284 units processed
+[2026-08-12 21:36:36] DA_VA_v2 - INFO -   7925/11284 units processed
+[2026-08-12 21:36:36] DA_VA_v2 - INFO -   7950/11284 units processed
+[2026-08-12 21:36:36] DA_VA_v2 - INFO -   7975/11284 units processed
+[2026-08-12 21:36:36] DA_VA_v2 - INFO -   8000/11284 units processed
+[2026-08-12 21:36:36] DA_VA_v2 - INFO -   8025/11284 units processed
+[2026-08-12 21:36:36] DA_VA_v2 - INFO -   8050/11284 units processed
+[2026-08-12 21:36:36] DA_VA_v2 - INFO -   8075/11284 units processed
+[2026-08-12 21:36:37] DA_VA_v2 - INFO -   8100/11284 units processed
+[2026-08-12 21:36:37] DA_VA_v2 - INFO -   8125/11284 units processed
+[2026-08-12 21:36:37] DA_VA_v2 - INFO -   8150/11284 units processed
+[2026-08-12 21:36:37] DA_VA_v2 - INFO -   8175/11284 units processed
+[2026-08-12 21:36:37] DA_VA_v2 - INFO -   8200/11284 units processed
+[2026-08-12 21:36:37] DA_VA_v2 - INFO -   8225/11284 units processed
+[2026-08-12 21:36:37] DA_VA_v2 - INFO -   8250/11284 units processed
+[2026-08-12 21:36:37] DA_VA_v2 - INFO -   8275/11284 units processed
+[2026-08-12 21:36:37] DA_VA_v2 - INFO -   8300/11284 units processed
+[2026-08-12 21:36:37] DA_VA_v2 - INFO -   8325/11284 units processed
+[2026-08-12 21:36:37] DA_VA_v2 - INFO -   8350/11284 units processed
+[2026-08-12 21:36:38] DA_VA_v2 - INFO -   8375/11284 units processed
+[2026-08-12 21:36:38] DA_VA_v2 - INFO -   8400/11284 units processed
+[2026-08-12 21:36:38] DA_VA_v2 - INFO -   8425/11284 units processed
+[2026-08-12 21:36:38] DA_VA_v2 - INFO -   8450/11284 units processed
+[2026-08-12 21:36:38] DA_VA_v2 - INFO -   8475/11284 units processed
+[2026-08-12 21:36:38] DA_VA_v2 - INFO -   8500/11284 units processed
+[2026-08-12 21:36:38] DA_VA_v2 - INFO -   8525/11284 units processed
+[2026-08-12 21:36:38] DA_VA_v2 - INFO -   8550/11284 units processed
+[2026-08-12 21:36:39] DA_VA_v2 - INFO -   8575/11284 units processed
+[2026-08-12 21:36:39] DA_VA_v2 - INFO -   8600/11284 units processed
+[2026-08-12 21:36:39] DA_VA_v2 - INFO -   8625/11284 units processed
+[2026-08-12 21:36:39] DA_VA_v2 - INFO -   8650/11284 units processed
+[2026-08-12 21:36:39] DA_VA_v2 - INFO -   8675/11284 units processed
+[2026-08-12 21:36:39] DA_VA_v2 - INFO -   8700/11284 units processed
+[2026-08-12 21:36:39] DA_VA_v2 - INFO -   8725/11284 units processed
+[2026-08-12 21:36:39] DA_VA_v2 - INFO -   8750/11284 units processed
+[2026-08-12 21:36:39] DA_VA_v2 - INFO -   8775/11284 units processed
+[2026-08-12 21:36:39] DA_VA_v2 - INFO -   8800/11284 units processed
+[2026-08-12 21:36:39] DA_VA_v2 - INFO -   8825/11284 units processed
+[2026-08-12 21:36:40] DA_VA_v2 - INFO -   8850/11284 units processed
+[2026-08-12 21:36:40] DA_VA_v2 - INFO -   8875/11284 units processed
+[2026-08-12 21:36:40] DA_VA_v2 - INFO -   8900/11284 units processed
+[2026-08-12 21:36:40] DA_VA_v2 - INFO -   8925/11284 units processed
+[2026-08-12 21:36:40] DA_VA_v2 - INFO -   8950/11284 units processed
+[2026-08-12 21:36:40] DA_VA_v2 - INFO -   8975/11284 units processed
+[2026-08-12 21:36:40] DA_VA_v2 - INFO -   9000/11284 units processed
+[2026-08-12 21:36:40] DA_VA_v2 - INFO -   9025/11284 units processed
+[2026-08-12 21:36:40] DA_VA_v2 - INFO -   9050/11284 units processed
+[2026-08-12 21:36:40] DA_VA_v2 - INFO -   9075/11284 units processed
+[2026-08-12 21:36:40] DA_VA_v2 - INFO -   9100/11284 units processed
+[2026-08-12 21:36:40] DA_VA_v2 - INFO -   9125/11284 units processed
+[2026-08-12 21:36:41] DA_VA_v2 - INFO -   9150/11284 units processed
+[2026-08-12 21:36:41] DA_VA_v2 - INFO -   9175/11284 units processed
+[2026-08-12 21:36:41] DA_VA_v2 - INFO -   9200/11284 units processed
+[2026-08-12 21:36:41] DA_VA_v2 - INFO -   9225/11284 units processed
+[2026-08-12 21:36:41] DA_VA_v2 - INFO -   9250/11284 units processed
+[2026-08-12 21:36:41] DA_VA_v2 - INFO -   9275/11284 units processed
+[2026-08-12 21:36:41] DA_VA_v2 - INFO -   9300/11284 units processed
+[2026-08-12 21:36:41] DA_VA_v2 - INFO -   9325/11284 units processed
+[2026-08-12 21:36:41] DA_VA_v2 - INFO -   9350/11284 units processed
+[2026-08-12 21:36:41] DA_VA_v2 - INFO -   9375/11284 units processed
+[2026-08-12 21:36:41] DA_VA_v2 - INFO -   9400/11284 units processed
+[2026-08-12 21:36:41] DA_VA_v2 - INFO -   9425/11284 units processed
+[2026-08-12 21:36:42] DA_VA_v2 - INFO -   9450/11284 units processed
+[2026-08-12 21:36:42] DA_VA_v2 - INFO -   9475/11284 units processed
+[2026-08-12 21:36:42] DA_VA_v2 - INFO -   9500/11284 units processed
+[2026-08-12 21:36:42] DA_VA_v2 - INFO -   9525/11284 units processed
+[2026-08-12 21:36:42] DA_VA_v2 - INFO -   9550/11284 units processed
+[2026-08-12 21:36:42] DA_VA_v2 - INFO -   9575/11284 units processed
+[2026-08-12 21:36:42] DA_VA_v2 - INFO -   9600/11284 units processed
+[2026-08-12 21:36:42] DA_VA_v2 - INFO -   9625/11284 units processed
+[2026-08-12 21:36:42] DA_VA_v2 - INFO -   9650/11284 units processed
+[2026-08-12 21:36:42] DA_VA_v2 - INFO -   9675/11284 units processed
+[2026-08-12 21:36:42] DA_VA_v2 - INFO -   9700/11284 units processed
+[2026-08-12 21:36:42] DA_VA_v2 - INFO -   9725/11284 units processed
+[2026-08-12 21:36:42] DA_VA_v2 - INFO -   9750/11284 units processed
+[2026-08-12 21:36:43] DA_VA_v2 - INFO -   9775/11284 units processed
+[2026-08-12 21:36:43] DA_VA_v2 - INFO -   9800/11284 units processed
+[2026-08-12 21:36:43] DA_VA_v2 - INFO -   9825/11284 units processed
+[2026-08-12 21:36:43] DA_VA_v2 - INFO -   9850/11284 units processed
+[2026-08-12 21:36:43] DA_VA_v2 - INFO -   9875/11284 units processed
+[2026-08-12 21:36:43] DA_VA_v2 - INFO -   9900/11284 units processed
+[2026-08-12 21:36:43] DA_VA_v2 - INFO -   9925/11284 units processed
+[2026-08-12 21:36:43] DA_VA_v2 - INFO -   9950/11284 units processed
+[2026-08-12 21:36:43] DA_VA_v2 - INFO -   9975/11284 units processed
+[2026-08-12 21:36:43] DA_VA_v2 - INFO -   10000/11284 units processed
+[2026-08-12 21:36:43] DA_VA_v2 - INFO -   10025/11284 units processed
+[2026-08-12 21:36:43] DA_VA_v2 - INFO -   10050/11284 units processed
+[2026-08-12 21:36:43] DA_VA_v2 - INFO -   10075/11284 units processed
+[2026-08-12 21:36:43] DA_VA_v2 - INFO -   10100/11284 units processed
+[2026-08-12 21:36:44] DA_VA_v2 - INFO -   10125/11284 units processed
+[2026-08-12 21:36:44] DA_VA_v2 - INFO -   10150/11284 units processed
+[2026-08-12 21:36:44] DA_VA_v2 - INFO -   10175/11284 units processed
+[2026-08-12 21:36:44] DA_VA_v2 - INFO -   10200/11284 units processed
+[2026-08-12 21:36:44] DA_VA_v2 - INFO -   10225/11284 units processed
+[2026-08-12 21:36:44] DA_VA_v2 - INFO -   10250/11284 units processed
+[2026-08-12 21:36:44] DA_VA_v2 - INFO -   10275/11284 units processed
+[2026-08-12 21:36:44] DA_VA_v2 - INFO -   10300/11284 units processed
+[2026-08-12 21:36:44] DA_VA_v2 - INFO -   10325/11284 units processed
+[2026-08-12 21:36:44] DA_VA_v2 - INFO -   10350/11284 units processed
+[2026-08-12 21:36:44] DA_VA_v2 - INFO -   10375/11284 units processed
+[2026-08-12 21:36:44] DA_VA_v2 - INFO -   10400/11284 units processed
+[2026-08-12 21:36:44] DA_VA_v2 - INFO -   10425/11284 units processed
+[2026-08-12 21:36:45] DA_VA_v2 - INFO -   10450/11284 units processed
+[2026-08-12 21:36:45] DA_VA_v2 - INFO -   10475/11284 units processed
+[2026-08-12 21:36:45] DA_VA_v2 - INFO -   10500/11284 units processed
+[2026-08-12 21:36:45] DA_VA_v2 - INFO -   10525/11284 units processed
+[2026-08-12 21:36:45] DA_VA_v2 - INFO -   10550/11284 units processed
+[2026-08-12 21:36:45] DA_VA_v2 - INFO -   10575/11284 units processed
+[2026-08-12 21:36:45] DA_VA_v2 - INFO -   10600/11284 units processed
+[2026-08-12 21:36:45] DA_VA_v2 - INFO -   10625/11284 units processed
+[2026-08-12 21:36:45] DA_VA_v2 - INFO -   10650/11284 units processed
+[2026-08-12 21:36:45] DA_VA_v2 - INFO -   10675/11284 units processed
+[2026-08-12 21:36:45] DA_VA_v2 - INFO -   10700/11284 units processed
+[2026-08-12 21:36:45] DA_VA_v2 - INFO -   10725/11284 units processed
+[2026-08-12 21:36:45] DA_VA_v2 - INFO -   10750/11284 units processed
+[2026-08-12 21:36:45] DA_VA_v2 - INFO -   10775/11284 units processed
+[2026-08-12 21:36:46] DA_VA_v2 - INFO -   10800/11284 units processed
+[2026-08-12 21:36:46] DA_VA_v2 - INFO -   10825/11284 units processed
+[2026-08-12 21:36:46] DA_VA_v2 - INFO -   10850/11284 units processed
+[2026-08-12 21:36:46] DA_VA_v2 - INFO -   10875/11284 units processed
+[2026-08-12 21:36:46] DA_VA_v2 - INFO -   10900/11284 units processed
+[2026-08-12 21:36:46] DA_VA_v2 - INFO -   10925/11284 units processed
+[2026-08-12 21:36:46] DA_VA_v2 - INFO -   10950/11284 units processed
+[2026-08-12 21:36:47] DA_VA_v2 - INFO -   10975/11284 units processed
+[2026-08-12 21:36:47] DA_VA_v2 - INFO -   11000/11284 units processed
+[2026-08-12 21:36:47] DA_VA_v2 - INFO -   11025/11284 units processed
+[2026-08-12 21:36:47] DA_VA_v2 - INFO -   11050/11284 units processed
+[2026-08-12 21:36:47] DA_VA_v2 - INFO -   11075/11284 units processed
+[2026-08-12 21:36:47] DA_VA_v2 - INFO -   11100/11284 units processed
+[2026-08-12 21:36:47] DA_VA_v2 - INFO -   11125/11284 units processed
+[2026-08-12 21:36:47] DA_VA_v2 - INFO -   11150/11284 units processed
+[2026-08-12 21:36:47] DA_VA_v2 - INFO -   11175/11284 units processed
+[2026-08-12 21:36:47] DA_VA_v2 - INFO -   11200/11284 units processed
+[2026-08-12 21:36:47] DA_VA_v2 - INFO -   11225/11284 units processed
+[2026-08-12 21:36:47] DA_VA_v2 - INFO -   11250/11284 units processed
+[2026-08-12 21:36:47] DA_VA_v2 - INFO -   11275/11284 units processed
+[2026-08-12 21:36:48] DA_VA_v2 - INFO -   11284/11284 units processed
+[2026-08-12 21:36:48] data_loader - INFO - Loading log written: Data_Analysis/analysis_results/batch_va2_20260812_213606/logs/loading.log
+[2026-08-12 21:36:48] DA_VA_v2 - INFO -   loaded=11284 failed=0 skipped=0
+[2026-08-12 21:36:48] DA_VA_v2 - INFO - [4/5] Aggregating
+[2026-08-12 21:36:48] aggregator - INFO - Aggregating 11284 units...
+[2026-08-12 21:37:33] aggregator - INFO - per_rollout=31508 rows, units_long=1280220 rows, agg_long=652764 rows
+[2026-08-12 21:37:33] aggregator - INFO - 
+=== Cross-candidate ranking ===
+  1. Candidate 45 (H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.): 79.2% goal+constraint, 167.0 ms/replan
+  2. Candidate 50 (H8_K5_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow): 78.7% goal+constraint, 142.8 ms/replan
+  3. Candidate 38 (H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.): 78.2% goal+constraint, 47.4 ms/replan
+  4. Candidate 63 (K20_thres0.5_mpc4_n2): 77.5% goal+constraint, 1475.5 ms/replan
+  5. Candidate 124 (H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow): 76.7% goal+constraint, 266.0 ms/replan
+  6. Candidate 126 (H8_K20_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow): 76.2% goal+constraint, 615.5 ms/replan
+  7. Candidate 46 (H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflo): 75.6% goal+constraint, 243.5 ms/replan
+  8. Candidate 119 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.): 75.6% goal+constraint, 405.6 ms/replan
+  9. Candidate 42 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models): 75.0% goal+constraint, 295.7 ms/replan
+  10. Candidate 66 (K20_thres0.5_mpc4_n2): 75.0% goal+constraint, 867.6 ms/replan
+  11. Candidate 43 (H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.): 74.4% goal+constraint, 21.2 ms/replan
+  12. Candidate 48 (H8_K20_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflo): 74.4% goal+constraint, 577.4 ms/replan
+  13. Candidate 47 (H8_K1_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow): 74.1% goal+constraint, 21.2 ms/replan
+  14. Candidate 128 (H8_K5_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.): 73.6% goal+constraint, 150.9 ms/replan
+  15. Candidate 56 (K10_thres0_mpc1_n2): 72.2% goal+constraint, 220.6 ms/replan
+  16. Candidate 111 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.): 71.8% goal+constraint, 395.6 ms/replan
+  17. Candidate 49 (H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow): 71.0% goal+constraint, 27.7 ms/replan
+  18. Candidate 135 (H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.): 70.3% goal+constraint, 36.8 ms/replan
+  19. Candidate 44 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.): 69.5% goal+constraint, 42.6 ms/replan
+  20. Candidate 134 (H8_K2_Meuler_T0,5_Dflow_matcher_v3_meanflow.models.M): 69.2% goal+constraint, 62.4 ms/replan
+  21. Candidate 133 (H8_K1_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.): 68.2% goal+constraint, 28.4 ms/replan
+  22. Candidate 37 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models): 67.9% goal+constraint, 387.8 ms/replan
+  23. Candidate 113 (H8_K20_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.): 67.9% goal+constraint, 899.1 ms/replan
+  24. Candidate 123 (H8_K5_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.M): 67.9% goal+constraint, 207.6 ms/replan
+  25. Candidate 39 (H8_K20_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models): 66.7% goal+constraint, 869.0 ms/replan
+  26. Candidate 57 (K20_thres0.5_mpc1_n2): 66.7% goal+constraint, 378.7 ms/replan
+  27. Candidate 58 (K20_thres0_mpc1_n2): 66.7% goal+constraint, 464.5 ms/replan
+  28. Candidate 59 (K20_thres0_mpc4_n2): 66.7% goal+constraint, 1219.6 ms/replan
+  29. Candidate 115 (H8_K5_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.M): 66.7% goal+constraint, 203.5 ms/replan
+  30. Candidate 121 (H8_K20_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.): 66.7% goal+constraint, 898.4 ms/replan
+  31. Candidate 139 (H8_K5_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.): 66.2% goal+constraint, 161.3 ms/replan
+  32. Candidate 131 (H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow): 65.9% goal+constraint, 283.6 ms/replan
+  33. Candidate 41 (H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.): 64.1% goal+constraint, 186.6 ms/replan
+  34. Candidate 62 (H8_K10_Dmodels.diffusion.FlowMatchingODE(UNORGNIZED)): 62.7% goal+constraint, 415.3 ms/replan
+  35. Candidate 64 (K20_thres0.05_mpc4_n2): 62.5% goal+constraint, 281.7 ms/replan
+  36. Candidate 65 (K20_thres0.1_mpc4_n2): 62.5% goal+constraint, 339.5 ms/replan
+  37. Candidate 148 (H8_K10_Meuler_T1_Dmodels.diffusion.GaussianDiffusion): 62.0% goal+constraint, 721.5 ms/replan
+  38. Candidate 129 (H8_K10_Meuler_T0.5_A0.1_B1_Dflow_matcher_v3_meanflow): 60.3% goal+constraint, 223.9 ms/replan
+  39. Candidate 132 (H8_K10_Meuler_T0.5_A0_B1_Dflow_matcher_v3_meanflow.m): 60.3% goal+constraint, 223.6 ms/replan
+  40. Candidate 53 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.): 60.0% goal+constraint, 90.5 ms/replan
+  41. Candidate 127 (H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.): 59.7% goal+constraint, 34.4 ms/replan
+  42. Candidate 30 (H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.): 59.0% goal+constraint, 12.7 ms/replan
+  43. Candidate 32 (H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.): 59.0% goal+constraint, 144.5 ms/replan
+  44. Candidate 68 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.): 58.8% goal+constraint, 60.2 ms/replan
+  45. Candidate 29 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models): 57.7% goal+constraint, 266.9 ms/replan
+  46. Candidate 99 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.): 57.7% goal+constraint, 34.8 ms/replan
+  47. Candidate 137 (H8_K5_Meuler_T0.5_A0.1_B1_Dflow_matcher_v3_meanflow.): 57.7% goal+constraint, 135.0 ms/replan
+  48. Candidate 138 (H8_K5_Meuler_T0.5_A0.25_B1_Dflow_matcher_v3_meanflow): 57.7% goal+constraint, 148.2 ms/replan
+  49. Candidate 140 (H8_K5_Meuler_T0.5_A0_B1_Dflow_matcher_v3_meanflow.mo): 57.7% goal+constraint, 134.0 ms/replan
+  50. Candidate 147 (H8_K10_Dmodels.diffusion.GaussianDiffusion): 56.5% goal+constraint, 179.6 ms/replan
+  51. Candidate 27 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.): 56.4% goal+constraint, 36.7 ms/replan
+  52. Candidate 130 (H8_K10_Meuler_T0.5_A0.25_B1_Dflow_matcher_v3_meanflo): 56.4% goal+constraint, 246.9 ms/replan
+  53. Candidate 122 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.M): 55.9% goal+constraint, 50.4 ms/replan
+  54. Candidate 150 (H8_K20_Meuler_Dmodels.diffusion.GaussianDiffusion): 55.9% goal+constraint, 495.6 ms/replan
+  55. Candidate 151 (H8_K5_Mmidpoint_Dmodels.diffusion.GaussianDiffusion): 55.9% goal+constraint, 144.3 ms/replan
+  56. Candidate 110 (H8_K5_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.M): 55.1% goal+constraint, 204.3 ms/replan
+  57. Candidate 149 (H8_K1_Meuler_T0.5_Dmodels.diffusion.GaussianDiffusio): 55.1% goal+constraint, 17.8 ms/replan
+  58. Candidate 152 (H8_K10_Meuler_Dmodels.diffusion.GaussianDiffusion): 55.1% goal+constraint, 178.2 ms/replan
+  59. Candidate 125 (H8_K1_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.): 54.9% goal+constraint, 35.6 ms/replan
+  60. Candidate 22 (H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5): 54.7% goal+constraint, 467.5 ms/replan
+  61. Candidate 24 (H8_K20_T1_Dmodels.GaussianDiffusion_aw10): 54.7% goal+constraint, 469.0 ms/replan
+  62. Candidate 67 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models): 53.9% goal+constraint, 464.9 ms/replan
+  63. Candidate 108 (H8_K20_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.): 53.8% goal+constraint, 908.2 ms/replan
+  64. Candidate 102 (H8_K1_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.): 51.3% goal+constraint, 24.3 ms/replan
+  65. Candidate 107 (H8_K1_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.M): 51.3% goal+constraint, 67.7 ms/replan
+  66. Candidate 23 (H8_K20_T0.5_Dmodels.GaussianDiffusion_aw1): 51.2% goal+constraint, 483.9 ms/replan
+  67. Candidate 16 (H8_K10_Dmodels.GaussianDiffusion_aw10_thres0.5): 50.0% goal+constraint, 261.9 ms/replan
+  68. Candidate 26 (H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.): 50.0% goal+constraint, 22.3 ms/replan
+  69. Candidate 28 (H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.): 50.0% goal+constraint, 159.2 ms/replan
+  70. Candidate 60 (K2_thres0_mpc1_n2): 50.0% goal+constraint, 40.9 ms/replan
+  71. Candidate 61 (K5_thres0_mpc1_n2): 50.0% goal+constraint, 114.3 ms/replan
+  72. Candidate 105 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.): 50.0% goal+constraint, 36.5 ms/replan
+  73. Candidate 78 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models): 49.0% goal+constraint, 410.4 ms/replan
+  74. Candidate 109 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.M): 48.7% goal+constraint, 58.5 ms/replan
+  75. Candidate 116 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.M): 48.7% goal+constraint, 35.0 ms/replan
+  76. Candidate 120 (H8_K1_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.M): 48.7% goal+constraint, 72.0 ms/replan
+  77. Candidate 55 (H8_K10_Meuler_T0.5_Dmodels.diffusion.GaussianDiffusi): 48.0% goal+constraint, 167.3 ms/replan
+  78. Candidate 31 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.): 47.4% goal+constraint, 27.9 ms/replan
+  79. Candidate 40 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.): 47.4% goal+constraint, 58.8 ms/replan
+  80. Candidate 100 (H8_K50_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models): 47.4% goal+constraint, 2030.3 ms/replan
+  81. Candidate 112 (H8_K1_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.M): 47.4% goal+constraint, 71.8 ms/replan
+  82. Candidate 69 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models): 46.1% goal+constraint, 403.2 ms/replan
+  83. Candidate 75 (H8_K20_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models): 46.1% goal+constraint, 955.5 ms/replan
+  84. Candidate 145 (H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE): 45.6% goal+constraint, 427.7 ms/replan
+  85. Candidate 18 (H8_K20_T1_Dmodels.GaussianDiffusion): 44.9% goal+constraint, 995.6 ms/replan
+  86. Candidate 81 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models): 44.9% goal+constraint, 321.8 ms/replan
+  87. Candidate 98 (H8_K1_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.): 44.9% goal+constraint, 26.5 ms/replan
+  88. Candidate 114 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.M): 44.9% goal+constraint, 59.7 ms/replan
+  89. Candidate 117 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.M): 44.9% goal+constraint, 23.0 ms/replan
+  90. Candidate 141 (H8_K10_Meuler_T0.05_Dmodels.diffusion.FlowMatchingOD): 44.9% goal+constraint, 92.4 ms/replan
+  91. Candidate 142 (H8_K10_Meuler_T0.1_Dmodels.diffusion.FlowMatchingODE): 44.9% goal+constraint, 92.7 ms/replan
+  92. Candidate 70 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models): 44.1% goal+constraint, 434.6 ms/replan
+  93. Candidate 82 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models): 44.1% goal+constraint, 569.0 ms/replan
+  94. Candidate 146 (H8_K5_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE): 43.6% goal+constraint, 91.1 ms/replan
+  95. Candidate 76 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.): 43.1% goal+constraint, 48.2 ms/replan
+  96. Candidate 25 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models): 42.3% goal+constraint, 297.9 ms/replan
+  97. Candidate 144 (H8_K20_Meuler_T0.1_Dmodels.diffusion.FlowMatchingODE): 42.3% goal+constraint, 186.3 ms/replan
+  98. Candidate 92 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models): 42.2% goal+constraint, 533.9 ms/replan
+  99. Candidate 74 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models): 41.2% goal+constraint, 387.5 ms/replan
+  100. Candidate 101 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models): 41.0% goal+constraint, 290.5 ms/replan
+  101. Candidate 106 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.): 41.0% goal+constraint, 35.4 ms/replan
+  102. Candidate 19 (X_H8_K20_T0.05_Dmodels.GaussianDiffusion): 39.7% goal+constraint, 402.5 ms/replan
+  103. Candidate 20 (X_H8_K20_T0.1_Dmodels.GaussianDiffusion): 39.7% goal+constraint, 398.5 ms/replan
+  104. Candidate 21 (X_H8_K20_T1_Dmodels.GaussianDiffusion): 39.7% goal+constraint, 404.4 ms/replan
+  105. Candidate 97 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models): 39.7% goal+constraint, 299.0 ms/replan
+  106. Candidate 103 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.): 39.7% goal+constraint, 36.4 ms/replan
+  107. Candidate 143 (H8_K20_Meuler_T0.05_Dmodels.diffusion.FlowMatchingOD): 38.5% goal+constraint, 177.0 ms/replan
+  108. Candidate 77 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models): 38.2% goal+constraint, 418.9 ms/replan
+  109. Candidate 96 (H8_K100_Meuler_T0.5_Dflow_matcher_v3_imeanflow.model): 35.9% goal+constraint, 4852.6 ms/replan
+  110. Candidate 104 (H8_K50_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models): 35.9% goal+constraint, 2085.6 ms/replan
+  111. Candidate 73 ((legacy_F2)H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanf): 35.3% goal+constraint, 48.1 ms/replan
+  112. Candidate 85 (H8_K20_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models): 34.3% goal+constraint, 1187.0 ms/replan
+  113. Candidate 88 (H8_K40_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models): 33.3% goal+constraint, 2475.2 ms/replan
+  114. Candidate 72 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.): 32.4% goal+constraint, 52.0 ms/replan
+  115. Candidate 80 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models): 32.1% goal+constraint, 409.5 ms/replan
+  116. Candidate 71 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models): 31.4% goal+constraint, 458.2 ms/replan
+  117. Candidate 83 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models): 30.8% goal+constraint, 506.0 ms/replan
+  118. Candidate 79 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models): 29.5% goal+constraint, 465.4 ms/replan
+  119. Candidate 84 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models): 29.4% goal+constraint, 525.0 ms/replan
+  120. Candidate 94 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models): 29.4% goal+constraint, 507.2 ms/replan
+  121. Candidate 95 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.): 27.5% goal+constraint, 90.5 ms/replan
+  122. Candidate 51 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models): 25.6% goal+constraint, 1217.3 ms/replan
+  123. Candidate 17 (H8_K1_T0.5_Dmodels.GaussianDiffusion): 25.3% goal+constraint, 29.7 ms/replan
+  124. Candidate 86 (H8_K20_Mrk4_T0.5_Dflow_matcher_v3_imeanflow.models.i): 24.4% goal+constraint, 1220.6 ms/replan
+  125. Candidate 93 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models): 24.4% goal+constraint, 626.0 ms/replan
+  126. Candidate 87 (H8_K2_Mrk4_T0.5_Dflow_matcher_v3_imeanflow.models.iM): 21.8% goal+constraint, 85.6 ms/replan
+  127. Candidate 52 (H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.): 20.5% goal+constraint, 148.1 ms/replan
+  128. Candidate 54 (H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.): 15.4% goal+constraint, 596.6 ms/replan
+  129. Candidate 118 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.M): 14.1% goal+constraint, 50.2 ms/replan
+  130. Candidate 89 (H8_K10_Meuler_Dflow_matcher_v3_imeanflow.models.iMFD): 12.7% goal+constraint, 356.7 ms/replan
+  131. Candidate 33 (H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models): 7.7% goal+constraint, 1304.9 ms/replan
+  132. Candidate 36 (H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.): 7.7% goal+constraint, 629.8 ms/replan
+  133. Candidate 34 (H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.): 6.4% goal+constraint, 141.6 ms/replan
+  134. Candidate 35 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.): 5.1% goal+constraint, 172.3 ms/replan
+  135. Candidate 5 (H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visu): 4.5% goal+constraint, 8660.7 ms/replan
+  136. Candidate 13 (H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual): 2.0% goal+constraint, 62.3 ms/replan
+  137. Candidate 14 (H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual): 1.1% goal+constraint, 50.0 ms/replan
+  138. Candidate 90 (H8_K1_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.): 1.0% goal+constraint, 71.2 ms/replan
+  139. Candidate 91 (H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.): 1.0% goal+constraint, 90.5 ms/replan
+  140. Candidate 6 (H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual): 0.4% goal+constraint, 62.8 ms/replan
+  141. Candidate 154 (d3il_baseline_ddpm_encdec_vision__Bf_U3): 0.3% goal+constraint, nan ms/replan
+  142. Candidate 1 (H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual): 0.0% goal+constraint, 629.7 ms/replan
+  143. Candidate 2 (H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual): 0.0% goal+constraint, 5327.7 ms/replan
+  144. Candidate 3 (H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual): 0.0% goal+constraint, 3641.7 ms/replan
+  145. Candidate 4 (H8_K20_Meuler_T0.5_Dfm_visual_aligning.models.visual): 0.0% goal+constraint, 1736.3 ms/replan
+  146. Candidate 7 (H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual): 0.0% goal+constraint, 58.5 ms/replan
+  147. Candidate 8 (H8_K100_T0.5_Dmix_visual_aligning.models.visual_gaus): 0.0% goal+constraint, 5021.1 ms/replan
+  148. Candidate 9 (H8_K20_T0.5_Dmix_visual_aligning.models.visual_gauss): 0.0% goal+constraint, 1182.0 ms/replan
+  149. Candidate 10 (H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visu): 0.0% goal+constraint, 4563.1 ms/replan
+  150. Candidate 11 (H8_K20_Meuler_T0.5_Dmix_visual_aligning.models.visua): 0.0% goal+constraint, 688.5 ms/replan
+  151. Candidate 12 (H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visu): 0.0% goal+constraint, 7940.7 ms/replan
+  152. Candidate 15 (H8_K20_T0.5_Ddiffuser_visual_aligning.models.visual_): 0.0% goal+constraint, 1008.1 ms/replan
+  153. Candidate 153 (d3il_baseline_ddpm_encdec_vision): 0.0% goal+constraint, 22.7 ms/replan
+[2026-08-12 21:37:33] DA_VA_v2 - INFO - [5/5] Writing reports
+[2026-08-12 21:37:34] reporter - INFO - per_rollout_detail.csv: 31508 rows
+[2026-08-12 21:37:46] reporter - INFO - va2_units_long.csv: 1312997 rows
+[2026-08-12 21:37:52] reporter - INFO - va2_aggregated_long.csv: 652764 rows
+[2026-08-12 21:37:52] reporter - INFO - data_quality.csv: 11284 rows
+[2026-08-12 21:37:52] reporter - INFO - run_config.csv: 11273 rows
+[2026-08-12 21:37:57] reporter - INFO - candidates_multidimensional_raw.csv: 640110 rows
+[2026-08-12 21:38:00] reporter - INFO - candidates_multidimensional_aggregated.csv: 326382 rows
+[2026-08-12 21:38:00] reporter - INFO - candidates_ranking.csv: 153 rows
+[2026-08-12 21:38:00] reporter - INFO - candidates_detailed.csv: 153 rows
+[2026-08-12 21:38:01] reporter - INFO - candidates_per_variant.csv: 11452 rows
+[2026-08-12 21:38:01] reporter - INFO - Summary written: Data_Analysis/analysis_results/batch_va2_20260812_213606/candidates_summary.txt
+[2026-08-12 21:38:01] reporter - INFO - 11 report files written to Data_Analysis/analysis_results/batch_va2_20260812_213606
+[2026-08-12 21:38:01] DA_VA_v2 - INFO - ======================================================================
+[2026-08-12 21:38:01] DA_VA_v2 - INFO - COMPLETE in 114.0s — Data_Analysis/analysis_results/batch_va2_20260812_213606
+[2026-08-12 21:38:01] DA_VA_v2 - INFO -   per_rollout_detail.csv               every rollout, wide
+[2026-08-12 21:38:01] DA_VA_v2 - INFO -   va2_units_long.csv                   per seed/geo/variant/mask
+[2026-08-12 21:38:01] DA_VA_v2 - INFO -   va2_aggregated_long.csv              pooled over seeds
+[2026-08-12 21:38:01] DA_VA_v2 - INFO -   candidates_multidimensional_*.csv    DA_Code_v3 visualizer
+[2026-08-12 21:38:01] DA_VA_v2 - INFO -   data_quality.csv                     frozen / circuit breaker
+[2026-08-12 21:38:01] DA_VA_v2 - INFO - ======================================================================
+DA_VA_v2 batch analysis completed.

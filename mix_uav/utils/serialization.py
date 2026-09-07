@@ -48,7 +48,7 @@ def load_losses(*loadpath):
         # print(f'[ utils/serialization ] File {loadpath} does not exist')
         return None
 
-def load_diffusion(*loadpath, epoch='latest', device='cuda:0', seed=None, override_args=None):
+def load_diffusion(*loadpath, epoch='best', device='cuda:0', seed=None, override_args=None):
     print(f'\n[ utils/serialization ] Loading model from {os.path.join(*loadpath)}\n')
 
     dataset_config = load_config(*loadpath, 'dataset_config.pkl')
@@ -97,6 +97,16 @@ def load_diffusion(*loadpath, epoch='latest', device='cuda:0', seed=None, overri
 
     if epoch == 'latest':
         epoch = get_latest_epoch(loadpath)
+        # 🔴 get_latest_epoch() returns -1 when the dir holds no state_<int>.pt (it parses
+        # state_best.pt with int(), catches the ValueError, and scores it -1). Without this
+        # guard that -1 flows on to trainer.load(-1) and dies on 'state_-1.pt' three frames
+        # later, hiding the real cause. Seen on the Gen15 mf corridor arm, 2026-08-19.
+        if epoch < 0:
+            _dir = os.path.join(*loadpath)
+            raise FileNotFoundError(
+                f'no numbered state_<N>.pt checkpoint in {_dir} '
+                f'(found: {sorted(glob.glob1(_dir, "state_*"))}). '
+                f'Pass epoch="best" to load state_best.pt.')
 
     # print(f'\n[ utils/serialization ] Loading model epoch: {epoch}\n')
 

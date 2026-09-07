@@ -1,0 +1,16 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+PIPELINE START: Tue Sep  1 21:10:12 UTC 2026
+JOB ID:    25279
+================================================================================
+Launching AlphaFlow Pipeline...
+Step 1: Training submitted. Job ID: 25292
+Step 2: Evaluation scheduled (afterok:25292). Job ID: 25293
+--------------------------------------------------------------------------------
+AlphaFlow Pipeline submitted successfully.
+Use 'squeue -u llim' to monitor progress.
+If training fails, evaluation will be cancelled automatically by Slurm.
+================================================================================
+================================================================================
+PIPELINE END:   Tue Sep  1 21:10:12 UTC 2026
+================================================================================

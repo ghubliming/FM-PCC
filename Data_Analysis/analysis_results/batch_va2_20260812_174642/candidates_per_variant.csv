@@ -1,0 +1,5 @@
+Candidate,FolderName,split,geo,tightened,variant,mask,n_success,mean_dist_per_rollout,n_steps,avg_time,avg_time_ms,n_rollouts
+1,post_U3,test,none,False,d3il_baseline,all,0.0,0.40088680340144456,400.0,0.022660185185185183,22.660185185185185,1080
+1,post_U3,test,none,False,d3il_baseline,unfrozen,0.0,0.40088680340144456,400.0,0.022660185185185183,22.660185185185185,1080
+2,Bf_U3,test,none,False,d3il_baseline,all,0.0028530670470756064,0.39175294010190875,399.3830242510699,,,2804
+2,Bf_U3,test,none,False,d3il_baseline,unfrozen,0.0028530670470756064,0.39175294010190875,399.3830242510699,,,2804

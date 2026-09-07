@@ -51,8 +51,11 @@ from config import (
 logger = logging.getLogger(__name__)
 
 # Path-encoded axes carried on every row (discovery._make_unit puts them there).
+# `run_tag` is the trailing `_{tag}` of the eval folder (FMPCC_UAV_EVAL_TAG). It is
+# an EXPERIMENT axis: `..._T0.5_fix16scaled` and `..._T0.5_fix16legacy` are two arms
+# of an A/B and must never be pooled.
 AXIS_COLUMNS = ['scene', 'engine', 'K', 'mpc_batch', 'controller', 'threshold',
-                'backbone', 'generation']
+                'run_tag', 'backbone', 'generation']
 
 ID_COLUMNS = (['Candidate', 'FolderName', 'FullPath', 'seed', 'split',
                'geo', 'geo_scene', 'variant', 'variant_base', 'tightened',
@@ -67,7 +70,12 @@ AGG_KEYS = (['Candidate', 'FolderName', 'FullPath', 'split',
 # The K-sweep cell: everything that must be held equal for a K comparison to be
 # a K comparison. Seeds are pooled, candidates are not a key (K IS the candidate
 # axis here — that is the whole point).
-K_SWEEP_KEYS = ['scene', 'engine', 'geo', 'variant', 'split', 'K']
+#
+# 🔴 [Fix_16 DA, 2026-09-03] `run_tag` MUST be here. Candidate is deliberately not a
+# key, so without it the pre-fix, `fix16legacy` and `fix16scaled` runs of the same
+# engine/K/variant land in ONE cell and get averaged — a 100 %-abort arm silently
+# blended with a 0 %-abort arm. That is strictly worse than the drop it replaces.
+K_SWEEP_KEYS = ['scene', 'engine', 'geo', 'variant', 'split', 'K', 'run_tag']
 
 
 class Aggregator:
@@ -78,6 +86,7 @@ class Aggregator:
         self.units_long = pd.DataFrame()
         self.agg_long = pd.DataFrame()
         self.k_sweep = pd.DataFrame()
+        self.hf_flags = pd.DataFrame()
         self.scalars_long = pd.DataFrame()
         self.quality = pd.DataFrame()
         self.run_config = pd.DataFrame()
@@ -95,9 +104,14 @@ class Aggregator:
         self.quality = self._build_quality(loaded_units)
         self.run_config = self._build_run_config(loaded_units)
         self.scalars_long = self._build_scalars(loaded_units)
+        # [HFK1c 2026-08-30] Build the degeneracy lookup BEFORE the wide tables, so every one
+        # of them can carry the flag. See `_build_hf_flags`.
+        self.hf_flags = self._build_hf_flags(loaded_units)
         self.units_long = _reduce(self.per_rollout, UNIT_KEYS)
         self.agg_long = self._reduce_over_seeds(self.per_rollout)
-        self.k_sweep = self._build_k_sweep(self.per_rollout)
+        self.k_sweep = self._attach_hf_flags(self._build_k_sweep(self.per_rollout),
+                                             K_SWEEP_KEYS)
+        self.quality = self._attach_hf_flags(self.quality, UNIT_KEYS)
         self.candidate_stats = self._candidate_stats()
         self.ranked_candidates = self._rank()
         logger.info(f'per_rollout={len(self.per_rollout)} rows, '
@@ -176,6 +190,64 @@ class Aggregator:
                 rows.append(row)
         return pd.DataFrame(rows)
 
+    # ── HFK1c (2026-08-30) — the degeneracy flag, on the WIDE tables ──────────
+    # 🔴 Why this exists. `hf_degenerate` was already computed per unit by
+    # data_loader.py and emitted into scalars_long, so it reached `uav_units_long.csv`
+    # — and NOTHING else. Every table a ranking is actually read off
+    # (`uav_k_sweep.csv`, `candidates_ranking.csv`, `candidates_per_variant.csv`,
+    # `data_quality.csv`) carried no degeneracy column at all. That is the mechanical
+    # reason a K=1 row could be promoted to "HardFlow's best result": the flag existed,
+    # but not on the path anyone reads. AUDIT_20260830 §3 Gap B.
+    #
+    # A degenerate row runs NO HardFlow arithmetic (n_genuine == 0) — it is
+    # Pi_S(Euler sample) = sample-then-project, == DPCC modulo solver/variable-scope.
+    # It must never carry a HardFlow claim, and best-of / win-count / Pareto selections
+    # must be computed over non-degenerate rows only.
+    #
+    # Aggregation rule: MAX over the group. A cell that pools any degenerate unit is
+    # flagged — a partially-degenerate cell is not safe to cite either.
+    @staticmethod
+    def _build_hf_flags(loaded_units):
+        """Per-unit degeneracy lookup: UNIT_KEYS + hf_degenerate / hf_n_genuine."""
+        rows = []
+        for unit, loaded in loaded_units:
+            scal = loaded.get('scalars') or {}
+            if 'hf_degenerate' not in scal and 'n_genuine' not in scal:
+                continue
+            row = {key: unit.get(key, '') for key in UNIT_KEYS}
+            row['hf_degenerate'] = scal.get('hf_degenerate', np.nan)
+            row['hf_n_genuine'] = scal.get('n_genuine', np.nan)
+            rows.append(row)
+        return pd.DataFrame(rows)
+
+    def _attach_hf_flags(self, table, keys):
+        """Merge `hf_degenerate` / `hf_n_genuine` onto `table`, grouped on `keys`.
+
+        No-op when the batch has no HardFlow units, so non-HF batches are unchanged.
+        Non-HardFlow rows get hf_degenerate = 0 (they cannot be degenerate), never NaN,
+        so a `== 0` filter selects exactly the citable rows.
+        """
+        flags = getattr(self, 'hf_flags', None)
+        if table is None or table.empty or flags is None or flags.empty:
+            return table
+        keys = [k for k in keys if k in table.columns and k in flags.columns]
+        if not keys:
+            return table
+        grouped = (flags.groupby(keys, observed=True)[['hf_degenerate', 'hf_n_genuine']]
+                   .max().reset_index())
+        out = table.merge(grouped, on=keys, how='left')
+        # A non-HardFlow row is not degenerate. Only HardFlow rows can be, and those all
+        # appear in `flags`, so an unmatched row is a DPCC/diffuser row -> 0.
+        out['hf_degenerate'] = out['hf_degenerate'].fillna(0.0)
+        n_deg = int((out['hf_degenerate'] > 0).sum())
+        if n_deg:
+            logger.warning(
+                f'  {n_deg} row(s) in this table are DEGENERATE HardFlow (hf_degenerate=1, '
+                f'n_genuine=0): sample-then-project, NOT HardFlow. Filter them out before '
+                f'any best-of / win-count / Pareto claim. See '
+                f'logs_in_develop/aggregated_hardflow_lowK/')
+        return out
+
     # ── reductions ────────────────────────────────────────────────────────────
     def _reduce_over_seeds(self, per_rollout):
         """One row per (candidate, split, geo, variant, mask, metric).
@@ -187,7 +259,7 @@ class Aggregator:
         table = _reduce(per_rollout, AGG_KEYS)
         if table.empty:
             return table
-        seeds = (per_rollout.groupby(AGG_KEYS, observed=True)['seed']
+        seeds = (per_rollout.groupby(AGG_KEYS, observed=True, dropna=False)['seed']
                  .nunique().reset_index().rename(columns={'seed': 'n_seeds'}))
         return table.merge(seeds, on=AGG_KEYS, how='left')
 
@@ -211,6 +283,18 @@ class Aggregator:
         if usable.empty:
             logger.info('  k_sweep skipped — no candidate has a parsable K')
             return pd.DataFrame()
+        # Dropping here is legitimate (a K sweep needs a K) but must never be quiet:
+        # an unparsed folder name looks identical to a run that was never done.
+        unparsed = per_rollout[per_rollout['K'].isna()]
+        if not unparsed.empty:
+            folders = sorted(set(unparsed['FolderName'].astype(str)))
+            logger.info(
+                f'  k_sweep: {len(unparsed)} rollout(s) from {len(folders)} candidate(s) '
+                f'have no K and are excluded from uav_k_sweep.csv (normal for a Gen11 '
+                f'model-folder candidate): '
+                f'{", ".join(folders[:6])}{" …" if len(folders) > 6 else ""}. '
+                f'They stay complete in per_rollout_detail.csv. If one of these IS an '
+                f'eval-tag folder, discovery has already warned about it by name.')
 
         table = _reduce(usable, keys)
         if table.empty:
@@ -230,7 +314,7 @@ class Aggregator:
             logger.warning(
                 f'  k_sweep: {len(mixed)} cell(s) pool MORE THAN ONE candidate at the '
                 f'same K — they differ in an axis this table does not key on '
-                f'(mpc batch / controller / threshold / backbone). See the '
+                f'(mpc batch / controller / threshold / backbone / run tag). See the '
                 f'`candidates` column in uav_k_sweep.csv before reading those rows.')
         return table.sort_values([k for k in keys if k != 'K'] + ['K', 'mask', 'metric'])
 
@@ -253,6 +337,10 @@ class Aggregator:
             }
             for axis in AXIS_COLUMNS:
                 entry[axis] = block[axis].iloc[0] if axis in block.columns else ''
+            # [HFK1c 2026-08-30] Carry the degeneracy verdict onto the candidate, so the
+            # ranking table can show it. 1 => at least one variant of this candidate is a
+            # DEGENERATE HardFlow arm (n_genuine == 0): sample-then-project, NOT HardFlow.
+            entry['hf_degenerate'] = self._candidate_hf_degenerate(candidate)
             entry['accuracy'] = _metric_mean(block, ACCURACY_METRIC,
                                              ACCURACY_FALLBACK_METRIC)
             entry['accuracy_std'] = _metric_std(block, ACCURACY_METRIC,
@@ -283,6 +371,17 @@ class Aggregator:
                                        if entry['major_metrics'] else np.nan)
             stats[candidate] = entry
         return stats
+
+    def _candidate_hf_degenerate(self, candidate):
+        """Max hf_degenerate over this candidate's units. 0 when it has no HardFlow arm."""
+        flags = getattr(self, 'hf_flags', None)
+        if flags is None or flags.empty or 'Candidate' not in flags.columns:
+            return 0.0
+        rows = flags[flags['Candidate'] == candidate]
+        if rows.empty:
+            return 0.0
+        val = rows['hf_degenerate'].max()
+        return 0.0 if pd.isna(val) else float(val)
 
     def _scalar_mean(self, candidate, metric):
         table = self.scalars_long
@@ -380,7 +479,10 @@ def _reduce(per_rollout, keys):
         subset = long if mask == 'all' else long[long[flag_column].fillna(0) != 1.0]
         if subset.empty:
             continue
-        grouped = (subset.groupby(keys + ['metric'], observed=True)['value']
+        # `dropna=False`: a NaN in ANY key column (an unparsable K, say) would
+        # otherwise delete those rollouts here with no error and no log line —
+        # which is exactly how the six Fix_16 A/B runs went missing on 2026-09-03.
+        grouped = (subset.groupby(keys + ['metric'], observed=True, dropna=False)['value']
                    .agg(['mean', 'std', 'min', 'max', 'count'])
                    .reset_index())
         grouped['mask'] = mask

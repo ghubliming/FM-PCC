@@ -20,23 +20,148 @@ set -e
 # Args: $1=engine (fm|mf|af|diffusion) [fm]  $2=scene [all]  $3=seeds (quoted) ["6"]
 #       $4=K list (quoted, space-sep) ["1 2 5 10 20"]  $5=n_trials [omit → yaml]  $6=projection [fm_only]
 #       $7=record (none|gif|all) [none]
-# ⚠️ record=gif/all renders one GIF per rollout (variants x trials of them) and the render
-# time lands inside the measured per-step wall clock. Use none for timing-critical sweeps.
+# NOTE record=gif/all renders one GIF per rollout (variants x trials of them) -> disk + job time.
+# It does NOT contaminate the metrics: eval_mix_uav.py times ONLY the policy() call, and
+# rendering happens outside that window. So a record=all run is timing-comparable to a
+# record=none run.
 ENGINE="${1:-fm}"
 case "$ENGINE" in fm|mf|af|diffusion) ;; *) echo "[ ERROR ] engine must be fm|mf|af|diffusion (got '$ENGINE')"; exit 1 ;; esac
 SCENE="${2:-all}"
 SEEDS="${3:-6}"
+# ⚠️ [HFK1 2026-08-24] K=1 and K=2 are DEGENERATE for the HardFlow arm. HardFlow's guidance
+#    lives only in ACTIVE NON-TERMINAL ODE steps; the terminal step has tau=1, which kills the
+#    endpoint lookahead, snaps instead of nudging, and has no successor call to react. At K=1
+#    the only step IS the terminal step, and at K=2 the shipped activation_threshold=0.5 floors
+#    step 0 out. Both therefore run Pi_S(Euler sample) = sample-then-project, i.e. DPCC's
+#    algorithm with IPOPT instead of SLSQP — NOT HardFlow. The sampler now prints
+#    `[hardflow][DEGENERATE]` for these; keep the rows if you want the cheap one-shot-projection
+#    comparison (it is matched-NFE since 2026-08-24), but do NOT label them HardFlow results.
+#    Non-degenerate from K>=3 at the shipped A=0.5, or K>=2 at A=1.0 (1 genuine step each);
+#    K>=5 at A=0.5 gives 2+, the first setting comparable to the paper's N=10 / A=0.5.
+#    See logs_in_develop/HF_iMF/HF_Study/DEGENERACY_HardFlow_at_low_K.md
+#
+# 🔴 [HFK1c 2026-08-30] THE ADVICE ABOVE ("keep the rows if you want the cheap one-shot-
+#    projection comparison") IS WITHDRAWN, and the eval now ENFORCES that. AUDIT_20260830
+#    tested whether those rows deliver the projector-only control they were kept for: they do
+#    not. 25 of 32 matched cells are 0.00 -> 0.00 floor effects, and in the 7 cells with any
+#    signal HardFlow is WORSE in 5 — because K=1/2 varies the projector AND K at once, so the
+#    comparison runs where the sample is a single Euler step and every arm floors. The clean
+#    instrument is A=0.0 at matched K (terminal-only at ANY K), which is a different run.
+#    `eval_mix_uav.py` therefore DROPS the HardFlow variants at degenerate K and writes an
+#    HF_DEGENERATE_SKIPPED.txt sentinel; the DPCC/diffuser arms at those K still run normally.
+#    The K list below is unchanged on purpose — the low-K DPCC points are a real curve.
+#    See logs_in_develop/aggregated_hardflow_lowK/AUDIT_20260830_*.md
 KS="${4:-1 2 5 10 20}"
 NTRIALS="${5:-}"
 PROJ="${6:-fm_only}"
 RECORD="${7:-none}"
+
+# ── [HFK1c / R4 2026-08-30] HardFlow degeneracy + activation-threshold knobs ───────────────
+# FMPCC_HF_ALLOW_DEGENERATE=1  run the HardFlow arm even when it is degenerate (n_genuine==0).
+#                              The ONLY supported use is the projector-only control:
+#                              A=0.0 at K>=5, which is terminal-only at any K. Rows produced
+#                              this way are stamped HF_DEGENERATE.txt and must never carry a
+#                              HardFlow claim.
+# FMPCC_HF_MIN_GENUINE         raise the bar: 2 also blocks THIN (one guided step, K=3/4 at
+#                              A=0.5) — the regime nothing can be attributed to. 0 disables
+#                              the guard entirely (same as ALLOW_DEGENERATE=1).
+# HFFM_ACT_THRESHOLD           per-job override for A. Wired into the UAV path by R4; the
+#                              MeanFlow / AlphaFlow / visual-aligning sbatches already had it.
+#                              Same polarity as DPCC's threshold: higher = MORE projection,
+#                              1.0 = every step, 0.5 = last half, 0.0 = terminal-only.
+export FMPCC_HF_ALLOW_DEGENERATE="${FMPCC_HF_ALLOW_DEGENERATE:-}"
+export FMPCC_HF_MIN_GENUINE="${FMPCC_HF_MIN_GENUINE:-}"
+export HFFM_ACT_THRESHOLD="${HFFM_ACT_THRESHOLD:-}"
+# 🔴 Gen15 Fix_16 — forwarded to every child eval job (sbatch --export=ALL by default, but
+# make it explicit so the sweep is reproducible from the log alone). See eval_mix_uav.sh.
+export FMPCC_SAFE_EPS_MODE="${FMPCC_SAFE_EPS_MODE:-scaled}"
+export FMPCC_SAFE_EPS_FRAC="${FMPCC_SAFE_EPS_FRAC:-1e-3}"
+export FMPCC_UAV_EVAL_TAG="${FMPCC_UAV_EVAL_TAG:-}"
+
+# ── Gen15 U6 (2026-09-03) — the alpha-Flow arm's three knobs ──────────────────────────────
+#   UAV_MIX_BONE_AF        unet (DEFAULT since U6) | sit | dit
+#                          🔴 THE DEFAULT CHANGED. It was a hard 'sit' (~9.4 M), which is NOT
+#                          parameter-matched to the fm/mf 4.0 M U-Net — so every pre-U6 af row
+#                          moves objective, backbone and param count together. 'sit' is kept,
+#                          not deleted: pass UAV_MIX_BONE_AF=sit to reach it.
+#                          CHECKPOINT-PATH KEY ('_bb<val>'): each bone has its own tree, so
+#                          nothing is overwritten — but a default af EVAL will fail on a
+#                          missing checkpoint until the U-Net arm has been TRAINED.
+#   UAV_MIX_AF_ALPHA_END   terminal alpha (default 0.0). At 0.0 the sigmoid+clamp snap alpha to
+#                          EXACTLY 0 from ~71.2% of the budget on and af_diffusion.py:568 runs
+#                          Gen3v6's MeanFlow target — i.e. the arm DEPLOYS A MEANFLOW MODEL.
+#                          >0 floors alpha so the bootstrap trains the final weights.
+#                          CHECKPOINT-PATH KEY ('_ae<val>').
+#   UAV_MIX_EPOCH          best (default) | latest | <step>.  EVAL-ONLY, no retrain.
+#                          RESULTS-PATH KEY ('_EP<sel>' in the eval-params folder).
+#                          🔴 On the af arm 'best' is chosen on an alpha-weighted test_loss and
+#                          therefore prefers a MID-CURRICULUM checkpoint: pairing
+#                          UAV_MIX_AF_ALPHA_END with 'best' floors alpha and then discards the
+#                          model the floor produced. Use 'latest'.
+export UAV_MIX_BONE_AF="${UAV_MIX_BONE_AF:-}"
+export UAV_MIX_AF_ALPHA_END="${UAV_MIX_AF_ALPHA_END:-}"
+export UAV_MIX_EPOCH="${UAV_MIX_EPOCH:-}"
+# [Gen15 U9] Per-job variant subset. At K>=3 the HardFlow arm re-enables and the set goes
+# 10 -> 17, which is what walled the pillars K=5 jobs. Filters the assembled list; the eval
+# refuses names it does not implement, and refuses a HardFlow-only set (no DPCC arm left to
+# compare against at the same K). Empty = run everything.
+export UAV_MIX_VARIANTS="${UAV_MIX_VARIANTS:-}"
+# [Gen15 U10] Tracker override (pid|pid_stopgo|pid_const_v|mjpc). RESULTS-PATH key, and 'mjpc'
+# also selects the FMPCC_mjx conda env in eval_mix_uav.sh. Empty = use config/uav_mix.py.
+export UAV_MIX_CONTROLLER="${UAV_MIX_CONTROLLER:-}"
+[ -n "$UAV_MIX_CONTROLLER" ] && echo "[ U10 ] controller = $UAV_MIX_CONTROLLER"
+[ -n "$UAV_MIX_VARIANTS" ] && echo "[ U9 ] variant subset = $UAV_MIX_VARIANTS"
+if [ -n "$UAV_MIX_BONE_AF" ]; then
+    case "$UAV_MIX_BONE_AF" in
+        unet|sit|dit) ;;
+        *) echo "[ ERROR ] UAV_MIX_BONE_AF='$UAV_MIX_BONE_AF' must be unet|sit|dit"
+           echo "          ('mf_dit' belongs to the mf arm -- a different class.)"; exit 1 ;;
+    esac
+    if [ "$ENGINE" != "af" ]; then
+        echo "[ ERROR ] UAV_MIX_BONE_AF is set but engine='$ENGINE'. It applies to the af arm only."
+        exit 1
+    fi
+fi
+if [ -n "$UAV_MIX_AF_ALPHA_END" ] && [ "$ENGINE" != "af" ]; then
+    echo "[ ERROR ] UAV_MIX_AF_ALPHA_END is set but engine='$ENGINE'. af arm only."; exit 1
+fi
+if [ -n "$UAV_MIX_EPOCH" ]; then
+    case "$UAV_MIX_EPOCH" in
+        best|latest) ;;
+        ''|*[!0-9]*) echo "[ ERROR ] UAV_MIX_EPOCH='$UAV_MIX_EPOCH' must be best|latest|<step>"; exit 1 ;;
+    esac
+fi
+if [ "$ENGINE" = "af" ]; then
+    echo "[ U6 ] af bone      = ${UAV_MIX_BONE_AF:-unet (U6 default; was sit)}"
+    echo "[ U6 ] af_alpha_end = ${UAV_MIX_AF_ALPHA_END:-0.0}  $([ -z "$UAV_MIX_AF_ALPHA_END" ] && echo '⚠ ends on the MeanFlow target -- set >0 to train alpha-Flow proper')"
+fi
+echo "[ U6 ] checkpoint   = ${UAV_MIX_EPOCH:-best (default; no _EP fragment)}"
+echo "[ fix_16 ] SAFE_EPS_MODE='$FMPCC_SAFE_EPS_MODE' SAFE_EPS_FRAC='$FMPCC_SAFE_EPS_FRAC' \
+EVAL_TAG='${FMPCC_UAV_EVAL_TAG:-<none>}'"
+echo "[ hardflow ] guard: FMPCC_HF_MIN_GENUINE='${FMPCC_HF_MIN_GENUINE:-<default 1>}' \
+FMPCC_HF_ALLOW_DEGENERATE='${FMPCC_HF_ALLOW_DEGENERATE:-<unset>}' \
+HFFM_ACT_THRESHOLD='${HFFM_ACT_THRESHOLD:-<config default>}'"
 EVAL="Slurm_Codes/sbatch/uav_mix/eval_mix_uav.sh"
 
 N_SEEDS=$(echo $SEEDS | wc -w)
-EVAL_HOURS=$((N_SEEDS * 8))
+# [Gen15 U7 2026-09-04] --time is now overridable, because 8 h/seed is NOT enough at high K.
+# Evidence: jobs 25318/25321 (pillars K5, 1 seed) both hit the wall clock with 5 of 17 variants
+# done. Two compounding reasons: Fix_16 made rollouts ~10x longer (they fly ~600 steps instead
+# of aborting at ~77), and projection cost scales hard with K -- measured `proj_ms` for
+# `dpcc-c` was 63 ms at K2 against 1751 ms at K5, a 28x step. Budget accordingly:
+#   K<=2 : the 8 h/seed default is comfortable (both K2 arms finished 10/10 variants)
+#   K=5  : needs ~27 h for the full 17-variant sweep -- over the 24 h cap. Split the variant
+#          list or run it as two submissions; do NOT just raise this and hope.
+# Per the cluster convention --time is ~2x expected and hard-capped at 24 h.
+EVAL_HOURS=${UAV_EVAL_HOURS:-$((N_SEEDS * 8))}
+if [ "$EVAL_HOURS" -gt 24 ]; then
+    echo "[ WARN ] UAV_EVAL_HOURS=$EVAL_HOURS exceeds the 24 h cluster cap -> clamped to 24."
+    EVAL_HOURS=24
+fi
 
 echo "================================================================================"
 echo "UAV-MIX K SWEEP  $(date)   engine=$ENGINE  scene=$SCENE  seeds=[$SEEDS]  K=[$KS]  proj=$PROJ  record=$RECORD"
+echo "  --time per eval job: ${EVAL_HOURS}:00:00  (override with UAV_EVAL_HOURS=<hours>)"
 echo "================================================================================"
 
 DATE=${SUBMIT_DATE:-$(date +%Y-%m-%d)}; TIME=${SUBMIT_TIME:-$(date +%H_%M_%S)}

@@ -1,0 +1,155 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Fri Aug 21 20:42:23 UTC 2026
+JOB NAME:  gates_mix_visual_avoiding
+JOB ID:    24853
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   0638507
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=1  MUJOCO_EGL_DEVICE_ID=1
+[ gates ] running: all
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+
+=== A0: copy fidelity (Gen16 vs Gen14) ===
+  edit mix_visual_avoiding/datasets/__init__.py
+         <- exports ParityAvoidingDataset
+  edit mix_visual_avoiding/datasets/sequence.py
+         <- REPLACED — ParityAvoidingDataset (Gen9 Epoch 2) + episode_split, spec-driven
+  edit mix_visual_avoiding/models/__init__.py
+         <- exports visual_spec
+  edit mix_visual_avoiding/models/engine_registry.py
+         <- provenance strings only (the table itself is Gen14 verbatim)
+  edit mix_visual_avoiding/models/visual_af_diffusion.py
+         <- cond packing via visual_spec; _encode_once is variadic
+  edit mix_visual_avoiding/models/visual_dit_twotime.py
+         <- same three edits as visual_unet.py
+  edit mix_visual_avoiding/models/visual_fm_diffusion.py
+         <- cond packing via visual_spec
+  edit mix_visual_avoiding/models/visual_gaussian_diffusion.py
+         <- cond packing via visual_spec (no hardcoded 2-camera tuple)
+  edit mix_visual_avoiding/models/visual_mf_diffusion.py
+         <- cond packing via visual_spec; _encode_once is variadic
+  edit mix_visual_avoiding/models/visual_spec.py
+         <- NEW — the single source of truth for cameras + dims
+  edit mix_visual_avoiding/models/visual_unet.py
+         <- encoder + dims from visual_spec; encode_visual is variadic over cameras
+  edit mix_visual_avoiding/models/visual_unet_twotime.py
+         <- same three edits as visual_unet.py
+  edit mix_visual_avoiding/sampling/hardflow_projection.py
+         <- encode_visual_cond via visual_spec + the fm raw-image path
+  edit mix_visual_avoiding/sampling/policies.py
+         <- NEW — VisualPolicy / VisualHardFlowPolicy, the Policy surface over visual engines
+  edit mix_visual_avoiding/utils/serialization.py
+         <- DiffusionExperiment gains 'ema' (mirrors Gen3v6 Fix2/U6)
+  edit mix_visual_avoiding/utils/setup.py
+         <- the snapshotted eval yaml follows FMPCC_PROJ_CFG instead of a hardcoded name
+  edit mix_visual_avoiding/utils/training.py
+         <- episode-level split + EMA-consistent test() + final save (Gen9 U4 Fix1 / B8)
+  edit mix_visual_avoiding/utils/training_twotime.py
+         <- the SAME three edits, so all four arms share one split and one selection criterion
+
+  A0 PASS — 30 files byte-identical to Gen14, 18 declared edits.
+
+=== A1: spec coherence ===
+  ok   LATENT_DIM == N_CAMERAS * RGB_OUTPUT_SIZE
+  ok   TRANSITION_DIM == ACTION_DIM + OBS_DIM
+  ok   len(CAMERA_KEYS) == len(COND_IMG_KEYS)
+  ok   shape_meta() has one entry per camera
+  ok   shape_meta() keys == CAMERA_KEYS
+  ok   avoiding is 6-D
+  ok   avoiding is single-camera
+  ok   pack_visual/split_visual round-trip
+  ok   split_visual refuses a short payload
+  spec: 6D = [act(0:2) | des_xy(2:4) | c_xy(4:6)]  ·  1 camera (agentview_image)
+  A1 PASS
+
+=== A2: no stray camera/dim literals ===
+  A2 PASS — 47 modules are spec-driven.
+
+=== A3: registry wiring ===
+  ok   diffusion mix_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion
+  ok   fm        mix_visual_avoiding.models.visual_fm_diffusion.VisualFlowMatching
+  ok   mf        mix_visual_avoiding.models.visual_mf_diffusion.VisualMeanFlow
+  ok   af        mix_visual_avoiding.models.visual_af_diffusion.VisualAlphaFlow
+  A3 PASS
+
+=== A4: checkpoint-path round-trip ===
+  ok   diffusion mix_visual_avoiding_diffusion/H8_K20_Dmix_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_aw10_VTrue_steps200_bs64_filmv1_Ediffusion
+  ok   fm        mix_visual_avoiding_fm/H8_Dmix_visual_avoiding.models.visual_fm_diffusion.VisualFlowMatching_a1.5_b1.0_aw1_VTrue_steps200_bs64_filmv1_Efm
+  ok   mf        mix_visual_avoiding_mf/H8_Dmix_visual_avoiding.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps200_bs64_filmv1_Emf_tslogit_normal
+  ok   af        mix_visual_avoiding_af/H8_Dmix_visual_avoiding.models.visual_af_diffusion.VisualAlphaFlow_a1.5_b1.0_aw1_VTrue_steps200_bs64_filmv1_Eaf_tslogit_normal_afschsigmoid
+  A4 PASS
+
+=== A5: backbones agree on the task ===
+  ok   VisualUNet           TRANSITION_DIM=6 LATENT_DIM=64
+  ok   VisualUNetTwoTime    TRANSITION_DIM=6 LATENT_DIM=64
+  ok   VisualDiTTwoTime     TRANSITION_DIM=6 LATENT_DIM=64
+  A5 PASS
+
+=== A6: dataset <-> spec ===
+  ok   ACTION_DIM
+  ok   OBS_DIM
+  ok   TRAJ_DIM
+  ok   one CAM_DIR per condition key
+  ok   episode_split exists (no window leakage)
+  A6 PASS
+
+=== A7: four arms, one visual training step ===
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /u/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+[ VisualUNet ] MultiImageObsEncoder initialized — LATENT_DIM=64 (1 cam x 64), imagenet_norm=True | 6D = [act(0:2) | des_xy(2:4) | c_xy(4:6)]  ·  1 camera (agentview_image)
+  FAIL diffusion TypeError: GaussianDiffusion.__init__() got an unexpected keyword argument 'device'
+[ VisualUNet ] MultiImageObsEncoder initialized — LATENT_DIM=64 (1 cam x 64), imagenet_norm=True | 6D = [act(0:2) | des_xy(2:4) | c_xy(4:6)]  ·  1 camera (agentview_image)
+  FAIL fm        TypeError: FlowMatchingODE.__init__() got an unexpected keyword argument 'device'
+[ VisualUNetTwoTime ] MultiImageObsEncoder initialized — LATENT_DIM=64 (1 cam x 64), imagenet_norm=True | 6D = [act(0:2) | des_xy(2:4) | c_xy(4:6)]  ·  1 camera (agentview_image)
+[ MFTrajectoryModel ] backbone=unet  vision=True  unet_width(freq_dim)=32  params=15.2M
+  FAIL mf        TypeError: MeanFlowODE.__init__() got an unexpected keyword argument 'device'
+[ VisualUNetTwoTime ] MultiImageObsEncoder initialized — LATENT_DIM=64 (1 cam x 64), imagenet_norm=True | 6D = [act(0:2) | des_xy(2:4) | c_xy(4:6)]  ·  1 camera (agentview_image)
+[ AFTrajectoryModel ] backbone=unet  vision=True  unet_width(freq_dim)=32  params=15.2M
+  FAIL af        TypeError: AlphaFlowODE.__init__() got an unexpected keyword argument 'device'
+  A7 FAIL
+
+=== A8: hardflow hosts + fm raw-image path ===
+  ok   diffusion refused as a HardFlow host
+  ok   fm  init_noise=0.5 two_time=False
+  ok   mf  init_noise=1.0 two_time=True
+  ok   af  init_noise=1.0 two_time=True
+  ok   two-time host -> visual_latent (2, 64)
+  ok   single-time host -> raw images (2-tuple)
+  ok   already-encoded cond passes through
+  A8 PASS
+
+=== A9: eval yaml <-> config agreement ===
+  ok   arm-C fan (hardflow.batch_size=4) == arm-B fan (mpc_batch_size=4)
+  ok   arm-C gate (activation_threshold=0.5) == arm-B gate (diffusion_timestep_threshold=0.5)
+  ok   replan_steps=1 is the historic default (1)
+  ok   the yaml declares a hardflow section
+  A9 PASS
+
+============================================================
+  A0: PASS
+  A1: PASS
+  A2: PASS
+  A3: PASS
+  A4: PASS
+  A5: PASS
+  A6: PASS
+  A7: FAIL
+  A8: PASS
+  A9: PASS
+============================================================

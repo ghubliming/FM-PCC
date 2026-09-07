@@ -157,6 +157,24 @@ class Parser(utils.Parser):
     dataset: str = exp
     config: str  = 'config.' + exp
 
+def _resume_target(v):
+    """--resume-step accepts a step NUMBER or the literal 'best'.
+
+    'best' resolves to state_best.pt, which is a FULL checkpoint, not a weights dump:
+    save_best() writes the same _checkpoint_payload() as the periodic saves, so it carries
+    step / model / ema / optimizer / lr_scheduler / best_test_loss / loss histories. It is
+    therefore a legitimate resume point, and on a run whose periodic saves were lost it is
+    the ONLY one. The step it resumes at is whatever step the last val improvement happened
+    on -- read from the payload, never assumed.
+    """
+    if isinstance(v, str) and v.strip().lower() == 'best':
+        return 'best'
+    try:
+        return int(v)
+    except (TypeError, ValueError):
+        raise argparse.ArgumentTypeError(f"--resume-step wants an integer step or 'best' (got {v!r})")
+
+
 def parse_top_level_args():
     p = argparse.ArgumentParser()
     p.add_argument('--seed', type=int)
@@ -164,7 +182,7 @@ def parse_top_level_args():
     p.add_argument('--seeds-from-config', type=str)
     p.add_argument('--num-seeds', type=int)
     p.add_argument('--resume-seed', type=int)
-    p.add_argument('--resume-step', type=int)
+    p.add_argument('--resume-step', type=_resume_target)
     p.add_argument('--auto-resume', action='store_true')
     p.add_argument('--use-wandb', action='store_true')
     p.add_argument('--wandb-project', type=str, default='FM-PCC-visual-aligning-gen14')
@@ -173,6 +191,9 @@ def parse_top_level_args():
     p.add_argument('--wandb-mode', type=str, default='online',
                    choices=['online', 'offline', 'disabled'])
     p.add_argument('--log-freq', type=int, default=1000)
+    p.add_argument('--save-every', type=int, default=None,
+                   help='checkpoint cadence in steps (default: n_train_steps // 5). Lower it '
+                        'on long visual runs so a wall-clock kill costs minutes, not hours.')
     # ── Gen14 ── the arm selector. Picks the config block, the engine classes and
     # the Trainer. Default 'fm' == the Gen7 reference arm, so a bare invocation
     # reproduces Gen7 behaviour.
@@ -214,6 +235,14 @@ def find_latest_checkpoint_step(results_dir):
             steps.append(int(os.path.basename(cp).replace('state_', '').replace('.pt', '')))
         except ValueError:
             pass
+    # 🔴 STEP 0 IS NOT PROGRESS. The trainer saves on `step % save_freq == 0`, which fires on
+    # the very first iteration, so EVERY run that has ever started owns a state_0.pt. Returning
+    # it made --auto-resume load a randomly-initialised network and announce 'Resuming from
+    # step 0' -- a fresh run wearing a resume's clothes, and one that silently discards the
+    # `resume checkpoint not found` warning that should have fired. state_best.pt is excluded
+    # separately (int('best') raises ValueError above), so a run killed before its first
+    # periodic save correctly reports None and starts over openly.
+    steps = [s for s in steps if s > 0]
     return max(steps) if steps else None
 
 def write_seed_manifest(run_root, seeds, source, cli_args):
@@ -351,6 +380,42 @@ for seed in selected_seeds:
           f"({'TRUE FiLM — per-block gamma scale + beta shift' if _film_mode == 'v2' else 'additive-bias FiLM (default)'})"
           f" — architecture key; v1/v2 checkpoints are NOT interchangeable")
 
+    # ── Gen14 U8 ── ML BONE (generative backbone for the two-time arms).
+    # Set per arm in the config block via _mix_bone_keys() / MIX_BONE_<ARM>. It is an
+    # ARCHITECTURE + PATH key ('B{ml_bone}' in args_to_watch_mix_visual_train), so each bone
+    # trains into its own tree and state_dicts are NOT interchangeable across bones.
+    # Validated and printed here so a bone mix-up is visible at the top of the log rather
+    # than only in a directory name.
+    _ML_BONE_BY_ARM = {'mf': ('unet', 'mf_dit', 'dit'), 'af': ('unet', 'sit', 'dit')}
+    _ml_bone = getattr(args, 'ml_bone', 'unet') or 'unet'
+    if ENGINE_SPEC['two_time']:
+        _allowed = _ML_BONE_BY_ARM[ENGINE]
+        if _ml_bone not in _allowed:
+            raise SystemExit(
+                f"[ train ] ERROR: ml_bone='{_ml_bone}' is not valid for the '{ENGINE}' arm "
+                f"(want one of {list(_allowed)}).")
+        if _ml_bone == 'unet':
+            print(f"[ train ] ml_bone = unet — VisualUNetTwoTime (FiLM {_film_mode}); "
+                  f"the Gen14 baseline bone")
+        else:
+            # 🔴 film_mode must NOT be defined on a DiT block: FiLM is a U-Net concept and the
+            # fragment would put a lying '_film..' in the checkpoint path. _mix_bone_keys()
+            # deletes it; this catches a hand-edited config that put it back.
+            if 'film_mode' in getattr(args, '_dict', {}) or hasattr(args, 'film_mode'):
+                if getattr(args, 'film_mode', None) is not None:
+                    raise SystemExit(
+                        f"[ train ] ERROR: ml_bone='{_ml_bone}' is a transformer bone but the "
+                        f"config block still defines film_mode={getattr(args,'film_mode')!r}. "
+                        f"FiLM is a U-Net concept; leave the key out (see _mix_bone_keys).")
+            print(f"[ train ] ml_bone = {_ml_bone} — VisualDiTTwoTime, visual latent enters as "
+                  f"ONE PREPENDED TOKEN (hidden={getattr(args,'dit_hidden_size',160)}, "
+                  f"depth={getattr(args,'dit_depth',8)}); "
+                  f"parameter-matched to the ~4.0M U-Net — see Gen14/U8 PLAN section 8")
+    elif _ml_bone != 'unet':
+        raise SystemExit(
+            f"[ train ] ERROR: ml_bone='{_ml_bone}' set on the '{ENGINE}' arm, which is "
+            f"single-time and has no transformer bone. Only mf/af accept a DiT (PLAN section 11).")
+
     ModelCls     = import_class(ENGINE_SPEC['model'])
     DiffusionCls = import_class(ENGINE_SPEC['diffusion'])
 
@@ -374,6 +439,18 @@ for seed in selected_seeds:
             # 🔴 interval_cfg=False in both Gen3v6 and Gen3v7 (no CFG in either). On the UNet arm
             # it changes the state_dict, so flipping it makes checkpoints non-interchangeable.
             interval_cfg=getattr(args, 'interval_cfg', False),
+            # ── Gen14 U8 ── the bone selector + its sizing. Before U8 these never reached the
+            # engine at all, so imf_backbone was stuck at its 'unet' default and the DiT/SiT
+            # ports were unreachable from a visual run. Because they are constructor kwargs of
+            # model_config, they are written into model_config.pkl and the eval loader
+            # reconstructs the right bone for free (eval_mix_visual_aligning.py:2291/2355).
+            imf_backbone=_ml_bone,
+            dit_hidden_size=getattr(args, 'dit_hidden_size', 160),
+            dit_depth=getattr(args, 'dit_depth', 8),
+            dit_num_heads=getattr(args, 'dit_num_heads', 4),
+            dit_patch_size=getattr(args, 'dit_patch_size', 1),
+            dit_aux_head_depth=getattr(args, 'dit_aux_head_depth', 2),
+            dit_condition_on_t=getattr(args, 'dit_condition_on_t', False),
         )
     else:
         # diffusion / fm — Gen6V4/Gen7 shape, unchanged.
@@ -491,6 +568,7 @@ for seed in selected_seeds:
         gradient_accumulate_every=args.gradient_accumulate_every,
         results_folder=args.savepath,
         log_freq=cli_args.log_freq,
+        save_freq=cli_args.save_every,
     )
     if ENGINE_SPEC['two_time']:
         # ⚠️ split_seed exists ONLY on the two-time trainer. This means mf/af use a
@@ -499,6 +577,11 @@ for seed in selected_seeds:
         # arms on unguided TASK SUCCESS (split-independent), never on test_loss.
         _trainer_kwargs['split_seed']    = getattr(args, 'split_seed', 42)
         _trainer_kwargs['gradient_clip'] = getattr(args, 'gradient_clip', 0.0)
+        # ── Gen14 U9 ── encoder LR scale. Only the two-time trainer (mf/af) implements it,
+        # which is also the only place U9 runs. 1.0 == pre-U9: the trainer then builds the
+        # optimiser exactly as before, one param group, so pre-U9 checkpoints auto-resume
+        # unchanged. Passing it unconditionally is safe because the default IS the old value.
+        _trainer_kwargs['vis_lr_scale']  = float(getattr(args, 'vis_lr_scale', 1.0))
     trainer_config = utils.Config(
         TrainerCls,
         savepath=(args.savepath, 'trainer_config.pkl'),
@@ -510,13 +593,38 @@ for seed in selected_seeds:
     resume_step = None
     if cli_args.auto_resume:
         resume_step = find_latest_checkpoint_step(args.savepath)
+        # ── Fix_10 ── FALL BACK TO state_best.pt when no numbered checkpoint survives.
+        # Job 24838 is the case this exists for: ENOSPC + a 24 h kill at step 83999 left the
+        # savepath holding state_best.pt and nothing else, so find_latest_checkpoint_step
+        # (which parses an int out of the filename, and so cannot see 'best') returned None
+        # and ~84k steps of GPU time looked unrecoverable. It was not: state_best.pt is the
+        # same full payload as a periodic save. Numbered checkpoints still win when present --
+        # they are the later training state; state_best is only the last val improvement.
+        if resume_step is None and os.path.exists(os.path.join(args.savepath, 'state_best.pt')):
+            resume_step = 'best'
+            print('[ train ] auto-resume: no numbered state_<step>.pt survives; '
+                  'falling back to state_best.pt')
     if should_apply_manual_resume(seed, selected_seeds, cli_args):
         resume_step = cli_args.resume_step
     if resume_step is not None:
         cp = os.path.join(args.savepath, f'state_{resume_step}.pt')
         if os.path.exists(cp):
-            print(f'[ train ] Resuming seed {seed} from step {resume_step}')
-            trainer.load(resume_step)
+            print(f'[ train ] Resuming seed {seed} from {os.path.basename(cp)}')
+            try:
+                trainer.load(resume_step)
+            except Exception as _e:
+                # 🔴 A checkpoint written while the disk was filling is TRUNCATED, and
+                # torch.load raises rather than returning garbage. Dying here is correct:
+                # silently starting from scratch would burn the whole wall producing a run
+                # the operator believes is a resume.
+                raise RuntimeError(
+                    f'[ train ] {cp} exists but could not be loaded ({type(_e).__name__}: {_e}).\n'
+                    f'  A checkpoint interrupted by ENOSPC is truncated and unrecoverable. '
+                    f'Delete it and start fresh, or resume from another state_<step>.pt.') from _e
+            # The TRUE step comes from the payload -- for 'best' it is whenever the last val
+            # improvement landed, which is NOT the same as the last periodic save.
+            print(f'[ train ] resumed at step {trainer.step} of {int(args.n_train_steps)} '
+                  f'({int(args.n_train_steps) - int(trainer.step)} remaining)')
         else:
             print(f'[ train ] Resume checkpoint not found: {cp}')
 

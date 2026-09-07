@@ -34,6 +34,20 @@ class Policy:
         # Previous observations
         self.prev_observations = None
 
+        # ── H8+8 (U10) — receding-horizon cadence ──────────────────────────────────────
+        # How many actions of each plan the CALLER executes before asking for a new one.
+        # The policy itself does not loop; it needs this for exactly one thing — the
+        # temporal-consistency shift below, which assumes the previous plan advanced by
+        # this many steps. DEFAULT 1 == the historic behaviour (replan every env step).
+        # The eval sets it (MF_REPLAN_STEPS); nothing else touches it.
+        self.replan_steps = 1
+        # The FULL action/observation sequence of the plan that was actually executed
+        # (i.e. of candidate `which_trajectory`, after any -c/-t selection). Published
+        # because `which_trajectory` is not visible to the caller, so a replan>1 caller
+        # cannot otherwise know WHICH candidate's remaining actions to replay.
+        self.last_executed_actions = None
+        self.last_executed_observations = None
+
     def __call__(self, conditions, batch_size=1, horizon=16, test_ret=None, constraints=None, disable_projection=False):
         conditions = {k: self.preprocess_fn(v) for k, v in conditions.items()}
         conditions = self._format_conditions(conditions, batch_size)
@@ -65,7 +79,13 @@ class Policy:
         # the invariant MPC_NPZ_PATCH (JOB C) intended: prev_observations is the plan that
         # was actually executed.
         if self.trajectory_selection == 'temporal_consistency' and not disable_projection and self.prev_observations is not None:   # Temporal consistency
-            order = np.argsort(np.linalg.norm(observations[:,:-1,:] - self.prev_observations[:,1:,:], axis=(1,2)))
+            # 🔵 U10 — the shift is the REPLAN CADENCE, not a constant 1. The previous plan
+            # was executed for `replan_steps` steps before this call, so its step `n` is the
+            # new plan's step 0. At the default replan_steps=1 this is the original
+            # `[:, :-1] vs [:, 1:]` expression, byte-for-byte.
+            _n = max(1, int(getattr(self, 'replan_steps', 1)))
+            _n = min(_n, observations.shape[1] - 1)   # keep at least one overlapping step
+            order = np.argsort(np.linalg.norm(observations[:,:-_n,:] - self.prev_observations[:,_n:,:], axis=(1,2)))
             which_trajectory = order[0]
             observations = observations[order]
             executed_idx = 0                                                                                                        # observations is now sorted; best match sits at 0
@@ -95,6 +115,15 @@ class Policy:
 
             ## extract first action
             action = actions[which_trajectory, 0]
+
+        # 🔵 U10 — publish the executed candidate's FULL plan (see __init__). `observations`
+        # may have been reordered by the -t branch, which is why the two use different
+        # indices: `executed_idx` indexes `observations` AS IT STANDS NOW, `which_trajectory`
+        # indexes `actions`, which is never reordered (the fix_5 invariant, above).
+        # The inverse-dynamics branch flattens `actions` and so has no per-candidate
+        # sequence to publish; it is hard-False in this generation.
+        self.last_executed_observations = observations[executed_idx]
+        self.last_executed_actions = None if self.inverse_dynamics else actions[which_trajectory]
 
         trajectories = Trajectories(actions, observations)
 

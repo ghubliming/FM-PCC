@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="430" viewBox="0 0 880 430" role="img">
+<rect x="0" y="0" width="880" height="430" fill="var(--fig-bg,#ffffff)"/>
+<text x="24" y="30" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="15.5" fill="var(--fig-ink,#1b1f24)" text-anchor="start" font-weight="650" letter-spacing="0">Figure A — The candidate fan scales the projection stage and nothing else</text>
+<text x="24" y="50" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11.5" fill="var(--fig-mute,#5b6570)" text-anchor="start" font-weight="400" letter-spacing="0">Per-step cost decomposed into generator + projection, normalised to each run's own generator cost. avoiding-d3il, tightened arm.</text>
+<line x1="200.00" y1="82.00" x2="200.00" y2="366.00" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="1"/>
+<text x="200.0" y="76" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">0×</text>
+<line x1="347.22" y1="82.00" x2="347.22" y2="366.00" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="1"/>
+<text x="347.22222222222223" y="76" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">1×</text>
+<line x1="494.44" y1="82.00" x2="494.44" y2="366.00" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="1"/>
+<text x="494.44444444444446" y="76" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">2×</text>
+<line x1="641.67" y1="82.00" x2="641.67" y2="366.00" stroke="var(--fig-grid,#dfe3e8)" stroke-width="1" stroke-linecap="butt" opacity="1"/>
+<text x="641.6666666666666" y="76" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">3×</text>
+<text x="465.0" y="58" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="11" fill="var(--fig-mute,#5b6570)" text-anchor="middle" font-weight="400" letter-spacing="0">per-step cost, in units of that run's generator cost</text>
+<text x="184" y="132.5" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="var(--fig-ink,#1b1f24)" text-anchor="end" font-weight="650" letter-spacing="0">DPCC Gen0</text>
+<text x="184" y="146.5" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="end" font-weight="400" letter-spacing="0">K=20 · UNet</text>
+<rect x="200.00" y="92.00" width="147.22" height="30.00" fill="var(--fig-acc,#8a8f98)" rx="2" opacity="0.35"/>
+<rect x="347.22" y="92.00" width="307.05" height="30.00" fill="var(--fig-f4,#b4472e)" rx="2" opacity="1"/>
+<text x="208.0" y="111.0" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-ink,#1b1f24)" text-anchor="start" font-weight="400" letter-spacing="0">generator</text>
+<text x="500.7449561055265" y="111.0" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-bg,#ffffff)" text-anchor="middle" font-weight="600" letter-spacing="0">projection</text>
+<text x="664.2676899888309" y="111.5" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="10.5" fill="var(--fig-f4,#b4472e)" text-anchor="start" font-weight="600" letter-spacing="0">fan 4   553 ms  (3.09×)</text>
+<rect x="200.00" y="135.00" width="147.22" height="30.00" fill="var(--fig-acc,#8a8f98)" rx="2" opacity="0.35"/>
+<rect x="347.22" y="135.00" width="97.08" height="30.00" fill="var(--fig-f1,#1f6f8b)" rx="2" opacity="1"/>
+<text x="208.0" y="154.0" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-ink,#1b1f24)" text-anchor="start" font-weight="400" letter-spacing="0">generator</text>
+<text x="395.7643480063636" y="154.0" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-bg,#ffffff)" text-anchor="middle" font-weight="600" letter-spacing="0">projection</text>
+<text x="454.306473790505" y="154.5" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="10.5" fill="var(--fig-f1,#1f6f8b)" text-anchor="start" font-weight="600" letter-spacing="0">fan 1   291 ms  (1.66×)</text>
+<text x="184" y="180" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-f1,#1f6f8b)" text-anchor="end" font-weight="600" letter-spacing="0">projection 3.2× cheaper  ·  end-to-end 1.86×</text>
+<text x="184" y="244.5" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="var(--fig-ink,#1b1f24)" text-anchor="end" font-weight="650" letter-spacing="0">AlphaFlow</text>
+<text x="184" y="258.5" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="end" font-weight="400" letter-spacing="0">K=2 · SiT</text>
+<rect x="200.00" y="204.00" width="147.22" height="30.00" fill="var(--fig-acc,#8a8f98)" rx="2" opacity="0.35"/>
+<rect x="347.22" y="204.00" width="118.02" height="30.00" fill="var(--fig-f4,#b4472e)" rx="2" opacity="1"/>
+<text x="208.0" y="223.0" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-ink,#1b1f24)" text-anchor="start" font-weight="400" letter-spacing="0">generator</text>
+<text x="406.2319148427533" y="223.0" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-bg,#ffffff)" text-anchor="middle" font-weight="600" letter-spacing="0">projection</text>
+<text x="475.2416074632845" y="223.5" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="10.5" fill="var(--fig-f4,#b4472e)" text-anchor="start" font-weight="600" letter-spacing="0">fan 4   22 ms  (1.80×)</text>
+<rect x="200.00" y="247.00" width="147.22" height="30.00" fill="var(--fig-acc,#8a8f98)" rx="2" opacity="0.35"/>
+<rect x="347.22" y="247.00" width="28.84" height="30.00" fill="var(--fig-f1,#1f6f8b)" rx="2" opacity="1"/>
+<text x="208.0" y="266.0" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-ink,#1b1f24)" text-anchor="start" font-weight="400" letter-spacing="0">generator</text>
+<text x="386.0592681340852" y="266.5" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="10.5" fill="var(--fig-f1,#1f6f8b)" text-anchor="start" font-weight="600" letter-spacing="0">fan 1   13 ms  (1.20×)</text>
+<text x="184" y="292" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-f1,#1f6f8b)" text-anchor="end" font-weight="600" letter-spacing="0">projection 4.1× cheaper  ·  end-to-end 1.51×</text>
+<text x="184" y="356.5" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" fill="var(--fig-ink,#1b1f24)" text-anchor="end" font-weight="650" letter-spacing="0">MeanFlow</text>
+<text x="184" y="370.5" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-mute,#5b6570)" text-anchor="end" font-weight="400" letter-spacing="0">K=2 · UNet · seed 6</text>
+<rect x="200.00" y="316.00" width="147.22" height="30.00" fill="var(--fig-acc,#8a8f98)" rx="2" opacity="0.35"/>
+<rect x="347.22" y="316.00" width="64.30" height="30.00" fill="var(--fig-f4,#b4472e)" rx="2" opacity="1"/>
+<text x="208.0" y="335.0" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-ink,#1b1f24)" text-anchor="start" font-weight="400" letter-spacing="0">generator</text>
+<text x="379.3709157880871" y="335.0" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-bg,#ffffff)" text-anchor="middle" font-weight="600" letter-spacing="0">projection</text>
+<text x="421.5196093539519" y="335.5" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="10.5" fill="var(--fig-f4,#b4472e)" text-anchor="start" font-weight="600" letter-spacing="0">fan 4   28 ms  (1.44×)</text>
+<rect x="200.00" y="359.00" width="147.22" height="30.00" fill="var(--fig-acc,#8a8f98)" rx="2" opacity="0.35"/>
+<rect x="347.22" y="359.00" width="12.76" height="30.00" fill="var(--fig-f1,#1f6f8b)" rx="2" opacity="1"/>
+<text x="208.0" y="378.0" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-ink,#1b1f24)" text-anchor="start" font-weight="400" letter-spacing="0">generator</text>
+<text x="369.98125110837555" y="378.5" font-family="ui-monospace,'SF Mono',Menlo,Consolas,monospace" font-size="10.5" fill="var(--fig-f1,#1f6f8b)" text-anchor="start" font-weight="600" letter-spacing="0">fan 1   21 ms  (1.09×)</text>
+<text x="184" y="404" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="9.5" fill="var(--fig-f1,#1f6f8b)" text-anchor="end" font-weight="600" letter-spacing="0">projection 5.0× cheaper  ·  end-to-end 1.32×</text>
+<text x="24" y="408" font-family="ui-sans-serif,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" fill="var(--fig-mute,#5b6570)" text-anchor="start" font-weight="400" letter-spacing="0">Generator cost is fan-invariant (grey band identical within each model); the entire saving comes from the projection band. End-to-end gain is therefore set by the projection's share of the budget.</text>
+</svg>

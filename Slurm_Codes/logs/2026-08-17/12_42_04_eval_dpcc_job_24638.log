@@ -1,0 +1,26 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Mon Aug 17 10:42:05 UTC 2026
+JOB NAME:  eval_dpcc_job
+JOB ID:    24638
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   5bc5db4
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=4  MUJOCO_EGL_DEVICE_ID=4
+pybullet build time: Nov 28 2023 23:45:17
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/scripts/eval.py", line 41, in <module>
+    seeds = config['seeds']
+KeyError: 'seeds'
+================================================================================
+JOB END:   Mon Aug 17 10:42:10 UTC 2026
+================================================================================

@@ -1,0 +1,204 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu Aug 27 23:40:31 UTC 2026  |  eval_mix_uav  |  ID 25130  |  NODE i6-gpu-1
+ENGINE: fm   SCENE: pillars   SEEDS: 6   N_TRIALS: 10   K: 20
+GIT REV:   2c3c38d
+================================================================================
+[ env-select ] config/uav.py controller='pid_stopgo' -> conda env 'FMPCC'
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=1  MUJOCO_EGL_DEVICE_ID=1
+--------------------------------------------------------------------------------
+[ uav_mix_eval ] seed 1/1: engine=fm scene=pillars seed=6  Thu Aug 27 23:40:31 UTC 2026
+[ uav_mix_eval ] python mix_uav_test/eval_mix_uav.py --engine fm --scene pillars --seed 6 --n-trials 10 --projection fm_only --record none --flow-steps 20
+[ eval ] Gen15 UAV Mix-ML — engine: fm  (Flow Matching (Gen11 FMv3ODE))
+[ eval ] K override from --flow-steps: 20
+[ eval ] seed=6  (source: --seed CLI)
+[ eval ] n_trials=10  (source: --n-trials CLI)
+[ eval ] HardFlow arm: +7 variants ['hardflow_new', 'hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t', 'hardflow_new-r-geo_free', 'hardflow_new-c-geo_free', 'hardflow_new-t-geo_free'] (from config/uav_mix.py, NOT the shared yaml)
+
+[ utils/serialization ] Loading model from logs/UAV_MIX/uav-pillars/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/6
+
+
+                    [ utils/normalization ] Constant data in dimension 2 | max = min = 0.0
+
+                    [ utils/normalization ] Constant data in dimension 0 | max = min = 0.0
+[ datasets/buffer ] Fields:
+    observations: (475, 560, 6)
+    actions: (475, 560, 3)
+    rewards: (475, 560, 1)
+    terminals: (475, 560, 1)
+    normed_observations: (475, 560, 6)
+    normed_actions: (475, 560, 3)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+[ eval ] engine=fm  NFE budget K=20 pinned on the loaded model (flow_steps_v3 / ode_inference_steps_v3)
+[ eval ] E9 geo 'pillars' ← variant 'pillars': constraint_types=['dynamics', 'geo_bounds', 'obstacles', 'bounds'] (bounds=True, hs=0, obs=6)
+[ eval ] cond_mode=pos_only  (source: train checkpoint args)
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles]: variants=['diffuser', 'dpcc-r', 'dpcc-r-tightened', 'dpcc-c', 'dpcc-c-tightened', 'dpcc-t', 'dpcc-t-tightened', 'dpcc-r-geo_free', 'dpcc-c-geo_free', 'dpcc-t-geo_free', 'hardflow_new', 'hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t', 'hardflow_new-r-geo_free', 'hardflow_new-c-geo_free', 'hardflow_new-t-geo_free']  constraints=['dynamics', 'geo_bounds', 'obstacles', 'bounds']  batch_size=4
+[ eval ] pillars feasibility check: homotopy=(L,L,L) expert route OK under planning margin 0.33 m
+[ eval ] pillars feasibility check: homotopy=(L,R,L) expert route OK under planning margin 0.33 m
+[ eval ] pillars feasibility check: homotopy=(R,L,R) expert route OK under planning margin 0.33 m
+[ eval ] pillars feasibility check: homotopy=(R,R,R) expert route OK under planning margin 0.33 m
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 1/17: 'diffuser'  (n_trials=10)
+[ provenance ] wrote logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ geo ] Constraint overview → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/constraint_overview.png (+ .svg)
+[ eval ] pillars variant=diffuser: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ eval ] pillars variant=diffuser trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 455/634 (t=13.79s) — reason=inverted: body z-axis · world z = -0.20 < 0 — the drone is upside down
+[ eval ] pillars variant=diffuser: trial 1/10 done  (79.2s elapsed this variant, ~712.8s to go)
+[ eval ] pillars variant=diffuser trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 490/634 (t=14.85s) — reason=inverted: body z-axis · world z = -0.17 < 0 — the drone is upside down
+[ eval ] pillars variant=diffuser: trial 2/10 done  (163.7s elapsed this variant, ~654.8s to go)
+[ eval ] pillars variant=diffuser trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 441/634 (t=13.36s) — reason=inverted: body z-axis · world z = -0.12 < 0 — the drone is upside down
+[ eval ] pillars variant=diffuser: trial 3/10 done  (240.4s elapsed this variant, ~560.9s to go)
+[ eval ] pillars variant=diffuser trial_seed=10003: ⚠ DIVERGENCE ABORT at FM step 440/634 (t=13.33s) — reason=inverted: body z-axis · world z = -0.17 < 0 — the drone is upside down
+[ eval ] pillars variant=diffuser: trial 4/10 done  (316.8s elapsed this variant, ~475.2s to go)
+[ eval ] pillars variant=diffuser: trial 5/10 done  (397.9s elapsed this variant, ~397.9s to go)
+[ eval ] pillars variant=diffuser trial_seed=10005: ⚠ DIVERGENCE ABORT at FM step 453/634 (t=13.73s) — reason=inverted: body z-axis · world z = -0.26 < 0 — the drone is upside down
+[ eval ] pillars variant=diffuser: trial 6/10 done  (476.6s elapsed this variant, ~317.7s to go)
+[ eval ] pillars variant=diffuser trial_seed=10006: ⚠ DIVERGENCE ABORT at FM step 514/634 (t=15.58s) — reason=inverted: body z-axis · world z = -0.09 < 0 — the drone is upside down
+[ eval ] pillars variant=diffuser: trial 7/10 done  (565.6s elapsed this variant, ~242.4s to go)
+[ eval ] pillars variant=diffuser trial_seed=10007: ⚠ DIVERGENCE ABORT at FM step 573/634 (t=17.36s) — reason=inverted: body z-axis · world z = -0.08 < 0 — the drone is upside down
+[ eval ] pillars variant=diffuser: trial 8/10 done  (664.9s elapsed this variant, ~166.2s to go)
+[ eval ] pillars variant=diffuser trial_seed=10008: ⚠ DIVERGENCE ABORT at FM step 489/634 (t=14.82s) — reason=inverted: body z-axis · world z = -0.17 < 0 — the drone is upside down
+[ eval ] pillars variant=diffuser: trial 9/10 done  (749.6s elapsed this variant, ~83.3s to go)
+[ eval ] pillars variant=diffuser trial_seed=10009: ⚠ DIVERGENCE ABORT at FM step 441/634 (t=13.36s) — reason=inverted: body z-axis · world z = -0.14 < 0 — the drone is upside down
+[ eval ] pillars variant=diffuser: trial 10/10 done  (826.3s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=diffuser: ⚠ DIVERGENCE ABORT on 9/10 trials [0, 1, 2, 3, 5, 6, 7, 8, 9] — see DIVERGENCE_ABORT.txt
+[ eval ] pillars variant=diffuser (B=4, proj=off, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.100  steps_to_goal=468/634  track_err=0.517  → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/diffuser/
+[ eval ] pillars variant=diffuser TIMING: fm_ms=166.9 proj_ms=0.0 total_ms=166.9 (p95=173.6) budget=30.3ms → real_time_OVER×4773
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 2/17: 'dpcc-r'  (n_trials=10)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ eval ] pillars variant=dpcc-r: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ eval ] pillars variant=dpcc-r trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 274/634 (t=8.30s) — reason=inverted: body z-axis · world z = -0.08 < 0 — the drone is upside down
+[ eval ] pillars variant=dpcc-r: trial 1/10 done  (2178.1s elapsed this variant, ~19603.1s to go)
+[ eval ] pillars variant=dpcc-r trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 449/634 (t=13.61s) — reason=inverted: body z-axis · world z = -0.01 < 0 — the drone is upside down
+[ eval ] pillars variant=dpcc-r: trial 2/10 done  (4707.9s elapsed this variant, ~18831.5s to go)
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #1).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 84 ms).
+[ eval ] pillars variant=dpcc-r trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 467/634 (t=14.15s) — reason=inverted: body z-axis · world z = -0.19 < 0 — the drone is upside down
+[ eval ] pillars variant=dpcc-r: trial 3/10 done  (8788.2s elapsed this variant, ~20505.8s to go)
+[ eval ] pillars variant=dpcc-r trial_seed=10003: ⚠ DIVERGENCE ABORT at FM step 376/634 (t=11.39s) — reason=inverted: body z-axis · world z = -0.28 < 0 — the drone is upside down
+[ eval ] pillars variant=dpcc-r: trial 4/10 done  (10754.2s elapsed this variant, ~16131.3s to go)
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #2).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 301 ms).
+[ eval ] pillars variant=dpcc-r trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 436/634 (t=13.21s) — reason=inverted: body z-axis · world z = -0.11 < 0 — the drone is upside down
+[ eval ] pillars variant=dpcc-r: trial 5/10 done  (13170.2s elapsed this variant, ~13170.2s to go)
+[ eval ] pillars variant=dpcc-r trial_seed=10005: ⚠ DIVERGENCE ABORT at FM step 265/634 (t=8.03s) — reason=inverted: body z-axis · world z = -0.05 < 0 — the drone is upside down
+[ eval ] pillars variant=dpcc-r: trial 6/10 done  (14786.9s elapsed this variant, ~9857.9s to go)
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #3).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 829 ms).
+[ eval ] pillars variant=dpcc-r trial_seed=10006: ⚠ DIVERGENCE ABORT at FM step 325/634 (t=9.85s) — reason=inverted: body z-axis · world z = -0.01 < 0 — the drone is upside down
+[ eval ] pillars variant=dpcc-r: trial 7/10 done  (17872.5s elapsed this variant, ~7659.6s to go)
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #4).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 496 ms).
+[ eval ] pillars variant=dpcc-r trial_seed=10007: ⚠ DIVERGENCE ABORT at FM step 431/634 (t=13.06s) — reason=inverted: body z-axis · world z = -0.09 < 0 — the drone is upside down
+[ eval ] pillars variant=dpcc-r: trial 8/10 done  (20432.6s elapsed this variant, ~5108.2s to go)
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #5).
+[ eval ] pillars variant=dpcc-r trial_seed=10008: ⚠ DIVERGENCE ABORT at FM step 271/634 (t=8.21s) — reason=inverted: body z-axis · world z = -0.08 < 0 — the drone is upside down
+[ eval ] pillars variant=dpcc-r: trial 9/10 done  (22123.2s elapsed this variant, ~2458.1s to go)
+[ projector ] circuit breaker RECOVERED — projection resumed (step 455 ms).
+[ eval ] pillars variant=dpcc-r trial_seed=10009: ⚠ DIVERGENCE ABORT at FM step 266/634 (t=8.06s) — reason=inverted: body z-axis · world z = -0.02 < 0 — the drone is upside down
+[ eval ] pillars variant=dpcc-r: trial 10/10 done  (24001.2s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=dpcc-r: ⚠ PROJECTION CIRCUIT-BREAKER TRIPPED on 6/10 trials (20 steps skipped) — results marked UNPROJECTED. See PROJECTION_CB_TRIPPED.txt.
+[ eval ] pillars variant=dpcc-r: ⚠ DIVERGENCE ABORT on 10/10 trials [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] — see DIVERGENCE_ABORT.txt
+[ eval ] pillars variant=dpcc-r (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/634  track_err=0.573  → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/dpcc-r/
+[ eval ] pillars variant=dpcc-r TIMING: fm_ms=174.3 proj_ms=6591.8 total_ms=6766.1 (p95=38197.1) budget=30.3ms → real_time_OVER×3570
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 3/17: 'dpcc-r-tightened'  (n_trials=10)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ geo ] Constraint overview → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/constraint_overview_tightened.png (+ .svg)
+[ eval ] pillars variant=dpcc-r-tightened: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #1).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 56 ms).
+[ eval ] pillars variant=dpcc-r-tightened: trial 1/10 done  (3915.5s elapsed this variant, ~35239.9s to go)
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #2).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 454 ms).
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #3).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 292 ms).
+[ projector ] COST EXPLODED (sustained): 38/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #4).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 894 ms).
+[ projector ] COST EXPLODED (sustained): 37/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #5).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 339 ms).
+[ projector ] COST EXPLODED (sustained): 37/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #6).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 188 ms).
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #7).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 772 ms).
+[ projector ] COST EXPLODED (sustained): 37/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #8).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 983 ms).
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #9).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 150 ms).
+[ eval ] pillars variant=dpcc-r-tightened trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 339/634 (t=10.27s) — reason=inverted: body z-axis · world z = -0.08 < 0 — the drone is upside down
+[ eval ] pillars variant=dpcc-r-tightened: trial 2/10 done  (9995.1s elapsed this variant, ~39980.4s to go)
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #10).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 495 ms).
+[ eval ] pillars variant=dpcc-r-tightened trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 358/634 (t=10.85s) — reason=inverted: body z-axis · world z = -0.19 < 0 — the drone is upside down
+[ eval ] pillars variant=dpcc-r-tightened: trial 3/10 done  (13394.7s elapsed this variant, ~31254.4s to go)
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #11).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 103 ms).
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #12).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 403 ms).
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #13).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 486 ms).
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #14).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 479 ms).
+[ eval ] pillars variant=dpcc-r-tightened trial_seed=10003: ⚠ DIVERGENCE ABORT at FM step 357/634 (t=10.82s) — reason=inverted: body z-axis · world z = -0.00 < 0 — the drone is upside down
+[ eval ] pillars variant=dpcc-r-tightened: trial 4/10 done  (17464.4s elapsed this variant, ~26196.6s to go)
+[ eval ] pillars variant=dpcc-r-tightened trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 427/634 (t=12.94s) — reason=inverted: body z-axis · world z = -0.28 < 0 — the drone is upside down
+[ eval ] pillars variant=dpcc-r-tightened: trial 5/10 done  (22101.2s elapsed this variant, ~22101.2s to go)
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #15).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 451 ms).
+[ eval ] pillars variant=dpcc-r-tightened trial_seed=10005: ⚠ DIVERGENCE ABORT at FM step 222/634 (t=6.73s) — reason=inverted: body z-axis · world z = -0.26 < 0 — the drone is upside down
+[ eval ] pillars variant=dpcc-r-tightened: trial 6/10 done  (23702.3s elapsed this variant, ~15801.5s to go)
+[ eval ] pillars variant=dpcc-r-tightened: trial 7/10 done  (27590.6s elapsed this variant, ~11824.5s to go)
+[ eval ] pillars variant=dpcc-r-tightened trial_seed=10007: ⚠ DIVERGENCE ABORT at FM step 495/634 (t=15.00s) — reason=inverted: body z-axis · world z = -0.08 < 0 — the drone is upside down
+[ eval ] pillars variant=dpcc-r-tightened: trial 8/10 done  (30190.6s elapsed this variant, ~7547.6s to go)
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #16).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 273 ms).
+[ eval ] pillars variant=dpcc-r-tightened trial_seed=10008: ⚠ DIVERGENCE ABORT at FM step 304/634 (t=9.21s) — reason=inverted: body z-axis · world z = -0.10 < 0 — the drone is upside down
+[ eval ] pillars variant=dpcc-r-tightened: trial 9/10 done  (32455.6s elapsed this variant, ~3606.2s to go)
+[ eval ] pillars variant=dpcc-r-tightened trial_seed=10009: ⚠ DIVERGENCE ABORT at FM step 196/634 (t=5.94s) — reason=inverted: body z-axis · world z = -0.03 < 0 — the drone is upside down
+[ eval ] pillars variant=dpcc-r-tightened: trial 10/10 done  (34425.1s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=dpcc-r-tightened: ⚠ PROJECTION CIRCUIT-BREAKER TRIPPED on 6/10 trials (96 steps skipped) — results marked UNPROJECTED. See PROJECTION_CB_TRIPPED.txt.
+[ eval ] pillars variant=dpcc-r-tightened: ⚠ DIVERGENCE ABORT on 8/10 trials [1, 2, 3, 4, 5, 7, 8, 9] — see DIVERGENCE_ABORT.txt
+[ eval ] pillars variant=dpcc-r-tightened (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.200  steps_to_goal=508/634  track_err=0.878  → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/dpcc-r-tightened/
+[ eval ] pillars variant=dpcc-r-tightened TIMING: fm_ms=180.4 proj_ms=9293.5 total_ms=9473.9 (p95=75116.0) budget=30.3ms → real_time_OVER×3723
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 4/17: 'dpcc-c'  (n_trials=10)
+[ provenance ] wrote logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/run_provenance_2.json
+[ eval ] pillars variant=dpcc-c: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ eval ] pillars variant=dpcc-c: trial 1/10 done  (2743.4s elapsed this variant, ~24690.2s to go)
+[ eval ] pillars variant=dpcc-c trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 247/634 (t=7.48s) — reason=inverted: body z-axis · world z = -0.02 < 0 — the drone is upside down
+[ eval ] pillars variant=dpcc-c: trial 2/10 done  (4394.3s elapsed this variant, ~17577.2s to go)
+[ eval ] pillars variant=dpcc-c: trial 3/10 done  (7430.6s elapsed this variant, ~17338.1s to go)
+[ eval ] pillars variant=dpcc-c: trial 4/10 done  (10133.3s elapsed this variant, ~15199.9s to go)
+[ eval ] pillars variant=dpcc-c: trial 5/10 done  (13076.2s elapsed this variant, ~13076.2s to go)
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #1).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 168 ms).
+[ eval ] pillars variant=dpcc-c trial_seed=10005: ⚠ DIVERGENCE ABORT at FM step 231/634 (t=7.00s) — reason=inverted: body z-axis · world z = -0.39 < 0 — the drone is upside down
+[ eval ] pillars variant=dpcc-c: trial 6/10 done  (14624.9s elapsed this variant, ~9750.0s to go)
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #2).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 290 ms).
+[ eval ] pillars variant=dpcc-c: trial 7/10 done  (19615.1s elapsed this variant, ~8406.5s to go)
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #3).
+[ projector ] circuit breaker RECOVERED — projection resumed (step 495 ms).
+[ eval ] pillars variant=dpcc-c trial_seed=10007: ⚠ DIVERGENCE ABORT at FM step 239/634 (t=7.24s) — reason=inverted: body z-axis · world z = -0.09 < 0 — the drone is upside down
+[ eval ] pillars variant=dpcc-c: trial 8/10 done  (21321.6s elapsed this variant, ~5330.4s to go)
+[ eval ] pillars variant=dpcc-c trial_seed=10008: ⚠ DIVERGENCE ABORT at FM step 264/634 (t=8.00s) — reason=inverted: body z-axis · world z = -0.00 < 0 — the drone is upside down
+[ eval ] pillars variant=dpcc-c: trial 9/10 done  (22984.8s elapsed this variant, ~2553.9s to go)
+[ eval ] pillars variant=dpcc-c: trial 10/10 done  (26288.1s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=dpcc-c: ⚠ PROJECTION CIRCUIT-BREAKER TRIPPED on 3/10 trials (12 steps skipped) — results marked UNPROJECTED. See PROJECTION_CB_TRIPPED.txt.
+[ eval ] pillars variant=dpcc-c: ⚠ DIVERGENCE ABORT on 4/10 trials [1, 5, 7, 8] — see DIVERGENCE_ABORT.txt
+[ eval ] pillars variant=dpcc-c (B=4, proj=on, sel=minimum_projection_cost): success=0.200  success_relaxed=0.200  safe=0.200  goal_reached=0.600  steps_to_goal=447/634  track_err=0.548  → logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/dpcc-c/
+[ eval ] pillars variant=dpcc-c TIMING: fm_ms=189.9 proj_ms=6880.1 total_ms=7069.9 (p95=34614.0) budget=30.3ms → real_time_OVER×3668
+[ eval ] pillars [geo_tag=pillars_bounds+dynamics+geo_bounds+obstacles] >>> variant 5/17: 'dpcc-c-tightened'  (n_trials=10)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/run_provenance_2.json
+[ eval ] pillars variant=dpcc-c-tightened: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+slurmstepd-i6-gpu-1: error: *** JOB 25130 ON i6-gpu-1 CANCELLED AT 2026-08-28T23:40:39 DUE TO TIME LIMIT ***
+JOB END: Fri Aug 28 23:40:39 UTC 2026

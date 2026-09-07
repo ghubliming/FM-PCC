@@ -1,0 +1,776 @@
+======================================================================
+CROSS-CANDIDATE COMPARISON SUMMARY
+======================================================================
+
+CANDIDATES DISCOVERED
+----------------------------------------------------------------------
+  1: H8_K20_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4
+      last run 2026-06-20 23:59:32   (2 config snapshot(s) over 1 seed(s))
+  2: (old_no_mpc_traj)H8_K20_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4
+      last run 2026-06-25 05:20:23   (13 config snapshot(s) over 5 seed(s))
+      per seed: 6:20260622_164149 | 7:20260625_052023 | 8:20260625_005203 | 9:20260625_022032 | 10:20260625_035121
+  3: H8_K20_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv1
+      last run 2026-07-15 04:33:15   (3 config snapshot(s) over 1 seed(s))
+  4: H8_K20_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4_filmv2
+      last run 2026-06-30 13:43:07   (6 config snapshot(s) over 1 seed(s))
+  5: H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc4
+      last run 2026-06-21 03:59:12   (3 config snapshot(s) over 1 seed(s))
+  6: H8_K20_T0.5_Ddiffuser_visual_avoiding.models.visual_gaussian_diffusion.VisualGaussianDiffusion_VTrue_steps200_mpc4
+      last run 2026-06-24 10:08:50   (15 config snapshot(s) over 5 seed(s))
+      per seed: 6:20260622_114259 | 7:20260624_090122 | 8:20260624_092659 | 9:20260624_094540 | 10:20260624_100850
+  7: H8_K10_Dmodels.GaussianDiffusion_aw10_thres0.5
+      last run 2026-05-06 03:48:06   (20 config snapshot(s) over 5 seed(s))
+  8: H8_K1_T0.5_Dmodels.GaussianDiffusion
+      last run 2026-05-21 12:17:37   (20 config snapshot(s) over 5 seed(s))
+  9: H8_K20_T0.5_Dmodels.GaussianDiffusion
+      last run 2026-05-14 08:53:39   (5 config snapshot(s) over 5 seed(s))
+  10: H8_K20_T1_Dmodels.GaussianDiffusion
+      last run 2026-08-04 23:44:16   (3 config snapshot(s) over 1 seed(s))
+  11: X_H8_K20_T0.05_Dmodels.GaussianDiffusion
+      last run 2026-08-04 13:54:35   (3 config snapshot(s) over 1 seed(s))
+  12: X_H8_K20_T0.1_Dmodels.GaussianDiffusion
+      last run 2026-08-04 10:32:42   (3 config snapshot(s) over 1 seed(s))
+  13: X_H8_K20_T1_Dmodels.GaussianDiffusion
+      last run 2026-08-04 16:28:21   (3 config snapshot(s) over 1 seed(s))
+  14: H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5
+      last run 2026-05-09 09:18:17   (5 config snapshot(s) over 5 seed(s))
+      per seed: 6:20260509_091817 | 7:20260504_161950 | 8:20260504_164443 | 9:20260504_170630 | 10:20260504_173624
+  15: H8_K20_T0.5_Dmodels.GaussianDiffusion_aw1
+      last run 2026-05-10 10:24:51   (20 config snapshot(s) over 5 seed(s))
+  16: H8_K20_T1_Dmodels.GaussianDiffusion_aw10
+      last run 2026-05-09 15:32:38   (20 config snapshot(s) over 5 seed(s))
+  17: H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-07-24 03:07:10   (3 config snapshot(s) over 1 seed(s))
+  18: H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-07-24 02:11:35   (3 config snapshot(s) over 1 seed(s))
+  19: H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-07-24 02:19:53   (3 config snapshot(s) over 1 seed(s))
+  20: H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-07-24 02:36:49   (3 config snapshot(s) over 1 seed(s))
+  21: H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-07-27 20:31:38   (3 config snapshot(s) over 1 seed(s))
+  22: H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-07-27 19:37:01   (3 config snapshot(s) over 1 seed(s))
+  23: H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-07-27 19:47:07   (3 config snapshot(s) over 1 seed(s))
+  24: H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-07-27 20:03:25   (3 config snapshot(s) over 1 seed(s))
+  25: H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-07-25 06:02:53   (3 config snapshot(s) over 1 seed(s))
+  26: H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-07-25 02:51:01   (3 config snapshot(s) over 1 seed(s))
+  27: H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-07-25 03:12:46   (3 config snapshot(s) over 1 seed(s))
+  28: H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-07-25 04:03:48   (3 config snapshot(s) over 1 seed(s))
+  29: H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-07-30 22:33:08   (3 config snapshot(s) over 1 seed(s))
+  30: H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-07-30 21:12:56   (3 config snapshot(s) over 1 seed(s))
+  31: H8_K20_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-07-30 23:58:52   (3 config snapshot(s) over 1 seed(s))
+  32: H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-07-30 21:28:46   (3 config snapshot(s) over 1 seed(s))
+  33: H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-07-30 21:51:18   (3 config snapshot(s) over 1 seed(s))
+  34: H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-08-01 16:41:20   (12 config snapshot(s) over 4 seed(s))
+      per seed: 7:20260801_161414 | 8:20260801_162353 | 9:20260801_163255 | 10:20260801_164120
+  35: H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-08-01 12:38:28   (12 config snapshot(s) over 4 seed(s))
+      per seed: 7:20260801_122929 | 8:20260801_123232 | 9:20260801_123516 | 10:20260801_123828
+  36: H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-08-01 13:19:02   (15 config snapshot(s) over 5 seed(s))
+      per seed: 6:20260801_105017 | 7:20260801_130908 | 8:20260801_131249 | 9:20260801_131551 | 10:20260801_131902
+  37: H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-08-01 14:39:23   (12 config snapshot(s) over 4 seed(s))
+      per seed: 7:20260801_142142 | 8:20260801_142731 | 9:20260801_143330 | 10:20260801_143923
+  38: H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-08-12 14:39:07   (15 config snapshot(s) over 5 seed(s))
+      per seed: 6:20260812_140814 | 7:20260812_141600 | 8:20260812_142411 | 9:20260812_143200 | 10:20260812_143907
+  39: H8_K1_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-08-12 10:08:42   (16 config snapshot(s) over 5 seed(s))
+      per seed: 6:20260812_095638 | 7:20260812_095945 | 8:20260812_100246 | 9:20260812_100530 | 10:20260812_100842
+  40: H8_K20_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-08-12 19:30:16   (15 config snapshot(s) over 5 seed(s))
+      per seed: 6:20260812_182329 | 7:20260812_184115 | 8:20260812_185759 | 9:20260812_191414 | 10:20260812_193016
+  41: H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-08-12 10:55:51   (15 config snapshot(s) over 5 seed(s))
+      per seed: 6:20260812_104413 | 7:20260812_104704 | 8:20260812_105027 | 9:20260812_105258 | 10:20260812_105551
+  42: H8_K5_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-08-12 12:26:44   (15 config snapshot(s) over 5 seed(s))
+      per seed: 6:20260812_120541 | 7:20260812_121050 | 8:20260812_121601 | 9:20260812_122130 | 10:20260812_122644
+  43: H8_K10_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-08-09 01:16:56   (3 config snapshot(s) over 1 seed(s))
+  44: H8_K1_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-08-08 22:16:37   (3 config snapshot(s) over 1 seed(s))
+  45: H8_K2_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-08-08 22:39:53   (15 config snapshot(s) over 5 seed(s))
+      per seed: 6:20260808_223953 | 7:20260808_195118 | 8:20260808_195500 | 9:20260808_195854 | 10:20260808_200248
+  46: H8_K5_Meuler_T0.5_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE
+      last run 2026-08-08 23:30:01   (3 config snapshot(s) over 1 seed(s))
+  47: H8_K10_Meuler_T0.5_Dmodels.diffusion.GaussianDiffusion
+      last run 2026-05-21 20:23:00   (4 config snapshot(s) over 1 seed(s))
+  48: K10_thres0_mpc1_n2
+      last run unknown (no config_snapshot marker)
+  49: K20_thres0.5_mpc1_n2
+      last run unknown (no config_snapshot marker)
+  50: K20_thres0_mpc1_n2
+      last run unknown (no config_snapshot marker)
+  51: K20_thres0_mpc4_n2
+      last run unknown (no config_snapshot marker)
+  52: K2_thres0_mpc1_n2
+      last run unknown (no config_snapshot marker)
+  53: K5_thres0_mpc1_n2
+      last run unknown (no config_snapshot marker)
+  54: H8_K10_Dmodels.diffusion.FlowMatchingODE(UNORGNIZED)
+      last run unknown (no config_snapshot marker)
+  55: K20_thres0.5_mpc4_n2
+      last run unknown (no config_snapshot marker)
+  56: H8_K10_Dmodels.diffusion.FlowMatchingODE
+      last run unknown (no config_snapshot marker)
+  57: K20_thres0.05_mpc4_n2
+      last run unknown (no config_snapshot marker)
+  58: K20_thres0.1_mpc4_n2
+      last run unknown (no config_snapshot marker)
+  59: K20_thres0.5_mpc4_n2
+      last run unknown (no config_snapshot marker)
+  60: H8_K10_Dmodels.diffusion.FlowMatchingODE
+      last run unknown (no config_snapshot marker)
+  61: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-06-16 18:04:46   (3 config snapshot(s) over 1 seed(s))
+  62: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-06-16 14:10:01   (3 config snapshot(s) over 1 seed(s))
+  63: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-06-14 21:32:29   (3 config snapshot(s) over 1 seed(s))
+  64: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-06-17 07:38:31   (3 config snapshot(s) over 1 seed(s))
+  65: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-06-15 09:10:19   (3 config snapshot(s) over 1 seed(s))
+  66: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-06-15 09:55:05   (3 config snapshot(s) over 1 seed(s))
+  67: (legacy_F2)H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-05-31 15:09:06   (3 config snapshot(s) over 1 seed(s))
+  68: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-06-02 21:14:37   (3 config snapshot(s) over 1 seed(s))
+  69: H8_K20_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-06-01 15:48:15   (3 config snapshot(s) over 1 seed(s))
+  70: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-06-01 16:38:55   (3 config snapshot(s) over 1 seed(s))
+  71: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-06-11 10:30:39   (3 config snapshot(s) over 1 seed(s))
+  72: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-06-11 15:16:13   (3 config snapshot(s) over 1 seed(s))
+  73: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-06-20 11:16:25   (3 config snapshot(s) over 1 seed(s))
+  74: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-06-29 07:25:23   (3 config snapshot(s) over 1 seed(s))
+  75: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-07-13 14:57:43   (3 config snapshot(s) over 1 seed(s))
+  76: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-06-17 12:12:18   (3 config snapshot(s) over 1 seed(s))
+  77: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-07-08 12:16:01   (3 config snapshot(s) over 1 seed(s))
+  78: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-06-18 19:55:50   (3 config snapshot(s) over 1 seed(s))
+  79: H8_K20_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-06-18 23:12:11   (3 config snapshot(s) over 1 seed(s))
+  80: H8_K20_Mrk4_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-06-19 11:07:50   (3 config snapshot(s) over 1 seed(s))
+  81: H8_K2_Mrk4_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-06-19 10:02:02   (3 config snapshot(s) over 1 seed(s))
+  82: H8_K40_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-06-19 02:58:04   (3 config snapshot(s) over 1 seed(s))
+  83: H8_K10_Mrk4_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-06-19 09:40:33   (1 config snapshot(s) over 1 seed(s))
+  84: H8_K10_Meuler_Dflow_matcher_v3_imeanflow.models.iMFDiffusion
+      last run 2026-05-21 21:45:52   (4 config snapshot(s) over 1 seed(s))
+  85: H8_K1_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-05-29 22:26:57   (4 config snapshot(s) over 1 seed(s))
+  86: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-05-30 09:58:57   (3 config snapshot(s) over 1 seed(s))
+  87: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-06-15 18:31:30   (3 config snapshot(s) over 1 seed(s))
+  88: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-07-09 15:21:10   (3 config snapshot(s) over 1 seed(s))
+  89: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-06-18 00:41:53   (3 config snapshot(s) over 1 seed(s))
+  90: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-06-18 09:48:25   (3 config snapshot(s) over 1 seed(s))
+  91: H8_K100_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-07-16 17:28:20   (3 config snapshot(s) over 1 seed(s))
+  92: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-07-15 11:44:57   (3 config snapshot(s) over 1 seed(s))
+  93: H8_K1_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-07-16 21:40:45   (3 config snapshot(s) over 1 seed(s))
+  94: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-07-14 22:52:55   (3 config snapshot(s) over 1 seed(s))
+  95: H8_K50_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-07-16 00:47:56   (3 config snapshot(s) over 1 seed(s))
+  96: H8_K10_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-07-18 21:27:48   (3 config snapshot(s) over 1 seed(s))
+  97: H8_K1_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-07-18 20:56:00   (3 config snapshot(s) over 1 seed(s))
+  98: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-07-18 17:08:03   (3 config snapshot(s) over 1 seed(s))
+  99: H8_K50_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-07-19 00:07:11   (3 config snapshot(s) over 1 seed(s))
+  100: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-07-22 15:23:16   (3 config snapshot(s) over 1 seed(s))
+  101: H8_K2_Meuler_T0.5_Dflow_matcher_v3_imeanflow.models.iMeanFlowODE
+      last run 2026-07-21 16:10:37   (3 config snapshot(s) over 1 seed(s))
+  102: H8_K1_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-07-30 11:33:39   (3 config snapshot(s) over 1 seed(s))
+  103: H8_K20_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-07-30 13:06:57   (3 config snapshot(s) over 1 seed(s))
+  104: H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-07-28 23:48:45   (3 config snapshot(s) over 1 seed(s))
+  105: H8_K5_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-07-30 11:50:10   (3 config snapshot(s) over 1 seed(s))
+  106: H8_K10_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-07-30 16:41:48   (3 config snapshot(s) over 1 seed(s))
+  107: H8_K1_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-07-30 15:59:04   (3 config snapshot(s) over 1 seed(s))
+  108: H8_K20_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-07-30 17:41:07   (3 config snapshot(s) over 1 seed(s))
+  109: H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-07-30 16:01:00   (3 config snapshot(s) over 1 seed(s))
+  110: H8_K5_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-07-30 16:22:43   (3 config snapshot(s) over 1 seed(s))
+  111: H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-07-24 01:46:00   (3 config snapshot(s) over 1 seed(s))
+  112: H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-07-27 21:55:07   (3 config snapshot(s) over 1 seed(s))
+  113: H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-07-25 07:26:57   (3 config snapshot(s) over 1 seed(s))
+  114: H8_K10_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-08-01 00:43:51   (3 config snapshot(s) over 1 seed(s))
+  115: H8_K1_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-07-31 23:18:41   (3 config snapshot(s) over 1 seed(s))
+  116: H8_K20_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-08-01 02:09:39   (3 config snapshot(s) over 1 seed(s))
+  117: H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-08-02 00:02:08   (17 config snapshot(s) over 5 seed(s))
+      per seed: 6:20260731_233403 | 7:20260801_235120 | 8:20260801_235508 | 9:20260801_235821 | 10:20260802_000208
+  118: H8_K5_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-07-31 23:59:32   (3 config snapshot(s) over 1 seed(s))
+  119: H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-08-12 15:25:28   (15 config snapshot(s) over 5 seed(s))
+      per seed: 6:20260812_145113 | 7:20260812_145928 | 8:20260812_150721 | 9:20260812_151658 | 10:20260812_152528
+  120: H8_K1_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-08-12 10:25:49   (15 config snapshot(s) over 5 seed(s))
+      per seed: 6:20260812_101305 | 7:20260812_101549 | 8:20260812_101846 | 9:20260812_102204 | 10:20260812_102549
+  121: H8_K20_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-08-12 20:33:42   (15 config snapshot(s) over 5 seed(s))
+      per seed: 6:20260812_192307 | 7:20260812_194044 | 8:20260812_195836 | 9:20260812_201537 | 10:20260812_203342
+  122: H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-08-12 11:19:08   (15 config snapshot(s) over 5 seed(s))
+      per seed: 6:20260812_110612 | 7:20260812_110928 | 8:20260812_111247 | 9:20260812_111534 | 10:20260812_111908
+  123: H8_K5_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-08-12 12:54:39   (15 config snapshot(s) over 5 seed(s))
+      per seed: 6:20260812_123215 | 7:20260812_123750 | 8:20260812_124257 | 9:20260812_124845 | 10:20260812_125439
+  124: H8_K10_Meuler_T0.5_A0.1_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-08-11 23:27:00   (3 config snapshot(s) over 1 seed(s))
+  125: H8_K10_Meuler_T0.5_A0.25_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-08-11 23:34:57   (3 config snapshot(s) over 1 seed(s))
+  126: H8_K10_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-08-11 21:54:12   (27 config snapshot(s) over 5 seed(s))
+      per seed: 6:20260811_215412 | 7:20260811_194436 | 8:20260811_195509 | 9:20260811_200445 | 10:20260811_201335
+  127: H8_K10_Meuler_T0.5_A0_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-08-11 23:09:55   (3 config snapshot(s) over 1 seed(s))
+  128: H8_K1_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-08-11 21:06:31   (27 config snapshot(s) over 5 seed(s))
+      per seed: 6:20260811_210631 | 7:20260811_162535 | 8:20260811_162758 | 9:20260811_163028 | 10:20260811_163309
+  129: H8_K2_Meuler_T0,5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-08-06 21:10:22   (4 config snapshot(s) over 2 seed(s))
+      per seed: 6:20260806_211022 | 7:20260806_183935
+  130: H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-08-11 21:14:36   (27 config snapshot(s) over 5 seed(s))
+      per seed: 6:20260811_211436 | 7:20260811_165814 | 8:20260811_170102 | 9:20260811_170347 | 10:20260811_170637
+  131: H8_K2_Meuler_T0.5_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-08-08 22:03:01   (1 config snapshot(s) over 1 seed(s))
+  132: H8_K5_Meuler_T0.5_A0.1_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-08-11 22:48:59   (3 config snapshot(s) over 1 seed(s))
+  133: H8_K5_Meuler_T0.5_A0.25_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-08-11 23:05:34   (3 config snapshot(s) over 1 seed(s))
+  134: H8_K5_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-08-11 21:29:30   (27 config snapshot(s) over 5 seed(s))
+      per seed: 6:20260811_212930 | 7:20260811_180055 | 8:20260811_180708 | 9:20260811_181313 | 10:20260811_181937
+  135: H8_K5_Meuler_T0.5_A0_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE
+      last run 2026-08-11 22:48:53   (3 config snapshot(s) over 1 seed(s))
+  136: H8_K10_Meuler_T0.1_Dmodels.diffusion.FlowMatchingODE
+      last run 2026-08-03 22:03:44   (3 config snapshot(s) over 1 seed(s))
+  137: H8_K5_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE
+      last run 2026-07-16 08:43:55   (2 config snapshot(s) over 1 seed(s))
+  138: H8_K10_Meuler_T0.05_Dmodels.diffusion.FlowMatchingODE
+      last run 2026-08-03 23:10:42   (3 config snapshot(s) over 1 seed(s))
+  139: H8_K10_Meuler_T0.1_Dmodels.diffusion.FlowMatchingODE
+      last run 2026-08-03 22:14:26   (3 config snapshot(s) over 1 seed(s))
+  140: H8_K20_Meuler_T0.05_Dmodels.diffusion.FlowMatchingODE
+      last run 2026-08-04 08:15:44   (3 config snapshot(s) over 1 seed(s))
+  141: H8_K20_Meuler_T0.1_Dmodels.diffusion.FlowMatchingODE
+      last run 2026-08-04 08:48:16   (3 config snapshot(s) over 1 seed(s))
+  142: H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE
+      last run 2026-07-03 01:15:54   (17 config snapshot(s) over 5 seed(s))
+      per seed: 6:20260703_001705 | 7:20260703_003046 | 8:20260703_004533 | 9:20260703_010023 | 10:20260703_011554
+  143: H8_K5_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE
+      last run 2026-07-16 13:41:38   (3 config snapshot(s) over 1 seed(s))
+  144: H8_K10_Dmodels.diffusion.GaussianDiffusion
+      last run unknown (no config_snapshot marker)
+  145: H8_K10_Meuler_T1_Dmodels.diffusion.GaussianDiffusion
+      last run 2026-05-08 19:44:33   (20 config snapshot(s) over 5 seed(s))
+  146: H8_K1_Meuler_T0.5_Dmodels.diffusion.GaussianDiffusion
+      last run 2026-05-20 21:09:46   (25 config snapshot(s) over 5 seed(s))
+  147: H8_K20_Meuler_Dmodels.diffusion.GaussianDiffusion
+      last run 2026-05-07 18:52:38   (20 config snapshot(s) over 5 seed(s))
+  148: H8_K5_Mmidpoint_Dmodels.diffusion.GaussianDiffusion
+      last run unknown (no config_snapshot marker)
+  149: H8_K10_Meuler_Dmodels.diffusion.GaussianDiffusion
+      last run 2026-05-07 03:32:55   (20 config snapshot(s) over 5 seed(s))
+  150: H8_K100_Meuler_T0.5_Dfm_visual_avoiding.models.visual_gaussian_diffusion.VisualFlowMatching_VTrue_mpc4
+      last run 2026-06-03 15:14:43   (1 config snapshot(s) over 1 seed(s))
+
+RANKINGS BY MAJOR VARIANT ACCURACY (DPCC average)
+----------------------------------------------------------------------
+  1. Candidate 48: 100.00%, Avg Time: 0.3ms
+      Breakdown: dpcc-c-tightened: 100.0%, hardflow_new: 100.0%
+  2. Candidate 49: 100.00%, Avg Time: 0.5ms
+      Breakdown: dpcc-c-tightened: 100.0%, hardflow_new: 100.0%
+  3. Candidate 50: 100.00%, Avg Time: 0.6ms
+      Breakdown: dpcc-c-tightened: 100.0%, hardflow_new: 100.0%
+  4. Candidate 51: 100.00%, Avg Time: 1.7ms
+      Breakdown: dpcc-c-tightened: 100.0%, hardflow_new: 100.0%
+  5. Candidate 30: 89.58%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 50.0%, dpcc-r-tightened: 100.0%, dpcc-c: 83.3%, dpcc-c-tightened: 100.0%, dpcc-t: 100.0%, dpcc-t-tightened: 100.0%, hardflow_new-c: 83.3%, hardflow_new-c-tightened: 100.0%
+  6. Candidate 22: 88.89%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 50.0%, dpcc-r-tightened: 100.0%, dpcc-c: 83.3%, dpcc-c-tightened: 100.0%, dpcc-t: 100.0%, dpcc-t-tightened: 100.0%
+  7. Candidate 55: 86.67%, Avg Time: 1.4ms
+      Breakdown: dpcc-c-tightened: 100.0%, hardflow_new-c: 60.0%, hardflow_new-c-tightened: 100.0%
+  8. Candidate 19: 83.33%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 83.3%, dpcc-r-tightened: 100.0%, dpcc-c: 66.7%, dpcc-c-tightened: 100.0%, dpcc-t: 50.0%, dpcc-t-tightened: 100.0%
+  9. Candidate 58: 83.33%, Avg Time: 0.4ms
+      Breakdown: dpcc-c-tightened: 100.0%, hardflow_new-c: 50.0%, hardflow_new-c-tightened: 100.0%
+  10. Candidate 59: 83.33%, Avg Time: 0.8ms
+      Breakdown: dpcc-c-tightened: 100.0%, hardflow_new-c: 50.0%, hardflow_new-c-tightened: 100.0%
+  11. Candidate 119: 82.08%, Avg Time: 0.3ms
+      Breakdown: dpcc-r: 66.7%, dpcc-r-tightened: 100.0%, dpcc-c: 63.3%, dpcc-c-tightened: 96.7%, dpcc-t: 73.3%, dpcc-t-tightened: 96.7%, hardflow_new-c: 66.7%, hardflow_new-c-tightened: 93.3%
+  12. Candidate 37: 81.77%, Avg Time: 0.2ms
+      Breakdown: dpcc-r: 58.3%, dpcc-r-tightened: 91.7%, dpcc-c: 83.3%, dpcc-c-tightened: 95.8%, dpcc-t: 50.0%, dpcc-t-tightened: 100.0%, hardflow_new-c: 75.0%, hardflow_new-c-tightened: 100.0%
+  13. Candidate 42: 81.25%, Avg Time: 0.2ms
+      Breakdown: dpcc-r: 53.3%, dpcc-r-tightened: 93.3%, dpcc-c: 80.0%, dpcc-c-tightened: 96.7%, dpcc-t: 53.3%, dpcc-t-tightened: 100.0%, hardflow_new-c: 73.3%, hardflow_new-c-tightened: 100.0%
+  14. Candidate 24: 80.56%, Avg Time: 0.2ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 100.0%, dpcc-c: 66.7%, dpcc-c-tightened: 100.0%, dpcc-t: 83.3%, dpcc-t-tightened: 100.0%
+  15. Candidate 18: 80.56%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 66.7%, dpcc-r-tightened: 100.0%, dpcc-c: 66.7%, dpcc-c-tightened: 100.0%, dpcc-t: 50.0%, dpcc-t-tightened: 100.0%
+  16. Candidate 100: 80.56%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 66.7%, dpcc-r-tightened: 100.0%, dpcc-c: 50.0%, dpcc-c-tightened: 100.0%, dpcc-t: 66.7%, dpcc-t-tightened: 100.0%
+  17. Candidate 145: 79.44%, Avg Time: 0.9ms
+      Breakdown: dpcc-r: 56.7%, dpcc-r-tightened: 100.0%, dpcc-c: 53.3%, dpcc-c-tightened: 100.0%, dpcc-t: 66.7%, dpcc-t-tightened: 100.0%
+  18. Candidate 114: 79.17%, Avg Time: 0.4ms
+      Breakdown: dpcc-r: 83.3%, dpcc-r-tightened: 100.0%, dpcc-c: 83.3%, dpcc-c-tightened: 100.0%, dpcc-t: 83.3%, dpcc-t-tightened: 100.0%, hardflow_new-c: 33.3%, hardflow_new-c-tightened: 50.0%
+  19. Candidate 38: 78.75%, Avg Time: 0.3ms
+      Breakdown: dpcc-r: 30.0%, dpcc-r-tightened: 86.7%, dpcc-c: 80.0%, dpcc-c-tightened: 100.0%, dpcc-t: 73.3%, dpcc-t-tightened: 96.7%, hardflow_new-c: 63.3%, hardflow_new-c-tightened: 100.0%
+  20. Candidate 39: 78.75%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 66.7%, dpcc-r-tightened: 100.0%, dpcc-c: 56.7%, dpcc-c-tightened: 90.0%, dpcc-t: 53.3%, dpcc-t-tightened: 100.0%, hardflow_new-c: 63.3%, hardflow_new-c-tightened: 100.0%
+  21. Candidate 35: 78.65%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 70.8%, dpcc-r-tightened: 100.0%, dpcc-c: 50.0%, dpcc-c-tightened: 87.5%, dpcc-t: 54.2%, dpcc-t-tightened: 100.0%, hardflow_new-c: 70.8%, hardflow_new-c-tightened: 95.8%
+  22. Candidate 123: 78.33%, Avg Time: 0.2ms
+      Breakdown: dpcc-r: 56.7%, dpcc-r-tightened: 96.7%, dpcc-c: 60.0%, dpcc-c-tightened: 100.0%, dpcc-t: 63.3%, dpcc-t-tightened: 96.7%, hardflow_new-c: 56.7%, hardflow_new-c-tightened: 96.7%
+  23. Candidate 34: 78.12%, Avg Time: 0.3ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 83.3%, dpcc-c: 75.0%, dpcc-c-tightened: 100.0%, dpcc-t: 70.8%, dpcc-t-tightened: 100.0%, hardflow_new-c: 62.5%, hardflow_new-c-tightened: 100.0%
+  24. Candidate 21: 77.78%, Avg Time: 0.4ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 100.0%, dpcc-c: 100.0%, dpcc-c-tightened: 100.0%, dpcc-t: 83.3%, dpcc-t-tightened: 83.3%
+  25. Candidate 20: 77.78%, Avg Time: 0.2ms
+      Breakdown: dpcc-r: 66.7%, dpcc-r-tightened: 66.7%, dpcc-c: 83.3%, dpcc-c-tightened: 100.0%, dpcc-t: 50.0%, dpcc-t-tightened: 100.0%
+  26. Candidate 57: 77.78%, Avg Time: 0.3ms
+      Breakdown: dpcc-c-tightened: 100.0%, hardflow_new-c: 33.3%, hardflow_new-c-tightened: 100.0%
+  27. Candidate 97: 77.78%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 66.7%, dpcc-r-tightened: 83.3%, dpcc-c: 66.7%, dpcc-c-tightened: 100.0%, dpcc-t: 50.0%, dpcc-t-tightened: 100.0%
+  28. Candidate 121: 77.08%, Avg Time: 0.8ms
+      Breakdown: dpcc-r: 43.3%, dpcc-r-tightened: 100.0%, dpcc-c: 50.0%, dpcc-c-tightened: 100.0%, dpcc-t: 50.0%, dpcc-t-tightened: 96.7%, hardflow_new-c: 83.3%, hardflow_new-c-tightened: 93.3%
+  29. Candidate 130: 76.25%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 46.7%, dpcc-r-tightened: 96.7%, dpcc-c: 80.0%, dpcc-c-tightened: 93.3%, dpcc-t: 46.7%, dpcc-t-tightened: 96.7%, hardflow_new-c: 56.7%, hardflow_new-c-tightened: 93.3%
+  30. Candidate 40: 76.25%, Avg Time: 0.7ms
+      Breakdown: dpcc-r: 30.0%, dpcc-r-tightened: 90.0%, dpcc-c: 66.7%, dpcc-c-tightened: 96.7%, dpcc-t: 60.0%, dpcc-t-tightened: 100.0%, hardflow_new-c: 70.0%, hardflow_new-c-tightened: 96.7%
+  31. Candidate 1: 75.00%, Avg Time: 9.2ms
+      Breakdown: dpcc-r: 50.0%, dpcc-r-tightened: 100.0%, dpcc-c: 50.0%, dpcc-c-tightened: 100.0%, dpcc-t: 50.0%, dpcc-t-tightened: 100.0%
+  32. Candidate 4: 75.00%, Avg Time: 4.0ms
+      Breakdown: dpcc-r: 50.0%, dpcc-r-tightened: 100.0%, dpcc-c: 50.0%, dpcc-c-tightened: 100.0%, dpcc-t: 50.0%, dpcc-t-tightened: 100.0%
+  33. Candidate 5: 75.00%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 50.0%, dpcc-r-tightened: 100.0%, dpcc-c: 50.0%, dpcc-c-tightened: 100.0%, dpcc-t: 50.0%, dpcc-t-tightened: 100.0%
+  34. Candidate 14: 75.00%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 26.7%, dpcc-r-tightened: 96.7%, dpcc-c: 60.0%, dpcc-c-tightened: 100.0%, dpcc-t: 66.7%, dpcc-t-tightened: 100.0%
+  35. Candidate 16: 75.00%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 26.7%, dpcc-r-tightened: 96.7%, dpcc-c: 60.0%, dpcc-c-tightened: 100.0%, dpcc-t: 66.7%, dpcc-t-tightened: 100.0%
+  36. Candidate 53: 75.00%, Avg Time: 0.1ms
+      Breakdown: dpcc-c-tightened: 100.0%, hardflow_new: 50.0%
+  37. Candidate 94: 75.00%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 100.0%, dpcc-c: 66.7%, dpcc-c-tightened: 100.0%, dpcc-t: 50.0%, dpcc-t-tightened: 100.0%
+  38. Candidate 106: 72.92%, Avg Time: 0.4ms
+      Breakdown: dpcc-r: 83.3%, dpcc-r-tightened: 100.0%, dpcc-c: 83.3%, dpcc-c-tightened: 100.0%, dpcc-t: 33.3%, dpcc-t-tightened: 100.0%, hardflow_new-c: 33.3%, hardflow_new-c-tightened: 50.0%
+  39. Candidate 129: 72.92%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 100.0%, dpcc-c: 66.7%, dpcc-c-tightened: 83.3%, dpcc-t: 50.0%, dpcc-t-tightened: 100.0%, hardflow_new-c: 50.0%, hardflow_new-c-tightened: 100.0%
+  40. Candidate 75: 72.22%, Avg Time: 0.4ms
+      Breakdown: dpcc-r: 50.0%, dpcc-r-tightened: 100.0%, dpcc-c: 50.0%, dpcc-c-tightened: 83.3%, dpcc-t: 50.0%, dpcc-t-tightened: 100.0%
+  41. Candidate 111: 72.22%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 83.3%, dpcc-c: 66.7%, dpcc-c-tightened: 100.0%, dpcc-t: 66.7%, dpcc-t-tightened: 83.3%
+  42. Candidate 143: 72.22%, Avg Time: 0.1ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 100.0%, dpcc-c: 50.0%, dpcc-c-tightened: 100.0%, dpcc-t: 50.0%, dpcc-t-tightened: 100.0%
+  43. Candidate 128: 72.08%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 90.0%, dpcc-c: 60.0%, dpcc-c-tightened: 93.3%, dpcc-t: 50.0%, dpcc-t-tightened: 96.7%, hardflow_new-c: 53.3%, hardflow_new-c-tightened: 100.0%
+  44. Candidate 33: 70.83%, Avg Time: 0.2ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 100.0%, dpcc-c: 66.7%, dpcc-c-tightened: 100.0%, dpcc-t: 83.3%, dpcc-t-tightened: 100.0%, hardflow_new-c: 33.3%, hardflow_new-c-tightened: 50.0%
+  45. Candidate 134: 70.83%, Avg Time: 0.2ms
+      Breakdown: dpcc-r: 43.3%, dpcc-r-tightened: 86.7%, dpcc-c: 63.3%, dpcc-c-tightened: 83.3%, dpcc-t: 50.0%, dpcc-t-tightened: 93.3%, hardflow_new-c: 53.3%, hardflow_new-c-tightened: 93.3%
+  46. Candidate 144: 70.56%, Avg Time: 0.2ms
+      Breakdown: dpcc-r: 26.7%, dpcc-r-tightened: 90.0%, dpcc-c: 63.3%, dpcc-c-tightened: 100.0%, dpcc-t: 43.3%, dpcc-t-tightened: 100.0%
+  47. Candidate 41: 69.58%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 73.3%, dpcc-r-tightened: 100.0%, dpcc-c: 16.7%, dpcc-c-tightened: 20.0%, dpcc-t: 80.0%, dpcc-t-tightened: 96.7%, hardflow_new-c: 70.0%, hardflow_new-c-tightened: 100.0%
+  48. Candidate 10: 69.44%, Avg Time: 1.9ms
+      Breakdown: dpcc-r: 66.7%, dpcc-r-tightened: 83.3%, dpcc-c: 16.7%, dpcc-c-tightened: 100.0%, dpcc-t: 66.7%, dpcc-t-tightened: 83.3%
+  49. Candidate 147: 69.44%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 30.0%, dpcc-r-tightened: 93.3%, dpcc-c: 36.7%, dpcc-c-tightened: 100.0%, dpcc-t: 56.7%, dpcc-t-tightened: 100.0%
+  50. Candidate 11: 69.44%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 83.3%, dpcc-c: 100.0%, dpcc-c-tightened: 100.0%, dpcc-t: 16.7%, dpcc-t-tightened: 100.0%
+  51. Candidate 12: 69.44%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 83.3%, dpcc-c: 100.0%, dpcc-c-tightened: 100.0%, dpcc-t: 16.7%, dpcc-t-tightened: 100.0%
+  52. Candidate 13: 69.44%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 83.3%, dpcc-c: 100.0%, dpcc-c-tightened: 100.0%, dpcc-t: 16.7%, dpcc-t-tightened: 100.0%
+  53. Candidate 141: 69.44%, Avg Time: 0.2ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 100.0%, dpcc-c: 50.0%, dpcc-c-tightened: 100.0%, dpcc-t: 33.3%, dpcc-t-tightened: 100.0%
+  54. Candidate 29: 68.75%, Avg Time: 0.4ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 100.0%, dpcc-c: 100.0%, dpcc-c-tightened: 100.0%, dpcc-t: 83.3%, dpcc-t-tightened: 83.3%, hardflow_new-c: 33.3%, hardflow_new-c-tightened: 50.0%
+  55. Candidate 118: 68.75%, Avg Time: 0.2ms
+      Breakdown: dpcc-r: 50.0%, dpcc-r-tightened: 100.0%, dpcc-c: 66.7%, dpcc-c-tightened: 100.0%, dpcc-t: 50.0%, dpcc-t-tightened: 100.0%, hardflow_new-c: 33.3%, hardflow_new-c-tightened: 50.0%
+  56. Candidate 126: 68.33%, Avg Time: 0.3ms
+      Breakdown: dpcc-r: 46.7%, dpcc-r-tightened: 83.3%, dpcc-c: 53.3%, dpcc-c-tightened: 83.3%, dpcc-t: 40.0%, dpcc-t-tightened: 93.3%, hardflow_new-c: 63.3%, hardflow_new-c-tightened: 83.3%
+  57. Candidate 146: 68.33%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 40.0%, dpcc-r-tightened: 100.0%, dpcc-c: 36.7%, dpcc-c-tightened: 100.0%, dpcc-t: 33.3%, dpcc-t-tightened: 100.0%
+  58. Candidate 149: 68.33%, Avg Time: 0.2ms
+      Breakdown: dpcc-r: 23.3%, dpcc-r-tightened: 100.0%, dpcc-c: 46.7%, dpcc-c-tightened: 100.0%, dpcc-t: 40.0%, dpcc-t-tightened: 100.0%
+  59. Candidate 142: 67.78%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 30.0%, dpcc-r-tightened: 86.7%, dpcc-c: 56.7%, dpcc-c-tightened: 100.0%, dpcc-t: 33.3%, dpcc-t-tightened: 100.0%
+  60. Candidate 148: 67.78%, Avg Time: 0.2ms
+      Breakdown: dpcc-r: 23.3%, dpcc-r-tightened: 93.3%, dpcc-c: 53.3%, dpcc-c-tightened: 100.0%, dpcc-t: 36.7%, dpcc-t-tightened: 100.0%
+  61. Candidate 15: 66.67%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 23.3%, dpcc-r-tightened: 100.0%, dpcc-c: 36.7%, dpcc-c-tightened: 96.7%, dpcc-t: 46.7%, dpcc-t-tightened: 96.7%
+  62. Candidate 52: 66.67%, Avg Time: 0.1ms
+      Breakdown: dpcc-c-tightened: 100.0%, hardflow_new: 33.3%
+  63. Candidate 61: 66.67%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 66.7%, dpcc-r-tightened: 100.0%, dpcc-c: 33.3%, dpcc-c-tightened: 66.7%, dpcc-t: 33.3%, dpcc-t-tightened: 100.0%
+  64. Candidate 62: 66.67%, Avg Time: 0.1ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 100.0%, dpcc-c: 83.3%, dpcc-c-tightened: 100.0%, dpcc-t: 16.7%, dpcc-t-tightened: 66.7%
+  65. Candidate 92: 66.67%, Avg Time: 0.4ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 83.3%, dpcc-c: 50.0%, dpcc-c-tightened: 100.0%, dpcc-t: 50.0%, dpcc-t-tightened: 83.3%
+  66. Candidate 101: 66.67%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 100.0%, dpcc-c: 16.7%, dpcc-c-tightened: 100.0%, dpcc-t: 50.0%, dpcc-t-tightened: 100.0%
+  67. Candidate 108: 66.67%, Avg Time: 0.9ms
+      Breakdown: dpcc-r: 66.7%, dpcc-r-tightened: 100.0%, dpcc-c: 33.3%, dpcc-c-tightened: 100.0%, dpcc-t: 50.0%, dpcc-t-tightened: 100.0%, hardflow_new-c: 33.3%, hardflow_new-c-tightened: 50.0%
+  68. Candidate 110: 66.67%, Avg Time: 0.2ms
+      Breakdown: dpcc-r: 50.0%, dpcc-r-tightened: 100.0%, dpcc-c: 66.7%, dpcc-c-tightened: 100.0%, dpcc-t: 33.3%, dpcc-t-tightened: 100.0%, hardflow_new-c: 33.3%, hardflow_new-c-tightened: 50.0%
+  69. Candidate 138: 66.67%, Avg Time: 0.1ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 100.0%, dpcc-c: 33.3%, dpcc-c-tightened: 100.0%, dpcc-t: 33.3%, dpcc-t-tightened: 100.0%
+  70. Candidate 139: 66.67%, Avg Time: 0.1ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 100.0%, dpcc-c: 33.3%, dpcc-c-tightened: 100.0%, dpcc-t: 33.3%, dpcc-t-tightened: 100.0%
+  71. Candidate 36: 65.83%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 73.3%, dpcc-r-tightened: 100.0%, dpcc-c: 16.7%, dpcc-c-tightened: 20.0%, dpcc-t: 80.0%, dpcc-t-tightened: 93.3%, hardflow_new-c: 63.3%, hardflow_new-c-tightened: 80.0%
+  72. Candidate 45: 64.58%, Avg Time: 0.1ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 73.3%, dpcc-c: 60.0%, dpcc-c-tightened: 76.7%, dpcc-t: 36.7%, dpcc-t-tightened: 83.3%, hardflow_new-c: 60.0%, hardflow_new-c-tightened: 93.3%
+  73. Candidate 132: 64.58%, Avg Time: 0.2ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 66.7%, dpcc-c: 83.3%, dpcc-c-tightened: 66.7%, dpcc-t: 50.0%, dpcc-t-tightened: 100.0%, hardflow_new-c: 16.7%, hardflow_new-c-tightened: 100.0%
+  74. Candidate 133: 64.58%, Avg Time: 0.2ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 66.7%, dpcc-c: 83.3%, dpcc-c-tightened: 66.7%, dpcc-t: 50.0%, dpcc-t-tightened: 100.0%, hardflow_new-c: 16.7%, hardflow_new-c-tightened: 100.0%
+  75. Candidate 135: 64.58%, Avg Time: 0.2ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 66.7%, dpcc-c: 83.3%, dpcc-c-tightened: 66.7%, dpcc-t: 50.0%, dpcc-t-tightened: 100.0%, hardflow_new-c: 16.7%, hardflow_new-c-tightened: 100.0%
+  76. Candidate 116: 64.58%, Avg Time: 0.9ms
+      Breakdown: dpcc-r: 66.7%, dpcc-r-tightened: 100.0%, dpcc-c: 33.3%, dpcc-c-tightened: 100.0%, dpcc-t: 33.3%, dpcc-t-tightened: 100.0%, hardflow_new-c: 33.3%, hardflow_new-c-tightened: 50.0%
+  77. Candidate 17: 63.89%, Avg Time: 0.4ms
+      Breakdown: dpcc-r: 66.7%, dpcc-r-tightened: 33.3%, dpcc-c: 66.7%, dpcc-c-tightened: 83.3%, dpcc-t: 33.3%, dpcc-t-tightened: 100.0%
+  78. Candidate 76: 63.89%, Avg Time: 0.6ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 66.7%, dpcc-c: 50.0%, dpcc-c-tightened: 83.3%, dpcc-t: 66.7%, dpcc-t-tightened: 83.3%
+  79. Candidate 93: 63.89%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 50.0%, dpcc-r-tightened: 66.7%, dpcc-c: 33.3%, dpcc-c-tightened: 100.0%, dpcc-t: 33.3%, dpcc-t-tightened: 100.0%
+  80. Candidate 7: 63.33%, Avg Time: 0.3ms
+      Breakdown: dpcc-r: 20.0%, dpcc-r-tightened: 90.0%, dpcc-c: 30.0%, dpcc-c-tightened: 100.0%, dpcc-t: 40.0%, dpcc-t-tightened: 100.0%
+  81. Candidate 31: 62.50%, Avg Time: 0.9ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 100.0%, dpcc-c: 66.7%, dpcc-c-tightened: 83.3%, dpcc-t: 66.7%, dpcc-t-tightened: 83.3%, hardflow_new-c: 33.3%, hardflow_new-c-tightened: 50.0%
+  82. Candidate 2: 61.62%, Avg Time: 8.1ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 90.9%, dpcc-c: 31.8%, dpcc-c-tightened: 90.9%, dpcc-t: 31.8%, dpcc-t-tightened: 90.9%
+  83. Candidate 96: 61.11%, Avg Time: 0.4ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 66.7%, dpcc-c: 50.0%, dpcc-c-tightened: 100.0%, dpcc-t: 50.0%, dpcc-t-tightened: 83.3%
+  84. Candidate 95: 61.11%, Avg Time: 2.8ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 100.0%, dpcc-c: 50.0%, dpcc-c-tightened: 100.0%, dpcc-t: 0.0%, dpcc-t-tightened: 83.3%
+  85. Candidate 140: 61.11%, Avg Time: 0.2ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 100.0%, dpcc-c: 33.3%, dpcc-c-tightened: 100.0%, dpcc-t: 0.0%, dpcc-t-tightened: 100.0%
+  86. Candidate 124: 60.42%, Avg Time: 0.3ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 50.0%, dpcc-c: 33.3%, dpcc-c-tightened: 83.3%, dpcc-t: 66.7%, dpcc-t-tightened: 100.0%, hardflow_new-c: 50.0%, hardflow_new-c-tightened: 100.0%
+  87. Candidate 127: 60.42%, Avg Time: 0.3ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 50.0%, dpcc-c: 33.3%, dpcc-c-tightened: 83.3%, dpcc-t: 66.7%, dpcc-t-tightened: 100.0%, hardflow_new-c: 50.0%, hardflow_new-c-tightened: 100.0%
+  88. Candidate 122: 58.75%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 63.3%, dpcc-r-tightened: 96.7%, dpcc-c: 6.7%, dpcc-c-tightened: 10.0%, dpcc-t: 46.7%, dpcc-t-tightened: 96.7%, hardflow_new-c: 60.0%, hardflow_new-c-tightened: 90.0%
+  89. Candidate 47: 58.33%, Avg Time: 0.2ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 83.3%, dpcc-c: 33.3%, dpcc-c-tightened: 100.0%, dpcc-t: 16.7%, dpcc-t-tightened: 100.0%
+  90. Candidate 63: 58.33%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 83.3%, dpcc-r-tightened: 66.7%, dpcc-c: 0.0%, dpcc-c-tightened: 66.7%, dpcc-t: 33.3%, dpcc-t-tightened: 100.0%
+  91. Candidate 125: 58.33%, Avg Time: 0.3ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 50.0%, dpcc-c: 33.3%, dpcc-c-tightened: 83.3%, dpcc-t: 66.7%, dpcc-t-tightened: 100.0%, hardflow_new-c: 33.3%, hardflow_new-c-tightened: 100.0%
+  92. Candidate 6: 56.67%, Avg Time: 0.6ms
+      Breakdown: dpcc-r: 23.3%, dpcc-r-tightened: 90.0%, dpcc-c: 23.3%, dpcc-c-tightened: 90.0%, dpcc-t: 23.3%, dpcc-t-tightened: 90.0%
+  93. Candidate 120: 56.67%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 43.3%, dpcc-r-tightened: 70.0%, dpcc-c: 26.7%, dpcc-c-tightened: 56.7%, dpcc-t: 26.7%, dpcc-t-tightened: 100.0%, hardflow_new-c: 43.3%, hardflow_new-c-tightened: 86.7%
+  94. Candidate 103: 56.25%, Avg Time: 0.9ms
+      Breakdown: dpcc-r: 66.7%, dpcc-r-tightened: 100.0%, dpcc-c: 33.3%, dpcc-c-tightened: 100.0%, dpcc-t: 50.0%, dpcc-t-tightened: 100.0%, hardflow_new-c: 0.0%, hardflow_new-c-tightened: 0.0%
+  95. Candidate 105: 56.25%, Avg Time: 0.2ms
+      Breakdown: dpcc-r: 50.0%, dpcc-r-tightened: 100.0%, dpcc-c: 66.7%, dpcc-c-tightened: 100.0%, dpcc-t: 33.3%, dpcc-t-tightened: 100.0%, hardflow_new-c: 0.0%, hardflow_new-c-tightened: 0.0%
+  96. Candidate 98: 55.56%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 83.3%, dpcc-c: 50.0%, dpcc-c-tightened: 83.3%, dpcc-t: 33.3%, dpcc-t-tightened: 83.3%
+  97. Candidate 69: 55.56%, Avg Time: 1.1ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 66.7%, dpcc-c: 50.0%, dpcc-c-tightened: 83.3%, dpcc-t: 16.7%, dpcc-t-tightened: 83.3%
+  98. Candidate 117: 54.17%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 63.3%, dpcc-r-tightened: 96.7%, dpcc-c: 6.7%, dpcc-c-tightened: 10.0%, dpcc-t: 43.3%, dpcc-t-tightened: 96.7%, hardflow_new-c: 40.0%, hardflow_new-c-tightened: 76.7%
+  99. Candidate 64: 52.78%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 50.0%, dpcc-c: 66.7%, dpcc-c-tightened: 83.3%, dpcc-t: 16.7%, dpcc-t-tightened: 83.3%
+  100. Candidate 112: 50.00%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 83.3%, dpcc-r-tightened: 83.3%, dpcc-c: 0.0%, dpcc-c-tightened: 0.0%, dpcc-t: 50.0%, dpcc-t-tightened: 83.3%
+  101. Candidate 3: 50.00%, Avg Time: 0.8ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 100.0%, dpcc-c: 0.0%, dpcc-c-tightened: 100.0%, dpcc-t: 0.0%, dpcc-t-tightened: 100.0%
+  102. Candidate 102: 50.00%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 83.3%, dpcc-c: 16.7%, dpcc-c-tightened: 33.3%, dpcc-t: 16.7%, dpcc-t-tightened: 100.0%, hardflow_new-c: 50.0%, hardflow_new-c-tightened: 83.3%
+  103. Candidate 115: 50.00%, Avg Time: 0.1ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 83.3%, dpcc-c: 16.7%, dpcc-c-tightened: 33.3%, dpcc-t: 33.3%, dpcc-t-tightened: 100.0%, hardflow_new-c: 50.0%, hardflow_new-c-tightened: 66.7%
+  104. Candidate 74: 50.00%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 83.3%, dpcc-c: 16.7%, dpcc-c-tightened: 66.7%, dpcc-t: 50.0%, dpcc-t-tightened: 66.7%
+  105. Candidate 104: 47.92%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 83.3%, dpcc-r-tightened: 83.3%, dpcc-c: 0.0%, dpcc-c-tightened: 0.0%, dpcc-t: 50.0%, dpcc-t-tightened: 83.3%, hardflow_new-c: 33.3%, hardflow_new-c-tightened: 50.0%
+  106. Candidate 107: 47.92%, Avg Time: 0.1ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 83.3%, dpcc-c: 16.7%, dpcc-c-tightened: 33.3%, dpcc-t: 16.7%, dpcc-t-tightened: 100.0%, hardflow_new-c: 50.0%, hardflow_new-c-tightened: 66.7%
+  107. Candidate 68: 47.22%, Avg Time: 0.4ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 100.0%, dpcc-c: 0.0%, dpcc-c-tightened: 66.7%, dpcc-t: 16.7%, dpcc-t-tightened: 83.3%
+  108. Candidate 77: 47.22%, Avg Time: 0.6ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 66.7%, dpcc-c: 33.3%, dpcc-c-tightened: 66.7%, dpcc-t: 33.3%, dpcc-t-tightened: 66.7%
+  109. Candidate 71: 47.22%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 50.0%, dpcc-c: 50.0%, dpcc-c-tightened: 66.7%, dpcc-t: 16.7%, dpcc-t-tightened: 66.7%
+  110. Candidate 72: 47.22%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 83.3%, dpcc-c: 33.3%, dpcc-c-tightened: 66.7%, dpcc-t: 16.7%, dpcc-t-tightened: 66.7%
+  111. Candidate 73: 47.22%, Avg Time: 0.6ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 83.3%, dpcc-c: 0.0%, dpcc-c-tightened: 66.7%, dpcc-t: 33.3%, dpcc-t-tightened: 83.3%
+  112. Candidate 87: 47.22%, Avg Time: 0.6ms
+      Breakdown: dpcc-r: 33.3%, dpcc-r-tightened: 66.7%, dpcc-c: 33.3%, dpcc-c-tightened: 50.0%, dpcc-t: 33.3%, dpcc-t-tightened: 66.7%
+  113. Candidate 91: 47.22%, Avg Time: 6.8ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 66.7%, dpcc-c: 33.3%, dpcc-c-tightened: 100.0%, dpcc-t: 0.0%, dpcc-t-tightened: 66.7%
+  114. Candidate 23: 44.44%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 50.0%, dpcc-r-tightened: 100.0%, dpcc-c: 0.0%, dpcc-c-tightened: 0.0%, dpcc-t: 33.3%, dpcc-t-tightened: 83.3%
+  115. Candidate 66: 44.44%, Avg Time: 0.1ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 66.7%, dpcc-c: 33.3%, dpcc-c-tightened: 83.3%, dpcc-t: 16.7%, dpcc-t-tightened: 66.7%
+  116. Candidate 70: 44.44%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 83.3%, dpcc-c: 16.7%, dpcc-c-tightened: 50.0%, dpcc-t: 33.3%, dpcc-t-tightened: 66.7%
+  117. Candidate 67: 41.67%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 66.7%, dpcc-c: 50.0%, dpcc-c-tightened: 83.3%, dpcc-t: 16.7%, dpcc-t-tightened: 33.3%
+  118. Candidate 79: 41.67%, Avg Time: 1.4ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 50.0%, dpcc-c: 16.7%, dpcc-c-tightened: 66.7%, dpcc-t: 33.3%, dpcc-t-tightened: 83.3%
+  119. Candidate 99: 41.67%, Avg Time: 2.9ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 66.7%, dpcc-c: 33.3%, dpcc-c-tightened: 66.7%, dpcc-t: 16.7%, dpcc-t-tightened: 66.7%
+  120. Candidate 80: 38.89%, Avg Time: 1.6ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 50.0%, dpcc-c: 16.7%, dpcc-c-tightened: 66.7%, dpcc-t: 16.7%, dpcc-t-tightened: 83.3%
+  121. Candidate 109: 37.50%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 83.3%, dpcc-r-tightened: 83.3%, dpcc-c: 0.0%, dpcc-c-tightened: 0.0%, dpcc-t: 50.0%, dpcc-t-tightened: 83.3%, hardflow_new-c: 0.0%, hardflow_new-c-tightened: 0.0%
+  122. Candidate 78: 36.11%, Avg Time: 0.6ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 50.0%, dpcc-c: 33.3%, dpcc-c-tightened: 66.7%, dpcc-t: 16.7%, dpcc-t-tightened: 33.3%
+  123. Candidate 89: 36.11%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 50.0%, dpcc-c: 33.3%, dpcc-c-tightened: 66.7%, dpcc-t: 16.7%, dpcc-t-tightened: 33.3%
+  124. Candidate 32: 33.33%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 50.0%, dpcc-r-tightened: 100.0%, dpcc-c: 0.0%, dpcc-c-tightened: 0.0%, dpcc-t: 33.3%, dpcc-t-tightened: 83.3%, hardflow_new-c: 0.0%, hardflow_new-c-tightened: 0.0%
+  125. Candidate 8: 33.33%, Avg Time: 0.0ms
+      Breakdown: dpcc-r: 6.7%, dpcc-r-tightened: 60.0%, dpcc-c: 6.7%, dpcc-c-tightened: 66.7%, dpcc-t: 0.0%, dpcc-t-tightened: 60.0%
+  126. Candidate 82: 30.56%, Avg Time: 2.8ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 50.0%, dpcc-c: 16.7%, dpcc-c-tightened: 33.3%, dpcc-t: 16.7%, dpcc-t-tightened: 66.7%
+  127. Candidate 65: 30.56%, Avg Time: 0.5ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 50.0%, dpcc-c: 0.0%, dpcc-c-tightened: 66.7%, dpcc-t: 16.7%, dpcc-t-tightened: 33.3%
+  128. Candidate 81: 25.00%, Avg Time: 0.1ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 66.7%, dpcc-c: 16.7%, dpcc-c-tightened: 16.7%, dpcc-t: 16.7%, dpcc-t-tightened: 33.3%
+  129. Candidate 90: 25.00%, Avg Time: 0.1ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 66.7%, dpcc-c: 16.7%, dpcc-c-tightened: 16.7%, dpcc-t: 16.7%, dpcc-t-tightened: 33.3%
+  130. Candidate 113: 22.22%, Avg Time: 0.1ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 33.3%, dpcc-c: 33.3%, dpcc-c-tightened: 50.0%, dpcc-t: 0.0%, dpcc-t-tightened: 0.0%
+  131. Candidate 88: 19.44%, Avg Time: 0.8ms
+      Breakdown: dpcc-r: 16.7%, dpcc-r-tightened: 16.7%, dpcc-c: 0.0%, dpcc-c-tightened: 33.3%, dpcc-t: 0.0%, dpcc-t-tightened: 50.0%
+  132. Candidate 84: 16.67%, Avg Time: 0.4ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 33.3%, dpcc-c: 0.0%, dpcc-c-tightened: 33.3%, dpcc-t: 0.0%, dpcc-t-tightened: 33.3%
+  133. Candidate 43: 14.58%, Avg Time: 1.7ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 0.0%, dpcc-c: 0.0%, dpcc-c-tightened: 0.0%, dpcc-t: 0.0%, dpcc-t-tightened: 16.7%, hardflow_new-c: 33.3%, hardflow_new-c-tightened: 66.7%
+  134. Candidate 44: 10.42%, Avg Time: 0.2ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 0.0%, dpcc-c: 0.0%, dpcc-c-tightened: 0.0%, dpcc-t: 0.0%, dpcc-t-tightened: 0.0%, hardflow_new-c: 16.7%, hardflow_new-c-tightened: 66.7%
+  135. Candidate 46: 10.42%, Avg Time: 0.8ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 0.0%, dpcc-c: 0.0%, dpcc-c-tightened: 0.0%, dpcc-t: 0.0%, dpcc-t-tightened: 33.3%, hardflow_new-c: 16.7%, hardflow_new-c-tightened: 33.3%
+  136. Candidate 26: 5.56%, Avg Time: 0.2ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 0.0%, dpcc-c: 0.0%, dpcc-c-tightened: 0.0%, dpcc-t: 0.0%, dpcc-t-tightened: 33.3%
+  137. Candidate 25: 2.78%, Avg Time: 2.0ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 0.0%, dpcc-c: 0.0%, dpcc-c-tightened: 0.0%, dpcc-t: 0.0%, dpcc-t-tightened: 16.7%
+  138. Candidate 27: 2.78%, Avg Time: 0.3ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 0.0%, dpcc-c: 0.0%, dpcc-c-tightened: 0.0%, dpcc-t: 0.0%, dpcc-t-tightened: 16.7%
+  139. Candidate 28: 2.78%, Avg Time: 1.0ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 0.0%, dpcc-c: 0.0%, dpcc-c-tightened: 0.0%, dpcc-t: 0.0%, dpcc-t-tightened: 16.7%
+  140. Candidate 9: 0.00%
+  141. Candidate 54: 0.00%
+  142. Candidate 56: 0.00%
+  143. Candidate 60: 0.00%
+  144. Candidate 83: 0.00%
+  145. Candidate 85: 0.00%, Avg Time: 0.1ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 0.0%, dpcc-c: 0.0%, dpcc-c-tightened: 0.0%, dpcc-t: 0.0%, dpcc-t-tightened: 0.0%
+  146. Candidate 86: 0.00%, Avg Time: 0.1ms
+      Breakdown: dpcc-r: 0.0%, dpcc-r-tightened: 0.0%, dpcc-c: 0.0%, dpcc-c-tightened: 0.0%, dpcc-t: 0.0%, dpcc-t-tightened: 0.0%
+  147. Candidate 131: 0.00%
+  148. Candidate 136: 0.00%
+  149. Candidate 137: 0.00%
+  150. Candidate 150: 0.00%
+
+AUXILIARY VARIANT PERFORMANCE
+----------------------------------------------------------------------
+  Candidate 1: 42.86% (Auxiliary Avg)
+  Candidate 2: 53.46% (Auxiliary Avg)
+  Candidate 3: 45.45% (Auxiliary Avg)
+  Candidate 4: 53.03% (Auxiliary Avg)
+  Candidate 5: 28.57% (Auxiliary Avg)
+  Candidate 6: 42.58% (Auxiliary Avg)
+  Candidate 7: 42.73% (Auxiliary Avg)
+  Candidate 8: 20.91% (Auxiliary Avg)
+  Candidate 10: 23.81% (Auxiliary Avg)
+  Candidate 11: 14.29% (Auxiliary Avg)
+  Candidate 12: 14.29% (Auxiliary Avg)
+  Candidate 13: 14.29% (Auxiliary Avg)
+  Candidate 14: 43.64% (Auxiliary Avg)
+  Candidate 15: 42.73% (Auxiliary Avg)
+  Candidate 16: 43.64% (Auxiliary Avg)
+  Candidate 17: 23.81% (Auxiliary Avg)
+  Candidate 18: 23.81% (Auxiliary Avg)
+  Candidate 19: 33.33% (Auxiliary Avg)
+  Candidate 20: 26.19% (Auxiliary Avg)
+  Candidate 21: 40.48% (Auxiliary Avg)
+  Candidate 22: 33.33% (Auxiliary Avg)
+  Candidate 23: 50.00% (Auxiliary Avg)
+  Candidate 24: 40.48% (Auxiliary Avg)
+  Candidate 25: 11.90% (Auxiliary Avg)
+  Candidate 26: 7.14% (Auxiliary Avg)
+  Candidate 27: 7.14% (Auxiliary Avg)
+  Candidate 28: 11.90% (Auxiliary Avg)
+  Candidate 29: 66.67% (Auxiliary Avg)
+  Candidate 30: 60.00% (Auxiliary Avg)
+  Candidate 31: 73.33% (Auxiliary Avg)
+  Candidate 32: 70.00% (Auxiliary Avg)
+  Candidate 33: 53.33% (Auxiliary Avg)
+  Candidate 34: 70.00% (Auxiliary Avg)
+  Candidate 35: 67.50% (Auxiliary Avg)
+  Candidate 36: 75.33% (Auxiliary Avg)
+  Candidate 37: 75.00% (Auxiliary Avg)
+  Candidate 38: 70.67% (Auxiliary Avg)
+  Candidate 39: 66.67% (Auxiliary Avg)
+  Candidate 40: 71.33% (Auxiliary Avg)
+  Candidate 41: 73.33% (Auxiliary Avg)
+  Candidate 42: 74.67% (Auxiliary Avg)
+  Candidate 43: 43.33% (Auxiliary Avg)
+  Candidate 44: 36.67% (Auxiliary Avg)
+  Candidate 45: 52.67% (Auxiliary Avg)
+  Candidate 46: 23.33% (Auxiliary Avg)
+  Candidate 47: 42.42% (Auxiliary Avg)
+  Candidate 48: 16.67% (Auxiliary Avg)
+  Candidate 49: 0.00% (Auxiliary Avg)
+  Candidate 50: 0.00% (Auxiliary Avg)
+  Candidate 51: 0.00% (Auxiliary Avg)
+  Candidate 52: 16.67% (Auxiliary Avg)
+  Candidate 53: 0.00% (Auxiliary Avg)
+  Candidate 55: 72.00% (Auxiliary Avg)
+  Candidate 57: 53.33% (Auxiliary Avg)
+  Candidate 58: 50.00% (Auxiliary Avg)
+  Candidate 59: 70.00% (Auxiliary Avg)
+  Candidate 61: 46.97% (Auxiliary Avg)
+  Candidate 62: 54.55% (Auxiliary Avg)
+  Candidate 63: 39.39% (Auxiliary Avg)
+  Candidate 64: 39.39% (Auxiliary Avg)
+  Candidate 65: 31.82% (Auxiliary Avg)
+  Candidate 66: 25.76% (Auxiliary Avg)
+  Candidate 67: 31.82% (Auxiliary Avg)
+  Candidate 68: 37.88% (Auxiliary Avg)
+  Candidate 69: 40.91% (Auxiliary Avg)
+  Candidate 70: 42.42% (Auxiliary Avg)
+  Candidate 71: 33.33% (Auxiliary Avg)
+  Candidate 72: 50.00% (Auxiliary Avg)
+  Candidate 73: 14.29% (Auxiliary Avg)
+  Candidate 74: 16.67% (Auxiliary Avg)
+  Candidate 75: 21.43% (Auxiliary Avg)
+  Candidate 76: 33.33% (Auxiliary Avg)
+  Candidate 77: 16.67% (Auxiliary Avg)
+  Candidate 78: 25.76% (Auxiliary Avg)
+  Candidate 79: 30.30% (Auxiliary Avg)
+  Candidate 80: 11.90% (Auxiliary Avg)
+  Candidate 81: 19.05% (Auxiliary Avg)
+  Candidate 82: 34.85% (Auxiliary Avg)
+  Candidate 84: 10.61% (Auxiliary Avg)
+  Candidate 85: 1.52% (Auxiliary Avg)
+  Candidate 86: 1.52% (Auxiliary Avg)
+  Candidate 87: 39.39% (Auxiliary Avg)
+  Candidate 88: 28.57% (Auxiliary Avg)
+  Candidate 89: 25.76% (Auxiliary Avg)
+  Candidate 90: 28.79% (Auxiliary Avg)
+  Candidate 91: 26.19% (Auxiliary Avg)
+  Candidate 92: 16.67% (Auxiliary Avg)
+  Candidate 93: 28.57% (Auxiliary Avg)
+  Candidate 94: 42.86% (Auxiliary Avg)
+  Candidate 95: 35.71% (Auxiliary Avg)
+  Candidate 96: 23.81% (Auxiliary Avg)
+  Candidate 97: 28.57% (Auxiliary Avg)
+  Candidate 98: 26.19% (Auxiliary Avg)
+  Candidate 99: 30.95% (Auxiliary Avg)
+  Candidate 100: 23.81% (Auxiliary Avg)
+  Candidate 101: 19.05% (Auxiliary Avg)
+  Candidate 102: 53.33% (Auxiliary Avg)
+  Candidate 103: 50.00% (Auxiliary Avg)
+  Candidate 104: 50.00% (Auxiliary Avg)
+  Candidate 105: 53.33% (Auxiliary Avg)
+  Candidate 106: 70.00% (Auxiliary Avg)
+  Candidate 107: 46.67% (Auxiliary Avg)
+  Candidate 108: 70.00% (Auxiliary Avg)
+  Candidate 109: 56.67% (Auxiliary Avg)
+  Candidate 110: 66.67% (Auxiliary Avg)
+  Candidate 111: 28.57% (Auxiliary Avg)
+  Candidate 112: 40.48% (Auxiliary Avg)
+  Candidate 113: 7.14% (Auxiliary Avg)
+  Candidate 114: 70.00% (Auxiliary Avg)
+  Candidate 115: 46.67% (Auxiliary Avg)
+  Candidate 116: 70.00% (Auxiliary Avg)
+  Candidate 117: 58.67% (Auxiliary Avg)
+  Candidate 118: 66.67% (Auxiliary Avg)
+  Candidate 119: 68.00% (Auxiliary Avg)
+  Candidate 120: 52.00% (Auxiliary Avg)
+  Candidate 121: 74.67% (Auxiliary Avg)
+  Candidate 122: 61.33% (Auxiliary Avg)
+  Candidate 123: 66.00% (Auxiliary Avg)
+  Candidate 124: 60.00% (Auxiliary Avg)
+  Candidate 125: 53.33% (Auxiliary Avg)
+  Candidate 126: 62.00% (Auxiliary Avg)
+  Candidate 127: 60.00% (Auxiliary Avg)
+  Candidate 128: 62.00% (Auxiliary Avg)
+  Candidate 129: 63.33% (Auxiliary Avg)
+  Candidate 130: 60.67% (Auxiliary Avg)
+  Candidate 132: 46.67% (Auxiliary Avg)
+  Candidate 133: 46.67% (Auxiliary Avg)
+  Candidate 134: 58.67% (Auxiliary Avg)
+  Candidate 135: 46.67% (Auxiliary Avg)
+  Candidate 138: 26.19% (Auxiliary Avg)
+  Candidate 139: 26.19% (Auxiliary Avg)
+  Candidate 140: 19.05% (Auxiliary Avg)
+  Candidate 141: 19.05% (Auxiliary Avg)
+  Candidate 142: 26.67% (Auxiliary Avg)
+  Candidate 143: 19.05% (Auxiliary Avg)
+  Candidate 144: 48.79% (Auxiliary Avg)
+  Candidate 145: 52.42% (Auxiliary Avg)
+  Candidate 146: 47.88% (Auxiliary Avg)
+  Candidate 147: 48.48% (Auxiliary Avg)
+  Candidate 148: 49.39% (Auxiliary Avg)
+  Candidate 149: 47.88% (Auxiliary Avg)
+
+RECOMMENDATIONS
+----------------------------------------------------------------------
+  Overall Best (Major): Candidate 48
+  Major Accuracy: 100.00%
+
+======================================================================

@@ -1,0 +1,1302 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu Aug 27 17:00:47 UTC 2026
+JOB NAME:  eval_fmv3_hardflow_job
+JOB ID:    25105
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   1897f4f
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=2  MUJOCO_EGL_DEVICE_ID=2
+[ hardflow ] HFFM_BATCH=1 (arm-C fan for -r/-c/-t; bare hardflow_new is always 1)  FMPCC_MPC_BATCH=1 (arms A/B fan)
+[ eval ] K sweep: 2   FORCE_OVERWRITE=0
+================================================================================
+[ eval ] K = 2   (Thu Aug 27 17:00:48 UTC 2026)
+================================================================================
+pybullet build time: Nov 28 2023 23:45:17
+[INFO] Instantiating diffusion model from /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_dc4e7320-a238-11f1-bd21-d85ed34e311e.xml' with default provider at slot 1
+
+[ eval ] mpc fan: arms A/B=1, arm C=1  |  run_msg=mpc1
+[ config/avoiding-d3il ] custom_msg="mpc1" -> results dirs end in "_msgmpc1"
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_K10_Dmodels.diffusion.FlowMatchingODE_msgmpc1/7
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/7
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 89000
+[ eval ] matched K (flow_steps_v3) = 2 for every arm
+[ eval ] savepath: logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K2_thres1_mpc1_n2_msgmpc1/7
+[ provenance ] wrote logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K2_thres1_mpc1_n2_msgmpc1/7/run_provenance.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-right-hard - diffuser (7) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 63.50 +- 2.50
+Avg number of constraint violations: 26.00 +- 7.00
+Avg total violation: 6.864 +- 3.252
+Average computation time per step: 0.021
+Compute: K=2  batch=1  NFE=258  NLP solves=0  NLP failures=0
+Tracking error: 0.036
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c-tightened (7) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 71.00 +- 2.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.021
+Compute: K=2  batch=1  NFE=288  NLP solves=0  NLP failures=0
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r (7) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 0.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 0.00 +- 0.00
+Avg number of constraint violations: 3.50 +- 0.50
+Avg total violation: 0.012 +- 0.007
+Average computation time per step: 0.075
+Compute: K=2  batch=1  NFE=228  NLP solves=152  NLP failures=0  act_thr=1  sel=random
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c (7) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 0.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 0.00 +- 0.00
+Avg number of constraint violations: 3.50 +- 0.50
+Avg total violation: 0.012 +- 0.007
+Average computation time per step: 0.072
+Compute: K=2  batch=1  NFE=228  NLP solves=152  NLP failures=0  act_thr=1  sel=minimum_projection_cost
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t (7) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 0.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 0.00 +- 0.00
+Avg number of constraint violations: 3.50 +- 0.50
+Avg total violation: 0.012 +- 0.007
+Average computation time per step: 0.072
+Compute: K=2  batch=1  NFE=228  NLP solves=152  NLP failures=0  act_thr=1  sel=temporal_consistency
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r-tightened (7) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 0.5
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 69.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.074
+Compute: K=2  batch=1  NFE=315  NLP solves=210  NLP failures=0  act_thr=1  sel=random
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c-tightened (7) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 0.5
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 69.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.074
+Compute: K=2  batch=1  NFE=315  NLP solves=210  NLP failures=0  act_thr=1  sel=minimum_projection_cost
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t-tightened (7) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 0.5
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 69.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.074
+Compute: K=2  batch=1  NFE=315  NLP solves=210  NLP failures=0  act_thr=1  sel=temporal_consistency
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_K10_Dmodels.diffusion.FlowMatchingODE_msgmpc1/8
+[INFO] Instantiating diffusion model from /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb1_12c40e10-a239-11f1-bd21-d85ed34e311e.xml' with default provider at slot 1
+
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/8
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 93000
+[ eval ] matched K (flow_steps_v3) = 2 for every arm
+[ eval ] savepath: logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K2_thres1_mpc1_n2_msgmpc1/8
+[ provenance ] wrote logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K2_thres1_mpc1_n2_msgmpc1/8/run_provenance.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-right-hard - diffuser (8) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 59.50 +- 1.50
+Avg number of constraint violations: 31.00 +- 2.00
+Avg total violation: 8.008 +- 2.877
+Average computation time per step: 0.018
+Compute: K=2  batch=1  NFE=242  NLP solves=0  NLP failures=0
+Tracking error: 0.047
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c-tightened (8) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 69.00 +- 1.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.021
+Compute: K=2  batch=1  NFE=280  NLP solves=0  NLP failures=0
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r (8) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged solve at tau=0.500. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 79.50 +- 1.50
+Avg number of constraint violations: 24.00 +- 1.00
+Avg total violation: 0.428 +- 0.065
+Average computation time per step: 0.090
+Compute: K=2  batch=1  NFE=483  NLP solves=322  NLP failures=14  act_thr=1  sel=random
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c (8) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged solve at tau=0.500. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 79.50 +- 1.50
+Avg number of constraint violations: 24.00 +- 1.00
+Avg total violation: 0.428 +- 0.065
+Average computation time per step: 0.090
+Compute: K=2  batch=1  NFE=483  NLP solves=322  NLP failures=14  act_thr=1  sel=minimum_projection_cost
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t (8) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged solve at tau=0.500. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 79.50 +- 1.50
+Avg number of constraint violations: 24.00 +- 1.00
+Avg total violation: 0.428 +- 0.065
+Average computation time per step: 0.092
+Compute: K=2  batch=1  NFE=483  NLP solves=322  NLP failures=14  act_thr=1  sel=temporal_consistency
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r-tightened (8) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 64.00 +- 3.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.075
+Compute: K=2  batch=1  NFE=390  NLP solves=260  NLP failures=0  act_thr=1  sel=random
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c-tightened (8) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 64.00 +- 3.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.075
+Compute: K=2  batch=1  NFE=390  NLP solves=260  NLP failures=0  act_thr=1  sel=minimum_projection_cost
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t-tightened (8) - K=2----------------------------
+[INFO] Instantiating diffusion model from /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb2_65bcb6d0-a239-11f1-bd21-d85ed34e311e.xml' with default provider at slot 1
+
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 64.00 +- 3.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.073
+Compute: K=2  batch=1  NFE=390  NLP solves=260  NLP failures=0  act_thr=1  sel=temporal_consistency
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_K10_Dmodels.diffusion.FlowMatchingODE_msgmpc1/9
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/9
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 83000
+[ eval ] matched K (flow_steps_v3) = 2 for every arm
+[ eval ] savepath: logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K2_thres1_mpc1_n2_msgmpc1/9
+[ provenance ] wrote logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K2_thres1_mpc1_n2_msgmpc1/9/run_provenance.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-right-hard - diffuser (9) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 60.00 +- 3.00
+Avg number of constraint violations: 33.00 +- 1.00
+Avg total violation: 13.130 +- 0.624
+Average computation time per step: 0.018
+Compute: K=2  batch=1  NFE=244  NLP solves=0  NLP failures=0
+Tracking error: 0.042
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c-tightened (9) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 73.00 +- 3.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.020
+Compute: K=2  batch=1  NFE=296  NLP solves=0  NLP failures=0
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r (9) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged solve at tau=0.500. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 80.50 +- 11.50
+Avg number of constraint violations: 13.50 +- 9.50
+Avg total violation: 0.345 +- 0.328
+Average computation time per step: 0.091
+Compute: K=2  batch=1  NFE=489  NLP solves=326  NLP failures=26  act_thr=1  sel=random
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c (9) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged solve at tau=0.500. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 80.50 +- 11.50
+Avg number of constraint violations: 13.50 +- 9.50
+Avg total violation: 0.345 +- 0.328
+Average computation time per step: 0.093
+Compute: K=2  batch=1  NFE=489  NLP solves=326  NLP failures=26  act_thr=1  sel=minimum_projection_cost
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t (9) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged solve at tau=0.500. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 80.50 +- 11.50
+Avg number of constraint violations: 13.50 +- 9.50
+Avg total violation: 0.345 +- 0.328
+Average computation time per step: 0.094
+Compute: K=2  batch=1  NFE=489  NLP solves=326  NLP failures=26  act_thr=1  sel=temporal_consistency
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r-tightened (9) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 66.00 +- 3.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.076
+Compute: K=2  batch=1  NFE=402  NLP solves=268  NLP failures=0  act_thr=1  sel=random
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c-tightened (9) - K=2----------------------------
+[INFO] Instantiating diffusion model from /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb3_bbb91dc6-a239-11f1-bd21-d85ed34e311e.xml' with default provider at slot 1
+
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 66.00 +- 3.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.075
+Compute: K=2  batch=1  NFE=402  NLP solves=268  NLP failures=0  act_thr=1  sel=minimum_projection_cost
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t-tightened (9) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 66.00 +- 3.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.073
+Compute: K=2  batch=1  NFE=402  NLP solves=268  NLP failures=0  act_thr=1  sel=temporal_consistency
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_K10_Dmodels.diffusion.FlowMatchingODE_msgmpc1/10
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/10
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 94000
+[ eval ] matched K (flow_steps_v3) = 2 for every arm
+[ eval ] savepath: logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K2_thres1_mpc1_n2_msgmpc1/10
+[ provenance ] wrote logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K2_thres1_mpc1_n2_msgmpc1/10/run_provenance.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-right-hard - diffuser (10) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 64.50 +- 2.50
+Avg number of constraint violations: 19.50 +- 1.50
+Avg total violation: 5.906 +- 2.160
+Average computation time per step: 0.018
+Compute: K=2  batch=1  NFE=262  NLP solves=0  NLP failures=0
+Tracking error: 0.035
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c-tightened (10) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 66.50 +- 5.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.020
+Compute: K=2  batch=1  NFE=270  NLP solves=0  NLP failures=0
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r (10) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 66.50 +- 4.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.068
+Compute: K=2  batch=1  NFE=405  NLP solves=270  NLP failures=0  act_thr=1  sel=random
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c (10) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 66.50 +- 4.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.068
+Compute: K=2  batch=1  NFE=405  NLP solves=270  NLP failures=0  act_thr=1  sel=minimum_projection_cost
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t (10) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 66.50 +- 4.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.070
+Compute: K=2  batch=1  NFE=405  NLP solves=270  NLP failures=0  act_thr=1  sel=temporal_consistency
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-r-tightened (10) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 65.50 +- 4.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.071
+Compute: K=2  batch=1  NFE=399  NLP solves=266  NLP failures=0  act_thr=1  sel=random
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-c-tightened (10) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[INFO] Instantiating diffusion model from /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb4_04304b4c-a23a-11f1-bd21-d85ed34e311e.xml' with default provider at slot 1
+
+/data/home/llim/FMPCC/FM-PCC/FM_v3_hardflow_test/eval_FM_v3_hardflow.py:332: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`). Consider using `matplotlib.pyplot.close()`.
+  fig_all, ax_all = plt.subplots(min(n_trials, plot_how_many), len(projection_variants), figsize=(10 * len(projection_variants), 10 * min(n_trials, plot_how_many)), squeeze=False)
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 65.50 +- 4.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.071
+Compute: K=2  batch=1  NFE=399  NLP solves=266  NLP failures=0  act_thr=1  sel=minimum_projection_cost
+------------------------Running avoiding-d3il - top-right-hard - hardflow_new-t-tightened (10) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 65.50 +- 4.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.071
+Compute: K=2  batch=1  NFE=399  NLP solves=266  NLP failures=0  act_thr=1  sel=temporal_consistency
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/7
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 89000
+[ eval ] matched K (flow_steps_v3) = 2 for every arm
+[ eval ] savepath: logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K2_thres1_mpc1_n2_msgmpc1/7
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K2_thres1_mpc1_n2_msgmpc1/7/run_provenance.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-left-hard - diffuser (7) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 63.50 +- 2.50
+Avg number of constraint violations: 5.50 +- 5.50
+Avg total violation: 0.092 +- 0.078
+Average computation time per step: 0.018
+Compute: K=2  batch=1  NFE=258  NLP solves=0  NLP failures=0
+Tracking error: 0.036
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c-tightened (7) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 61.50 +- 2.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.020
+Compute: K=2  batch=1  NFE=250  NLP solves=0  NLP failures=0
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r (7) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 61.50 +- 2.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.069
+Compute: K=2  batch=1  NFE=375  NLP solves=250  NLP failures=0  act_thr=1  sel=random
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c (7) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 61.50 +- 2.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.070
+Compute: K=2  batch=1  NFE=375  NLP solves=250  NLP failures=0  act_thr=1  sel=minimum_projection_cost
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t (7) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 61.50 +- 2.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.070
+Compute: K=2  batch=1  NFE=375  NLP solves=250  NLP failures=0  act_thr=1  sel=temporal_consistency
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r-tightened (7) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.50 +- 2.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.069
+Compute: K=2  batch=1  NFE=381  NLP solves=254  NLP failures=0  act_thr=1  sel=random
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c-tightened (7) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.50 +- 2.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+[INFO] Instantiating diffusion model from /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb5_4765197e-a23a-11f1-bd21-d85ed34e311e.xml' with default provider at slot 1
+
+Average computation time per step: 0.069
+Compute: K=2  batch=1  NFE=381  NLP solves=254  NLP failures=0  act_thr=1  sel=minimum_projection_cost
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t-tightened (7) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.50 +- 2.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.070
+Compute: K=2  batch=1  NFE=381  NLP solves=254  NLP failures=0  act_thr=1  sel=temporal_consistency
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/8
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 93000
+[ eval ] matched K (flow_steps_v3) = 2 for every arm
+[ eval ] savepath: logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K2_thres1_mpc1_n2_msgmpc1/8
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K2_thres1_mpc1_n2_msgmpc1/8/run_provenance.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-left-hard - diffuser (8) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 59.50 +- 1.50
+Avg number of constraint violations: 12.50 +- 1.50
+Avg total violation: 0.253 +- 0.073
+Average computation time per step: 0.019
+Compute: K=2  batch=1  NFE=242  NLP solves=0  NLP failures=0
+Tracking error: 0.047
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c-tightened (8) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 67.00 +- 6.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.023
+Compute: K=2  batch=1  NFE=272  NLP solves=0  NLP failures=0
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r (8) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged solve at tau=0.500. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 62.50 +- 2.50
+Avg number of constraint violations: 2.50 +- 2.50
+Avg total violation: 0.021 +- 0.021
+Average computation time per step: 0.083
+Compute: K=2  batch=1  NFE=381  NLP solves=254  NLP failures=8  act_thr=1  sel=random
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c (8) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged solve at tau=0.500. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 62.50 +- 2.50
+Avg number of constraint violations: 2.50 +- 2.50
+Avg total violation: 0.021 +- 0.021
+Average computation time per step: 0.083
+Compute: K=2  batch=1  NFE=381  NLP solves=254  NLP failures=8  act_thr=1  sel=minimum_projection_cost
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t (8) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged solve at tau=0.500. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 62.50 +- 2.50
+Avg number of constraint violations: 2.50 +- 2.50
+Avg total violation: 0.021 +- 0.021
+Average computation time per step: 0.083
+Compute: K=2  batch=1  NFE=381  NLP solves=254  NLP failures=8  act_thr=1  sel=temporal_consistency
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r-tightened (8) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged solve at tau=0.500. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+[INFO] Instantiating diffusion model from /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb6_906fe356-a23a-11f1-bd21-d85ed34e311e.xml' with default provider at slot 1
+
+Avg number of steps: 62.50 +- 1.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.077
+Compute: K=2  batch=1  NFE=381  NLP solves=254  NLP failures=6  act_thr=1  sel=random
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c-tightened (8) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged solve at tau=0.500. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.50 +- 1.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.078
+Compute: K=2  batch=1  NFE=381  NLP solves=254  NLP failures=6  act_thr=1  sel=minimum_projection_cost
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t-tightened (8) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged solve at tau=0.500. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.50 +- 1.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.077
+Compute: K=2  batch=1  NFE=381  NLP solves=254  NLP failures=6  act_thr=1  sel=temporal_consistency
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/9
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 83000
+[ eval ] matched K (flow_steps_v3) = 2 for every arm
+[ eval ] savepath: logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K2_thres1_mpc1_n2_msgmpc1/9
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K2_thres1_mpc1_n2_msgmpc1/9/run_provenance.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-left-hard - diffuser (9) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 60.00 +- 3.00
+Avg number of constraint violations: 2.00 +- 2.00
+Avg total violation: 0.017 +- 0.003
+Average computation time per step: 0.019
+Compute: K=2  batch=1  NFE=244  NLP solves=0  NLP failures=0
+Tracking error: 0.042
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c-tightened (9) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 61.50 +- 3.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.021
+Compute: K=2  batch=1  NFE=250  NLP solves=0  NLP failures=0
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r (9) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 61.50 +- 3.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.068
+Compute: K=2  batch=1  NFE=375  NLP solves=250  NLP failures=0  act_thr=1  sel=random
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c (9) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 61.50 +- 3.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.070
+Compute: K=2  batch=1  NFE=375  NLP solves=250  NLP failures=0  act_thr=1  sel=minimum_projection_cost
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t (9) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 61.50 +- 3.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.069
+Compute: K=2  batch=1  NFE=375  NLP solves=250  NLP failures=0  act_thr=1  sel=temporal_consistency
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r-tightened (9) - K=2----------------------------
+[INFO] Instantiating diffusion model from /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb7_d2eccbc2-a23a-11f1-bd21-d85ed34e311e.xml' with default provider at slot 1
+
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.00 +- 3.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.069
+Compute: K=2  batch=1  NFE=378  NLP solves=252  NLP failures=0  act_thr=1  sel=random
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c-tightened (9) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.00 +- 3.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.072
+Compute: K=2  batch=1  NFE=378  NLP solves=252  NLP failures=0  act_thr=1  sel=minimum_projection_cost
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t-tightened (9) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.00 +- 3.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.067
+Compute: K=2  batch=1  NFE=378  NLP solves=252  NLP failures=0  act_thr=1  sel=temporal_consistency
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/10
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 94000
+[ eval ] matched K (flow_steps_v3) = 2 for every arm
+[ eval ] savepath: logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K2_thres1_mpc1_n2_msgmpc1/10
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K2_thres1_mpc1_n2_msgmpc1/10/run_provenance.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-left-hard - diffuser (10) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 64.50 +- 2.50
+Avg number of constraint violations: 7.50 +- 5.50
+Avg total violation: 0.059 +- 0.042
+Average computation time per step: 0.018
+Compute: K=2  batch=1  NFE=262  NLP solves=0  NLP failures=0
+Tracking error: 0.035
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c-tightened (10) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 67.00 +- 7.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.020
+Compute: K=2  batch=1  NFE=272  NLP solves=0  NLP failures=0
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r (10) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged solve at tau=0.500. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 67.50 +- 6.50
+Avg number of constraint violations: 3.00 +- 1.00
+Avg total violation: 0.021 +- 0.015
+Average computation time per step: 0.070
+Compute: K=2  batch=1  NFE=411  NLP solves=274  NLP failures=6  act_thr=1  sel=random
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c (10) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged solve at tau=0.500. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 67.50 +- 6.50
+Avg number of constraint violations: 3.00 +- 1.00
+Avg total violation: 0.021 +- 0.015
+Average computation time per step: 0.070
+Compute: K=2  batch=1  NFE=411  NLP solves=274  NLP failures=6  act_thr=1  sel=minimum_projection_cost
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t (10) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[INFO] Instantiating diffusion model from /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb8_1b6d4ebc-a23b-11f1-bd21-d85ed34e311e.xml' with default provider at slot 1
+
+[hardflow][NLP-FAILURE] first non-converged solve at tau=0.500. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 67.50 +- 6.50
+Avg number of constraint violations: 3.00 +- 1.00
+Avg total violation: 0.021 +- 0.015
+Average computation time per step: 0.070
+Compute: K=2  batch=1  NFE=411  NLP solves=274  NLP failures=6  act_thr=1  sel=temporal_consistency
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-r-tightened (10) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 64.00 +- 5.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.070
+Compute: K=2  batch=1  NFE=390  NLP solves=260  NLP failures=0  act_thr=1  sel=random
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-c-tightened (10) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 64.00 +- 5.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.071
+Compute: K=2  batch=1  NFE=390  NLP solves=260  NLP failures=0  act_thr=1  sel=minimum_projection_cost
+------------------------Running avoiding-d3il - top-left-hard - hardflow_new-t-tightened (10) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 64.00 +- 5.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.071
+Compute: K=2  batch=1  NFE=390  NLP solves=260  NLP failures=0  act_thr=1  sel=temporal_consistency
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/7
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 89000
+[ eval ] matched K (flow_steps_v3) = 2 for every arm
+[ eval ] savepath: logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K2_thres1_mpc1_n2_msgmpc1/7
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K2_thres1_mpc1_n2_msgmpc1/7/run_provenance.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - both-hard - diffuser (7) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 63.50 +- 2.50
+Avg number of constraint violations: 6.00 +- 4.00
+Avg total violation: 1.219 +- 1.204
+Average computation time per step: 0.018
+Compute: K=2  batch=1  NFE=258  NLP solves=0  NLP failures=0
+Tracking error: 0.036
+------------------------Running avoiding-d3il - both-hard - dpcc-c-tightened (7) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 63.00 +- 2.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.020
+Compute: K=2  batch=1  NFE=256  NLP solves=0  NLP failures=0
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r (7) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 66.50 +- 2.50
+Avg number of constraint violations: 4.50 +- 0.50
+Avg total violation: 0.047 +- 0.014
+Average computation time per step: 0.073
+Compute: K=2  batch=1  NFE=405  NLP solves=270  NLP failures=0  act_thr=1  sel=random
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c (7) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 66.50 +- 2.50
+Avg number of constraint violations: 4.50 +- 0.50
+Avg total violation: 0.047 +- 0.014
+Average computation time per step: 0.075
+Compute: K=2  batch=1  NFE=405  NLP solves=270  NLP failures=0  act_thr=1  sel=minimum_projection_cost
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t (7) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.0
+[INFO] Instantiating diffusion model from /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb9_63bbbc26-a23b-11f1-bd21-d85ed34e311e.xml' with default provider at slot 1
+
+Success rate (goal and constraints): 0.0
+Avg number of steps: 66.50 +- 2.50
+Avg number of constraint violations: 4.50 +- 0.50
+Avg total violation: 0.047 +- 0.014
+Average computation time per step: 0.076
+Compute: K=2  batch=1  NFE=405  NLP solves=270  NLP failures=0  act_thr=1  sel=temporal_consistency
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r-tightened (7) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 63.50 +- 2.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.074
+Compute: K=2  batch=1  NFE=387  NLP solves=258  NLP failures=0  act_thr=1  sel=random
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c-tightened (7) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 63.50 +- 2.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.074
+Compute: K=2  batch=1  NFE=387  NLP solves=258  NLP failures=0  act_thr=1  sel=minimum_projection_cost
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t-tightened (7) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 63.50 +- 2.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.072
+Compute: K=2  batch=1  NFE=387  NLP solves=258  NLP failures=0  act_thr=1  sel=temporal_consistency
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/8
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 93000
+[ eval ] matched K (flow_steps_v3) = 2 for every arm
+[ eval ] savepath: logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K2_thres1_mpc1_n2_msgmpc1/8
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K2_thres1_mpc1_n2_msgmpc1/8/run_provenance.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - both-hard - diffuser (8) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 59.50 +- 1.50
+Avg number of constraint violations: 8.00 +- 4.00
+Avg total violation: 1.642 +- 1.621
+Average computation time per step: 0.018
+Compute: K=2  batch=1  NFE=242  NLP solves=0  NLP failures=0
+Tracking error: 0.047
+------------------------Running avoiding-d3il - both-hard - dpcc-c-tightened (8) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 60.00 +- 2.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.020
+Compute: K=2  batch=1  NFE=244  NLP solves=0  NLP failures=0
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r (8) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 61.50 +- 4.50
+Avg number of constraint violations: 3.00 +- 3.00
+Avg total violation: 0.025 +- 0.025
+Average computation time per step: 0.074
+Compute: K=2  batch=1  NFE=375  NLP solves=250  NLP failures=0  act_thr=1  sel=random
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c (8) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 61.50 +- 4.50
+Avg number of constraint violations: 3.00 +- 3.00
+Avg total violation: 0.025 +- 0.025
+Average computation time per step: 0.074
+Compute: K=2  batch=1  NFE=375  NLP solves=250  NLP failures=0  act_thr=1  sel=minimum_projection_cost
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t (8) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 61.50 +- 4.50
+Avg number of constraint violations: 3.00 +- 3.00
+Avg total violation: 0.025 +- 0.025
+Average computation time per step: 0.074
+Compute: K=2  batch=1  NFE=375  NLP solves=250  NLP failures=0  act_thr=1  sel=temporal_consistency
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r-tightened (8) - K=2----------------------------
+[INFO] Instantiating diffusion model from /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb10_a82de8f2-a23b-11f1-bd21-d85ed34e311e.xml' with default provider at slot 1
+
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 60.00 +- 1.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.076
+Compute: K=2  batch=1  NFE=366  NLP solves=244  NLP failures=0  act_thr=1  sel=random
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c-tightened (8) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 60.00 +- 1.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.078
+Compute: K=2  batch=1  NFE=366  NLP solves=244  NLP failures=0  act_thr=1  sel=minimum_projection_cost
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t-tightened (8) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 60.00 +- 1.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.077
+Compute: K=2  batch=1  NFE=366  NLP solves=244  NLP failures=0  act_thr=1  sel=temporal_consistency
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/9
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 83000
+[ eval ] matched K (flow_steps_v3) = 2 for every arm
+[ eval ] savepath: logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K2_thres1_mpc1_n2_msgmpc1/9
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K2_thres1_mpc1_n2_msgmpc1/9/run_provenance.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - both-hard - diffuser (9) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 60.00 +- 3.00
+Avg number of constraint violations: 20.50 +- 0.50
+Avg total violation: 5.364 +- 0.615
+Average computation time per step: 0.018
+Compute: K=2  batch=1  NFE=244  NLP solves=0  NLP failures=0
+Tracking error: 0.042
+------------------------Running avoiding-d3il - both-hard - dpcc-c-tightened (9) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 66.00 +- 3.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.020
+Compute: K=2  batch=1  NFE=268  NLP solves=0  NLP failures=0
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r (9) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 68.00 +- 2.00
+Avg number of constraint violations: 6.00 +- 2.00
+Avg total violation: 0.089 +- 0.007
+Average computation time per step: 0.074
+Compute: K=2  batch=1  NFE=414  NLP solves=276  NLP failures=0  act_thr=1  sel=random
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c (9) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 68.00 +- 2.00
+Avg number of constraint violations: 6.00 +- 2.00
+Avg total violation: 0.089 +- 0.007
+Average computation time per step: 0.075
+Compute: K=2  batch=1  NFE=414  NLP solves=276  NLP failures=0  act_thr=1  sel=minimum_projection_cost
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t (9) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 68.00 +- 2.00
+Avg number of constraint violations: 6.00 +- 2.00
+Avg total violation: 0.089 +- 0.007
+Average computation time per step: 0.076
+Compute: K=2  batch=1  NFE=414  NLP solves=276  NLP failures=0  act_thr=1  sel=temporal_consistency
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r-tightened (9) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[INFO] Instantiating diffusion model from /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb11_f197120c-a23b-11f1-bd21-d85ed34e311e.xml' with default provider at slot 1
+
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged solve at tau=0.500. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 63.00 +- 3.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.079
+Compute: K=2  batch=1  NFE=384  NLP solves=256  NLP failures=4  act_thr=1  sel=random
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c-tightened (9) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged solve at tau=0.500. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 63.00 +- 3.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.079
+Compute: K=2  batch=1  NFE=384  NLP solves=256  NLP failures=4  act_thr=1  sel=minimum_projection_cost
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t-tightened (9) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged solve at tau=0.500. Falling back to IPOPT's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Further failures are silent; read `nlp_failures` in the run summary for the total, and check the constraint metrics before trusting this row. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 63.00 +- 3.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.079
+Compute: K=2  batch=1  NFE=384  NLP solves=256  NLP failures=4  act_thr=1  sel=temporal_consistency
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/10
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 94000
+[ eval ] matched K (flow_steps_v3) = 2 for every arm
+[ eval ] savepath: logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K2_thres1_mpc1_n2_msgmpc1/10
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_hardflow/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/K2_thres1_mpc1_n2_msgmpc1/10/run_provenance.json
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - both-hard - diffuser (10) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 64.50 +- 2.50
+Avg number of constraint violations: 13.50 +- 6.50
+Avg total violation: 1.467 +- 1.404
+Average computation time per step: 0.018
+Compute: K=2  batch=1  NFE=262  NLP solves=0  NLP failures=0
+Tracking error: 0.035
+------------------------Running avoiding-d3il - both-hard - dpcc-c-tightened (10) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 64.50 +- 4.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.020
+Compute: K=2  batch=1  NFE=262  NLP solves=0  NLP failures=0
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r (10) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 64.00 +- 5.00
+Avg number of constraint violations: 1.50 +- 0.50
+Avg total violation: 0.002 +- 0.000
+Average computation time per step: 0.070
+Compute: K=2  batch=1  NFE=390  NLP solves=260  NLP failures=0  act_thr=1  sel=random
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c (10) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 64.00 +- 5.00
+Avg number of constraint violations: 1.50 +- 0.50
+Avg total violation: 0.002 +- 0.000
+Average computation time per step: 0.069
+Compute: K=2  batch=1  NFE=390  NLP solves=260  NLP failures=0  act_thr=1  sel=minimum_projection_cost
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t (10) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 64.00 +- 5.00
+Avg number of constraint violations: 1.50 +- 0.50
+Avg total violation: 0.002 +- 0.000
+Average computation time per step: 0.070
+Compute: K=2  batch=1  NFE=390  NLP solves=260  NLP failures=0  act_thr=1  sel=temporal_consistency
+------------------------Running avoiding-d3il - both-hard - hardflow_new-r-tightened (10) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 64.50 +- 4.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.077
+Compute: K=2  batch=1  NFE=393  NLP solves=262  NLP failures=0  act_thr=1  sel=random
+------------------------Running avoiding-d3il - both-hard - hardflow_new-c-tightened (10) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 64.50 +- 4.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.074
+Compute: K=2  batch=1  NFE=393  NLP solves=262  NLP failures=0  act_thr=1  sel=minimum_projection_cost
+------------------------Running avoiding-d3il - both-hard - hardflow_new-t-tightened (10) - K=2----------------------------
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 64.50 +- 4.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.072
+Compute: K=2  batch=1  NFE=393  NLP solves=262  NLP failures=0  act_thr=1  sel=temporal_consistency
+Evaluation completed successfully.
+================================================================================
+JOB END:   Thu Aug 27 17:24:59 UTC 2026
+================================================================================

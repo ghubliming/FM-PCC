@@ -19,6 +19,7 @@ import torch
 
 from flow_matcher_v3_meanflow.sampling.hardflow_projection import (
     TrajectoryLayout, HardFlowSampler, resolve_activation_threshold,
+    resolve_hf_batch_size,
 )
 
 HORIZON, ACTION_DIM, STATE_DIM = 8, 2, 4
@@ -123,6 +124,56 @@ def gate_h3(device='cpu'):
     return ok
 
 
+def gate_h4():
+    """B4_PARITY: the arm-C candidate fan is decided by the variant NAME, not by the arm.
+
+    Pins the 2026-08-20 P0 fix. Before it, every `hardflow_new*` variant took the yaml's
+    `hardflow.batch_size` (which defaulted to 1) while the DPCC arms took `args.batch_size`
+    (4). Both arms loop serially over candidates around their CPU solve, so arm C was doing
+    a quarter of the projection work and its `avg_time` read ~25% BELOW DPCC's — while its
+    per-solve cost is really ~1.8-2.2x DPCC's.
+
+    The rule under test: a selection suffix asks for the fan; the bare name asks for
+    upstream's faithful batch-1.
+    """
+    print('\n-- H4: B4_PARITY per-variant candidate fan ' + '-' * 20)
+    cases = [
+        # (variant,                          configured, expected)
+        ('hardflow_new',                     4, 1),   # bare -> faithful batch-1 control
+        ('hardflow_new-tightened',           4, 1),   # geometry suffix composes
+        ('hardflow_new-r',                   4, 4),   # selection suffix -> the fan
+        ('hardflow_new-c',                   4, 4),
+        ('hardflow_new-t',                   4, 4),
+        ('hardflow_new-r-tightened',         4, 4),
+        ('hardflow_new-c-tightened',         4, 4),
+        ('hardflow_new-t-tightened',         4, 4),
+        ('hardflow_new-c',                   8, 8),   # honours a swept HFFM_BATCH
+        ('hardflow_new-c',                   1, 1),   # ...including an explicit 1
+        ('hardflow_new',                     1, 1),
+    ]
+    ok = True
+    for variant, configured, expected in cases:
+        got = resolve_hf_batch_size(variant, configured)
+        flag = 'ok ' if got == expected else 'FAIL'
+        if got != expected:
+            ok = False
+        print(f'  {flag} {variant:<28} configured={configured} -> B={got} (expected {expected})')
+
+    # A non-arm-C variant must be REFUSED, not silently handed a fan: arms A/B read
+    # args.batch_size directly and routing them through here would hide a real mismatch.
+    for bad in ('dpcc-c-tightened', 'diffuser'):
+        try:
+            resolve_hf_batch_size(bad, 4)
+        except ValueError:
+            print(f'  ok  {bad:<28} correctly refused')
+        else:
+            ok = False
+            print(f'  FAIL {bad:<28} was accepted; must raise ValueError')
+
+    print(f'  H4 -> {"PASS" if ok else "FAIL"}')
+    return ok
+
+
 def gate_h2(checkpoint, device='cuda'):
     """Numeric identity on a REAL checkpoint: u(x,t,h=0) ~= FM velocity (finite-diff of the flow).
 
@@ -144,7 +195,7 @@ if __name__ == '__main__':
     ap.add_argument('--device', default='cpu')
     a = ap.parse_args()
 
-    results = [gate_h0(), gate_h1(device=a.device), gate_h3(device=a.device)]
+    results = [gate_h0(), gate_h1(device=a.device), gate_h3(device=a.device), gate_h4()]
     if a.checkpoint:
         results.append(gate_h2(a.checkpoint, device=a.device))
     print('\n' + '=' * 60)

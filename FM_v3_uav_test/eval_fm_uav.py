@@ -110,6 +110,135 @@ SCENE_MAX_EPISODE_LENGTH = {
 # snapshot from before a `snapshot_configs` fix persist forever across job re-runs.
 _SNAPSHOTTED_DIRS = set()
 
+# ── Div_Abort: divergence detection + episode abort ──────────────────────────
+# A quadrotor that has lost control does not merely fail the task — it flies an ABNORMAL
+# ROUTE: it leaves the volume every expert trajectory of its scene lives in, and it gets
+# there fast. Nothing in the loop stopped that, so the episode burned its whole step budget
+# while the drone tumbled. This guard ends such an episode on the step the flight is provably
+# lost and records WHEN / WHERE / WHY into every artifact.
+#
+# What this guard is NOT
+#   • NOT what keeps the plots readable. `p_des` excursions used to autoscale the
+#     `*_mpc_foresight.svg` into two near-empty panels dominated by one hike. That is fixed
+#     independently by `eval_artifacts.view_window()`, which scales every panel to the FLOWN
+#     PATH and lets `p_des` widen it by at most VIEW_MAX_GROW core spans — a commanded point
+#     at -600 m can no longer shrink a plot, aborted or not. Aborting is about not burning
+#     800 steps of compute on a dead aircraft, and about scoring it as the miss it is.
+#   • NOT a constraint check. Leaving the declared workspace box is a NORMAL, measured
+#     violation (`_exec_constraint_violations`). That box also SHRINKS per geo ablation, so
+#     it is deliberately NOT used here: the envelope below is a fixed physical property of
+#     the SCENE, identical across every projection variant, so an abort can never be an
+#     artefact of which ablation happens to be running.
+#   • Does NOT look at `p_des`. The commanded-point lead (`|p_des - p| > 5 m`) was tried and
+#     REMOVED — it is direction-blind. `p_des` 5 m BELOW the drone means required thrust has
+#     gone negative (saturation → free fall); 5 m ABOVE means an ordinary lagging climb the
+#     drone recovers from at max climb accel; 5 m sideways means a 64° tilt, aggressive but
+#     upright and flying. The old check aborted all three identically. Loss of control is now
+#     read off the AIRCRAFT state only.
+#
+# What the abort DOES do for the plots: the clamp above rescues `p_des` excursions, but it
+# cannot rescue a DRONE excursion — the flown path IS the core the window scales to, so a
+# fly-away sets a huge percentile band and compresses the real flight anyway. Ending the
+# episode on the step the aircraft is lost keeps the core band on the arena. That is why
+# `off_route` and `overspeed` fire INDEPENDENTLY (OR, not AND): either one on its own is
+# already a sign the rollout has failed, and either one on its own already wrecks the SVG.
+#
+# Env overrides (all optional; the defaults are what the cluster runs):
+#   FMPCC_UAV_DIVERGENCE_ABORT=0  → disable entirely (exact pre-Div_Abort behaviour)
+#   FMPCC_UAV_DIV_SLACK_M         → how far outside its scene envelope counts as abnormal
+#   FMPCC_UAV_DIV_SPEED_MS        → what counts as "very fast"
+#   FMPCC_UAV_DIV_MAP_XY_M / _MAP_Z_M → the hard off-the-world bound
+DIVERGENCE_ABORT = os.environ.get('FMPCC_UAV_DIVERGENCE_ABORT', '1').lower() not in ('0', 'false', 'no')
+
+# Per-scene FLIGHT ENVELOPE — the box containing every expert trajectory of that scene.
+# Sources: d3il/environments/d3il/models/mj/robot/quadrotor/scenes/scene_<scene>.xml (floor
+# plane spans ±10 m; walls are 1.5 m tall) and uav_expert_data_collect/generator.py (altitude
+# drawn U(0.90, 1.30) at the start, U(0.70, 1.10) at the goal):
+#   empty     start/goal drawn in U(-1.8, 1.8) on x and y; no walls, no obstacles.
+#   corridor  path spans x = ±2.8; wall inner faces at y = ∓0.45.
+#   pillars   path spans x = ±3.2; outermost trained channel centred y = ±1.11.
+#   s_curve   path spans x = ±3.2; wall corridor band |y| <= 1.25.
+SCENE_FLIGHT_ENVELOPE = {
+    'empty':    ((-1.8, -1.80, 0.70), (1.8, 1.80, 1.30)),
+    'corridor': ((-2.8, -0.45, 0.70), (2.8, 0.45, 1.30)),
+    'pillars':  ((-3.2, -1.11, 0.70), (3.2, 1.11, 1.30)),
+    's_curve':  ((-3.2, -1.25, 0.70), (3.2, 1.25, 1.30)),
+}
+# Unknown scene → the union of the four above, so a new scene can never abort spuriously
+# before someone measures its real envelope and adds a row.
+SCENE_FLIGHT_ENVELOPE_DEFAULT = ((-3.6, -1.80, 0.70), (3.6, 1.80, 1.30))
+
+# `off_route`: how far outside its scene envelope the drone has to be. 2.0 m is wider than the
+# whole corridor/s_curve wall gap, and puts the ceiling trigger at z = 3.30 m — 1.8 m clear of
+# the tallest wall (1.5 m) and 2.0 m above any altitude the expert ever flies. Fires ALONE.
+DIV_ENVELOPE_SLACK_M = float(os.environ.get('FMPCC_UAV_DIV_SLACK_M', '2.0'))
+# `overspeed`: the expert covers <= 8 m of path in 6-22 s — ~0.4-0.9 m/s mean, well under
+# 2 m/s peak. Fires ALONE, so it is set above every speed the arena can produce innocently:
+# a free fall from the top of the altitude draw (1.30 m) lands at sqrt(2*9.81*1.30) = 5.05 m/s,
+# so 6.0 m/s cannot be reached by merely dropping out of cruise — it takes powered divergence.
+# ~3x the expert peak. THIS is the threshold to sanity-check first on the cluster (§5).
+DIV_SPEED_MAX_MS = float(os.environ.get('FMPCC_UAV_DIV_SPEED_MS', '6.0'))
+# Hard off-the-world bound: the MuJoCo floor plane is 10 x 10 m. Fires on POSITION ALONE (no
+# speed term) — a drone that coasts out over the void and slows down is still gone.
+DIV_MAP_XY_M = float(os.environ.get('FMPCC_UAV_DIV_MAP_XY_M', '10.0'))
+DIV_MAP_Z_M = float(os.environ.get('FMPCC_UAV_DIV_MAP_Z_M', '10.0'))
+
+
+def _flight_envelope(scene):
+    """(lb, ub) of the box every EXPERT trajectory of `scene` stays inside.
+
+    A fixed physical property of the scene. Deliberately independent of `geo_config`: its
+    `workspace_bounds` shrink per geo ablation (`geo_bounds_only`, tightened `combined_*`),
+    which would make the same flight abort under one variant and survive under another.
+    """
+    lb, ub = SCENE_FLIGHT_ENVELOPE.get(scene, SCENE_FLIGHT_ENVELOPE_DEFAULT)
+    return np.array(lb, dtype=float), np.array(ub, dtype=float)
+
+
+def _check_divergence(p, v, envelope_lb, envelope_ub, quat=None):
+    """First lost-the-aircraft condition this state trips → (reason, detail); else (None, '').
+
+    Reads the AIRCRAFT state only — p, v, attitude. Never `p_des`. `reason` is a short
+    greppable tag that lands in results.json / the npz / the eval log / the foresight SVG;
+    `detail` is the human sentence.
+    """
+    if not (np.all(np.isfinite(p)) and np.all(np.isfinite(v))):
+        return 'nan_state', 'non-finite p / v — the integrator blew up'
+
+    if (np.any(np.abs(np.asarray(p, dtype=float)[:2]) > DIV_MAP_XY_M)
+            or p[2] > DIV_MAP_Z_M or p[2] < -0.5):
+        return 'off_map', (f'p={np.round(p, 2).tolist()} is off the map — the floor plane '
+                           f'spans ±{DIV_MAP_XY_M:.0f} m and the ceiling trigger is '
+                           f'{DIV_MAP_Z_M:.0f} m; the drone has left the world')
+
+    # off_route: somewhere no expert trajectory of this scene ever goes — too far from the
+    # walls / pillars the route is defined by. Independent of speed: a drone that drifts far
+    # off-route slowly has still failed, and its trace still sets the plot scale.
+    lo = np.asarray(envelope_lb, dtype=float) - DIV_ENVELOPE_SLACK_M
+    hi = np.asarray(envelope_ub, dtype=float) + DIV_ENVELOPE_SLACK_M
+    off_route = [ax for ax, c, l, h in zip('xyz', p, lo, hi) if c < l or c > h]
+    if off_route:
+        return 'off_route', (f'p={np.round(p, 2).tolist()} is outside the scene flight envelope '
+                             f'{np.round(lo, 2).tolist()}..{np.round(hi, 2).tolist()} on '
+                             f'{"/".join(off_route)} (expert envelope ⊕ '
+                             f'{DIV_ENVELOPE_SLACK_M:.1f} m) — too far off the trained route')
+
+    # overspeed: independent of position. A speed no expert ever flies is itself the failure
+    # signature, and by the time it shows up the trace is already leaving the arena.
+    speed = float(np.linalg.norm(v))
+    if speed > DIV_SPEED_MAX_MS:
+        return 'overspeed', (f'|v|={speed:.2f} m/s > {DIV_SPEED_MAX_MS:.1f} m/s — the expert '
+                             f'cruises at 0.4-0.9 m/s and a free fall from cruise altitude '
+                             f'lands at 5.05 m/s; this is powered divergence')
+
+    if quat is not None:
+        q = np.asarray(quat, dtype=float).reshape(-1)
+        if q.size == 4 and np.all(np.isfinite(q)):
+            cos_tilt = 1.0 - 2.0 * (q[1] * q[1] + q[2] * q[2])   # body z-axis · world z
+            if cos_tilt < 0.0:
+                return 'inverted', f'body z-axis · world z = {cos_tilt:.2f} < 0 — the drone is upside down'
+    return None, ''
+
 
 def parse_args():
     p = argparse.ArgumentParser(description='Closed-loop UAV FM evaluation.')
@@ -126,7 +255,9 @@ def parse_args():
                         'SCENE_MAX_EPISODE_LENGTH defaults). Mirrors DPCC avoiding max_episode_length. '
                         'Episodes early-stop on goal-reach; goal-path scenes that never reach run the '
                         'full budget. Default: per-scene value.')
-    p.add_argument('--epoch', type=str, default='latest', help="Checkpoint epoch ('latest' or int).")
+    p.add_argument('--epoch', type=str, default='best', help="Checkpoint to load: 'best' (lowest val loss; the default and the ONLY choice that matches the D3IL arms), "
+                   "'latest' (last PERIODIC save -- with save_freq=n_train_steps//5 that is "
+                   "step 80000 of 100000, i.e. 80%% trained, NOT the final model), or an int.")
     p.add_argument('--projection', type=str, default='fm_only',
                    help="Projection variant for the output subfolder. 'fm_only' (state-only FM, no DPCC); "
                         "DPCC variants (dpcc-c, …) slot in here when Phase-3 lands.")
@@ -146,7 +277,7 @@ def build_experiment(scene, seed, epoch, device):
     p.dataset = f'uav-{scene}'            # → data branch + output path segregation
     args = p.parse_args(experiment='flow_matching_v3_uav', seed=seed)
 
-    ep = epoch if epoch == 'latest' else int(epoch)
+    ep = epoch if epoch in ('latest', 'best') else int(epoch)
     # CONFIG-OVERRIDES-PKL (2026-07-13): pass parsed config args so same-named pickled
     # diffusion kwargs are overridden by the current config (warn-on-change). See
     # logs_in_develop/config_override_pkl/CHANGELOG_config_overrides_pkl.md
@@ -465,19 +596,47 @@ def plot_geo_constraints(geo_name, config, out_dir, is_tightened=False, basename
     has_bounds = 'geo_bounds' in ctypes and config.get('workspace_bounds') is not None
     ws_lb = ws_ub = lb_d = ub_d = None
     _Z_DISP = (0.0, 2.0)        # UAV flight band default display when z is unconstrained
+
+    # Gen15 Fix_2: these two are resolved HERE, before the display-bounds block, because that
+    # block now frames an unbounded axis from the geometry that actually lives on it.
+    halfspace_list = config.get('halfspace_constraints', []) if 'halfspace' in ctypes else []
+    obstacle_list  = config.get('obstacle_constraints', [])  if 'obstacles' in ctypes else []
+
+    def _geo_extent(axis):
+        """(min, max) over every drawn feature on `axis` (0=x, 1=y), or None if nothing is
+        drawn there. Used to frame an axis the workspace box does not bound. Halfspaces use
+        their RAW endpoints — x_active only shortens a segment, so this stays a superset."""
+        vals = []
+        for hs in halfspace_list:
+            _triple, _xa = _normalize_halfspace(hs)
+            vals += [float(_triple[0][axis]), float(_triple[1][axis])]
+        for obs in obstacle_list:
+            _c = float(obs['center'][axis]); _r = float(obs['radius']) + margin
+            vals += [_c - _r, _c + _r]
+        return (min(vals), max(vals)) if vals else None
+
     if has_bounds:
         ws_lb = np.array(config['workspace_bounds']['lb'], dtype=float)
         ws_ub = np.array(config['workspace_bounds']['ub'], dtype=float)
         ws_lb = ws_lb + margin; ws_ub = ws_ub - margin
         lb_d = ws_lb.copy(); ub_d = ws_ub.copy()
-        lb_d[np.isinf(lb_d)] = _Z_DISP[0]; ub_d[np.isinf(ub_d)] = _Z_DISP[1]
-        # y may be ±inf too (e.g. a scene relying purely on halfspace walls for y) — clamp display
-        for _i, _fallback in ((0, (-3.5, 3.5)), (1, (-2.0, 2.0))):
-            if np.isinf(lb_d[_i]): lb_d[_i] = _fallback[0]
-            if np.isinf(ub_d[_i]): ub_d[_i] = _fallback[1]
-
-    halfspace_list = config.get('halfspace_constraints', []) if 'halfspace' in ctypes else []
-    obstacle_list  = config.get('obstacle_constraints', [])  if 'obstacles' in ctypes else []
+        # 🔴 Gen15 Fix_2 — CLAMP PER AXIS, NEVER WITH A BOOLEAN MASK. This used to read
+        #     lb_d[np.isinf(lb_d)] = _Z_DISP[0]; ub_d[np.isinf(ub_d)] = _Z_DISP[1]
+        # which stamps the *z* flight band (0.0, 2.0) onto ANY infinite axis. corridor declares
+        # y = ±inf deliberately ('y handled by the wall halfspaces', config/uav_projection.yaml),
+        # so its y frame became [0.0, 2.0] — the walls at y = ±0.45 and the cap balls at y = ∓0.5
+        # fell outside _ylim(), and every drawn object appeared shoved to the bottom edge under a
+        # bounds rectangle floating over empty space. The mask also made the x/y fallback loop
+        # that followed it DEAD CODE: nothing is inf after the mask, so np.isinf never fires.
+        # Display only — setup_dpcc_projector keeps the ±inf rows (−inf + margin = −inf) and SLSQP
+        # reads them as unbounded, so no evaluated number was ever affected. See
+        # logs_in_develop/Gen15/fix_2/.
+        for _i, _fb in ((0, (-3.6, 3.6)), (1, (-2.0, 2.0)), (2, _Z_DISP)):
+            # Prefer the real geometry on an unbounded axis; the constants are a last resort
+            # (they frame corridor's ±0.45 walls inside a ±2 m box, which is legible but poor).
+            _geo = _geo_extent(_i) if _i < 2 else None
+            if np.isinf(lb_d[_i]): lb_d[_i] = (_geo[0] - 0.35) if _geo else _fb[0]
+            if np.isinf(ub_d[_i]): ub_d[_i] = (_geo[1] + 0.35) if _geo else _fb[1]
 
     def _xlim(): return (lb_d[0]-0.3, ub_d[0]+0.3) if lb_d is not None else (-3.5, 3.5)
     def _ylim(): return (lb_d[1]-0.3, ub_d[1]+0.3) if lb_d is not None else (-2.0, 2.0)
@@ -930,6 +1089,22 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     # stopped on. `empty` has a random ill-defined goal → never early-stops (runs full budget).
     goal_reached_latch = False
     steps_run = n_fm     # overwritten at an early break; == full budget on a miss
+    # Div_Abort: divergence/abort bookkeeping for THIS rollout. Every field is persisted
+    # (results.json `divergence` group, npz `divergence_*`, eval log, foresight SVG) so a
+    # lost flight can be read back — WHEN (step/time/physics step), WHERE (p/p_des/v) and
+    # WHY (reason/detail/thresholds) — without re-running anything.
+    arena_lb, arena_ub = _flight_envelope(scene)
+    divergence = {
+        'enabled': bool(DIVERGENCE_ABORT),
+        'aborted': False, 'reason': None, 'detail': '',
+        'step': -1, 'time_s': float('nan'), 'physics_step': -1, 'executed_steps': 0,
+        'p': None, 'p_des': None, 'v': None,
+        'speed': float('nan'), 'p_des_lead': float('nan'),
+        'arena_lb': [float(c) for c in arena_lb], 'arena_ub': [float(c) for c in arena_ub],
+        'thresholds': {'envelope_slack_m': DIV_ENVELOPE_SLACK_M,
+                       'speed_max_ms': DIV_SPEED_MAX_MS,
+                       'map_xy_m': DIV_MAP_XY_M, 'map_z_m': DIV_MAP_Z_M},
+    }
 
     for k in range(n_fm):
         p = data.qpos[:3].copy()
@@ -1051,6 +1226,41 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
                 print(f'[ eval ] frame render failed ({exc}); stopping capture')
                 renderer = None     # stop capturing for THIS rollout; eval_scene still owns/frees it
 
+        # ── Div_Abort: stop the episode the step the flight is provably lost ──
+        # Checked AFTER the physics decimation (so it reads the freshly integrated state) and
+        # only while the goal has NOT been latched — a rollout that already reached the goal
+        # exits through the normal break below and is never re-labelled an abort.
+        if DIVERGENCE_ABORT and not goal_reached_latch:
+            _p_now = data.qpos[:3].copy()
+            _v_now = data.qvel[:3].copy()
+            _reason, _detail = _check_divergence(_p_now, _v_now, arena_lb, arena_ub,
+                                                 quat=data.qpos[3:7])
+            if _reason is not None:
+                divergence.update({
+                    'aborted': True, 'reason': _reason, 'detail': _detail,
+                    'step': int(k), 'time_s': float(k / DATASET_HZ),
+                    'physics_step': int(n_phys), 'executed_steps': int(k + 1),
+                    'p': [float(c) for c in _p_now],
+                    'p_des': [float(c) for c in np.asarray(p_des, dtype=float).reshape(-1)],
+                    'v': [float(c) for c in _v_now],
+                    'speed': float(np.linalg.norm(_v_now)),
+                    'p_des_lead': float(np.linalg.norm(
+                        np.asarray(p_des, dtype=float).reshape(-1) - _p_now)),
+                })
+                blog.note(f'DIVERGENCE ABORT  reason={_reason}  step={k}/{n_fm}  '
+                          f't={k / DATASET_HZ:.3f}s  p={np.round(_p_now, 3).tolist()}  '
+                          f'p_des={np.round(np.asarray(p_des, dtype=float), 3).tolist()}  '
+                          f'|v|={np.linalg.norm(_v_now):.2f}m/s  |  {_detail}')
+                print(f'[ eval ] {scene} variant={variant} trial_seed={trial_seed}: '
+                      f'⚠ DIVERGENCE ABORT at FM step {k}/{n_fm} (t={k / DATASET_HZ:.2f}s) — '
+                      f'reason={_reason}: {_detail}', flush=True)
+                # U_13 step accounting: an abort is a MISS, and a miss costs the FULL budget
+                # (DPCC convention). Charging it the truncated count would make a lost flight
+                # look like a fast one in steps_mean. The true executed count lives in
+                # divergence['executed_steps'].
+                steps_run = n_fm
+                break
+
         # U_13: DPCC avoiding-style early termination (aux_repo/dpcc/scripts/eval.py:264) —
         # stop the instant the goal is reached (goal-path scenes) or the fixed budget is
         # exhausted. `steps_run` (the FM step count at stop) is the deterministic time-to-goal
@@ -1078,6 +1288,12 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     else:
         goal_reached = bool(goal_dist < goal_radius)
     safe = bool(contact_frac <= limit and airborne)       # contact-free + airborne
+    # Div_Abort: a rollout that flew away is NOT "safe" whatever contact_frac/min_z say — it
+    # may well have left the arena without ever touching an obstacle or dropping to the floor,
+    # and on `empty` (where success == safe) that would have been scored a SUCCESS. Force the
+    # physical-safety axis false so every downstream success flag collapses to 0.
+    if divergence['aborted']:
+        safe = False
     # Scene-aware success (Fix2_metrics): fixed-route scenes must REACH the goal AND be safe;
     # `empty` has a RANDOM goal the unconditioned FM can't be expected to hit, so there
     # success = stable/safe flight only. A goal-path drone that flies around without reaching
@@ -1112,6 +1328,11 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
         'goal_dist': f'{goal_dist:.3f}m', 'safe': safe, 'min_z': f'{min_z:.3f}',
         'contact_frac': f'{contact_frac:.3f}',
     }
+    if divergence['aborted']:
+        behaviour['result'] = f'ABORT({divergence["reason"]})'
+        behaviour['abort_when'] = f'step {divergence["step"]}/{n_fm} (t={divergence["time_s"]:.3f}s)'
+        behaviour['abort_where'] = f'p={divergence["p"]} p_des={divergence["p_des"]}'
+        behaviour['abort_why'] = divergence['detail']
     blog_summary = blog.summary_dict()
     if log_dir is not None:
         blog.save(os.path.join(log_dir, f'rollout_{episode_id}.log'), behaviour=behaviour)
@@ -1179,6 +1400,10 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
         },
         # U_13: actual FM steps executed (deterministic time-to-goal on success, full budget
         # on a miss) — was the random round(dur*HZ) budget. `max_episode_length` = the budget.
+        # Div_Abort: WHEN/WHERE/WHY this flight was declared lost (all-False group when it
+        # was not). `n_fm_steps` below is charged the FULL budget for an abort (miss
+        # convention); `divergence['executed_steps']` is what actually ran.
+        'divergence': divergence,
         'n_fm_steps': steps_run, 'max_episode_length': n_fm, 'decim': decim, 'dt': dt,
         # ── heavy (npz / gif only; stripped from results.json) ──
         'obs_traj': np.asarray(obs_traj),
@@ -1418,6 +1643,17 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
         },
         'track_err_mean': float(np.mean([r['track_err_mean'] for r in rollouts])),
         'projection': variant,
+        # Div_Abort: variant-level rollup. n_aborted > 0 means some trials were cut short
+        # because the drone lost control — those rows are misses by construction (safe forced
+        # False) and their constraint counts cover fewer steps, so a DA comparing violation
+        # COUNTS across variants must account for them.
+        'divergence': {
+            'n_aborted_trials': int(sum(1 for r in rollouts if r.get('divergence', {}).get('aborted'))),
+            'aborted_trials': [i for i, r in enumerate(rollouts) if r.get('divergence', {}).get('aborted')],
+            'reasons': {i: r['divergence']['reason'] for i, r in enumerate(rollouts)
+                        if r.get('divergence', {}).get('aborted')},
+            'enabled': bool(DIVERGENCE_ABORT),
+        },
         # Fix_15.3: variant-level projection-circuit-breaker rollup. `n_tripped_trials` > 0 means
         # the sustained-slowness breaker (projection.py Fix_15.2) OPENED on some trials, which ran
         # (partly) UNPROJECTED — treat this variant as "projection broken for this geometry", not a
@@ -1454,6 +1690,28 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
         print(f'[ eval ] {scene} variant={variant}: ⚠ PROJECTION CIRCUIT-BREAKER TRIPPED on '
               f'{_ph["n_tripped_trials"]}/{len(rollouts)} trials ({_ph["total_skipped_steps"]} '
               f'steps skipped) — results marked UNPROJECTED. See PROJECTION_CB_TRIPPED.txt.', flush=True)
+
+    # Div_Abort: greppable sentinel when any trial of this variant lost control, mirroring the
+    # PROJECTION_CB_TRIPPED.txt convention — visible from the file tree without opening artifacts.
+    _dv = summary['divergence']
+    if _dv['n_aborted_trials'] > 0:
+        with open(os.path.join(out_dir, 'DIVERGENCE_ABORT.txt'), 'w') as _f:
+            _f.write(f"DIVERGENCE ABORT — {scene} variant={variant}\n")
+            _f.write(f"aborted_trials={_dv['aborted_trials']} "
+                     f"({_dv['n_aborted_trials']}/{len(rollouts)})\n\n")
+            for _i in _dv['aborted_trials']:
+                _d = rollouts[_i]['divergence']
+                _f.write(f"  trial {_i}: reason={_d['reason']}  step={_d['step']}/"
+                         f"{rollouts[_i]['max_episode_length']}  t={_d['time_s']:.3f}s\n")
+                _f.write(f"            p={_d['p']}  p_des={_d['p_des']}  "
+                         f"|v|={_d['speed']:.2f} m/s  |p_des-p|={_d['p_des_lead']:.2f} m\n")
+                _f.write(f"            why: {_d['detail']}\n")
+            _f.write("\nThese rollouts were STOPPED early (the drone had lost control). They are\n")
+            _f.write("scored as misses (physical.safe forced False) and their step count is charged\n")
+            _f.write("the full budget; constraint counts cover only the steps actually flown.\n")
+        print(f'[ eval ] {scene} variant={variant}: ⚠ DIVERGENCE ABORT on '
+              f'{_dv["n_aborted_trials"]}/{len(rollouts)} trials {_dv["aborted_trials"]} — '
+              f'see DIVERGENCE_ABORT.txt', flush=True)
 
     _steps_tg = summary['steps']['to_goal_mean']
     print(f'[ eval ] {scene} variant={variant} (B={batch_size}, proj={"on" if projector else "off"}, '

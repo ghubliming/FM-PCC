@@ -1,6 +1,7 @@
 from diffuser.utils import watch
 import yaml
 import os
+import sys                     # Gen14 U9 — stderr notes from _mix_u9_keys()
 
 # Read the threshold dynamically from the YAML config, abort if not found
 with open('config/visual_aligning_eval.yaml', 'r') as f:
@@ -10,6 +11,60 @@ if 'diffusion_timestep_threshold' not in _proj_config:
     raise ValueError("CRITICAL: 'diffusion_timestep_threshold' MUST be defined in config/visual_aligning_eval.yaml")
 
 _yaml_threshold = _proj_config['diffusion_timestep_threshold']
+
+# ─── Gen14 U11 — MIX_PROJ_T: the projection threshold as an env knob ───────────────────
+# `diffusion_timestep_threshold` (T) is the fraction of the LATE ODE over which the DPCC
+# projector runs: the sampler projects on every step from int((1 - T) * K) to the end, so
+# the solve count per replan is ~T*K.
+#
+#     T = 0.5 , K = 100  ->  50 SLSQP solves / replan   (the shipped setting; 15 s/step,
+#                                                        needs 50 h for 30 rollouts and has
+#                                                        NEVER finished inside the 24 h wall)
+#     T = 0.1 , K = 100  ->  10 solves / replan
+#     T = 0.05, K = 100  ->   5 solves / replan
+#     T = 0.5 , K = 2    ->   1 solve  / replan
+#
+# 🔴 WHY AN ENV KNOB RATHER THAN A YAML EDIT. The YAML value is read ONCE, here, at config
+# import, and feeds EVERY block in this file — Gen6v4, Gen7 and all four Gen14 arms. Editing
+# it to run one job silently re-points every other eval that imports the config afterwards,
+# and it is exactly the kind of edit that gets left behind. MIX_PROJ_T is per-job, travels
+# with --export, and disappears when the job does.
+#
+# ✅ NO COLLISION RISK, BY CONSTRUCTION. `diffusion_timestep_threshold` is already a PLAN
+# path key — ('diffusion_timestep_threshold', 'T') in args_to_watch_mix_visual_plan — so the
+# results folder carries it: T=0.5 writes `H8_K100_Meuler_T0.5_...`, T=0.1 writes
+# `H8_K100_Meuler_T0.1_...`. A new threshold can never overwrite an old run's results.
+# The CHECKPOINT path is untouched (T is eval-only), so no retraining is implied.
+def _env_or_none(name):
+    """Env value, or None when unset **or blank**.
+
+    🔴 BLANK MUST MEAN UNSET (job 25215). Shell `VAR= cmd` does not unset VAR — it exports
+    it as the EMPTY STRING, so `os.environ.get(name)` returns '' and `is not None` is True.
+    That turned a sweep loop's own `MIX_PROJ_T= run_eval` into `float('')` and killed both
+    passes at config-import. `env -u VAR cmd` is the correct shell idiom and the sbatch now
+    uses it, but a knob must not be one shell quirk away from a crash — so blank is treated
+    as absent here too, and every MIX_* reader below goes through this function.
+    """
+    raw = os.environ.get(name)
+    if raw is None or not str(raw).strip():
+        return None
+    return str(raw).strip()
+
+
+_env_T = _env_or_none('MIX_PROJ_T')
+if _env_T is not None:
+    try:
+        _env_T = float(_env_T)
+    except ValueError:
+        raise ValueError(f"CRITICAL: MIX_PROJ_T='{_env_T}' is not a float.")
+    if not (0.0 <= _env_T <= 1.0):
+        raise ValueError(
+            f"CRITICAL: MIX_PROJ_T={_env_T} must lie in [0, 1] — it is a FRACTION of the "
+            f"late ODE, not a step count. 0.0 = terminal solve only, 1.0 = every step.")
+    print(f"[ config ] MIX_PROJ_T: diffusion_timestep_threshold {_yaml_threshold} -> {_env_T} "
+          f"(results folder key 'T' moves with it; checkpoint path unchanged)",
+          file=sys.stderr)
+    _yaml_threshold = _env_T
 
 args_to_watch_dpcc_train = [
     ('prefix', ''),
@@ -873,7 +928,23 @@ base['plan_imf_visual_aligning'] = {
 # Single source of truth for the training budget. 🔴 The alpha-Flow anneal MUST span the
 # ACTUAL budget (PLAN §6.2a): af_alpha_end_step and af_n_train_steps are BOTH derived from
 # this one name, and af_diffusion.py asserts they agree. Never write the number twice.
-_MIX_N_TRAIN_STEPS = int(1e5)
+_MIX_FULL_N_TRAIN_STEPS = int(1e5)
+_MIX_N_TRAIN_STEPS = int(float(os.environ.get('MIX_TRAIN_STEPS', _MIX_FULL_N_TRAIN_STEPS)))
+
+# 🔴 A SHORTENED RUN MUST NOT LOOK LIKE A FULL ONE. Budget is an identity key: a 50k-step
+# checkpoint and a 100k-step checkpoint are different models, and two different models must
+# never share a directory. When MIX_TRAIN_STEPS cuts the budget, `train_budget` joins
+# args_to_watch_mix_visual_train and the checkpoint folder gains a trailing '_TB50pct'.
+# At the FULL budget the key is absent (watch() skips undefined keys), so every path that
+# exists today keeps its current name. Mirrored from Gen16's avoiding config.
+def _budget_tag():
+    if _MIX_N_TRAIN_STEPS >= _MIX_FULL_N_TRAIN_STEPS:
+        return None
+    pct = 100.0 * _MIX_N_TRAIN_STEPS / _MIX_FULL_N_TRAIN_STEPS
+    return f'{int(round(pct))}pct' if abs(pct - round(pct)) < 1e-9 else f'{_MIX_N_TRAIN_STEPS}steps'
+
+
+_MIX_BUDGET_TAG = _budget_tag()
 
 # One watch list for all four arms. watch() skips keys a block does not define, so each
 # arm's folder name carries exactly its own identity keys (e.g. 'K' only for diffusion,
@@ -890,9 +961,32 @@ args_to_watch_mix_visual_train = [
     ('max_path_length', 'steps'),
     ('batch_size', 'bs'),
     ('film_mode', 'film'),
+    # 🔴 Gen14 U8 — the ML-BONE key. MUST be in this list: film_mode is a path key and the
+    # bone was not, so a DiT run would have overwritten the U-Net checkpoint in the same
+    # directory (the trap CHANGELOG_Gen14_U5...md:208 flagged a year in advance). Blocks that
+    # do not define it are skipped by watch(), so every existing U-Net path is unchanged.
+    ('ml_bone', 'B'),
     ('engine', 'E'),                 # ← Gen14 arm identity key
     ('t_schedule', 'ts'),            # mf/af only
     ('af_alpha_scheduler', 'afsch'), # af only
+    # 🔴 Gen14 U10 — the alpha SCHEDULE as an identity key. Emitted by
+    # _mix_af_alpha_keys() ONLY when a value differs from the shipped default, and
+    # watch() skips undefined keys, so every pre-U10 af path is unchanged. Without it,
+    # `af_alpha_end=0.02` under the same 'sigmoid' scheduler lands in the SAME directory
+    # as the alpha->0 run and overwrites it.
+    ('af_alpha', 'AF'),             # af only, non-default schedules only
+    # ── Gen14 U9 ── perception / conditioning identity keys. Each is emitted by
+    # _mix_u9_keys() ONLY when it differs from the pre-U9 value, and watch() skips keys a
+    # block does not define — so every path that exists today keeps its exact current name
+    # and a U9 run lands in its own tree. This is the same absent-when-default trick
+    # ml_bone, film_mode and train_budget already use; it is what stops U9 from orphaning
+    # every U8 checkpoint and results folder.
+    ('vis_pretrained', 'VP'),
+    ('vis_lr_scale',   'VLR'),
+    ('vis_cond_mode',  'VC'),
+    # Appended LAST so a reduced-budget run reads as the full name plus a suffix, and the
+    # full-budget name is unchanged. Set only when the budget is cut (see _budget_tag).
+    ('train_budget', 'TB'),
 ]
 
 args_to_watch_mix_visual_plan = [
@@ -906,7 +1000,25 @@ args_to_watch_mix_visual_plan = [
     ('if_vision', 'V'),
     ('mpc_batch_size', 'mpc'),
     ('film_mode', 'film'),
+    ('ml_bone', 'B'),                # Gen14 U8 — see the training list
     ('engine', 'E'),
+    # 🔴 Gen14 U12 — WHICH CHECKPOINT was rolled out. Emitted by _mix_epoch_keys() ONLY when
+    # the selector differs from the shipped 'best', and watch() skips keys a block does not
+    # define — so every results folder that exists today keeps its exact name, and a
+    # `latest` run lands in its own tree.
+    #
+    # WITHOUT IT a `--epoch latest` eval would write into the SAME directory as the `best`
+    # eval of the SAME checkpoint, and the two are DIFFERENT MODELS. On the af arm that is
+    # not a corner case: state_best.pt is chosen on a test_loss that scales with alpha
+    # (~0.75 + 0.25*alpha), so it structurally prefers a MID-CURRICULUM checkpoint rather
+    # than the model the alpha schedule actually produced — see
+    # logs_in_develop/Gen3v7_AlphaFlow/DA/DA_20260901_AF_UNet_alpha_clamp_T1_negative.md
+    # §3.1/§4.2, where `latest` vs `best` was the whole difference between never reaching
+    # the goal and always reaching it.
+    #
+    # Appended LAST so a non-default name reads as the existing one plus a suffix — the
+    # same trick `train_budget` uses on the training list.
+    ('diffusion_epoch_tag', 'EP'),
 ]
 
 
@@ -955,12 +1067,80 @@ _mix_plan_common = {
 }
 
 
+# Gen14 U8 — sentinel meaning "REMOVE this inherited key from the block".
+# An override dict can add or replace, but the mf/af arms inherit `film_mode` from their
+# parent (`fm_visual_aligning`), and on a DiT bone the key must be GONE, not merely unset:
+# diffuser's watch() skips keys the args object lacks (utils/setup.py:25), so deleting it is
+# what keeps '_film..' out of a transformer checkpoint path.
+_DROP = object()
+
+
 def _mix_train_block(engine, parent, overrides):
-    """Assemble one training block: parent arm's config + Gen14 identity + arm overrides."""
+    """Assemble one training block: parent arm's config + Gen14 identity + arm overrides.
+
+    Keys whose override value is `_DROP` are removed from the merged block entirely.
+    """
     blk = {**base[parent], **overrides, 'engine': engine,
            'prefix': f'mix_visual_aligning_{engine}/'}
+    for k in [k for k, v in blk.items() if v is _DROP]:
+        del blk[k]
+    # Present ONLY on a reduced budget -- absent means "full 1e5".
+    if _MIX_BUDGET_TAG is not None:
+        blk['train_budget'] = _MIX_BUDGET_TAG
     blk['exp_name'] = watch(args_to_watch_mix_visual_train)
     return blk
+
+
+# ═══ Gen14 U12 — MIX_EPOCH: WHICH CHECKPOINT the eval deploys ══════════════════════════
+# WHY THIS EXISTS. `diffusion_epoch: 'best'` is inherited by all four mix plan blocks from
+# plan_fm_visual_aligning via _mix_plan_common, and NOTHING could override it: no env var, no
+# CLI flag. `best` is state_best.pt, written whenever test_loss hits a new low.
+#
+# 🔴 For the af arm that is the WRONG checkpoint by construction. alpha-Flow's test loss
+# carries an alpha-weighted term, so the minimum sits mid-homotopy: `best` deploys a model
+# caught INSIDE the curriculum, never the one the schedule ends on. Gen3v7 measured the
+# difference directly — the same training run went from 0/2 to 2/2 goals at K=1 purely by
+# evaluating `latest` instead of `best` (DA_20260901_AF_UNet_alpha_clamp_T1_negative.md §4).
+# Pairing MIX_AF_ALPHA_END (U10) with `best` would therefore floor alpha and then throw away
+# the checkpoint the floor produced, i.e. run the experiment and discard its result.
+#
+# EVAL-ONLY, NO RETRAIN. This never reaches a training block: it selects among files that
+# already exist in the checkpoint tree. The checkpoint path (`prefix` / `diffusion_loadpath`,
+# built from args_to_watch_mix_visual_train) is untouched; only the RESULTS folder moves,
+# via the 'diffusion_epoch_tag' key above.
+#
+#   MIX_EPOCH=latest        -> newest state_<step>.pt   -> results dir gains '_EPlatest'
+#   MIX_EPOCH=80000         -> state_80000.pt           -> '_EP80000'
+#   MIX_EPOCH=best / unset  -> state_best.pt            -> NO fragment (today's paths)
+_MIX_EPOCH_DEFAULT = 'best'
+
+
+def _mix_epoch_keys(raw=None):
+    """Checkpoint-selector keys for a plan block, present only when non-default.
+
+    `raw=None` reads MIX_EPOCH from the environment (blank == unset, see _env_or_none).
+    Returns {} for the shipped 'best', so with nothing set the af/mf/fm/diffusion plan
+    blocks are byte-identical to their pre-U12 selves.
+
+    The eval script calls this with an explicit value for its --epoch flag, so the CLI and
+    the env form can never disagree about what is valid or how the tag is spelled.
+    """
+    if raw is None:
+        raw = _env_or_none('MIX_EPOCH')
+    if raw is None:
+        return {}
+    val = str(raw).strip()
+    if val == _MIX_EPOCH_DEFAULT:
+        return {}                      # explicit 'best' == the default: emit nothing
+    if val != 'latest':
+        # An explicit step. Reject anything else HERE rather than let it become a
+        # 'state_<garbage>.pt' FileNotFoundError minutes into a GPU allocation.
+        if not val.isdigit():
+            raise ValueError(
+                f"CRITICAL: MIX_EPOCH/--epoch='{val}' is not 'best', 'latest', or a "
+                f"non-negative step number.")
+        val = int(val)
+    return {'diffusion_epoch': val, 'diffusion_epoch_tag': val}
 
 
 def _mix_plan_block(engine, train_blk, overrides, drop=()):
@@ -992,6 +1172,17 @@ def _mix_plan_block(engine, train_blk, overrides, drop=()):
         # Overriding it in a plan block is exactly the mistake this loop prevents.
         blk[plan_key] = train_blk[key]
 
+    # 🔴 Gen14 U8 — an identity key the TRAINING block does not have must not survive on the
+    # plan block. `film_mode` arrives here via _mix_plan_common (copied from the FM plan
+    # template), so on a DiT bone it would otherwise label the RESULTS folder '_filmv1_' for a
+    # model that has no FiLM path at all — the eval-side twin of the checkpoint-path lie.
+    # The mirror loop above only ADDS keys; this is the matching removal.
+    for _identity_key, _ in args_to_watch_mix_visual_train:
+        if _identity_key == 'prefix':
+            continue
+        if _identity_key not in train_blk:
+            blk.pop(_MIX_TRAIN_TO_PLAN_KEY.get(_identity_key, _identity_key), None)
+
     # Training-key fragments -> the CHECKPOINT identity, re-pointed at this arm's plan
     # namespace. `[2:]` strips the 'f:' marker; the whole prefix carries one of its own.
     _ckpt_id = _mix_loadpath(
@@ -1005,6 +1196,12 @@ def _mix_plan_block(engine, train_blk, overrides, drop=()):
     blk['diffusion_loadpath'] = _mix_loadpath(
         args_to_watch_mix_visual_train, train_blk,
         f'mix_visual_aligning_{engine}/', _MIX_TRAIN_TO_PLAN_KEY)
+
+    # ── Gen14 U12 ── which checkpoint this eval deploys. EMPTY at the default, so every
+    # existing results path is unchanged. Applied LAST, and deliberately AFTER
+    # diffusion_loadpath: these are EVAL keys, and nothing here may touch the checkpoint
+    # identity the two mirror loops above just finished building.
+    blk.update(_mix_epoch_keys())
     return blk
 
 
@@ -1104,10 +1301,293 @@ def _film_mode(engine):
             return val
     return 'v1'
 
+# ══════════════════════════════════════════════════════════════════════════════════════
+# Gen14 U8 — the ML-BONE knob (generative backbone for the two-time arms)
+# ══════════════════════════════════════════════════════════════════════════════════════
+# Plan:     logs_in_develop/Gen14/U8/PLAN_Gen14_U8_visual_dit_bone.md
+# Decision: logs_in_develop/Gen14/U8/DECISION_Gen14_U8_injection_choice.md
+#
+#   'unet'    VisualUNetTwoTime  — the Gen14 baseline. FiLM conditioning (film_mode v1/v2).
+#   'mf_dit'  official MeanFlow DiT (adaLN-zero trunk)          — mf arm only
+#   'sit'     alpha-Flow SiT      (adaLN-zero trunk)            — af arm only
+#   'dit'     iMF DiT             (RoPE, in-context tokens)     — both arms
+#
+# On every DiT/SiT bone the 128-D visual latent enters as ONE PREPENDED TOKEN, never as
+# adaLN modulation — that design point is already occupied by the U-Net's FiLM, and
+# diffusion_policy (the upstream of this repo's vision encoder) tokenises for its
+# transformer and reserves FiLM for its U-Net. See the DECISION doc §2.
+#
+# ⚠️ film_mode is a U-NET concept. On a DiT bone it is not merely unused, it would put a
+#    lying '_filmv1_' fragment in the checkpoint path — so `_mix_bone_keys()` DELETES the
+#    key for non-unet bones and watch() then skips it. Never re-add it by hand.
+#
+# ✅ Safe to flip one arm at a time: ml_bone is in args_to_watch_mix_visual_train, so each
+#    bone trains into its own '..._B{bone}_E..' tree and no existing run is overwritten.
+_MIX_ML_BONES = {
+    'mf': ('unet', 'mf_dit', 'dit'),
+    'af': ('unet', 'sit', 'dit'),
+}
+
+
+def _ml_bone(engine):
+    """Resolve ONE arm's generative bone. Same precedence shape as _film_mode().
+
+        1. MIX_BONE_<ENGINE>   e.g. MIX_BONE_MF=mf_dit   — this arm only
+        2. MIX_BONE            — every two-time arm that has no specific setting
+        3. 'unet'              — the default, identical to the pre-U8 behaviour
+
+    Unknown values RAISE, and so does a bone that belongs to the OTHER arm ('sit' on mf,
+    'mf_dit' on af) — those are separate classes with separate provenance, and silently
+    accepting one would train a model whose folder name names a different architecture.
+    """
+    allowed = _MIX_ML_BONES[engine]
+    for key in (f'MIX_BONE_{engine.upper()}', 'MIX_BONE'):
+        val = os.environ.get(key)
+        if val:
+            if val not in allowed:
+                raise ValueError(
+                    f"CRITICAL: {key}='{val}' is not a valid ML bone for the '{engine}' arm "
+                    f"(want one of {list(allowed)}).")
+            return val
+    return 'unet'
+
+
+def _mix_bone_keys(engine):
+    """The bone-dependent block fragment: ml_bone plus EITHER film_mode OR the DiT sizing.
+
+    Returns a dict to splat into the arm's training block. Exactly one conditioning-config
+    family is present at a time, so a block can never carry both a FiLM mode and a DiT width.
+    """
+    bone = _ml_bone(engine)
+    if bone == 'unet':
+        # 🔴 ml_bone is DELIBERATELY ABSENT on the baseline bone. watch() skips keys a block
+        # does not define, so the U-Net's exp_name / diffusion_loadpath stay BYTE-IDENTICAL to
+        # every pre-U8 Gen14 run — no existing checkpoint or results folder is orphaned. The
+        # DiT blocks below DO define it, so they carry a '_B{bone}' fragment the U-Net lacks
+        # and the two can never collide. Same trick n_diffusion_steps and film_mode already use.
+        return {'film_mode': _film_mode(engine)}
+    # DiT/SiT bone: film_mode is deliberately ABSENT (see the warning above).
+    # 🔴 dit_hidden_size=160 (not the state-only 256) is the PARAMETER-MATCHED width:
+    # 18*depth*d^2 => 160/8 ~ 3.9 M vs the visual U-Net's ~4.0 M (dim=32). 256/8 is ~9.9 M,
+    # i.e. 2.5x, and an unmatched backbone A/B is exactly the Fix_8 defect that already
+    # forced one public retraction (PLAN §1.2(c), §8). Both are ARCHITECTURE keys — changing
+    # either requires a retrain, and neither is in the watch list, so treat a change as
+    # needing a new bone name rather than silently overwriting.
+    return {
+        'ml_bone':         bone,
+        'film_mode':       _DROP,   # 🔴 inherited from fm_visual_aligning — must be DELETED
+        'dit_hidden_size': 160,
+        'dit_depth':       8,
+        'dit_num_heads':   4,
+        'dit_patch_size':  1,
+    }
+
+
+# ═══ Gen14 U9 — perception-first knobs ═══════════════════════════════════════════════
+# Three ML-side flags. NONE of them touches the projector, the constraint YAML, the MPC
+# candidate fan, the horizon or the observation window — U9 is deliberately comparable to
+# U8 cell for cell (PLAN §3).
+#
+#   MIX_VIS_PRETRAINED=1        ImageNet init of the dual ResNet-18 (default 0 = random,
+#                               i.e. every pre-U9 run). Only the WEIGHTS change: the
+#                               architecture, LATENT_DIM=128 and cond_dim are untouched, so
+#                               every U8 gate stays valid exactly as written.
+#   MIX_VIS_LR_SCALE=0.1        encoder LR = train_lr * scale (default 1.0 = pre-U9).
+#                               0.0 is the hard-freeze extreme.
+#   MIX_VIS_COND=adaln          where the latent enters the transformer (default 'token'
+#                               = U8, bit-identical). adaLN bones only (mf_dit / sit).
+#
+# 🔴 EVERY key is emitted ONLY when non-default. At the defaults _mix_u9_keys() returns {},
+#    watch() skips all three, and the checkpoint path is character-for-character the U8 one
+#    — which is what makes the R0 reproduction run in PLAN §6 a real check rather than a
+#    new tree that trivially "passes".
+_U9_DEFAULTS = {'vis_pretrained': False, 'vis_lr_scale': 1.0, 'vis_cond_mode': 'token'}
+
+
+def _mix_u9_keys(engine):
+    """U9 knobs for one arm, present only where they differ from the pre-U9 behaviour."""
+    def _env(name):
+        return os.environ.get(f'{name}_{engine.upper()}') or os.environ.get(name)
+
+    out = {}
+
+    raw = _env('MIX_VIS_PRETRAINED')
+    if raw is not None:
+        if raw.strip().lower() not in ('0', '1', 'true', 'false'):
+            raise ValueError(
+                f"CRITICAL: MIX_VIS_PRETRAINED='{raw}' must be 0|1|true|false.")
+        val = raw.strip().lower() in ('1', 'true')
+        if val != _U9_DEFAULTS['vis_pretrained']:
+            out['vis_pretrained'] = val
+
+    raw = _env('MIX_VIS_LR_SCALE')
+    if raw is not None:
+        try:
+            val = float(raw)
+        except ValueError:
+            raise ValueError(f"CRITICAL: MIX_VIS_LR_SCALE='{raw}' is not a float.")
+        if val < 0.0:
+            raise ValueError(f"CRITICAL: MIX_VIS_LR_SCALE={val} must be >= 0.")
+        if val != _U9_DEFAULTS['vis_lr_scale']:
+            # Rendered as-is ('VLR0.1'): dotted fragments are already the house style
+            # here (the plan paths carry 'T0.5'), so no p-substitution is introduced.
+            out['vis_lr_scale'] = val
+
+    raw = _env('MIX_VIS_COND')
+    if raw is not None:
+        if raw not in ('token', 'adaln', 'both'):
+            raise ValueError(
+                f"CRITICAL: MIX_VIS_COND='{raw}' is not one of token|adaln|both.")
+        if raw != _U9_DEFAULTS['vis_cond_mode']:
+            # 🔴 DROP, DO NOT RAISE (jobs 25034 / 25038, 2026-08-25).
+            #
+            # This module defines ALL FOUR arms on import, and a bare MIX_VIS_COND rides
+            # along to every one of them. Raising here made the whole config UNIMPORTABLE
+            # for any arm whose bone is not adaLN -- which is most of them, most of the
+            # time -- and it took down G-B7 twice: once on 'mf', then on 'af'. A config
+            # module that cannot be imported is a worse failure than the one being guarded.
+            #
+            # What actually needs preventing is a LYING PATH KEY: a '_VCadaln' fragment on
+            # a checkpoint whose bone has no adaLN pathway and ignored the setting. Dropping
+            # the key prevents exactly that, with no collateral damage -- the same treatment
+            # film_mode gets on a DiT bone (_DROP in _mix_bone_keys).
+            #
+            # The HARD failure lives where the arm is actually known, which is where it
+            # belongs and where it still fires:
+            #   * Slurm_Codes/.../train_mix_visual_aligning.sh and the pipeline -- at SUBMIT
+            #     time, before a GPU is allocated;
+            #   * VisualDiTTwoTime.__init__ -- at build time, as the backstop.
+            bone = _ml_bone(engine)
+            if bone not in ('mf_dit', 'sit'):
+                print(f"[ config ] NOTE: MIX_VIS_COND='{raw}' ignored for the '{engine}' arm "
+                      f"(ml_bone='{bone}' has no adaLN pathway); the key is dropped so no "
+                      f"'_VC{raw}' fragment lands in a path that did not use it. Use "
+                      f"MIX_VIS_COND_{engine.upper()} to target one arm.", file=sys.stderr)
+            else:
+                out['vis_cond_mode'] = raw
+
+    return out
+
+
 # ─── arm: diffusion (Gen6V4) ────────────────────────────────────────────────────────────────
 # Parent is visual_aligning_dpcc, NOT fm_visual_aligning: the DDPM arm must inherit
 # Gen6V4's own hyperparameters (action_weight=10), otherwise it is not the Gen6V4 baseline
 # it claims to be.
+# ─── Gen14 U10 — the alpha-Flow schedule as an OVERRIDABLE, PATH-BEARING knob ──────────
+# WHY THIS EXISTS. `af_alpha_end: 0.0` means the af arm trains on the MeanFlow target for
+# its last ~28.8 % of steps (the sigmoid + `af_alpha_clamp=0.005` snap α to exactly 0 at
+# ~0.712*end_step). Gen14 U5 measured what that costs: test raw_mse_u 2.657 @ step 70 k
+# (alpha 0.0067) -> 8.504 @ step 72 k (alpha 0), a 2.9x jump that never recovers, landing on
+# mf's own plateau. See logs_in_develop/Gen14/U5/DA_20260804_mf_af_visual_aligning_first_run.md
+# and Data_Analysis/DA_Result_Curated_MD/ANALYSIS_20260829_alphaflow_vs_meanflow_visual_aligning_are_they_the_same.md §5.
+#
+# 🔴 THE PATH KEY IS THE WHOLE POINT. `af_alpha_scheduler` was already a watched key
+# ('afsch'), but `af_alpha_end`, `af_alpha_init` and `af_alpha_clamp` were NOT — so a rerun
+# with `af_alpha_end=0.02` under the SAME 'sigmoid' scheduler produced a
+# character-for-character IDENTICAL checkpoint directory and would have silently overwritten
+# (or auto-resumed into) the existing alpha->0 run. The derived `af_alpha` tag below closes
+# that: it joins args_to_watch_mix_visual_train, so the checkpoint tree, the plans/ results
+# tree and the eval's diffusion_loadpath all move together, from one list.
+#
+# ABSENT AT THE DEFAULTS. Exactly the trick _budget_tag() and _mix_u9_keys() already use:
+# every key here is emitted ONLY when it differs from the shipped value, and watch() skips
+# undefined keys — so every path that exists today (cand6 included) is unchanged.
+#
+#   MIX_AF_ALPHA_SCHED=constant MIX_AF_ALPHA_INIT=0.05 MIX_AF_ALPHA_END=0.05  -> _AFconst0p05
+#   MIX_AF_ALPHA_END=0.02                                                    -> _AFend0p02
+#   MIX_AF_ALPHA_CLAMP=1e-4                                                  -> _AFclamp0p0001
+_AF_ALPHA_DEFAULTS = {
+    'af_alpha_scheduler': 'sigmoid',
+    'af_alpha_init':      1.0,
+    'af_alpha_end':       0.0,
+    'af_alpha_clamp':     0.005,
+    'af_alpha_gamma':     25.0,
+}
+_AF_ALPHA_SCHEDULERS = ('constant', 'step', 'linear', 'exponential', 'log', 'sigmoid')
+
+
+def _af_num(name, raw):
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        raise ValueError(f"CRITICAL: {name}='{raw}' is not a float.")
+
+
+def _af_frag(value):
+    """Filesystem-safe fragment: 0.05 -> '0p05', 0.0001 -> '0p0001'. House style is 'p'."""
+    txt = f'{value:g}'
+    if 'e' in txt or 'E' in txt:          # 1e-04 -> plain decimal, so the tag stays readable
+        txt = f'{value:.10f}'.rstrip('0').rstrip('.')
+    return txt.replace('.', 'p').replace('-', 'm')
+
+
+def _mix_af_alpha_keys():
+    """alpha-Flow schedule overrides for the af arm, present only where non-default.
+
+    Returns a dict that is ** -spread into the af training block. When nothing is
+    overridden it is EMPTY, so the af path string is byte-identical to the pre-U10 one.
+    """
+    out, tag = {}, []
+
+    raw = _env_or_none('MIX_AF_ALPHA_SCHED')      # blank == unset, see _env_or_none
+    if raw is not None:
+        if raw not in _AF_ALPHA_SCHEDULERS:
+            raise ValueError(
+                f"CRITICAL: MIX_AF_ALPHA_SCHED='{raw}' is not one of "
+                f"{'|'.join(_AF_ALPHA_SCHEDULERS)} (af_diffusion._get_ratio).")
+        if raw != _AF_ALPHA_DEFAULTS['af_alpha_scheduler']:
+            out['af_alpha_scheduler'] = raw     # already watched as 'afsch'
+
+    for env_name, key, label in (
+            ('MIX_AF_ALPHA_INIT',  'af_alpha_init',  'init'),
+            ('MIX_AF_ALPHA_END',   'af_alpha_end',   'end'),
+            ('MIX_AF_ALPHA_CLAMP', 'af_alpha_clamp', 'clamp'),
+            ('MIX_AF_ALPHA_GAMMA', 'af_alpha_gamma', 'g'),
+    ):
+        raw = _env_or_none(env_name)              # blank == unset, see _env_or_none
+        if raw is None:
+            continue
+        val = _af_num(env_name, raw)
+        if key in ('af_alpha_init', 'af_alpha_end') and not (0.0 <= val <= 1.0):
+            raise ValueError(f"CRITICAL: {env_name}={val} must lie in [0, 1]; "
+                             f"alpha=1 is pure FM, alpha=0 is MeanFlow.")
+        if key == 'af_alpha_clamp' and not (0.0 <= val < 0.5):
+            raise ValueError(f"CRITICAL: {env_name}={val} must lie in [0, 0.5).")
+        if val != _AF_ALPHA_DEFAULTS[key]:
+            out[key] = val
+            tag.append(f'{label}{_af_frag(val)}')
+
+    # 'constant' collapses init/end into one number — say it once, not twice.
+    if out.get('af_alpha_scheduler') == 'constant':
+        if 'af_alpha_init' not in out and 'af_alpha_end' not in out:
+            # _get_ratio('constant') returns af_alpha_init, whose shipped value is 1.0 —
+            # i.e. PURE FLOW MATCHING for the whole run, which is certainly not what anyone
+            # typing MIX_AF_ALPHA_SCHED=constant meant. Refuse rather than train it.
+            raise ValueError(
+                "CRITICAL: MIX_AF_ALPHA_SCHED=constant needs MIX_AF_ALPHA_INIT (and/or "
+                "MIX_AF_ALPHA_END) — the shipped af_alpha_init is 1.0, so a bare 'constant' "
+                "would train PURE FLOW MATCHING for every step.")
+        held = out.get('af_alpha_end', out.get('af_alpha_init',
+                                               _AF_ALPHA_DEFAULTS['af_alpha_end']))
+        # 🔴 The clamp fires on EVERY scheduler, constant included (af_diffusion._get_ratio
+        # tail). A held alpha below it snaps to exactly 0 and the run is MeanFlow from step
+        # 0 while the folder name still says 'AFconst...' — the precise lie this tag exists
+        # to prevent. Lower MIX_AF_ALPHA_CLAMP alongside it, or raise alpha.
+        _clamp = out.get('af_alpha_clamp', _AF_ALPHA_DEFAULTS['af_alpha_clamp'])
+        if 0.0 < held < _clamp:
+            raise ValueError(
+                f"CRITICAL: constant alpha={held} is below af_alpha_clamp={_clamp}, so "
+                f"_get_ratio snaps it to 0.0 and the arm trains the MeanFlow target for "
+                f"every step. Set MIX_AF_ALPHA_CLAMP < {held} or raise alpha.")
+        tag = [f'const{_af_frag(held)}'] + [t for t in tag
+                                            if not t.startswith(('init', 'end'))]
+
+    if tag:
+        # 🔴 The path key. Absent unless something moved, so pre-U10 trees are untouched.
+        out['af_alpha'] = 'AF' + '-'.join(tag)
+    return out
+
+
 base['mix_visual_aligning_diffusion'] = _mix_train_block('diffusion', 'visual_aligning_dpcc', {
     'model':     'mix_visual_aligning.models.visual_unet.VisualUNet',
     'diffusion': 'mix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
@@ -1177,7 +1657,12 @@ base['mix_visual_aligning_mf'] = _mix_train_block('mf', 'fm_visual_aligning', {
     # MIX_FILM_MODE_MF=v2 selects TRUE FiLM (retrain required). Backbone: VisualUNetTwoTime
     # -> unet1d_twotime_film.Flow_matcher_U_Net_v2_FiLM, which retains h_mlp (U5).
     # ⚠️ For an mf-vs-af comparison, move this arm and the af arm TOGETHER (see af block).
-    'film_mode': _film_mode('mf'),
+    # Gen14 U8: _mix_bone_keys emits ml_bone + film_mode on the U-Net bone, or ml_bone +
+    # the DiT sizing (film_mode ABSENT) on a transformer bone. MIX_BONE_MF=mf_dit|dit.
+    **_mix_bone_keys('mf'),
+    # Gen14 U9 — empty dict at the defaults, so this line is inert on every
+    # pre-U9 configuration and the path string is unchanged.
+    **_mix_u9_keys('mf'),
 })
 
 # ─── arm: af (Gen3v7 alpha-Flow) ───────────────────────────────────────────────────────
@@ -1217,7 +1702,17 @@ base['mix_visual_aligning_af'] = _mix_train_block('af', 'fm_visual_aligning', {
     # MIX_FILM_MODE=v2 (the all-arms form) when you want the pair moved together, or set
     # MIX_FILM_MODE_MF and MIX_FILM_MODE_AF to the same value. Comparing mf@v2 against
     # af@v1 confounds the objective with the conditioning route.
-    'film_mode': _film_mode('af'),
+    # Gen14 U8: same bone treatment as the mf arm. MIX_BONE_AF=sit|dit. The mf-vs-af
+    # comparison is architecture-controlled only if BOTH arms sit on the same bone — use
+    # the bare MIX_BONE to move them together.
+    **_mix_bone_keys('af'),
+    # Gen14 U9 — empty dict at the defaults, so this line is inert on every
+    # pre-U9 configuration and the path string is unchanged.
+    **_mix_u9_keys('af'),
+    # Gen14 U10 — alpha-schedule overrides + the `af_alpha` path tag. Empty (and so
+    # completely inert) unless MIX_AF_ALPHA_* is set. MUST stay LAST: it overrides the
+    # af_alpha_* literals above.
+    **_mix_af_alpha_keys(),
 })
 
 # ─── planning / evaluation blocks (one per arm) ────────────────────────────────────────

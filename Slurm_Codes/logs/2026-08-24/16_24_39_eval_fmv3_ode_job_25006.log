@@ -1,0 +1,1596 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Mon Aug 24 14:24:40 UTC 2026
+JOB NAME:  eval_fmv3_ode_job
+JOB ID:    25006
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   7111fb2
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=4  MUJOCO_EGL_DEVICE_ID=4
+[ eval ] NFE budgets to evaluate: 20
+================================================================================
+[ eval ] K = 20   (Mon Aug 24 14:24:40 UTC 2026)
+================================================================================
+pybullet build time: Nov 28 2023 23:45:17
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+
+[ config/avoiding-d3il ] custom_msg="20trials" -> results dirs end in "_msg20trials"
+[ eval ] Overriding flow_steps_v3 (K) from config to: 20
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials/6
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/6
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r (6)----------------------------
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb0_8daaa13a-9fc7-11f1-a07a-d85ed34e311e.xml' with default provider at slot 1
+
+Success rate: 0.15
+Constraints satisfied: 0.1
+Success rate (goal and constraints): 0.1
+Avg number of steps: 70.00 +- 6.16
+Avg number of constraint violations: 2.35 +- 1.53
+Avg total violation: 0.025 +- 0.024
+Average computation time per step: 0.257
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r-tightened (6)----------------------------
+Success rate: 0.95
+Constraints satisfied: 0.95
+Success rate (goal and constraints): 0.95
+Avg number of steps: 75.21 +- 8.04
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.337
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c (6)----------------------------
+Success rate: 0.25
+Constraints satisfied: 0.2
+Success rate (goal and constraints): 0.2
+Avg number of steps: 67.80 +- 8.16
+Avg number of constraint violations: 1.50 +- 1.40
+Avg total violation: 0.017 +- 0.017
+Average computation time per step: 0.267
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c-tightened (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 67.85 +- 9.87
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.329
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t (6)----------------------------
+Success rate: 0.3
+Constraints satisfied: 0.05
+Success rate (goal and constraints): 0.05
+Avg number of steps: 72.50 +- 11.31
+Avg number of constraint violations: 1.40 +- 1.28
+Avg total violation: 0.016 +- 0.021
+Average computation time per step: 0.281
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t-tightened (6)----------------------------
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 68.55 +- 10.22
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.369
+------------------------Running avoiding-d3il - top-right-hard - diffuser (6)----------------------------
+/data/home/llim/FMPCC/FM-PCC/FM_v3_ode_selectable_test/eval_flow_matching_v3_ode_selectable.py:301: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`). Consider using `matplotlib.pyplot.close()`.
+  fig_all, ax_all = plt.subplots(min(n_trials, plot_how_many), len(projection_variants), figsize=(10 * len(projection_variants), 10 * min(n_trials, plot_how_many)), squeeze=False)
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 67.70 +- 7.58
+Avg number of constraint violations: 31.55 +- 2.91
+Avg total violation: 9.753 +- 1.956
+Average computation time per step: 0.172
+Tracking error: 0.029
+------------------------Running avoiding-d3il - top-right-hard - gradient (6)----------------------------
+/data/home/llim/FMPCC/FM-PCC/FM_v3_ode_selectable_test/eval_flow_matching_v3_ode_selectable.py:284: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`). Consider using `matplotlib.pyplot.close()`.
+  fig, ax = plt.subplots(min(n_trials, plot_how_many), 6, figsize=(30, 5 * min(n_trials, plot_how_many)), squeeze=False)
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 67.50 +- 7.47
+Avg number of constraint violations: 32.45 +- 3.09
+Avg total violation: 8.509 +- 2.574
+Average computation time per step: 0.184
+------------------------Running avoiding-d3il - top-right-hard - gradient-tightened (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 67.80 +- 7.62
+Avg number of constraint violations: 32.70 +- 3.27
+Avg total violation: 8.319 +- 2.638
+Average computation time per step: 0.184
+------------------------Running avoiding-d3il - top-right-hard - post_processing (6)----------------------------
+Success rate: 0.1
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 74.50 +- 3.50
+Avg number of constraint violations: 2.00 +- 1.52
+Avg total violation: 0.008 +- 0.015
+Average computation time per step: 0.180
+------------------------Running avoiding-d3il - top-right-hard - post_processing-tightened (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 78.30 +- 8.69
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.179
+------------------------Running avoiding-d3il - top-right-hard - model_free (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 69.70 +- 7.73
+Avg number of constraint violations: 32.80 +- 4.56
+Avg total violation: 8.215 +- 2.419
+Average computation time per step: 0.226
+------------------------Running avoiding-d3il - top-right-hard - model_free-tightened (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 70.05 +- 7.93
+Avg number of constraint violations: 32.80 +- 4.71
+Avg total violation: 7.622 +- 2.693
+Average computation time per step: 0.231
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb1_f2fba9fc-9fd2-11f1-a07a-d85ed34e311e.xml' with default provider at slot 1
+
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials/7
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/7
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 89000
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r (7)----------------------------
+Success rate: 0.95
+Constraints satisfied: 0.35
+Success rate (goal and constraints): 0.35
+Avg number of steps: 88.53 +- 16.28
+Avg number of constraint violations: 4.90 +- 7.22
+Avg total violation: 0.158 +- 0.328
+Average computation time per step: 0.322
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r-tightened (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 83.25 +- 13.24
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.357
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.45
+Success rate (goal and constraints): 0.45
+Avg number of steps: 75.55 +- 10.30
+Avg number of constraint violations: 3.65 +- 6.09
+Avg total violation: 0.084 +- 0.213
+Average computation time per step: 0.300
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c-tightened (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 74.15 +- 10.43
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.377
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.35
+Success rate (goal and constraints): 0.35
+Avg number of steps: 87.35 +- 20.88
+Avg number of constraint violations: 8.20 +- 10.90
+Avg total violation: 0.290 +- 0.473
+Average computation time per step: 0.360
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t-tightened (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.95
+Success rate (goal and constraints): 0.95
+Avg number of steps: 78.35 +- 11.50
+Avg number of constraint violations: 0.20 +- 0.87
+Avg total violation: 0.002 +- 0.007
+Average computation time per step: 0.379
+------------------------Running avoiding-d3il - top-right-hard - diffuser (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 79.95 +- 16.20
+Avg number of constraint violations: 25.35 +- 8.08
+Avg total violation: 5.146 +- 3.690
+Average computation time per step: 0.173
+Tracking error: 0.150
+------------------------Running avoiding-d3il - top-right-hard - gradient (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.05
+Success rate (goal and constraints): 0.05
+Avg number of steps: 80.80 +- 12.68
+Avg number of constraint violations: 23.60 +- 12.68
+Avg total violation: 5.277 +- 4.653
+Average computation time per step: 0.186
+------------------------Running avoiding-d3il - top-right-hard - gradient-tightened (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.05
+Success rate (goal and constraints): 0.05
+Avg number of steps: 80.50 +- 14.14
+Avg number of constraint violations: 24.10 +- 12.05
+Avg total violation: 5.098 +- 4.396
+Average computation time per step: 0.185
+------------------------Running avoiding-d3il - top-right-hard - post_processing (7)----------------------------
+Success rate: 0.95
+Constraints satisfied: 0.25
+Success rate (goal and constraints): 0.25
+Avg number of steps: 98.89 +- 27.13
+Avg number of constraint violations: 12.10 +- 10.72
+Avg total violation: 0.500 +- 0.542
+Average computation time per step: 0.184
+------------------------Running avoiding-d3il - top-right-hard - post_processing-tightened (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 82.70 +- 10.80
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.180
+------------------------Running avoiding-d3il - top-right-hard - model_free (7)----------------------------
+Success rate: 0.95
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 79.79 +- 13.32
+Avg number of constraint violations: 26.40 +- 9.53
+Avg total violation: 4.238 +- 3.111
+Average computation time per step: 0.228
+------------------------Running avoiding-d3il - top-right-hard - model_free-tightened (7)----------------------------
+Success rate: 0.95
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 79.05 +- 12.42
+Avg number of constraint violations: 24.10 +- 8.87
+Avg total violation: 4.112 +- 3.271
+Average computation time per step: 0.239
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb2_13a11786-9fe3-11f1-a07a-d85ed34e311e.xml' with default provider at slot 1
+
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials/8
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/8
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 93000
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.25
+Success rate (goal and constraints): 0.25
+Avg number of steps: 71.00 +- 10.32
+Avg number of constraint violations: 3.55 +- 4.08
+Avg total violation: 0.052 +- 0.080
+Average computation time per step: 0.347
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r-tightened (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 72.10 +- 7.13
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.420
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 62.05 +- 4.99
+Avg number of constraint violations: 1.10 +- 1.26
+Avg total violation: 0.006 +- 0.009
+Average computation time per step: 0.359
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c-tightened (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 63.85 +- 3.79
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.470
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.1
+Success rate (goal and constraints): 0.1
+Avg number of steps: 71.55 +- 16.42
+Avg number of constraint violations: 7.50 +- 8.54
+Avg total violation: 0.244 +- 0.396
+Average computation time per step: 0.373
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t-tightened (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 67.30 +- 5.68
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.001 +- 0.001
+Average computation time per step: 0.467
+------------------------Running avoiding-d3il - top-right-hard - diffuser (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 68.05 +- 9.55
+Avg number of constraint violations: 25.25 +- 7.25
+Avg total violation: 6.161 +- 4.192
+Average computation time per step: 0.173
+Tracking error: 0.136
+------------------------Running avoiding-d3il - top-right-hard - gradient (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.05
+Success rate (goal and constraints): 0.05
+Avg number of steps: 66.50 +- 8.78
+Avg number of constraint violations: 23.40 +- 10.10
+Avg total violation: 4.905 +- 3.869
+Average computation time per step: 0.187
+------------------------Running avoiding-d3il - top-right-hard - gradient-tightened (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 69.00 +- 11.70
+Avg number of constraint violations: 24.10 +- 9.05
+Avg total violation: 5.021 +- 3.657
+Average computation time per step: 0.187
+------------------------Running avoiding-d3il - top-right-hard - post_processing (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.25
+Success rate (goal and constraints): 0.25
+Avg number of steps: 77.00 +- 12.09
+Avg number of constraint violations: 5.95 +- 5.80
+Avg total violation: 0.171 +- 0.257
+Average computation time per step: 0.184
+------------------------Running avoiding-d3il - top-right-hard - post_processing-tightened (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.95
+Success rate (goal and constraints): 0.95
+Avg number of steps: 74.50 +- 9.76
+Avg number of constraint violations: 0.15 +- 0.65
+Avg total violation: 0.001 +- 0.002
+Average computation time per step: 0.182
+------------------------Running avoiding-d3il - top-right-hard - model_free (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.05
+Success rate (goal and constraints): 0.05
+Avg number of steps: 73.85 +- 20.74
+Avg number of constraint violations: 23.45 +- 9.27
+Avg total violation: 4.840 +- 3.734
+Average computation time per step: 0.234
+------------------------Running avoiding-d3il - top-right-hard - model_free-tightened (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.05
+Success rate (goal and constraints): 0.05
+Avg number of steps: 74.00 +- 21.26
+Avg number of constraint violations: 22.90 +- 9.25
+Avg total violation: 4.616 +- 3.630
+Average computation time per step: 0.244
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb3_a66e5ab6-9ff1-11f1-a07a-d85ed34e311e.xml' with default provider at slot 1
+
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials/9
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/9
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 83000
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r (9)----------------------------
+Success rate: 0.95
+Constraints satisfied: 0.1
+Success rate (goal and constraints): 0.1
+Avg number of steps: 104.89 +- 27.75
+Avg number of constraint violations: 16.35 +- 11.85
+Avg total violation: 0.623 +- 0.477
+Average computation time per step: 0.379
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r-tightened (9)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 78.90 +- 8.48
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.324
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c (9)----------------------------
+Success rate: 0.95
+Constraints satisfied: 0.25
+Success rate (goal and constraints): 0.25
+Avg number of steps: 87.95 +- 20.41
+Avg number of constraint violations: 11.95 +- 10.23
+Avg total violation: 0.357 +- 0.395
+Average computation time per step: 0.326
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c-tightened (9)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 71.85 +- 9.19
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.316
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t (9)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 89.70 +- 13.79
+Avg number of constraint violations: 16.00 +- 7.75
+Avg total violation: 0.761 +- 0.582
+Average computation time per step: 0.503
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t-tightened (9)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 72.80 +- 9.03
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.330
+------------------------Running avoiding-d3il - top-right-hard - diffuser (9)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.05
+Success rate (goal and constraints): 0.05
+Avg number of steps: 78.85 +- 15.09
+Avg number of constraint violations: 29.70 +- 7.10
+Avg total violation: 11.463 +- 2.967
+Average computation time per step: 0.173
+Tracking error: 0.031
+------------------------Running avoiding-d3il - top-right-hard - gradient (9)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 76.50 +- 11.62
+Avg number of constraint violations: 32.60 +- 3.23
+Avg total violation: 10.688 +- 1.902
+Average computation time per step: 0.186
+------------------------Running avoiding-d3il - top-right-hard - gradient-tightened (9)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 76.90 +- 11.24
+Avg number of constraint violations: 32.90 +- 3.45
+Avg total violation: 9.791 +- 2.368
+Average computation time per step: 0.186
+------------------------Running avoiding-d3il - top-right-hard - post_processing (9)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.1
+Success rate (goal and constraints): 0.1
+Avg number of steps: 111.25 +- 20.05
+Avg number of constraint violations: 16.70 +- 7.85
+Avg total violation: 0.603 +- 0.454
+Average computation time per step: 0.185
+------------------------Running avoiding-d3il - top-right-hard - post_processing-tightened (9)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 91.15 +- 19.04
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.182
+------------------------Running avoiding-d3il - top-right-hard - model_free (9)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 81.40 +- 14.18
+Avg number of constraint violations: 32.70 +- 5.97
+Avg total violation: 9.976 +- 2.823
+Average computation time per step: 0.227
+------------------------Running avoiding-d3il - top-right-hard - model_free-tightened (9)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.05
+Success rate (goal and constraints): 0.05
+Avg number of steps: 81.95 +- 14.39
+Avg number of constraint violations: 32.75 +- 8.13
+Avg total violation: 9.355 +- 2.890
+Average computation time per step: 0.233
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb4_b7ddf822-a002-11f1-a07a-d85ed34e311e.xml' with default provider at slot 1
+
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials/10
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/10
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 94000
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r (10)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.45
+Success rate (goal and constraints): 0.45
+Avg number of steps: 74.00 +- 9.60
+Avg number of constraint violations: 3.20 +- 4.06
+Avg total violation: 0.038 +- 0.059
+Average computation time per step: 0.355
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r-tightened (10)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 73.30 +- 7.95
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.392
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c (10)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.8
+Success rate (goal and constraints): 0.8
+Avg number of steps: 68.30 +- 8.46
+Avg number of constraint violations: 1.25 +- 4.17
+Avg total violation: 0.064 +- 0.271
+Average computation time per step: 0.395
+------------------------Running avoiding-d3il - top-right-hard - dpcc-c-tightened (10)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 68.50 +- 8.31
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.446
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t (10)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.45
+Success rate (goal and constraints): 0.45
+Avg number of steps: 78.00 +- 22.62
+Avg number of constraint violations: 3.95 +- 6.27
+Avg total violation: 0.130 +- 0.298
+Average computation time per step: 0.361
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t-tightened (10)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 73.60 +- 14.52
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.390
+------------------------Running avoiding-d3il - top-right-hard - diffuser (10)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.1
+Success rate (goal and constraints): 0.1
+Avg number of steps: 75.50 +- 12.79
+Avg number of constraint violations: 20.85 +- 10.18
+Avg total violation: 4.231 +- 3.794
+Average computation time per step: 0.173
+Tracking error: 0.122
+------------------------Running avoiding-d3il - top-right-hard - gradient (10)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.1
+Success rate (goal and constraints): 0.1
+Avg number of steps: 76.85 +- 18.80
+Avg number of constraint violations: 18.90 +- 9.63
+Avg total violation: 3.313 +- 3.635
+Average computation time per step: 0.185
+------------------------Running avoiding-d3il - top-right-hard - gradient-tightened (10)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.15
+Success rate (goal and constraints): 0.15
+Avg number of steps: 73.20 +- 12.00
+Avg number of constraint violations: 17.75 +- 9.47
+Avg total violation: 2.956 +- 3.194
+Average computation time per step: 0.186
+------------------------Running avoiding-d3il - top-right-hard - post_processing (10)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.3
+Success rate (goal and constraints): 0.3
+Avg number of steps: 82.70 +- 13.68
+Avg number of constraint violations: 5.60 +- 6.83
+Avg total violation: 0.191 +- 0.416
+Average computation time per step: 0.183
+------------------------Running avoiding-d3il - top-right-hard - post_processing-tightened (10)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 78.10 +- 13.76
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.193
+------------------------Running avoiding-d3il - top-right-hard - model_free (10)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.1
+Success rate (goal and constraints): 0.1
+Avg number of steps: 75.65 +- 12.98
+Avg number of constraint violations: 18.25 +- 8.60
+Avg total violation: 2.851 +- 2.858
+Average computation time per step: 0.235
+------------------------Running avoiding-d3il - top-right-hard - model_free-tightened (10)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.1
+Success rate (goal and constraints): 0.1
+Avg number of steps: 76.15 +- 14.09
+Avg number of constraint violations: 18.10 +- 8.83
+Avg total violation: 2.937 +- 3.086
+Average computation time per step: 0.242
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb5_001cd37e-a012-11f1-a07a-d85ed34e311e.xml' with default provider at slot 1
+
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/6
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.75
+Success rate (goal and constraints): 0.75
+Avg number of steps: 72.30 +- 8.89
+Avg number of constraint violations: 0.95 +- 2.13
+Avg total violation: 0.002 +- 0.006
+Average computation time per step: 0.491
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r-tightened (6)----------------------------
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+Success rate: 1.0
+Constraints satisfied: 0.95
+Success rate (goal and constraints): 0.95
+Avg number of steps: 78.80 +- 7.61
+Avg number of constraint violations: 0.35 +- 1.53
+Avg total violation: 0.006 +- 0.027
+Average computation time per step: 0.548
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.7
+Success rate (goal and constraints): 0.7
+Avg number of steps: 68.70 +- 12.95
+Avg number of constraint violations: 0.70 +- 1.45
+Avg total violation: 0.006 +- 0.017
+Average computation time per step: 0.471
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c-tightened (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.9
+Success rate (goal and constraints): 0.9
+Avg number of steps: 70.35 +- 13.11
+Avg number of constraint violations: 0.35 +- 1.15
+Avg total violation: 0.003 +- 0.010
+Average computation time per step: 0.524
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.6
+Success rate (goal and constraints): 0.6
+Avg number of steps: 66.35 +- 9.84
+Avg number of constraint violations: 0.70 +- 1.00
+Avg total violation: 0.003 +- 0.009
+Average computation time per step: 0.403
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t-tightened (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 68.40 +- 10.17
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.476
+------------------------Running avoiding-d3il - top-left-hard - diffuser (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.05
+Success rate (goal and constraints): 0.05
+Avg number of steps: 67.70 +- 7.58
+Avg number of constraint violations: 10.75 +- 2.96
+Avg total violation: 0.208 +- 0.103
+Average computation time per step: 0.176
+Tracking error: 0.029
+------------------------Running avoiding-d3il - top-left-hard - gradient (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.15
+Success rate (goal and constraints): 0.15
+Avg number of steps: 66.55 +- 6.96
+Avg number of constraint violations: 8.80 +- 4.42
+Avg total violation: 0.160 +- 0.101
+Average computation time per step: 0.188
+------------------------Running avoiding-d3il - top-left-hard - gradient-tightened (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.1
+Success rate (goal and constraints): 0.1
+Avg number of steps: 66.90 +- 7.21
+Avg number of constraint violations: 9.65 +- 4.27
+Avg total violation: 0.187 +- 0.117
+Average computation time per step: 0.187
+------------------------Running avoiding-d3il - top-left-hard - post_processing (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.8
+Success rate (goal and constraints): 0.8
+Avg number of steps: 69.55 +- 10.91
+Avg number of constraint violations: 0.90 +- 1.92
+Avg total violation: 0.007 +- 0.016
+Average computation time per step: 0.182
+------------------------Running avoiding-d3il - top-left-hard - post_processing-tightened (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 69.40 +- 10.28
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.182
+------------------------Running avoiding-d3il - top-left-hard - model_free (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.05
+Success rate (goal and constraints): 0.05
+Avg number of steps: 68.65 +- 7.38
+Avg number of constraint violations: 10.35 +- 2.95
+Avg total violation: 0.180 +- 0.110
+Average computation time per step: 0.244
+------------------------Running avoiding-d3il - top-left-hard - model_free-tightened (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.05
+Success rate (goal and constraints): 0.05
+Avg number of steps: 68.60 +- 7.35
+Avg number of constraint violations: 9.85 +- 3.10
+Avg total violation: 0.160 +- 0.109
+Average computation time per step: 0.254
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb6_4f387a7a-a022-11f1-a07a-d85ed34e311e.xml' with default provider at slot 1
+
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/7
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 89000
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.6
+Success rate (goal and constraints): 0.6
+Avg number of steps: 91.25 +- 14.83
+Avg number of constraint violations: 0.90 +- 1.45
+Avg total violation: 0.022 +- 0.036
+Average computation time per step: 0.354
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r-tightened (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.95
+Success rate (goal and constraints): 0.95
+Avg number of steps: 91.55 +- 23.00
+Avg number of constraint violations: 5.05 +- 22.01
+Avg total violation: 0.157 +- 0.684
+Average computation time per step: 0.836
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.85
+Success rate (goal and constraints): 0.85
+Avg number of steps: 73.40 +- 12.21
+Avg number of constraint violations: 0.30 +- 0.78
+Avg total violation: 0.010 +- 0.025
+Average computation time per step: 0.369
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c-tightened (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 71.15 +- 11.18
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.399
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.65
+Success rate (goal and constraints): 0.65
+Avg number of steps: 76.95 +- 13.95
+Avg number of constraint violations: 1.20 +- 2.14
+Avg total violation: 0.010 +- 0.021
+Average computation time per step: 0.365
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t-tightened (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 76.05 +- 10.22
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.415
+------------------------Running avoiding-d3il - top-left-hard - diffuser (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.15
+Success rate (goal and constraints): 0.15
+Avg number of steps: 79.95 +- 16.20
+Avg number of constraint violations: 13.00 +- 10.91
+Avg total violation: 1.545 +- 3.060
+Average computation time per step: 0.173
+Tracking error: 0.150
+------------------------Running avoiding-d3il - top-left-hard - gradient (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.2
+Success rate (goal and constraints): 0.2
+Avg number of steps: 80.80 +- 12.59
+Avg number of constraint violations: 16.05 +- 12.43
+Avg total violation: 2.686 +- 3.829
+Average computation time per step: 0.186
+------------------------Running avoiding-d3il - top-left-hard - gradient-tightened (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.1
+Success rate (goal and constraints): 0.1
+Avg number of steps: 79.55 +- 12.99
+Avg number of constraint violations: 16.40 +- 12.18
+Avg total violation: 2.637 +- 4.115
+Average computation time per step: 0.186
+------------------------Running avoiding-d3il - top-left-hard - post_processing (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.7
+Success rate (goal and constraints): 0.7
+Avg number of steps: 79.60 +- 16.14
+Avg number of constraint violations: 3.60 +- 10.85
+Avg total violation: 0.050 +- 0.171
+Average computation time per step: 0.182
+------------------------Running avoiding-d3il - top-left-hard - post_processing-tightened (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 76.15 +- 9.92
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.181
+------------------------Running avoiding-d3il - top-left-hard - model_free (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.05
+Success rate (goal and constraints): 0.05
+Avg number of steps: 79.95 +- 13.79
+Avg number of constraint violations: 13.75 +- 10.83
+Avg total violation: 1.776 +- 3.457
+Average computation time per step: 0.236
+------------------------Running avoiding-d3il - top-left-hard - model_free-tightened (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.25
+Success rate (goal and constraints): 0.25
+Avg number of steps: 80.05 +- 14.02
+Avg number of constraint violations: 13.40 +- 11.27
+Avg total violation: 1.449 +- 2.824
+Average computation time per step: 0.245
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb7_ff3cd390-a035-11f1-a07a-d85ed34e311e.xml' with default provider at slot 1
+
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/8
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 93000
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.45
+Success rate (goal and constraints): 0.45
+Avg number of steps: 71.25 +- 10.03
+Avg number of constraint violations: 1.75 +- 1.97
+Avg total violation: 0.013 +- 0.023
+Average computation time per step: 0.349
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r-tightened (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.9
+Success rate (goal and constraints): 0.9
+Avg number of steps: 74.00 +- 10.82
+Avg number of constraint violations: 1.30 +- 5.02
+Avg total violation: 0.211 +- 0.916
+Average computation time per step: 0.418
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.8
+Success rate (goal and constraints): 0.8
+Avg number of steps: 62.50 +- 4.79
+Avg number of constraint violations: 0.45 +- 0.92
+Avg total violation: 0.001 +- 0.004
+Average computation time per step: 0.355
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c-tightened (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 63.45 +- 4.31
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.414
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.75
+Success rate (goal and constraints): 0.75
+Avg number of steps: 61.60 +- 5.54
+Avg number of constraint violations: 0.75 +- 1.41
+Avg total violation: 0.005 +- 0.012
+Average computation time per step: 0.373
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t-tightened (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 65.25 +- 5.63
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.410
+------------------------Running avoiding-d3il - top-left-hard - diffuser (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.05
+Success rate (goal and constraints): 0.05
+Avg number of steps: 68.05 +- 9.55
+Avg number of constraint violations: 17.90 +- 11.57
+Avg total violation: 2.638 +- 4.226
+Average computation time per step: 0.173
+Tracking error: 0.136
+------------------------Running avoiding-d3il - top-left-hard - gradient (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.05
+Success rate (goal and constraints): 0.05
+Avg number of steps: 66.85 +- 8.43
+Avg number of constraint violations: 18.50 +- 11.13
+Avg total violation: 2.384 +- 3.559
+Average computation time per step: 0.186
+------------------------Running avoiding-d3il - top-left-hard - gradient-tightened (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.05
+Success rate (goal and constraints): 0.05
+Avg number of steps: 67.55 +- 8.39
+Avg number of constraint violations: 18.25 +- 10.52
+Avg total violation: 2.278 +- 3.477
+Average computation time per step: 0.186
+------------------------Running avoiding-d3il - top-left-hard - post_processing (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.55
+Success rate (goal and constraints): 0.55
+Avg number of steps: 74.60 +- 16.43
+Avg number of constraint violations: 5.60 +- 12.34
+Avg total violation: 0.079 +- 0.209
+Average computation time per step: 0.183
+------------------------Running avoiding-d3il - top-left-hard - post_processing-tightened (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.95
+Success rate (goal and constraints): 0.95
+Avg number of steps: 72.75 +- 11.48
+Avg number of constraint violations: 0.10 +- 0.44
+Avg total violation: 0.000 +- 0.001
+Average computation time per step: 0.183
+------------------------Running avoiding-d3il - top-left-hard - model_free (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.1
+Success rate (goal and constraints): 0.1
+Avg number of steps: 68.55 +- 8.81
+Avg number of constraint violations: 17.35 +- 11.80
+Avg total violation: 2.496 +- 3.973
+Average computation time per step: 0.238
+------------------------Running avoiding-d3il - top-left-hard - model_free-tightened (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.1
+Success rate (goal and constraints): 0.1
+Avg number of steps: 68.80 +- 8.77
+Avg number of constraint violations: 16.90 +- 11.91
+Avg total violation: 2.491 +- 3.988
+Average computation time per step: 0.252
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb8_f266c4d8-a043-11f1-a07a-d85ed34e311e.xml' with default provider at slot 1
+
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/9
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 83000
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r (9)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.7
+Success rate (goal and constraints): 0.7
+Avg number of steps: 76.85 +- 9.65
+Avg number of constraint violations: 0.80 +- 1.29
+Avg total violation: 0.003 +- 0.006
+Average computation time per step: 0.476
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r-tightened (9)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.65
+Success rate (goal and constraints): 0.65
+Avg number of steps: 84.45 +- 11.09
+Avg number of constraint violations: 1.60 +- 2.62
+Avg total violation: 0.017 +- 0.035
+Average computation time per step: 0.604
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c (9)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.95
+Success rate (goal and constraints): 0.95
+Avg number of steps: 69.55 +- 8.56
+Avg number of constraint violations: 0.20 +- 0.87
+Avg total violation: 0.001 +- 0.005
+Average computation time per step: 0.516
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c-tightened (9)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.65
+Success rate (goal and constraints): 0.65
+Avg number of steps: 75.10 +- 8.96
+Avg number of constraint violations: 0.90 +- 1.67
+Avg total violation: 0.007 +- 0.025
+Average computation time per step: 0.569
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t (9)----------------------------
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+Success rate: 1.0
+Constraints satisfied: 0.65
+Success rate (goal and constraints): 0.65
+Avg number of steps: 71.55 +- 11.75
+Avg number of constraint violations: 0.95 +- 1.43
+Avg total violation: 0.006 +- 0.017
+Average computation time per step: 0.485
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t-tightened (9)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.85
+Success rate (goal and constraints): 0.85
+Avg number of steps: 73.55 +- 11.67
+Avg number of constraint violations: 0.55 +- 1.47
+Avg total violation: 0.005 +- 0.019
+Average computation time per step: 0.506
+------------------------Running avoiding-d3il - top-left-hard - diffuser (9)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.3
+Success rate (goal and constraints): 0.3
+Avg number of steps: 78.85 +- 15.09
+Avg number of constraint violations: 6.15 +- 6.78
+Avg total violation: 0.547 +- 2.060
+Average computation time per step: 0.173
+Tracking error: 0.031
+------------------------Running avoiding-d3il - top-left-hard - gradient (9)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.3
+Success rate (goal and constraints): 0.3
+Avg number of steps: 74.45 +- 12.09
+Avg number of constraint violations: 5.00 +- 4.01
+Avg total violation: 0.073 +- 0.091
+Average computation time per step: 0.186
+------------------------Running avoiding-d3il - top-left-hard - gradient-tightened (9)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.45
+Success rate (goal and constraints): 0.45
+Avg number of steps: 74.75 +- 12.33
+Avg number of constraint violations: 4.60 +- 4.54
+Avg total violation: 0.080 +- 0.104
+Average computation time per step: 0.186
+------------------------Running avoiding-d3il - top-left-hard - post_processing (9)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.8
+Success rate (goal and constraints): 0.8
+Avg number of steps: 86.00 +- 22.45
+Avg number of constraint violations: 1.85 +- 4.63
+Avg total violation: 0.011 +- 0.023
+Average computation time per step: 0.181
+------------------------Running avoiding-d3il - top-left-hard - post_processing-tightened (9)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 83.20 +- 18.76
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.181
+------------------------Running avoiding-d3il - top-left-hard - model_free (9)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.35
+Success rate (goal and constraints): 0.35
+Avg number of steps: 79.75 +- 15.12
+Avg number of constraint violations: 5.35 +- 6.04
+Avg total violation: 0.225 +- 0.745
+Average computation time per step: 0.236
+------------------------Running avoiding-d3il - top-left-hard - model_free-tightened (9)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.3
+Success rate (goal and constraints): 0.3
+Avg number of steps: 79.70 +- 15.12
+Avg number of constraint violations: 5.45 +- 5.70
+Avg total violation: 0.204 +- 0.650
+Average computation time per step: 0.244
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb9_95f995b4-a056-11f1-a07a-d85ed34e311e.xml' with default provider at slot 1
+
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/10
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 94000
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r (10)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.9
+Success rate (goal and constraints): 0.9
+Avg number of steps: 73.75 +- 11.67
+Avg number of constraint violations: 0.10 +- 0.30
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.330
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r-tightened (10)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 74.90 +- 11.57
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.359
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c (10)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.9
+Success rate (goal and constraints): 0.9
+Avg number of steps: 67.55 +- 9.13
+Avg number of constraint violations: 0.20 +- 0.68
+Avg total violation: 0.002 +- 0.006
+Average computation time per step: 0.321
+------------------------Running avoiding-d3il - top-left-hard - dpcc-c-tightened (10)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 65.45 +- 8.46
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.343
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t (10)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.95
+Success rate (goal and constraints): 0.95
+Avg number of steps: 66.90 +- 10.28
+Avg number of constraint violations: 0.15 +- 0.65
+Avg total violation: 0.000 +- 0.001
+Average computation time per step: 0.339
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t-tightened (10)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 66.20 +- 10.96
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.369
+------------------------Running avoiding-d3il - top-left-hard - diffuser (10)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.25
+Success rate (goal and constraints): 0.25
+Avg number of steps: 75.50 +- 12.79
+Avg number of constraint violations: 16.30 +- 14.21
+Avg total violation: 3.110 +- 4.641
+Average computation time per step: 0.173
+Tracking error: 0.122
+------------------------Running avoiding-d3il - top-left-hard - gradient (10)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.25
+Success rate (goal and constraints): 0.25
+Avg number of steps: 75.05 +- 11.78
+Avg number of constraint violations: 18.25 +- 14.38
+Avg total violation: 3.541 +- 4.392
+Average computation time per step: 0.186
+------------------------Running avoiding-d3il - top-left-hard - gradient-tightened (10)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.2
+Success rate (goal and constraints): 0.2
+Avg number of steps: 78.85 +- 20.05
+Avg number of constraint violations: 21.60 +- 17.97
+Avg total violation: 4.320 +- 5.709
+Average computation time per step: 0.186
+------------------------Running avoiding-d3il - top-left-hard - post_processing (10)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 84.35 +- 17.96
+Avg number of constraint violations: 4.55 +- 8.45
+Avg total violation: 0.061 +- 0.139
+Average computation time per step: 0.184
+------------------------Running avoiding-d3il - top-left-hard - post_processing-tightened (10)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.95
+Success rate (goal and constraints): 0.95
+Avg number of steps: 77.30 +- 13.23
+Avg number of constraint violations: 0.15 +- 0.65
+Avg total violation: 0.001 +- 0.002
+Average computation time per step: 0.183
+------------------------Running avoiding-d3il - top-left-hard - model_free (10)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.2
+Success rate (goal and constraints): 0.2
+Avg number of steps: 75.75 +- 13.11
+Avg number of constraint violations: 18.80 +- 15.52
+Avg total violation: 3.649 +- 4.649
+Average computation time per step: 0.232
+------------------------Running avoiding-d3il - top-left-hard - model_free-tightened (10)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.25
+Success rate (goal and constraints): 0.25
+Avg number of steps: 75.20 +- 12.84
+Avg number of constraint violations: 15.85 +- 14.64
+Avg total violation: 2.110 +- 2.659
+Average computation time per step: 0.241
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb10_88434722-a064-11f1-a07a-d85ed34e311e.xml' with default provider at slot 1
+
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/6
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - both-hard - dpcc-r (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.05
+Success rate (goal and constraints): 0.05
+Avg number of steps: 87.55 +- 21.33
+Avg number of constraint violations: 25.35 +- 21.00
+Avg total violation: 0.488 +- 0.454
+Average computation time per step: 0.434
+------------------------Running avoiding-d3il - both-hard - dpcc-r-tightened (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 61.90 +- 2.98
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.569
+------------------------Running avoiding-d3il - both-hard - dpcc-c (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.55
+Success rate (goal and constraints): 0.55
+Avg number of steps: 72.40 +- 28.29
+Avg number of constraint violations: 5.70 +- 14.05
+Avg total violation: 0.119 +- 0.279
+Average computation time per step: 0.541
+------------------------Running avoiding-d3il - both-hard - dpcc-c-tightened (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 59.60 +- 3.53
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.585
+------------------------Running avoiding-d3il - both-hard - dpcc-t (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.2
+Success rate (goal and constraints): 0.2
+Avg number of steps: 81.90 +- 22.79
+Avg number of constraint violations: 16.70 +- 21.05
+Avg total violation: 0.325 +- 0.425
+Average computation time per step: 0.442
+------------------------Running avoiding-d3il - both-hard - dpcc-t-tightened (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 59.40 +- 2.35
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.568
+------------------------Running avoiding-d3il - both-hard - diffuser (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.05
+Success rate (goal and constraints): 0.05
+Avg number of steps: 67.70 +- 7.58
+Avg number of constraint violations: 12.20 +- 5.54
+Avg total violation: 2.697 +- 1.147
+Average computation time per step: 0.172
+Tracking error: 0.029
+------------------------Running avoiding-d3il - both-hard - gradient (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.2
+Success rate (goal and constraints): 0.2
+Avg number of steps: 66.00 +- 7.36
+Avg number of constraint violations: 10.65 +- 6.11
+Avg total violation: 2.318 +- 1.354
+Average computation time per step: 0.185
+------------------------Running avoiding-d3il - both-hard - gradient-tightened (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 65.90 +- 6.88
+Avg number of constraint violations: 13.05 +- 4.08
+Avg total violation: 2.865 +- 0.795
+Average computation time per step: 0.185
+------------------------Running avoiding-d3il - both-hard - post_processing (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.4
+Success rate (goal and constraints): 0.4
+Avg number of steps: 75.65 +- 8.48
+Avg number of constraint violations: 1.65 +- 1.65
+Avg total violation: 0.010 +- 0.016
+Average computation time per step: 0.178
+------------------------Running avoiding-d3il - both-hard - post_processing-tightened (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 71.15 +- 9.29
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.178
+------------------------Running avoiding-d3il - both-hard - model_free (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.05
+Success rate (goal and constraints): 0.05
+Avg number of steps: 68.70 +- 8.33
+Avg number of constraint violations: 13.30 +- 4.22
+Avg total violation: 2.968 +- 0.771
+Average computation time per step: 0.243
+------------------------Running avoiding-d3il - both-hard - model_free-tightened (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.05
+Success rate (goal and constraints): 0.05
+Avg number of steps: 68.90 +- 9.20
+Avg number of constraint violations: 13.20 +- 4.14
+Avg total violation: 2.946 +- 0.791
+Average computation time per step: 0.253
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb11_0e53e62c-a075-11f1-a07a-d85ed34e311e.xml' with default provider at slot 1
+
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/7
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 89000
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - both-hard - dpcc-r (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.25
+Success rate (goal and constraints): 0.25
+Avg number of steps: 77.40 +- 17.94
+Avg number of constraint violations: 16.60 +- 18.30
+Avg total violation: 0.305 +- 0.373
+Average computation time per step: 0.488
+------------------------Running avoiding-d3il - both-hard - dpcc-r-tightened (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.45 +- 4.21
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.563
+------------------------Running avoiding-d3il - both-hard - dpcc-c (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.3
+Success rate (goal and constraints): 0.3
+Avg number of steps: 76.75 +- 22.31
+Avg number of constraint violations: 11.10 +- 16.72
+Avg total violation: 0.223 +- 0.356
+Average computation time per step: 0.508
+------------------------Running avoiding-d3il - both-hard - dpcc-c-tightened (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 58.30 +- 3.45
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.577
+------------------------Running avoiding-d3il - both-hard - dpcc-t (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.3
+Success rate (goal and constraints): 0.3
+Avg number of steps: 71.30 +- 15.57
+Avg number of constraint violations: 10.10 +- 14.71
+Avg total violation: 0.189 +- 0.280
+Average computation time per step: 0.499
+------------------------Running avoiding-d3il - both-hard - dpcc-t-tightened (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 60.55 +- 5.81
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.582
+------------------------Running avoiding-d3il - both-hard - diffuser (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.05
+Success rate (goal and constraints): 0.05
+Avg number of steps: 79.95 +- 16.20
+Avg number of constraint violations: 9.75 +- 5.92
+Avg total violation: 1.106 +- 1.482
+Average computation time per step: 0.172
+Tracking error: 0.150
+------------------------Running avoiding-d3il - both-hard - gradient (7)----------------------------
+Success rate: 0.95
+Constraints satisfied: 0.15
+Success rate (goal and constraints): 0.15
+Avg number of steps: 79.89 +- 15.09
+Avg number of constraint violations: 17.00 +- 26.47
+Avg total violation: 1.835 +- 1.857
+Average computation time per step: 0.189
+------------------------Running avoiding-d3il - both-hard - gradient-tightened (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.05
+Success rate (goal and constraints): 0.05
+Avg number of steps: 78.05 +- 15.17
+Avg number of constraint violations: 14.45 +- 6.75
+Avg total violation: 2.638 +- 1.646
+Average computation time per step: 0.188
+------------------------Running avoiding-d3il - both-hard - post_processing (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.3
+Success rate (goal and constraints): 0.3
+Avg number of steps: 80.40 +- 11.27
+Avg number of constraint violations: 4.90 +- 11.45
+Avg total violation: 0.068 +- 0.232
+Average computation time per step: 0.181
+------------------------Running avoiding-d3il - both-hard - post_processing-tightened (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 75.50 +- 10.07
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.181
+------------------------Running avoiding-d3il - both-hard - model_free (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.05
+Success rate (goal and constraints): 0.05
+Avg number of steps: 78.30 +- 12.05
+Avg number of constraint violations: 11.10 +- 6.02
+Avg total violation: 1.083 +- 1.463
+Average computation time per step: 0.247
+------------------------Running avoiding-d3il - both-hard - model_free-tightened (7)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.05
+Success rate (goal and constraints): 0.05
+Avg number of steps: 81.60 +- 23.92
+Avg number of constraint violations: 10.50 +- 5.95
+Avg total violation: 1.251 +- 1.507
+Average computation time per step: 0.256
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+
+WARNING: mju_openResource: could not open resource '/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/panda_tmp_rb12_98b221d8-a086-11f1-a07a-d85ed34e311e.xml' with default provider at slot 1
+
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/8
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 93000
+Final IK error (78 iterations):  7.285862274064339e-06
+Final IK error (0 iterations):  7.285862274064339e-06
+------------------------Running avoiding-d3il - both-hard - dpcc-r (8)----------------------------
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+Success rate: 1.0
+Constraints satisfied: 0.1
+Success rate (goal and constraints): 0.1
+Avg number of steps: 92.10 +- 20.71
+Avg number of constraint violations: 18.80 +- 20.75
+Avg total violation: 0.384 +- 0.450
+Average computation time per step: 0.426
+------------------------Running avoiding-d3il - both-hard - dpcc-r-tightened (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 60.10 +- 2.70
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.580
+------------------------Running avoiding-d3il - both-hard - dpcc-c (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.1
+Success rate (goal and constraints): 0.1
+Avg number of steps: 77.20 +- 19.67
+Avg number of constraint violations: 17.10 +- 17.92
+Avg total violation: 0.326 +- 0.398
+Average computation time per step: 0.447
+------------------------Running avoiding-d3il - both-hard - dpcc-c-tightened (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 57.55 +- 3.38
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.614
+------------------------Running avoiding-d3il - both-hard - dpcc-t (8)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.05
+Success rate (goal and constraints): 0.05
+Avg number of steps: 76.45 +- 15.59
+Avg number of constraint violations: 10.55 +- 14.86
+Avg total violation: 0.205 +- 0.305
+Average computation time per step: 0.487
+------------------------Running avoiding-d3il - both-hard - dpcc-t-tightened (8)----------------------------
+slurmstepd-i6-gpu-1: error: *** JOB 25006 ON i6-gpu-1 CANCELLED AT 2026-08-25T14:24:58 DUE TO TIME LIMIT ***
+================================================================================
+JOB END:   Tue Aug 25 14:24:58 UTC 2026
+================================================================================

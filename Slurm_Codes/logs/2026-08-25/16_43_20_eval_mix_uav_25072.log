@@ -1,0 +1,392 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Tue Aug 25 20:31:46 UTC 2026  |  eval_mix_uav  |  ID 25072  |  NODE i6-gpu-1
+ENGINE: fm   SCENE: s_curve   SEEDS: 6   N_TRIALS: 5   K: 20
+GIT REV:   6c2df73
+================================================================================
+[ env-select ] config/uav.py controller='pid_stopgo' -> conda env 'FMPCC'
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=4  MUJOCO_EGL_DEVICE_ID=4
+--------------------------------------------------------------------------------
+[ uav_mix_eval ] seed 1/1: engine=fm scene=s_curve seed=6  Tue Aug 25 20:31:46 UTC 2026
+[ uav_mix_eval ] python mix_uav_test/eval_mix_uav.py --engine fm --scene s_curve --seed 6 --n-trials 5 --projection fm_only --record none --flow-steps 20
+[ eval ] Gen15 UAV Mix-ML — engine: fm  (Flow Matching (Gen11 FMv3ODE))
+[ eval ] K override from --flow-steps: 20
+[ eval ] seed=6  (source: --seed CLI)
+[ eval ] n_trials=5  (source: --n-trials CLI)
+[ eval ] UAV_MIX_HF_OFF set → HardFlow arm disabled for this run
+
+[ utils/serialization ] Loading model from logs/UAV_MIX/uav-s_curve/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/6
+
+
+                    [ utils/normalization ] Constant data in dimension 2 | max = min = 0.0
+
+                    [ utils/normalization ] Constant data in dimension 0 | max = min = 0.0
+[ datasets/buffer ] Fields:
+    observations: (500, 750, 6)
+    actions: (500, 750, 3)
+    rewards: (500, 750, 1)
+    terminals: (500, 750, 1)
+    normed_observations: (500, 750, 6)
+    normed_actions: (500, 750, 3)
+[ utils/training ] Restored loss history from checkpoint at step 91000
+[ eval ] engine=fm  NFE budget K=20 pinned on the loaded model (flow_steps_v3 / ode_inference_steps_v3)
+[ eval ] E9 geo 's_curve' ← variant 's_curve': constraint_types=['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds'] (bounds=True, hs=4, obs=2)
+[ eval ] cond_mode=pos_only  (source: train checkpoint args)
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles]: variants=['diffuser', 'gradient', 'gradient-tightened', 'post_processing', 'post_processing-tightened', 'model_free', 'model_free-tightened', 'bounds_free', 'bounds_free-tightened', 'geo_free', 'geo_free-bounds_free', 'geo_free-model_free', 'model_free-bounds_free', 'model_free-bounds_free-tightened', 'dpcc-r', 'dpcc-r-tightened', 'dpcc-c', 'dpcc-c-tightened', 'dpcc-t', 'dpcc-t-tightened']  constraints=['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds']  batch_size=4
+[ eval ] s_curve feasibility check: homotopy=default expert route OK under planning margin 0.33 m
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 1/20: 'diffuser'  (n_trials=5)
+[ provenance ] wrote logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ geo ] Constraint overview → logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/constraint_overview.png (+ .svg)
+[ eval ] s_curve variant=diffuser: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=diffuser trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 100/871 (t=3.03s) — reason=p_des_runaway: |p_des-p|=5.56 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=diffuser: trial 1/5 done  (18.0s elapsed this variant, ~72.1s to go)
+[ eval ] s_curve variant=diffuser trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 92/871 (t=2.79s) — reason=p_des_runaway: |p_des-p|=5.62 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=diffuser: trial 2/5 done  (34.4s elapsed this variant, ~51.6s to go)
+[ eval ] s_curve variant=diffuser trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 132/871 (t=4.00s) — reason=p_des_runaway: |p_des-p|=5.10 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=diffuser: trial 3/5 done  (58.0s elapsed this variant, ~38.7s to go)
+[ eval ] s_curve variant=diffuser trial_seed=10003: ⚠ DIVERGENCE ABORT at FM step 94/871 (t=2.85s) — reason=p_des_runaway: |p_des-p|=5.05 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=diffuser: trial 4/5 done  (74.7s elapsed this variant, ~18.7s to go)
+[ eval ] s_curve variant=diffuser trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 131/871 (t=3.97s) — reason=p_des_runaway: |p_des-p|=5.64 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=diffuser: trial 5/5 done  (97.8s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=diffuser: ⚠ DIVERGENCE ABORT on 5/5 trials [0, 1, 2, 3, 4] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=diffuser (B=4, proj=off, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=0.658  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/diffuser/
+[ eval ] s_curve variant=diffuser TIMING: fm_ms=167.4 proj_ms=0.0 total_ms=167.4 (p95=168.6) budget=30.3ms → real_time_OVER×554
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 2/20: 'gradient'  (n_trials=5)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ eval ] s_curve variant=gradient: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=gradient trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 7/871 (t=0.21s) — reason=p_des_runaway: |p_des-p|=5.80 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=gradient: trial 1/5 done  (2.1s elapsed this variant, ~8.3s to go)
+[ eval ] s_curve variant=gradient trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 5/871 (t=0.15s) — reason=p_des_runaway: |p_des-p|=5.90 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=gradient: trial 2/5 done  (3.7s elapsed this variant, ~5.6s to go)
+[ eval ] s_curve variant=gradient trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 5/871 (t=0.15s) — reason=p_des_runaway: |p_des-p|=5.89 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=gradient: trial 3/5 done  (5.4s elapsed this variant, ~3.6s to go)
+[ eval ] s_curve variant=gradient trial_seed=10003: ⚠ DIVERGENCE ABORT at FM step 7/871 (t=0.21s) — reason=p_des_runaway: |p_des-p|=5.87 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=gradient: trial 4/5 done  (7.5s elapsed this variant, ~1.9s to go)
+[ eval ] s_curve variant=gradient trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 7/871 (t=0.21s) — reason=p_des_runaway: |p_des-p|=5.92 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=gradient: trial 5/5 done  (9.6s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=gradient: ⚠ DIVERGENCE ABORT on 5/5 trials [0, 1, 2, 3, 4] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=gradient (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=3.014  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/gradient/
+[ eval ] s_curve variant=gradient TIMING: fm_ms=190.8 proj_ms=0.0 total_ms=190.8 (p95=219.2) budget=30.3ms → real_time_OVER×36
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 3/20: 'gradient-tightened'  (n_trials=5)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ geo ] Constraint overview → logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/constraint_overview_tightened.png (+ .svg)
+[ eval ] s_curve variant=gradient-tightened: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=gradient-tightened trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 5/871 (t=0.15s) — reason=p_des_runaway: |p_des-p|=5.87 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=gradient-tightened: trial 1/5 done  (1.6s elapsed this variant, ~6.5s to go)
+[ eval ] s_curve variant=gradient-tightened trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 5/871 (t=0.15s) — reason=p_des_runaway: |p_des-p|=5.84 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=gradient-tightened: trial 2/5 done  (3.2s elapsed this variant, ~4.8s to go)
+[ eval ] s_curve variant=gradient-tightened trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 5/871 (t=0.15s) — reason=p_des_runaway: |p_des-p|=5.84 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=gradient-tightened: trial 3/5 done  (4.8s elapsed this variant, ~3.2s to go)
+[ eval ] s_curve variant=gradient-tightened trial_seed=10003: ⚠ DIVERGENCE ABORT at FM step 5/871 (t=0.15s) — reason=p_des_runaway: |p_des-p|=5.84 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=gradient-tightened: trial 4/5 done  (6.4s elapsed this variant, ~1.6s to go)
+[ eval ] s_curve variant=gradient-tightened trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 5/871 (t=0.15s) — reason=p_des_runaway: |p_des-p|=5.84 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=gradient-tightened: trial 5/5 done  (8.1s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=gradient-tightened: ⚠ DIVERGENCE ABORT on 5/5 trials [0, 1, 2, 3, 4] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=gradient-tightened (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=3.445  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/gradient-tightened/
+[ eval ] s_curve variant=gradient-tightened TIMING: fm_ms=184.1 proj_ms=0.0 total_ms=184.1 (p95=192.4) budget=30.3ms → real_time_OVER×30
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 4/20: 'post_processing'  (n_trials=5)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ eval ] s_curve variant=post_processing: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ eval ] s_curve variant=post_processing trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 402/871 (t=12.18s) — reason=p_des_runaway: |p_des-p|=5.26 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=post_processing: trial 1/5 done  (88.6s elapsed this variant, ~354.2s to go)
+[ eval ] s_curve variant=post_processing trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 409/871 (t=12.39s) — reason=p_des_runaway: |p_des-p|=5.40 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=post_processing: trial 2/5 done  (175.5s elapsed this variant, ~263.3s to go)
+[ eval ] s_curve variant=post_processing trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 411/871 (t=12.45s) — reason=p_des_runaway: |p_des-p|=5.52 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=post_processing: trial 3/5 done  (265.3s elapsed this variant, ~176.9s to go)
+[ eval ] s_curve variant=post_processing trial_seed=10003: ⚠ DIVERGENCE ABORT at FM step 414/871 (t=12.55s) — reason=p_des_runaway: |p_des-p|=5.61 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=post_processing: trial 4/5 done  (353.6s elapsed this variant, ~88.4s to go)
+[ eval ] s_curve variant=post_processing trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 405/871 (t=12.27s) — reason=p_des_runaway: |p_des-p|=5.28 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=post_processing: trial 5/5 done  (440.2s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=post_processing: ⚠ DIVERGENCE ABORT on 5/5 trials [0, 1, 2, 3, 4] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=post_processing (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=0.349  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/post_processing/
+[ eval ] s_curve variant=post_processing TIMING: fm_ms=169.3 proj_ms=28.2 total_ms=197.5 (p95=290.6) budget=30.3ms → real_time_OVER×2046
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 5/20: 'post_processing-tightened'  (n_trials=5)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ eval ] s_curve variant=post_processing-tightened: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=post_processing-tightened trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 408/871 (t=12.36s) — reason=p_des_runaway: |p_des-p|=5.27 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=post_processing-tightened: trial 1/5 done  (111.5s elapsed this variant, ~446.2s to go)
+[ eval ] s_curve variant=post_processing-tightened trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 408/871 (t=12.36s) — reason=p_des_runaway: |p_des-p|=5.03 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=post_processing-tightened: trial 2/5 done  (197.4s elapsed this variant, ~296.1s to go)
+[ eval ] s_curve variant=post_processing-tightened trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 399/871 (t=12.09s) — reason=p_des_runaway: |p_des-p|=5.41 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=post_processing-tightened: trial 3/5 done  (283.0s elapsed this variant, ~188.7s to go)
+[ eval ] s_curve variant=post_processing-tightened trial_seed=10003: ⚠ DIVERGENCE ABORT at FM step 409/871 (t=12.39s) — reason=p_des_runaway: |p_des-p|=5.45 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=post_processing-tightened: trial 4/5 done  (369.6s elapsed this variant, ~92.4s to go)
+[ eval ] s_curve variant=post_processing-tightened trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 408/871 (t=12.36s) — reason=p_des_runaway: |p_des-p|=5.19 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=post_processing-tightened: trial 5/5 done  (458.3s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=post_processing-tightened: ⚠ DIVERGENCE ABORT on 5/5 trials [0, 1, 2, 3, 4] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=post_processing-tightened (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=0.344  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/post_processing-tightened/
+[ eval ] s_curve variant=post_processing-tightened TIMING: fm_ms=169.0 proj_ms=38.5 total_ms=207.5 (p95=341.7) budget=30.3ms → real_time_OVER×2037
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 6/20: 'model_free'  (n_trials=5)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ eval ] s_curve variant=model_free: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=model_free trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 93/871 (t=2.82s) — reason=p_des_runaway: |p_des-p|=5.19 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=model_free: trial 1/5 done  (29.3s elapsed this variant, ~117.4s to go)
+[ eval ] s_curve variant=model_free trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 102/871 (t=3.09s) — reason=p_des_runaway: |p_des-p|=5.02 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=model_free: trial 2/5 done  (61.2s elapsed this variant, ~91.7s to go)
+[ eval ] s_curve variant=model_free trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 106/871 (t=3.21s) — reason=p_des_runaway: |p_des-p|=5.08 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=model_free: trial 3/5 done  (94.7s elapsed this variant, ~63.1s to go)
+[ eval ] s_curve variant=model_free trial_seed=10003: ⚠ DIVERGENCE ABORT at FM step 87/871 (t=2.64s) — reason=p_des_runaway: |p_des-p|=5.43 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=model_free: trial 4/5 done  (123.4s elapsed this variant, ~30.9s to go)
+[ eval ] s_curve variant=model_free trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 117/871 (t=3.55s) — reason=p_des_runaway: |p_des-p|=5.38 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=model_free: trial 5/5 done  (156.7s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=model_free: ⚠ DIVERGENCE ABORT on 5/5 trials [0, 1, 2, 3, 4] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=model_free (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=0.653  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free/
+[ eval ] s_curve variant=model_free TIMING: fm_ms=169.0 proj_ms=125.6 total_ms=294.6 (p95=467.4) budget=30.3ms → real_time_OVER×510
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 7/20: 'model_free-tightened'  (n_trials=5)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ eval ] s_curve variant=model_free-tightened: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=model_free-tightened trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 97/871 (t=2.94s) — reason=p_des_runaway: |p_des-p|=5.44 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=model_free-tightened: trial 1/5 done  (32.4s elapsed this variant, ~129.4s to go)
+[ eval ] s_curve variant=model_free-tightened trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 100/871 (t=3.03s) — reason=inverted: body z-axis · world z = -0.02 < 0 — the drone is upside down
+[ eval ] s_curve variant=model_free-tightened: trial 2/5 done  (65.3s elapsed this variant, ~97.9s to go)
+[ eval ] s_curve variant=model_free-tightened trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 135/871 (t=4.09s) — reason=p_des_runaway: |p_des-p|=5.24 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=model_free-tightened: trial 3/5 done  (106.4s elapsed this variant, ~71.0s to go)
+[ eval ] s_curve variant=model_free-tightened trial_seed=10003: ⚠ DIVERGENCE ABORT at FM step 98/871 (t=2.97s) — reason=p_des_runaway: |p_des-p|=5.07 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=model_free-tightened: trial 4/5 done  (138.9s elapsed this variant, ~34.7s to go)
+[ eval ] s_curve variant=model_free-tightened trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 115/871 (t=3.48s) — reason=p_des_runaway: |p_des-p|=5.45 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=model_free-tightened: trial 5/5 done  (172.2s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=model_free-tightened: ⚠ DIVERGENCE ABORT on 5/5 trials [0, 1, 2, 3, 4] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=model_free-tightened (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=0.626  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-tightened/
+[ eval ] s_curve variant=model_free-tightened TIMING: fm_ms=169.2 proj_ms=130.5 total_ms=299.7 (p95=466.0) budget=30.3ms → real_time_OVER×550
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 8/20: 'bounds_free'  (n_trials=5)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ eval ] s_curve variant=bounds_free: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ eval ] s_curve variant=bounds_free trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 331/871 (t=10.03s) — reason=p_des_runaway: |p_des-p|=5.04 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=bounds_free: trial 1/5 done  (468.5s elapsed this variant, ~1874.0s to go)
+[ eval ] s_curve variant=bounds_free trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 354/871 (t=10.73s) — reason=p_des_runaway: |p_des-p|=5.16 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=bounds_free: trial 2/5 done  (1401.4s elapsed this variant, ~2102.1s to go)
+[ eval ] s_curve variant=bounds_free trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 310/871 (t=9.39s) — reason=p_des_runaway: |p_des-p|=5.90 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=bounds_free: trial 3/5 done  (1736.6s elapsed this variant, ~1157.7s to go)
+[ eval ] s_curve variant=bounds_free trial_seed=10003: ⚠ DIVERGENCE ABORT at FM step 312/871 (t=9.45s) — reason=p_des_runaway: |p_des-p|=5.79 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=bounds_free: trial 4/5 done  (2248.4s elapsed this variant, ~562.1s to go)
+[ eval ] s_curve variant=bounds_free trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 327/871 (t=9.91s) — reason=p_des_runaway: |p_des-p|=5.01 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=bounds_free: trial 5/5 done  (2607.7s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=bounds_free: ⚠ DIVERGENCE ABORT on 5/5 trials [0, 1, 2, 3, 4] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=bounds_free (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=0.432  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/bounds_free/
+[ eval ] s_curve variant=bounds_free TIMING: fm_ms=169.5 proj_ms=1384.3 total_ms=1553.7 (p95=9886.4) budget=30.3ms → real_time_OVER×1639
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 9/20: 'bounds_free-tightened'  (n_trials=5)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ eval ] s_curve variant=bounds_free-tightened: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ eval ] s_curve variant=bounds_free-tightened trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 389/871 (t=11.79s) — reason=p_des_runaway: |p_des-p|=5.09 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=bounds_free-tightened: trial 1/5 done  (629.7s elapsed this variant, ~2518.6s to go)
+[ eval ] s_curve variant=bounds_free-tightened trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 327/871 (t=9.91s) — reason=p_des_runaway: |p_des-p|=5.55 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=bounds_free-tightened: trial 2/5 done  (1454.6s elapsed this variant, ~2181.9s to go)
+[ eval ] s_curve variant=bounds_free-tightened trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 326/871 (t=9.88s) — reason=inverted: body z-axis · world z = -0.23 < 0 — the drone is upside down
+[ eval ] s_curve variant=bounds_free-tightened: trial 3/5 done  (2038.3s elapsed this variant, ~1358.9s to go)
+[ eval ] s_curve variant=bounds_free-tightened trial_seed=10003: ⚠ DIVERGENCE ABORT at FM step 336/871 (t=10.18s) — reason=p_des_runaway: |p_des-p|=5.38 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=bounds_free-tightened: trial 4/5 done  (2623.0s elapsed this variant, ~655.8s to go)
+[ eval ] s_curve variant=bounds_free-tightened trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 350/871 (t=10.61s) — reason=p_des_runaway: |p_des-p|=5.57 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=bounds_free-tightened: trial 5/5 done  (3181.8s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=bounds_free-tightened: ⚠ DIVERGENCE ABORT on 5/5 trials [0, 1, 2, 3, 4] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=bounds_free-tightened (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=0.413  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/bounds_free-tightened/
+[ eval ] s_curve variant=bounds_free-tightened TIMING: fm_ms=169.7 proj_ms=1663.0 total_ms=1832.7 (p95=7891.1) budget=30.3ms → real_time_OVER×1733
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 10/20: 'geo_free'  (n_trials=5)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ eval ] s_curve variant=geo_free: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=geo_free trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 412/871 (t=12.48s) — reason=inverted: body z-axis · world z = -0.04 < 0 — the drone is upside down
+[ eval ] s_curve variant=geo_free: trial 1/5 done  (121.8s elapsed this variant, ~487.2s to go)
+[ eval ] s_curve variant=geo_free: trial 2/5 done  (300.0s elapsed this variant, ~450.0s to go)
+[ eval ] s_curve variant=geo_free trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 395/871 (t=11.97s) — reason=inverted: body z-axis · world z = -0.11 < 0 — the drone is upside down
+[ eval ] s_curve variant=geo_free: trial 3/5 done  (416.3s elapsed this variant, ~277.6s to go)
+[ eval ] s_curve variant=geo_free: trial 4/5 done  (597.3s elapsed this variant, ~149.3s to go)
+[ eval ] s_curve variant=geo_free trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 417/871 (t=12.64s) — reason=inverted: body z-axis · world z = -0.02 < 0 — the drone is upside down
+[ eval ] s_curve variant=geo_free: trial 5/5 done  (720.0s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=geo_free: ⚠ DIVERGENCE ABORT on 3/5 trials [0, 2, 4] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=geo_free (B=4, proj=on, sel=random): success=0.400  success_relaxed=0.400  safe=0.400  goal_reached=0.400  steps_to_goal=610/871  track_err=0.315  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free/
+[ eval ] s_curve variant=geo_free TIMING: fm_ms=169.4 proj_ms=112.0 total_ms=281.4 (p95=285.2) budget=30.3ms → real_time_OVER×2448
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 11/20: 'geo_free-bounds_free'  (n_trials=5)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ eval ] s_curve variant=geo_free-bounds_free: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=geo_free-bounds_free: trial 1/5 done  (162.7s elapsed this variant, ~650.8s to go)
+[ eval ] s_curve variant=geo_free-bounds_free: trial 2/5 done  (400.4s elapsed this variant, ~600.6s to go)
+[ eval ] s_curve variant=geo_free-bounds_free trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 393/871 (t=11.91s) — reason=inverted: body z-axis · world z = -0.07 < 0 — the drone is upside down
+[ eval ] s_curve variant=geo_free-bounds_free: trial 3/5 done  (507.3s elapsed this variant, ~338.2s to go)
+[ eval ] s_curve variant=geo_free-bounds_free: trial 4/5 done  (673.6s elapsed this variant, ~168.4s to go)
+[ eval ] s_curve variant=geo_free-bounds_free trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 405/871 (t=12.27s) — reason=inverted: body z-axis · world z = -0.03 < 0 — the drone is upside down
+[ eval ] s_curve variant=geo_free-bounds_free: trial 5/5 done  (783.6s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=geo_free-bounds_free: ⚠ DIVERGENCE ABORT on 2/5 trials [2, 4] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=geo_free-bounds_free (B=4, proj=on, sel=random): success=0.400  success_relaxed=0.600  safe=0.600  goal_reached=0.400  steps_to_goal=604/871  track_err=0.295  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free-bounds_free/
+[ eval ] s_curve variant=geo_free-bounds_free TIMING: fm_ms=168.9 proj_ms=92.6 total_ms=261.4 (p95=265.2) budget=30.3ms → real_time_OVER×2880
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 12/20: 'geo_free-model_free'  (n_trials=5)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ eval ] s_curve variant=geo_free-model_free: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=geo_free-model_free trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 105/871 (t=3.18s) — reason=p_des_runaway: |p_des-p|=5.08 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=geo_free-model_free: trial 1/5 done  (25.1s elapsed this variant, ~100.3s to go)
+[ eval ] s_curve variant=geo_free-model_free trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 105/871 (t=3.18s) — reason=p_des_runaway: |p_des-p|=5.14 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=geo_free-model_free: trial 2/5 done  (49.8s elapsed this variant, ~74.7s to go)
+[ eval ] s_curve variant=geo_free-model_free trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 134/871 (t=4.06s) — reason=p_des_runaway: |p_des-p|=5.44 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=geo_free-model_free: trial 3/5 done  (80.8s elapsed this variant, ~53.9s to go)
+[ eval ] s_curve variant=geo_free-model_free trial_seed=10003: ⚠ DIVERGENCE ABORT at FM step 96/871 (t=2.91s) — reason=p_des_runaway: |p_des-p|=5.01 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=geo_free-model_free: trial 4/5 done  (103.5s elapsed this variant, ~25.9s to go)
+[ eval ] s_curve variant=geo_free-model_free trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 143/871 (t=4.33s) — reason=p_des_runaway: |p_des-p|=5.03 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=geo_free-model_free: trial 5/5 done  (136.8s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=geo_free-model_free: ⚠ DIVERGENCE ABORT on 5/5 trials [0, 1, 2, 3, 4] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=geo_free-model_free (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=0.628  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free-model_free/
+[ eval ] s_curve variant=geo_free-model_free TIMING: fm_ms=168.3 proj_ms=54.5 total_ms=222.8 (p95=248.0) budget=30.3ms → real_time_OVER×588
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 13/20: 'model_free-bounds_free'  (n_trials=5)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ eval ] s_curve variant=model_free-bounds_free: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=model_free-bounds_free trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 104/871 (t=3.15s) — reason=p_des_runaway: |p_des-p|=5.23 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=model_free-bounds_free: trial 1/5 done  (29.8s elapsed this variant, ~119.2s to go)
+[ eval ] s_curve variant=model_free-bounds_free trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 95/871 (t=2.88s) — reason=p_des_runaway: |p_des-p|=5.35 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=model_free-bounds_free: trial 2/5 done  (58.4s elapsed this variant, ~87.6s to go)
+[ eval ] s_curve variant=model_free-bounds_free trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 116/871 (t=3.52s) — reason=p_des_runaway: |p_des-p|=5.07 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=model_free-bounds_free: trial 3/5 done  (91.2s elapsed this variant, ~60.8s to go)
+[ eval ] s_curve variant=model_free-bounds_free trial_seed=10003: ⚠ DIVERGENCE ABORT at FM step 88/871 (t=2.67s) — reason=p_des_runaway: |p_des-p|=5.33 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=model_free-bounds_free: trial 4/5 done  (117.9s elapsed this variant, ~29.5s to go)
+[ eval ] s_curve variant=model_free-bounds_free trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 123/871 (t=3.73s) — reason=p_des_runaway: |p_des-p|=5.09 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=model_free-bounds_free: trial 5/5 done  (151.1s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=model_free-bounds_free: ⚠ DIVERGENCE ABORT on 5/5 trials [0, 1, 2, 3, 4] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=model_free-bounds_free (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=0.651  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-bounds_free/
+[ eval ] s_curve variant=model_free-bounds_free TIMING: fm_ms=168.1 proj_ms=105.6 total_ms=273.7 (p95=419.2) budget=30.3ms → real_time_OVER×531
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 14/20: 'model_free-bounds_free-tightened'  (n_trials=5)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ eval ] s_curve variant=model_free-bounds_free-tightened: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=model_free-bounds_free-tightened trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 107/871 (t=3.24s) — reason=p_des_runaway: |p_des-p|=5.33 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=model_free-bounds_free-tightened: trial 1/5 done  (30.9s elapsed this variant, ~123.8s to go)
+[ eval ] s_curve variant=model_free-bounds_free-tightened trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 103/871 (t=3.12s) — reason=p_des_runaway: |p_des-p|=5.37 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=model_free-bounds_free-tightened: trial 2/5 done  (62.4s elapsed this variant, ~93.5s to go)
+[ eval ] s_curve variant=model_free-bounds_free-tightened trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 127/871 (t=3.85s) — reason=p_des_runaway: |p_des-p|=5.13 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=model_free-bounds_free-tightened: trial 3/5 done  (98.6s elapsed this variant, ~65.7s to go)
+[ eval ] s_curve variant=model_free-bounds_free-tightened trial_seed=10003: ⚠ DIVERGENCE ABORT at FM step 86/871 (t=2.61s) — reason=p_des_runaway: |p_des-p|=5.29 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=model_free-bounds_free-tightened: trial 4/5 done  (124.9s elapsed this variant, ~31.2s to go)
+[ eval ] s_curve variant=model_free-bounds_free-tightened trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 115/871 (t=3.48s) — reason=p_des_runaway: |p_des-p|=5.53 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=model_free-bounds_free-tightened: trial 5/5 done  (156.1s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=model_free-bounds_free-tightened: ⚠ DIVERGENCE ABORT on 5/5 trials [0, 1, 2, 3, 4] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=model_free-bounds_free-tightened (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=0.629  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-bounds_free-tightened/
+[ eval ] s_curve variant=model_free-bounds_free-tightened TIMING: fm_ms=168.2 proj_ms=108.3 total_ms=276.5 (p95=431.9) budget=30.3ms → real_time_OVER×543
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 15/20: 'dpcc-r'  (n_trials=5)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ eval ] s_curve variant=dpcc-r: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ eval ] s_curve variant=dpcc-r trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 317/871 (t=9.61s) — reason=p_des_runaway: |p_des-p|=5.40 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=dpcc-r: trial 1/5 done  (769.2s elapsed this variant, ~3077.0s to go)
+[ eval ] s_curve variant=dpcc-r trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 365/871 (t=11.06s) — reason=p_des_runaway: |p_des-p|=5.39 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=dpcc-r: trial 2/5 done  (1844.7s elapsed this variant, ~2767.1s to go)
+[ eval ] s_curve variant=dpcc-r trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 226/871 (t=6.85s) — reason=p_des_runaway: |p_des-p|=5.45 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=dpcc-r: trial 3/5 done  (2254.0s elapsed this variant, ~1502.7s to go)
+[ eval ] s_curve variant=dpcc-r trial_seed=10003: ⚠ DIVERGENCE ABORT at FM step 365/871 (t=11.06s) — reason=p_des_runaway: |p_des-p|=5.16 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=dpcc-r: trial 4/5 done  (3276.9s elapsed this variant, ~819.2s to go)
+[ eval ] s_curve variant=dpcc-r trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 274/871 (t=8.30s) — reason=p_des_runaway: |p_des-p|=5.45 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=dpcc-r: trial 5/5 done  (3891.7s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=dpcc-r: ⚠ DIVERGENCE ABORT on 5/5 trials [0, 1, 2, 3, 4] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=dpcc-r (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=0.395  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r/
+[ eval ] s_curve variant=dpcc-r TIMING: fm_ms=169.2 proj_ms=2250.9 total_ms=2420.1 (p95=9567.4) budget=30.3ms → real_time_OVER×1552
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 16/20: 'dpcc-r-tightened'  (n_trials=5)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ eval ] s_curve variant=dpcc-r-tightened: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ eval ] s_curve variant=dpcc-r-tightened trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 354/871 (t=10.73s) — reason=p_des_runaway: |p_des-p|=5.15 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=dpcc-r-tightened: trial 1/5 done  (1059.7s elapsed this variant, ~4238.9s to go)
+[ eval ] s_curve variant=dpcc-r-tightened trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 379/871 (t=11.48s) — reason=inverted: body z-axis · world z = -0.16 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-r-tightened: trial 2/5 done  (2402.0s elapsed this variant, ~3603.0s to go)
+[ eval ] s_curve variant=dpcc-r-tightened trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 375/871 (t=11.36s) — reason=p_des_runaway: |p_des-p|=5.59 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=dpcc-r-tightened: trial 3/5 done  (3795.8s elapsed this variant, ~2530.5s to go)
+[ eval ] s_curve variant=dpcc-r-tightened trial_seed=10003: ⚠ DIVERGENCE ABORT at FM step 395/871 (t=11.97s) — reason=p_des_runaway: |p_des-p|=5.53 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=dpcc-r-tightened: trial 4/5 done  (5263.3s elapsed this variant, ~1315.8s to go)
+[ eval ] s_curve variant=dpcc-r-tightened trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 369/871 (t=11.18s) — reason=p_des_runaway: |p_des-p|=5.53 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=dpcc-r-tightened: trial 5/5 done  (6425.5s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=dpcc-r-tightened: ⚠ DIVERGENCE ABORT on 5/5 trials [0, 1, 2, 3, 4] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=dpcc-r-tightened (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=0.370  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r-tightened/
+[ eval ] s_curve variant=dpcc-r-tightened TIMING: fm_ms=169.5 proj_ms=3227.1 total_ms=3396.6 (p95=13006.9) budget=30.3ms → real_time_OVER×1877
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 17/20: 'dpcc-c'  (n_trials=5)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ eval ] s_curve variant=dpcc-c: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ eval ] s_curve variant=dpcc-c trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 401/871 (t=12.15s) — reason=inverted: body z-axis · world z = -0.09 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-c: trial 1/5 done  (1288.2s elapsed this variant, ~5152.6s to go)
+[ eval ] s_curve variant=dpcc-c trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 399/871 (t=12.09s) — reason=p_des_runaway: |p_des-p|=5.22 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=dpcc-c: trial 2/5 done  (2501.8s elapsed this variant, ~3752.7s to go)
+[ eval ] s_curve variant=dpcc-c trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 399/871 (t=12.09s) — reason=inverted: body z-axis · world z = -0.15 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-c: trial 3/5 done  (3729.6s elapsed this variant, ~2486.4s to go)
+[ eval ] s_curve variant=dpcc-c trial_seed=10003: ⚠ DIVERGENCE ABORT at FM step 394/871 (t=11.94s) — reason=p_des_runaway: |p_des-p|=5.41 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=dpcc-c: trial 4/5 done  (4906.9s elapsed this variant, ~1226.7s to go)
+[ eval ] s_curve variant=dpcc-c trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 403/871 (t=12.21s) — reason=inverted: body z-axis · world z = -0.13 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-c: trial 5/5 done  (6132.2s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=dpcc-c: ⚠ DIVERGENCE ABORT on 5/5 trials [0, 1, 2, 3, 4] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=dpcc-c (B=4, proj=on, sel=minimum_projection_cost): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=0.327  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c/
+[ eval ] s_curve variant=dpcc-c TIMING: fm_ms=169.4 proj_ms=2877.4 total_ms=3046.8 (p95=10638.0) budget=30.3ms → real_time_OVER×2001
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 18/20: 'dpcc-c-tightened'  (n_trials=5)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ eval ] s_curve variant=dpcc-c-tightened: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ eval ] s_curve variant=dpcc-c-tightened trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 390/871 (t=11.82s) — reason=p_des_runaway: |p_des-p|=5.37 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=dpcc-c-tightened: trial 1/5 done  (1337.9s elapsed this variant, ~5351.4s to go)
+[ eval ] s_curve variant=dpcc-c-tightened trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 409/871 (t=12.39s) — reason=p_des_runaway: |p_des-p|=5.53 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=dpcc-c-tightened: trial 2/5 done  (2746.9s elapsed this variant, ~4120.3s to go)
+[ eval ] s_curve variant=dpcc-c-tightened trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 460/871 (t=13.94s) — reason=p_des_runaway: |p_des-p|=5.64 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=dpcc-c-tightened: trial 3/5 done  (5270.2s elapsed this variant, ~3513.5s to go)
+[ eval ] s_curve variant=dpcc-c-tightened trial_seed=10003: ⚠ DIVERGENCE ABORT at FM step 387/871 (t=11.73s) — reason=p_des_runaway: |p_des-p|=5.20 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=dpcc-c-tightened: trial 4/5 done  (6502.1s elapsed this variant, ~1625.5s to go)
+[ eval ] s_curve variant=dpcc-c-tightened trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 410/871 (t=12.42s) — reason=inverted: body z-axis · world z = -0.23 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-c-tightened: trial 5/5 done  (7870.7s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=dpcc-c-tightened: ⚠ DIVERGENCE ABORT on 5/5 trials [0, 1, 2, 3, 4] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=dpcc-c-tightened (B=4, proj=on, sel=minimum_projection_cost): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=0.369  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c-tightened/
+[ eval ] s_curve variant=dpcc-c-tightened TIMING: fm_ms=169.2 proj_ms=3580.7 total_ms=3749.9 (p95=18581.5) budget=30.3ms → real_time_OVER×2061
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 19/20: 'dpcc-t'  (n_trials=5)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ eval ] s_curve variant=dpcc-t: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ eval ] s_curve variant=dpcc-t trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 368/871 (t=11.15s) — reason=inverted: body z-axis · world z = -0.24 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-t: trial 1/5 done  (1207.7s elapsed this variant, ~4830.8s to go)
+[ eval ] s_curve variant=dpcc-t trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 374/871 (t=11.33s) — reason=inverted: body z-axis · world z = -0.08 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-t: trial 2/5 done  (2436.7s elapsed this variant, ~3655.1s to go)
+[ eval ] s_curve variant=dpcc-t trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 371/871 (t=11.24s) — reason=inverted: body z-axis · world z = -0.06 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-t: trial 3/5 done  (3520.9s elapsed this variant, ~2347.3s to go)
+[ eval ] s_curve variant=dpcc-t trial_seed=10003: ⚠ DIVERGENCE ABORT at FM step 381/871 (t=11.55s) — reason=p_des_runaway: |p_des-p|=5.02 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=dpcc-t: trial 4/5 done  (4850.9s elapsed this variant, ~1212.7s to go)
+[ eval ] s_curve variant=dpcc-t trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 370/871 (t=11.21s) — reason=inverted: body z-axis · world z = -0.12 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-t: trial 5/5 done  (5958.8s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=dpcc-t: ⚠ DIVERGENCE ABORT on 5/5 trials [0, 1, 2, 3, 4] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=dpcc-t (B=4, proj=on, sel=temporal_consistency): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=0.335  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t/
+[ eval ] s_curve variant=dpcc-t TIMING: fm_ms=169.4 proj_ms=2999.5 total_ms=3168.9 (p95=10508.8) budget=30.3ms → real_time_OVER×1869
+[ eval ] s_curve [geo_tag=s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 20/20: 'dpcc-t-tightened'  (n_trials=5)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/run_provenance.json
+[ eval ] s_curve variant=dpcc-t-tightened: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ eval ] s_curve variant=dpcc-t-tightened trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 472/871 (t=14.30s) — reason=p_des_runaway: |p_des-p|=5.35 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=dpcc-t-tightened: trial 1/5 done  (2497.5s elapsed this variant, ~9989.9s to go)
+[ eval ] s_curve variant=dpcc-t-tightened trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 377/871 (t=11.42s) — reason=p_des_runaway: |p_des-p|=5.42 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=dpcc-t-tightened: trial 2/5 done  (3790.0s elapsed this variant, ~5685.1s to go)
+[ eval ] s_curve variant=dpcc-t-tightened trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 369/871 (t=11.18s) — reason=p_des_runaway: |p_des-p|=5.12 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=dpcc-t-tightened: trial 3/5 done  (4923.9s elapsed this variant, ~3282.6s to go)
+[ eval ] s_curve variant=dpcc-t-tightened trial_seed=10003: ⚠ DIVERGENCE ABORT at FM step 368/871 (t=11.15s) — reason=p_des_runaway: |p_des-p|=5.10 m > 5.0 m — the commanded point ran away from the drone (free-running p_des integrator)
+[ eval ] s_curve variant=dpcc-t-tightened: trial 4/5 done  (6170.0s elapsed this variant, ~1542.5s to go)
+[ eval ] s_curve variant=dpcc-t-tightened trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 376/871 (t=11.39s) — reason=inverted: body z-axis · world z = -0.07 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-t-tightened: trial 5/5 done  (7460.4s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=dpcc-t-tightened: ⚠ DIVERGENCE ABORT on 5/5 trials [0, 1, 2, 3, 4] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=dpcc-t-tightened (B=4, proj=on, sel=temporal_consistency): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=0.393  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t-tightened/
+[ eval ] s_curve variant=dpcc-t-tightened TIMING: fm_ms=169.7 proj_ms=3525.4 total_ms=3695.1 (p95=19792.6) budget=30.3ms → real_time_OVER×1967
+UAV Mix-ML eval complete (engine=fm).
+Job completed successfully. Evaluated engine=fm scene=s_curve for seeds=[6]
+JOB END: Wed Aug 26 09:32:20 UTC 2026

@@ -591,6 +591,215 @@ def plot_geo_constraints(geo_name, geo_config, out_dir, is_tightened=False):
 
 # ── UF-16.3: Constraint satisfaction / violation metrics ──────────────────────
 
+# ── Div_Abort: divergence detection + episode abort (visual-aligning setup) ──
+# The commanded end-effector position is a FREE-RUNNING integrator: aligning_sim does
+# `pred_action = agent.predict(...)[0] + des_robot_pos` every step, so des_c_pos accumulates
+# without any absolute clamp (only the per-step `max_action_delta` cap). A policy that keeps
+# pushing one direction therefore walks the command clean off the table while the real arm
+# saturates against its own limits, and the episode burns its full 400-step budget going
+# nowhere. Every artifact that AUTOSCALES to the data (the per-rollout `*_mpc_foresight.svg`
+# above all) then degenerates: the 0.6 x 0.9 m workspace collapses into a couple of pixel rows
+# next to one runaway hike. This guard stops such an episode at the step it is provably lost,
+# records WHEN / WHERE / WHY, and lets the plots draw the abort explicitly.
+#
+# THRESHOLDS ARE ALIGNING-SPECIFIC — roughly a tenth of the UAV family's, because this
+# workspace is roughly a tenth the size (x∈[0.20,0.80], y∈[±0.45], z∈[0.02,0.50] m). There is
+# no velocity or attitude state exposed by D3IL, so unlike the UAV guard this one watches only
+# position and command/state disagreement.
+#
+# NOT a constraint check: leaving the declared workspace box is a NORMAL, measured constraint
+# violation (`check_trajectory_constraints`). These bounds are the "we lost the arm" boundary
+# and sit well outside every planning surface on purpose.
+#
+# Env overrides: FMPCC_ALIGN_DIVERGENCE_ABORT=0 disables the guard entirely (old behaviour);
+# FMPCC_ALIGN_DIV_SLACK_M / FMPCC_ALIGN_DIV_SPEED_MS retune the two live thresholds.
+#
+# v2 (2026-08-27) — the guard now reads the ARM, never the command. Deleted:
+#   `des_runaway`       |des_c_pos - c_pos|_xy > 0.25 m. Direction-blind lead check on a
+#                       free-running integrator: a large lead is a SYMPTOM that the episode
+#                       may be lost, never a measurement that the arm is. Direction-blind:
+#                       its UAV twin `p_des_runaway` treated a lagging climb (recoverable)
+#                       and a thrust-saturated dive (fatal) as the same 5 m.
+#   `des_out_of_arena`  the same signal expressed as a bound instead of a lead — it bounds the
+#                       COMMANDED point, which is not the robot either.
+# A runaway command with a stationary arm is now simply a failed rollout that runs out its
+# budget. Its plots stay readable via align_view_window() below, which scales to the ACTUAL
+# arm path and lets des_c_pos widen the window by at most ALIGN_VIEW_MAX_GROW core spans.
+# See logs_in_develop/aggregated_divergence_abort/CHANGELOG_20260827_div_abort_v2_scene_envelope.md
+ALIGN_DIVERGENCE_ABORT = os.environ.get(
+    'FMPCC_ALIGN_DIVERGENCE_ABORT', '1').lower() not in ('0', 'false', 'no')
+ALIGN_DIV_SLACK_M = float(os.environ.get('FMPCC_ALIGN_DIV_SLACK_M', '0.15'))
+# The physical-table box, in the Franka frame — the "arm has left the building" bound, the
+# aligning twin of the UAV guard's `off_map`. Fires on POSITION ALONE.
+ALIGN_TABLE_LB = (-0.30, -1.20, -0.50)
+ALIGN_TABLE_UB = (1.60, 1.20, 1.50)
+# TASK ENVELOPE — the box the aligning task actually happens in: the WIDEST Cartesian surface
+# any shipped geo entry declares (x∈[0.30,0.70], y∈[±0.35], z∈[0.05,0.40] in
+# config/visual_aligning_eval.yaml), opened out to the reachable aligning area. A FIXED
+# property of the task, deliberately NOT `geo_config['workspace_bounds']`: the geo variants
+# SHRINK that box for ablations (`geo_bounds_only_1/2`, relaxed vs tight `combined_*`), and a
+# shrunken PLANNING box must never become an abort trigger — going outside it is exactly the
+# constraint violation the eval exists to measure. Keying off a fixed envelope means the same
+# motion aborts, or does not, identically under every variant.
+ALIGN_ROUTE_LB = (0.20, -0.45, 0.02)
+ALIGN_ROUTE_UB = (0.80, 0.45, 0.50)
+# `ee_overspeed`: TCP speed from a finite difference of c_pos across one control step
+# (RT_CONTROL_HZ). DISABLED BY DEFAULT (0 = off) and this is deliberate: unlike the UAV, where
+# a free fall from cruise altitude gives a hard physical constant to anchor the number to, the
+# arm has no such reference and no measured speed distribution in-repo. Shipping a guessed
+# threshold that fires ALONE is exactly the mistake `des_runaway` was. Measure `c_pos_history`
+# from a healthy cluster run first, then enable with FMPCC_ALIGN_DIV_SPEED_MS=<value>.
+ALIGN_DIV_SPEED_MS = float(os.environ.get('FMPCC_ALIGN_DIV_SPEED_MS', '0'))
+
+
+def align_route_envelope():
+    """(lb, ub) of the box the aligning task actually happens in, ⊕ ALIGN_DIV_SLACK_M."""
+    return (np.array(ALIGN_ROUTE_LB, dtype=float) - ALIGN_DIV_SLACK_M,
+            np.array(ALIGN_ROUTE_UB, dtype=float) + ALIGN_DIV_SLACK_M)
+
+
+def check_align_divergence(des, cpos, prev_cpos=None, dt=None):
+    """First lost-the-arm condition this step trips → (reason, detail); else (None, '').
+
+    Reads the ARM (`cpos`, and its finite-difference speed) — never the command's lead over
+    it. `des` is used only for the NaN check, because a non-finite command is an unambiguous
+    integrator blow-up rather than a judgement call about control authority.
+    `reason` is a short greppable tag that lands in the stats JSON / npz / foresight SVG.
+    """
+    des = np.asarray(des, dtype=float).reshape(-1)[:3]
+    cpos = np.asarray(cpos, dtype=float).reshape(-1)[:3]
+    if not (np.all(np.isfinite(des)) and np.all(np.isfinite(cpos))):
+        return 'nan_state', 'non-finite des_c_pos / c_pos — the command integrator blew up'
+
+    if np.any(cpos < np.array(ALIGN_TABLE_LB)) or np.any(cpos > np.array(ALIGN_TABLE_UB)):
+        return 'off_table', (f'c_pos={np.round(cpos, 3).tolist()} is off the table box '
+                             f'{list(ALIGN_TABLE_LB)}..{list(ALIGN_TABLE_UB)} — the arm has '
+                             f'left the physical workspace entirely')
+
+    lo, hi = align_route_envelope()
+    off_route = [ax for ax, c, l, h in zip('xyz', cpos, lo, hi) if c < l or c > h]
+    if off_route:
+        return 'ee_off_route', (f'c_pos={np.round(cpos, 3).tolist()} is outside the aligning '
+                                f'task envelope {np.round(lo, 3).tolist()}..'
+                                f'{np.round(hi, 3).tolist()} on {"/".join(off_route)} '
+                                f'(task box ⊕ {ALIGN_DIV_SLACK_M:.2f} m) — the EE is nowhere '
+                                f'the task ever goes')
+
+    if ALIGN_DIV_SPEED_MS > 0 and prev_cpos is not None and dt:
+        prev = np.asarray(prev_cpos, dtype=float).reshape(-1)[:3]
+        if np.all(np.isfinite(prev)):
+            speed = float(np.linalg.norm(cpos - prev)) / float(dt)
+            if speed > ALIGN_DIV_SPEED_MS:
+                return 'ee_overspeed', (f'|v_ee|={speed:.3f} m/s > {ALIGN_DIV_SPEED_MS:.3f} m/s '
+                                        f'(finite difference of c_pos over one control step)')
+    return None, ''
+
+
+# ── Div_Abort: robust plot windows ───────────────────────────────────────────
+# matplotlib autoscales to the DATA, so one runaway command — or one wild candidate in the
+# MPC fan — compresses the whole workspace into a couple of pixel rows. The window is instead
+# built from content that CANNOT run away (the enforced geometry + a robust percentile band of
+# the ACTUAL arm path) and may grow for the rest only up to a hard cap. Excursions are still
+# drawn (matplotlib clips them) and counted in a corner note, so nothing is hidden silently.
+ALIGN_VIEW_PCT = (2.0, 98.0)
+ALIGN_VIEW_MAX_GROW = 1.0
+
+
+def _align_finite_cat(arrays):
+    """Flatten `arrays` into one finite 1-D array, or None if nothing usable is left."""
+    out = []
+    for a in arrays:
+        if a is None:
+            continue
+        a = np.asarray(a, dtype=float).reshape(-1)
+        a = a[np.isfinite(a)]
+        if a.size:
+            out.append(a)
+    return np.concatenate(out) if out else None
+
+
+def align_view_window(core, extra=(), fixed=(), pad=0.05,
+                      pct=ALIGN_VIEW_PCT, max_grow=ALIGN_VIEW_MAX_GROW):
+    """(lo, hi) axis limits a runaway cannot destroy — see the note above.
+
+    core  — sets the scale (robust `pct` band): the actual executed arm path.
+    fixed — always fully visible: the enforced constraint geometry, box/target poses.
+    extra — may widen the window by at most `max_grow` core spans per side: des_c_pos and
+            the MPC candidate fan.
+    Returns None when nothing finite is available (caller leaves autoscale alone).
+    """
+    core_cat = _align_finite_cat(core)
+    fixed_cat = _align_finite_cat(fixed)
+    if core_cat is not None:
+        lo = float(np.percentile(core_cat, pct[0]))
+        hi = float(np.percentile(core_cat, pct[1]))
+    elif fixed_cat is not None:
+        lo, hi = float(fixed_cat.min()), float(fixed_cat.max())
+    else:
+        return None
+    if fixed_cat is not None:
+        lo, hi = min(lo, float(fixed_cat.min())), max(hi, float(fixed_cat.max()))
+    span = max(hi - lo, 1e-4)
+    ex = _align_finite_cat(extra)
+    if ex is not None:
+        lo = min(lo, max(float(ex.min()), lo - max_grow * span))
+        hi = max(hi, min(float(ex.max()), hi + max_grow * span))
+    if hi - lo < 1e-6:
+        lo, hi = lo - 0.05, hi + 0.05
+    return lo - pad, hi + pad
+
+
+def align_outside_note(ax, series, xlim, ylim):
+    """Corner note naming what the clamped window cuts off — keeps the clamp honest."""
+    msgs = []
+    for label, xs, ys in series:
+        xs = np.asarray(xs, dtype=float).reshape(-1)
+        ys = np.asarray(ys, dtype=float).reshape(-1)
+        if xs.size == 0 or xs.size != ys.size:
+            continue
+        bad = ((~np.isfinite(xs)) | (~np.isfinite(ys)) | (xs < xlim[0]) | (xs > xlim[1])
+               | (ys < ylim[0]) | (ys > ylim[1]))
+        n = int(bad.sum())
+        if n:
+            far = _align_finite_cat([np.abs(xs[bad]), np.abs(ys[bad])])
+            reach = f', max |coord| {float(far.max()):.2f} m' if far is not None else ''
+            msgs.append(f'{n} {label} pt(s) outside view{reach}')
+    if msgs:
+        ax.text(0.99, 0.01, 'view clamped: ' + '; '.join(msgs), transform=ax.transAxes,
+                fontsize=7, color='crimson', ha='right', va='bottom', zorder=16,
+                bbox=dict(boxstyle='round,pad=0.25', facecolor='white', alpha=0.75, lw=0))
+
+
+def align_geometry_anchors(geo_config, context_info=None):
+    """(xs, ys, zs) coordinates that must stay in frame: enforced surfaces + box/target poses."""
+    xs, ys, zs = [], [], []
+    gc = geo_config or {}
+    ct = list(gc.get('constraint_types', []))
+    ws = gc.get('workspace_bounds')
+    if 'geo_bounds' in ct and ws:
+        _lb, _ub = ws.get('lb', []), ws.get('ub', [])
+        for axis, acc in enumerate((xs, ys, zs)):
+            for _seq in (_lb, _ub):
+                if axis < len(_seq) and np.isfinite(float(_seq[axis])):
+                    acc.append(float(_seq[axis]))
+    if 'halfspace' in ct:
+        for hs in gc.get('halfspace_constraints', []):
+            _line = hs['line'] if isinstance(hs, dict) else hs[:2]
+            xs += [float(_line[0][0]), float(_line[1][0])]
+            ys += [float(_line[0][1]), float(_line[1][1])]
+    if 'obstacles' in ct:
+        for ob in gc.get('obstacle_constraints', []):
+            c, r = ob['center'], float(ob['radius'])
+            xs += [float(c[0]) - r, float(c[0]) + r]
+            ys += [float(c[1]) - r, float(c[1]) + r]
+    for key in ('box_init_xy', 'target_xy', 'final_box_xy'):
+        pt = (context_info or {}).get(key)
+        if pt is not None and len(pt) >= 2:
+            xs += [float(pt[0]) - 0.08, float(pt[0]) + 0.08]
+            ys += [float(pt[1]) - 0.08, float(pt[1]) + 0.08]
+    return xs, ys, zs
+
+
 def check_trajectory_constraints(c_pos_traj, act_traj, geo_config, enlarge=0.0):
     """
     Evaluate actual EE trajectory against all active geometric constraints.
@@ -897,6 +1106,17 @@ def _collect_per_rollout_arrays(agent):
         projection_cb_tripped=np.array([1 if s > 0 else 0 for s in agent.history_cb_skipped_steps],
                                        dtype=np.int32),
         projection_cb_skipped_steps=np.array(agent.history_cb_skipped_steps, dtype=np.int32),
+        # Div_Abort: rollouts STOPPED early because the command ran away. An aborted row
+        # covers fewer steps than a normal one, so downstream analysis must treat
+        # divergence_aborted==1 separately rather than averaging it in blind. `reason` is
+        # '' for a normal rollout; nan_state / off_table / ee_off_route / ee_overspeed
+        # otherwise.
+        divergence_aborted=np.array([1 if d.get('aborted') else 0
+                                     for d in agent.history_divergence], dtype=np.int32),
+        divergence_step=np.array([int(d.get('step', -1)) for d in agent.history_divergence],
+                                 dtype=np.int32),
+        divergence_reason=np.array([d.get('reason') or '' for d in agent.history_divergence],
+                                   dtype=object),
     )
 
 
@@ -1121,6 +1341,11 @@ class VisualAgentWrapper:
         self.history_dist_to_target      = []
         self.history_clamp_events        = []
         self._replan_count               = 0
+        # Div_Abort: per-rollout divergence record (None until the guard fires) + the flag
+        # Aligning_Sim polls to break out of `while not done`. See check_align_divergence.
+        self.abort_episode               = False
+        self.curr_rollout_divergence     = None
+        self.history_divergence          = []
         # UF-16.3: constraint metrics
         self.history_constraint_metrics  = []   # per-rollout exec metric dicts
         self._plan_post_viol_rates       = []   # per-replan planned violation rate
@@ -1159,6 +1384,8 @@ class VisualAgentWrapper:
         self.curr_rollout_clamp_events.clear()
         self._replan_count = 0
         self._plan_post_viol_rates.clear()   # UF-16.3
+        self.abort_episode = False               # Div_Abort
+        self.curr_rollout_divergence = None      # Div_Abort
         self.curr_rollout_cb_skipped_steps = 0   # Fix_15.3
         # REAL_TIME_RECORDING_UPDATE — fresh per-rollout timing recorder.
         self.rt_rec = RTRecorder(
@@ -1275,6 +1502,15 @@ class VisualAgentWrapper:
         self.master_rollout_history[f'rollout_{ridx}']['constraint_metrics'] = _cmetrics
         self.history_constraint_metrics.append(_cmetrics)
 
+        # Div_Abort: WHEN/WHERE/WHY this rollout was cut short (all-False group when it ran
+        # to a normal end). An aborted rollout is a genuine FAILURE — the env's own success
+        # flag is left untouched — but it covers FEWER steps than a normal one, so a DA
+        # comparing step counts or violation COUNTS must account for it.
+        _div = self.curr_rollout_divergence or {
+            'enabled': bool(ALIGN_DIVERGENCE_ABORT), 'aborted': False, 'reason': None,
+            'detail': '', 'step': -1}
+        self.master_rollout_history[f'rollout_{ridx}']['divergence'] = _div
+        self.history_divergence.append(_div)
         self.history_n_steps.append(self.step_counter)
         self.history_avg_time.append(avg_time)
         self.history_cb_skipped_steps.append(int(self.curr_rollout_cb_skipped_steps))   # Fix_15.3
@@ -1322,6 +1558,11 @@ class VisualAgentWrapper:
                       f'angle={ci["final_box_angle_deg"]:.1f}°'
                       f'  (dist_to_target: {ci["final_xy_dist"]:.4f} m)')
         print(f'  - Total Steps: {self.step_counter}')
+        if _div.get('aborted'):   # Div_Abort
+            print(f'  - ⚠ DIVERGENCE ABORT at step {_div["step"]}: {_div["reason"]} — '
+                  f'{_div["detail"]}')
+            print(f'    des_c_pos={_div["des_c_pos"]}  c_pos={_div["c_pos"]}  '
+                  f'|des-c_pos|={_div["lead"]:.3f} m  — EXCLUDE FROM METRICS')
         print(f'  - Success status: {success}')
         print(f'  - Final Mean Distance: {mean_dist:.6f} m')
         print(f'  - Environment Mode: {mode}')
@@ -1482,6 +1723,12 @@ class VisualAgentWrapper:
                     'note':          _contact_note,
                 },
                 'constraint': _nested_cm,
+                # Div_Abort: WHEN / WHERE / WHY this rollout was stopped early
+                # (`aborted: false` when it ran to a normal end). An aborted rollout is a
+                # genuine failure that covers FEWER steps than a normal one — its step
+                # count and constraint metrics are truncated by design.
+                'divergence': dict(data.get('divergence')
+                                   or {'aborted': False, 'reason': None, 'step': -1}),
             }
             if _cm:
                 _ex = _nested_cm['exec']
@@ -1686,7 +1933,10 @@ class VisualAgentWrapper:
                                 fontsize=12)
                 ax_xy.set_xlabel('X (m)', fontsize=11)
                 ax_xy.set_ylabel('Y (m)', fontsize=11)
-                ax_xy.set_aspect('equal', adjustable='datalim')
+                # Div_Abort: 'box' (not 'datalim') so the clamped x/y limits set below
+                # survive — with 'datalim' matplotlib re-expands the data limits to
+                # satisfy the aspect ratio and the clamp is silently undone.
+                ax_xy.set_aspect('equal', adjustable='box')
                 ax_xy.grid(True, alpha=0.3)
 
                 # UF-15.2 / UF-16: constraint geometry overlay — drawn behind trajectories.
@@ -1915,6 +2165,56 @@ class VisualAgentWrapper:
                                     _ocz + _or*np.outer(np.ones_like(_ou), np.cos(_ov)),
                                     color='tomato', alpha=0.30, linewidth=0)
 
+                # ── Div_Abort: clamp both panels + mark the abort ────────────
+                # Scale comes from the ACTUAL arm path and the enforced geometry; des_c_pos and
+                # the candidate fan may widen it only up to ALIGN_VIEW_MAX_GROW spans, so a
+                # runaway command can no longer flatten the workspace into a few pixels.
+                _core = c_arr if c_arr is not None else real_pos
+                _cand_all = (np.concatenate([np.asarray(c).reshape(-1, 3) for c in all_cands_list],
+                                            axis=0) if all_cands_list else np.zeros((0, 3)))
+                _gax, _gay, _gaz = align_geometry_anchors(_gc, _ci)
+                _vx = align_view_window([_core[:, 0]], extra=[real_pos[:, 0], _cand_all[:, 0]],
+                                        fixed=_gax)
+                _vy = align_view_window([_core[:, 1]], extra=[real_pos[:, 1], _cand_all[:, 1]],
+                                        fixed=_gay)
+                _vz = align_view_window([_core[:, 2]], extra=[real_pos[:, 2], _cand_all[:, 2]],
+                                        fixed=_gaz, pad=0.02)
+                if _vx:
+                    ax_xy.set_xlim(*_vx); ax_3d.set_xlim3d(*_vx)
+                if _vy:
+                    ax_xy.set_ylim(*_vy); ax_3d.set_ylim3d(*_vy)
+                if _vz:
+                    ax_3d.set_zlim3d(*_vz)
+                if _vx and _vy:
+                    align_outside_note(ax_xy,
+                                       [('des_c_pos', real_pos[:, 0], real_pos[:, 1]),
+                                        ('actual', _core[:, 0], _core[:, 1]),
+                                        ('candidate', _cand_all[:, 0], _cand_all[:, 1])],
+                                       _vx, _vy)
+
+                # ✖ = the arm's last actual position; the dotted leader points at the commanded
+                # des_c_pos it was chasing (typically far outside the window — that IS the failure).
+                _dv = data.get('divergence') or {}
+                if _dv.get('aborted'):
+                    _dp = np.asarray(_dv.get('c_pos'), dtype=float)
+                    _dd = np.asarray(_dv.get('des_c_pos') or _dv.get('c_pos'), dtype=float)
+                    ax_xy.plot([_dp[0], _dd[0]], [_dp[1], _dd[1]], color='darkred', ls=':',
+                               lw=1.4, alpha=0.9, zorder=15)
+                    ax_xy.scatter([_dp[0]], [_dp[1]], marker='X', s=260, color='darkred',
+                                  edgecolors='white', linewidths=1.2, zorder=16)
+                    ax_xy.annotate(f'ABORT step {_dv["step"]}\n{_dv["reason"]}',
+                                   xy=(_dp[0], _dp[1]), xytext=(6, 8), textcoords='offset points',
+                                   fontsize=8, color='darkred', fontweight='bold', zorder=16,
+                                   bbox=dict(boxstyle='round,pad=0.25', facecolor='white',
+                                             alpha=0.8, lw=0))
+                    ax_3d.scatter([_dp[0]], [_dp[1]], [_dp[2]], marker='X', s=180,
+                                  color='darkred', edgecolors='white', linewidths=1.0, zorder=16)
+                    fig_mpc.text(0.5, 0.925,
+                                 f'✖ DIVERGENCE ABORT — {_dv["reason"]} at step {_dv["step"]}:  '
+                                 f'{_dv["detail"]}',
+                                 color='white', backgroundcolor='darkred', fontsize=11,
+                                 fontweight='bold', ha='center', va='center')
+
                 fig_mpc.tight_layout()
                 _mpc_base = os.path.join(diag_path, f'rollout_{rollout_idx}_mpc_foresight')
                 # fig_mpc.savefig(f'{_mpc_base}.png', dpi=200, bbox_inches='tight')
@@ -2045,6 +2345,45 @@ class VisualAgentWrapper:
                 print(f'[ box-obstacle ] holding position for this rollout (context '
                       f'{self.ctx_box_obs_conflict["context_idx"]}) — see abort notice above.',
                       flush=True)
+            self.curr_rollout_act_magnitudes.append(0.0)
+            self.step_counter += 1
+            return np.zeros((1, 3), dtype=np.float64)
+
+        # ── Div_Abort: stop this rollout the step the command is provably lost ──
+        # Runs AFTER the per-step bookkeeping above (so the JSON/npz keep a real trace up to
+        # and including the abort step) and BEFORE any planning — spending a replan's SLSQP
+        # solves on a runaway command buys nothing. The EE holds position for the one step it
+        # takes Aligning_Sim to notice `abort_episode` and break the episode loop.
+        if ALIGN_DIVERGENCE_ABORT and not self.abort_episode:
+            # `curr_rollout_c_pos` was appended with THIS step's position by the bookkeeping
+            # above, so [-2] is the previous step — the finite difference for `ee_overspeed`.
+            _prev_cpos = (self.curr_rollout_c_pos[-2]
+                          if len(self.curr_rollout_c_pos) >= 2 else None)
+            _route_lb, _route_ub = align_route_envelope()
+            _reason, _detail = check_align_divergence(
+                des_robot_pos_np, robot_pos_np,
+                prev_cpos=_prev_cpos, dt=1.0 / float(RT_CONTROL_HZ))
+            if _reason is not None:
+                self.abort_episode = True
+                self.curr_rollout_divergence = {
+                    'enabled': True, 'aborted': True, 'reason': _reason, 'detail': _detail,
+                    'step': int(self.step_counter),
+                    # des_c_pos / lead are kept as DIAGNOSTICS only — neither is a trigger any
+                    # more (v2). The foresight SVG still draws the leader to the commanded point.
+                    'des_c_pos': [float(c) for c in np.asarray(des_robot_pos_np, dtype=float).reshape(-1)[:3]],
+                    'c_pos': [float(c) for c in np.asarray(robot_pos_np, dtype=float).reshape(-1)[:3]],
+                    'lead': float(np.linalg.norm(
+                        np.asarray(des_robot_pos_np, dtype=float).reshape(-1)[:2]
+                        - np.asarray(robot_pos_np, dtype=float).reshape(-1)[:2])),
+                    'route_lb': [float(c) for c in _route_lb],
+                    'route_ub': [float(c) for c in _route_ub],
+                    'table_lb': list(ALIGN_TABLE_LB), 'table_ub': list(ALIGN_TABLE_UB),
+                    'thresholds': {'route_slack_m': ALIGN_DIV_SLACK_M,
+                                   'ee_speed_ms': ALIGN_DIV_SPEED_MS},
+                }
+                print(f'[ Div_Abort ] rollout {self.rollout_counter}: ⚠ DIVERGENCE ABORT at step '
+                      f'{self.step_counter} — reason={_reason}: {_detail}', flush=True)
+        if self.abort_episode:
             self.curr_rollout_act_magnitudes.append(0.0)
             self.step_counter += 1
             return np.zeros((1, 3), dtype=np.float64)
@@ -2229,7 +2568,7 @@ class VisualAgentWrapper:
 
 # ── Model loading ─────────────────────────────────────────────────────────────
 
-def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', device='cuda:0', override_args=None):
+def load_diffusion_with_override(*loadpath, target_class=None, epoch='best', device='cuda:0', override_args=None):
     lp = os.path.join(*loadpath)
     print(f'\n[ eval loading ] Loading from {lp}\n')
     dataset_config   = utils.load_config(*loadpath, 'dataset_config.pkl')
@@ -2646,6 +2985,29 @@ if __name__ == '__main__':
                           f'{len(_cb_tripped_idx)}/{len(_cb_skips)} rollouts ({_tot_skipped} steps '
                           f'skipped) — results marked UNPROJECTED. See PROJECTION_CB_TRIPPED.txt.',
                           flush=True)
+
+                # Div_Abort: greppable sentinel + warning when any rollout of this variant was
+                # STOPPED early because the commanded EE position ran away, mirroring the
+                # PROJECTION_CB_TRIPPED.txt convention above — visible from the file tree without
+                # opening a single artifact. Artifacts are still written; they are just marked.
+                _divs = getattr(agent, 'history_divergence', [])
+                _div_idx = [i for i, d in enumerate(_divs) if d.get('aborted')]
+                if _div_idx:
+                    with open(os.path.join(save_path, 'DIVERGENCE_ABORT.txt'), 'w') as _f:
+                        _f.write(f"DIVERGENCE ABORT — aligning variant={variant}\n")
+                        _f.write(f"aborted_rollouts={_div_idx}  ({len(_div_idx)}/{len(_divs)})\n\n")
+                        for _i in _div_idx:
+                            _d = _divs[_i]
+                            _f.write(f"  rollout {_i}: reason={_d['reason']}  step={_d['step']}\n")
+                            _f.write(f"            des_c_pos={_d['des_c_pos']}  c_pos={_d['c_pos']}  "
+                                     f"|des-c_pos|={_d['lead']:.3f} m\n")
+                            _f.write(f"            why: {_d['detail']}\n")
+                        _f.write("\nThese rollouts were STOPPED early (the commanded position had run\n")
+                        _f.write("away). They are genuine failures and cover FEWER steps than a normal\n")
+                        _f.write("rollout, so step counts and violation COUNTS for them are truncated.\n")
+                    print(f'[ eval ] variant={variant}: ⚠ DIVERGENCE ABORT on '
+                          f'{len(_div_idx)}/{len(_divs)} rollouts {_div_idx} — '
+                          f'see DIVERGENCE_ABORT.txt', flush=True)
 
                 # ── Legacy PNG rollout grid (mirrors ddpm_encdec) ────────────
                 print(f'[ eval ] Generating PNG rollout grid for {variant}...')

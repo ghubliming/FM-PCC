@@ -68,8 +68,21 @@ WHAT IT DOES (PLAN §1.2), per ODE step k of K:
   2. terminal predict  x1_ref = x_ref + (1 - tau_{k+1}) * f(x_ref, tau_{k+1})
   3. projection        solve a prox-NLP: keep x1 near x1_ref, satisfy constraints
   4. pull-back         x_{k+1} = x_ref + tau_{k+1} * (x1_proj - x1_ref)
-The prox weight carries a tau^2 factor, so early steps are nudged and late
-steps are pulled hard onto the feasible set.
+The prox weight carries a tau^2 factor -- but it does NOT schedule anything here.
+Our port implements the prox term ALONE (upstream's optional cost C(.) is dropped
+on purpose, so arms B and C solve the same feasible-set problem), and for a pure
+quadratic prox `argmin c*||x1 - x1_ref||^2 s.t. h <= 0` is independent of c > 0.
+So the NLP is exactly Pi_S(x1_ref) at every active step, for any reg_scale and any
+tau.  What actually damps early steps is the LINEAR tau_{k+1} factor in the
+pull-back (4).  Pinned by `gates_hardflow.py::gate_g2`; see DEGENERACY §5 (D2).
+
+STEP k = K-1 IS ALWAYS A PLAIN PROJECTION.  There tau_{k+1} == 1, so (2) collapses
+to x1_ref = x_ref (no lookahead), (4) collapses to x_{k+1} = x1_proj (full snap),
+and no step k+1 exists to react.  That is by design -- it is the paper's safety
+proposition -- but it means HardFlow's distinctive behaviour lives ONLY in the
+active NON-terminal steps.  `hardflow_step_budget()` counts them; when it returns
+n_genuine == 0 (always at K=1, and at K=2 under the shipped A=0.5) this sampler is
+sample-then-project, not HardFlow, and `sample()` says so in the log.
 
 WHY THIS IS LEGAL ON A TWO-TIME MODEL (and why α-Flow is the BEST host for it)
 -----------------------------------------------------------------------------
@@ -100,7 +113,8 @@ DIFFERENCES FROM UPSTREAM, ALL DELIBERATE (see the Gen12 changelog §4):
     be enforcing *different* constraint sets and the comparison would be void.
   * No value-model warm start.  FMPCC has no value model; upstream's warmstart
     only picked a noise seed and the s0 parameter, both of which we get for
-    free.  This also keeps the NFE accounting clean (2K here, K+2K upstream).
+    free.  This also keeps the NFE accounting clean (K + n_active - 1 here
+    since 2026-08-24, K+2K upstream).
   * The initial noise matches THE HOST MODEL'S OWN SAMPLER, via the explicit
     `init_noise_scale` argument.  See the fix_4 warning below — this is the one
     thing that does NOT transfer when the port is moved to a new generation.
@@ -129,6 +143,7 @@ default — a wrong scale is silent, so the call site must state it).
 explicitly anyway.  `gates_hardflow_alphaflow.py::gate_h3` pins it numerically.
 """
 
+import os
 import time
 
 import numpy as np
@@ -148,6 +163,65 @@ except ImportError:  # pragma: no cover - the cluster env has it, this container
 # ---------------------------------------------------------------------------#
 # ------------------------------- DOF layout --------------------------------#
 # ---------------------------------------------------------------------------#
+
+# ---------------------------------------------------------------------------#
+# [SolverSwap 2026-08-27] NLP backend selection  (ADD-ON — nothing was removed)
+# ---------------------------------------------------------------------------#
+# Job 25121 measured, on the IDENTICAL NLP and the same constraint_list:
+# IPOPT 47.6 ms vs scipy SLSQP 11.0 ms per solve (4.33x), the two backends
+# agreeing to mean 3.4e-4 / max 1.0e-3 over 100 solves. IPOPT is an interior-
+# point code for large SPARSE NLPs; ours is 44 dense variables, so most of its
+# cost is size-independent per-call setup (it is only 1.14x slower on a 3x
+# harder problem, against SLSQP's 3.09x — the signature of overhead, not work).
+# So 'slsqp' is the default. The IPOPT path is NOT deleted and stays selectable:
+#     kwarg / config : nlp_backend='ipopt'
+#     env override   : FMPCC_HF_NLP_BACKEND=ipopt
+# Every run announces which backend ran, in the LOG and in `nlp_backend`
+# (episode info -> eval npz/json -> DA), so no result is ever ambiguous.
+# Full write-up: logs_in_develop/aggregated_hf_nlp_backend/
+NLP_BACKENDS = ('slsqp', 'ipopt')
+DEFAULT_NLP_BACKEND = 'slsqp'
+
+
+def resolve_nlp_backend(requested=None):
+    """Explicit kwarg > FMPCC_HF_NLP_BACKEND env var > DEFAULT_NLP_BACKEND."""
+    backend = requested or os.environ.get('FMPCC_HF_NLP_BACKEND') or DEFAULT_NLP_BACKEND
+    backend = str(backend).strip().lower()
+    if backend not in NLP_BACKENDS:
+        raise ValueError(f'nlp_backend must be one of {NLP_BACKENDS}, got {backend!r}')
+    return backend
+
+
+def artifact_variant_label(variant, backend=None):
+    """The name a result FILE gets for `variant` under `backend`.
+
+    🔴 This exists to stop a swap run from destroying the IPOPT corpus. Every eval
+    writes `{save_path}/{variant}.npz`, so re-running `hardflow_new-c-tightened` on
+    the new backend would overwrite the very rows chapters 1-3 of the DA are built
+    on — silently, and with no way back.
+
+        ipopt : returns `variant` UNCHANGED. Every pre-existing path stays exactly
+                what it was, so nothing already on disk moves or is reinterpreted.
+        slsqp : renames the stem, `hardflow_new-c-tightened` ->
+                `hardflow_sls-c-tightened`. The suffix grammar (-r/-c/-t,
+                -tightened) is untouched, and the name still starts with
+                'hardflow', so arm-C branching keeps working.
+
+    Non-HardFlow variants (diffuser, dpcc-*) are returned unchanged on both
+    backends: they never touch this NLP.
+
+    ⚠️ DA discovery uses explicit allow-lists of variant names, so a new label is
+    INVISIBLE until it is registered in the DA configs. That registration ships
+    with this change; a later variant needs the same treatment.
+    """
+    backend = resolve_nlp_backend(backend)
+    variant = str(variant)
+    if backend != 'slsqp' or not variant.startswith('hardflow'):
+        return variant
+    stem, sep, suffix = variant.partition('-')
+    stem = 'hardflow_sls' if stem in ('hardflow_new', 'hardflow') else f'{stem}_sls'
+    return f'{stem}{sep}{suffix}'
+
 
 class TrajectoryLayout:
     """Index bookkeeping for the flattened, s0-free trajectory vector.
@@ -219,7 +293,8 @@ class HardFlowNLP:
 
     def __init__(self, layout, constraint_list, mins, maxs, dt=1.0,
                  reg_scale=1.0, dynamics_mode='deriv', linear_dynamics=None,
-                 print_level=0, print_time=False, solver_opts=None):
+                 print_level=0, print_time=False, solver_opts=None,
+                 nlp_backend=None):
         if cs is None:
             raise ImportError(
                 'casadi is required for the Gen12 hardflow_new sampler. '
@@ -237,6 +312,12 @@ class HardFlowNLP:
 
         self.n_solves = 0
         self.n_failures = 0
+
+        # [SolverSwap] Which solver actually runs. `resolve_nlp_backend` above.
+        self.nlp_backend = resolve_nlp_backend(nlp_backend)
+        self.constraint_list = constraint_list
+        self._s0 = None
+        self.projector = None
 
         self.opti = cs.Opti()
         self.s0_param = self.opti.parameter(layout.state_dim)
@@ -266,6 +347,18 @@ class HardFlowNLP:
         if solver_opts:
             opts.update(solver_opts)
         self.opti.solver('ipopt', opts)
+
+        # [SolverSwap] The IPOPT NLP above is ALWAYS built, so the backend can be
+        # flipped without touching any other code path; `solve()` picks which one
+        # actually runs. Announce it — a run whose solver is not in its own log is
+        # a run nobody can interpret later.
+        if self.nlp_backend == 'slsqp':
+            self.projector = self._build_slsqp_projector(constraint_list)
+        print('[hardflow][NLP-BACKEND] {}{}  dof={}  reg_scale={}'.format(
+            self.nlp_backend,
+            '  (scipy SLSQP via DPCC Projector — IPOPT built but idle)'
+            if self.nlp_backend == 'slsqp' else '  (CasADi/IPOPT — original path)',
+            self.layout.dof, self.reg_scale))
 
     # -- symbolic helpers ----------------------------------------------------
 
@@ -390,9 +483,96 @@ class HardFlowNLP:
     # -- solve ---------------------------------------------------------------
 
     def set_s0(self, s0):
-        self.opti.set_value(self.s0_param, np.asarray(s0, dtype=float).reshape(-1))
+        # [SolverSwap] also kept for the slsqp backend, which rebuilds the full
+        # trajectory (from_dof) before handing it to DPCC's projector.
+        self._s0 = np.asarray(s0, dtype=float).reshape(-1)
+        self.opti.set_value(self.s0_param, self._s0)
 
+    # -- [SolverSwap 2026-08-27] backend dispatch ----------------------------
+    #
+    # ADD-ON. `_solve_ipopt` below is the original `solve` body, byte-for-byte.
+    #
+    # Why the two backends solve the SAME problem: HardFlow's cost is
+    #     0.5 * reg_scale * tau^2 * ||x - x_ref||^2
+    # a positive SCALAR multiple of the squared distance. A positive scalar does
+    # not move an argmin, so HF's NLP is exactly Pi_S(x_ref) — which is what
+    # DPCC's `Projector.project` computes (Q = I, r = -x_ref). `tau` is therefore
+    # accepted and ignored by the slsqp path; that is exact, not an approximation.
+    # Residual formulation gaps (s_0 scope, the Bounds(-5,5) box) are the ones
+    # catalogued in the companion DA doc 4c and measured at ~1e-3.
     def solve(self, x1_ref, tau):
+        """Project `x1_ref` onto the feasible set at flow time `tau`, via `self.nlp_backend`."""
+        if self.nlp_backend == 'slsqp':
+            return self._solve_slsqp(x1_ref, tau)
+        return self._solve_ipopt(x1_ref, tau)
+
+    def _build_slsqp_projector(self, constraint_list):
+        """DPCC's scipy-SLSQP projector, pinned to the IPOPT path's geometry."""
+        from .projection import Projector
+
+        class _Limits:
+            def __init__(self, mins, maxs):
+                self.mins, self.maxs = np.asarray(mins), np.asarray(maxs)
+
+        class _StubNormalizer:
+            """`Projector` reads only `.normalizers[k].mins/.maxs`.
+
+            Built from the SAME mins/maxs the IPOPT path uses, so both backends
+            see identical limits — which is the whole point of the swap.
+            """
+
+            def __init__(self, mins, maxs, action_dim):
+                self.normalizers = {
+                    'actions': _Limits(mins[:action_dim], maxs[:action_dim]),
+                    'observations': _Limits(mins[action_dim:], maxs[action_dim:]),
+                }
+
+        L = self.layout
+        return Projector(
+            horizon=L.horizon, transition_dim=L.transition_dim,
+            action_dim=L.action_dim, goal_dim=0,
+            constraint_list=constraint_list,
+            normalizer=_StubNormalizer(self.mins, self.maxs, L.action_dim),
+            variant='states_actions', dt=self.dt, skip_initial_state=True,
+            device='cpu', solver='scipy', parallelize=False)
+
+    def _solve_slsqp(self, x1_ref, tau):
+        """`Pi_S(x1_ref)` via DPCC's scipy SLSQP. Same feasible set, same argmin."""
+        x1_ref = np.asarray(x1_ref, dtype=float).reshape(-1)
+        L = self.layout
+        if self._s0 is None:
+            raise RuntimeError(
+                'set_s0() must be called before solve() on the slsqp backend — '
+                'the DPCC projector takes a FULL trajectory, so s_0 has to be '
+                'reinstated before the call and dropped again after it.')
+        full = L.from_dof(x1_ref, self._s0).reshape(1, L.horizon, L.transition_dim)
+        self.n_solves += 1
+        _t0 = time.perf_counter()
+        sol, _cost = self.projector.project(
+            torch.tensor(full, dtype=torch.float32, device='cpu'))
+        # Mirrors the mix_uav IPOPT accounting: a run that books solver time as
+        # inference time repeats the Fix_1 failure. `getattr` because only the UAV
+        # copy initialises `solve_ms`; elsewhere this creates it harmlessly.
+        self.solve_ms = getattr(self, 'solve_ms', 0.0) + (time.perf_counter() - _t0) * 1e3
+        # DPCC keeps scipy's last iterate on non-convergence exactly as IPOPT keeps
+        # its own — same silent-infeasibility exposure, so the two backends stay
+        # comparable. `last_solve_success` (projection.py, additive, behaviour-
+        # neutral) is only what makes those failures COUNTABLE here.
+        n_bad = sum(1 for ok in getattr(self.projector, 'last_solve_success', ()) if not ok)
+        if n_bad:
+            self.n_failures += n_bad
+            if self.n_failures == n_bad:
+                print(f'[hardflow][NLP-FAILURE] first non-converged SLSQP solve at '
+                      f'tau={float(tau):.3f}. Keeping scipy\'s last iterate, which may be '
+                      f'INFEASIBLE — the terminal-solve safety guarantee does not hold for '
+                      f'this plan. Same exposure as the IPOPT path. Further failures are '
+                      f'silent; read `nlp_failures` in the run summary for the total.')
+        out = np.asarray(sol.detach().cpu().numpy(), dtype=float).reshape(-1)
+        # s_0 is dropped again here, so anything the projector did to it is
+        # discarded — equivalent to DPCC's post-projection `apply_conditioning`.
+        return L.to_dof(out)
+
+    def _solve_ipopt(self, x1_ref, tau):
         """Project `x1_ref` onto the feasible set at flow time `tau`."""
         x1_ref = np.asarray(x1_ref, dtype=float).reshape(-1)
         self.opti.set_value(self.tau_param, float(tau))
@@ -407,6 +587,23 @@ class HardFlowNLP:
             # fix_4-style counter: with IPOPT silenced this is the ONLY signal
             # left that a solve did not converge, so it is reported per episode.
             self.n_failures += 1
+            # [HFK1b 2026-08-24] The OTHER kind of "incomplete HardFlow", and the dangerous
+            # one. The fallback below returns IPOPT's last iterate, which is NOT guaranteed
+            # feasible — so for this plan the safety guarantee (paper Prop. 1, which rides
+            # entirely on the terminal solve) simply does not hold, silently. IPOPT is muted
+            # by default and `n_failures` only surfaces in the end-of-episode rollup, so a run
+            # could previously produce constraint violations with no in-log signal at all.
+            # Announce the FIRST one loudly, then stay quiet and let the counter do the rest —
+            # a per-solve print would flood a batch log.
+            # Note DPCC fails the other way: its circuit breaker returns the trajectory
+            # UNPROJECTED (also unsafe, also silent) — see projection.py.
+            if self.n_failures == 1:
+                print(f'[hardflow][NLP-FAILURE] first non-converged solve at tau={float(tau):.3f}. '
+                      f'Falling back to IPOPT\'s last iterate, which may be INFEASIBLE — the '
+                      f'terminal-solve safety guarantee does not hold for this plan. Further '
+                      f'failures are silent; read `nlp_failures` in the run summary for the '
+                      f'total, and check the constraint metrics before trusting this row. '
+                      f'See logs_in_develop/aggregated_hardflow_lowK/')
             return np.asarray(
                 self.opti.debug.value(self.x1), dtype=float).reshape(-1)
 
@@ -441,6 +638,241 @@ def resolve_activation_threshold(activation):
     if not (0.0 <= thr <= 1.0):
         raise ValueError(f'activation_threshold must be in [0, 1], got {thr}')
     return thr
+
+
+# ── HFK1 (2026-08-24) — how many of the K steps are actually HardFlow? ────────────────────
+# 🔴 A step does real HardFlow work only if it is ACTIVE **and NOT the terminal step**. At
+# k = K-1 the flow time is tau_next == 1.0 EXACTLY, which independently kills all three of
+# HardFlow's ingredients:
+#   I1 endpoint lookahead  (1 - tau_next) == 0  -> the "predicted endpoint" IS the Euler point
+#   I2 damped pull-back     tau_next == 1       -> a full snap onto the feasible set, no nudge
+#   I3 feedback             no step k+1         -> the network never sees the correction
+# That collapse is not a bug: it IS the paper's safety proposition (the terminal solve is what
+# guarantees h(x_N) <= 0). But it means `n_genuine == 0` runs execute `Pi_S(Euler sample)` --
+# sample-then-project, i.e. DPCC's algorithm with a different solver -- and carry NO in-loop
+# guidance. This is UNCONDITIONAL at K=1 (the only step is the last step) and also true at
+# K=2 under the shipped activation_threshold=0.5 (floor gate deactivates step 0).
+# Full derivation + the empirical consequences:
+#   logs_in_develop/HF_iMF/HF_Study/DEGENERACY_HardFlow_at_low_K.md  (§0.1, §3, §4.1)
+def hardflow_step_budget(flow_steps, activation_threshold):
+    """(n_active, n_genuine) for the shipped gate `k >= int((1-A)*K) or k == K-1`.
+
+    n_active  — ODE steps that solve the NLP (>= 1: the terminal solve is forced).
+    n_genuine — those that are NOT the terminal step, i.e. the only steps where HardFlow's
+                lookahead / damped pull-back / feedback actually run. 0 => not HardFlow.
+
+    Reference table (matches DEGENERACY §4.1):
+        A=0.5 (shipped): K=1 -> 1/0 · K=2 -> 1/0 · K=5 -> 3/2 · K=10 -> 5/4 · K=20 -> 10/9
+        A=1.0:           K=1 -> 1/0 · K=2 -> 2/1 · K=5 -> 5/4
+        A=0.0:           terminal-only at every K -> n_genuine = 0
+    """
+    K = int(flow_steps)
+    A = float(activation_threshold)
+    n_active = max(K - int((1.0 - A) * K), 1)      # `or k == K-1` forces at least one
+    return n_active, n_active - 1
+
+
+# ── HFK1b (2026-08-24) — three regimes, not two ──────────────────────────────────────────
+# "Is this HardFlow?" is not a yes/no question. There are three answers, and the middle one
+# is the one that used to pass unnoticed:
+#
+#   DEGENERATE  n_genuine == 0   No HardFlow arithmetic runs at all. The arm is
+#                                Pi_S(Euler sample) = sample-then-project (== DPCC modulo
+#                                solver). SAFE and useful, but it must not be LABELLED
+#                                HardFlow. K=1 always; K=2 at A <= 0.5; any K at A = 0.0.
+#   THIN        n_genuine == 1   HardFlow runs, but as a SINGLE nudge. Nothing measurable can
+#                                be attributed to it: one step is inside the seed-to-seed
+#                                noise of every metric we report. Worse, the lone step is the
+#                                EARLIEST active one, so it carries the largest lookahead of
+#                                any step at that K -- exactly the regime the paper's Thm. 4
+#                                bound degrades in and its Rmk. 9 tells you to skip.
+#                                K=2 at A=1.0; K=3, K=4 at A=0.5.
+#   OK          n_genuine >= 2   Enough guided steps to attribute an effect to.
+#
+# `first_lookahead` = 1 - tau_next at the FIRST genuine step = how far the endpoint
+# extrapolation has to reach at the least trustworthy guided step. The paper's own N=10 /
+# A=0.5 configuration sits at 0.4 with 4 genuine steps; that is the reference "known-good"
+# point. A LARGE first_lookahead is not automatically bad -- A=1.0 always starts near tau=0
+# and so always maxes it out -- but combined with a small n_genuine it means the one thing
+# HardFlow did was also the thing it does worst.
+HF_DEGENERATE = 'DEGENERATE'
+HF_THIN = 'THIN'
+HF_OK = 'OK'
+
+
+def hardflow_regime(flow_steps, activation_threshold):
+    """(tier, n_active, n_genuine, first_lookahead) for a (K, A) pair.
+
+    Pure arithmetic over the shipped gate -- no model, no run. Pinned against the literal
+    loop by `gates_hardflow.py::gate_g6`.
+    """
+    K = int(flow_steps)
+    n_active, n_genuine = hardflow_step_budget(K, activation_threshold)
+    k0 = K - n_active                              # index of the FIRST active step
+    first_lookahead = (1.0 - float(k0 + 1) / K) if n_genuine else 0.0
+    if n_genuine == 0:
+        tier = HF_DEGENERATE
+    elif n_genuine == 1:
+        tier = HF_THIN
+    else:
+        tier = HF_OK
+    return tier, n_active, n_genuine, first_lookahead
+
+
+# ── HFK1c (2026-08-30) — the degeneracy GUARD.  Degenerate arms are OFF by default. ───────
+# 🔴 WHY A GUARD AND NOT JUST THE WARNING ABOVE.  The `[hardflow][DEGENERATE]` banner has
+# existed since 2026-08-24 and it stopped nothing.  AUDIT_20260830 found the Gen15 UAV
+# K-sweep still spending cluster hours on K=1/K=2 HardFlow cells that no claim can cite, and
+# the flag never reached the ranking CSVs, so a degenerate row could still be promoted to
+# "HardFlow's best result".  A line printed into a 3000-line stdout log is not a control.
+# This is the control.
+#
+# WHAT IS BLOCKED: `n_genuine == 0` — no HardFlow arithmetic runs at all and the arm is
+# Pi_S(Euler sample) = sample-then-project (== DPCC modulo solver/variable-scope).
+#
+# 🔴 THE THRESHOLD IS IN `n_genuine`, NOT IN K.  The shipped `A` is NOT uniform across
+# generations — Gen12 ships A=1.0, every other generation ships (or inherits) 0.5 — so
+# "K <= 2 is degenerate" is true for five generations and FALSE for Gen12.  `n_genuine` is
+# A-aware by construction, so one threshold is correct everywhere.  See REGISTER_20260824 §1.
+#
+# WHY THIS IS NOT KEPT AS A CONTROL.  It was retained for one question: "does HardFlow's
+# PROJECTOR alone beat DPCC's, independent of K?"  The question is real; K=1/2 cannot answer
+# it, because it varies the projector AND K at once — the comparison then runs at the one
+# operating point where the sample is a single Euler step and every arm floors.  Measured on
+# the Gen15 UAV corpus: 25 of 32 matched cells are 0.00 -> 0.00, and in the 7 cells with any
+# signal HardFlow is WORSE in 5.  The clean instrument is `A = 0.0` at matched K — terminal-
+# only at ANY K, since n_active = max(K - floor(1*K), 1) = 1 — which isolates the projector at
+# unchanged K and unchanged sample quality.  That is a different run, and it is the supported
+# way to get the control back:
+#
+#     FMPCC_HF_ALLOW_DEGENERATE=1  with  HFFM_ACT_THRESHOLD=0.0  and  K >= 5
+#
+# Numbers and full derivation: logs_in_develop/aggregated_hardflow_lowK/
+#   AUDIT_20260830_lowK_warning_coverage_and_UAV_degeneracy_check.md  §4, §6
+HF_MIN_GENUINE_DEFAULT = 1        # 1 = block DEGENERATE only.  2 also blocks THIN.
+
+
+class HardFlowDegenerateError(RuntimeError):
+    """A degenerate (or sub-threshold) HardFlow arm was run without an explicit opt-in.
+
+    Callers that sweep should ask `hardflow_guard()` BEFORE building the policy and skip the
+    variant cleanly — see `hardflow_guard.__doc__`.  This exception is the backstop for the
+    callers that do not, so that a degenerate arm can never run silently.
+    """
+
+
+def _env_flag(name):
+    return str(os.environ.get(name, '')).strip().lower() in ('1', 'true', 'yes', 'on')
+
+
+def hf_allow_degenerate():
+    """True if this job explicitly opted in to running degenerate/sub-threshold HardFlow."""
+    return _env_flag('FMPCC_HF_ALLOW_DEGENERATE')
+
+
+def resolve_hf_min_genuine(requested=None):
+    """Explicit arg > FMPCC_HF_MIN_GENUINE env var > HF_MIN_GENUINE_DEFAULT.
+
+    0 disables the guard entirely (equivalent to FMPCC_HF_ALLOW_DEGENERATE=1).
+    """
+    val = requested if requested is not None else os.environ.get('FMPCC_HF_MIN_GENUINE')
+    if val is None or str(val).strip() == '':
+        return HF_MIN_GENUINE_DEFAULT
+    try:
+        out = int(str(val).strip())
+    except (TypeError, ValueError):
+        raise ValueError(f'FMPCC_HF_MIN_GENUINE must be an integer, got {val!r}')
+    if out < 0:
+        raise ValueError(f'FMPCC_HF_MIN_GENUINE must be >= 0, got {out}')
+    return out
+
+
+def hardflow_guard(flow_steps, activation_threshold, min_genuine=None, allow_degenerate=None):
+    """Should this HardFlow arm run at all?
+
+    Returns `(ok, reason, tier, n_active, n_genuine, first_lookahead)`.
+      ok      — False => do not run this arm.  `reason` is a one-line, log-ready explanation
+                (empty string when ok is True).
+    Pure arithmetic over (K, A) and the environment: no model, no run, safe to call during
+    config assembly.  Sweeps should call this while building `projection_variants` and drop
+    the blocked arms there — dropping the arm beats crashing inside the sampler hours in.
+    """
+    tier, n_active, n_genuine, first_lookahead = hardflow_regime(
+        flow_steps, activation_threshold)
+    if allow_degenerate is None:
+        allow_degenerate = hf_allow_degenerate()
+    min_genuine = resolve_hf_min_genuine(min_genuine)
+    if allow_degenerate or min_genuine == 0:
+        return True, '', tier, n_active, n_genuine, first_lookahead
+    if n_genuine < min_genuine:
+        what = ('runs NO HardFlow arithmetic (every NLP solve is the terminal tau=1 solve, so '
+                'the arm is Pi_S(Euler sample) = sample-then-project, == DPCC modulo '
+                'solver/variable-scope)' if n_genuine == 0 else
+                f'runs only {n_genuine} genuine step(s), below the required {min_genuine}')
+        reason = (f'K={int(flow_steps)} A={float(activation_threshold)} -> n_genuine={n_genuine} '
+                  f'[{tier}]: this arm {what}. No claim can cite it, so it is DISABLED. '
+                  f'For a genuine arm use n_genuine>={min_genuine} (at A=0.5 that is K>=3; '
+                  f'K>=5 for an attributable effect). To run it anyway — e.g. the A=0.0 '
+                  f'projector control at matched K — set FMPCC_HF_ALLOW_DEGENERATE=1. '
+                  f'See logs_in_develop/aggregated_hardflow_lowK/'
+                  f'AUDIT_20260830_lowK_warning_coverage_and_UAV_degeneracy_check.md')
+        return False, reason, tier, n_active, n_genuine, first_lookahead
+    return True, '', tier, n_active, n_genuine, first_lookahead
+
+
+def hardflow_skip_note(variant, flow_steps, activation_threshold, reason):
+    """The text written to the `HF_DEGENERATE_SKIPPED.txt` sentinel in a skipped variant dir."""
+    return (f'HARDFLOW ARM DISABLED — degeneracy guard (HFK1c 2026-08-30)\n'
+            f'variant={variant}  K={int(flow_steps)}  A={float(activation_threshold)}\n\n'
+            f'{reason}\n\n'
+            f'Nothing was evaluated for this variant; there are no results in this folder.\n'
+            f'This file is the record that the arm was SKIPPED, not that it failed.\n')
+
+
+
+# ── B4_PARITY (2026-08-20) — per-variant MPC candidate-fan size for arm C ──────────────
+# 🔴 P0. This function exists because `hardflow.batch_size` used to default to 1 while the
+# DPCC arms ran `args.batch_size` (4). Both arms loop SERIALLY over candidates around their
+# CPU solve (DPCC: `projection.py::Projector.project`, `for i in range(batch_size)`;
+# HardFlow: `HardFlowSampler.sample`, `for b in range(batch_size)`), so a mismatched fan
+# scales the projection cost almost linearly and makes every arm-B-vs-arm-C wall-clock
+# comparison meaningless. It shipped: arm C looked ~25% CHEAPER than DPCC while its
+# PER-SOLVE cost is ~1.8-2.2x DPCC's. See
+# logs_in_develop/HF_Batch_Parity/CHANGELOG_20260820_HF_batch_parity.md and
+# logs_in_develop/Gen3v6_MeanFlow/DA/DA_20260820_HF_lower_avgtime_batchsize_confound.md.
+#
+# THE RULE (one line): the NAME says the fan.
+#   `hardflow_new`            -> 1                  faithful upstream batch-1 control.
+#                                                   Upstream asserts batch==1; this arm is
+#                                                   what keeps that reading available.
+#   `hardflow_new-r|-c|-t`    -> `configured_batch` a selection RULE is only meaningful over
+#                                                   a fan, so asking for one asks for the fan.
+#                                                   Matches the DPCC arms by construction.
+#   `...-tightened`           -> composes          geometry suffix, stripped before parsing.
+#
+# ⚠️ At B>1 `hardflow_new` and `hardflow_new-r` would be byte-identical (both select index 0),
+# so running both at the same fan is duplicated compute. Pinning the bare name to 1 is what
+# gives it a distinct meaning instead.
+def resolve_hf_batch_size(variant, configured_batch):
+    """MPC candidate-fan size for one arm-C variant. See the block comment above.
+
+    `configured_batch` is the run-level fan (yaml `hardflow.batch_size` / `mpc_batch_size`,
+    env `HFFM_BATCH`) — i.e. what the SELECTION arms get. The bare `hardflow_new` name is
+    pinned to 1 regardless, because that is what the name means.
+
+    Raises on a non-arm-C variant: the DPCC/diffuser arms take `args.batch_size` directly
+    and must never be routed through here.
+    """
+    name = str(variant)
+    for _suffix in ('_train_set', '-tightened'):   # bookkeeping/geometry suffixes
+        if name.endswith(_suffix):
+            name = name[:-len(_suffix)]
+    if not name.startswith('hardflow'):
+        raise ValueError(
+            f'resolve_hf_batch_size is for arm-C (hardflow*) variants only, got {variant!r}')
+    if name.endswith(('-r', '-c', '-t')):
+        return max(1, int(configured_batch))
+    return 1                                        # bare `hardflow_new`: faithful batch-1
 
 
 # ── U7 delta 3/4: Gen14-specific constants and the visual-cond adapter ────────────────
@@ -485,14 +917,28 @@ def resolve_engine_hf(engine):
 def encode_visual_cond(model, cond):
     """Turn `VisualAgentWrapper`'s raw cond into the ENCODED cond the sampler needs.
 
-    Mirrors `VisualMeanFlow.forward` / `VisualAlphaFlow.forward` / `VisualFlowMatching.forward`
-    exactly — same unpack, same `[:, -1]` snapshot, same single `_encode_once` call — because
+    Mirrors each wrapper's OWN `forward()` — same unpack, same `[:, -1]` snapshot — because
     the HardFlow sampler bypasses `model.forward()` (it replaces `p_sample_loop` wholesale)
-    and would otherwise never reach the encoder those wrappers run.
+    and would otherwise never reach the conditioning path those wrappers set up.
 
-    Encoding ONCE here, not per ODE step, is also what the wrappers do and is numerically
-    identical: the encoder is deterministic in eval mode (GroupNorm, no dropout) and the
-    images are constant across the ODE loop.
+    The two engine families do NOT share that path, and this function must not assume they do:
+
+      * TWO-TIME (`VisualMeanFlow`, `VisualAlphaFlow`) expose `_encode_once` and want the
+        PRE-ENCODED `'visual_latent'`. That method exists for a MeanFlow-specific reason —
+        the latent is captured as a constant inside `_p_losses_meanflow`'s JVP closure so its
+        forward-mode tangent is zero — and encoding once here, not per ODE step, is what the
+        wrappers do and is numerically identical (deterministic encoder in eval mode,
+        images constant across the ODE loop).
+
+      * SINGLE-TIME (`VisualFlowMatching`, Gen7) has NO `_encode_once` and never needed one.
+        It passes the raw dual-cam window through as `'visual'` and lets the backbone encode
+        (`visual_fm_diffusion.py::forward`). `_VISUAL_COND_KEYS` already admits `'visual'`,
+        so the sampler's own conditioning guard accepts this untouched.
+
+    Assuming `_encode_once` unconditionally raised `AttributeError: 'VisualFlowMatching'
+    object has no attribute '_encode_once'` and made arm C unreachable for engine=fm — it
+    never surfaced because every earlier arm-C run was mf or af. See
+    logs_in_develop/Gen14/DA_20260901_Gen14_flagship_K20_T0.2_dpcc_vs_hardflow.md Part 4.
 
     A cond that is already encoded, or a non-visual model, passes through untouched.
     """
@@ -502,6 +948,10 @@ def encode_visual_cond(model, cond):
         return cond                                  # already encoded upstream
     if 0 in cond and isinstance(cond[0], tuple):
         bp_imgs, inhand_imgs, obs_seq = cond[0]
+        if not hasattr(model, '_encode_once'):
+            # Single-time engine: hand back exactly what its own forward() builds.
+            return {0: obs_seq[:, -1],
+                    'visual': (bp_imgs, inhand_imgs, obs_seq)}
         return {0: obs_seq[:, -1],
                 'visual_latent': model._encode_once(bp_imgs, inhand_imgs)}
     return cond
@@ -614,6 +1064,39 @@ class HardFlowSampler:
         K = int(flow_steps)
         dt = 1.0 / K
 
+        # [HFK1b 2026-08-24] Announce the REGIME in the log instead of letting a DA discover
+        # it three weeks later. Two tiers warn: DEGENERATE (no HardFlow math at all) and THIN
+        # (one guided step — HardFlow ran, but nothing can be attributed to it). Warned once
+        # per (K, A); nothing about the computation changes. See `hardflow_regime` above.
+        # [HFK1c 2026-08-30] BACKSTOP. Sweeps are expected to call `hardflow_guard()` while
+        # assembling `projection_variants` and drop blocked arms there (no crash, the sweep
+        # continues). This raise catches every caller that does not, so a degenerate arm can
+        # never run silently. Opt in with FMPCC_HF_ALLOW_DEGENERATE=1.
+        _hf_ok, _hf_reason, hf_tier, n_active, n_genuine, first_lookahead = hardflow_guard(
+            K, self.activation_threshold)
+        if not _hf_ok:
+            raise HardFlowDegenerateError('[hardflow][BLOCKED] ' + _hf_reason)
+        if hf_tier != HF_OK and getattr(self, '_hf_regime_warned', None) != (K, self.activation_threshold):
+            self._hf_regime_warned = (K, self.activation_threshold)
+            _hdr = f'[hardflow][{hf_tier}] K={K} A={self.activation_threshold}: '
+            if hf_tier == HF_DEGENERATE:
+                print(_hdr + f'n_active={n_active}, n_genuine=0 — every NLP solve is the '
+                      f'terminal tau=1 solve, so this arm runs Pi_S(Euler sample): '
+                      f'sample-then-project, == DPCC modulo solver/variable-scope, NOT '
+                      f'HardFlow. The result is still SAFE and still worth having as a '
+                      f'one-shot-projection comparison — just do NOT label it a HardFlow '
+                      f'result.')
+            else:
+                print(_hdr + f'n_active={n_active}, n_genuine=1 — HardFlow runs, but as a '
+                      f'SINGLE nudge, and that lone guided step carries this K\'s largest '
+                      f'lookahead ({first_lookahead:.2f}), the regime the paper\'s Thm. 4 '
+                      f'bound degrades in. One step cannot be separated from seed noise: do '
+                      f'NOT rest a HardFlow claim on this row.')
+            print(f'[hardflow][{hf_tier}] first non-degenerate: K>=3 at A=0.5 or K>=2 at '
+                  f'A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, '
+                  f'which is the paper\'s own N=10 / A=0.5 regime. See '
+                  f'logs_in_develop/aggregated_hardflow_lowK/')
+
         # fix_4: the initial-noise law is taken from the HOST model's own sampler
         # via `init_noise_scale` (Gen3v7 α-Flow: sigma=1.0, af_diffusion.py:260),
         # NOT hardcoded to Gen12's 0.5 and NOT read off the legacy FMv3ODE class
@@ -687,8 +1170,28 @@ class HardFlowSampler:
             # See logs_in_develop/Gen12/fix_8/.
             active = (k >= int((1.0 - self.activation_threshold) * K)) or (k == K - 1)
             if active:
-                V_next = self._velocity_batch(X_ref, tau_next, s0_all, cond_net, returns_net)
-                X1_ref = X_ref + (1.0 - tau_next) * V_next            # (B, dof) GPU
+                # [HFK1 2026-08-24] The TERMINAL step has tau_next == 1, so the lookahead
+                # weight (1 - tau_next) is zero and V_next used to be computed only to be
+                # multiplied away. Skipping it is a no-op on the trajectory, saves 1 NFE per
+                # plan, and removes the IEEE `0.0 * NaN = NaN` hazard at t = 1.0 — the CLOSED
+                # edge of the CFM training support (t ~ U[0,1)), where the backbone is least
+                # trustworthy and the poisoned X1_ref would go straight into the NLP.
+                #
+                # The test is STRUCTURAL (`k < K-1`) rather than `1.0 - tau_next > 0.0`: for
+                # K in {1,2,5,10,20} the float sum lands on exactly 1.0, but for K in
+                # {6,14,24,28,...} it leaves a +1.1e-16 residue. That residue is orders below
+                # float32 epsilon (it changes nothing on the tensor), yet a float test would
+                # read it as "lookahead alive" and keep the waste and the hazard for those K.
+                #
+                # ⚠️ `policy.nfe` now reads K + n_active - 1 (was K + n_active), so HF NFE and
+                # wall-time figures are NOT comparable with pre-2026-08-24 runs. Trajectories
+                # are unchanged. See logs_in_develop/aggregated_hardflow_lowK/
+                #   CHANGELOG_20260824_hardflow_terminal_nfe_and_K1_guard.md
+                if k < K - 1:
+                    V_next = self._velocity_batch(X_ref, tau_next, s0_all, cond_net, returns_net)
+                    X1_ref = X_ref + (1.0 - tau_next) * V_next        # (B, dof) GPU
+                else:
+                    X1_ref = X_ref                                    # terminal: tau_next == 1
                 # --- CPU NLP boundary: one transfer out, serial per-candidate solve
                 #     (== DPCC's Projector.project loop), one transfer back.
                 X1_ref_np = X1_ref.detach().cpu().numpy()
@@ -733,8 +1236,19 @@ class HardFlowSampler:
             'nfe': self.nfe - nfe_before,
             'nfe_total': self.nfe,
             'nlp_solves': self.nlp.n_solves - n_solves_before,
+            # [SolverSwap] which solver produced this episode. Carried all the way
+            # to the eval npz/json so a DA can never mix the two backends silently.
+            'nlp_backend': self.nlp.nlp_backend,
             'nlp_failures': self.nlp.n_failures - n_fail_before,
             'activation_threshold': self.activation_threshold,
+            # [HFK1 2026-08-24] So a DA can check the §9.1 prediction (nlp_solves
+            # per plan == n_active) and separate genuine-HardFlow rows from
+            # sample-then-project rows WITHOUT re-deriving the gate arithmetic.
+            'n_active': n_active,
+            'n_genuine': n_genuine,
+            # HFK1b: 'OK' | 'THIN' | 'DEGENERATE' — see `hardflow_regime`.
+            'hf_tier': hf_tier,
+            'first_lookahead': first_lookahead,
             'dof_chains': dof_chains,
         }
         return out, infos
@@ -758,7 +1272,7 @@ def build_hardflow_sampler(model, normalizer, horizon, transition_dim, action_di
                            constraint_list, engine, dt=1.0, reg_scale=1.0,
                            activation_threshold=0.0, dynamics_mode='deriv',
                            linear_dynamics=None, print_level=0, print_time=False,
-                           device='cuda', goal_dim=0, verbose=False):
+                           device='cuda', goal_dim=0, verbose=False, nlp_backend=None):
     """Assemble (layout, nlp, sampler) for one Gen14 arm.
 
     `normalizer` is the eval's `ProjectorNormalizer` — it exposes exactly the
@@ -787,7 +1301,9 @@ def build_hardflow_sampler(model, normalizer, horizon, transition_dim, action_di
         layout=layout, constraint_list=constraint_list,
         mins=mins, maxs=maxs, dt=dt, reg_scale=reg_scale,
         dynamics_mode=dynamics_mode, linear_dynamics=linear_dynamics,
-        print_level=print_level, print_time=print_time)
+        print_level=print_level, print_time=print_time,
+        # [SolverSwap] None => resolve_nlp_backend (env, then DEFAULT_NLP_BACKEND).
+        nlp_backend=nlp_backend)
 
     sampler = HardFlowSampler(
         model=model, layout=layout, nlp=nlp,

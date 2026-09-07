@@ -115,9 +115,13 @@ wall clock with no rendering at all**. U2 adds to that load in three ways at onc
 
 - **+3 variants** (the HardFlow arm) → 23 total;
 - **HardFlow solves an IPOPT NLP per activated ODE step**, on CPU;
-- **`--record all` renders a GIF per rollout** — 23 × 10 = 230 GIFs per scene — and the render
-  time lands **inside the measured per-step wall clock**, contaminating the `total_ms` column
-  that Gen15 exists to measure.
+- **`--record all` renders a GIF per rollout** — 23 × 10 = 230 GIFs per scene — costing job
+  wall-clock and disk.
+  🔴 **CORRECTION (2026-08-17):** this bullet originally claimed the render time lands inside the
+  measured per-step wall clock and contaminates `total_ms`. **That is wrong.** `eval_mix_uav.py`
+  times only the `policy(...)` call (`t0 = perf_counter()` … `step_total_ms`); rendering happens
+  elsewhere in the rollout loop, outside that window. A `--record all` run is therefore
+  timing-comparable to a `--record none` run. Only job duration and disk are affected.
 
 **Recommendation: pillars first at full 10 trials; s_curve at 3–5 trials for the recorded run.**
 If the timing numbers matter more than the GIFs for a given scene, run that scene twice —

@@ -1,0 +1,780 @@
+=== Batch Loading Summary ===
+
+Candidate 1:
+  Files Found: 18
+  Files Loaded: 18
+  Files Failed: 30
+
+Candidate 2:
+  Files Found: 176
+  Files Loaded: 176
+  Files Failed: 112
+
+Candidate 3:
+  Files Found: 51
+  Files Loaded: 51
+  Files Failed: 21
+
+Candidate 4:
+  Files Found: 51
+  Files Loaded: 51
+  Files Failed: 21
+
+Candidate 5:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 6:
+  Files Found: 243
+  Files Loaded: 243
+  Files Failed: 117
+
+Candidate 7:
+  Files Found: 255
+  Files Loaded: 255
+  Files Failed: 105
+
+Candidate 8:
+  Files Found: 255
+  Files Loaded: 255
+  Files Failed: 105
+
+Candidate 9:
+  Files Found: 0
+  Files Loaded: 0
+  Files Failed: 0
+
+Candidate 10:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 11:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 12:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 13:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 14:
+  Files Found: 255
+  Files Loaded: 255
+  Files Failed: 105
+
+Candidate 15:
+  Files Found: 255
+  Files Loaded: 255
+  Files Failed: 105
+
+Candidate 16:
+  Files Found: 255
+  Files Loaded: 255
+  Files Failed: 105
+
+Candidate 17:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 18:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 19:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 20:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 21:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 22:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 23:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 24:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 25:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 26:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 27:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 28:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 29:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 30:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 31:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 32:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 33:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 34:
+  Files Found: 156
+  Files Loaded: 156
+  Files Failed: 132
+
+Candidate 35:
+  Files Found: 156
+  Files Loaded: 156
+  Files Failed: 132
+
+Candidate 36:
+  Files Found: 195
+  Files Loaded: 195
+  Files Failed: 165
+
+Candidate 37:
+  Files Found: 156
+  Files Loaded: 156
+  Files Failed: 132
+
+Candidate 38:
+  Files Found: 195
+  Files Loaded: 195
+  Files Failed: 165
+
+Candidate 39:
+  Files Found: 195
+  Files Loaded: 195
+  Files Failed: 165
+
+Candidate 40:
+  Files Found: 195
+  Files Loaded: 195
+  Files Failed: 165
+
+Candidate 41:
+  Files Found: 195
+  Files Loaded: 195
+  Files Failed: 165
+
+Candidate 42:
+  Files Found: 195
+  Files Loaded: 195
+  Files Failed: 165
+
+Candidate 43:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 44:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 45:
+  Files Found: 195
+  Files Loaded: 195
+  Files Failed: 165
+
+Candidate 46:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 47:
+  Files Found: 51
+  Files Loaded: 51
+  Files Failed: 21
+
+Candidate 48:
+  Files Found: 9
+  Files Loaded: 9
+  Files Failed: 63
+
+Candidate 49:
+  Files Found: 9
+  Files Loaded: 9
+  Files Failed: 63
+
+Candidate 50:
+  Files Found: 9
+  Files Loaded: 9
+  Files Failed: 63
+
+Candidate 51:
+  Files Found: 9
+  Files Loaded: 9
+  Files Failed: 63
+
+Candidate 52:
+  Files Found: 9
+  Files Loaded: 9
+  Files Failed: 63
+
+Candidate 53:
+  Files Found: 9
+  Files Loaded: 9
+  Files Failed: 63
+
+Candidate 54:
+  Files Found: 0
+  Files Loaded: 0
+  Files Failed: 72
+
+Candidate 55:
+  Files Found: 120
+  Files Loaded: 120
+  Files Failed: 240
+
+Candidate 56:
+  Files Found: 0
+  Files Loaded: 0
+  Files Failed: 0
+
+Candidate 57:
+  Files Found: 24
+  Files Loaded: 24
+  Files Failed: 48
+
+Candidate 58:
+  Files Found: 24
+  Files Loaded: 24
+  Files Failed: 48
+
+Candidate 59:
+  Files Found: 24
+  Files Loaded: 24
+  Files Failed: 48
+
+Candidate 60:
+  Files Found: 0
+  Files Loaded: 0
+  Files Failed: 0
+
+Candidate 61:
+  Files Found: 51
+  Files Loaded: 51
+  Files Failed: 21
+
+Candidate 62:
+  Files Found: 51
+  Files Loaded: 51
+  Files Failed: 21
+
+Candidate 63:
+  Files Found: 51
+  Files Loaded: 51
+  Files Failed: 21
+
+Candidate 64:
+  Files Found: 51
+  Files Loaded: 51
+  Files Failed: 21
+
+Candidate 65:
+  Files Found: 51
+  Files Loaded: 51
+  Files Failed: 21
+
+Candidate 66:
+  Files Found: 51
+  Files Loaded: 51
+  Files Failed: 21
+
+Candidate 67:
+  Files Found: 51
+  Files Loaded: 51
+  Files Failed: 21
+
+Candidate 68:
+  Files Found: 51
+  Files Loaded: 51
+  Files Failed: 21
+
+Candidate 69:
+  Files Found: 51
+  Files Loaded: 51
+  Files Failed: 21
+
+Candidate 70:
+  Files Found: 51
+  Files Loaded: 51
+  Files Failed: 21
+
+Candidate 71:
+  Files Found: 51
+  Files Loaded: 51
+  Files Failed: 21
+
+Candidate 72:
+  Files Found: 51
+  Files Loaded: 51
+  Files Failed: 21
+
+Candidate 73:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 74:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 75:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 76:
+  Files Found: 51
+  Files Loaded: 51
+  Files Failed: 21
+
+Candidate 77:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 78:
+  Files Found: 51
+  Files Loaded: 51
+  Files Failed: 21
+
+Candidate 79:
+  Files Found: 51
+  Files Loaded: 51
+  Files Failed: 21
+
+Candidate 80:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 81:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 82:
+  Files Found: 51
+  Files Loaded: 51
+  Files Failed: 21
+
+Candidate 83:
+  Files Found: 0
+  Files Loaded: 0
+  Files Failed: 0
+
+Candidate 84:
+  Files Found: 51
+  Files Loaded: 51
+  Files Failed: 21
+
+Candidate 85:
+  Files Found: 51
+  Files Loaded: 51
+  Files Failed: 21
+
+Candidate 86:
+  Files Found: 51
+  Files Loaded: 51
+  Files Failed: 21
+
+Candidate 87:
+  Files Found: 51
+  Files Loaded: 51
+  Files Failed: 21
+
+Candidate 88:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 89:
+  Files Found: 51
+  Files Loaded: 51
+  Files Failed: 21
+
+Candidate 90:
+  Files Found: 51
+  Files Loaded: 51
+  Files Failed: 21
+
+Candidate 91:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 92:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 93:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 94:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 95:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 96:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 97:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 98:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 99:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 100:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 101:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 102:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 103:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 104:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 105:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 106:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 107:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 108:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 109:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 110:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 111:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 112:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 113:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 114:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 115:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 116:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 117:
+  Files Found: 195
+  Files Loaded: 195
+  Files Failed: 165
+
+Candidate 118:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 119:
+  Files Found: 195
+  Files Loaded: 195
+  Files Failed: 165
+
+Candidate 120:
+  Files Found: 195
+  Files Loaded: 195
+  Files Failed: 165
+
+Candidate 121:
+  Files Found: 195
+  Files Loaded: 195
+  Files Failed: 165
+
+Candidate 122:
+  Files Found: 195
+  Files Loaded: 195
+  Files Failed: 165
+
+Candidate 123:
+  Files Found: 195
+  Files Loaded: 195
+  Files Failed: 165
+
+Candidate 124:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 125:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 126:
+  Files Found: 195
+  Files Loaded: 195
+  Files Failed: 165
+
+Candidate 127:
+  Files Found: 190
+  Files Loaded: 190
+  Files Failed: 170
+
+Candidate 128:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 129:
+  Files Found: 195
+  Files Loaded: 195
+  Files Failed: 165
+
+Candidate 130:
+  Files Found: 195
+  Files Loaded: 195
+  Files Failed: 165
+
+Candidate 131:
+  Files Found: 92
+  Files Loaded: 92
+  Files Failed: 100
+
+Candidate 132:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 133:
+  Files Found: 195
+  Files Loaded: 195
+  Files Failed: 165
+
+Candidate 134:
+  Files Found: 195
+  Files Loaded: 195
+  Files Failed: 165
+
+Candidate 135:
+  Files Found: 0
+  Files Loaded: 0
+  Files Failed: 24
+
+Candidate 136:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 137:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 138:
+  Files Found: 195
+  Files Loaded: 195
+  Files Failed: 165
+
+Candidate 139:
+  Files Found: 195
+  Files Loaded: 195
+  Files Failed: 165
+
+Candidate 140:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 141:
+  Files Found: 0
+  Files Loaded: 0
+  Files Failed: 0
+
+Candidate 142:
+  Files Found: 0
+  Files Loaded: 0
+  Files Failed: 0
+
+Candidate 143:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 144:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 145:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 146:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 147:
+  Files Found: 195
+  Files Loaded: 195
+  Files Failed: 165
+
+Candidate 148:
+  Files Found: 39
+  Files Loaded: 39
+  Files Failed: 33
+
+Candidate 149:
+  Files Found: 255
+  Files Loaded: 255
+  Files Failed: 105
+
+Candidate 150:
+  Files Found: 255
+  Files Loaded: 255
+  Files Failed: 105
+
+Candidate 151:
+  Files Found: 255
+  Files Loaded: 255
+  Files Failed: 105
+
+Candidate 152:
+  Files Found: 255
+  Files Loaded: 255
+  Files Failed: 105
+
+Candidate 153:
+  Files Found: 255
+  Files Loaded: 255
+  Files Failed: 105
+
+Candidate 154:
+  Files Found: 255
+  Files Loaded: 255
+  Files Failed: 105
+
+Candidate 155:
+  Files Found: 0
+  Files Loaded: 0
+  Files Failed: 0
+
+=== Total ===
+Total Files Loaded: 12377
+Total Files Failed: 9271

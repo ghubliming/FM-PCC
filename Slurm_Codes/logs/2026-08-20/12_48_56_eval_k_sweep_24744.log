@@ -1,0 +1,14 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+UAV-MIX K SWEEP  Thu Aug 20 10:48:57 UTC 2026   engine=mf  scene=corridor  seeds=[6]  K=[1 2 5 10 20]  proj=fm_only  record=none
+================================================================================
+  eval   engine=mf scene=corridor K=1  → Job 24745
+  eval   engine=mf scene=corridor K=2  → Job 24746
+  eval   engine=mf scene=corridor K=5  → Job 24747
+  eval   engine=mf scene=corridor K=10  → Job 24748
+  eval   engine=mf scene=corridor K=20  → Job 24749
+--------------------------------------------------------------------------------
+Submitted 5 eval jobs (one per K).
+Results: logs/UAV_MIX/uav-<scene>/plans/mix_uav_mf/<train-id>/Emf_K<k>_.../<seed>/<variant>/results.json
+Repeat for every arm with the SAME K list, then compare at matched K.
+================================================================================

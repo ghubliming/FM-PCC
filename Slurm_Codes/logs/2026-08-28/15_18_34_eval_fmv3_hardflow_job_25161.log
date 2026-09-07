@@ -1,0 +1,50 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Sat Aug 29 22:17:47 UTC 2026
+JOB NAME:  eval_fmv3_hardflow_job
+JOB ID:    25161
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   3df77e8
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=4  MUJOCO_EGL_DEVICE_ID=4
+[ hardflow ] HFFM_BATCH=4 (arm-C fan for -r/-c/-t; bare hardflow_new is always 1)  FMPCC_MPC_BATCH=4 (arms A/B fan)
+[ hardflow ] NLP backend sweep: ipopt slsqp  (one process per backend; ipopt -> hardflow_new-*, slsqp -> hardflow_sls-*)
+[ eval ] K sweep: 10 20   FORCE_OVERWRITE=0
+================================================================================
+[ eval ] K = 10   (Sat Aug 29 22:17:48 UTC 2026)
+================================================================================
+--------------------------------------------------------------------------------
+[ eval ] NLP backend = ipopt   K = 10   (Sat Aug 29 22:17:48 UTC 2026)
+--------------------------------------------------------------------------------
+pybullet build time: Nov 28 2023 23:45:17
+[ eval ] mpc fan: arms A/B=4, arm C=4
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/FM_v3_hardflow_test/eval_FM_v3_hardflow.py", line 198, in <module>
+    args = Parser().parse_args(experiment='plan_fm_v3_hardflow', seed=seed)
+  File "/u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_hardflow/utils/setup.py", line 70, in parse_args
+    args = self.read_config(args, experiment)
+  File "/u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_hardflow/utils/setup.py", line 88, in read_config
+    module = importlib.import_module(args.config)
+  File "/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/u/home/llim/FMPCC/FM-PCC/config/avoiding-d3il.py", line 1441, in <module>
+    'flow_steps_v3': int(os.environ.get('HFFM_FLOW_STEPS', 2)),
+ValueError: invalid literal for int() with base 10: '10 20'
+================================================================================
+JOB END:   Sat Aug 29 22:17:52 UTC 2026
+================================================================================

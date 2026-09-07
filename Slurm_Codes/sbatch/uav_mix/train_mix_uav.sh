@@ -21,6 +21,55 @@ SCENE="${2:-all}"
 # Default single seed=6 for testing. For the full multi-seed run pass "6 7 8 9 10".
 SEEDS="${3:-6}"
 
+# ── Gen15 U6 (2026-09-03) — the alpha-Flow arm's three knobs ──────────────────────────────
+#   UAV_MIX_BONE_AF        unet (DEFAULT since U6) | sit | dit
+#                          🔴 THE DEFAULT CHANGED. It was a hard 'sit' (~9.4 M), which is NOT
+#                          parameter-matched to the fm/mf 4.0 M U-Net — so every pre-U6 af row
+#                          moves objective, backbone and param count together. 'sit' is kept,
+#                          not deleted: pass UAV_MIX_BONE_AF=sit to reach it.
+#                          CHECKPOINT-PATH KEY ('_bb<val>'): each bone has its own tree, so
+#                          nothing is overwritten — but a default af EVAL will fail on a
+#                          missing checkpoint until the U-Net arm has been TRAINED.
+#   UAV_MIX_AF_ALPHA_END   terminal alpha (default 0.0). At 0.0 the sigmoid+clamp snap alpha to
+#                          EXACTLY 0 from ~71.2% of the budget on and af_diffusion.py:568 runs
+#                          Gen3v6's MeanFlow target — i.e. the arm DEPLOYS A MEANFLOW MODEL.
+#                          >0 floors alpha so the bootstrap trains the final weights.
+#                          CHECKPOINT-PATH KEY ('_ae<val>').
+#   UAV_MIX_EPOCH          best (default) | latest | <step>.  EVAL-ONLY, no retrain.
+#                          RESULTS-PATH KEY ('_EP<sel>' in the eval-params folder).
+#                          🔴 On the af arm 'best' is chosen on an alpha-weighted test_loss and
+#                          therefore prefers a MID-CURRICULUM checkpoint: pairing
+#                          UAV_MIX_AF_ALPHA_END with 'best' floors alpha and then discards the
+#                          model the floor produced. Use 'latest'.
+export UAV_MIX_BONE_AF="${UAV_MIX_BONE_AF:-}"
+export UAV_MIX_AF_ALPHA_END="${UAV_MIX_AF_ALPHA_END:-}"
+export UAV_MIX_EPOCH="${UAV_MIX_EPOCH:-}"
+if [ -n "$UAV_MIX_BONE_AF" ]; then
+    case "$UAV_MIX_BONE_AF" in
+        unet|sit|dit) ;;
+        *) echo "[ ERROR ] UAV_MIX_BONE_AF='$UAV_MIX_BONE_AF' must be unet|sit|dit"
+           echo "          ('mf_dit' belongs to the mf arm -- a different class.)"; exit 1 ;;
+    esac
+    if [ "$ENGINE" != "af" ]; then
+        echo "[ ERROR ] UAV_MIX_BONE_AF is set but engine='$ENGINE'. It applies to the af arm only."
+        exit 1
+    fi
+fi
+if [ -n "$UAV_MIX_AF_ALPHA_END" ] && [ "$ENGINE" != "af" ]; then
+    echo "[ ERROR ] UAV_MIX_AF_ALPHA_END is set but engine='$ENGINE'. af arm only."; exit 1
+fi
+if [ -n "$UAV_MIX_EPOCH" ]; then
+    case "$UAV_MIX_EPOCH" in
+        best|latest) ;;
+        ''|*[!0-9]*) echo "[ ERROR ] UAV_MIX_EPOCH='$UAV_MIX_EPOCH' must be best|latest|<step>"; exit 1 ;;
+    esac
+fi
+if [ "$ENGINE" = "af" ]; then
+    echo "[ U6 ] af bone      = ${UAV_MIX_BONE_AF:-unet (U6 default; was sit)}"
+    echo "[ U6 ] af_alpha_end = ${UAV_MIX_AF_ALPHA_END:-0.0}  $([ -z "$UAV_MIX_AF_ALPHA_END" ] && echo '⚠ ends on the MeanFlow target -- set >0 to train alpha-Flow proper')"
+fi
+echo "[ U6 ] checkpoint   = ${UAV_MIX_EPOCH:-best (default; no _EP fragment)}"
+
 # ---- Pro-logging ----
 CURRENT_LOG=$(scontrol show job $SLURM_JOB_ID | grep -oP 'StdOut=\K\S+')
 if [ -n "$CURRENT_LOG" ]; then ln -snf "$CURRENT_LOG" Slurm_Codes/logs/latest.log; fi

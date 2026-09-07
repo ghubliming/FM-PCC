@@ -46,6 +46,91 @@ _yaml_threshold = (_num(_env_threshold) if _env_threshold is not None
 _hf_act_threshold = _num(os.environ.get('HFFM_ACT_THRESHOLD', 1.0))
 _hf_batch_size = int(os.environ.get('HFFM_BATCH', 1))
 
+# ── MPC CANDIDATE FAN for arms A/B (`diffuser`, `dpcc-*`) — the SECOND, independent fan ──
+# There are TWO candidate fans in an arms-A/B/C eval and they are set in different places:
+#   arms A/B (`diffuser`, `dpcc-*`)  -> the plan block's `batch_size`      = THIS knob
+#   arm C    (`hardflow_new-*`)      -> `hardflow.batch_size` / HFFM_BATCH -> resolve_hf_batch_size()
+#                                       (bare `hardflow_new` is pinned to 1 regardless)
+# BOTH arms loop SERIALLY over candidates around their CPU solve — projection.py
+# `for i in range(batch_size)` (scipy SLSQP) and hardflow_projection.py
+# `for b in range(batch_size)` (CasADi/IPOPT) — so the fan scales projection wall-time
+# almost linearly in each arm and a MISMATCH voids every arm-B-vs-arm-C timing comparison.
+# That is the B4_PARITY confound
+# (logs_in_develop/Gen3v6_MeanFlow/DA/DA_20260820_HF_lower_avgtime_batchsize_confound.md);
+# until now only arm C's fan was settable, so "hold BOTH arms at one candidate" — the
+# control that isolates how much of DPCC's success rate is MPC candidate SELECTION rather
+# than the projector — could not be expressed at all.
+#   FMPCC_MPC_BATCH=1 HFFM_BATCH=1 <command>     -> single candidate in every arm
+# ⚠️ At a fan of 1 the selection RULES collapse: dpcc-r/-c/-t all execute index 0
+#    (sampling/policies.py — `which_trajectory = 0` in every branch) and so do
+#    hardflow_new-r/-c/-t. Running the trio at mpc==1 is redundant compute, not three arms.
+# ⚠️ `batch_size` is NOT a results-folder token, so an mpc1 and an mpc4 run at the same
+#    K/A/T would land in the SAME directory and clobber each other. The eval scripts
+#    auto-tag a non-default fan via FMPCC_RUN_MSG=mpc<N>, the same guard U10 uses for
+#    replan_steps. Default 4 => every existing command and path is unchanged.
+_mpc_batch = int(os.environ.get('FMPCC_MPC_BATCH', 4))
+
+# ── H8+8 (U10) — Gen3v6 MeanFlow horizon / backbone, read ONCE ────────────────────────
+# `horizon` is a TRAINING property (dataset windows in datasets/sequence.py:71-83 and the
+# per-step loss weights in models/helpers.py:295-314 are both sized by it), so an H16 study
+# needs its own checkpoint — and the train block and the plan block must agree or
+# diffusion_loadpath resolves to a directory that does not exist (trap #6 above). Reading
+# both from one env var makes that impossible to half-apply.
+#   MF_HORIZON=16 MF_BACKBONE=unet <command>
+# ⚠️ CLI flags cannot do this job: utils.Parser.add_extras is commented out
+# (diffuser/utils/setup.py:77), so `--horizon 16` is silently ignored.
+# Defaults reproduce the pre-U10 literals exactly — every existing command is unchanged.
+_mf_horizon = int(os.environ.get('MF_HORIZON', 8))
+_mf_backbone = os.environ.get('MF_BACKBONE', 'mf_dit')
+
+# ── Gen3v7 α-Flow — backbone + probe-size knobs, read ONCE (2026-08-31) ───────────────
+# Same contract as MF_BACKBONE above, for the α-Flow arm.
+#   AF_BONE=unet AF_ALPHA_CLAMP=0.05 <command>
+#
+# `af_alpha_clamp` is the α below which the schedule snaps to exactly 0. It encodes
+# "the probe dt = α·h has become too small for the backbone to resolve" — and that floor
+# is BACKBONE-DEPENDENT: the U-Net's time code has ~4 resolving frequencies on [0,1]
+# against the SiT's ~32 (freq_dim=32 sets BOTH channel width and time-embed width), so the
+# U-Net needs a probe ~8x larger to see the same step. Upstream's 0.005 was chosen for a
+# SiT in latent space. Full derivation: logs_in_develop/Gen3v7_AlphaFlow/Study/
+# REPORT_20260830_af_unet_vs_sit_avoiding_root_cause.md §7.3, §7.5, §9.1.
+#
+# 🔴 PATH SAFETY. At the default 0.005 the key is OMITTED from the training block, so
+#    watch() skips it (utils/setup.py:25) and every existing α-Flow checkpoint path stays
+#    BYTE-IDENTICAL — nothing is orphaned. Any other value emits an '_ac<val>' token, so a
+#    re-clamped run trains into its OWN tree and CANNOT --auto-resume onto the old weights.
+#    That collision is exactly the stale-seed-6 defect (REPORT §2.2); this is the guard.
+# ⚠️ CLI flags cannot do this job: utils.Parser.add_extras is commented out
+#    (flow_matcher_v3_alphaflow/utils/setup.py:76), so `--imf_backbone unet` is ignored.
+_af_backbone = os.environ.get('AF_BONE', 'sit')
+# Which checkpoint the AF plan block loads. 'best' is the historical default, but for α-Flow
+# `best` is selected by a metric whose dominant term is 0.75+0.25*alpha (REPORT §4.3), so it is
+# ALWAYS the ~step-69k mid-homotopy model. AF_EPOCH=latest evaluates the end of training instead.
+# ⚠️ diffusion_epoch is NOT a results-path token — pair it with FMPCC_RUN_MSG so the two evals
+#    do not overwrite each other:  AF_EPOCH=latest FMPCC_RUN_MSG=latest <command>
+_af_diffusion_epoch = os.environ.get('AF_EPOCH', 'best')
+_AF_CLAMP_DEFAULT = 0.005
+_af_alpha_clamp = float(os.environ.get('AF_ALPHA_CLAMP', _AF_CLAMP_DEFAULT))
+# ── AF_ALPHA_END — the terminal α of the schedule (2026-09-01) ────────────────────────
+# 0.0 (the default, and every upstream recipe) anneals α to EXACTLY zero, which routes the
+# whole tail into `compute_u_target`'s alpha<=0 branch — Gen3v6's MeanFlow JVP target,
+# unmodified (af_diffusion.py:552). So a run that ends at 0.0 DEPLOYS A MEANFLOW MODEL:
+# α-Flow's bootstrapped target trains none of the final weights. That is upstream's design
+# (α-Flow is a curriculum whose destination is MeanFlow), but it means the bootstrapped
+# objective has never actually been evaluated on this task.
+#   AF_ALPHA_END=0.05 <command>   -> α floors at ~0.05: the discrete branch stays live to
+#                                    the last step, so the deployed model is genuinely AF.
+# Upstream's own switch for the same intent is `discrete_training: true`
+# (aux_repo/alphaflow/src/training/loss.py:421-426), which floors α at clamp_value instead
+# of snapping to 0; this key reaches the same state without a code port.
+# 🔴 PATH SAFETY: 'af_alpha_end' is an UNCONDITIONAL args_to_watch token ('ae', line ~233),
+#    so any value already lands in its own '_ae<val>' tree — no --auto-resume collision.
+#    Keep this in sync between the TRAIN block and the PLAN block or eval finds no weights.
+_af_alpha_end = float(os.environ.get('AF_ALPHA_END', 0.0))
+_af_clamp_is_default = (_af_alpha_clamp == _AF_CLAMP_DEFAULT)
+_af_clamp_key = {} if _af_clamp_is_default else {'af_alpha_clamp': _af_alpha_clamp}
+_af_clamp_tok = '' if _af_clamp_is_default else '_ac{af_alpha_clamp}'
+
 #------------------------ base ------------------------#
 
 ## automatically make experiment names for planning
@@ -164,6 +249,7 @@ args_to_watch_fmv3_af_train = [
     ('af_alpha_end', 'ae'),          # 0.0  — α at the end (0.0 ⇒ ends as MeanFlow)
     ('af_alpha_gamma', 'ag'),        # 25.0 — sigmoid sharpness
     ('af_ratio_fm', 'rf'),           # 0.5  — fraction of the batch forced to h=0 (FM anchors)
+    ('af_alpha_clamp', 'ac'),      # ABSENT at the 0.005 default => pre-existing paths unchanged
 ]
 
 logbase = 'logs'
@@ -723,7 +809,7 @@ base = {
         ## model & engine
         'model': 'flow_matcher_v3_meanflow.models.MeanFlowEngine',
         'diffusion': 'flow_matcher_v3_meanflow.models.MeanFlowODE',
-        'horizon': 8,
+        'horizon': _mf_horizon,   # U10: MF_HORIZON (default 8). MUST equal the plan block.
 
         ## architecture sizing (UNet arm; DiT sizing is the dit_* block below)
         # 🔴 FIX_8_UNET_WIDTH (2026-08-05) — THIS KEY IS THE UNET CHANNEL WIDTH.
@@ -767,7 +853,7 @@ base = {
 
         ## backbone selector. MUST match the plan block (state_dict + loadpath depend on it).
         ## valid: 'unet' (DPCC U-Net) | 'dit' (iMF DiT) | 'mf_dit' (U2: official-MeanFlow DiT).
-        'imf_backbone': 'mf_dit',    # U2 default: MeanFlow's own DiT (was 'dit'); use 'dit'/'unet' for A/B
+        'imf_backbone': _mf_backbone,  # U2 default 'mf_dit'; U10: MF_BACKBONE (unet|dit|mf_dit). MUST equal the plan block.
         'dit_depth': 8,
         'dit_hidden_size': 256,
         'dit_num_heads': 4,
@@ -863,7 +949,7 @@ base = {
         ##    RESCALED to OUR budget) ────────────────────────────────────────────────
         'af_alpha_scheduler': 'sigmoid',
         'af_alpha_init': 1.0,
-        'af_alpha_end': 0.0,
+        'af_alpha_end': _af_alpha_end,   # AF_ALPHA_END — >0 keeps the bootstrap live to the end
         'af_alpha_init_step': 0,
         # 🔴🔴 THE #1 SILENT FAILURE OF THIS GENERATION (PLAN §11 trap 1). MUST equal
         # 'n_train_steps' below. Upstream anneals over 400000 steps; copying that verbatim
@@ -875,7 +961,10 @@ base = {
         'af_alpha_gamma': 25.0,
         # snap-to-exact-0/1 guard. Without it α becomes a tiny-but-nonzero number and every
         # sample takes the discrete branch with dt≈0 ⇒ a degenerate near-identity target.
-        'af_alpha_clamp': 0.005,
+        # 🔴 Emitted ONLY when non-default (see _af_clamp_key above) so the default path is
+        # byte-identical and a re-clamped run gets its own '_ac' tree. Constructor default
+        # is 0.005 (af_diffusion.py:93) and the train script reads it with getattr(...,0.005).
+        **_af_clamp_key,
 
         'af_ratio_fm': 0.5,      # FM anchors (h=0). Upstream ships {0.25,0.5,0.75}; Gen3v4/
                                  # Gen3v6 use 0.5, so 0.5 keeps the A/B controlled.
@@ -892,7 +981,7 @@ base = {
 
         ## backbone selector. MUST match the plan block (state_dict + loadpath depend on it).
         ## valid: 'unet' (DPCC U-Net) | 'dit' (iMF DiT) | 'sit' (U2: α-Flow's own SiT).
-        'imf_backbone': 'sit',       # U2 default: α-Flow's own SiT (was 'dit'); use 'dit'/'unet' for A/B
+        'imf_backbone': _af_backbone,  # U2 default 'sit'; AF_BONE=unet|dit|sit. MUST equal the plan block.
         'dit_depth': 8,
         'dit_hidden_size': 256,
         'dit_num_heads': 4,
@@ -949,7 +1038,11 @@ base = {
     'plan': {
         'policy': 'sampling.Policy',
         'max_episode_length': 200,
-        'batch_size': 4,
+        # Gen0 DPCC baseline fan (FMPCC_MPC_BATCH). No arm C here, so this is the ONLY fan in
+        # the block — nothing to match against and no B4_PARITY warning to emit. scripts/eval.py
+        # auto-tags a non-default fan onto custom_msg so an mpc1 run cannot land on the mpc4
+        # baseline (`batch_size` is not a folder token; `_msg_suffix` in exp_name below is).
+        'batch_size': _mpc_batch,
         'preprocess_fns': [],
         'device': 'cuda',
         'seed': 0,
@@ -1144,7 +1237,7 @@ base = {
     'plan_fm_v3_hardflow': {
         'policy': 'sampling.Policy',
         'max_episode_length': 200,
-        'batch_size': 4,            # arms A/B; arm C uses hardflow.batch_size (default 1)
+        'batch_size': _mpc_batch,   # arms A/B fan (FMPCC_MPC_BATCH); arm C: hardflow.batch_size/HFFM_BATCH
         'preprocess_fns': [],
         'device': 'cuda',
         'seed': 0,
@@ -1206,7 +1299,7 @@ base = {
         ## flow matching v3 model
         'diffusion': 'models.diffusion.FlowMatchingODE',
         'horizon': 8,
-        'action_weight': 1,
+        'action_weight': 10, # should use 10, same as DPCC, though 1 seems little better
         'time_beta_alpha_v3': 1.5,
         'time_beta_beta_v3': 1.0,
         # 'n_diffusion_steps': 20, # DEAD code (mathematically irrelevant for FM flow)
@@ -1368,7 +1461,7 @@ base = {
         # (trap #6). Only sampling knobs (flow_steps_v3, solver, threshold) may differ.
         'policy': 'sampling.Policy',
         'max_episode_length': 200,
-        'batch_size': 4,
+        'batch_size': _mpc_batch,   # arms A/B fan (FMPCC_MPC_BATCH); arm C: hardflow.batch_size/HFFM_BATCH
         'preprocess_fns': [],
         'device': 'cuda',
         'seed': 0,
@@ -1385,7 +1478,7 @@ base = {
 
         ## MeanFlow model
         'diffusion': 'flow_matcher_v3_meanflow.models.MeanFlowODE',
-        'horizon': 8,
+        'horizon': _mf_horizon,   # U10: MF_HORIZON (default 8). MUST equal the train block.
         'action_weight': 10,
         'u_loss_weight': 1.0,
         'v_loss_weight': 1.0,
@@ -1427,7 +1520,7 @@ base = {
         'dual_head': True,
         'interval_cfg': False,
         ## valid: 'unet' | 'dit' | 'mf_dit' (U2) — MUST equal the train block's value.
-        'imf_backbone': 'mf_dit',
+        'imf_backbone': _mf_backbone,  # U10: MF_BACKBONE (default 'mf_dit'). MUST equal the train block.
         'dit_depth': 8,
         'dit_hidden_size': 256,
         'dit_num_heads': 4,
@@ -1465,7 +1558,7 @@ base = {
         # config-overrides-pkl reconciliation stays a silent no-op.
         'policy': 'sampling.Policy',
         'max_episode_length': 200,
-        'batch_size': 4,
+        'batch_size': _mpc_batch,   # arms A/B fan (FMPCC_MPC_BATCH); arm C: hardflow.batch_size/HFFM_BATCH
         'preprocess_fns': [],
         'device': 'cuda',
         'seed': 0,
@@ -1503,7 +1596,7 @@ base = {
         'flow_steps': int(os.environ.get('HFFM_FLOW_STEPS', 2)),
         ## MUST match training (these four are in diffusion_loadpath)
         'af_alpha_init': 1.0,
-        'af_alpha_end': 0.0,
+        'af_alpha_end': _af_alpha_end,   # AF_ALPHA_END — must match the training block
         'af_alpha_gamma': 25.0,
         'af_ratio_fm': 0.5,
         't_schedule': 'logit_normal',
@@ -1515,7 +1608,7 @@ base = {
         'af_alpha_scheduler': 'sigmoid',
         'af_alpha_init_step': 0,
         'af_alpha_end_step': 100000,
-        'af_alpha_clamp': 0.005,
+        'af_alpha_clamp': _af_alpha_clamp,   # AF_ALPHA_CLAMP — also feeds _af_clamp_tok below
         'af_clamp_utgt': 4.0,
         'af_adp_eps': 1e-3,
 
@@ -1535,7 +1628,7 @@ base = {
         'dual_head': True,
         'interval_cfg': False,
         ## valid: 'unet' | 'dit' | 'sit' (U2) — MUST equal the train block's value.
-        'imf_backbone': 'sit',
+        'imf_backbone': _af_backbone,   # AF_BONE — MUST equal the train block
         'dit_depth': 8,
         'dit_hidden_size': 256,
         'dit_num_heads': 4,
@@ -1559,8 +1652,9 @@ base = {
         ## (H, D, aw, bb, ts, ai, ae, ag, rf) or eval silently finds no checkpoint.
         'diffusion_loadpath': 'f:flow_matching_v3_alphaflow/' +
                   'H{horizon}_D{diffusion}_aw{action_weight}_bb{imf_backbone}_ts{t_schedule}'
-                  '_ai{af_alpha_init}_ae{af_alpha_end}_ag{af_alpha_gamma}_rf{af_ratio_fm}',
-        'diffusion_epoch': 'best',
+                  '_ai{af_alpha_init}_ae{af_alpha_end}_ag{af_alpha_gamma}_rf{af_ratio_fm}'
+                  + _af_clamp_tok,
+        'diffusion_epoch': _af_diffusion_epoch,   # AF_EPOCH=latest for the §10.2 A/B
     },
 
     ## ── Hyperparameter Tuning Blocks ──────────────────────────────────

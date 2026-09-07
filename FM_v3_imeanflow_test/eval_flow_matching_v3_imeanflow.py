@@ -86,7 +86,7 @@ for exp in exps:
             
             if not args_cli.aggregate_only:
                 # Get model
-                def load_diffusion_with_override(*loadpath, target_class=None, epoch='latest', device='cuda:0', seed=None):
+                def load_diffusion_with_override(*loadpath, target_class=None, epoch='best', device='cuda:0', seed=None):
                     import os  # TODO: Clean up these inline imports later (os/sys are already imported globally, inspect can be moved to the top)
                     import sys
                     print(f'\n[ eval loading ] Intercepting load from {os.path.join(*loadpath)}\n')

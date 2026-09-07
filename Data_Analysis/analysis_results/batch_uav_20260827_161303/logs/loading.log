@@ -1,0 +1,265 @@
+=== DA_UAV_v1 loading log ===
+
+Loaded:          803
+Failed:          0
+Skipped:         0
+Without timing:  21
+
+[WARN   ] cand3/seed6/none/fm_only: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand4/seed6/none/diffuser: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand4/seed6/none/dpcc-c: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand4/seed6/none/dpcc-r: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand4/seed6/none/dpcc-t: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand10/seed6/none/fm_only: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand11/seed6/none/diffuser: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand11/seed6/none/dpcc-c: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand11/seed6/none/dpcc-r: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand11/seed6/none/dpcc-t: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand12/seed6/eval(legacy)/fm_only: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand20/seed6/none/diffuser: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand20/seed6/none/dpcc-c: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand20/seed6/none/dpcc-r: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand20/seed6/none/dpcc-t: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand21/seed6/none/diffuser: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand21/seed6/none/dpcc-c: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand21/seed6/none/dpcc-r: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand21/seed6/none/dpcc-t: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand26/seed6/none/fm_only: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand27/seed6/none/fm_only: no per-rollout timing found — avg_time / fm_ms / proj_ms are NaN. The npz never carries timing; it needs diagnostics/*.json.
+[WARN   ] cand29/seed6/corridor_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_new-c: HardFlow arm is DEGENERATE (K=1, A=0.5, n_genuine=0) — this row is sample-then-project, not HardFlow. Do not label it a HardFlow result. See logs_in_develop/aggregated_hardflow_lowK/
+[WARN   ] cand29/seed6/corridor_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_new-r: HardFlow arm is DEGENERATE (K=1, A=0.5, n_genuine=0) — this row is sample-then-project, not HardFlow. Do not label it a HardFlow result. See logs_in_develop/aggregated_hardflow_lowK/
+[WARN   ] cand29/seed6/corridor_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_new-t: HardFlow arm is DEGENERATE (K=1, A=0.5, n_genuine=0) — this row is sample-then-project, not HardFlow. Do not label it a HardFlow result. See logs_in_develop/aggregated_hardflow_lowK/
+[WARN   ] cand30/seed6/corridor_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_new-c: HardFlow arm is DEGENERATE (K=2, A=0.5, n_genuine=0) — this row is sample-then-project, not HardFlow. Do not label it a HardFlow result. See logs_in_develop/aggregated_hardflow_lowK/
+[WARN   ] cand30/seed6/corridor_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_new-r: HardFlow arm is DEGENERATE (K=2, A=0.5, n_genuine=0) — this row is sample-then-project, not HardFlow. Do not label it a HardFlow result. See logs_in_develop/aggregated_hardflow_lowK/
+[WARN   ] cand30/seed6/corridor_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_new-t: HardFlow arm is DEGENERATE (K=2, A=0.5, n_genuine=0) — this row is sample-then-project, not HardFlow. Do not label it a HardFlow result. See logs_in_develop/aggregated_hardflow_lowK/
+[WARN   ] cand33/seed6/corridor_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_new: HardFlow arm is DEGENERATE (K=1, A=0.5, n_genuine=0) — this row is sample-then-project, not HardFlow. Do not label it a HardFlow result. See logs_in_develop/aggregated_hardflow_lowK/
+[WARN   ] cand33/seed6/corridor_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_new-c: HardFlow arm is DEGENERATE (K=1, A=0.5, n_genuine=0) — this row is sample-then-project, not HardFlow. Do not label it a HardFlow result. See logs_in_develop/aggregated_hardflow_lowK/
+[WARN   ] cand33/seed6/corridor_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_new-t: HardFlow arm is DEGENERATE (K=1, A=0.5, n_genuine=0) — this row is sample-then-project, not HardFlow. Do not label it a HardFlow result. See logs_in_develop/aggregated_hardflow_lowK/
+[WARN   ] cand35/seed6/corridor_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_new: HardFlow arm is DEGENERATE (K=2, A=0.5, n_genuine=0) — this row is sample-then-project, not HardFlow. Do not label it a HardFlow result. See logs_in_develop/aggregated_hardflow_lowK/
+[WARN   ] cand35/seed6/corridor_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_new-c: HardFlow arm is DEGENERATE (K=2, A=0.5, n_genuine=0) — this row is sample-then-project, not HardFlow. Do not label it a HardFlow result. See logs_in_develop/aggregated_hardflow_lowK/
+[WARN   ] cand35/seed6/corridor_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_new-t: HardFlow arm is DEGENERATE (K=2, A=0.5, n_genuine=0) — this row is sample-then-project, not HardFlow. Do not label it a HardFlow result. See logs_in_develop/aggregated_hardflow_lowK/
+[WARN   ] cand38/seed6/corridor_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_new: HardFlow arm is DEGENERATE (K=1, A=0.5, n_genuine=0) — this row is sample-then-project, not HardFlow. Do not label it a HardFlow result. See logs_in_develop/aggregated_hardflow_lowK/
+[WARN   ] cand38/seed6/corridor_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_new-c: HardFlow arm is DEGENERATE (K=1, A=0.5, n_genuine=0) — this row is sample-then-project, not HardFlow. Do not label it a HardFlow result. See logs_in_develop/aggregated_hardflow_lowK/
+[WARN   ] cand38/seed6/corridor_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_new-t: HardFlow arm is DEGENERATE (K=1, A=0.5, n_genuine=0) — this row is sample-then-project, not HardFlow. Do not label it a HardFlow result. See logs_in_develop/aggregated_hardflow_lowK/
+[WARN   ] cand40/seed6/corridor_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_new: HardFlow arm is DEGENERATE (K=2, A=0.5, n_genuine=0) — this row is sample-then-project, not HardFlow. Do not label it a HardFlow result. See logs_in_develop/aggregated_hardflow_lowK/
+[WARN   ] cand40/seed6/corridor_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_new-c: HardFlow arm is DEGENERATE (K=2, A=0.5, n_genuine=0) — this row is sample-then-project, not HardFlow. Do not label it a HardFlow result. See logs_in_develop/aggregated_hardflow_lowK/
+[WARN   ] cand40/seed6/corridor_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_new-t: HardFlow arm is DEGENERATE (K=2, A=0.5, n_genuine=0) — this row is sample-then-project, not HardFlow. Do not label it a HardFlow result. See logs_in_develop/aggregated_hardflow_lowK/
+[SKIP   ] cand44/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand44/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/bounds_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand44/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/diffuser: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand44/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand44/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand44/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand44/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand44/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand44/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand44/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free-bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand44/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free-model_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand44/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/gradient: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand44/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/gradient-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand44/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand44/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand44/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-bounds_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand44/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand44/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/post_processing: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand44/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/post_processing-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand45/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand45/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/bounds_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand45/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/diffuser: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand45/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand45/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand45/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand45/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand45/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand45/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand45/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand45/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free-bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand45/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free-model_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand45/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/gradient: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand45/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/gradient-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand45/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand45/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand45/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-bounds_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand45/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand45/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/post_processing: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand45/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/post_processing-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand46/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand46/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/bounds_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand46/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/diffuser: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand46/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand46/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand46/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand46/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand46/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand46/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand46/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand46/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free-bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand46/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free-model_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand46/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/gradient: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand46/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/gradient-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand46/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand46/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand46/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-bounds_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand46/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand46/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/post_processing: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand46/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/post_processing-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand47/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand47/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/bounds_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand47/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/diffuser: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand47/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand47/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand47/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand47/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand47/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand47/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand47/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand47/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free-bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand47/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free-model_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand47/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/gradient: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand47/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/gradient-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand47/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand47/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand47/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-bounds_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand47/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand47/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/post_processing: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand47/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/post_processing-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand48/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand48/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/bounds_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand48/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/diffuser: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand48/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand48/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand48/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand48/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand48/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand48/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand48/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand48/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free-bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand48/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free-model_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand48/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/gradient: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand48/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/gradient-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand48/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand48/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand48/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-bounds_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand48/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand48/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/post_processing: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand48/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/post_processing-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand49/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand49/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/bounds_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand49/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/diffuser: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand49/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand49/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand49/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand49/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand49/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand49/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand49/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand49/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free-bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand49/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free-model_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand49/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/gradient: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand49/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/gradient-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand49/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand49/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand49/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-bounds_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand49/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand49/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/post_processing: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand49/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/post_processing-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand50/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand50/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/bounds_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand50/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/diffuser: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand50/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand50/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand50/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand50/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand50/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand50/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand50/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand50/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free-bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand50/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free-model_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand50/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/gradient: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand50/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/gradient-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand50/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand50/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand50/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-bounds_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand50/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand50/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/post_processing: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand50/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/post_processing-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand51/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand51/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/bounds_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand51/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/diffuser: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand51/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand51/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand51/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand51/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand51/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand51/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand51/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand51/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free-bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand51/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free-model_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand51/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/gradient: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand51/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/gradient-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand51/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand51/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand51/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-bounds_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand51/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand51/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/post_processing: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand51/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/post_processing-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand52/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand52/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/bounds_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand52/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/diffuser: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand52/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand52/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand52/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand52/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand52/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand52/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand52/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand52/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free-bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand52/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free-model_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand52/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/gradient: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand52/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/gradient-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand52/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand52/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand52/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-bounds_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand52/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand52/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/post_processing: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand52/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/post_processing-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand53/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand53/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/bounds_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand53/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/diffuser: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand53/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand53/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand53/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand53/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand53/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand53/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand53/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand53/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free-bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand53/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free-model_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand53/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/gradient: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand53/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/gradient-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand53/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand53/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand53/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-bounds_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand53/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand53/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/post_processing: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand53/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/post_processing-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand54/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand54/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/bounds_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand54/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/diffuser: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand54/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand54/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand54/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand54/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand54/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand54/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand54/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand54/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free-bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand54/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/geo_free-model_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand54/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/gradient: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand54/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/gradient-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand54/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand54/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-bounds_free: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand54/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-bounds_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand54/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/model_free-tightened: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand54/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/post_processing: key divergence_reason shape (5,) not tabular
+[SKIP   ] cand54/seed6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/post_processing-tightened: key divergence_reason shape (5,) not tabular

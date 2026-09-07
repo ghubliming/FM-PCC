@@ -27,10 +27,49 @@ def train_name(checkpoint_dir, diffusion_loadpath):
     return os.path.basename(str(src).rstrip('/'))
 
 
-def eval_name(flow_steps, activation_threshold, batch_size, n_trials):
-    """The eval-run identity folder: K, activation threshold, MPC candidates, n."""
+def sanitize_msg(text):
+    """Filesystem-safe token. Deliberately byte-identical to config/avoiding-d3il.py's
+    `_sanitize_msg`, so the tag Gen12 puts in its own path matches the `_msg…` suffix the
+    other generations get from `watch_plan`."""
+    raw = str(text if text is not None else '').strip()
+    if not raw:
+        return ''
+    out = ''.join(ch if (ch.isalnum() or ch in '._-') else '-' for ch in raw)
+    while '--' in out:
+        out = out.replace('--', '-')
+    return out.strip('-._')[:40]
+
+
+def resolve_run_msg():
+    """The run tag for this process, from FMPCC_RUN_MSG (explicit) or FMPCC_MPC_BATCH (auto).
+
+    Gen12 builds savepath itself instead of going through `Parser.mkdir`, so `custom_msg` from
+    config/avoiding-d3il.py never reaches this layout — the tag has to be resolved here, and
+    identically in the eval and the aggregator, which is what this module is for.
+
+    Why a tag is needed at all: `eval_name`'s `mpc<N>` token has ALWAYS described arm C only
+    (it is fed `hf_batch_size`), because the arms-A/B fan was a hardcoded 4 and therefore
+    invisible. Now that FMPCC_MPC_BATCH can move it, an `mpc=1` arms-A/B run would otherwise
+    land in the same `K…_mpc1_n…` folder as the historic arm-C-only B1 runs, whose DPCC arms
+    ran at 4 — two different controllers in one directory.
+    """
+    msg = sanitize_msg(os.environ.get('FMPCC_RUN_MSG', ''))
+    if msg:
+        return msg
+    mpc_batch = int(os.environ.get('FMPCC_MPC_BATCH', 4))
+    return f'mpc{mpc_batch}' if mpc_batch != 4 else ''
+
+
+def eval_name(flow_steps, activation_threshold, batch_size, n_trials, run_msg=None):
+    """The eval-run identity folder: K, activation threshold, MPC candidates, n [, run tag].
+
+    `batch_size` is the ARM-C fan (`hf_batch_size`). The arms-A/B fan (FMPCC_MPC_BATCH) is
+    not a token of its own — a non-default value arrives through the `_msg…` suffix, see
+    `resolve_run_msg`. Pass `run_msg=''` to force the historic, untagged name.
+    """
+    msg = resolve_run_msg() if run_msg is None else sanitize_msg(run_msg)
     return (f'K{flow_steps}_thres{activation_threshold:g}'
-            f'_mpc{batch_size}_n{n_trials}')
+            f'_mpc{batch_size}_n{n_trials}' + (f'_msg{msg}' if msg else ''))
 
 
 def eval_root(logbase, dataset, train, evalname, seed):
