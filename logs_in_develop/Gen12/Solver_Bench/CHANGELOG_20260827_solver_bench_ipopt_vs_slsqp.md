@@ -10,7 +10,7 @@ On `avoiding-d3il` our arm C (HardFlow) costs **1.4–14× more per plan** than 
 - ours is IPOPT-on-endpoint (~30 ms) vs **scipy SLSQP**-on-noisy-iterate (2.1–21 ms);
 - and **~81 % of an H8 IPOPT solve looks like fixed per-call overhead** rather than optimisation work — 2.09× the variables buys only 1.66× the time, where a dense NLP should scale superlinearly.
 
-Full reasoning: [`AUDIT_20260827_hardflow_paper_timing_and_baselines.md`](../../../Data_Analysis/DA_Result_Curated_MD/AUDIT_20260827_hardflow_paper_timing_and_baselines.md) §0–0.2.
+Full reasoning: [`outdated_AUDIT_20260827_hardflow_paper_timing_and_baselines.md`](../../../Data_Analysis/DA_Result_Curated_MD/outdated_AUDIT_20260827_hardflow_paper_timing_and_baselines.md) §0–0.2.
 
 **The user's constraint: do not change the solver permanently.** So this is a standalone bench that builds both projectors side by side in one process and times them. Production `hardflow_projection.py` and `projection.py` are untouched.
 

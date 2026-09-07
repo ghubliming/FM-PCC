@@ -1,7 +1,22 @@
 # Audit — is HardFlow's D3IL table honest? A line-by-line check of the code behind it
 
+> # 🗄️ OUTDATED — 2026-09-07
+>
+> **Its cost verdict is reversed.** §0 concluded "HF vs *our* baseline: **loses 1.4–14×**, because
+> SLSQP costs 2.1 ms where our IPOPT costs ~30 ms". With both arms on SLSQP, matched fan (B=4) and
+> matched K, arm C costs **0.50–0.58× arm B** at K ∈ {3, 5} — HardFlow does *more* NLP solves and
+> still costs half as much.
+>
+> **Replaced by**
+> [`Proposal_20260905_HF_minK_mf_af_unet/DA_20260906_hf_minK_mfunet_A1_K2_K3_K5.md`](Proposal_20260905_HF_minK_mf_af_unet/DA_20260906_hf_minK_mfunet_A1_K2_K3_K5.md) §4.
+>
+> **Still worth reading for** the line-by-line source audit of the upstream HardFlow D3IL table —
+> that half was never about our numbers and is unaffected.
+
+---
+
 **2026-08-27** · source audit of `aux_repo/HardFlow` (branch `d3il`) + `arXiv-2511.08425v3/main.tex`. Nothing run; every claim below cites a file and line.
-**Companion:** [`RESPONSE_20260826_did_HardFlow_ever_beat_DPCC.md`](./RESPONSE_20260826_did_HardFlow_ever_beat_DPCC.md) Q6 — the measurement this audit was spun out of.
+**Companion:** [`outdated_RESPONSE_20260826_did_HardFlow_ever_beat_DPCC.md`](./outdated_RESPONSE_20260826_did_HardFlow_ever_beat_DPCC.md) Q6 — the measurement this audit was spun out of.
 
 ## 0 · The direct answer — why their HardFlow is faster and ours is not
 

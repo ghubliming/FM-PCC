@@ -10,7 +10,7 @@
 `config/uav_mix.py:204-215`, `mix_uav_test/eval_mix_uav.py:1361-1402`, `Slurm_Codes/sbatch/uav_mix/eval_k_sweep.sh:30` ·
 **§8 additionally reads** `logs_in_develop/Gen3v6_MeanFlow/DA/DA_20260802_K2_MeanFlow_AlphaFlow_vs_FM_DPCC.md`,
 `…/DA_20260811_MF_UNet32_full5seeds_avoiding.md`,
-`Data_Analysis/DA_Result_Curated_MD/SNAPSHOT_20260813_avoiding_d3il_vs_DPCC_baseline.md`
+`Data_Analysis/DA_Result_Curated_MD/outdated_SNAPSHOT_20260813_avoiding_d3il_vs_DPCC_baseline.md`
 
 **Companions:** `H2H_iMF_vs_HardFlow_stepwise.md` · `MAP_Algorithm1_to_AvoidingCode.md`
 
@@ -422,7 +422,7 @@ should work, so a low-K failure in our sweep refutes nothing of theirs.
 **Sources for this section:**
 `logs_in_develop/Gen3v6_MeanFlow/DA/DA_20260802_K2_MeanFlow_AlphaFlow_vs_FM_DPCC.md` (§5.6, §11.3-11.7) ·
 `…/DA_20260811_MF_UNet32_full5seeds_avoiding.md` (§4.3, §8, §9.2-9.4) ·
-`Data_Analysis/DA_Result_Curated_MD/SNAPSHOT_20260813_avoiding_d3il_vs_DPCC_baseline.md` (§2, §3, §4).
+`Data_Analysis/DA_Result_Curated_MD/outdated_SNAPSHOT_20260813_avoiding_d3il_vs_DPCC_baseline.md` (§2, §3, §4).
 All rows are `avoiding-d3il`; every HardFlow run in the corpus used **`A = 0.5`, `hf_batch = 1`**
 (5-seed DA §8 "No activation-threshold sweep — HardFlow ran `A0.5_B1` only").
 

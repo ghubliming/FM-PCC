@@ -1,5 +1,17 @@
 # `aligning-d3il-visual` — env status, per projector, constraint-checked
 
+> # 🗄️ OUTDATED — 2026-09-07
+>
+> Superseded on its own terms (*"use the newest `SNAPSHOT_<date>_*` file"*), and its §5 answer
+> "**No**, HardFlow never beat DPCC" is reversed — that cell was `K=2` at `thr=0.5`, i.e.
+> `n_genuine = 0`, **not HardFlow at all** but sample-then-project.
+>
+> **Replaced by**
+> [`Gen14/CLOSURE_20260907_Gen14_V_A_engine_comparison_final.md`](../../logs_in_develop/Gen14/CLOSURE_20260907_Gen14_V_A_engine_comparison_final.md)
+> — the final V_A engine ranking, flagship, and arm-C result. V_A engine selection is closed there.
+
+---
+
 > **SNAPSHOT 2026-08-23.** Whole-env status across every candidate in the visual-aligning tree.
 > Regenerated as new batches land. Use the newest `SNAPSHOT_<date>_*` file in this folder.
 

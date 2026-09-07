@@ -1,5 +1,24 @@
 # `af` vs `mf` on visual-aligning — is the training target changed, and what is left once the bone is shared?
 
+> ## ⚠️ PARTIALLY SUPERSEDED — 2026-09-07 · kept as current, read with this caveat
+>
+> **The source-level half is confirmed and load-bearing.** Q1–Q4 — α-Flow *is* MeanFlow at α = 0,
+> branch-for-branch; α touches training only — were verified independently by
+> [`CLOSURE_20260907`](../../logs_in_develop/Gen14/CLOSURE_20260907_Gen14_V_A_engine_comparison_final.md)
+> §6, which used exactly this identity to retire every `ae0.0` checkpoint as *MeanFlow in an α-Flow
+> folder*.
+>
+> **The empirical half is done.** Q5's recommendation — *"turn α on; the fix was logged as the
+> highest-value training job and never run"* — **has since been run** (`AFAFend0p2` / `AFAFend0p05`,
+> 2026-09-01→03). The answer is in
+> [`Report_20260903_AF_UNet/README.md`](Report_20260903_AF_UNet/README.md) (avoiding) and
+> `CLOSURE_20260907` R.4 / §5 (visual aligning): **with α provably live, α-Flow still does not beat
+> MeanFlow** — indistinguishable at K=2, worse at K=20, better nowhere. `af`-U-Net is **closed**.
+>
+> So: cite this file for the *mechanism*, never for the open question. The question is answered.
+
+---
+
 **Date** 2026-08-29 · **Scope** Gen14 `mix_visual_aligning`, `engine=mf` (`cand14`) vs `engine=af`
 (`cand6`), both `unet` bone / `filmv1` / `K = 2`.
 **Method** source diffs + verbatim quotes from this repo and the two upstreams in `/workspaces/aux_repo/`.
@@ -367,7 +386,7 @@ It has never been run with `if_vision=True` (§6).
 
 **They agree, as the config predicts.** Paired over the same 30 contexts, matched bone, each at its
 own best DPCC projector
-([`Report_20260829_VA_funnel`](Report_20260829_VA_funnel/README.md)):
+([`outdated_Report_20260829_VA_funnel`](outdated_Report_20260829_VA_funnel/README.md)):
 
 | | `dist` | ≤ 15 cm ∧ clean | `0-viol` | `ms` |
 |---|---|---|---|---|
@@ -380,7 +399,7 @@ to explain away — it is what §2.2 predicts.**
 
 **And they disagree in the one way that proves distinct weights.** On the unguided arm the two react
 to sampler steps in *opposite* directions
-([`DA_20260826_K_sampler_steps_visual_aligning.md`](DA_20260826_K_sampler_steps_visual_aligning.md)):
+([`outdated_DA_20260826_K_sampler_steps_visual_aligning.md`](outdated_DA_20260826_K_sampler_steps_visual_aligning.md)):
 
 | engine | K = 100 | K = 2 | paired sign / Wilcoxon |
 |---|---|---|---|
@@ -485,7 +504,7 @@ two arms share an objective. What changes is the **reading** of that convergence
 | the constant-α run | a nice-to-have control | **the experiment that should have been run first** |
 
 **The V_A numbers do not measure α-Flow at its own operating point.** They measure the post-cliff
-model. Every `af` row in [`Report_20260829_VA_funnel`](Report_20260829_VA_funnel/README.md) should
+model. Every `af` row in [`outdated_Report_20260829_VA_funnel`](outdated_Report_20260829_VA_funnel/README.md) should
 be read that way.
 
 ---

@@ -10,7 +10,7 @@
 covered by [`DA_20260819_ntrials20_…`](DA_20260819_ntrials20_DPCC_vs_FM_vs_MeanFlow_vs_AlphaFlow.md).
 **Companions:**
 [`Gen16/init/DA_20260823_…mf_visual_avoiding…`](../../logs_in_develop/Gen16/init/DA_20260823_Gen16_mf_visual_avoiding_first_results.md) (the `mf` row, in depth) ·
-[`SNAPSHOT_20260823_visual_aligning_env_status.md`](SNAPSHOT_20260823_visual_aligning_env_status.md) (the sibling env, where the premise comes from) ·
+[`outdated_SNAPSHOT_20260823_visual_aligning_env_status.md`](outdated_SNAPSHOT_20260823_visual_aligning_env_status.md) (the sibling env, where the premise comes from) ·
 [`DA_20260819_DPCC_K20_aw10_ntrials20_vs_ntrials2.md`](DA_20260819_DPCC_K20_aw10_ntrials20_vs_ntrials2.md) (why `n_trials=2` cells cannot be ranked).
 
 > ### The four answers up front
@@ -447,7 +447,7 @@ sweep is still missing. No `fm` or `dpcc` visual candidate has arm C at all.
 | `mf` cheaper than `fm`/`dpcc` | ✅ | ✅ | ✅ **12–17×** — but attributable entirely to K (§4) |
 
 **The premise is a visual-*aligning* result, and it is already contradicted on state avoiding.**
-[`SNAPSHOT_20260823_visual_aligning_env_status.md`](SNAPSHOT_20260823_visual_aligning_env_status.md)
+[`outdated_SNAPSHOT_20260823_visual_aligning_env_status.md`](outdated_SNAPSHOT_20260823_visual_aligning_env_status.md)
 §3 answers "does `mf`/`af` at K=2 beat `fm`/`diffusion` at K=20?" with **yes, on every axis**. The
 state-avoiding DA's §3/§6 answer the same question with **"MeanFlow must beat naive FM to justify
 itself. It does not, at any K, on any halfspace"** — naive FM is that study's winner. So the ordering
@@ -572,7 +572,7 @@ happened yet, not a finding about a run.
 
 Checked against the criterion, **UAV would fail #1 exactly the way avoiding does, for a different
 reason.** Four scenes exist — `corridor`, `pillars`, `s_curve`, `empty` — but per
-[`SNAPSHOT_20260825_uav_mix_env_status_PILOT.md`](SNAPSHOT_20260825_uav_mix_env_status_PILOT.md) the
+[`outdated_SNAPSHOT_20260825_uav_mix_env_status_PILOT.md`](outdated_SNAPSHOT_20260825_uav_mix_env_status_PILOT.md) the
 entire deployable core is **13 candidates × 2 943 rollouts, all `corridor`, one seed**; `pillars` and
 `s_curve` ran n = 3 and are quarantined. **One scene per run ⇒ the geometry is constant within the
 experiment ⇒ a camera would have nothing episode-varying to report**, exactly as here.

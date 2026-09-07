@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Figures for Report_20260829_VA_funnel (visual-aligning, three-stage funnel).
+"""Figures for outdated_Report_20260829_VA_funnel (visual-aligning, three-stage funnel).
 
 Dependency-free SVG writer: no matplotlib in the AI container. Every number is
 recomputed from the batch's per_rollout_detail.csv, so the figures and the

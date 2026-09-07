@@ -94,7 +94,7 @@ Classified by the §1 rule. "Degenerate rows" = the K values in that document wh
 | `Gen16/init/DA_20260823_Gen16_mf_visual_avoiding_first_results.md` | 2, 20 ✅ | 0.5 | **K=2 rows** | ⚠️ §3 C2 for the K=2 rows |
 | `HF_Batch_Parity/DA_20260824_mpc1_parity_MF_vs_FM.md` | 2, 10, 20 ✅ | 0.5 | **K=2 rows** | ✅ — it is *about* W3 |
 | `Data_Analysis/DA_Result_Curated_MD/DA_20260819_ntrials20_*.md` | 1,2,5,10,20 ✅ | 0.5 | **K=1, K=2** | ✅ §3 C1 |
-| `Data_Analysis/DA_Result_Curated_MD/SNAPSHOT_20260813_avoiding_d3il_vs_DPCC_baseline.md` | headline is **K=1** | 0.5 | **the headline row** | ✅ number stands, label does not — §3 C1 |
+| `Data_Analysis/DA_Result_Curated_MD/outdated_SNAPSHOT_20260813_avoiding_d3il_vs_DPCC_baseline.md` | headline is **K=1** | 0.5 | **the headline row** | ✅ number stands, label does not — §3 C1 |
 
 ---
 

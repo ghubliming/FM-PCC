@@ -62,7 +62,7 @@ A vision branch earns its cost only if the task-relevant scene state **(1)** var
 
 UAV fails #1 today not because its scenes are fixed by design — it has four — but because the run
 protocol is single-scene. Per
-[`SNAPSHOT_20260825_uav_mix_env_status_PILOT.md`](../../../Data_Analysis/DA_Result_Curated_MD/SNAPSHOT_20260825_uav_mix_env_status_PILOT.md),
+[`outdated_SNAPSHOT_20260825_uav_mix_env_status_PILOT.md`](../../../Data_Analysis/DA_Result_Curated_MD/outdated_SNAPSHOT_20260825_uav_mix_env_status_PILOT.md),
 the entire deployable core is **13 candidates × 2 943 rollouts, all `corridor`, one seed**;
 `pillars` and `s_curve` ran **n = 3** and are quarantined. **This proposal is a protocol change
 before it is a modelling change**, which is why it is cheap.
@@ -211,7 +211,7 @@ the projector is broken."
 ⚠️ **One latent the image cannot fix — do not score it.** `corridor` already carries a *second*
 unobserved latent: the seeded `homotopy` (L/C/R), which the eval tracks as `match` — *"the
 state-only policy is **never told** the homotopy"*
-([UAV snapshot §0.1](../../../Data_Analysis/DA_Result_Curated_MD/SNAPSHOT_20260825_uav_mix_env_status_PILOT.md)).
+([UAV snapshot §0.1](../../../Data_Analysis/DA_Result_Curated_MD/outdated_SNAPSHOT_20260825_uav_mix_env_status_PILOT.md)).
 Homotopy is an **intended mode**, not a scene property — no camera can read "which side did you mean"
 off an arena. **Pooled training therefore has two latents, and vision collapses only one.** `match`
 will stay near chance even for a perfect visual model; **scoring the visual arm on `match` would

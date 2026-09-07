@@ -1,5 +1,22 @@
 # HF Q&A — HardFlow vs DPCC
 
+> # 🗄️ OUTDATED — 2026-09-07
+>
+> **Its headline answer is reversed.** Q3 answered "**No**, DPCC wins every axis at every K".
+> That measurement carried two confounds since removed: the NLP backend was **IPOPT**, and
+> HardFlow ran at **`A = 1.0`** against DPCC's **`thr = 0.5`**, i.e. ~2× the projection work.
+>
+> **Replaced by** [`NOTEBOOK_20260829_key_headlines.md`](NOTEBOOK_20260829_key_headlines.md)
+> Headline 6 (the correction) and Headline 9 ·
+> [`Proposal_20260905_HF_minK_mf_af_unet/DA_20260906_hf_minK_mfunet_A1_K2_K3_K5.md`](Proposal_20260905_HF_minK_mf_af_unet/DA_20260906_hf_minK_mfunet_A1_K2_K3_K5.md)
+> (HardFlow Pareto-dominates the Target at K=3) ·
+> [`Gen14/CLOSURE_20260907`](../../logs_in_develop/Gen14/CLOSURE_20260907_Gen14_V_A_engine_comparison_final.md) R.2.
+>
+> **Still worth reading for** the degeneracy rule stated at the top (`n_genuine ≥ 1`) and the
+> per-question data provenance. Do not quote a verdict from it.
+
+---
+
 **2026-08-26** · re-analysis of existing runs, nothing new executed, no code touched.
 **Cost convention:** `ep-time s` in every table = one episode's total wall-clock, `avg_time × n_steps` — the "time × steps" metric. "episodes" always means rollout count (sample size), never time. Each section names its own data source and states whether the candidate fan was matched natively or re-priced.
 
@@ -269,7 +286,7 @@ Two things fall out. **First, the degeneracy formula is confirmed on a second ax
 
 # 3 · Visual aligning — how does HardFlow perform there?
 
-**Short answer — no better, and the one significant test runs against it.** Same degeneracy caveat: both candidates carrying arm C are **K=2 at A=0.5 → ❌**. Answered independently in `SNAPSHOT_20260823_visual_aligning_env_status.md` §5; the numbers below are re-derived from `temp/2608/batch_va2_20260826_142750/va2_aggregated_long.csv` and agree with it to 4 decimals.
+**Short answer — no better, and the one significant test runs against it.** Same degeneracy caveat: both candidates carrying arm C are **K=2 at A=0.5 → ❌**. Answered independently in `outdated_SNAPSHOT_20260823_visual_aligning_env_status.md` §5; the numbers below are re-derived from `temp/2608/batch_va2_20260826_142750/va2_aggregated_long.csv` and agree with it to 4 decimals.
 
 ## 3a · S&C is the wrong metric here
 
@@ -368,7 +385,7 @@ Read together: **when the base trajectory is shared, differences 1, 2 and 5 prod
 
 ## 4f · The ladder, cheapest first
 
-Each rung removes one difference; watch the residual. ⚠️ **Scope note:** "smallest term" below refers to the **trajectory** — the solver does not change *what* is produced (`fm` rollouts were bit-identical). On **cost** the solver is the *largest* term: ~81 % of an H8 IPOPT solve is fixed per-call overhead, so IPOPT costs ~30 ms where SLSQP costs 2.1 ms ([audit §0.1](./AUDIT_20260827_hardflow_paper_timing_and_baselines.md)). ⚠️ **Superseded ordering — see 4i, and see Q6 Part 6 for the *direction*: giving the DPCC arm IPOPT reproduces their published comparison, which is more informative than giving HardFlow SLSQP.** Revised priority: rung 0 stays first, but the `h = dt` fix in 4i outranks rungs 1–2, which chase the smallest term.
+Each rung removes one difference; watch the residual. ⚠️ **Scope note:** "smallest term" below refers to the **trajectory** — the solver does not change *what* is produced (`fm` rollouts were bit-identical). On **cost** the solver is the *largest* term: ~81 % of an H8 IPOPT solve is fixed per-call overhead, so IPOPT costs ~30 ms where SLSQP costs 2.1 ms ([audit §0.1](./outdated_AUDIT_20260827_hardflow_paper_timing_and_baselines.md)). ⚠️ **Superseded ordering — see 4i, and see Q6 Part 6 for the *direction*: giving the DPCC arm IPOPT reproduces their published comparison, which is more informative than giving HardFlow SLSQP.** Revised priority: rung 0 stays first, but the `h = dt` fix in 4i outranks rungs 1–2, which chase the smallest term.
 
 | rung | what to run | cost | what it settles |
 |---:|---|---|---|

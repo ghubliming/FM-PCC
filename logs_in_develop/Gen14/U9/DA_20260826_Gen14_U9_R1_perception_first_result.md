@@ -6,7 +6,7 @@
 > [`CHANGELOG`](CHANGELOG_Gen14_U9_perception_first_ml.md) (what was built, and the three cluster
 > failures on the way).
 > Reporting conventions inherited from
-> [`SNAPSHOT_20260823_visual_aligning_env_status.md`](../../../Data_Analysis/DA_Result_Curated_MD/SNAPSHOT_20260823_visual_aligning_env_status.md) — §0 restates them and adds one.
+> [`outdated_SNAPSHOT_20260823_visual_aligning_env_status.md`](../../../Data_Analysis/DA_Result_Curated_MD/outdated_SNAPSHOT_20260823_visual_aligning_env_status.md) — §0 restates them and adds one.
 
 **Run:** jobs 25045 (pipeline) → 25046 (gates) → 25047 (train) → 25048 (eval), all on `i6-gpu-1`,
 git rev `6c2df73`. **Batch:** `batch_va2_20260826_142750` (DA_VA_v2, 19 candidates / 353 units /

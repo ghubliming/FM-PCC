@@ -3,7 +3,7 @@
 *Rebuilt 2026-09-04 on the Gen3v7 template
 ([`DA_20260901_AF_UNet_alpha_clamp_T1_negative.md`](../Gen3v7_AlphaFlow/DA/DA_20260901_AF_UNet_alpha_clamp_T1_negative.md) §0)
 and the Gen14 funnel
-([`Report_20260829_VA_funnel`](../../Data_Analysis/DA_Result_Curated_MD/Report_20260829_VA_funnel/README.md)).
+([`outdated_Report_20260829_VA_funnel`](../../Data_Analysis/DA_Result_Curated_MD/outdated_Report_20260829_VA_funnel/README.md)).
 Supersedes the K-sweep draft of the same name — that plan is withdrawn.*
 
 ---

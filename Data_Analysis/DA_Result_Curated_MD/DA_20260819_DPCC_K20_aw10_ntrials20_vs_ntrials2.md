@@ -180,7 +180,7 @@ This matters because `post_processing` is a *baseline* in the DPCC paper, not a 
 ## 6. Practical implications
 
 - **All n=2 comparisons against this baseline need re-checking.** The two effects that bite hardest: any 1.00 was inflated, and untightened DPCC variants were flattered by ~0.2.
-- **`SNAPSHOT_20260813_avoiding_d3il_vs_DPCC_baseline.md` is stale** — it uses n=2 baseline numbers, including the corrupt `post_processing` rows.
+- **`outdated_SNAPSHOT_20260813_avoiding_d3il_vs_DPCC_baseline.md` is stale** — it uses n=2 baseline numbers, including the corrupt `post_processing` rows.
 - **Trial-count parity is now mandatory** in any table: an n=2 method row against an n=20 baseline row is not a comparison.
 - Seed noise at n=20 is still substantial (SEM up to 0.073 for a 5-seed mean). Differences under ~0.10 in S&C are not real.
 

@@ -1,12 +1,54 @@
 # FM-PCC — Key Headlines Notebook
 
-**Last updated:** 2026-09-05 · **Author:** auto-generated from curated reports  
-**Status:** 🟡 Two tasks established, one under construction, several open experiments
+**Last updated:** 2026-09-07 · **Author:** curated from the reports in this directory  
+**Status:** 🟢 Visual aligning **closed** · 🟢 Avoiding **strongest result to date** · 🔴 UAV **unrankable**
 
-> ⚠️ **Headlines 1–5 are the 2026-08-29 snapshot. Read the
-> [Addendum 2026-09-05](#addendum-2026-09-05--evidence-against-the-thesis-target) before quoting
-> anything about HardFlow or the `-r`/`-c`/`-t` selection rules** — Headline 6 supersedes this
-> directory's earlier "HardFlow never beat DPCC" answer, and Headline 7 refines Headline 5.
+## How to read this file
+
+Headlines are **append-only and numbered by the date they were written**, so a later headline can
+overturn an earlier one. Before quoting any number, check the 🔴/⚠️ banner on its headline.
+
+| block | written | trust |
+|---|---|---|
+| **[Headlines 1–5](#headline-1--avoiding-state-based-meanflow-unet-is-pareto-dominant-)** | 2026-08-29 | ⚠️ H2 and H3 are **superseded** by H10; H1 and H5 stand |
+| **[Headlines 6–8](#addendum-2026-09-05--evidence-against-the-thesis-target)** | 2026-09-05 | ✅ current; H6 is *strengthened* by H9 |
+| **[Headlines 9–10](#addendum-2026-09-07--two-results-that-close-two-questions)** | 2026-09-07 | ✅ **current — start here** |
+
+**The two-sentence state of the project.** On `avoiding-d3il`, MeanFlow-UNet with the HardFlow-SLSQP
+sampler at K = 3 **Pareto-dominates the pinned DPCC baseline** — equal safety, 16 % fewer steps,
+7.4× cheaper, architecture-matched (H9). On `aligning-d3il-visual`, MeanFlow is the flagship and the
+engine comparison is **closed**: α-Flow is never better, naive FM is excluded, and only MeanFlow
+separates from the diffusion baseline (H10). UAV remains the one environment that cannot yet rank
+anything.
+
+---
+
+## Document index — this directory
+
+🟢 current · 🗄️ outdated (renamed `outdated_*`, banner at the top of each says what replaced it)
+
+| doc | covers | state |
+|---|---|---|
+| **this file** | the headline index | 🟢 |
+| [`Proposal_20260905_HF_minK_mf_af_unet/`](Proposal_20260905_HF_minK_mf_af_unet/README.md) → [`DA_20260906`](Proposal_20260905_HF_minK_mf_af_unet/DA_20260906_hf_minK_mfunet_A1_K2_K3_K5.md) | HardFlow's K floor + the result at it | 🟢 **newest result** |
+| [`Report_20260903_AF_UNet/`](Report_20260903_AF_UNet/README.md) | α-Flow with α actually on, avoiding | 🟢 |
+| [`Report_20260819_MF_UNet/`](Report_20260819_MF_UNet/README.md) | MF-UNet Pareto dominance, avoiding | 🟢 |
+| [`DA_20260819_ntrials20_…`](DA_20260819_ntrials20_DPCC_vs_FM_vs_MeanFlow_vs_AlphaFlow.md) | n=20 cross-family, avoiding | 🟢 |
+| [`DA_20260819_DPCC_K20_aw10_ntrials20_vs_ntrials2`](DA_20260819_DPCC_K20_aw10_ntrials20_vs_ntrials2.md) | why n=2 overstates — pins the Target | 🟢 methodology |
+| [`DA_20260827_mpc_candidate_fan_avoiding`](DA_20260827_mpc_candidate_fan_avoiding.md) | the B=4 → B=1 fan study | 🟢 |
+| [`SNAPSHOT_20260826_visual_avoiding_env_status`](SNAPSHOT_20260826_visual_avoiding_env_status.md) | `avoiding-d3il-visual` — the only doc on it | 🟢 |
+| [`ANALYSIS_20260829_alphaflow_vs_meanflow…`](ANALYSIS_20260829_alphaflow_vs_meanflow_visual_aligning_are_they_the_same.md) | α-Flow ≡ MeanFlow at α=0, from source | ⚠️ mechanism 🟢, open question **answered** |
+| [`outdated_RESPONSE_20260826_did_HardFlow_ever_beat_DPCC`](outdated_RESPONSE_20260826_did_HardFlow_ever_beat_DPCC.md) | "No" — measured on IPOPT at an unmatched threshold | 🗄️ **reversed** |
+| [`outdated_AUDIT_20260827_hardflow_paper_timing…`](outdated_AUDIT_20260827_hardflow_paper_timing_and_baselines.md) | "HF loses 1.4–14× to our SLSQP baseline" | 🗄️ **reversed** |
+| [`outdated_Report_20260829_VA_funnel/`](outdated_Report_20260829_VA_funnel/README.md) | the funnel that crowned `mf` K=2 | 🗄️ rankings stale, **method still standard** |
+| [`outdated_SNAPSHOT_20260823_visual_aligning_env_status`](outdated_SNAPSHOT_20260823_visual_aligning_env_status.md) | V_A whole-env, pre-closure | 🗄️ |
+| [`outdated_SNAPSHOT_20260813_avoiding_d3il_vs_DPCC_baseline`](outdated_SNAPSHOT_20260813_avoiding_d3il_vs_DPCC_baseline.md) | avoiding whole-env at the n=2 tier | 🗄️ |
+| [`outdated_SNAPSHOT_20260825_uav_mix_env_status_PILOT`](outdated_SNAPSHOT_20260825_uav_mix_env_status_PILOT.md) | UAV whole-env, pre-Fix_16 | 🗄️ **no replacement exists** |
+| [`outdated_DA_20260826_K_sampler_steps_visual_aligning`](outdated_DA_20260826_K_sampler_steps_visual_aligning.md) | the V_A K ladder, pre-α-live | 🗄️ |
+
+> External anchors this notebook leans on:
+> [`Gen14/CLOSURE_20260907`](../../logs_in_develop/Gen14/CLOSURE_20260907_Gen14_V_A_engine_comparison_final.md) (V_A closed) ·
+> [`Writing/Working_Space/TARGET_20260905_thesis_claim_ladder.md`](../../logs_in_develop/Writing/Working_Space/TARGET_20260905_thesis_claim_ladder.md) (the goals this is scored against).
 
 ---
 
@@ -30,7 +72,9 @@
 | 2026-09-01 | **VA flagship** K20/T0.2 — first non-degenerate HF cell on visual aligning; HF ≥ DPCC on constraints 3/3 |
 | 2026-09-03 | **Fix_16 A/B on `pillars`** — divergence abort 100 % → 0 %; scene still unrankable (S&C 0/2876) |
 | 2026-09-04 | Honest-geometry audit — UAV scene slack measured below policy tracking error |
-| 2026-09-05 | **Thesis target written**; evidence board + Headlines 6–8 (this addendum) |
+| 2026-09-05 | **Thesis target written**; evidence board + Headlines 6–8 |
+| 2026-09-06 | **HardFlow's floor run** (job 25444) — MF-UNet, `A=1.0`, K ∈ {2,3,5}; first ✅-tier arm-C row to clear the Target |
+| 2026-09-07 | **Gen14 V_A closed** — `mf` flagship, `af` closed, `af`-SiT abandoned, `fm` excluded |
 
 ---
 
@@ -64,6 +108,13 @@ The 21× speedup decomposes into: **≈1.4×** from FM's model advantage at equa
 
 ## Headline 2 — α-Flow vs MeanFlow: Same Engine, Different Curriculum ⚠️
 
+> 🗄️ **SUPERSEDED on the verdict — see [Headline 10](#headline-10--visual-aligning-is-closed-meanflow-is-the-flagship-).**
+> The open question this headline ends on — *"turn α on and re-measure"* — **was run**
+> (`AFAFend0p2` / `AFAFend0p05`). With α provably live and architecture matched, α-Flow ties
+> MeanFlow at K=2, loses at K=20, and is **better nowhere**; `af`-U-Net is **closed** and every
+> `af`-SiT row is **abandoned** (9.4 M vs 4.0 M *and* `ae0.0` ⇒ MeanFlow mislabelled).
+> **The mechanism below still stands** — it is what let the SiT rows be identified as MeanFlow.
+
 > **Source:** [ANALYSIS_20260829_alphaflow_vs_meanflow](ANALYSIS_20260829_alphaflow_vs_meanflow_visual_aligning_are_they_the_same.md)
 
 ### The finding
@@ -94,7 +145,15 @@ At step 70k, α ≈ 0.007: test MSE(u) = **2.657**. At step 72k, α = 0.0: test 
 
 ## Headline 3 — Visual Aligning: MeanFlow K2 is the Sole Survivor ✅
 
-> **Source:** [Report_20260829_VA_funnel](Report_20260829_VA_funnel/README.md) (updated)
+> 🗄️ **SUPERSEDED — see [Headline 10](#headline-10--visual-aligning-is-closed-meanflow-is-the-flagship-).**
+> The engine survives; **the operating point does not.** The flagship is now **`mf` K=20, T=0.2,
+> arm C `hardflow_sls-r`**, not `mf` K=2 + `dpcc-t`. Two things changed after this was written:
+> applying Stage 2 in the strict order put **K=20 ahead of K=10 and K=2**, and the K=20/T=0.2 cell —
+> the first non-degenerate arm-C cell on this task — did not exist yet. The entrant list here also
+> has **no `af`** and no arm C at all.
+> **The three-stage method is not superseded**; it is still the house standard.
+
+> **Source:** [outdated_Report_20260829_VA_funnel](outdated_Report_20260829_VA_funnel/README.md) (rankings stale)
 
 The report now runs a strict **three-stage funnel** — an arm leaves the moment it fails a stage. No `af` in the entrants (see Headline 2 — it is the same engine as `mf`). Entrants: **MF K2/K100 · FM K20/K100 · Diffusion K20/K100** on the matched UNet FiLM v1 bone.
 
@@ -159,7 +218,7 @@ The report explicitly disclaims any transfer claim:
 
 ## Headline 4 — UAV Task: It Works, But Needs Refinement 🟡
 
-> **Source:** [SNAPSHOT_20260825_uav_mix_env_status_PILOT](SNAPSHOT_20260825_uav_mix_env_status_PILOT.md)
+> **Source:** [outdated_SNAPSHOT_20260825_uav_mix_env_status_PILOT](outdated_SNAPSHOT_20260825_uav_mix_env_status_PILOT.md)
 
 ### What is built
 
@@ -266,69 +325,40 @@ The four SLSQP solves per replan are independent (same constraints, different `x
 
 ## Summary Scorecard
 
+*Live board — rewritten 2026-09-07. `H<n>` names the headline carrying the claim.*
+
 | task | claim | evidence | blocking item |
 |---|---|---|---|
-| **Avoiding** (state) | MF-UNet ≫ DPCC (30×) | ✅ Strong (5 seeds, n=20, Pareto) | DPCC K∈{1,2,5} at n=20 |
-| **Avoiding** (state) | FM ≫ DPCC (21×) | ✅ Strong (5 seeds, n=20) | — |
-| **Visual Aligning** | MF K2 sole survivor of 3-stage funnel | ✅ Significant (McNemar p ≤ 0.039) | K=100 arms unscorable (24h wall) |
-| **Visual Aligning** | MF ≈ AF (same engine) | ⚠️ Not separable (p = 0.39) | Constant-α training run |
+| **Avoiding** (state) | **MF-UNet + HardFlow-SLSQP ≻ Target: 16 % fewer steps, 7.4× cheaper, equal S&C, K=3** | 🟢 **Pareto, architecture-matched** (H9) | ⚠️ 24 rollouts, no seed 6 → **run queue #1** |
+| **Avoiding** (state) | HardFlow does *more* NLP solves and costs **0.50–0.58× DPCC** at K ≥ 3 | 🟢 systematic, survives the small n (H9) | export `solve_ms` to measure, not infer |
+| **Avoiding** (state) | MF-UNet ≫ DPCC (30×), unguided | ✅ Strong (5 seeds, n=20, Pareto) (H1) | DPCC K ∈ {1,2,5} at n=20 |
+| **Avoiding** (state) | FM ≫ DPCC (21×) | ✅ Strong (5 seeds, n=20) (H1) | — |
+| **Avoiding** (state) | HF-SLSQP `-t` ≻ DPCC at K20, matched threshold | 🟢 Pareto, n = 6 seed 6 (H6a) | seeds 7–10 |
+| **Avoiding** (state) | α-Flow-UNet ≱ MeanFlow with α live | 🔴 **negative, clean** (`Report_20260903_AF_UNet`) | seed 6 only |
+| **Avoiding** (state) | MPC fan B=4 not needed; B=1 statistically good | ⚠️ Directional (30 ep. fan 4, 6 ep. fan 1) (H5) | K1 fan 1 @ 20 trials; parallelise projector |
+| **Visual Aligning** | **`mf` is the flagship — K=20, T=0.2, `hardflow_sls-r`** | 🟢 **closed** (H10) | seed 6 only |
+| **Visual Aligning** | `mf` ≻ `diffusion` baseline | 🟢 −0.3744 m, **0/10, p = 0.0020** (H10) | — |
+| **Visual Aligning** | `mf` ≻ naive `fm` | 🟢 +0.216 m, **9/0, p = 0.0039** (H10) | — |
+| **Visual Aligning** | ~~`fm` > `diffusion`~~ | 🔴 **fails** — 0.0055 m inside a 0.4 m band (H10) | *do not quote; not a required rung* |
+| **Visual Aligning** | α-Flow ≥ MeanFlow | ⛔ **closed** — ties at K=2, worse at K=20, better nowhere (H10) | *parked at user request* |
+| **Visual Aligning** | HF ≻ DPCC **on latency at K=10** | 🟢 −325 ms/step, **0/9, p = 0.0039** (H10) | — |
+| **Visual Aligning** | ~~HF safer than DPCC at K=20~~ | 🔴 **one discordant rollout, p = 1.0000** (H10) | *do not quote* |
+| **Visual Aligning** | constraint comparison vs the baseline | 🟡 **incomplete** — `diffusion` has no tightened cell (H10) | **tightened `diffusion` K=20** |
+| **All tasks** | `-r`/`-c`/`-t` do not earn their compute | 🟢 exact at B=1; `-c` known-bad at B=4 (H7, H9) | default rule is **task-dependent** — `-t` on avoiding, `-r` on V_A |
 | **UAV corridor** | MF > FM at K ≤ 2 | 🟡 Directional (1 seed, n=10) | Multi-seed, diffusion baseline |
-| **UAV pillars** | MF > FM > DPCC? | 🔴 Not yet tested | Expand pillars to full sweep |
-| **Avoiding** (state) | MPC fan B=4 not needed; B=1 statistically good | ⚠️ Directional (30 ep. fan 4, 6 ep. fan 1) | K1 fan 1 @ 20 trials; parallelise projector |
-| **Avoiding** (state) | HF-SLSQP `-t` ≻ DPCC at K20, matched threshold | 🟢 Pareto, but n=6 seed 6 (H6a) | seeds 7–10 |
-| **Visual Aligning** | HF-SLSQP ≥ DPCC on constraints 3/3 | ⚠️ *p* floor 0.125 at n=30 (H6b) | seeds 7–10, arm C |
-| **All tasks** | `-r`/`-c`/`-t` do not earn their compute | 🟢 exact at B=1; ⚠️ directional at B=4 (H7) | paired B=4 A/B, seeds 7–10 |
 | **UAV pillars** | Fix_16 confirmed; scene still unrankable | 🟢 A/B clean · 🔴 S&C 0/2876 (H8) | `*_hg` re-run, all 3 engines |
 
 ---
 
-## Next Key Headlines (prioritised)
+## Next Key Headlines
 
-### Near-term (next batch)
-
-1. **🔑🔑 Project the K=100 arms on visual-aligning** — the only thing that could change the result. At `T=0.5`, K=100 needs 50 SLSQP solves/replan → 28–50h. Must raise the Slurm wall, split one variant per job, or cut `diffusion_timestep_threshold`. MF K100 (0.28×) is closer unguided than the survivor is projected.
-2. **🔑🔑 Test-split eval for all VA entrants** — the biggest hole in the funnel. No generalisation demonstrated.
-3. **🔑🔑 Constant-α training run on visual-aligning** — tests whether the α→0 snap is an artefact or the JVP target is genuinely worse on vision-conditioned trajectories.
-4. **🔑🔑 UAV pillars full sweep** — K ∈ {1, 2, 5, 10, 20} × {fm, mf} × 5 seeds on `pillars`, to prove MF > FM > DPCC where constraints bind.
-
-### Medium-term
-
-4. **🔑 DPCC K ∈ {1, 2, 5} at n=20 on avoiding** — pins diffusion's floor.
-5. **🔑 UAV diffusion baseline** — without it no hierarchy claim on UAV.
-6. **`af` @ UNet on UAV** — isolate backbone from objective.
-7. **Resolve the two FM checkpoints on VA** — Gen7 `cand4` works, Gen14 `cand11` is a no-op. Why?
-
----
-
-*All numbers sourced from the curated reports in this directory. No number was independently computed for this notebook. See individual reports for methodology, statistics, and reproduction instructions.*
+> 📍 **Moved.** The prioritised queue is now the single
+> [**Run queue**](#run-queue) at the end of this file, kept beside the live evidence board so the
+> two cannot drift apart. Four items that stood here on 2026-09-05 have since been **answered or
+> closed** — the K=100 V_A projection, the constant-α training run, α-Flow at MF's flagship, and the
+> `af_unet` re-entry — and are listed there as dropped.
 
 
----
-
-# by User notes to update
-1. 
-the Pillars results is good
-/workspaces/FM-PCC/logs_in_develop/Gen15/DA/DA_20260830_pillars_K_sweep_fm_mf_af.md
-
-> ✅ **Folded in → [Headline 8](#headline-8--uav-pillars-the-engine-was-fixed-the-scene-still-is-not-).**
-> Split in two, because the two halves point opposite ways: **8a** the Fix_16 A/B is a clean
-> methodological win (100 % → 0 % divergence abort, 6.50 m → 0.62 m); **8b** the scene is still
-> unrankable (S&C 0/2876, no `diffusion` arm). The 08-30 K-sweep you linked is the *negative* half;
-> the positive half is the newer [`DA_20260903_fix16_AB_mf_pillars`](../../logs_in_develop/Gen15/DA/DA_20260903_fix16_AB_mf_pillars.md).
-
-
-2.
-HF beat DPCC in the d3il avoiding. 
-/workspaces/FM-PCC/logs_in_develop/aggregated_hf_nlp_backend/DA_20260830_ipopt_vs_slsqp_fmv3ode_K10_K20.md
-
-> ✅ **Confirmed and folded in → [Headline 6a](#headline-6--hardflow-vs-dpcc-the-threshold-was-the-confound-not-the-solver-).**
-> You were right and it **supersedes** this directory's standing answer
-> ([`RESPONSE_20260826_did_HardFlow_ever_beat_DPCC`](RESPONSE_20260826_did_HardFlow_ever_beat_DPCC.md) §Q3 "No" and
-> [`SNAPSHOT_20260823_visual_aligning_env_status`](SNAPSHOT_20260823_visual_aligning_env_status.md) §5 "No").
-> The old "no" was measured with **IPOPT at an unmatched activation threshold** (HF `A=1.0` vs DPCC `0.5`,
-> i.e. HF doing ~2× the projection work). With SLSQP + `A=0.5`, `hardflow_sls-t-tightened` at K=20
-> **Pareto-dominates** DPCC: 61.0 vs 62.2 steps and 0.343 vs 0.475 s/step, both at 100 % S&C and 0.00000
-> violations. ⚠️ n = 6, seed 6 only, and only the `-t` arm — `-r`/`-c` are non-dominated.
 
 ---
 
@@ -347,7 +377,7 @@ HF beat DPCC in the d3il avoiding.
 
 ### The correction
 
-The standing answer in this directory — [`RESPONSE_20260826_did_HardFlow_ever_beat_DPCC`](RESPONSE_20260826_did_HardFlow_ever_beat_DPCC.md) §Q3 ("**No.** DPCC wins every axis at every K") and [`SNAPSHOT_20260823_visual_aligning_env_status`](SNAPSHOT_20260823_visual_aligning_env_status.md) §5 ("**No**") — **is superseded on both tasks.** Those runs carried two confounds that have since been removed:
+The standing answer in this directory — [`outdated_RESPONSE_20260826_did_HardFlow_ever_beat_DPCC`](outdated_RESPONSE_20260826_did_HardFlow_ever_beat_DPCC.md) §Q3 ("**No.** DPCC wins every axis at every K") and [`outdated_SNAPSHOT_20260823_visual_aligning_env_status`](outdated_SNAPSHOT_20260823_visual_aligning_env_status.md) §5 ("**No**") — **is superseded on both tasks.** Those runs carried two confounds that have since been removed:
 
 | confound | old setting | fixed in | effect |
 |---|---|---|---|
@@ -496,59 +526,306 @@ Fix_16 and the honest-geometry work belong in **methodology and threats-to-valid
 
 ---
 
-## Evidence board vs. the target (2026-09-05)
+# Addendum 2026-09-07 — two results that close two questions
 
-🟢 supported · 🟡 partial / underpowered · 🔴 contradicted · ⬜ not measured
+> Written from
+> [`Proposal_20260905_HF_minK_mf_af_unet/DA_20260906_hf_minK_mfunet_A1_K2_K3_K5.md`](Proposal_20260905_HF_minK_mf_af_unet/DA_20260906_hf_minK_mfunet_A1_K2_K3_K5.md)
+> and
+> [`Gen14/CLOSURE_20260907_Gen14_V_A_engine_comparison_final.md`](../../logs_in_develop/Gen14/CLOSURE_20260907_Gen14_V_A_engine_comparison_final.md).
+> Nothing below was independently computed; every number is quoted, cited inline.
+
+---
+
+## Headline 9 — HardFlow at its own floor Pareto-dominates the Target ✅⚠️
+
+> **Source:** [`DA_20260906_hf_minK_mfunet_A1_K2_K3_K5`](Proposal_20260905_HF_minK_mf_af_unet/DA_20260906_hf_minK_mfunet_A1_K2_K3_K5.md) ·
+> job `25444`, `avoiding-d3il`, MeanFlow U-Net **4.0 M**, `A = 1.0`, K ∈ {2, 3, 5}, B4 parity, SLSQP
+
+### The claim
+
+**This is the strongest `avoiding-d3il` result in the corpus.** Against the pinned Target —
+DPCC K20 / aw10 / T0.5, `dpcc-c-tightened`, S&C 1.000 / 70.13 steps / 0.5534 s:
+
+| row | backbone | params | K | tier | S&C | steps | t (s) |
+|---|---|---|---|---|---|---|---|
+| **Target** `dpcc-c-tightened` | U-Net | (DPCC) | 20 | — | 1.000 | 70.13 | 0.5534 |
+| **MF-UNet `hardflow_sls-t-tightened`** | U-Net | **4.0 M** | **3** | ✅ | **1.000** | **58.88** | **0.0745** |
+| MF-UNet `hardflow_sls-t-tightened` | U-Net | 4.0 M | 5 | ✅ | 1.000 | 59.00 | 0.1304 |
+| MF-UNet `hardflow_sls-t-tightened` | U-Net | 4.0 M | 2 | ⚠️ THIN | 1.000 | 58.62 | 0.0468 |
+| MF-UNet `dpcc-t-tightened` (arm B, same job) | U-Net | 4.0 M | 2 | — | 0.958 | 59.62 | 0.0270 |
+
+**Pareto-dominant, not a trade-off:** S&C equal, **16 % fewer steps**, **7.4× lower `avg_time`**,
+both axes improving and neither degrading. **Architecture-matched** — 4.0 M U-Net against the U-Net
+baseline — so this is the strong form of the claim, not a backbone confound. It is the **first time
+in this corpus a `hardflow` row on a ✅ genuine tier has cleared the Target**, and the arm-B row at
+the same K does *not* clear it (0.958), so the guidance arm is load-bearing here.
+
+### 🔑 The mechanism: HardFlow does *more* NLP solves and costs *less*
+
+The striking result is cost, not safety. Same job, same checkpoint, same solver, same fan:
+
+| K | arm B solves/plan | arm B t | arm C solves/plan | arm C t | ratio |
+|---|---|---|---|---|---|
+| 2 | 1 | 0.0270 | 2 | 0.0468 | 1.73× *slower* |
+| 3 | 2 | 0.1478 | 3 | **0.0745** | **0.50×** |
+| 5 | 3 | 0.2268 | 5 | **0.1304** | **0.58×** |
+
+Arm C's cost is **flat per solve** (~28 ms, fit `t ≈ 0.0279·K − 0.009`); arm B's *rises* with K —
+its second and third solves cost 80–120 ms each against a first solve of ≤27 ms. The explanation is
+HardFlow's stated mechanism showing up as a cost effect: **DPCC projects the off-manifold flow
+iterate, HardFlow projects the predicted clean endpoint `x1_ref`**, which is near-feasible at every
+τ, so SLSQP converges in a few iterations instead of many.
+
+**The crossover is K = 3** — which is also the floor for a citable HardFlow row. *The K at which
+HardFlow becomes attributable and the K at which it starts paying for itself are the same K.*
+
+### The floor, confirmed at run time
+
+`n_genuine = max(K − int((1−A)·K), 1) − 1`. The eval printed `[hardflow][THIN] K=2 A=1.0:
+n_active=2, n_genuine=1` and ran `n_genuine = 2 / 4` at K = 3 / 5; `nlp_solves_total` scaled
+954 : 1437 : 2400 (1 : 1.51 : 2.52 vs the predicted 1 : 1.5 : 2.5). **K = 1 is structurally
+impossible for arm C at every `A`** — the only step is terminal, so there is no successor to react
+to the correction. No knob fixes it.
+
+### Two secondary findings from the same job
+
+- **Tightening is a bigger lever than the choice of arm.** `dpcc-t` 0.458 → `-tightened` 0.958;
+  `hardflow_sls-t` 0.583 → `-tightened` 1.000. **No untightened row clears 0.75 anywhere in the
+  run.** Any arm comparison on untightened geometry is measuring the margin, not the arm.
+- **Unguided is unusable at low K here.** `diffuser` S&C = 0.042 at K=2 and **0.000** at K=3 and 5,
+  at 1.000 success and 15–17 executed violations — the model reaches the goal and walks through the
+  halfspace every time. On this task projection is not a refinement, it is the whole constraint story.
+
+### ⚠️ Caveats — read before citing
+
+1. **24 rollouts per row** (4 seeds × 3 geometries × `n_trials = 2`). The S&C gap carrying the
+   headline (1.000 vs 0.917) is **2 rollouts** and is not significant. The **time** differences are
+   systematic and survive; the **safety** differences do not.
+2. **Not seed-matched** — seed 6 was never run (yaml said 7–10), the Target pools 5 seeds.
+3. `-c` at B=4 is the **known-bad** arm (49 % timeouts, `logs_in_develop/HF_Batch_Parity/`); its
+   114.6-step blow-up at K=5 is that pathology, not a HardFlow property. Reported, never cited.
+4. **No α-Flow arm and no `A = 0.5` reference at matched K** — so how much of arm C's advantage is
+   the *activation schedule* rather than HardFlow itself is still open.
+5. The run tag says `s6` and the run is not seed 6. Folder names are misleading; no number affected.
+
+> **Status: 🟢 the result to power next.** One run — 5 seeds, `n_trials = 20`, corrected tag —
+> stands between this and a citable headline claim.
+
+---
+
+## Headline 10 — Visual aligning is closed; MeanFlow is the flagship ✅
+
+> **Source:** [`Gen14/CLOSURE_20260907`](../../logs_in_develop/Gen14/CLOSURE_20260907_Gen14_V_A_engine_comparison_final.md) ·
+> corpus `batch_va2_20260907_141036` — 673 config rows, 14 102 rollout rows, seed 6, 10 paired contexts
+
+**Supersedes [Headline 3](#headline-3--visual-aligning-meanflow-k2-is-the-sole-survivor-) (operating point) and
+[Headline 2](#headline-2--α-flow-vs-meanflow-same-engine-different-curriculum-) (verdict).**
+
+### 10.1 The verdict table
+
+| engine | status | operating point | basis |
+|---|---|---|---|
+| **`mf`** | ✅ **flagship** | K=20, T=0.2, arm C `hardflow_sls-r` | only engine separating from `diffusion` (0/10, p = 0.0020); only zero-violation 1.000 **unfrozen** |
+| `af`-U-Net | ⛔ **closed** | — | ties `mf` at K=2, loses at K=20, flat in K, no arm reaching zv 1.000 |
+| `af`-SiT | ⛔ **abandoned** | — | 9.4 M vs 4.0 M **and** `ae0.0` ⇒ MeanFlow mislabelled |
+| `fm` | ⛔ **excluded** | — | four gates, three 🔴 |
+| `diffusion` | 🟡 **partial** | K=20 / K=100, untightened only | **tightened K=20 still pending**; K=100 competitive but 8.0× the cost |
+
+### 10.2 🔴 The ladder was wrong — the true shape is `mf` ≫ {`af`, `fm`, `diffusion`}
+
+Unguided plan, untightened `combined_5`, initial distance **0.4530 m**:
+
+| rank | engine | K | median | MIN | untouched | ms/step | vs `diffusion` K=20 |
+|---|---|---|---|---|---|---|---|
+| 1 | **`mf`** | 20 | **0.0741** | 0.0278 | **0/10** | 190.5 | **−0.3744 · 0/10 · p = 0.0020** |
+| 2 | `af`/α=0.2 | 20 | 0.3918 | 0.0110 | 2/10 | 191.3 | −0.1389 · 5/5 · p = 1.0000 |
+| 3 | `fm` | 20 | 0.4085 | 0.0394 | 4/10 | 295.8 | −0.1411 · 4/5 · p = 1.0000 |
+| 4 | `diffusion` | 20 | 0.4140 | 0.0280 | 10/30 | 298.3 | — |
+| 5 | *d3il baseline* | — | *0.4152* | *0.0091* | *1712/3884 (44 %)* | *22.7* | — |
+
+**Paired on the same contexts, `af`, `fm` and `diffusion` are mutually indistinguishable** — every
+pairwise p is 0.51–1.00. They are one cluster at 0.39–0.42 m, i.e. *"barely moved the box"* from a
+0.4530 m start, sitting alongside the d3il baseline. **Only MeanFlow separates, categorically.**
+
+> 🔴 **Do not quote `fm > diffusion`.** It is a **0.0055 m gap inside a ~0.4 m band**. The thesis
+> ladder never required it — it requires `mf` ≻ baseline and `mf` ≻ naive FM, and both hold at
+> p ≤ 0.0039. Finding this before it went into the thesis is a save, not a loss.
+
+### 10.3 The three required rungs all hold
+
+| # | required claim | status | evidence |
+|---|---|---|---|
+| 1 | MeanFlow ≻ the diffusion-DPCC baseline *(THE baseline)* | ✅ **decisive** | −0.3744 m, **0/10, p = 0.0020**, at 0.64× the per-step cost |
+| 2 | MeanFlow ≻ naive Flow Matching | ✅ **holds** | +0.216 m, **9/0, p = 0.0039**; `fm` frozen 5/10 vs `mf` 1/10 |
+| 3 | HardFlow ≻ the DPCC projector | ✅ **holds — on latency at K=10** | −324.96 ms/step, **0/9, p = 0.0039** (`-r`) |
+| — | *α-Flow ≻ MeanFlow* | ❌ fails | **never a required rung** — an optional extra arm |
+
+### 10.4 ⚠️ How to state the HardFlow claim on V_A — and how not to
+
+| | K = 10 (T=0.4) | K = 20 (T=0.2) |
+|---|---|---|
+| latency vs DPCC | 🟢 **−324.96 ms/step, 0/9, p = 0.0039** | ⚪ parity (all p = 0.18–1.00) |
+| zero-violation vs DPCC | n.s. | 🟢 10/10 vs 9/10 — **one discordant rollout, p = 1.0000** |
+| distance cost | none | none |
+
+> ✅ **Citable:** *at K=10, HardFlow-SLSQP delivers DPCC-level safety and distance at ~325 ms/step
+> less — a 0/9 sweep at p = 0.0039.*
+>
+> 🔴 **Not citable:** *"HardFlow is safer than DPCC at K=20."* That edge is one rollout. What **is**
+> true at K=20 is that `hardflow_sls-r`/`-c` are **the only arms in the entire V_A corpus reaching
+> zero-violation 1.000 with 0.00 violations while still moving the box** — `dpcc-c-dt4p0` also
+> reaches 1.000, but by freezing 10/10, which is disqualified.
+
+### 10.5 The flagship cell
+
+`mf` · `VisualMeanFlow` two-time · `unet` **4.0 M** · FiLM v1 · seed 6 · `mpc4` · H8 · K=20 · T=0.2
+(4 projector calls/replan) · arm C on SLSQP, tightened `combined_5-tightened`:
+
+| variant | MIN | median | untouched | **zero-viol** | violations | ms/step |
+|---|---|---|---|---|---|---|
+| `diffuser` (unguided) | 0.0278 | **0.0902** | 1/10 | 0.20 | 31.60 | 172.5 |
+| **`hardflow_sls-r`** ⭐ | 0.0220 | 0.1967 | 2/10 | **1.00** | **0.00** | 275.3 |
+| **`hardflow_sls-c`** ⭐ | 0.0241 | 0.3227 | 4/10 | **1.00** | **0.00** | 282.3 |
+| `dpcc-r` | 0.0329 | 0.1786 | 2/10 | 0.90 | 2.70 | 265.9 |
+| `dpcc-c` | 0.0415 | 0.3328 | 4/10 | 0.90 | 4.30 | 325.3 |
+
+The baseline's projector reaches comparable safety only at **2157.9 ms/step** (`diffusion` +
+`dpcc-r`) — **7.8× `hardflow_sls-r`**.
+
+### 10.6 What was gained by closing it
+
+Three findings that did not exist before this drop:
+
+1. **HardFlow's benefit scales with plan constraint error and is free on a high-violation field** —
+   −124.70 violations on `af` at p = 0.0078, at **zero distance cost**.
+2. **The τ = 0.850 NLP failure is engine-independent** — same non-converged SLSQP solve at call #2,
+   24/24 arm-C items, across three objectives. Engine-side is ruled out; constraint-Jacobian
+   conditioning is the remaining suspect.
+3. **A measured ~0.4 m run-to-run reproducibility floor on projected arms**, which now qualifies
+   **every MIN in every V_A DA**. MIN gaps under ~0.1 m on projected arms are noise.
+
+> **A negative result on a well-posed question is a thesis contribution.** "α-Flow, α provably live
+> at two settings, architecture-matched on the same 4.0 M U-Net, does not improve on MeanFlow and
+> does not scale with NFE — because its target bootstraps the network's own output rather than an
+> analytic derivative" is a defensible chapter section.
+
+### ⚠️ Caveats
+
+- **Seed 6 only, 10 contexts.** The whole V_A corpus is single-seed.
+- **`diffusion` has no tightened cell**, so the §10.2 ranking is a **plan-quality** ranking; the
+  constraint comparison against the baseline is incomplete until tightened `diffusion` K=20 lands.
+- The `af` K=20 loss is **weak evidence** — the sign test does not reject (perm p = 0.0469 only).
+  α-Flow is closed for being *never better across two environments and flat in K*, not for being
+  decisively beaten at one point.
+
+---
+
+## Live evidence board vs. the target (2026-09-07)
+
+🟢 supported · 🟡 partial / underpowered · 🔴 contradicted · ⛔ closed · ⬜ not measured
 
 ### Goal A — engine ladder `af_unet ≥ mf > fm > diffusion`
 
 | environment | `mf > fm` | `fm > diffusion` | `af_unet ≥ mf` |
 |---|---|---|---|
-| `avoiding-d3il` | 🟢 Pareto-dominant, 30× | 🟡 21×, needs NFE-matched restatement | ⬜ AF ran (24515), never ranked |
+| `avoiding-d3il` | 🟢 Pareto-dominant, 30× | 🟡 21×, needs NFE-matched restatement | 🔴 **α-live, never better** (H9 source job, `Report_20260903_AF_UNet`) |
+| `aligning-d3il-visual` | 🟢 **9/0, p = 0.0039** | 🔴 **fails — 0.0055 m inside a 0.4 m band** (H10) | ⛔ **closed: ties at K=2, worse at K=20** (H10) |
 | `aligning-d3il` (3-D state) | ⬜ | ⬜ | ⬜ — **no data at all** |
-| `aligning-d3il-visual` | 🟢 K2 beats K20 on every axis | 🟢 | 🔴 **AF has never been run at MF's flagship K=20** |
-| `uav-corridor` | 🔴 **regime-split**: W13 at K1–K2, L25 at K5–K20 | 🟡 | ⬜ AF was SiT 10.0 M (unmatched); `af_unet` only landed with Gen15 U6 (25434/25439) |
-| `uav-pillars` | ⬜ **unrankable** — S&C 0/2876, no `diffusion` arm exists (Headline 8) | ⬜ | ⬜ |
+| `uav-corridor` | 🔴 regime-split: W13 at K1–K2, L25 at K5–K20 | 🟡 | ⬜ `af_unet` landed with Gen15 U6, never ranked |
+| `uav-pillars` | ⬜ **unrankable** — S&C 0/2876, no `diffusion` arm (H8) | ⬜ | ⬜ |
+
+🔑 **The top rung of Goal A is now decided negatively, on two environments.** The ladder that
+survives is **`mf` ≫ {`af`, `fm`, `diffusion`}** — one winner, one cluster. Rewrite the target's
+Goal A to that shape rather than carrying a four-rung ladder the data does not support.
 
 ### Goal B — projector ladder
 
 | environment | status |
 |---|---|
-| `avoiding-d3il`, matched threshold + SLSQP | 🟢 **HF `-t` Pareto-dominates at K=20** (n = 6, seed 6) |
-| `aligning-d3il-visual`, K20/T0.2 | 🟡 3/3 constraints, 2/3 strictly better, **but *p* floor is 0.125** |
-| `uav-corridor` | 🟡 win switches on at K≥5; 1 seed, pilot, pre-honest-geometry |
+| `avoiding-d3il`, `A = 1.0`, K ∈ {3, 5}, SLSQP, B4 | 🟢 **HF `-t` Pareto-dominates the Target** — 16 % fewer steps, 7.4× cheaper (H9); ⚠️ 24 rollouts, no seed 6 |
+| `avoiding-d3il`, `A = 0.5`, K=20 | 🟢 HF `-t` Pareto-dominates DPCC (n = 6, seed 6) |
+| `aligning-d3il-visual`, K=10 / T=0.4 | 🟢 **−325 ms/step, 0/9, p = 0.0039** at equal safety and distance (H10) |
+| `aligning-d3il-visual`, K=20 / T=0.2 | 🟡 only arms reaching zv 1.000 unfrozen — but the *margin* over DPCC is one rollout |
+| `uav-corridor` | 🟡 win switches on at K ≥ 5; 1 seed, pilot, pre-honest-geometry |
 
 ### Goal C — selection machinery
 
 | claim | status |
 |---|---|
 | `B=1` → three rules identical → 3× waste | 🟢 **exact** |
-| `-c` is deletable | 🟡 strongly directional |
-| `-t` as sole default | 🟡 directional |
+| `-c` is deletable | 🟢 **strengthened** — known-bad at B=4 (49 % timeouts); 114.6-step blow-up at K=5 (H9) |
+| a single default rule | ⚠️ **task-dependent, do not over-generalise** — `-t` is the rule that works at B=4 on `avoiding`; `-r` is the flagship on V_A |
 
-### The three real gaps
+### The four real gaps
 
-1. **`af_unet ≥ mf` is unproven everywhere** — the top rung of the headline ladder. Fix: AF at MF's exact flagship (unet, FiLM v1, K=20, T=0.2, seed 6, 26.4 M), **`diffuser` arm first** — an arm that loses unprojected is never ranked projected.
-2. **Every projector result is underpowered** — Goal B and Goal C both bottleneck on the same run: seeds 7–10, arm C, `mf`, K=10 and K=20.
-3. **`aligning-d3il` 3-D state has no data** — the modality-transfer argument claims state→visual on *aligning*, but aligning was only ever measured visually.
+1. **H9 is underpowered** — 24 rollouts, no seed 6. One run fixes it and it is the strongest result
+   in the corpus. **Highest value per GPU-hour of anything on this list.**
+2. **Tightened `diffusion` K=20 on V_A** — the funnel's binding gap. Until it lands there is no
+   complete constraint comparison against the DPCC baseline, and the H10 ranking stays
+   plan-quality-only.
+3. **UAV cannot rank anything** — S&C 0/2876 on `pillars`, no `diffusion` arm, `*_hg` scenes never
+   re-run with all three engines. The target's UAV kill criterion is live.
+4. **`aligning-d3il` 3-D state has no data** — the modality-transfer argument claims state→visual on
+   *aligning*, but aligning was only ever measured visually.
 
-### Run queue implied by the target
+### Run queue
 
 | # | run | closes |
 |---|---|---|
-| 1 | AF U-Net at MF's flagship, VA, `diffuser` arm | gap 1, Stage 1 |
-| 2 | if #1 wins: same config through DPCC + HF arms | gap 1, Stage 2 |
-| 3 | **Seeds 7–10, arm C, `mf`, K=10 + K=20, VA** | gap 2 — Goal B *and* Goal C |
-| 4 | `af_unet` UAV (25434/25439) ranked vs `mf`/`fm` on `pillars_hg` | Goal A row 4 |
-| 5 | UAV `*_hg` K-sweep, **all three engines re-run with Fix_16**, ≥3 seeds | UAV S&C → paper grade; makes UAV rankable at all |
-| 6 | `aligning-d3il` 3-D state, four-engine ladder | gap 3 |
+| 1 | **Power H9** — MF-UNet `A=1.0`, K ∈ {2,3,5}, seeds 6–10, `n_trials = 20`, corrected tag | gap 1 — the flagship paper number |
+| 2 | **Tightened `diffusion` K=20**, V_A | gap 2 |
+| 3 | The `A = 0.5` reference ladder at matched K (proposal §4.3) | separates the activation schedule from HardFlow itself |
+| 4 | UAV `*_hg` K-sweep, **all three engines with Fix_16**, ≥ 3 seeds | gap 3 — makes UAV rankable at all |
+| 5 | Repeat one projected `mf` V_A cell 3× | pins the ~0.4 m reproducibility floor qualifying every MIN |
+| 6 | Export `solve_ms` + SLSQP iteration counts per arm; give `dpcc-*` the NLP counters arm C has | turns H9's *inferred* mechanism into a measured one |
+| 7 | `aligning-d3il` 3-D state, engine ladder | gap 4 |
+| 8 | τ = 0.850 — check constraint-Jacobian conditioning | the one open bug (engine-side already ruled out) |
 
+**Dropped from the queue** (previously listed, now answered or closed): project the K=100 V_A arms ·
+constant-α training run · α-Flow at MF's flagship · `af_unet` re-entry at `α_end ∈ {0.4, 0.6}`.
 
+---
 
-# DA — HardFlow's minimum K, run: MeanFlow-UNet at `A = 1.0`, K ∈ {2, 3, 5} on `avoiding-d3il`
+# Folded-in user notes
 
-...
+*Kept as an audit trail of what was raised and where it landed.*
 
-GOOD REUSLT
+**1. "The pillars results are good"** →
+[`Gen15/DA/DA_20260830_pillars_K_sweep_fm_mf_af.md`](../../logs_in_develop/Gen15/DA/DA_20260830_pillars_K_sweep_fm_mf_af.md)
 
-MAYBE CONSIDER USING THIS AS A FLAGSHIP FOR THE PAPER!!!
+> ✅ **Folded in → [Headline 8](#headline-8--uav-pillars-the-engine-was-fixed-the-scene-still-is-not-).**
+> Split in two, because the halves point opposite ways: **8a** the Fix_16 A/B is a clean
+> methodological win (100 % → 0 % divergence abort, 6.50 m → 0.62 m); **8b** the scene is still
+> unrankable (S&C 0/2876, no `diffusion` arm).
+
+**2. "HF beat DPCC in d3il avoiding"** →
+[`aggregated_hf_nlp_backend/DA_20260830_ipopt_vs_slsqp_fmv3ode_K10_K20.md`](../../logs_in_develop/aggregated_hf_nlp_backend/DA_20260830_ipopt_vs_slsqp_fmv3ode_K10_K20.md)
+
+> ✅ **Confirmed → [Headline 6a](#6a--avoiding-state-hardflow-slsqp-pareto-dominates-at-k20-),
+> then extended by [Headline 9](#headline-9--hardflow-at-its-own-floor-pareto-dominates-the-target-).**
+> You were right, and it superseded this directory's standing "no" — which is why
+> `RESPONSE_20260826` and `AUDIT_20260827` are now `outdated_*`.
+
+**3. "GOOD RESULT — maybe consider using this as a flagship for the paper!!!"** →
+[`Proposal_20260905_HF_minK_mf_af_unet/DA_20260906_hf_minK_mfunet_A1_K2_K3_K5.md`](Proposal_20260905_HF_minK_mf_af_unet/DA_20260906_hf_minK_mfunet_A1_K2_K3_K5.md)
+
+> ✅ **Folded in → [Headline 9](#headline-9--hardflow-at-its-own-floor-pareto-dominates-the-target-).**
+> **Agreed on the flagship, with one condition.** It is the only row in the corpus that
+> Pareto-dominates the Target on an architecture-matched backbone at a ✅ genuine tier — that is
+> exactly what a flagship needs. The condition is **power**: 24 rollouts and no seed 6. The *time*
+> axis (7.4×) is systematic and will survive; the *safety* axis (1.000 vs 0.917 = 2 rollouts) will
+> not. Run queue #1 before it goes in a paper.
+
+**4. "Stop exploring `af_unet` in V_A"** →
+[`Gen14/CLOSURE_20260907`](../../logs_in_develop/Gen14/CLOSURE_20260907_Gen14_V_A_engine_comparison_final.md)
+
+> ✅ **Applied → [Headline 10](#headline-10--visual-aligning-is-closed-meanflow-is-the-flagship-).**
+> `af`-U-Net is **closed** and `af`-SiT **abandoned**. The CLOSURE §7 leaves one optional re-entry —
+> `α_end ∈ {0.4, 0.6}` at K=2, ~24 ms/step — and per this instruction it is **parked, not queued**.
+> It is off the run queue above.
+
+---
+
+*All numbers sourced from the curated reports in this directory and the cited `logs_in_develop/`
+DAs. No number was independently computed for this notebook. See the individual reports for
+methodology, statistics, and reproduction instructions.*

@@ -299,7 +299,7 @@ The headline result of this round is **FM, not the flow-family extensions.** The
 - [ ] **AlphaFlow K5+** — only K1/K2 exist; and AF needs a UNet run before any claim is architecture-matched.
 - [ ] **Investigate AF K2 + `dpcc-c*`** (S&C 0.16, n_steps 184).
 - [x] ~~**Confirm `hardflow_new` r/c/t degeneracy** is intended.~~ → **partly answered (§5b):** the flag *does* select a candidate rule (`random` / `minimum_projection_cost` / `temporal_consistency`); at K=2 all three pick the same candidate, so the variants collapse. Re-open at **K≥5**, where there is more than one post-threshold step to choose at, to confirm they separate.
-- [ ] Supersede `SNAPSHOT_20260813_avoiding_d3il_vs_DPCC_baseline.md` — its headline row (`hardflow` K1) does not survive at n=20.
+- [ ] Supersede `outdated_SNAPSHOT_20260813_avoiding_d3il_vs_DPCC_baseline.md` — its headline row (`hardflow` K1) does not survive at n=20.
 
 **New (2026-08-25):**
 - [ ] **FM K20 `both-hard`, seeds 8–10** — job 25006 hit the 24 h wall. Resubmit `both-hard` only; ~10 h. Until then the FM K20 `worst` column is a TL/TR minimum.

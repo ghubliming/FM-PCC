@@ -1,9 +1,22 @@
 # `uav-*` (Gen15 UAV Mix-ML) — env status, per projector, constraint-checked · **PILOT**
 
+> # 🗄️ OUTDATED — 2026-09-07
+>
+> Self-declared PILOT (one seed, n = 10, one usable scene), and **pre-Fix_16 / pre-honest-geometry**.
+> Every `pillars` row in it was taken while the engine diverged 100 % of the time, and every scene
+> slack figure predates the 2026-09-04 audit that measured the slack below policy tracking error.
+>
+> **Replaced by** [`NOTEBOOK_20260829_key_headlines.md`](NOTEBOOK_20260829_key_headlines.md)
+> Headline 8 ·
+> [`Gen15/DA/DA_20260903_fix16_AB_mf_pillars.md`](../../logs_in_develop/Gen15/DA/DA_20260903_fix16_AB_mf_pillars.md).
+> **No replacement whole-env UAV snapshot exists yet** — that is an open item, not a finished doc.
+
+---
+
 > 🚧 **PILOT / UNDER CONSTRUCTION — 2026-08-25.** This is the first whole-env pass over the UAV
 > tree. It is written to the same contract as
-> [`SNAPSHOT_20260823_visual_aligning_env_status.md`](SNAPSHOT_20260823_visual_aligning_env_status.md)
-> and [`SNAPSHOT_20260813_avoiding_d3il_vs_DPCC_baseline.md`](SNAPSHOT_20260813_avoiding_d3il_vs_DPCC_baseline.md),
+> [`outdated_SNAPSHOT_20260823_visual_aligning_env_status.md`](outdated_SNAPSHOT_20260823_visual_aligning_env_status.md)
+> and [`outdated_SNAPSHOT_20260813_avoiding_d3il_vs_DPCC_baseline.md`](outdated_SNAPSHOT_20260813_avoiding_d3il_vs_DPCC_baseline.md),
 > but the underlying batch is **one seed, n = 10 per cell, one usable scene**. Nothing here is a
 > paper number. Regenerated as new batches land; use the newest `SNAPSHOT_<date>_uav_*` file.
 

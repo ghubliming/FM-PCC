@@ -1,5 +1,22 @@
 # K (sampler steps) sweep — visual-aligning, distance axis
 
+> # 🗄️ OUTDATED — 2026-09-07
+>
+> The V_A K-ladder is now settled with α-live α-Flow checkpoints and a paired-statistics treatment.
+> Its `AlphaFlow` row (*"reversed — low K better, p = 0.008"*) predates the `AFAFend0p2` /
+> `AFAFend0p05` checkpoints (trained 2026-09-01→03), and its source DA declares itself
+> *"internal dev log, not a paper DA … not publishable"*.
+>
+> **Replaced by**
+> [`Gen14/CLOSURE_20260907_Gen14_V_A_engine_comparison_final.md`](../../logs_in_develop/Gen14/CLOSURE_20260907_Gen14_V_A_engine_comparison_final.md)
+> §1 (ranking) and §5.1 (the per-engine K ladders).
+>
+> **Still true and still worth carrying:** the two caveats at the bottom — the d3il vision baseline
+> does not move the box, and `mean_dist_per_rollout` is not a distance. Both are now ground rules in
+> the CLOSURE.
+
+---
+
 **Date:** 2026-08-26 · **Task:** aligning-d3il-visual · **Batch:** `temp/2608/batch_va2_20260826_142750`
 
 📄 **Full analysis:**

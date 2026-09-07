@@ -1,5 +1,24 @@
 # Visual aligning: a three-stage funnel — distance, then constraints, then time
 
+> # 🗄️ OUTDATED — 2026-09-07
+>
+> **Its champion is no longer the flagship.** This funnel crowned **`mf` K=2**; the operating point
+> is now **`mf` K=20, T=0.2, arm C `hardflow_sls-r`**. Two things moved: the K10-vs-K20 funnel found
+> K=20 wins once Stage 2 is applied in the strict order, and the K=20/T=0.2 cell — the first
+> non-degenerate arm-C cell on this task — did not exist when this report was written. The entrant
+> list also has **no `af`**.
+>
+> **Replaced by**
+> [`Gen14/CLOSURE_20260907_Gen14_V_A_engine_comparison_final.md`](../../../logs_in_develop/Gen14/CLOSURE_20260907_Gen14_V_A_engine_comparison_final.md)
+> (final ranking + flagship) and
+> [`Gen14/DA_20260902_Gen14_three_stage_funnel_K10_vs_K20.md`](../../../logs_in_develop/Gen14/DA_20260902_Gen14_three_stage_funnel_K10_vs_K20.md)
+> (the K verdict).
+>
+> **The three-stage methodology itself is not outdated** — distance → constraints → time is still
+> the house standard, and the figures here still illustrate it. The *rankings* are stale.
+
+---
+
 **Task** `aligning-d3il-visual` (vision) · **Date** 2026-08-29
 **Data** `temp/2508/batch_va2_20260823_135156/per_rollout_detail.csv` · **Figures** `make_figs.py`
 **Entrants** the three Gen14 `mix_visual_aligning` engines on the matched **UNet FiLM v1** bone, each
@@ -350,8 +369,8 @@ only. `wall_hours()` builds §2.2's table from the same CSV — measured `avg_ti
 so "hours needed" is not an estimate from job logs.
 
 Companions: whole-env cell-by-cell status
-[`../SNAPSHOT_20260823_visual_aligning_env_status.md`](../SNAPSHOT_20260823_visual_aligning_env_status.md) ·
-K sweep [`../DA_20260826_K_sampler_steps_visual_aligning.md`](../DA_20260826_K_sampler_steps_visual_aligning.md) ·
+[`../outdated_SNAPSHOT_20260823_visual_aligning_env_status.md`](../outdated_SNAPSHOT_20260823_visual_aligning_env_status.md) ·
+K sweep [`../outdated_DA_20260826_K_sampler_steps_visual_aligning.md`](../outdated_DA_20260826_K_sampler_steps_visual_aligning.md) ·
 arm B vs arm C [`../../../logs_in_develop/Gen14/U7/DA_20260823_hardflow_vs_dpcc_visual_aligning.md`](../../../logs_in_develop/Gen14/U7/DA_20260823_hardflow_vs_dpcc_visual_aligning.md).
 
 Statistics are pure Python (no SciPy in this container): exact two-sided sign test, exact McNemar,

@@ -1,5 +1,20 @@
 # `avoiding-d3il` — configurations beating the DPCC baseline
 
+> # 🗄️ OUTDATED — 2026-09-07
+>
+> Superseded on its own terms — the header already says *"use the newest `SNAPSHOT_<date>_*` file"*.
+> Every cell is the **`n_trials = 2`** tier, which
+> [`DA_20260819_DPCC_K20_aw10_ntrials20_vs_ntrials2.md`](DA_20260819_DPCC_K20_aw10_ntrials20_vs_ntrials2.md)
+> then showed reads `1.00` where n=20 reads 0.92–0.97.
+>
+> **Replaced by**
+> [`DA_20260819_ntrials20_DPCC_vs_FM_vs_MeanFlow_vs_AlphaFlow.md`](DA_20260819_ntrials20_DPCC_vs_FM_vs_MeanFlow_vs_AlphaFlow.md)
+> (the n=20 cross-family DA) and
+> [`Proposal_20260905_HF_minK_mf_af_unet/DA_20260906_hf_minK_mfunet_A1_K2_K3_K5.md`](Proposal_20260905_HF_minK_mf_af_unet/DA_20260906_hf_minK_mfunet_A1_K2_K3_K5.md)
+> (the current arm-C ladder on the same task).
+
+---
+
 > **SNAPSHOT 2026-08-13.** Regenerated as new batches land; numbers change. Use the newest
 > `SNAPSHOT_<date>_*` file in this folder.
 
