@@ -4,13 +4,18 @@ You are working inside the repository root.
 
 ## Objective
 
-Update:
+1. Update:
 
-`FM-PCC/logs_in_develop/MASTER_TEST_HISTORY.md`
+   `FM-PCC/logs_in_develop/MASTER_TEST_HISTORY.md`
 
-This file is a chronological daily development history.
+   This file is a chronological daily development history.
 
-Your task is to append new history entries starting from the current end of the file. Do NOT rewrite existing history under any circumstances unless the user explicitly requests modifications to existing content. Preserve all existing content.
+   Your task is to append new history entries starting from the current end of the file. Do NOT rewrite existing history under any circumstances unless the user explicitly requests modifications to existing content. Preserve all existing content.
+
+2. Maintain Daily Claude History Backup:
+
+   Overwrite and update the latest Claude history into:
+   `/workspaces/FM-PCC/.claude_history_backup/AUTO_BACKUP`
 
 ---
 
@@ -160,9 +165,19 @@ Maintain chronological ordering.
 
 ---
 
+## Claude History Auto-Backup
+
+Run the following script to overwrite and refresh the Claude history backup (no LLM reasoning required):
+
+```bash
+bash /workspaces/FM-PCC/.claude_history_backup/AUTO_BACKUP/auto_backup.sh
+```
+
+---
+
 ## Cleanup Requirements
 
-After successfully updating the history file, you MUST explicitly delete any temporary files, intermediate text dumps, or processing scripts you created during your research and analysis steps to keep the workspace clean.
+After successfully updating the history file and backing up Claude history, you MUST explicitly delete any temporary files, intermediate text dumps, or processing scripts you created during your research and analysis steps to keep the workspace clean.
 
 ---
 

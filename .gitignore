@@ -41,3 +41,6 @@ scratch/
 
 # Gen11 E6 — ignore all root-level data/ (curated UAV FM dataset, regenerable from raw collect)
 /data/
+
+# Local Codex history and state backups (includes credentials)
+/.codex_history_backup/

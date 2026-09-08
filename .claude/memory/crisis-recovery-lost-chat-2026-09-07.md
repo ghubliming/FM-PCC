@@ -19,8 +19,11 @@ survived — 3 commits that day — only the reasoning and queue state went with
 **The two chats worth resuming** (session files inside that backup):
 - `98b47af3-7e9c-4caf-beec-a0dee7db2b2d.jsonl` — UAV/Gen15 `af_unet` + K-sweeps + HF-SLSQP +
   `s_curve`; live until the backup's final second, dying words *"JUST REMEMNR THE NUMBER INEX, Wait
-  for reustls"*. Its one still-open thread is **slurm 25514** (mjpc vs pid controller) — no results
-  in `temp/` yet.
+  for reustls"*. Its one still-open thread is **slurm 25514** (mjpc vs pid controller): resolved on
+  2026-09-08 — the job **never started** (`PENDING`, `QOSMaxCpuPerUserLimit`, blocked by llim's own
+  25502/25503), so there are no results to look for. Current ledger for that whole job wave:
+  `logs_in_develop/Gen15/U10/RUNSTATUS_20260908_wave_25486_25514_status.md`, which supersedes the
+  dossier's §5 mission table.
 - `05aa2a33-71ca-4f2c-8195-6954000e2d0e.jsonl` — the Master's-thesis writing chat (the user's
   *"matina writing"*); on Sep 7 it produced `Writing/Working_Space/v1/thesis_v1.tex`.
   See [[master-thesis-writing-tum]].
