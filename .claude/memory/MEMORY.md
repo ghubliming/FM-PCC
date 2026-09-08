@@ -19,3 +19,4 @@
 - [HardFlow low-K degeneracy](hardflow-low-K-degeneracy.md) — K1/K2 at A=0.5 run NO HardFlow math; tag rows ✅/❌ and build claims on ✅ only
 - [Never write URLs / publish artifacts unless asked](no-unrequested-urls-or-artifacts.md) — deliver repo files + terminal summary; no links by default
 - [Master's thesis writing (TUM I6)](master-thesis-writing-tum.md) — template is read-only; work in Writing/Working_Space, notes in Writing/Auxiliary; papers in aux_repo/PAPERS
+- [🚨 GATED: 2026-09-07 lost-history recovery](crisis-recovery-lost-chat-2026-09-07.md) — open the dossier ONLY when the user explicitly says "resume from the Claude Code crisis" / "continue the lost chat"; Sep-7 transcripts unrecoverable, 2 key sessions + a chat↔MD↔topic bridge table located in the 09-06 backup

@@ -5772,3 +5772,135 @@ Comprehensive data analysis of the MPC candidate fan ($B=4$ vs $B=1$) on `avoidi
    - **Diagnostic Telemetry**: Added eval-time breadcrumbs reporting actual resolved step, backbone parameter size, and $\alpha(\text{step})$ from train config, logging an explicit warning if α=0.
    - **Gate G9**: Implemented static verification in `mix_uav_test/gates_mix_uav.py` asserting engine registry compliance, train/plan block synchronization, path distinctness, and rejection of invalid knob values.
 
+***
+
+## Gen15 U7: Honest Scene Geometry (`_hg`), Slack-Aware Feasibility Gate & `geo_tag` Collision Isolation (September 4, 2026)
+
+**Keywords**: Gen15, UAV Mix-ML, honest geometry, pillars_hg, corridor_hg, s_curve_hg, slack-aware feasibility gate, geo_tag_suffix, planning_inflation, CHANGELOG_20260904_honest_geometry_and_slack_gate.md, commit 8648c41a.
+
+1. **Root Cause: Geometric Infeasibility by Construction**:
+   - Comprehensive audit in `DA_20260903_fix16_AB_mf_pillars.md` (Part II §II.3) demonstrated that benchmark scenes provided less physical clearance around their expert demonstration routes than the policy's best measured tracking error (`track_err_mean` $\approx 0.30–0.49\text{ m}$).
+   - *The Extreme*: `corridor` L/R routes ($y = \pm 0.12\text{ m}$) against the planning band $[-0.12, +0.12]\text{ m}$ (derived from wall inner face at $0.45\text{ m}$ minus total margin $0.33\text{ m}$) left **$0.000\text{ m}$ of slack**, making constraint satisfaction provably impossible even for a policy reproducing expert routes perfectly.
+   - `pillars` outer channel left $0.060\text{ m}$ slack vs $0.336\text{ m}$ tracking error ($5.6\times$ too tight); `s_curve` left $0.120\text{ m}$ vs $0.302\text{ m}$ ($2.5\times$ too tight). The historical 0/2876 success+constraints metric on `pillars` was primarily an arena boundary artifact.
+
+2. **Honest Geometry Configuration (`pillars_hg`, `corridor_hg`, `s_curve_hg`)**:
+   - Preserved all physical MuJoCo XML geoms (obstacle radii, wall placements, altitude slab) untouched, while correcting purely synthetic planning boundaries in `config/uav_projection.yaml`:
+     - **`pillars_hg`**: Widened the invented workspace bounding box from $y \in [-1.5, 1.5]$ to $[-2.5, 2.5]\text{ m}$ and $x \in [-3.6, 3.6]$ to $[-4.0, 4.0]\text{ m}$. In `scene_pillars.xml` there are no arena walls (the floor is a $10 \times 10\text{ m}$ plane); the $y = \pm 1.5\text{ m}$ boundary was an artificial limit sitting only $0.06\text{ m}$ outside the expert trajectory.
+     - **`corridor_hg`**: Added `x_active: [-2.0, 2.0]` to halfspace constraints matching physical wall length in `scene_corridor.xml`, eliminating infinite halfspaces that penalized drone approach and departure outside the corridor.
+     - **Decoupled Planning Inflation**: Introduced `planning_inflation: {r_drone: 0.31, margin_base: 0.0}` across all three scenes, removing the arbitrary $2\text{ cm}$ margin pad from the projector while keeping `inflation: {r_drone: 0.31, margin_base: 0.02}` for collision scoring (`_exec_constraint_violations`). This loosens the planner's tube without altering the physical evaluation yardstick.
+
+3. **Slack-Aware Bisection Feasibility Gate**:
+   - Replaced the naive penetration check in `_warn_expert_route_infeasibility` (`mix_uav_test/eval_mix_uav.py`) with a bisection probe (`_slack_m`) calculating exact spatial displacement allowed before violating planning constraints.
+   - Emits an explicit `NEAR-ZERO SLACK` warning when slack $< \text{FMPCC\_GEO\_SLACK\_PROBE\_M}$ (default $0.30\text{ m}$), preventing zero-slack infeasible scenes from silently reporting as healthy.
+
+4. **`geo_tag_suffix` Collision Isolation**:
+   - Repaired a latent defect in `_apply_geo_entry`: `geo_tag` previously only encoded active `constraint_types`, omitting the geometry entry name. Two configurations testing the same scene with identical constraint families (the exact signature of an A/B geometry test) collided into the same output path, silently overwriting earlier evaluations.
+   - Added opt-in `geo_tag_suffix` (e.g. `_hg`), guaranteeing deterministic output folder isolation without altering legacy baseline tags.
+
+***
+
+## Gen14: Visual Aligning Alpha-Floor Evaluation (`MIX_AF_ALPHA_END`) & Attack Plan Formalization (September 4, 2026)
+
+**Keywords**: Gen14, visual aligning, alpha floor, MIX_AF_ALPHA_END, MIX_EPOCH, latest checkpoint, PLAN_20260904, DA_20260904_Gen14_U12_alpha_floor_and_latest_checkpoint.md, commit 8648c41a.
+
+1. **First Empirical Test of U12 Recipe on Visual Aligning (Jobs 25372/25373 & 25376/25377)**:
+   - Evaluated the ported α-floor recipe on `aligning-d3il-visual` (seed 6, matched 26.4M visual U-Net with FiLM v1, $K=2$, 10 paired contexts) at `MIX_EPOCH=latest`: $\alpha_{\text{end}} = 0.2$ and $\alpha_{\text{end}} = 0.05$.
+   - Verified all four U12 architectural gates: final checkpoint `state_100000.pt` persisted and loaded, eval-time $\alpha(\text{step})$ read back as $0.2000$ and $0.0500$, `discrete_frac` confirmed active bootstrap branch execution, and results paths routed to `_EPlatest`.
+
+2. **Empirical Finding: The Alpha Floor Trades Task Progress for Static Freezing**:
+   - The α floor failed to improve task performance: on progress ($\text{dist}_{\text{init}} - \text{dist}_{\text{final}}$), ranking was $\text{mf} > \text{af} > \text{fm}$ rather than the hypothesised $\text{af} > \text{mf} > \text{fm}$.
+   - While $\alpha_{\text{end}} = 0.05$ showed high apparent constraint satisfaction ($0\text{-viol} = 0.70$ vs $\text{mf}$'s $0.10$), it did so solely by freezing the box near its initial position (mean final distance $0.449\text{ m}$ vs initial $0.453\text{ m}$, $4/10$ untouched contexts). Every arm, including the pinned DPCC target, scored $\text{S\&C} = 0.000$.
+
+3. **Attack Plan Formalization (`PLAN_20260904`)**:
+   - Formalized pre-registered attack plan targeting MeanFlow's flagship ($K=20, T=0.2$, seed 6, 26.4M U-Net): defined Stage 1 unguided ratio target ($\le 0.267$ mean / $0.178$ median $\times$ start distance, $0\text{-viol} \ge 0.150$) with strict parameter-matched architecture freezes.
+
+***
+
+## HardFlow Minimum K Theoretical Derivation & UAV AF-UNet Live Bootstrap Verification (September 5, 2026)
+
+**Keywords**: HardFlow, minimum K, activation threshold, n_genuine, avoiding-d3il, Gen15 U6, UAV Mix-ML, live bootstrap, RUNSTATUS_20260905, Proposal_20260905_HF_minK_mf_af_unet, commit 963faed0.
+
+1. **Mathematical Derivation of HardFlow's Minimum K Floor**:
+   - Formally proved that the NLP solver backend (`slsqp` vs `ipopt`) does not alter the activation floor. HardFlow execution is governed by $k \ge \lfloor(1-A)K\rfloor \lor k = K-1$.
+   - With genuine ODE steps defined as $n_{\text{genuine}} = \max(K - \lfloor(1-A)K\rfloor, 1) - 1$:
+     - At $K=1$, lookahead is identically 0, pull-back gain $\tau^+ = 1$ snaps to full projection, and no subsequent ODE steps exist to react to corrections ($n_{\text{genuine}} = 0$, degenerating to sample-then-project).
+     - At default $A=0.5$: first active solve occurs at $K=3$ (thin, $n_{\text{genuine}}=1$, lookahead 0.333), and first citable ladder with $n_{\text{genuine}} \ge 2$ requires $K=5$.
+     - At aggressive $A=1.0$: absolute floor is $K=2$ (thin, $n_{\text{genuine}}=1$, lookahead 0.500), and first citable ladder is $K=3$ ($n_{\text{genuine}}=2$, lookaheads 0.667 and 0.333).
+   - Proved that existing batches in `temp/0309` contained only Gen12 naive-FM HardFlow rows, confirming that MeanFlow-UNet and AlphaFlow-UNet arm-C cells on `avoiding-d3il` were completely unpopulated.
+
+2. **Gen15 U6 UAV AF-UNet Live Bootstrap Verification (Job 25393/25394)**:
+   - Verified end-to-end execution of U6 on `pillars`: 3.97M parameter U-Net confirmed, $\alpha=0.2$ sustained across epochs 96–99, `discrete_frac` measured at $0.51$, and checkpoint `_EPlatest` resolved.
+   - Audited evaluator tagging: revealed that pre-U6 results tags lacked `_EP<sel>` path tokens, risking checkpoint selection ambiguity. Formulated resubmission plan for clean matched comparisons.
+
+***
+
+## Headless TQDM Patch, Gen15 U7 Honest Geometry Breakthrough, and HardFlow Min-K Pareto-Dominance (September 6, 2026)
+
+**Keywords**: Gen15 U8, tqdm patch, sbatch logging, Gen15 U7, pillars, corridor, honest geometry validation, avoiding-d3il, HardFlow minimum K, Pareto dominance, Gen14 live alpha, Gen15 U9, UAV_MIX_VARIANTS, commits 0c83b5a0 & 530eac7d.
+
+1. **Training Log Hygiene: Headless Non-Interactive TQDM Patch (Commit 0c83b5a0)**:
+   - Discovered that unclosed tqdm instances emit carriage-return frames on construction and garbage collection (`__del__`), injecting 200 escape sequences per 100 epochs into non-TTY sbatch logs and breaking log parsing.
+   - Implemented `_TQDM_OFF = os.environ.get('FMPCC_TQDM', '') != '1' and not sys.stderr.isatty()` across all 6 trainer modules (`mix_uav`, `mix_visual_aligning`, `mix_visual_avoiding` standard and two-time). Emits clean, single-line greppable telemetry via `_fmt_logs()` while retaining interactive progress bars when stderr is a TTY.
+
+2. **Gen15 U7 Empirical Results: Honest Geometry Unlocks `pillars` and Solves `corridor` (Jobs 25419–25424)**:
+   - `pillars` S&C unlocked from **$0.00 \rightarrow \mathbf{0.70}$** (`mf`, `dpcc-r`, $K=2$). Proved the historical 0/2876 zero result was completely an artifact of the artificial $y=\pm 1.5\text{ m}$ arena box slicing through the expert path.
+   - `corridor` **solved**: S&C reached **$1.00$** on 17 of 20 arm $\times$ variant cells with 0 violations and 0 aborts.
+   - *Definitive Control Proof on Unguided Policy*: On `pillars/mf/diffuser` (projection OFF), physical flight trajectory was mathematically invariant between old and new geometry (tracking error $0.37\text{ m}$, goal distance $0.66\text{ m}$, success $0.30$), yet S&C jumped from $0.00 \rightarrow 0.30$ and executed violations collapsed from $325.7 \rightarrow 139.0$.
+   - `s_curve` remained constrained by physical channel width ($0.90\text{ m}$ physical clearance vs $0.62\text{ m}$ drone diameter).
+
+3. **HardFlow Minimum K Empirical Validation on `avoiding-d3il` (Job 25444)**:
+   - Executed MeanFlow-UNet with arm C at $A=1.0$ across $K \in \{2, 3, 5\}$ (24 rollouts/row, seeds 7–10, 3 halfspaces):
+     - Runtime telemetry matched theoretical predictions exactly: $K=2$ reported `[THIN] n_genuine=1`, while $K=3$ ($n_{\text{genuine}}=2$) and $K=5$ ($n_{\text{genuine}}=4$) operated as full genuine HardFlow.
+     - **Headline Pareto Dominance over Baseline Target**: Against the pinned DPCC baseline (K20/aw10/T0.5 `dpcc-c-tightened`: S&C $1.000$, $70.13$ steps, $0.5534\text{ s}$), HardFlow $K=3$ achieved **S&C = 1.000 with 0 violations, 16% fewer steps (59.0), and 7.4× lower latency (0.0745 s/step)**.
+     - At matched $K$, arm C executed more NLP solves than arm B yet achieved $\approx 2\times$ lower latency ($K=3$: $0.0745$ vs $0.1478\text{ s}$; $K=5$: $0.1304$ vs $0.2268\text{ s}$).
+
+4. **Gen14 Live Alpha-Flow Evaluation at Flagship K=20 / T=0.2 (Jobs 25416 & 25417)**:
+   - Confirmed live α at $0.05$ and $0.20$ on 26.4M visual U-Net at 100k steps.
+   - Performance was invariant/flat across NFE; `af` solved only 2 distinct contexts out of 10 vs `mf`'s 7; exhibited unique push-away mode ($2/10$ and $4/10$ rollouts ending further than start). `mf` strictly dominated on distance and safety.
+
+5. **Gen15 U9: `UAV_MIX_VARIANTS` Variant Filtering Knob (Commit 530eac7d)**:
+   - Introduced `UAV_MIX_VARIANTS` env var to filter evaluated variants per-job, reducing evaluation load from 17 to 8 variants (53% reduction) and eliminating SLURM 24h wall-clock timeouts at $K=5$.
+   - Added fail-fast validation and hard constraint ensuring `hardflow_*` cannot be run without matched `dpcc-*` at the same K.
+
+***
+
+## Gen15 U10 MJPC Fix, AF Degradation Discovery, Gen14 Gate 1/4 Closure & Unified Rebuild Architecture (September 7, 2026)
+
+**Keywords**: Gen15 U10, UAV_MIX_CONTROLLER, mjpc env detection bug, Gen15 AF-UNet K-sweep, NFE degradation, Gen14 Gate 1 KILL, Gen14 Gate 4 arm C, CLOSURE_20260907, unified rebuild, CONCEPT_unified_rebuild.md, commits 9bda071c, d6e2a857, fd594d8d.
+
+1. **Gen15 U10: Repair of Latent MJPC Environment Bug & Controller Override (Commit 9bda071c)**:
+   - Fixed latent bug in `Slurm_Codes/sbatch/uav_mix/eval_mix_uav.sh` where controller environment selection grepped Gen11's `config/uav.py` instead of Gen15's `config/uav_mix.py`, causing `mjpc` runs to launch under `FMPCC` instead of `FMPCC_mjx` (MuJoCo 3/MJX).
+   - Added `UAV_MIX_CONTROLLER` per-job CLI/env override (`pid`, `pid_stopgo`, `pid_const_v`, `mjpc`) with folder path isolation (`_mpc4_<controller>_T0.5`).
+
+2. **Gen15 UAV AF-UNet K-Sweep Evaluation (`DA_20260907`)**:
+   - Evaluated live α-Flow U-Net on `s_curve` under honest geometry across $K \in \{1, 2, 5\}$ (Jobs 25440–25443):
+     - Confirmed mechanical integrity of port (3.97M U-Net, $\alpha=0.2$, discrete_frac $\approx 0.51$, `_EPlatest`).
+     - S&C reached $0.00$ on 27 of 30 legal cells (peak cell $0.20$).
+     - **Discovered Inverse NFE Scaling**: On unprojected plans (`diffuser`), task success collapsed monotonically with increasing K ($0.60$ at $K=1 \rightarrow 0.10$ at $K=2 \rightarrow 0.20$ at $K=5$), while goal distance worsened from $1.31 \rightarrow 2.08 \rightarrow 2.25\text{ m}$. Additional generative ODE integration steps actively degraded policy quality.
+
+3. **Gen14 Visual Aligning: Gate 1 KILL on AlphaFlow (`DA_20260907_Gen14_Gate1_AF_vs_MF_K20_flagship_KILL.md`)**:
+   - Evaluated Stage 1 unguided performance at $K=20, T=0.2$ against MeanFlow Target ($0.210\times$ start distance, $0\%$ abort): $\alpha_{\text{end}} = 0.2$ reached only $0.709\times$ ($20\%$ abort); $\alpha_{\text{end}} = 0.05$ reached $0.942\times$ and was statistically significantly worse (paired sign test $p=0.0215$, winning only 1 context of 10).
+   - Triggered pre-registered termination threshold: **Gate 1 KILL. AlphaFlow attack plan formally closed.**
+
+4. **Gen14 Gate 4 Closed on AlphaFlow via Arm C (`DA_20260907_Gen14_af_arm_C_gate4_closed.md`, Job 25475)**:
+   - Executed arm C (`hardflow_sls-*`) on `engine=af` at $K=20, T=0.2$ ($380$ rows, 19 variants):
+       - Gate 4 closed (zero-violation ceiling $0.80$ vs $\text{mf}$'s $1.00$; minimum distance $4.4\times$ worse than unguided).
+       - *Significant HardFlow Finding*: Proved that projector benefit scales directly with plan error—on the high-violation $\alpha$-Flow trajectory, arm C yielded a $3.9\times$ violation reduction ($127.4 \rightarrow 33.0$) at zero distance penalty ($p=0.0078$).
+       - Confirmed SLSQP non-convergence at $\tau=0.850$ on call #2 across three distinct generative engines (`fm`, `mf`, `af`), localizing failure to constraint Jacobian conditioning rather than generative field dynamics.
+       - Quantified a $\sim 0.4\text{ m}$ stochastic run-to-run noise floor on projected arms.
+
+5. **Gen14 Final Engine Comparison & Closure (`CLOSURE_20260907_Gen14_V_A_engine_comparison_final.md`)**:
+   - Formally consolidated visual aligning engine benchmark: `af`-UNet CLOSED, `af`-SiT ABANDONED, `mf` Flagship retained, `fm` Excluded.
+   - Verified that all three mandatory thesis claim rungs hold unconditionally:
+     1. MeanFlow beats diffusion-DPCC baseline: unguided median $0.0741$ vs $0.4140\text{ m}$, paired difference $-0.3744\text{ m}$ ($p=0.0020$), $0.64\times$ latency.
+     2. MeanFlow beats naive Flow Matching: paired difference $+0.216\text{ m}$ ($p=0.0039$), `fm` frozen 5/10 contexts.
+     3. HardFlow beats DPCC on latency at $K=10$: $-325\text{ ms/step}$ ($0/9$ sweep, $p=0.0039$) with matching safety and distance.
+
+6. **Unified Repository Rebuild Architecture Specification (`CONCEPT_unified_rebuild.md` v2, Commit fd594d8d)**:
+   - Formulated 6 core architectural key points (KP1–KP6) for repo unification:
+     - **KP1 (Diffuser Purge)**: Systematic replacement of legacy `diffuser` nomenclature with explicit `flow_matcher_ode.py` and `gaussian_diffusion.py`, supported by `ENGINE_ALIASES`.
+     - **KP2 (Projector Disentanglement)**: Renamed `dpcc-*` to `pcc-*` (`pcc-r`, `pcc-c`, `pcc-t`) to reflect mathematical independence from diffusion models.
+     - **KP3 (Unified Hierarchical Configuration)**: Designed `ConfigResolver` unifying `.py` training and `.yaml` evaluation configs under deterministic precedence: `CLI > env > yaml > py`.
+     - **KP4 (Backbone Architecture Naming)**: Renamed opaque `VisualUNet` and `VisualUNetTwoTime` to `VisionTrajectoryUNet` and `VisionTrajectoryUNetTwoTime`.
+     - **KP5 (Conditioning Mechanism Clarification)**: Replaced misleading `film_v1` and `film_v2` with `ConcatCond` (`concat`) and `AffineFiLM` (`affine`).
+     - **KP6 (Checkpoint Lifecycle & Manifest)**: Added atomic `state_latest.pt` hard saves and lightweight JSON metadata manifests (`checkpoint_manifest.json`) recording step, validation loss, and timestamps without GPU loading overhead.

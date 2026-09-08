@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/tmp/claude-1000/-workspaces-FM-PCC/bd7818bb-1de6-4bfb-9771-e06f31cce259/scratchpad/npzenv/bin/python npz_analysis/compare_horizon_plans.py temp/npz_imf_debug/halfspace_both-hard-imf-debug --trial 0 --snapshot 48 --align step --env avoiding --variants diffuser,model_free,gradient,dpcc-c,dpcc-r,dpcc-t)",
+      "Bash(python3 *)"
+    ]
+  }
+}
