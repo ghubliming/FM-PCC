@@ -34,7 +34,13 @@ question the user posed on Sep 7 as *"let's see if the controller is not powerfu
 **No mission runs `engine=diffusion`.** The wave is `af`, `fm` and `mf` only. Per
 [[benchmark-hierarchy-who-beats-whom]] the diffusion-DPCC arm is *the* baseline every claim must
 clear, so this campaign **cannot on its own produce the headline result** — it can only order
-af/mf/fm among themselves. A `diffusion` arm at matched K on the same scenes is still owed.
+af/mf/fm among themselves.
+
+🔴 **Confirmed against the CSVs (2026-09-08):** the whole batch holds exactly two `diffusion`
+candidates — **C75 and C91, both `s_curve` K=20, both untagged (pre-U7 geometry)**. There is no
+`u7hg` diffusion arm on any scene, so the bottom rung `fm > diffusion` is **untestable campaign-wide**,
+not merely missing on one scene. The single job that would fix it — a `diffusion` `s_curve` K=20 run
+under `u7hg` — is not among the five missions.
 
 Two naming traps that bite readers of these logs:
 
@@ -89,7 +95,9 @@ Source: `temp/0809/batch_uav_20260908_153947` (`DA_UAV_v1`, 1263 units, 0 failed
 
 1. **`corridor` is saturated** — S&C = 1.000 in all 20 af cells and all 10 mf cells.
 2. 🔴 **af_unet ≡ mf_unet at K=2.** af leads 5/10 variants, mf 5/10, mean |Δ| = 0.83 steps against
-   σ = 5–14. **The ladder step `af > mf` is not supported on this scene.**
+   σ = 5–14. **The ladder step `af > mf` is not supported** — and note it is *undetectable*, not
+   refuted: two engines pinned at 1.000 cannot be ranked on the primary axis.
+   **Corridor holds 1 of the 3 ladder rungs:** `af > mf` ✗ · `mf > fm` ✓ · `fm > diffusion` — untestable.
 3. **fm is the only engine corridor breaks** — S&C 0.800 on all three `temporal_consistency` rows
    (goal-reach failures, `phys_safe` stays 1.000) and **3–6× the step dispersion** of af/mf.
    `af, mf > fm` holds, weakly.
@@ -101,11 +109,34 @@ Source: `temp/0809/batch_uav_20260908_153947` (`DA_UAV_v1`, 1263 units, 0 failed
 that cannot rank this arm. The af_unet UAV arm still has **no scene with usable dynamic range** —
 which is exactly what mission 5 exists to attack.
 
-### The other four — not yet analysed
+### Mission 5 — analysed ✅ [`DA_20260909_T5_mjpc_vs_pid_s_curve.md`](DA_20260909_T5_mjpc_vs_pid_s_curve.md)
+
+Source: `temp/0909/batch_uav_20260909_205118`. C94 (`mjpc`, n=3) vs C95 (`pid_stopgo`, n=10) — matched
+on engine/scene/K=10/tag/seed, and **paired** (`rollout_idx` names the same initial condition in both).
+
+1. ✅ **The controller was the bottleneck on the raw plan.** `pid_stopgo` reaches the goal **0/10**;
+   `mjpc` **3/3** on the same three initial conditions. `goal_dist` 2.86/2.72/2.89 → 0.299/0.298/0.294.
+   Fisher-exact **p ≈ 0.0035**.
+2. The PID failure mode is a **progress stall, not divergence** — all 10 rollouts burn the full
+   871-step budget while holding the *best* `track_err` in the table (0.30). Tight tracking with zero
+   goal reach = following the reference without advancing along it.
+3. **`dpcc-r` is unflyable by either controller** (0/10 and 0/3). That is a **projector** defect, and
+   mission 5 isolated it cleanly.
+4. On `hardflow_sls-r`, **PID "succeeds" by dragging along the floor** — `phys_min_z` ≈ 0 or negative
+   on all 10 rollouts, vs ≈ 1.1 m under `mjpc`. MJPC strictly dominates there on every axis
+   including cost (`proj_ms` 1587 → 762).
+5. 🔴 **But S&C stays 0.000 in all six cells.** MJPC converts *"never arrives"* into *"arrives, still
+   violates"*. PID's lower violation count is an artefact of not flying.
+
+**Consequence:** `s_curve` is **not** rescued as a rankable scene. With `corridor` saturated at 1.000
+and pre-U7 `pillars` void, the af/mf UAV arm still has **no scene with usable dynamic range** — and
+mission 5 was the last single-knob hypothesis for restoring it. This is a **scene/constraint-set**
+problem, not a controller problem.
+
+### The other three — not yet analysed
 
 A DA may only be written from the `DA_UAV_v1` batch CSVs, never from the sbatch/eval job logs —
-see [[da-requires-csv-never-from-logs]]. Missions 1, 3, 4 and 5 have no complete result set in
-`batch_uav_20260908_153947`, so they stay un-analysed until their runs land and a fresh batch is cut.
+see [[da-requires-csv-never-from-logs]]. Missions 1, 3 and 4 have no complete result set yet, so they stay un-analysed until their runs land and a fresh batch is cut.
 
 Run status — which job finished, which died, what is queued — is *not* a DA and lives in
 [`../U10/RUNSTATUS_20260908_wave_25486_25514_status.md`](../U10/RUNSTATUS_20260908_wave_25486_25514_status.md).
@@ -119,7 +150,7 @@ Run status — which job finished, which died, what is queued — is *not* a DA 
 | **2** corridor K1/K2 | ✅ complete (25495, 25498) | ✅ **DONE** — `batch_uav_20260908_153947` |
 | **3** pillars K5 fm/mf | fm ✅ (25496) · mf 🟡 (25503 running) | 25503 lands, then a batch covering all three engines at matched K=5 |
 | **4** s_curve | fm ❌ partial (25500, 6/8) + 25543 pending · mf 🟡 (25502 running) | both land |
-| **5** mjpc vs pid | ❌ nothing — 25514 never started | 25514 runs at all |
+| **5** mjpc vs pid | ✅ complete (25554) | ✅ **DONE** — `batch_uav_20260909_205118` |
 
 ### Carry-over context (from earlier, separately analysed work — not this wave)
 
@@ -137,6 +168,7 @@ Prior DA on the af_unet UAV arm, for framing only:
 |---|---|
 | `MASTER_20260908_five_missions_campaign.md` | this file — campaign definition, index, status, DA readiness |
 | `DA_20260908_T2_af_unet_corridor_K1_K2.md` | **mission 2** DA — af_unet on `corridor`, K=1/K=2, vs mf and fm at matched K=2 |
+| `DA_20260909_T5_mjpc_vs_pid_s_curve.md` | **mission 5** DA — `mjpc` vs `pid_stopgo` on `s_curve` at K=10 · paper version: [`Report_20260909_MJPC_vs_PID_s_curve/`](../../../Data_Analysis/DA_Result_Curated_MD/Report_20260909_MJPC_vs_PID_s_curve/README.md) |
 
 Planned, as the runs land: a DA per remaining mission, then a cross-mission closure.
 

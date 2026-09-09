@@ -27,4 +27,20 @@ Never hardcode `EGL_DEVICE_ID=0` and never overwrite `CUDA_VISIBLE_DEVICES`.
 
 **Exceeding 24h does NOT mean "killed mid-run" — it means the job NEVER STARTS.** Confirmed incident (2026-07-18, job 23577, `imf_pipeline_hardflow.sh`): requesting `36:00:00` (naively summing a 24h train job + a 12h eval job into one inline pipeline job) left the job stuck `PENDING` forever with reason `(PartitionTimeLimit)` — `gpu-1-student`'s actual max is 24h, so SLURM will never schedule it at all, silently, with no error until someone checks `squeue`. **Root-cause pattern to avoid:** never write a "pipeline" script that runs multiple long phases (train, then eval) *inline in one job* — their walltimes sum and can blow past 24h even when each phase alone fits. Instead use the established **orchestrator pattern** (e.g. `Slurm_Codes/sbatch/iMF/imf_pipeline.sh`, and every other repo `*_pipeline.sh` except the two that had this bug): the pipeline script itself requests trivial resources (`00:10:00`, 1 CPU, 2G, no GPU) and does nothing but `sbatch --parsable` the train job, then `sbatch --dependency=afterok:$TRAIN_ID` the eval job — each chained job keeps its own independently-sized ≤24h budget. **How to apply:** any time you're about to write `#SBATCH --time` for a script that itself calls/contains more than one long-running phase, stop and use the dependency-chain orchestrator pattern instead of inlining — never add up two phase budgets into one `--time`.
 
+**UAV mix evals: ALWAYS pass `UAV_EVAL_HOURS=24` — the default is 8h and it silently truncates.**
+`Slurm_Codes/sbatch/uav_mix/eval_k_sweep.sh:156` computes `EVAL_HOURS=${UAV_EVAL_HOURS:-$((N_SEEDS * 8))}`,
+so a one-seed job defaults to **8 hours**, not the 24h cap. Real incident (2026-09-09, job 25553): a
+3-variant `fm s_curve K=20` resume was killed `DUE TO TIME LIMIT` at exactly 8:00:10 with the last
+variant at trial 7/10, producing a partial `results.json` with `n=7` that then pooled silently with
+the `n=10` cells in the DA batch.
+
+**This overrides the "request ~2x expected, never 24h just because you can" rule above, for UAV mix
+eval jobs only.** Their per-variant cost spans two orders of magnitude on the same scene (0.4h for a
+`geo_free` row up to 7h for a `dpcc-t` at K=20), and the engine multiplier is large and only known
+after the fact (af ≈ 2.0x fm, mf ≈ 1.5x fm at matched scene/K) — so a "2x expected" estimate is not
+reliable enough to protect a multi-variant job. The user's standing instruction (2026-09-09): **24h
+on every future UAV job.** **How to apply:** put `UAV_EVAL_HOURS=24` at the front of every
+`eval_k_sweep.sh` / `uav_mix_ksweep_pipeline.sh` submission you write, including resumes. Related:
+[[da-requires-csv-never-from-logs]] (a truncated variant becomes a bad DA row).
+
 **NEVER use tqdm / live-updating progress bars in a script an sbatch job invokes.** `Slurm_Codes/submit.sh` redirects stdout+stderr to a log **file**, not a live terminal — tqdm's carriage-return trick to update in place does not collapse in a file, so a per-iteration `pbar.set_postfix(...)` (or similar) dumps every single update as raw text, producing multi-thousand-character unreadable log lines (real incident: HardFlow eval job 23565, `logs_in_develop/Gen13/fix_2/CHANGELOG_Gen13_fix2_pipeline_and_quiet_logs.md`). **How to apply:** any progress reporting inside code that will run under `submit.sh` must either (a) gate the live bar behind `sys.stdout.isatty()` so it only renders in an interactive terminal, or (b) print one compact plain-text line per meaningful unit of work (e.g. per episode/epoch), never per inner-loop step. If the noisy code is pre-existing and off-limits to edit, fork just the reporting wrapper into a new file rather than leaving the noise in place — don't accept "that's just how it logs" as an answer.

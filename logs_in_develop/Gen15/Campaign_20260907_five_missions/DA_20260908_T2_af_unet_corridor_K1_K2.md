@@ -166,6 +166,31 @@ deliberately not reproduced here.
 
 ---
 
+## 7. The claim ladder, rung by rung — `corridor` holds one of three
+
+| rung | verdict on `corridor` | evidence |
+|---|---|---|
+| **af > mf** | ✗ **not supported** | tie on every axis — primary saturated (both 1.000), secondary a coin-flip (5/10 vs 5/10, mean \|Δ\| = 0.83 steps vs σ = 5–14) · §3 |
+| **mf > fm** | ✓ **supported**, weakly | fm alone drops to S&C 0.800 on all three `-t` rows, and carries 3.6–4.7× the step dispersion · §4 |
+| **fm > diffusion** | — **untestable** | no `engine=diffusion` arm exists on `corridor` · §1.1 |
+
+🔴 **`af > mf` is undetectable here, not refuted.** Two engines both pinned at S&C 1.000 cannot be
+ranked on the primary axis, and the tiebreaker axes returned noise. This bounds the *scene*, not
+α-Flow: a scene with real dynamic range could still separate them. `corridor` cannot ask the question.
+
+### 7.1 🔴 The baseline rung is untestable campaign-wide, not just here
+
+`batch_uav_20260908_153947` contains exactly **two** `engine=diffusion` candidates in total —
+**C75 and C91, both `s_curve` K=20, both untagged (pre-U7 geometry)**. There is no `u7hg` diffusion
+arm on any scene.
+
+So the bottom rung cannot be evaluated anywhere in this campaign: mission 4's `s_curve` runs are
+`u7hg`, the only diffusion arms are pre-U7, and comparing across that boundary confounds the U7
+geometry change with the engine change. **A `diffusion` `s_curve` K=20 rerun under `u7hg` is the one
+missing job that would make the baseline comparable** — and it is not among the five missions.
+
+---
+
 ## 7. What this licenses
 
 **Supported.** `corridor` is saturated at K=1 and K=2 for af_unet. af_unet and mf_unet are
@@ -189,4 +214,5 @@ open question mission 5 (25514, mjpc vs pid) was designed to attack.
 - A `corridor` arm at **K=5 or higher** would put a genuine HardFlow row on this scene and re-open
   the budget axis, which is flat at K≤2.
 - Missions 3 and 4 (25503, 25502 running; 25542/25543 queued) carry the K=5/K=10/K=20 evidence.
-- A **`diffusion` corridor arm at matched K** is still owed before any headline claim.
+- 🔴 A **`diffusion` arm under `u7hg`** is owed before *any* headline claim — see §7.1. The
+  cheapest form is `s_curve` K=20 with the `u7hg` tag, which would make C75/C91 comparable.

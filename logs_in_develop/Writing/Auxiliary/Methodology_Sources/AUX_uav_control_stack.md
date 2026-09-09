@@ -87,15 +87,59 @@ properly-instrumented measurement.
 | PID signature | `compute(p, q, v, om, p_des, v_des, a_des, yaw_des)` | `DESIGN_dataset_pid_vs_mjpc.md` §1.2 |
 | actuation | `data.ctrl[:4]`, 4 rotors | ibid. |
 | conditioning mode | `cond_mode='pos_only'` for the Gen15 UAV runs | eval logs; `DESIGN_dataset_pid_vs_mjpc.md` |
+| physics timestep | `0.01` s (⇒ 100 Hz physics + PID) | `d3il/.../quadrotor/quadrotor_modified.xml:4` |
+| plan rate | `DATASET_HZ = 33` ⇒ `decim = round(1/(dt·33)) = 3` physics steps per FM query, `p_des` zero-order held between | `uav_expert_data_collect/dataset_writer.py:31`; `mix_uav_test/eval_mix_uav.py:1454-1455` |
+
+### Controller gains (read from `uav_env_test/flight_controller.py`, 2026-09-08)
+
+| symbol | value | line |
+|---|---|---|
+| `Kp_pos` (world) | `(4.0, 4.0, 8.0)` | `:65` |
+| `Kd_pos` (world) | `(3.0, 3.0, 4.0)` | `:66` |
+| `Kp_att` (body) | `(70.0, 70.0, 4.0)` | `:69` |
+| `Kp_omega` (body) | `(2.5, 2.5, 1.0)` | `:70` |
+| `u_hover` | `m·g/4` | `:60` |
+| `u_max` / `u_min` | `max(2·u_hover, 6)` / `0` | `:61-62` |
+| thrust floor | `0.1·m·g` | `:73` |
+| gravity | `GRAVITY_MAG = 9.81` | `:20` |
+| allocation column `i` | `[1, r_iy, −r_ix, κ_iz]`, from site positions + actuator gear | `:43-50` |
+| saturation | thrust-priority: hold mean, scale torque by the exact largest in-bounds factor, floored at `0.5` | `:142-153` |
+| `m`, `J_b` | read from the model (`body_subtreemass`, `body_inertia`) — **not hard-coded** | `:39-41` |
+
+> ⚠️ Attitude reference is `ω_des = 0` (`:122`, *"acceptable for slow tracking"*). That is a
+> modelling choice, not a neutral default, and it belongs in `sec:disc:threats`.
+
+### `v_des` — the three shipped policies (`controller` selects)
+
+| `controller` | `v_des` | note |
+|---|---|---|
+| `pid` (default) | `action / dt_fm` | timing-derived; `dt_fm = 1/33` s |
+| `pid_stopgo` | `0` | brake to rest at every FM step |
+| `pid_const_v` | `unit(action) · v̄` | `v̄ = mean(‖action‖)·DATASET_HZ`, auto-derived from the dataset ⇒ same *average* speed as `pid`, different profile |
+| `mjpc` | accepted for API parity, **ignored** | MJX recovers the velocity profile from state |
+
+### MJPC tracker parameters (`mix_uav_test/mjpc_tracker.py`)
+
+| item | value | note |
+|---|---|---|
+| planner | DeepMind `mujoco_mpc.mjx` predictive sampling, used verbatim | no gRPC, no C++ binary |
+| cost | `‖p − p_des‖² + w_v‖v‖²` | `w_v = 0.1` mirrors the cascade's `Kd` |
+| horizon / samples / iters | `0.3` s of physics steps / `16` / `5` | `noise_scale = 0.3`, zero-order-hold splines |
+| collisions | **disabled** inside the planner's model copy | obstacle avoidance is the projector's job |
 
 ---
 
 ## 5. Holes — fill before writing
 
-- [ ] **The PID gains are nowhere in the logs.** Position/velocity/attitude/rate gains, and the
-      cascade structure (which loop runs at which rate) must be read out of the `CascadedPID`
-      implementation and tabulated. Without this the controller is not reproducible.
-- [ ] **`v_des` synthesis is described as a plan, not as shipped.** Confirm what the final code does.
+- [x] ~~**The PID gains are nowhere in the logs.**~~ **CLOSED 2026-09-08** — they are in the code,
+      not the logs. Read out of `uav_env_test/flight_controller.py:33-155` (`CascadedPID`) and
+      tabulated in §4 below; written into the thesis at `sec:method:deployment`
+      (`Working_Space/v2`, changelog entry `v2.2`). The cascade is *geometric*, not three scalar
+      PID loops: outer position PD → thrust vector → desired attitude → SO(3) attitude error
+      (Lee et al., `PAPERS/auxiliary_papers/Drone/PID_Control_UAV.pdf`) → moment → rotor allocation.
+- [x] ~~**`v_des` synthesis is described as a plan, not as shipped.**~~ **CLOSED 2026-09-08** —
+      the shipped code has **three** policies selected by `controller`, not one; all three are in §4
+      and in the thesis as one equation. See `mix_uav_test/eval_mix_uav.py:1551-1563, 1822-1832`.
 - [ ] **MJPC's final status is ambiguous across logs** — `U6_rebuild_mujoco_MPC` suggests a rebuild
       landed. Establish whether MJPC is (a) abandoned, (b) a comparison controller, or (c) used
       anywhere in a reported number, and say so once.

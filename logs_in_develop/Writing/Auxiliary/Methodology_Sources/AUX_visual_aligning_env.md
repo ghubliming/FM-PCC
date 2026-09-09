@@ -26,10 +26,21 @@ The section has to establish three things, in this order:
    encoder-agnostic. **The generative backbone never sees an image.** So when the thesis says "same
    4.0 M U-Net, only the objective differs", the perception stack is provably held fixed rather than
    assumed fixed.
-3. **Conditioning is FiLM, and the mode is a recorded knob.** `film_mode` `v1` is the default on all
-   four Gen14 arms and every reported flagship number; `v2` exists and is reachable. Because the
-   value used to arrive by *config inheritance* rather than being stated in the arm blocks, the
-   checkpoint tag carries it (`filmv1`) — the thesis should quote the tag rather than the prose.
+3. **🔴 Conditioning is NOT FiLM on the shipped arm — the flag name lies.** `film_mode` `v1` is the
+   default on all four Gen14 arms and every reported flagship number; `v2` exists and is reachable.
+   But **only `v2` is FiLM.** `v1` (`UNet1DTemporalCondModel`) projects the visual latent and
+   *concatenates* it with the time embedding, which reaches the trajectory as a single **additive
+   per-channel bias**, constant along the horizon — i.e. FiLM with `γ ≡ 0`. `v2`
+   (`UNet1DTemporalFiLMModel`) is the real thing: per-block `γ` scale and `β` shift,
+   `h ← (1+γ)⊙h + β`, zero-initialised. The code says so itself (*"Fake FiLM: additive bias via
+   time-embed concat"* / *"True FiLM"*, `visual_unet.py:64-97`).
+   **Consequence for writing:** the word "FiLM" appears in every config block, checkpoint tag
+   (`filmv1`) and eval log for the arm that is not FiLM. Name the arm by *mechanism* in the thesis —
+   "concatenated conditioning" vs "affine (FiLM) conditioning" — and quote the tag only as a tag.
+   Standing rule + translation table: [`../NOTES_naming_and_rebuild.md`](../NOTES_naming_and_rebuild.md).
+   Written up as equations in `sec:method:backbone` (`Working_Space/v2`), with an explicit remark.
+   Because the value arrived by *config inheritance* rather than being stated in the arm blocks, the
+   checkpoint tag is still the reliable record of which arm ran.
 
 ---
 
@@ -39,7 +50,8 @@ The section has to establish three things, in this order:
   agentview_image ─► ResNet-18 (GroupNorm) ─► 64-D ┐
                                                     ├─ concat ─► 128-D visual latent
   in_hand_image   ─► ResNet-18 (GroupNorm) ─► 64-D ┘        │
-                                                             │  FiLM conditioning (v1)
+                                                             │  concat with time embed (v1)
+                                                             │  [affine FiLM = v2, ablation only]
                                                              ▼
                                         UNet1DTemporalCondModel — 1-D temporal conv U-Net
                                         (Conv1d residual blocks, stride-2 down/up,
@@ -55,7 +67,10 @@ The section has to establish three things, in this order:
 | images | 2 × RGB, 96 × 96 | `D3IL_Native_Visual_Aligning_Pipeline_Guide.md` §2 |
 | state part of obs | `obs_dim: 3` (robot EE position) | ibid. |
 | generative backbone | `VisualUNet` / `VisualUNetTwoTime`, **4.0 M** | CLOSURE_20260907 §2 |
-| conditioning | FiLM, `film_mode = v1` on every reported run | `Gen14/Fix_9/` |
+| conditioning | **concatenated** (latent ⊕ time embedding → additive bias); flag is `film_mode = v1` on every reported run — see §1.3 | `Gen14/Fix_9/`; `models/unet1d_temporal_cond.py:53-82, 205-235` |
+| conditioning (ablation) | **affine / true FiLM**, `film_mode = v2`, zero-initialised γ/β | `models/unet1d_temporal_film.py:38-92` |
+| backbone width | `dim = 32`, `dim_mults = (1,2,4,8)` ⇒ channels `[9, 32, 64, 128, 256]`, 3 stride-2 stages | `config/aligning-d3il-visual.py:245-246` |
+| horizon padding | padded up to a multiple of 8 before the U-Net, cropped after (H8 needs none) | `visual_unet.py:73-74, 128-140` |
 | horizon | H8 | run tags |
 
 **Encoder universality is a documented D3IL design property**, not our inference: the identical
@@ -105,6 +120,8 @@ out with a reason.
       are stated per-DA but not in one place. **Most V_A results are train-split — say so.**
 - [ ] **Whose checkpoint, whose training run** — `steps1000_bs64` and the EMA policy are in the tags;
       the training recipe (optimiser, LR schedule, epochs, action weight `aw`) needs one table.
+- [x] ~~**FiLM naming**~~ **CLOSED 2026-09-09** — resolved as above; `v1` is concatenated
+      conditioning, not FiLM. Rule in `../NOTES_naming_and_rebuild.md`.
 - [ ] **Camera placement and rendering settings** for the two views are not documented on our side —
       they are inherited from D3IL and should be cited, not restated from memory.
 - [ ] **Licence and version of the vendored D3IL encoder** for `app:repro` (§5.3).

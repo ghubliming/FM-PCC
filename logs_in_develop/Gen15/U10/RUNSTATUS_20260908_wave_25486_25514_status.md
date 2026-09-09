@@ -206,3 +206,70 @@ All three pending jobs are **wrappers** (`TRES = N/A`, no GPU) blocked on llim's
 by 25502 + 25503. They release in job-ID order, so **25514 starts first** — the desired order, since
 it is the longest-waiting and the only test with no substitute. Wrappers exit within seconds of
 starting; their *children* then queue for GPUs behind `schan` (4 cards, 17:53 in) and `saju`.
+
+---
+
+## 7. Final outcomes — 2026-09-09 drop (`temp/0909`)
+
+Status only; no DA. CSVs for this wave arrived as `temp/0909/batch_uav_20260909_205118`
+(`DA_UAV_v1`, 2026-09-09 20:51:50, 1288 units, 0 failed, 96 candidates).
+
+| job | arm | window (UTC) | outcome |
+|---|---|---|---|
+| 25502 | mf s_curve K=10 | 09-08 10:30 → 09-09 04:12 (17.7 h) | ✅ **complete, 8/8 variants** |
+| 25503 | mf pillars K=5 | 09-08 10:50 → 09-09 05:40 (18.8 h) | ✅ **complete, 17/17 variants** |
+| **25514 → 25554** | **mf s_curve K=10, `controller=mjpc`** | 09-09 13:20 → 14:54 (1.6 h) | ✅ **complete, 3/3 variants** |
+| 25543 → 25553 | fm s_curve K=20 tail | 09-09 12:13 → 20:13 (8.0 h) | ❌ **TIME LIMIT**, 2/3 |
+| 25542 → 25555 | af pillars K=5 resume | 09-09 14:54, 3 s | ❌ **exit 2**, 0/3 |
+
+**Correction to §2.** The variant tallies there under-counted by one: plain `hardflow_new` prints its
+summary as `(B=1, proj=off, …)`, not `B=4`, so a `B=4`-anchored grep skips it. 25502 and 25503 each
+completed their full variant set.
+
+### 7.1 ✅ U10 validated on the cluster — every open question in `../U10/CHANGELOG…§5` is now answered
+
+25554 is the first Gen15 run ever to use `controller=mjpc`, and all four first-run checks passed:
+
+```
+[ U10 ] UAV_MIX_CONTROLLER='mjpc' (env override)
+[ env-select ] controller='mjpc' -> conda env 'FMPCC_mjx'
+[ U10 ] controller: 'pid_stopgo' (config) -> 'mjpc' (env override)
+→ logs/UAV_MIX/uav-s_curve/plans/mix_uav_mf/…/Emf_K10_mpc4_mjpc_T0.5_u7hg/6/
+```
+
+So: the `FMPCC_mjx` env **exists**, `MJPCTracker` **runs** on a Gen15 UAV scene (JAX float64→float32
+truncation warnings from `mix_uav_test/mjpc_tracker.py:136-138`, no `import mujoco.mjx` failure), and
+`controller` behaves as a results-path key exactly as designed.
+
+*Cosmetic:* the echo reads `[ env-select ] config/uav.py controller='mjpc' …` even though the value
+came from the env override, not from `config/uav.py` (which still says `pid_stopgo`). The resolution
+is correct; only the label is stale. Worth a one-line fix next time that file is touched.
+
+### 7.2 🔴 25553 died on the **8 h default wall**, not the 24 h cap
+
+`eval_k_sweep.sh:156` — `EVAL_HOURS=${UAV_EVAL_HOURS:-$((N_SEEDS * 8))}`. With one seed the default
+is **8 h**; the 24 h figure in §6 applies only when `UAV_EVAL_HOURS` is set explicitly, as the
+original 25488–25492 submissions did. The §6 resubmit commands omitted it, so 25553 was capped at 8 h
+and was killed with `hardflow_new-t` at trial 7/10.
+
+**Any re-run of that tail must pass `UAV_EVAL_HOURS=24`.**
+
+### 7.3 Three unmatched-`n` cells the next DA must handle explicitly
+
+| candidate | cell | `n_rollouts` | cause |
+|---|---|---|---|
+| **C94** mf s_curve K10 **mjpc** | all 3 variants | **3** | intentional — mission 5 was specified with fewer trials |
+| **C92** fm s_curve K20 | `hardflow_sls-t` | **7** | 25553 timeout wrote a partial `results.json` |
+| **C50** af pillars K5 | `dpcc-t` | **5** | 25501 cancellation wrote a partial `results.json` |
+
+A partial cell still produces a row, so these will silently pool with `n=10` cells unless excluded or
+flagged. Note in particular that the mission-5 A/B is **C94 (mjpc, n=3) vs C95 (pid_stopgo, n=10)** —
+matched on scene, engine, K=10, tag and seed, differing only in controller, with three shared
+variants (`diffuser`, `dpcc-r`, `hardflow_sls-r`).
+
+### 7.4 Still open
+
+| mission | gap | fix |
+|---|---|---|
+| **1** + **3** (af leg) | af pillars K=5 has 6/17 variants and **zero HardFlow** | resubmit 25542's command on **one line**, with `UAV_EVAL_HOURS=24` |
+| **4** (fm leg) | `hardflow_new-t` incomplete (n=7) | re-run that single variant with `UAV_EVAL_HOURS=24` |

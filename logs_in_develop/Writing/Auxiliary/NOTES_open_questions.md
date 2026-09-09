@@ -57,16 +57,38 @@ by the author) before prose drafting starts, because each one moves chapters.
 8. **Degenerate configurations.** Some low-step HardFlow settings run no
    constraint math at all. Those rows must be marked and excluded from claims
    (`sec:res:constraints:degenerate`), not silently averaged.
+   *Context worth keeping:* the **published** HardFlow config (`N=10`, activate on
+   the second half) sits at `n_gen = 4` — inside the admissible regime. The
+   degeneracy is a property of the convention at low budget, **not** a defect of
+   their experiment. Write it that way; see `sec:method:hardflow`.
+8b. **Arm C is not comparable to HardFlow's published table.** Their setup is
+   **H16 / 8 actions per plan / IPOPT / fitted linear dynamics**; ours is
+   **H8 / 1 action per plan / SLSQP / Euler**. Because we replan every step, the
+   sampler+projector runs ~8× more often per environment step, so **their
+   per-replan timing and our per-step timing must never share a table.**
+   Recorded as `tab:hardflow-setup` in `Working_Space/v2`.
 9. **UAV timing.** The 33 Hz / budget-ms figure is a data-rate and
    cluster-latency artefact, not a real-time target. Do not present it as a
    pass/fail criterion anywhere in Chapter 6.
 10. **German abstract** — required, or is the English one sufficient? Confirm.
 11. **One-sided vs. two-sided print.** Affects `BCOR` and the class options.
 
+12. **Visual conditioning: which arm is the method?** Two mechanisms exist —
+    *concatenated conditioning* (the shipped default, the source of every reported visual number)
+    and *affine/FiLM conditioning* (opt-in, zero-initialised). The v2 draft presents the first as
+    the method and the second as an ablation. Both are written as equations in
+    `sec:method:backbone`. Changing this reshapes that section and every visual table.
+    **Do not decide it from the flag names** — the default's flag is called `film_mode='v1'` and it
+    is not FiLM. See `NOTES_naming_and_rebuild.md` §2.
+13. **The artefact→thesis name translation table for `app:repro`.** Every log, checkpoint path and
+    DA row uses the old tokens (`filmv1`, `dpcc-c`, `diffuser`). If the thesis renames in prose
+    without shipping the table, no reader can match a row to a checkpoint.
+    Blocking for `app:repro`, not for the chapters.
+
 ## Process
 
-12. Register the thesis (Informatics Infopoint or RCI, programme-dependent);
+14. Register the thesis (Informatics Infopoint or RCI, programme-dependent);
     final-submission deadline is the 15th of the month.
-13. 3–4 page exposé at the start — largely derivable from Chapters 1 and 4 of
+15. 3–4 page exposé at the start — largely derivable from Chapters 1 and 4 of
     this bone.
-14. Schedule the initial topic presentation (5 + 5 min) at I6 Defense Day.
+16. Schedule the initial topic presentation (5 + 5 min) at I6 Defense Day.

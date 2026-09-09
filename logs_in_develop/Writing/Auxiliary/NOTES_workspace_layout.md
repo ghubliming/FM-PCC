@@ -36,3 +36,8 @@ Harvest from it rather than hand-typing entries.
   and figures the Results chapter will cite.
 - `Slurm_Codes/logs/important_runs/important_runs.md` — which cluster runs the
   reported numbers actually came from. Needed for the reproducibility appendix.
+- `logs_in_develop/Rebuild_repo/` — 🔴 **read-only insight, never a source.** A concept sketch for a
+  unified rebuild: unbuilt, unstable, self-labelled *"CONCEPT / IDEAS — not a finalized plan"*.
+  **Do not cite it in the thesis and do not point a chapter at it.** Its one contribution to the
+  writing is a naming audit, which has been re-checked against the code and copied into
+  `NOTES_naming_and_rebuild.md`. Use that file; re-read the original only when it moves.

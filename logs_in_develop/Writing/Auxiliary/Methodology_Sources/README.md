@@ -32,6 +32,7 @@ matters — **names what is missing**. A hole named here is a writing task, not 
 | [`AUX_visual_aligning_env.md`](AUX_visual_aligning_env.md) | how `aligning-d3il-visual` was built on D3IL; rendering, encoder provenance, FiLM | `sec:method:visual`, `sec:setup:tasks` · TARGET §5.1 |
 | [`AUX_rendering_and_gif_pipeline.md`](AUX_rendering_and_gif_pipeline.md) | offscreen rendering, **state injection** ("replay without re-flying"), GIF/overlay artefacts | `sec:setup:tasks`, `app:repro` · TARGET §5.1/5.2 |
 | [`AUX_constraint_geometry.md`](AUX_constraint_geometry.md) | the constraint sets beside the main env — 3-D bounds, halfspaces, obstacles, tightened/ablated variants, feasibility and honest geometry | `sec:method:constraints`, `sec:disc:threats` · TARGET §5.2 |
+| [`AUX_compute_environment.md`](AUX_compute_environment.md) | the cluster, node, GPU and software stack every number was produced on; the shared-node timing caveat | `sec:setup:implementation`, `app:repro` · TARGET §5.3, §6.5 |
 
 ## How to use them when writing
 
