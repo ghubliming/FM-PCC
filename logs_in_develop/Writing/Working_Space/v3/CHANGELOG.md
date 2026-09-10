@@ -17,6 +17,70 @@ is sourced from · what it left open.
 
 ---
 
+## v3.1 — 2026-09-10 · a flattened build, because the split draft would not compile
+
+**Asked for:** the split draft cannot be compiled on a remote Overleaf. Write a tool — not an
+LLM-driven copy-paste — that aggregates the parts into one full `.tex`, timestamped, in a subfolder
+under `v3/`, with the tool living in that subfolder. Write it and run it.
+
+**Added:** `bundle/make_bundle.py`, plus `bundle/README.md` and `bundle/BUNDLE_LOG.md`.
+
+### What it does
+
+Recursively inlines every `\input` whose target exists, wrapping each in `BEGIN`/`END` banners
+carrying the source path and its SHA-256 prefix, and writes
+`bundle/thesis_v3_<YYYYMMDD_HHMMSS>.tex` plus a `.zip` holding that file, both bibliography
+resources and `figures/` — an Overleaf upload in one artefact.
+
+**An `\input` whose target does not exist is left verbatim, and that is correct rather than a
+fallback.** The inherited preamble and front matter carry `\input{settings}` and
+`\input{pages/cover}` inside the `\ifstandalone … \else` branch, for the day the draft is merged
+into the TUM template; `\standalonetrue` is set, so LaTeX never reads them. Six such lines survive
+in the bundle and all six are in dead branches — checked, not assumed.
+
+### The figure problem, and how it is handled
+
+The figures are SVG and `\includegraphics` cannot read SVG; no converter exists in this container.
+The tool rewrites every `\includegraphics` to `\fmpccgraphic` and injects that macro, resolving
+`.pdf` → `.png` → *(mode)* → placeholder. Default mode draws a framed box naming the missing file, so
+**the document always builds**; `--svg-package` adds `\usepackage{svg}` for hosts with Inkscape,
+Overleaf among them. Opt-in rather than default because it is a property of the build host, not of
+the document. A real `.pdf`/`.png` wins in every mode, so running `tools/svg2pdf.sh` and rebuilding
+upgrades the figures with no source change.
+
+🔴 **Ordering constraint, recorded because it is easy to get backwards:** the rewrite must run
+*before* the shim is injected. The shim's own body calls `\includegraphics`; injecting first would
+rewrite those calls too and make `\fmpccgraphic` infinitely recursive.
+
+### Verification, which is the part that matters
+
+`--verify` extracts every inlined source back out of a bundle, undoes the one transformation the tool
+applies, and diffs against the tree. **All 13 inlined sources round-trip byte-for-byte.** Tested in
+both directions: appending one line to a chapter made it report `DIFF … first difference at source
+line 127`, and reverting restored `byte-faithful throughout`. Run against an *older* bundle it
+answers a different and equally useful question — *was this built from what is on disk now?*
+
+The build path additionally refuses to write at all unless: no resolvable `\input` remains, no
+content was lost, braces balance, environments balance, and `\documentclass`, `\begin{document}`
+and `\end{document}` each appear exactly once.
+
+### Two bugs found by running it rather than by reading it
+
+- 🔴 **The placeholder would have failed on exactly the filenames it exists to print.** It set the
+  missing name in `\texttt{figures/#1}`, and every generated figure name contains underscores
+  (`fig_avoiding_k_ladder`); a bare `_` in text mode is a subscript ⇒ *"Missing $ inserted"*. Now
+  `\texttt{\detokenize{...}}`, with a comment saying why it is not decorative.
+- **Two runs in the same second collided** and the second silently overwrote the first, defeating the
+  point of stamping them. A bundle is now never overwritten: the tool suffixes instead.
+
+### Result
+
+14 source files, 3 648 source lines → **3 719 output lines, 228 KB**, 90 KB zipped. Two bundles
+built, one per figure mode. **Still not compiled** — there is no TeX toolchain here, the tool checks
+structure rather than typesetting, and it says so on every run. The first real build is the author's.
+
+---
+
 ## v3.0 — 2026-09-10 · the workspace, the figure pipeline, and the experiments
 
 **Asked for:** branch a v3 off v2 that can be worked on **in parallel** with it, so that a later v2

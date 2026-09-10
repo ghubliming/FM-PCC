@@ -44,6 +44,7 @@ the mathematics.
 for Chapters 1–4; v3 owns 5–8. When v2 moves, `sync_v2.py` says so and merges it down.
 
 ```bash
+python3 bundle/make_bundle.py      # flatten to ONE .tex + an Overleaf-ready .zip
 python3 tools/sync_v2.py status    # has v2 moved? which files? which need a real merge?
 python3 tools/sync_v2.py diff      # what exactly did v2 change
 python3 tools/sync_v2.py merge     # three-way-merge it in, advance the baseline, re-stamp
@@ -107,7 +108,27 @@ tools/
   svg2pdf.sh           figures for the LaTeX build
 plots/                 the figure pipeline — see plots/README.md
 figures/               generated SVG + MANIFEST.md saying what came from where
+bundle/                flattened builds — see bundle/README.md
+  make_bundle.py       inlines every \input, verifies, zips for Overleaf
+  thesis_v3_<stamp>.tex/.zip   build output. NEVER edit these; rebuild instead.
 ```
+
+## Compiling it
+
+The split layout is for editing. **To build or upload, flatten it first:**
+
+```bash
+python3 bundle/make_bundle.py                 # -> bundle/thesis_v3_<stamp>.tex + .zip
+python3 bundle/make_bundle.py --svg-package   # same, with the SVG figures rendered
+python3 bundle/make_bundle.py --verify        # prove a bundle matches the tree, byte for byte
+```
+
+Upload the `.zip` to Overleaf — it carries the flat `.tex`, both `.bib` files and `figures/`.
+Compiler **pdfLaTeX**, bibliography **Biber**. Full detail, including the two figure modes and why
+`--svg-package` is opt-in, in [`bundle/README.md`](bundle/README.md).
+
+The bundle is **build output**: never edit it, and nothing reads it back. Its header lists every
+source file with a SHA-256 prefix, so any bundle can be traced to exactly what produced it.
 
 ## Drafting macros — all four must be gone before submission
 

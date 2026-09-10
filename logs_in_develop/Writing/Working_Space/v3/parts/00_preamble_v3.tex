@@ -55,3 +55,31 @@
 \ifstandalone
   \addbibresource{bibliography_v3.bib}
 \fi
+
+% -----------------------------------------------------------------------------
+%  \autoref NAMES THAT NOTHING ELSE DEFINES
+% -----------------------------------------------------------------------------
+%  Two gaps that only bite once Chapters 5-8 exist, both fixed here rather than
+%  in a chapter, so no inherited file diverges from v2 over them.
+%
+%  1. THEOREM-LIKE ENVIRONMENTS. The inherited preamble declares definition /
+%     proposition / theorem / remark, but hyperref only knows \autoref names for
+%     the standard sectioning units. sec:setup:metrics states the thesis's
+%     definition of improvement as a `definition' and five places \autoref it,
+%     which without this is an undefined control sequence at build time.
+%     \providecommand, not \newcommand: settings.tex may define them on merge.
+\providecommand{\definitionautorefname}{Definition}
+\providecommand{\propositionautorefname}{Proposition}
+\providecommand{\theoremautorefname}{Theorem}
+\providecommand{\remarkautorefname}{Remark}
+
+%  2. APPENDICES. After \appendix the chapter counter still carries the chapter
+%     autoref name, so \autoref{app:repro} renders "Chapter C" -- which is why v2
+%     wrote that one cross-reference as `Appendix~\ref{...}' by hand and recorded
+%     it as its single \ref exception. Redefining the name inside \appendix fixes
+%     it for every appendix reference at once and lets \autoref be used
+%     uniformly. The hand-written exception in Chapter 4 still typesets
+%     correctly, so nothing there needs touching.
+\providecommand{\chapterautorefname}{Chapter}
+\let\fmpccorigappendix\appendix
+\renewcommand{\appendix}{\fmpccorigappendix\def\chapterautorefname{Appendix}}
