@@ -459,6 +459,41 @@ def _resolve_active_geo_matches(scene, cfg):
     many (Fix_6: eval_scene runs every one of them in a single job)."""
     _all_geo = [g for g in (cfg.get('geo_constraint_variants') or []) if 'name' in g]
     _active = cfg.get('active_geo_variants')
+
+    # ── [Gen15 U11 2026-09-10] UAV_MIX_GEO_VARIANTS — per-job geo-variant subset ──────────
+    # `active_geo_variants` is a SHARED yaml key: editing it to run a new geometry (e.g.
+    # corridor_ball) would change every queued corridor job, whose config is read at RUN time
+    # while its environment is captured at SUBMIT time. That is the U6 failure mode exactly,
+    # and the reason U9 (UAV_MIX_VARIANTS) and U10 (UAV_MIX_CONTROLLER) exist. This is the
+    # same pattern for geometry: read-only, per job, and it can only NARROW or re-point the
+    # selection to entries the yaml already defines — it can never invent one.
+    #
+    #   UAV_MIX_GEO_VARIANTS='corridor_ball'              # the forced-detour A arm
+    #   UAV_MIX_GEO_VARIANTS='corridor_hg,corridor_ball'  # both, one job, two result folders
+    #
+    # NOTE eval_scene() runs EVERY active entry for the scene in one job (Fix_6), so listing
+    # two names here is a within-job A/B and roughly doubles the runtime. load_pcc_config()
+    # still requires exactly one match and will raise if given two.
+    _geo_env = (os.environ.get('UAV_MIX_GEO_VARIANTS') or '').strip()
+    if _geo_env:
+        _want = [v.strip() for v in _geo_env.split(',') if v.strip()]
+        _known = {g['name'] for g in _all_geo}
+        _unknown = [v for v in _want if v not in _known]
+        if _unknown:
+            print(f'[ ERROR ] UAV_MIX_GEO_VARIANTS names {len(_unknown)} geo variant(s) that do '
+                  f'not exist in config/uav_projection.yaml: {_unknown}')
+            print(f'          defined: {sorted(_known)}')
+            raise SystemExit(2)
+        _for_scene = [v for v in _want if
+                      next(g.get('scene', g['name']) for g in _all_geo if g['name'] == v) == scene]
+        if not _for_scene:
+            print(f'[ ERROR ] UAV_MIX_GEO_VARIANTS={_want} selects no geo variant for '
+                  f"scene '{scene}'. Available for this scene: "
+                  f"{[g['name'] for g in _all_geo if g.get('scene', g['name']) == scene]}")
+            raise SystemExit(2)
+        print(f"[ U11 ] geo variants for '{scene}': {_for_scene}  (env UAV_MIX_GEO_VARIANTS)")
+        _active = _for_scene
+
     return [g for g in _all_geo
             if g.get('scene', g['name']) == scene and (_active is None or g['name'] in _active)]
 

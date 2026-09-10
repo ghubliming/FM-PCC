@@ -5,6 +5,13 @@ Source batch: **`temp/0809/batch_uav_20260908_153947`** (`DA_UAV_v1`, generated 
 1263 units loaded, 0 failed). Candidates **C29** (af K=1) and **C30** (af K=2), with **C44** (mf K=2)
 and **C38** (fm K=2) as the matched comparators.*
 
+> ⚠️ **Superseded in part by [`CLOSURE_20260910_uav_engine_ladder_final.md`](CLOSURE_20260910_uav_engine_ladder_final.md) §1.**
+> This DA concluded `corridor` "cannot rank". That is wrong: an all-pass scene is the
+> **`avoiding-d3il` regime** and ranks on **cost at equal S&C**. At each engine's cheapest
+> S&C = 1.000 point (all `diffuser`, K=2): **af 270.9 < mf 271.7 < fm 273.3 steps** at identical
+> `avg_ms` — the ladder ordering, but the 2.4-step spread sits inside σ ≈ 4.5, exactly the
+> `avoiding` failure mode. The tie finding below stands; the "unrankable" framing does not.
+
 ## 0. TL;DR — three answers
 
 1. **`corridor` is saturated for both U-Net engines.** S&C = 1.000 in **all 20** af cells (10 variants

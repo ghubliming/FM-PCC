@@ -69,6 +69,12 @@ export UAV_MIX_EPOCH="${UAV_MIX_EPOCH:-}"
 # compare against at the same K). Empty = run everything.
 export UAV_MIX_VARIANTS="${UAV_MIX_VARIANTS:-}"
 [ -n "$UAV_MIX_VARIANTS" ] && echo "[ U9 ] variant subset = $UAV_MIX_VARIANTS"
+# [Gen15 U11] Per-job GEO-variant subset. `active_geo_variants` in config/uav_projection.yaml
+# is shared, so editing it to run a new geometry (corridor_ball) would re-point every queued
+# corridor job -- the U6 failure mode. Names must already exist in the yaml and must belong to
+# the scene being run. Empty = use active_geo_variants as written.
+export UAV_MIX_GEO_VARIANTS="${UAV_MIX_GEO_VARIANTS:-}"
+[ -n "$UAV_MIX_GEO_VARIANTS" ] && echo "[ U11 ] geo variants = $UAV_MIX_GEO_VARIANTS"
 if [ -n "$UAV_MIX_BONE_AF" ]; then
     case "$UAV_MIX_BONE_AF" in
         unet|sit|dit) ;;

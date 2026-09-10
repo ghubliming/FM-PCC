@@ -362,6 +362,71 @@ geo_constraint_variants:
       - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0,  0.5], radius: 0.05}
       - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0,  0.5], radius: 0.05}
 
+  # ══════════════════════════════════════════════════════════════════════════════
+  # [Gen15 U11 2026-09-10] corridor_ball — a forced-detour variant of `corridor`
+  #
+  # WHY. `corridor_hg` is constraint-TRIVIAL: measured over 40 cells (af K1/K2, mf K2, fm K2),
+  # EVERY arm reports n_violations = 0.00 and collision_free_completed = 1.000 — projected AND
+  # unprojected alike. S&C therefore degenerates to plain `success` on this scene, and the
+  # projector spends 155-202 ms/step removing violations that never occurred. The scene cannot
+  # test the constrained-control problem the thesis is about.
+  # Evidence: logs_in_develop/Gen15/Campaign_20260907_five_missions/
+  #           CLOSURE_20260910_uav_engine_ladder_final.md §1.1
+  #
+  # WHAT THIS ADDS. One large VIRTUAL sphere at the corridor centre, on top of the unchanged
+  # corridor_hg geometry (same walls, same four wall-end caps). It forces a real detour.
+  #
+  # 🔴 THE DETOUR IS VERTICAL, AND THAT IS FORCED BY THE GEOMETRY, NOT A CHOICE.
+  #   Walls: inner faces y = +/-0.45; with planning_inflation r_drone = 0.31 the planner's free
+  #   lateral band is |y| <= 0.14. A sphere at the centre demands |y| >= r + 0.31 >= 0.31.
+  #   0.31 > 0.14 for ANY radius, INCLUDING r = 0 -> a lateral bypass is impossible in this
+  #   corridor. An ['x','y'] cylinder here would make the scene infeasible, not hard. So the
+  #   sphere is 3-D (['x','y','z']) and the only feasible route is over the top.
+  #
+  # THE NUMBERS (drone r = 0.31 planning / 0.33 scoring; workspace z in [0.30, 1.80]):
+  #   ball centre z = 0.75, radius 0.35  ->  blocked band at (x,y)=(0,0):  z in [0.09, 1.41]
+  #   expert cruise altitude is U(0.90, 1.30)  (uav_expert_data_collect/generator.py:124)
+  #     -> [0.90, 1.30] lies ENTIRELY inside the blocked band: every expert route is blocked,
+  #        on all three channels (CORRIDOR_CHANNELS L/C/R = -0.12 / 0.0 / +0.12).
+  #   escape band: z in [1.41, 1.80] -> 0.39 m of headroom. Feasible, and nothing else is.
+  #   Under the ball is infeasible: 0.75 - 0.66 = 0.09 < 0.30 workspace floor.
+  #   Ball diameter 0.70 m in a 0.90 m corridor, vs a 0.62 m drone -> "giant" as intended.
+  #
+  # 🔴 THE SPHERE IS VIRTUAL. There is no geom for it in scene_corridor.xml, which has only the
+  #   floor and the two walls. The drone will fly THROUGH it in MuJoCo; it is scored as a
+  #   constraint violation and nothing else. That is deliberate: this variant tests whether the
+  #   PROJECTOR can route around a constraint the policy has never seen, with no retraining and
+  #   no change to physics. Do not describe it as an obstacle the drone collides with.
+  #
+  # EXPECTED READING. The unprojected (`diffuser`) arm is trained at z in [0.90, 1.30] and will
+  # violate on essentially every rollout. A projector that does real work must LIFT the plan
+  # into [1.41, 1.80]. corridor_hg could not tell those two apart; this variant can.
+  #
+  # NOT in `active_geo_variants` by default — select it per job with UAV_MIX_GEO_VARIANTS
+  # (Gen15 U11), so it can never silently change a queued corridor run.
+  # Changelog: logs_in_develop/Gen15/U11/
+  # ══════════════════════════════════════════════════════════════════════════════
+
+  - name: corridor_ball
+    scene: corridor
+    geo_tag_suffix: '_hgb'        # distinct results folder — can never pool with _hg
+    constraint_types: ['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds']
+    planning_inflation: {r_drone: 0.31, margin_base: 0.0}
+    workspace_bounds:             # identical to corridor_hg
+      lb: [-4.0, -.inf, 0.30]
+      ub: [ 4.0,  .inf, 1.80]
+    halfspace_constraints:        # identical to corridor_hg — PHYSICAL wall inner faces
+      - {line: [[-2.0, -0.45], [2.0, -0.45]], side: 'above', x_active: [-2.0, 2.0]}
+      - {line: [[-2.0,  0.45], [2.0,  0.45]], side: 'below', x_active: [-2.0, 2.0]}
+    obstacle_constraints:
+      # the four PHYSICAL wall-end caps — unchanged from corridor_hg
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0, -0.5], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0, -0.5], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0,  0.5], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0,  0.5], radius: 0.05}
+      # 🔴 the VIRTUAL centre ball — 3-D, forces the climb-over detour (see header)
+      - {type: sphere_outside, dimensions: ['x', 'y', 'z'], center: [0.0, 0.0, 0.75], radius: 0.35}
+
   - name: s_curve_hg
     scene: s_curve
     geo_tag_suffix: '_hg'
