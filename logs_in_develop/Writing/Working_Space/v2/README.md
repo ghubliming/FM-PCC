@@ -34,6 +34,9 @@ Scope, across the three passes so far (see `CHANGELOG.md`):
 - **v2.5** — arm C's **published** experimental setup (H16, 8 actions per plan, IPOPT, fitted linear
   dynamics) recorded against ours (H8, 1 action per plan, SLSQP, Euler) in `tab:hardflow-setup`,
   with the wall-clock consequence spelled out.
+- **v2.6** — the dropped terminal cost `C` and what its removal costs; and the naming pass —
+  arms are now **iterate projection** / **in-ODE endpoint projection**, engine 3 is **the
+  bootstrapped target**. Canonical table: `Auxiliary/Naming/NAMING_20260910_master_table.md`.
 - **v2.6** — the **compute environment**: the cluster, node, CPU/GPU and software stack every number
   was produced on, plus the two caveats that follow from the machine. First prose written into
   Chapter 5 — a deliberate, scoped exception to the bone rule (see below).

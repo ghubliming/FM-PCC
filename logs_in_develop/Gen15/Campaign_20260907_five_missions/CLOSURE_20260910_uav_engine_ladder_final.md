@@ -293,3 +293,53 @@ Candidates C29/C30 (corridor af), C38/C44 (corridor fm/mf), C47/C49/C50 (pillars
 [T4](DA_20260910_T4_s_curve_budget_explore.md) · [T5](DA_20260909_T5_mjpc_vs_pid_s_curve.md).
 d3il figures: `Report_20260903_AF_UNet/README.md`, `outdated_Report_20260829_VA_funnel/README.md`,
 `NOTEBOOK_20260829_key_headlines.md` §10.2–10.3 and its 2026-09-07 evidence board.
+
+---
+
+## 9. Runs in flight after this closure (2026-09-10)
+
+Two waves submitted after the closure was written. Neither changes §4's verdict; they close
+coverage gaps §7 named, plus a new scene from U11.
+
+### 9.1 `corridor_ball` — U11, the constraint-trivial fix (jobs 25599–25604)
+
+`corridor_hg` cannot arbitrate anything (§1.1: zero violations, projected and unprojected alike), so
+U11 adds a virtual centre ball that forces a vertical detour. Driver:
+`Slurm_Codes/temp_bash/eval_20260910_corridor_ball.sh`.
+
+| tier | K | HardFlow | af | mf | fm |
+|---|---|---|---|---|---|
+| **A** PCC only | 2 | degenerate (`n_genuine = 0`) | **25599** | **25600** | **25601** |
+| **B** PCC + HF-SLSQP | 5 | genuine (`n_genuine = 2`) | **25602** | **25603** | **25604** |
+
+🔴 **Gate before any reading:** the unprojected `diffuser` row must report `n_violations > 0`. If it
+is still 0.00 the ball is not binding and the geometry needs revisiting, not analysing.
+
+### 9.2 Benchmark-matrix completion (jobs 25611–25614)
+
+Driver: `Slurm_Codes/temp_bash/submit_20260910_diffusion_baseline_and_scurve_mirror.sh`.
+
+| job | arm | type | note |
+|---|---|---|---|
+| **25611** | `pillars` · **diffusion** | **train + eval** | §7.2, resolved as a **reference row** |
+| **25612** | `s_curve` · diffusion | eval only | matrix completeness |
+| **25613** | `s_curve` · af K=5 part A (DPCC) | eval only | matrix completeness |
+| **25614** | `s_curve` · af K=5 part B (HardFlow) | eval only | split against the 24 h wall |
+
+Only 25611 trains — `u7hg` was a constraint-set change, not a model change, so the existing
+`AlphaFlowODE_9D_as1_ae0.2_bbunet` and `GaussianDiffusion_9D_K20` s_curve checkpoints stay valid.
+
+**§7.2 is resolved, not upgraded.** The user's decision (2026-09-10) is that the diffusion arm is a
+**reference row for the reader's scale, not a proof**: single seed, and the budgets are deliberately
+unmatched (diffusion K=20 — a *training* parameter for DPCC — against the flow family at K=5).
+Label it as a reference in the table caption. *"mf beats the DPCC baseline"* remains an
+`avoiding-d3il` claim, where it is already decisive.
+
+**The two `s_curve` rows are for completeness, not ranking.** Max S&C across the 40 existing `u7hg`
+s_curve cells is 0.100 (§3); these two will not change that. They exist so the matrix reads
+"all four engines, identical geometry" and no reviewer can ask why an engine is missing.
+
+### 9.3 Still outstanding
+
+**§7.1 — seeds on `pillars` K=5 — remains the one required run.** Nothing above addresses it, and
+every UAV headline still rests on seed 6, n = 10.

@@ -1,0 +1,126 @@
+% =============================================================================
+%  CHAPTER 8 -- CONCLUSION                                             [v3 OWNS]
+% -----------------------------------------------------------------------------
+%  WRITTEN, with two deliberate holes.
+%
+%  sec:conc:summary and sec:conc:rqs are written: the RQ answers are settled at
+%  the strength the evidence supports, and that strength does not change when the
+%  owed runs land -- they would sharpen RQ4's aerial half and nothing else.
+%
+%  What is NOT written, on purpose: headline numbers in the summary paragraph,
+%  which are the abstract's job and are rewritten last (parts/01_frontmatter.tex
+%  still carries v1's sketch); and sec:conc:future beyond its outline, whose
+%  material lives in Working_Space/future_work/ and is explicitly IDEAS, NOT
+%  RESULTS -- see that folder's README before promoting any of it into prose.
+% =============================================================================
+
+\chapter{Conclusion}\label{ch:conclusion}
+
+\section{Summary}\label{sec:conc:summary}
+
+This thesis replaced the stochastic diffusion engine of a constrained predictive controller with
+deterministic ODE transport, holding the backbone, the parameter count, the projector, the data and
+the evaluation harness fixed, and asked what that substitution buys under a strict definition of
+improvement.
+
+The substitution turns the sampling budget from a property of the trained model into a parameter of
+the integrator. That is the whole result, and everything else follows from it. On the benchmark the
+baseline reports on, the MeanFlow engine attains equal-or-better success and constraint satisfaction
+with fewer control steps at a single network evaluation per plan, against the baseline's twenty ---
+Pareto dominance in the strong sense, architecture-matched. Decomposed, the engine contributes about
+a $1.4\times$ compute advantage at equal budget; the budget contributes the order of magnitude. On a
+harder, vision-conditioned task the same engine beats the baseline decisively on plan quality, and
+that comparison also shows that it is the few-step \emph{objective} rather than transport alone that
+separates: plain flow matching ties the baseline there. On a quadrotor embodiment built for this
+work, the stack transfers to an underactuated, open-loop-unstable plant and flies it through static
+obstacle fields under a cascaded geometric controller.
+
+Alongside the performance results the thesis contributes three things that are not performance
+results. A \textbf{correctness condition} for evaluating in-loop guided samplers: below a computable
+number of genuine steps such a sampler is sample-then-project, and a comparison run there measures
+nothing --- derived, then confirmed by the instrumentation at run time. A \textbf{regime taxonomy}
+and the argument that reporting it is the cheapest defence against a general threat to validity, on
+the evidence of a scene in this work's own results that is feasible, well-instrumented, and unable to
+support the comparison run on it. And a \textbf{negative result with a derived mechanism}: an
+additional engine that does not improve on its predecessor in any of four environments, kept and
+explained rather than dropped.
+
+\hole{Headline numbers for this paragraph and for the abstract are written last, together, once the
+owed runs in \autoref{sec:setup:protocol} have landed or been formally abandoned. The numbers exist
+today --- they are in \autoref{tab:state-headline} --- but the abstract should quote one number, not
+three, and which one it is depends on whether the aerial seeds arrive.}
+
+\section{Answers to the Research Questions}\label{sec:conc:rqs}
+
+\begin{description}
+  \item[RQ1 --- Engine.] \textbf{Yes, and the improvement orders the family only partially.} Under an
+    identical backbone, projector, dataset and harness, replacing diffusion with deterministic
+    transport improves the quality--cost frontier: the MeanFlow engine Pareto-dominates the pinned
+    baseline on the state-based benchmark and beats it decisively on plan quality on the
+    vision-conditioned one. The family is ordered as \emph{MeanFlow ahead of the rest}, with plain
+    flow matching and the bootstrapped target clustered behind it; the planned finer ordering
+    between those two does not hold, and \autoref{sec:disc:negative} gives the measurement and the
+    mechanism. Plain transport alone buys about $1.4\times$ at equal budget and ties the baseline on
+    quality --- a cost result, not a quality one.
+
+  \item[RQ2 --- Budget.] \textbf{Down to a single network evaluation, and the mechanism is that the
+    budget changes hands.} The transport engines hold their quality from twenty evaluations to one;
+    the baseline scores $0.667$ at one evaluation against $1.000$ at ten, at its own published
+    protocol. For diffusion the budget is fixed when the noise schedule is discretised at training
+    time; for transport it is a choice made by the integrator at inference, and the average-velocity
+    objective is what makes one Euler step of the learned field a usable plan. \guard{The
+    low-budget baseline cells are ten episodes per cell; the direction is far outside that
+    resolution, the exact value is not, and a clean sweep at this work's protocol is outstanding.}
+
+  \item[RQ3 --- Constraints.] \textbf{Regime-dependent, not superior --- and the question is only
+    well-posed above a computable floor.} The second half of the question turns out to be the more
+    important one: the comparison between the two arms is meaningless where the number of genuine
+    steps reaches zero, because the endpoint arm then \emph{is} the iterate arm. Above that floor,
+    endpoint projection is the cheaper arm in all three entries, at parity on safety: a cost
+    crossover at a budget of three on the state-based benchmark, a $325$\,ms-per-step latency win at
+    a budget of ten on the vision-conditioned entry, and an $8$--$21\times$ projection-cost advantage
+    with zero unsafe rollouts in 210 on the aerial entry. It is not \emph{superior} --- no
+    safety advantage survives its significance test --- and this thesis stops sweeping for one.
+
+  \item[RQ4 --- Transfer.] \textbf{Yes across embodiment; yes across a harder and
+    differently-observed task, but not, on this evidence, as a state-to-vision transfer.} The
+    engine result reproduces on the vision-conditioned task and on the aerial embodiment, and the
+    constraint-arm result reproduces in all three entries at three different strengths, so the
+    answers to RQ1--RQ3 are not properties of one benchmark. Two qualifications are load-bearing.
+    The vision-conditioned entry changes the control problem \emph{and} the observation modality at
+    once, so it cannot separate the two increments, and the state-based leg that would separate them
+    was never run. The aerial entry's \emph{ranking} is one seed of one scene; its embodiment
+    argument, regime taxonomy and projection results do not depend on that ranking and stand
+    without it.
+\end{description}
+
+\section{Future Work}\label{sec:conc:future}
+
+\subsection*{What would settle what is currently unsettled}
+
+Four items, in order of evidence gained per unit of compute, would move claims in this thesis from
+qualified to banked. Raising the vision-conditioned entry to fifty enumerated contexts multiplies its
+paired sample fivefold with no retraining and brings the protocol close to the benchmark's own.
+Two to three additional seeds on the aerial pillars scene bank the aerial ranking. Evaluating all
+engines at the baseline's published two-trial protocol on one binary completes the two-tier protocol
+argument, at about a tenth of the cost of the tier already paid for. And building the
+three-dimensional \emph{state} leg of the aligning task --- one configuration, four trained engines,
+one evaluation --- is what would separate harder control from harder perception and make the
+state-to-vision transfer claimable at all.
+
+\subsection*{Directions beyond this thesis}
+
+\hole{Outline only. Two directions are drafted in
+\texttt{Writing/Working\_Space/future\_work/}: a perception-to-constraint front end, in which the
+feasible set is inferred from observation rather than supplied, and zero-shot constraint re-tasking
+with its sim-to-real question. That material is deliberately ideas rather than results; read its
+README before promoting any of it into this section, and cite nothing from it as evidence.}
+
+Two directions do follow directly from results in this thesis and can be stated now. First, the
+budget and the activation threshold should be chosen \emph{together}: \autoref{sec:disc:interpretation}
+argues they are one decision, and this work maps that trade-off at two points rather than across it.
+Mapping it properly would turn a regime argument into a design rule. Second, the candidate fan should
+be parallelised rather than shrunk --- the fan is free on the generator and linear on a projector
+that is currently solved serially on the CPU, so the same latency is available without discarding
+candidates. That is a code change with a predicted, measurable effect, and
+\autoref{sec:res:ablations} states both the prediction and its uncertainty.

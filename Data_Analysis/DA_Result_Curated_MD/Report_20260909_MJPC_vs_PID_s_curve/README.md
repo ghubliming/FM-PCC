@@ -21,11 +21,12 @@ otherwise byte-identical evaluation.
 | # | Finding | Strength |
 |---|---|---|
 | **F1** | **The raw MeanFlow plan was flyable; `pid_stopgo` could not fly it.** Goal reached **0/10** under PID, **3/3** under MJPC, on the *same* three initial conditions. Goal distance 2.86/2.72/2.89 → 0.299/0.298/0.294. | Fisher exact **p = 0.0035**, paired |
-| **F2** | **PID fails by stalling, not diverging.** All 10 rollouts exhaust the 871-step budget while airborne and stable (`min_z` 0.96–1.24) and hold the *tightest* tracking in the study (`track_err` 0.294–0.341). Tight tracking + zero goal reach ⇒ following the reference without advancing along it. | 10/10, unambiguous |
+| **F2** | 🔴 **PID loses ATTITUDE control — the drone inverts.** All **10/10** raw-plan rollouts abort with `inverted: body z-axis · world z < 0` at step **395–421** (t ≈ 11.97–12.76 s). MJPC: **0/3**. `min_z` stays ~1.1 m because the aircraft is upside down *at altitude*, not on the ground. | 10/10 vs 0/3, §6 |
 | **F3** | **The DPCC-projected plan is unflyable by either tracker** — 0/10 and 0/3, goal distance ≈ 2.6–2.9 under both. A stronger controller changes nothing. This localises a **projector** defect. | 13/13 failures |
 | **F4** | **On the HardFlow arm PID "succeeds" by dragging along the floor.** `phys_min_z` ≈ 0 or negative on **all 10** PID rollouts (min −0.009) vs **1.05–1.14 m** under MJPC, at 3.0× fewer violations per step and **half** the projection time. | 10/10 vs 3/3 |
 | **F5** | 🔴 **S&C remains 0.000 in all six cells.** MJPC converts *"never arrives"* into *"arrives, still violates"*. The scene is **not** rescued as a ranking instrument. | all cells |
 | **F6** | MJPC's per-step violation rate is near-constant across variants (0.068–0.077) while PID's spans **15×** (0.016–0.235). PID's numbers are dictated by *which pathology it falls into*; MJPC has a characteristic cost. | 3 variants |
+| **F7** | 🔴 **MJPC is the *more expensive* controller — ≈ 119 ms/step more, a ~20× multiple on the tracker.** On the projector-free arm it costs **2.27×** per executed step (94.9 → 215.6 ms). It is still the cheaper route to a *success* (PID: ∞ on 2 of 3 arms), and on HardFlow it wins end-to-end (0.59×) — not by being fast, but by conditioning the SLSQP (`proj_ms` 1587.5 → 761.8). | §5, wall-clock |
 
 ---
 
@@ -43,6 +44,10 @@ otherwise byte-identical evaluation.
 ![Fig 4 — tracking error vs goal reached: the anti-correlation](fig4_trackerr_vs_goal.svg)
 
 ![Fig 5 — example trajectories on a shared initial condition](fig5_trajectories_idx0.svg)
+
+![Fig 6 — planner compute per rollout, and per successful rollout](fig6_compute_cost.svg)
+
+![Fig 7 — divergence: when each controller loses attitude](fig7_divergence.svg)
 
 ---
 
@@ -160,7 +165,223 @@ falls into; MJPC has a characteristic, predictable cost.
 
 ---
 
-## 5. 🔴 What this does *not* show
+---
+
+## 5. Cost — wall-clock and compute
+
+### 5.1 🔴 What is measured, and what is not
+
+`avg_time_ms` is **exactly** `fm_ms + proj_ms` — verified on all six cells, to the decimal:
+
+| variant | ctrl | `fm_ms` | `proj_ms` | sum | `avg_time_ms` |
+|---|---|---|---|---|---|
+| `diffuser` | PID | 88.59 | 0.00 | 88.59 | **88.59** |
+| `diffuser` | MJPC | 90.06 | 0.00 | 90.06 | **90.06** |
+| `dpcc-r` | PID | 90.17 | 1870.39 | 1960.56 | **1960.56** |
+| `dpcc-r` | MJPC | 93.72 | 2459.11 | 2552.83 | **2552.83** |
+| `hardflow_sls-r` | PID | 131.10 | 1121.85 | 1252.95 | **1252.95** |
+| `hardflow_sls-r` | MJPC | 136.90 | 761.56 | 898.46 | **898.46** |
+
+**The timed window is the planner — generation plus projection — and the low-level tracker runs
+outside it, inside the environment step.** So this batch **cannot** price `pid_stopgo` against
+`mjpc` directly. Any table claiming "MJPC costs X ms more per step" is not supported by this data,
+and the near-identical `fm_ms` (+1.6 % to +2.7 %, same generator at the same K) is the artefact that
+proves the tracker is absent from the measurement, not evidence that MJPC is free.
+
+Getting the direct number needs instrumentation: a timer around the tracker call, exported the way
+`fm_ms` / `proj_ms` already are. MuJoCo MPC solves an optimisation per control step and will not be
+free — treat its per-step cost as **unmeasured**, not small.
+
+### 5.2 The controller's real cost effect is indirect — through the projector — and it reverses
+
+The tracker changes the *states* the projector is handed, and that changes how hard the NLP is:
+
+| variant | PID `proj_ms` | MJPC `proj_ms` | |
+|---|---|---|---|
+| `hardflow_sls-r` | 1587.50 | **761.83** | **52 % cheaper** under MJPC |
+| `dpcc-r` | 2122.00 | **2420.15** | **14 % dearer** under MJPC |
+| `diffuser` | 0.00 | 0.00 | no projector |
+
+MJPC keeps the aircraft at ~1.1 m and on a feasible path, so HardFlow's SLSQP converges from
+better-conditioned states (§4). Under DPCC the effect runs the other way. **There is no single
+"MJPC is cheaper" statement to make — it depends on which projector is downstream.**
+
+### 5.3 🔴 RETRACTED — "planner compute per rollout"
+
+An earlier draft of this section computed `n_fm_steps × fm_ms + n_proj_steps × proj_ms` and
+concluded MJPC was **0.74×** the cost on the raw plan. **That was wrong.** `n_fm_steps` reports the
+episode **budget** (871), not the steps that executed. PID's rollouts abort at step ≈ 406 (§6.1), so
+the calculation charged PID for **465 steps that never ran** and inflated its cost by ≈ 2.1×. The
+sanity check it failed: it put PID's planner cost at 77.0 s inside a rollout whose *total* wall-clock
+was 38.5 s.
+
+### 5.4 The direct measurement — wall-clock per executed step
+
+The CSV carries no wall-clock column, so this comes from the **job logs** (total elapsed per variant
+÷ `n_trials`) — labelled as such, and it is the only figure here that contains the tracker.
+Executed steps = `divergence_step` when the run aborts, else `steps_to_goal`.
+
+| variant | ctrl | wall-clock **s / rollout** | executed steps | **ms / step** | ratio |
+|---|---|---|---|---|---|
+| **`diffuser`** *(no projector)* | PID | 38.5 | 405.8 | **94.9** | — |
+| **`diffuser`** | **MJPC** | **137.1** | 636.0 | **215.6** | **2.27× DEARER** |
+| `dpcc-r` | PID | 863.3 | 375.6 | 2298.6 | — |
+| `dpcc-r` | **MJPC** | 1110.0 | 417.3 | 2660.1 | 1.16× dearer |
+| `hardflow_sls-r` | PID | 1101.0 | 631.2 | 1744.2 | — |
+| `hardflow_sls-r` | **MJPC** | **639.3** | 618.0 | **1034.5** | **0.59× cheaper** |
+
+**On the controller-only arm MJPC costs 2.27× more per executed step.** That is the honest answer to
+"is MJPC faster": **it is not.** It solves an optimisation every control step where PID evaluates an
+algebraic law.
+
+### 5.5 Isolating the tracker — the per-step controller cost
+
+On `diffuser` there is no projector, so wall-clock ≈ planner + tracker + simulator. The planner term
+is `fm_ms` × executed steps, and the simulator term is identical for both controllers, so the
+residual difference is the tracker:
+
+| | PID | MJPC |
+|---|---|---|
+| wall-clock / rollout | 38.5 s | 137.1 s |
+| executed steps | 405.8 | 636.0 |
+| planner (`fm_ms` × steps) | 35.9 s | 57.1 s |
+| **residual (tracker + sim)** | **2.6 s → 6.4 ms/step** | **80.0 s → 125.8 ms/step** |
+
+**MJPC adds ≈ 119 ms per control step over `pid_stopgo`** — the simulator term cancels. Roughly a
+**20×** step-cost multiple on the tracker itself. Both residuals are now smaller than their
+wall-clocks, which is the consistency check §5.3 failed.
+
+⚠️ Single seed, n = 10 (PID) vs n = 3 (MJPC), and the residual lumps the MuJoCo step in with the
+tracker. It is a decomposition, not an instrumented measurement — §6.3 lists the counter that would
+replace it.
+
+### 5.6 Where MJPC *does* win, and why it is not a speed win
+
+`hardflow_sls-r` is the one row where MJPC is cheaper end-to-end (0.59×), and the cause is not the
+tracker — it is **downstream**. MJPC keeps the aircraft at ~1.1 m on a feasible path, so HardFlow's
+SLSQP converges from better-conditioned states: `proj_ms` **1587.5 → 761.8**, a 52 % saving that
+more than repays the ~119 ms/step the tracker costs. Under DPCC the same mechanism runs backwards
+(`proj_ms` 2122.0 → 2420.2, 14 % dearer).
+
+**So the correct statement is:** MJPC is a *more expensive controller* that can make an *expensive
+projector cheaper*. Whether the trade pays depends entirely on what is downstream of it — and on
+the raw plan, where nothing is downstream, it simply costs 2.27× more.
+
+### 5.7 Cost per **successful** rollout
+
+Wall-clock seconds per rollout ÷ `goal_reached` — what a success actually costs:
+
+| variant | PID | MJPC | |
+|---|---|---|---|
+| `diffuser` | 38.5 s → **∞** (0/10 goals) | **137.1 s** (3/3) | PID never pays off at any budget |
+| `dpcc-r` | ∞ (0/10) | ∞ (0/3) | neither controller can fly it |
+| `hardflow_sls-r` | 1572.8 s (0.700) | **639.3 s** (1.000) | **2.46× cheaper** |
+
+MJPC is the dearer controller per step and still the cheaper route to a completed traverse, because
+PID's cheap steps buy nothing on two of the three arms.
+
+*Raw times only. The `budget = 30.3 ms` / 33 Hz line in the job logs is a data-rate artefact plus
+cluster latency, not a real-time target.*
+
+---
+
+## 6. The two controllers, compared directly
+
+This section isolates the tracker. The `diffuser` arm carries **no projector at all**, so PID vs
+MJPC on that arm is the cleanest controller-only comparison the data admits: identical plans from
+an identical checkpoint, identical scene and seed, differing only in what flies them.
+
+### 6.1 🔴 The headline: attitude stability
+
+`divergence_aborted` fires on `inverted: body z-axis · world z < 0` — the aircraft is upside down.
+
+| variant | ctrl | diverged | rate | `divergence_step` (range) |
+|---|---|---|---|---|
+| **`diffuser`** *(no projector)* | **PID** | **10 / 10** | **100 %** | 405.8 (**395 – 421**) |
+| `diffuser` | **MJPC** | **0 / 3** | **0 %** | — |
+| `dpcc-r` | PID | 10 / 10 | 100 % | 375.6 (350 – 469) |
+| `dpcc-r` | **MJPC** | **3 / 3** | **100 %** | 417.3 (400 – 451) |
+| `hardflow_sls-r` | PID | 3 / 10 | 30 % | 611.3 (462 – 782) |
+| `hardflow_sls-r` | **MJPC** | **0 / 3** | **0 %** | — |
+| **all variants** | PID | **48 / 80** | **60 %** | — |
+| **all variants** | MJPC | **3 / 9** | **33 %** *(all on `dpcc-r`)* | — |
+
+Three things fall out of this table:
+
+1. **On the raw plan, `pid_stopgo` inverts the aircraft on every single rollout**, inside a 26-step
+   window (395–421, t ≈ 11.97–12.76 s) across ten different initial conditions. That is not a
+   marginal instability — it is deterministic, and it lands at the same point of the trajectory
+   every time, ≈ 12 s into a ≈ 26 s traverse, i.e. **at the S-curve crossover** where the reference
+   demands the sharpest lateral change. MJPC flies the same plans with **zero** divergences.
+2. **On `dpcc-r`, both controllers invert, 100 % and 100 %.** This is the sharpest possible form of
+   F3: the DPCC-projected plan is not merely hard to track, it is **dynamically infeasible** — it
+   tumbles a controller that handles the unprojected plan perfectly. The defect is in the plan.
+3. **On the HardFlow arm PID's divergence is later and rarer** (3/10, steps 462–782) — consistent
+   with §4, where PID reaches the goal 0.700 of the time by dragging along the floor. Fewer flips,
+   but only because it is scraping rather than flying.
+
+### 6.2 Behavioural comparison on the controller-only arm (`diffuser`)
+
+Means; PID n = 10, MJPC n = 3. Paired on `rollout_idx` 0–2.
+
+| axis | metric | **PID** | **MJPC** | reading |
+|---|---|---|---|---|
+| **attitude** | `divergence_aborted` | **1.000** | **0.000** | MJPC eliminates the failure |
+| | `divergence_step` | 405.8 | — | |
+| **progress** | `n_steps` | 871 *(budget exhausted)* | **636** | 27 % shorter |
+| | `steps_to_goal` | **nan** *(never)* | **636** | |
+| **terminal** | `goal_dist` | 2.809 | **0.297** | −2.512 m |
+| | `goal_crossed_line` | 0.000 | **1.000** | |
+| **tracking** | `track_err_mean` | **0.304** | 0.455 | not comparable — see §2 |
+| **altitude** | `phys_min_z` | 1.126 | 1.100 | indistinguishable |
+| | `phys_final_z` | 1.492 | **1.138** | PID ends 0.35 m higher — attitude loss, not descent |
+| | `phys_contact_frac` | 0.042 | 0.037 | indistinguishable |
+| **constraints** | `n_violations` | 13.7 | 48.7 | confounded by episode length — §4 |
+| **outcome** | `success_strict` | 0.000 | **0.667** | |
+| | `phys_safe` | **0.000** | **0.667** | PID: 0/10 physically valid |
+
+Paired, on the three shared initial conditions:
+
+| idx | `goal_dist` PID → MJPC | `n_steps` PID → MJPC | diverged PID → MJPC |
+|---|---|---|---|
+| 0 | 2.863 → **0.299** | 871 → **633** | yes → **no** |
+| 1 | 2.718 → **0.298** | 871 → **650** | yes → **no** |
+| 2 | 2.889 → **0.294** | 871 → **625** | yes → **no** |
+
+**Every axis that describes control quality moves the same way, on every pair.**
+
+### 6.3 🔴 What cannot be compared — and what it would take
+
+The batch carries **67 per-rollout columns and none of them are tracker-side**. Specifically
+**not available**, and therefore not claimed anywhere in this report:
+
+| missing | consequence |
+|---|---|
+| controller compute time | no ms-per-control-step figure for either tracker (§5.1). MJPC solves an optimisation per step; treat its cost as **unmeasured, not small** |
+| control effort / energy | no thrust-integral or power comparison — the "which controller is cheaper to run" question is **open** |
+| actuator saturation | cannot say whether PID's inversion is a saturation event or a gain/phase problem |
+| attitude time-series | `divergence_step` gives *when*, not the roll/pitch trajectory into it |
+| per-axis tracking error | `track_err_mean` is a scalar; no lateral-vs-vertical decomposition |
+
+**To close these, three counters would be enough**, exported the way `fm_ms` / `proj_ms` already
+are: (i) wall-clock around the tracker call, (ii) Σ‖u‖ or Σ‖u‖² per rollout, (iii) attitude
+(roll/pitch) sampled per step, or at minimum its max. (i) and (ii) are the two the thesis would
+actually quote.
+
+### 6.4 What the controller comparison establishes
+
+**`mjpc` is not "better tracking" — it is a different failure profile.** It tracks the reference
+*worse* by the scalar metric (0.455 vs 0.304) and that is the correct trade: it gives up positional
+tightness for attitude authority, and consequently completes the traverse that PID tumbles out of
+on every attempt. On the unprojected plan the comparison is categorical rather than quantitative —
+**0/10 physically valid rollouts against 3/3 that reach the goal.**
+
+What it does **not** establish is that MJPC is a better controller in general. It fails exactly as
+hard as PID on `dpcc-r` (3/3 inverted), it costs an unmeasured amount more per step, and n = 3.
+
+---
+
+## 7. 🔴 What this does *not* show
 
 **S&C = 0.000 in all six cells, under both controllers.** Under MJPC the raw plan reaches `success`
 0.667 and `phys_safe` 0.667 — but S&C requires success *and* a clean constraint record, and the
@@ -181,7 +402,7 @@ the `real_time_OVER×N` counters are deliberately not reproduced as a pass/fail 
 
 ---
 
-## 6. Implications
+## 8. Implications
 
 1. **A UAV result that reports `goal_reached` without `phys_min_z` can be an artefact of the
    tracker.** F4 is the cautionary case: a 70 % goal rate achieved at zero altitude.
@@ -199,7 +420,7 @@ for a controller change to make `s_curve` rankable.
 
 ---
 
-## 7. Reproduction
+## 9. Reproduction
 
 ```bash
 # PID arm (C95) — job 25502
@@ -251,6 +472,8 @@ C94 = `mjpc` (n=3). `rollout_idx` names the same initial condition in both runs.
 | `fig3_violations_per_step.svg` | Grouped bars, `n_violations / n_steps`, PID vs MJPC × 3 variants. Annotate the 4.9× (raw) and 3.0× (HardFlow) ratios. | **F6** — the trade reverses by variant; MJPC's rate is near-constant |
 | `fig4_trackerr_vs_goal.svg` | Scatter `track_err_mean` (x) vs `goal_reached` (y), coloured by controller, marker by variant. | **F2** — tight tracking with zero goal reach |
 | `fig5_trajectories_idx0.svg` | Top-down `s_curve` trajectory overlay for `rollout_idx=0`, raw plan: PID vs MJPC, with obstacles/half-spaces and the reference. Optional z-vs-time inset. | **F1/F2** — the stall made visible |
+| `fig6_compute_cost.svg` | Paired bars per variant: planner s/rollout (PID vs MJPC), with a second panel for s **per success**. Mark `diffuser`/PID as ∞ rather than plotting a bar. Annotate 0.74× / 1.25× / 0.51×. | **F7** — the cost picture, and that it reverses by projector |
+| `fig7_divergence.svg` | Per rollout, a horizontal bar from 0 to `n_steps` with a marker at `divergence_step`; grouped PID/MJPC, panelled by variant. Shade the 395–421 band on the `diffuser`/PID panel. | **F2/§6.1** — 10/10 inversions in a 26-step window; `dpcc-r` tumbles both |
 
 Keep both themes legible (no pure-black/pure-white fills), embed fonts, prefer `.svg`.
 The sibling `../Report_20260903_AF_UNet/make_figs.py` is the closest existing template.

@@ -1,0 +1,54 @@
+% =============================================================================
+%  BIBLIOGRAPHY — v3 ENTRIES ONLY
+% -----------------------------------------------------------------------------
+%  WHY THIS FILE EXISTS, AND WHY v3 NEVER ADDS TO bibliography.bib
+%
+%  bibliography.bib is INHERITED from v2 byte-for-byte, exactly like
+%  parts/00_preamble.tex. That is what lets a v2 bibliography change
+%  fast-forward into v3 with no conflict and no merge. The moment v3 appends an
+%  entry to that file, every future v2 bibliography pass becomes a three-way
+%  merge on a file where both sides append at the end — the worst possible
+%  conflict shape, and one that recurs on every single pass.
+%
+%  So: v2 owns bibliography.bib. v3 owns this file. Neither ever writes the
+%  other's. biblatex merges them at build time; \addbibresource is additive and
+%  duplicate keys across resources are reported by biber, so a key that lands in
+%  BOTH files is caught at build rather than silently shadowed.
+%
+%  Which v2 revision the inherited bibliography.bib came from is recorded in
+%  inherited/SYNC_STATE.json (field `v2_version`), stamped by tools/sync_v2.py.
+%
+%  IF A v3 ENTRY BELONGS IN BOTH DRAFTS: add it to ../v2/bibliography.bib and
+%  run `python3 tools/sync_v2.py merge` to pull it down. Never the other way —
+%  see inherited/MANIFEST.md, "The one-way rule".
+%
+%  SOURCING RULE, inherited from v2 unchanged: an entry is either verified
+%  against a PDF in /workspaces/aux_repo/PAPERS/ (then it carries `file = {...}`
+%  relative to that root, and title/authors/year were read off that copy's own
+%  title page), or it is marked `% NO LOCAL COPY` and is UNVERIFIED. Never write
+%  an entry from memory: v2's first α-Flow entry was written that way and was
+%  wrong in the title and in every author.
+% =============================================================================
+
+% -----------------------------------------------------------------------------
+% (empty)
+%
+% v3.0 added no bibliography entries. Chapters 5-8 cite the environments, the
+% baseline and the engines, and every one of those keys already exists in the
+% inherited bibliography.bib:
+%   jia2024towards      the D3IL benchmark suite and its `avoiding` task
+%   romer2025diffusion  the DPCC baseline and its projector
+%   lipman2023flow      flow matching
+%   geng2025meanflow    the average-velocity objective
+%   zhang2025alphaflow  the bootstrapped target
+%   li2025hardflow      endpoint projection
+%   lee2010geometric    the cascaded geometric controller
+%   howell2022predictive  the sampling-based predictive tracker
+%
+% Expected first users of this file, per DATASTATUS_20260910 section 7:
+%   - a citation for the Fisher exact / sign / sign-flip permutation tests used
+%     in sec:setup:metrics, if the thesis names a statistics reference at all;
+%   - a Pareto-dominance reference for the definition in sec:setup:metrics;
+%   - whatever `sec:conc:future` needs from Working_Space/future_work/, which is
+%     outlook material and cites work v2 never had to.
+% -----------------------------------------------------------------------------

@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+
+# Figure PDFs are build output of tools/svg2pdf.sh; the SVGs are the artefact.
+figures/*.pdf

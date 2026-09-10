@@ -1,0 +1,55 @@
+\chapter{Related Work}\label{ch:related}
+% =============================================================================
+
+\emph{Chapter summary.} Four bodies of work converge on this thesis; the chapter treats each
+as a line the thesis extends or corrects, and closes by stating precisely which gap is left.
+
+\section{Diffusion-Based Planners and Policies}\label{sec:rel:diffusion}
+
+Trajectory-level diffusion planning \parencite{janner2022planning} and its policy-level
+descendants \parencite{chi2023diffusion}, up to the constrained-projection variant that this work
+starts from \parencite{romer2025diffusion}. The section is careful about a
+dual role that recurs throughout: the immediate predecessor is simultaneously the
+\emph{codebase} inherited and the \emph{baseline} measured against. Both roles are declared
+here so no later table looks like a straw man.
+
+\section{Flow Matching for Robot Control}\label{sec:rel:fm}
+
+Transport-based generative models \parencite{lipman2023flow,liu2023flow} applied to control and
+manipulation, including few-step variants \parencite{geng2025meanflow,zhang2025alphaflow} and their
+reported step budgets. The section positions this thesis
+against them on one axis: most report the engine improvement \emph{without} a hard
+constraint mechanism, so the interaction between a cheap sampler and an expensive projector
+--- the interaction this thesis finds to be decisive --- is not visible in them.
+
+\section{Safety Filters and Hard-Constrained Sampling}\label{sec:rel:safety}
+
+Projection-based safety filters
+\parencite{power2023sampling,christopher2024constrained,romer2025diffusion}, control-barrier
+approaches \parencite{yang2025safeflowmatcher}, and samplers that interleave optimisation with
+generation \parencite{li2025hardflow}. This is where arm~C's ancestry is set out --- the idea of
+projecting a \emph{predicted endpoint} inside the sampler is theirs, and is credited as theirs
+wherever the arm is introduced --- and where the
+thesis's degeneracy contribution is positioned: the activation-threshold convention these
+methods use has a low-budget regime in which the method reduces to its own baseline, and
+that regime is not, to the author's knowledge, characterised in the literature.
+
+\section{Accelerating Generative Planners}\label{sec:rel:accel}
+
+Distillation, consistency-style objectives, solver improvements and caching, together with
+the implicit samplers that retro-fit a shorter chain onto a trained diffusion model
+\parencite{song2021denoising}. The section
+distinguishes these from the present approach: they accelerate a model \emph{post hoc},
+whereas the few-step objective changes what is learned, and --- more importantly for a
+controller --- leaves the budget adjustable at deployment rather than baking in a new one.
+
+\section{Positioning of This Thesis}\label{sec:rel:positioning}
+
+One page. The gap in one sentence: \emph{the engine question and the constraint question have
+been studied separately, and the interaction between them --- which is where the cost
+actually lives in a receding-horizon controller --- has not been measured under matched
+conditions.} The section then states what this thesis adds that is not a combination of the
+above: the genuine-step condition, the regime split with its mechanism, and the removal of
+the selection machinery.
+
+% =============================================================================

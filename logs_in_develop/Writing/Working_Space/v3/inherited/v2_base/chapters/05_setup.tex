@@ -1,0 +1,50 @@
+\chapter{Experimental Setup}\label{ch:setup}
+\section{Tasks and Environments}\label{sec:setup:tasks}
+\section{Datasets}\label{sec:setup:data}
+\section{Baselines}\label{sec:setup:baselines}
+\section{Metrics}\label{sec:setup:metrics}
+\section{Training and Evaluation Protocol}\label{sec:setup:protocol}
+
+% -----------------------------------------------------------------------------
+% EXCEPTION to the "bone only" rule of Chapters 5-8 above. The compute
+% environment is NOT blocked on the run queue: it is a property of the machine,
+% settled and independently verifiable today (sinfo/scontrol/lscpu, 2026-09-09,
+% plus every sbatch log header). Written now so it does not have to be
+% reconstructed later. Source of record, with the raw command output:
+%   Writing/Auxiliary/Methodology_Sources/AUX_compute_environment.md
+% Everything else in Chapters 5-8 stays bone.
+% -----------------------------------------------------------------------------
+
+\subsection*{Compute environment}
+
+All training and evaluation reported in this thesis ran on a single shared GPU node of the
+institute's cluster, scheduled with SLURM. The node carries two 16-core AMD EPYC~7282 processors
+(32~physical cores, 64~hardware threads) and eight NVIDIA RTX~A5000 accelerators with 24~GB of
+device memory each. \textbf{Every job was allocated exactly one GPU}: no result in this thesis comes
+from a distributed or multi-GPU run. The full hardware and software inventory, including package
+versions, is given in \autoref{app:repro}, \autoref{tab:compute}.
+\srcnote{Slurm\_Codes/sbatch/templates/2026\_04\_30\_job\_template.sh; every log header in Slurm\_Codes/logs/}
+
+Two properties of this machine bear directly on how the wall-clock measurements in
+\autoref{ch:results} may be read, and both argue for reading them as \emph{indicative} rather than as
+a hardware benchmark.
+
+\emph{The node is shared.} It serves the institute's student and staff GPU queues simultaneously,
+and a snapshot taken while preparing this section found six of the eight accelerators and 42 of the
+64 threads already committed to other users' jobs. What this does \emph{not} affect is the
+accelerator itself: the scheduler neither oversubscribes GPUs nor preempts running jobs, so a job
+holds its device exclusively for its lifetime. Contention is therefore confined to the CPU, the
+memory system and I/O.
+
+\emph{The CPU-to-GPU ratio is low, and this work is CPU-bound.} Thirty-two physical cores serve
+eight accelerators, so a fully occupied node offers roughly four physical cores per GPU. Both halves
+of the evaluation loop --- the MuJoCo rollout and the per-step projection, which is solved by SLSQP
+on the CPU (\autoref{sec:method:proj}) --- run on those cores rather than on the accelerator.
+Evaluation throughput on this machine is thus plausibly limited by the CPU side and not by the
+RTX~A5000. This holds independently of contention, that is, it would hold on an idle node as well;
+it is the more fundamental of the two caveats.
+
+Both observations are recorded here rather than in \autoref{sec:disc:threats} because they concern
+the measurement apparatus rather than the validity of a claim. Their consequence for the timing
+figures specifically is taken up in \autoref{sec:res:summary}.
+

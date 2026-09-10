@@ -1,0 +1,72 @@
+
+\pagenumbering{alph}
+\ifstandalone
+  \begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\scshape\LARGE \getUniversity\par}
+    \vspace{0.5cm}
+    {\scshape\large School of \getSchool\par}
+    \vspace{2.5cm}
+    {\huge\bfseries \getTitle\par}
+    \vspace{1cm}
+    {\Large \getDoctype\par}
+    \vfill
+    {\large \getAuthor\par}
+    \vspace{1cm}
+    {\large Supervisor: \getSupervisor\par}
+    {\large Advisor: \getAdvisor\par}
+    \vspace{1cm}
+    {\large \getSubmissionLocation, \getSubmissionDate\par}
+  \end{titlepage}
+  \chapter*{Abstract}
+\else
+  % Order copied from Template_DONT_CHANGE/main.tex so the merge is a straight
+  % lift: cover, \frontmatter, then the front pages.
+  \input{pages/cover}
+  \frontmatter{}
+  \input{pages/title}
+  \input{pages/disclaimer}
+  % \input{pages/software_used}   % optional, per the template
+  \input{pages/acknowledgments}
+  \input{pages/abstract}
+\fi
+
+% -----------------------------------------------------------------------------
+% ABSTRACT -- v1 sketch. Rewrite last, once Results is settled.
+% -----------------------------------------------------------------------------
+\ifstandalone
+Predictive control with a generative planner has to pay for its samples. Diffusion
+Predictive Control couples a denoising planner to a per-step projection that enforces
+dynamics and safety constraints, and inherits diffusion's step budget: the number of
+network evaluations is fixed at training time and cannot be reduced afterwards. This
+thesis replaces that engine with deterministic ODE transport --- flow matching and its
+few-step variants --- while holding the backbone, the projector, the data and the
+evaluation harness fixed, so that the step budget becomes an inference-time choice.
+
+Across a state-based manipulator benchmark, a vision-conditioned variant of it, and an
+aerial embodiment built for this work, the resulting system is evaluated against the
+diffusion baseline under a strict definition of improvement: Pareto dominance at equal
+success and equal constraint satisfaction. \hole{Headline numbers -- write last, after
+Results is settled and the powered runs land.}
+
+The thesis makes three further contributions beyond the engine swap. First, a
+correctness condition for evaluating in-loop guided samplers: a step budget below a
+computable threshold reduces the guided sampler to sample-then-project, so that a
+substantial class of published-style comparisons measures nothing. Second, a measured
+regime split between the two constraint-enforcement arms, with a mechanism that explains
+it: projecting a predicted clean endpoint is cheaper per solve than projecting an
+off-manifold iterate, and the advantage appears exactly where the guided sampler becomes
+well-defined. Third, negative results are retained rather than discarded --- an
+additional engine that does not improve on its predecessor, and a benchmark defect
+diagnosed by this work's own instrumentation.
+\fi
+
+\microtypesetup{protrusion=false}
+\tableofcontents{}
+\microtypesetup{protrusion=true}
+
+% =============================================================================
+\mainmatter{}
+% =============================================================================
+

@@ -97,6 +97,77 @@ none of the other 38 starred subsections is labelled.
 
 ---
 
+## v2.6 — 2026-09-10 · the dropped terminal cost, and names that were claims
+
+**Asked for:** (1) put the dropped terminal cost `C` into the HardFlow difference section; (2)
+organise the naming — one MD in its own subfolder, three columns (repo code │ original paper │ what
+it really is / thesis) — and (3) apply it to the tex.
+
+### 1 · The dropped terminal cost `C`
+
+`tab:hardflow-setup` had the *fact* since v2.5; the **consequence** was missing. Added as a new
+bullet in *What differs from the published configuration*, making two points:
+
+- **Why dropping it is required, not a defect.** Arm B's projection is pure proximity with no goal
+  term. An arm C carrying a goal-seeking objective would beat it on task metrics for a reason
+  unrelated to where the program is posed. Dropping `C` is what makes the arm comparison *a
+  comparison*.
+- **The upside, now stated:** with `C` gone the objective is a pure quadratic prox, whose minimiser
+  is weight-independent — so arm C's per-step program **is exactly `Π_S(x̂₁)`**, arm B's operator at
+  a different point. *"Identical constraints, identical solver, different linearisation point"*
+  becomes literally true. What distinguishes arm C is the lookahead and the damped pull-back, **not
+  any optimisation of an objective**.
+- **The cost, now stated:** the source's headline on this benchmark is *fewer steps to target*, and
+  that is `C`'s doing — in their own table **every projection-only baseline lengthens the path**
+  (58.7 → 63.4–67.2) and only the arm carrying `C` shortens it (→ 52.5). **Arm C as run here has no
+  mechanism that shortens paths.** A null task-performance result must therefore not be reported as
+  evidence against the published method.
+
+### 2 · `Auxiliary/Naming/` — the consolidated table
+
+New folder, two files. `NAMING_20260910_master_table.md` is **canonical**; where it and any other
+note disagree, it wins. Three columns throughout — **① code token** (what you meet in `config/`, a
+checkpoint path, a CSV `variant` string; never in prose) │ **② paper name** (first mention + citation
+only; blank = it is ours) │ **③ what it really is → thesis name**. Seven tables: engines, constraint
+arms, selection rules, backbone/conditioning, geometry & protocol, environments & control, plus the
+five standing rules.
+
+Consolidates `NOTES_method_naming.md`, `NOTES_naming_and_rebuild.md`, `Rebuild_repo` §5 (🔴 unbuilt,
+never cited), `AUX_visual_aligning_env.md` §1.3, `FALLBACK_…` §2.1 and `DATASTATUS_…` §9.11. Both
+existing notes are kept as *rationale* and now carry a pointer at the top; `Auxiliary/README.md` and
+`NOTES_workspace_layout.md` index the folder.
+
+**Three names that were claims, and were false:**
+
+| was | is |
+|---|---|
+| `film_mode='v1'` → "FiLM conditioning" | **concatenated conditioning** — FiLM with `γ ≡ 0` (fixed in v2.4) |
+| "HF-SLSQP" / "HardFlow" for arm C | **in-ODE endpoint projection** — brand says nothing, and a *solver* in a method name asserts the solver is the contribution |
+| §-title "In-Loop Trajectory **Optimisation**" | **In-ODE Endpoint Projection** — our port optimises no objective (see §1 above) |
+
+### 3 · Applied to `thesis_v2.tex`
+
+| site | change |
+|---|---|
+| `sec:method:proj` title | → **"Constraint Enforcement I: Per-Step Iterate Projection"** |
+| `sec:method:hardflow` title | → **"Constraint Enforcement II: In-ODE Endpoint Projection"** |
+| arm C opening | now names the mechanism, credits the source *and its mode* in the same sentence, and says **why** the name is not theirs and not the solver's |
+| RQ3, `sec:intro:scope`, `sec:bg:mpc`, contributions | arms named **iterate projection** / **endpoint projection** — one adjective each, because the two algorithms differ by exactly one thing |
+| engine 3 | "curriculum variant" → **"the bootstrapped target"** (the brand hides the mechanism, and the mechanism *is* the negative result) |
+| `sec:rel:safety` | the idea of projecting a predicted endpoint is credited as the source's, explicitly |
+| degeneracy table & rule | "in-loop optimisation" → "in-ODE projection" / "the endpoint-projection arm" |
+| naming remark's `\srcnote` | repointed at the canonical master table |
+
+Nothing was renamed in the evidence: CSVs, DAs, checkpoint paths and the run ledger keep the
+artefact tokens forever (rule 5) — renaming them would break every existing cross-reference.
+
+### Checks
+
+`env balanced · braces 0 · $ parity even · dangling refs 0 · missing bib keys 0 · uncited entries 0`.
+2011 → 2151 lines. **Not compiled.**
+
+---
+
 ## v2.5 — 2026-09-09 · arm C's published setup is H16/8, ours is H8/1 — now stated
 
 **Asked for:** check whether the methodology records that HardFlow's own experiments run

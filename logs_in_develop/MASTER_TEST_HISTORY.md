@@ -5941,3 +5941,23 @@ Comprehensive data analysis of the MPC candidate fan ($B=4$ vs $B=1$) on `avoidi
 5. **Thesis Claim Ladder Audit & Campaign-Wide Baseline Gap Identification**:
    - Audited the thesis 3-rung claim ladder on `corridor`: holds only 1 of 3 rungs ($\text{af} > \text{mf}$ undetectable/tie; $\text{mf} > \text{fm}$ supported weakly; $\text{fm} > \text{diffusion}$ untestable).
    - Identified a critical campaign-wide empirical confound: `batch_uav_20260908_153947` contains only two legacy `diffusion` candidates (C75 and C91, both $K=20$ on `s_curve` under pre-U7 geometry). With zero `diffusion` runs executed under honest geometry (`u7hg`), the foundational claim $\text{fm} > \text{diffusion}$ cannot be evaluated without confounding geometry changes. Determined that a dedicated `diffusion` `s_curve` $K=20$ run under `u7hg` is urgently required to close the baseline benchmark.
+
+
+***
+
+## Gen15 Five-Mission Closure, MJPC Diagnosis & U11 corridor_ball (September 9–10, 2026)
+
+**Keywords**: Gen15, MJPC, pid_stopgo, pillars, HardFlow, AlphaFlow, MeanFlow, s_curve, U11, corridor_ball, commits ecb3ddf, b5861d9, 2453c73.
+
+1. **MJPC isolated a controller bottleneck but did not rescue s_curve** (DA_20260909_T5_mjpc_vs_pid_s_curve.md, jobs 25502 and 25514→25554):
+   - On the matched unprojected MeanFlow $K=10$ plan, pid_stopgo reached 0/10 goals while MJPC reached all three paired initial conditions (goal distance $2.86/2.72/2.89 \rightarrow 0.299/0.298/0.294$ m; Fisher $p\approx0.0035$). MJPC improved the HardFlow arm's goal reach ($0.70\rightarrow1.00$), violations ($166.9\rightarrow48.0$), and projection time ($1587.5\rightarrow761.8$ ms).
+   - Every controller-by-variant cell still had S&C $=0.000$: the stronger tracker converts failure to arrive into arrival through constraints. s_curve is therefore not a valid engine-ranking scene.
+
+2. **The completed five-mission wave closes the UAV ranking evidence** (DA_20260910_T1_af_unet_pillars_K_sweep.md, DA_20260910_T3_hardflow_vs_dpcc_pillars_K5.md, DA_20260910_T4_s_curve_budget_explore.md, CLOSURE_20260910_uav_engine_ladder_final.md):
+   - On discriminating pillars at $K=5$, the matched ordering is **mf $>$ fm $>$ af** (mean S&C $0.635$, $0.359$, $0.235$); AlphaFlow has no cell at S&C $\geq0.8$, refuting af > mf in the first UAV scene with dynamic range.
+   - Genuine HardFlow ($n_{\text{genuine}}=2$) was $8.2$–$21.3\times$ cheaper than full-geometry DPCC projection and had 0 unsafe rollouts in 210, versus 43/270 for DPCC, while S&C was a non-dominant 8–9–1 split. dpcc geo-free remained cheaper end-to-end in all matched pairs.
+   - More NFE failed to repair s_curve (fm $K=2\rightarrow20$ degraded all five shared variants at $9.9\times$ network cost; maximum S&C over 40 cells remained $0.100$). The apparent PID-only fm-over-mf ordering was retracted as tracker-confounded.
+
+3. **U11 adds a binding virtual-corridor test and isolates geometry per job** (CHANGELOG_20260910_corridor_ball_and_geo_variant_override.md):
+   - Diagnosed corridor_hg as constraint-trivial (zero unprojected and projected violations), then added virtual corridor_ball, forcing a vertical route above $z=1.41$ m without changing MuJoCo physics, with output-path isolation.
+   - Added validated UAV_MIX_GEO_VARIANTS propagation through evaluator and sbatch wrappers. Submitted six corridor_ball arms at PCC-only $K=2$ and genuine-HardFlow $K=5$ (jobs 25599–25604), gated on unprojected diffuser reporting violations; added robust temp-bash drivers for these tiers and diffusion/s_curve matrix-completeness rows.

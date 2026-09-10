@@ -3,6 +3,8 @@
 **Created:** 2026-09-10 · **Type:** fallback target + storytelling plan · **Status:** 🟢 **this branch has fired — treat it as the active plan**
 **Scope:** the engine half of the thesis (Goal A). Goals B and C are untouched by this document.
 **Governs together with:** [`../TARGET_20260905_thesis_claim_ladder.md`](../TARGET_20260905_thesis_claim_ladder.md) — this file is the discharge of its **§8 kill criterion 1**, not a replacement for it.
+**Extended 2026-09-10** with §10 — the author's restated general principle checked against the data, the containment argument, and the two new evidence paths the topic framing opens.
+**Data status:** [`../data_status/DATASTATUS_20260910_v3_entry_readiness.md`](../data_status/DATASTATUS_20260910_v3_entry_readiness.md)
 **Current draft:** [`../v2/thesis_v2.tex`](../v2/thesis_v2.tex) ([README](../v2/README.md)) — v1/v2 already demote α-Flow; this file supplies the *reason, the mechanism and the narrative* that the draft still marks as deferred.
 
 > 🔴 **What this file is.** A target/plan statement with the minimum evidence needed to justify it.
@@ -343,6 +345,8 @@ Symmetry with TARGET §8: this document must also be able to be wrong.
 | a **higher α floor** (α ≥ 0.4, untested) beats `mf` on V_A at K = 20 with paired significance | α-Flow re-enters as a rung and this file is retired. This is the **only** live re-entry path, and it is a *single* pre-registered run, not a sweep. |
 | the **seed replication** on `uav-pillars` K=5 reverses the ordering | soften the UAV row to "inconclusive"; the closure still stands on V_A + the mechanism, but the "worst where measurement is sharpest" line is withdrawn. |
 | a **constant-α** arm (never run) on the same visual U-Net beats `mf` | the *anneal*, not the objective, was the problem — rewrite §2 accordingly and say so. |
+| a **V_A retrain** (§10.3) moves the scene out of the all-fail regime and the re-run reverses `af` vs `mf` at K = 20 | the V_A leg of the closure is re-opened. **The `uav-pillars` leg and the flat-in-K mechanism are untouched** — a retrain cannot make a bootstrapped target K-dependent |
+| the **3-D state aligning leg** runs all engines and `af` beats `mf` there | a fifth environment contradicts four. Re-open, and state plainly that the closure was environment-dependent |
 | none of the above lands by the writing deadline | ship as written; α-Flow is closed on four environments and a derivation. |
 
 🔴 **Anti-rule, carried from TARGET §8:** *stop sweeping for a winning cell.* Two α floors, four
@@ -367,3 +371,63 @@ except for the single re-entry run above.
 (item 2's scope list still carries Gen3v7 α-Flow as an "in" generation without the demotion note) and
 [`../v2/README.md`](../v2/README.md) (still says "across two environments"). Both are one-line edits,
 left for the next writing pass rather than made silently here.
+
+---
+
+## 10. The 2026-09-10 topic framing — what it changes, and what it does not
+
+The author's restated general principle, recorded verbatim so it can be checked against the data:
+
+> *"General principle still Pareto: `mf` best, `af` at least no worse and could be better (as theory
+> shows), and > `fm` ≈ (or >) `diffusion`."*
+
+**The `mf` half and the `fm ≈ diffusion` half are exactly what this file already claims.** The
+`af` half is the one the data has answered, and it answers it in one direction only.
+
+### 10.1 "At least no worse" — true only in the direction the data allows
+
+| where | `af` vs `mf` | reading |
+|---|---|---|
+| `avoiding`, low K | nominal +3.5 steps, **p = 0.231**, a wash over all six rules | **indistinguishable** |
+| `uav-corridor` K=2 | 2.4 steps inside σ ≈ 4.5, paired 5/10–5/10 | **indistinguishable** |
+| `V_A` **K=2** | +0.0240 m, 4/4, perm p = 0.8750 | **indistinguishable** (but `mf` solves 7/10 contexts to `af`'s 2/10) |
+| `V_A` **K=20** | +0.2004 m; α=0.05 arm **1/10, p = 0.0215** | **worse** |
+| `uav-pillars` **K=5** | mean S&C **0.235** vs `mf` 0.635 — **behind naive `fm`**, 0/17 cells ≥ 0.8 | **worst in the family** |
+
+> ### The formulation that satisfies the principle *and* the data
+> **`af ≤ mf` everywhere: indistinguishable where the task has no power to separate, worse where it
+> does. Never better, on four environments.**
+>
+> That *is* "at least no worse" read in the only direction the measurements permit — with the
+> asymmetry stated, because the asymmetry is the finding (§1).
+
+### 10.2 "As theory shows" — the containment argument, and why it does not transfer
+
+The theory that predicts `af ≥ mf` is **containment**: α-Flow contains MeanFlow at α = 0, so the
+family cannot be worse than its own member. §2.2 already answers this and the answer has not moved:
+
+1. **α is a fixed schedule, not an optimised parameter.** The family contains MeanFlow; *training
+   picks one point in it*, and the point is chosen by a hand-set anneal. Containment bounds the
+   family, not the checkpoint.
+2. **The family is not even continuous at that end** — the implementation *changes branch* at
+   `α == 0` (`af_diffusion.py:552`), from a finite difference to an exact derivative. Small α is the
+   **worst-conditioned** regime, which is why the measured α = 0.05 arm is worse than α = 0.2.
+3. **The error decomposition predicts an interior optimum and no good limit at either end** (§2.2),
+   and the prediction that follows from it — **flat in K** — was derived before the UAV numbers
+   arrived and then held (§2.3).
+
+🔑 **This is the single most likely question in the defence, and it has a one-line answer.** Keep it
+in the chapter; do not let the topic reframing quietly reinstate the containment expectation.
+
+### 10.3 Two new evidence paths the topic framing opens — neither is α-Flow compute
+
+Both come from the 2026-09-10 topic plan and would touch the closure only as a side effect:
+
+| path | what it is | effect on this file |
+|---|---|---|
+| **V_A retrain + re-eval** | the author's plausibility concern about the visual leg (all-fail regime, over-strict constraint set) | 🟡 could re-open the **V_A leg** if the ranking reverses at K = 20 — see §8. It **cannot** touch the flat-in-K mechanism or the `pillars` result |
+| **the 3-D state aligning leg** | a new environment (harder control, no perception change) where **`af` has never been measured** | 🟢 if the leg runs all engines, `af` rides along at no extra design cost and the closure gains a **fifth** environment. **Not required** — Anti-rule §8 still forbids running α-Flow *for its own sake* |
+
+⚠️ **Anti-rule unchanged:** *stop sweeping for a winning cell.* α-Flow compute is closed except the
+one pre-registered re-entry (α ≥ 0.4 on V_A K=20). An `af` arm inside a run that was going to happen
+anyway is not a sweep; a run commissioned to rescue `af` is.

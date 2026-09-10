@@ -1,0 +1,126 @@
+\chapter{Introduction}\label{ch:introduction}
+
+\section{Motivation}\label{sec:intro:motivation}
+
+A robot that plans with a generative model buys expressiveness with computation. Diffusion
+planners \parencite{janner2022planning,chi2023diffusion} represent multi-modal demonstration data
+\parencite{jia2024towards} well and, when paired with a constrained projection step
+\parencite{romer2025diffusion}, can respect dynamics and safety at deployment. The price is the sampling
+loop: producing one plan costs tens to hundreds of network evaluations, and in a
+receding-horizon controller that cost is paid again at every timestep.
+
+The section argues that this cost is not incidental but \emph{structural}, and that the
+structure is what makes it addressable. In a diffusion model the number of steps is a
+property of the trained noise schedule \parencite{ho2020denoising}; reducing it after training
+degrades the sample, and recovering quality needs a different sampler
+\parencite{song2021denoising}. In a deterministic transport model \parencite{lipman2023flow} the same
+quantity is a property of the \ac{ODE} solver, and is chosen at inference. The motivation of this thesis is therefore not ``make the planner
+faster'' but ``move the step budget from training time to inference time, and then find out
+what it costs.''
+
+A second motivation follows from the first. Once the budget is cheap, the constraint
+machinery --- not the generative model --- becomes the dominant cost, and the question of
+\emph{how} constraints are enforced stops being a footnote.
+
+\section{Problem Statement}\label{sec:intro:problem}
+
+The object of study is a closed-loop controller in which, at each timestep, a conditional
+generative model proposes a trajectory over a fixed horizon, a constraint mechanism makes
+that trajectory admissible, and the first action is executed. The thesis holds this
+architecture fixed and varies exactly two things: the generative engine, and the
+constraint mechanism.
+
+Stating it this way exposes the methodological demand the rest of the thesis has to meet.
+A claim that one engine beats another is only meaningful if the backbone, parameter count,
+data, normalisation, horizon, seeds, projector and harness are all held constant. A claim
+that one constraint arm beats another is only meaningful if both arms see the same feasible
+set, the same solver, the same activation threshold and the same candidate budget. Most of
+the engineering behind this thesis exists to make those two sentences true, and the section
+says so plainly rather than leaving it to the reader to infer.
+
+\section{Research Questions}\label{sec:intro:rqs}
+
+\begin{description}
+  \item[RQ1 --- Engine.] Under an identical backbone, projector, dataset and harness, does
+    replacing the diffusion engine with deterministic ODE transport improve the
+    quality--cost frontier of constrained predictive control, and does the improvement
+    order the engine family?
+  \item[RQ2 --- Budget.] How far can the \ac{NFE} be reduced before
+    plan quality degrades, and what mechanism explains why the flow family can follow that
+    ladder down while diffusion cannot?
+  \item[RQ3 --- Constraints.] Given one fixed feasible set, which constraint-enforcement
+    arm --- projection of the current \emph{iterate}, or projection of the predicted clean
+    \emph{endpoint} inside the sampler --- should be used, and under what condition is the
+    comparison even well-posed?
+  \item[RQ4 --- Transfer.] Do the answers to RQ1--RQ3 survive a change of observation
+    modality (state $\rightarrow$ vision) and a change of embodiment (manipulator
+    $\rightarrow$ aerial), or are they properties of one benchmark?
+\end{description}
+
+\srcnote{TARGET \S7 maps each RQ to its evidence sections. RQ2 is the ``argue the mechanism
+before any table'' item.}
+
+\section{Contributions}\label{sec:intro:contributions}
+
+The section lists six contributions and is explicit that two of them are negative or
+methodological rather than performance claims.
+
+\begin{enumerate}
+  \item \textbf{An architecture-matched engine substitution.} Deterministic transport
+    engines \parencite{lipman2023flow,geng2025meanflow} are placed inside the \ac{DPCC} control stack
+    \parencite{romer2025diffusion} with the backbone, parameter count and constraint machinery held
+    fixed, so that the engine is the only moving part. The
+    resulting comparison is reported under Pareto dominance rather than a single metric.
+  \item \textbf{A correctness condition for evaluating in-loop guided samplers.} A guided
+    sampler that is only active near the end of its own integration performs no guidance at
+    all when the step budget is small: the sole active step is terminal, and what executes is
+    sample-then-project. The condition is a computable function of the step budget and the
+    activation threshold, and it disqualifies a class of comparisons that otherwise look
+    valid. This thesis derives it, instruments it, and enforces it in every table.
+  \item \textbf{A measured regime split between constraint arms, with a mechanism.} The two
+    arms are shown to swap places as a function of the same quantity, and the swap is
+    explained by \emph{which point} each arm hands to an identical projection operator, not by
+    solver differences.
+  \item \textbf{Removal of the candidate-selection machinery.} The projector's selection
+    rules are shown not to earn their computation, and the system ships with the redundancy
+    removed rather than retained ``just in case''.
+  \item \textbf{Two constructed benchmark environments} --- a vision-conditioned
+    manipulation task and an aerial task with four scenes, expert data, constraint geometry
+    and a low-level controller --- together with their construction documented as
+    methodology.
+  \item \textbf{Retained negative results.} An additional engine variant that does not
+    improve on its predecessor is reported as a clean negative rather than omitted, and a
+    defect in this work's own benchmark geometry, found by its own instrumentation, is
+    reported with the correction and its limits.
+\end{enumerate}
+
+\section{Scope and Terminology}\label{sec:intro:scope}
+
+A short section, placed before the background because the rest of the thesis is unreadable
+without it. It fixes the vocabulary that recurs in every chapter:
+
+\begin{itemize}
+  \item \textbf{Step budget $K$ / NFE.} The number of generative network evaluations spent
+    producing one plan. For the transport family this is a solver setting; for diffusion it
+    is fixed by training. \emph{$K$ is never the planner's candidate fan} --- a distinct
+    quantity, also swept, and a persistent source of confusion.
+  \item \textbf{Arms.} Arm~A is the \emph{unguided} plan (no constraint enforcement). Arm~B is
+    \emph{iterate projection}: the same projection applied to the sampler's current iterate. Arm~C
+    is \emph{endpoint projection}: the same projection applied inside the sampler to the predicted
+    clean endpoint, with a damped pull-back. The two names differ by one adjective because the two
+    algorithms differ by one thing --- the point handed to an identical operator.
+  \item \textbf{Genuine steps.} The number of sampler steps at which arm~C performs
+    non-terminal guided work; formalised in Chapter~\autoref{ch:method}. Zero genuine steps
+    means arm~C is not arm~C.
+  \item \textbf{Tightened geometry.} A stricter constraint margin applied to an otherwise
+    identical feasible set; an experimental factor, not a formatting suffix.
+  \item \textbf{``Better''.} Pareto dominance --- equal success \emph{and} equal constraint
+    satisfaction, with strictly fewer evaluations \emph{and} lower wall-clock. Anything else
+    is named a trade-off.
+\end{itemize}
+
+\section{Outline}\label{sec:intro:outline}
+
+\hole{Write last. One paragraph, one sentence per chapter.}
+
+% =============================================================================

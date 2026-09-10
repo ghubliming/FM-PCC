@@ -1,0 +1,56 @@
+% =============================================================================
+%  FM-PCC MASTER'S THESIS -- v3   (master file: structure only, no prose)
+%  TUM, School of CIT, Chair I6
+% -----------------------------------------------------------------------------
+%  WHAT v3 IS
+%  v2 wrote the mathematics. v3 writes the EXPERIMENTS: Chapters 5-8 stop being
+%  bone and start carrying results. The foundation entry -- the state-based
+%  manipulation benchmark (`avoiding-d3il`) -- is written in full; the vision-
+%  conditioned and aerial entries are written to the strength their data
+%  actually supports, and every guarded claim says so in its own sentence.
+%
+%  WHY THIS FILE IS A MASTER AND v2 WAS ONE FILE
+%  v2 and v3 are worked on IN PARALLEL. v2 keeps evolving Chapters 1-4; v3 owns
+%  Chapters 5-8. A monolithic file makes that impossible -- one edit anywhere
+%  makes the whole draft conflict. So v3 is split by chapter, and the split is
+%  mechanical (tools/split_v2.py), which is what lets tools/sync_v2.py detect a
+%  v2 change and three-way-merge it in. See inherited/MANIFEST.md for which
+%  file belongs to whom, and README.md for the workflow.
+%
+%  BUILD: latexmk -pdf thesis_v3.tex
+%     or: pdflatex thesis_v3.tex ; biber thesis_v3 ; pdflatex x2
+%  (There is no TeX toolchain in the AI container -- this has never been
+%   compiled here. Build it on a machine that has one before believing it.)
+%
+%  FIGURES: plots/make_figs.py regenerates every figure from the batch CSVs.
+%  It emits SVG; \includegraphics needs PDF. See tools/svg2pdf.sh.
+% =============================================================================
+
+% --- preamble -----------------------------------------------------------------
+% 00_preamble.tex is INHERITED from v2 byte-for-byte -- do not edit it here, or
+% every future sync conflicts. v3-only packages and macros go in the _v3 file.
+\input{parts/00_preamble}
+\input{parts/00_preamble_v3}
+
+\begin{document}
+
+% --- front matter -------------------------------------------------------------
+\input{parts/01_frontmatter}
+
+% --- main matter --------------------------------------------------------------
+\input{chapters/01_introduction}
+\input{chapters/02_background}
+\input{chapters/03_related_work}
+\input{chapters/04_method}
+\input{chapters/05_setup}
+\input{chapters/06_results}
+\input{chapters/07_discussion}
+\input{chapters/08_conclusion}
+
+% --- appendices ---------------------------------------------------------------
+\input{chapters/09_appendix}
+
+% --- back matter --------------------------------------------------------------
+\input{parts/99_backmatter}
+
+\end{document}

@@ -1,0 +1,70 @@
+\appendix{}
+
+\chapter{Derivations}\label{app:derivations}
+\chapter{Extended Results}\label{app:results}
+\chapter{Reproducibility}\label{app:repro}
+
+\section*{Compute environment}
+
+\autoref{tab:compute} is the machine of record for every number in this thesis. The hardware block
+is transcribed from \texttt{sinfo}, \texttt{scontrol show node} and \texttt{lscpu} run on the cluster
+on 2026-09-09, cross-checked against the provenance header (\texttt{NODE}, \texttt{GPU INFO},
+\texttt{GIT REV}) that every batch job in this project writes to its own log. The software block is
+transcribed from the environment-verification job that certified the cluster installation, and from
+the pinned dependency list.
+
+\begin{table}[htpb]
+  \caption[Compute environment]{The machine and software stack of record. All runs used a single
+  node; every job was allocated one GPU.}
+  \label{tab:compute}
+  \centering
+  \begin{tabular}{ll}
+    \toprule
+    Component & Configuration \\
+    \midrule
+    \multicolumn{2}{l}{\emph{hardware}}\\
+    Node                    & single shared GPU node, institute cluster \\
+    CPU                     & $2\times$ AMD EPYC 7282, 16 cores each \\
+    Cores / threads         & 32 physical / 64 logical, 2 NUMA domains, 1.5--2.8\,GHz \\
+    Cache                   & 512\,KiB L2 per core; 128\,MiB L3 total ($8\times16$\,MiB) \\
+    Main memory             & 252\,GiB; no node-local scratch \\
+    GPUs on node            & $8\times$ NVIDIA RTX A5000, 24\,GB each \\
+    GPUs per job            & \textbf{1}, held exclusively (no oversubscription, no preemption) \\
+    NVIDIA driver           & 530.41.03, unchanged over the project \\
+    \midrule
+    \multicolumn{2}{l}{\emph{scheduling}}\\
+    Scheduler               & SLURM 21.08.5 \\
+    Wall-clock limit        & 24\,h per job, partition-enforced \\
+    Typical training job    & 1 GPU, 8 threads, 32\,GB, 3--24\,h \\
+    Operating system        & Ubuntu, Linux 5.15.0 \\
+    \midrule
+    \multicolumn{2}{l}{\emph{software}}\\
+    Python                  & 3.10 (Conda environment) \\
+    PyTorch                 & 2.2.2, CUDA 12.1 build \\
+    NumPy / SciPy           & 1.26.4 / 1.13.1 \\
+    MuJoCo                  & 2.3.7, headless EGL rendering \\
+    Projection solver       & SciPy SLSQP (default); CasADi 3.6.5 with IPOPT selectable \\
+    ODE integration         & \texttt{torchdiffeq} 0.2.3 \\
+    Diffusers / Transformers & 0.31.0 / 4.41.2 \\
+    Gym / Gymnasium         & 0.26.2 / 0.29.1 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Two qualifications belong with the table. The software block is a snapshot taken when the
+environment was certified at the start of the project; no version change is recorded in any
+subsequent job log, but the environment was not frozen, so the defensible claim is that these
+versions were verified at the outset rather than that each one produced every reported number.
+And the accelerator, though the GPU is held exclusively, sits in a node whose CPU and memory are
+shared, which is why \autoref{sec:setup:protocol} declines to read the timing figures as a hardware
+benchmark.
+
+Reproducing a run requires the batch scripts as much as the code: the scheduling parameters, the
+GPU pinning and the headless-rendering configuration all live in the job scripts, and each job
+records the git revision it ran at in its own log header.
+\srcnote{Slurm\_Codes/submit.sh; Slurm\_Codes/sbatch/}
+
+\hole{Total compute spent is not yet quantified. Arithmetic over the batch-log timestamps gives an
+order of $10^{3}$ GPU-hours across roughly five months, but that covers only the jobs whose logs
+record both a start and an end; re-derive it with \texttt{sacct} before stating any figure.}
+

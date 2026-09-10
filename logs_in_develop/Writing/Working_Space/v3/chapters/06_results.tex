@@ -1,0 +1,601 @@
+% =============================================================================
+%  CHAPTER 6 -- RESULTS                                                [v3 OWNS]
+% -----------------------------------------------------------------------------
+%  WHAT IS WRITTEN AND WHAT IS HELD, and why -- from
+%  Working_Space/data_status/DATASTATUS_20260910_v3_entry_readiness.md section 7:
+%
+%    sec:res:state       WRITTEN IN FULL. The foundation. 5 seeds x 20 trials.
+%    sec:res:fewstep     WRITTEN IN FULL. The step-budget ladder.
+%    sec:res:constraints WRITTEN, per environment; never pooled across them.
+%    sec:res:visual      WRITTEN to grade. One table HELD (see the text).
+%    sec:res:uav         CHAPTER written, RANKING guarded: seed 6, n = 10.
+%    sec:res:ablations   WRITTEN. Exact at fan 1; directional on the default rule.
+%    sec:res:summary     PARTIAL -- the cross-entry synthesis needs the owed runs.
+%
+%  BINDING RULES OBSERVED HERE (TARGET section 6, DATASTATUS section 9):
+%   1 baseline pinned once, never renegotiated per table
+%   2 every table carries backbone + parameter count
+%   3 no aggregation across constraint arms; model-vs-model uses each model's
+%     own best arm, always named
+%   4 degenerate rows tagged, never averaged in
+%   5 the aerial per-step budget is never a pass/fail criterion
+%   6 nominal orderings inside noise are tagged as such -- never "wins"
+%   7 never "the bootstrapped target fails"; write "does not improve on
+%     MeanFlow", and NAME THE FLOOR (0.2 and 0.05 are different arms)
+%   8 constraint-family ablations are labelled and never ranked against legal arms
+%   9 mechanism names, never code tags (Auxiliary/Naming/NAMING_20260910)
+% =============================================================================
+
+\chapter{Results}\label{ch:results}
+
+Results are reported entry by entry, and each entry opens by stating its regime
+(\autoref{sec:setup:tasks}), because the regime determines which metric is a ranking instrument
+there. The three entries do not carry equal weight and the chapter does not pretend they do: the
+state-based benchmark is multi-seed and carries the principal claim; the vision-conditioned entry is
+single-seed but paired, and carries a decisive engine result and one citable projector result; the
+aerial entry carries the embodiment argument and a new safety and cost result, and its \emph{engine
+ranking} rests on one seed of one scene and says so in every sentence.
+
+\section{State-Based Manipulation}\label{sec:res:state}
+
+This is the foundation. It is the benchmark the baseline reports on, the only entry with multi-seed
+data, and the entry on which the thesis's principal claim rests. Its geometries are
+\textbf{discriminating}: the unprojected arm violates the constraint set, so success and constraint
+satisfaction ranks arms here rather than collapsing to plain success.
+
+\subsection*{The principal result}
+
+\begin{quote}
+\textbf{At a step budget of one, the MeanFlow engine Pareto-dominates the pinned baseline:
+higher success and constraint satisfaction, fewer control steps, and thirty-one times less compute
+per step, on the same backbone at the same parameter count.}
+\end{quote}
+
+\autoref{tab:state-headline} gives it. The comparison is architecture-matched --- a 4.0\,M temporal
+U-Net against the baseline's 4.0\,M temporal U-Net --- so it is not confounded by capacity, and it
+satisfies \autoref{def:improvement} in its strong form: equal-or-better on \emph{every} axis, with
+no trade-off to negotiate.
+
+\begin{table}[htpb]
+  \caption[The principal result on the state-based benchmark]{The MeanFlow engine against the
+  pinned baseline on the state-based manipulation benchmark. Both sides use per-step iterate
+  projection on tightened geometry with a candidate fan of four; each model is shown at its own best
+  selection rule, which is named. Aggregation is per geometry, then across the three geometries.}
+  \label{tab:state-headline}
+  \centering
+  \begin{tabular}{llrrrrr}
+    \toprule
+    Engine & Selection rule & $\nfe$ & S\&C & Steps & ms/step & s/episode \\
+    \midrule
+    Diffusion \emph{(pinned baseline)} & cumulative cost & 20 & 0.983 & 69.0 & 563.5 & 38.9 \\
+    \textbf{MeanFlow}                  & temporal consistency & \textbf{1} & \textbf{0.993}
+                                       & \textbf{61.0} & \textbf{18.1} & \textbf{1.10} \\
+    \textbf{MeanFlow}                  & temporal consistency & \textbf{2} & \textbf{0.993}
+                                       & \textbf{60.4} & \textbf{27.1} & \textbf{1.64} \\
+    \midrule
+    \multicolumn{7}{l}{\footnotesize Backbone: temporal U-Net, 4.0\,M parameters, all three rows.
+      S\&C $=$ success and constraint satisfaction.}\\
+    \multicolumn{7}{l}{\footnotesize Protocol: 5 seeds $\times$ 20 trials. 300 episodes on the
+      MeanFlow rows; 220 on the baseline row (see below).}\\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\dataref{temp/2508/batch\_avoiding\_combined\_20260825\_143212, reproduced in DA\_20260827 \S10.1}
+
+The margins are of two different kinds and should be read differently. The compute margin ---
+$31\times$ per step at $\nfe = 1$, $21\times$ at $\nfe = 2$, and $35\times$ end-to-end per episode
+--- is enormous relative to any plausible measurement noise, and its mechanism is not in doubt: the
+baseline must evaluate its network twenty times per plan because its step budget was fixed when it
+was trained, and the MeanFlow engine evaluates it once. The quality margin, 0.993 against 0.983, is
+\emph{within} the across-seed standard error of roughly 0.07 and is therefore not a claim that
+MeanFlow is safer. \guard{What \autoref{def:improvement} requires on that axis is equal-or-better,
+not better, and 0.993 against 0.983 satisfies it; the claim is dominance, and the quality axis is
+its gate rather than its margin.}
+
+\guard{The coverage asymmetry stated in \autoref{sec:setup:baselines} applies to this table.} The
+MeanFlow rows are complete at five seeds on all three geometries, 300 episodes; the baseline
+completed five seeds on the two single-halfspace geometries and only seed~6 on \emph{both-hard}, 220
+episodes. The geometry-first aggregation is what makes the two rows comparable at all, and the
+deficit is on the baseline's hardest geometry, which is the one where a single seed is least
+representative.
+
+\subsection*{Flow matching alone: a cost result, and only a cost result}
+
+Removing the few-step objective and keeping only deterministic transport isolates how much of
+\autoref{tab:state-headline} is transport and how much is the average-velocity target. The answer is
+that plain flow matching \emph{matches} the baseline's success at a fraction of its compute, and
+that this is a claim about cost and must be written as one.
+
+\begin{table}[htpb]
+  \caption[Flow matching against the baseline]{Plain flow matching at a step budget of two against
+  the pinned baseline at twenty, per geometry, both on cumulative-projection-cost tightened
+  geometry. The two geometries shown are the two on which the baseline is complete at five seeds.}
+  \label{tab:state-fm}
+  \centering
+  \begin{tabular}{llrrrr}
+    \toprule
+    Geometry & Engine & S\&C & Steps & s/step & s/episode \\
+    \midrule
+    top-left-hard
+      & Diffusion, $\nfe = 20$ & 1.00 & 70.0 & 0.558 & 39.1 \\
+      & Flow matching, $\nfe = 2$ & 1.00 & \textbf{65.5} & \textbf{0.028} & \textbf{1.8} \\
+    \midrule
+    top-right-hard
+      & Diffusion, $\nfe = 20$ & 0.95 & 77.6 & 0.517 & 40.2 \\
+      & Flow matching, $\nfe = 2$ & \textbf{1.00} & \textbf{71.6} & \textbf{0.026} & \textbf{1.9} \\
+    \midrule
+    \multicolumn{6}{l}{\footnotesize Temporal U-Net, 4.0\,M parameters, both engines.
+      5 seeds $\times$ 20 trials $=$ 100 episodes per cell.}\\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\dataref{DA\_20260819, \texttt{n\_trials}$=$20 cross-family, \S1}
+
+On both fully measured geometries this is dominance on all three axes, at $21\times$ lower wall
+clock per episode. But the success gap on \emph{top-right-hard}, 1.00 against 0.95, is inside seed
+noise on its own, so the defensible sentence is \textbf{``matches the baseline's success at twenty
+to thirty times less compute''} and not ``beats the baseline''. That wording is not caution for its
+own sake: \autoref{sec:res:visual} finds the two engines \emph{tied} on plan quality, and an
+unqualified quality claim here would contradict it.
+
+\subsection*{Decomposing the twenty-one-fold factor}
+
+The obvious objection to \autoref{tab:state-fm} is that the comparison is not budget-matched: flow
+matching is given a tenfold smaller budget and still wins on wall clock, so how much of the factor is
+the engine and how much is simply fewer network evaluations? Running the same flow-matching
+checkpoints at the baseline's own budget of twenty answers it.
+
+At matched budget, \textbf{the two engines are a wash on success}. Paired by seed across three
+projection rules on both complete geometries, thirty pairs, the pooled difference is $-0.012$ with a
+standard deviation of $0.113$ --- indistinguishable from zero. Flow matching wins
+\emph{top-right-hard} on all three rules by $+0.04$ to $+0.07$ and loses \emph{top-left-hard} by
+$-0.03$ to $-0.11$, and the entire top-left deficit is one seed. On compute at matched budget it is
+only $1.24$--$1.33\times$ cheaper, and that comes almost entirely from cheaper constraint solves
+rather than from cheaper generation: per-evaluation generation cost differs by nine per cent
+($0.0087$\,s against $0.0095$\,s), as it must for two networks of the same size.
+\dataref{DA\_20260819 \S1b, job 25006}
+
+The factor therefore decomposes into a modest model advantage of about $1.4\times$ at equal budget,
+and about $15\times$ from the fact that flow matching \emph{can} run at a budget of two and the
+baseline cannot. \textbf{The second factor is the result}, and it is a statement about the budget
+ladder rather than about the engine --- which is what \autoref{sec:res:fewstep} is about.
+
+\subsection*{The low-budget pair}
+
+At the cheapest configuration reaching perfect success and constraint satisfaction, the two
+few-step objectives --- MeanFlow and the bootstrapped target --- both improve on plain flow matching
+on both cost axes at once. On the architecture-matched U-Net, on \emph{top-left-hard}, at a budget of
+one, on temporal-consistency tightened geometry, with every row at S\&C $=1.00$:
+
+\begin{table}[htpb]
+  \caption[The low-budget pair]{The cheapest configuration reaching perfect success and constraint
+  satisfaction, per engine. All rows are the same 4.0\,M temporal U-Net; the baseline row is at its
+  own best rule. The two few-step rows are a \emph{pair}, not a ladder --- see the guard below.}
+  \label{tab:state-lowk}
+  \centering
+  \begin{tabular}{lrrr}
+    \toprule
+    Engine & Steps & s/episode & vs.\ baseline \\
+    \midrule
+    Bootstrapped target, floor $\alpha = 0.2$   & 57.20 & 1.07 & $33.3\times$ \\
+    Bootstrapped target, floor $\alpha = 0.05$  & 58.20 & 1.09 & $32.7\times$ \\
+    MeanFlow                                    & 60.75 & 1.13 & $31.6\times$ \\
+    Flow matching                               & 65.65 & 1.31 & $27.2\times$ \\
+    Diffusion \emph{(pinned baseline)}, $\nfe = 20$ & 61.00 & 35.66 & --- \\
+    \midrule
+    \multicolumn{4}{l}{\footnotesize Temporal U-Net, 4.0\,M parameters, every row.
+      \textbf{Seed 6 only}, 20 trials, \emph{top-left-hard}, $\nfe = 1$.}\\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\dataref{temp/0309/batch\_avoiding\_combined\_20260903\_133730; Report\_20260903 \S1}
+
+\guard{This table must be read as a pair and never as a ladder.} Three facts forbid the ordering.
+The nominal separation between the two few-step rows is 3.55 steps on a single seed; the exact test
+on the underlying cell gives $p = 0.231$. Averaged over all six projection rules rather than the
+best one, the two engines are a wash --- eight non-dominated cells against nine. And two floors of
+the bootstrapped target were trained and \emph{the better of the two is quoted here}, which is a
+selection effect that a single-seed comparison has no power to absorb. What the table supports is
+that \emph{both} few-step objectives beat plain flow matching at the lowest budget, on both cost
+axes; it does not support an ordering between them. \autoref{sec:disc:negative} takes up what
+happens to that pair on the other two entries, where the task does have power to separate.
+
+\subsection*{An engine-independent finding about the selection rules}
+
+One row of \autoref{tab:state-headline} deserves separate mention because it is a defect, not a
+result. On the MeanFlow flagship the cumulative-projection-cost rule stalls: 98.0 control steps at a
+budget of two and 72.0 at a budget of one, against roughly 61 for every other tightened arm, and at
+a lower success and constraint satisfaction as well (0.927 and 0.943 against 0.993). The same
+signature appears on the bootstrapped target and does \emph{not} appear on the baseline, despite all
+three sharing a backbone. The sign of the effect therefore tracks the projection-cost landscape
+rather than the architecture. This is why \autoref{tab:state-headline} names its selection rule
+rather than reporting a best-over-rules number, and it is picked up in
+\autoref{sec:res:ablations}.
+
+\section{Few-Step Engines}\label{sec:res:fewstep}
+
+\subsection*{The step budget is inference-time for one family and training-time for the other}
+
+\autoref{fig:k-ladder} is the figure this chapter turns on. It plots success and constraint
+satisfaction against the step budget, and the shape of the two families is categorically different:
+the transport engines are \emph{flat} in the budget down to a single network evaluation, while the
+diffusion baseline collapses below the budget it was trained at.
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=\textwidth]{fig_avoiding_k_ladder}
+  \caption[Quality against step budget]{Success and constraint satisfaction against the step budget
+  on the state-based benchmark, geometry-mean over all three geometries, 4.0\,M temporal U-Net
+  throughout. Solid: this work's protocol, 5 seeds $\times$ 20 trials. Dashed with hollow markers:
+  the baseline at its own published protocol, 5 seeds $\times$ 2 trials --- shown because it is the
+  only measurement of what the diffusion engine does below its training budget, and drawn
+  differently because it is a different protocol. The baseline is plotted on the
+  cumulative-projection-cost rule, which is also the rule its pinned configuration uses; the
+  transport engines are on temporal consistency.}
+  \label{fig:k-ladder}
+\end{figure}
+
+The asymmetry is structural rather than empirical. For the diffusion engine the number of network
+evaluations is a property of the trained model: the noise schedule is discretised at training time,
+and sampling with fewer steps than were trained is sampling from a different chain. For the
+transport engines the budget is a property of the \emph{integrator}, chosen at inference; the
+learned object is a velocity field, and the average-velocity objective is what makes a single Euler
+step of that field a usable plan rather than a coarse one.
+
+Measured, at the published protocol, the baseline scores $0.667$ at a budget of one and $1.000$ at
+ten and at twenty; the transport engines hold $0.99$--$1.00$ from one to twenty.
+\guard{The low-budget baseline cells are ten episodes per cell, a resolution of $\pm 0.10$. The
+\emph{direction} is far outside that resolution --- $0.667$ against $1.000$ is not a
+ten-episode artefact --- but the exact value is not, and the sentence this licenses is a mechanism
+sentence, not a powered comparison.} A clean budget sweep of the baseline at this work's protocol is
+the single highest-value outstanding run on this entry (\autoref{sec:setup:protocol}).
+
+\subsection*{What this does and does not order within the transport family}
+
+Within the transport family the budget ladder is flat enough that it does \emph{not} order the
+engines on this entry: at every budget from one to twenty, all three transport rows sit between
+$0.97$ and $1.00$, inside seed noise of each other. The separation between them is a
+\emph{cost} separation, and it is reported as such in \autoref{tab:state-lowk}. The entry on which
+the few-step objective separates the engines on \emph{quality} is the vision-conditioned one, where
+the task is hard enough to have the range, and that result is in \autoref{sec:res:visual}.
+
+One negative observation belongs here. Raising the budget does not monotonically improve plain flow
+matching: its worst-geometry score goes $0.99$, $1.00$, $1.00$, $0.91$ across budgets of one, two,
+five and twenty. The drop is not spread over seeds --- four of five stay between $0.90$ and $1.00$
+and one falls to $0.65$ on one geometry, having scored a clean $1.00$ there at every lower budget.
+So it is one checkpoint misbehaving once the trajectory is integrated finely, not a property of the
+engine. \dataref{DA\_20260819, bonus finding}
+
+\section{Constraint Arms}\label{sec:res:constraints}
+
+The two constraint arms differ in exactly one thing --- the point handed to an identical projection
+operator. Per-step \emph{iterate} projection applies it to the sampler's current iterate, which at
+early transport times is not yet a plan; in-ODE \emph{endpoint} projection applies it to the
+predicted clean endpoint and then damps the correction back
+(\autoref{sec:method:hardflow}). \textbf{The citable comparison differs per entry and the three are
+never pooled}, because they occupy different regimes and different budgets.
+
+\subsection*{On the state-based benchmark: a cost crossover, at a low budget}
+
+Here the arm comparison is a \emph{side topic} rather than the entry's headline, and it is the least
+powered result in it. At matched budget, in the same job, on the same checkpoint, the endpoint arm
+performs \emph{more} constraint solves than the iterate arm and costs about half as much per step:
+$0.0745$\,s against $0.1478$\,s at a budget of three, $0.1304$ against $0.2268$ at five.
+\autoref{fig:projector-cost} shows the crossover.
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=\textwidth]{fig_avoiding_projector_cost}
+  \caption[Cost of the two constraint arms]{Per-step wall clock of the two constraint arms against
+  the step budget, MeanFlow on the 4.0\,M temporal U-Net, activation threshold fully open,
+  temporal-consistency tightened geometry, one job. The shaded band is the regime in which the
+  endpoint arm executes a single genuine step and is therefore not running the mechanism it names
+  (\autoref{sec:res:constraints:degenerate}); its markers there are hollow.}
+  \label{fig:projector-cost}
+\end{figure}
+
+At a budget of three --- the lowest citable one --- the endpoint arm reaches perfect success and
+constraint satisfaction with zero executed violations at $58.88$ control steps and $0.0745$\,s per
+step, against the pinned baseline's $1.000$, $70.13$ and $0.5534$\,s. That is sixteen per cent fewer
+control steps at $7.4\times$ less compute, architecture-matched, and it satisfies
+\autoref{def:improvement}.
+\dataref{temp/0609/I/batch\_avoiding\_combined\_20260906\_125724, job 25444; DA\_20260906 \S3}
+
+\provisional{This row is underpowered and must not be quoted as the entry's headline. It rests on
+24 rollouts --- 4 seeds $\times$ 3 geometries $\times$ 2 trials --- and \textbf{seed 6 is absent},
+while the pinned baseline pools five seeds, so the comparison is not seed-matched. The
+\emph{timing} differences survive that: they are factors of two and seven against run-to-run
+variation of a few per cent. The \emph{safety} difference does not: $1.000$ against $0.917$ is two
+rollouts out of 24 and is not significant. The powered version is a budget sweep at this work's
+protocol across all five seeds.}
+
+The mechanism follows from the name and is worth stating because it predicts the sign. The endpoint
+is near-feasible at every transport time, so the solver starts close to its answer and converges in
+few iterations; the iterate is off-manifold early, so it does not. \guard{This mechanism is
+currently \emph{inferred from timing}: per-solve time and iteration counts are not exported for the
+iterate arm, so the inference is from total cost divided by solve count rather than from measured
+solver work.}
+
+\subsection{Degenerate and Thin Configurations}\label{sec:res:constraints:degenerate}
+
+\autoref{sec:method:degenerate} derives a condition under which the in-loop guided sampler is not
+guided at all: the number of \emph{genuine} steps --- active steps that are not the terminal one ---
+is
+\begin{equation*}
+  n_{\text{gen}} \;=\; \max\!\big(\nfe - \lfloor (1-\eta)\,\nfe \rfloor,\, 1\big) - 1 ,
+\end{equation*}
+and where it is zero, the endpoint arm collapses to sample-then-project: at the terminal step the
+predicted endpoint \emph{is} the iterate, so the two arms compute the same thing.
+
+\textbf{This is a correctness condition for evaluation, and it was confirmed by the shipped code at
+run time.} The evaluation printed its own thin-configuration banner at a budget of two with the
+threshold fully open, reporting one active step and zero genuine ones, and ran with two and four
+genuine steps at budgets of three and five. The count of constraint solves scaled $1 : 1.51 : 2.52$
+across those three budgets against a prediction of $1 : 1.5 : 2.5$.
+\dataref{job 25444 evaluation log, 2026-09-06}
+
+Three consequences bind the rest of this chapter. \emph{First}, the budget floor is a pair --- the
+budget and the activation threshold together --- and not a budget: a budget of one is structurally
+impossible for the endpoint arm at \emph{every} threshold. \emph{Second}, every degenerate row in
+this thesis is tagged and never averaged into a mean with non-degenerate rows. \emph{Third}, and
+most consequentially outside this work, a published-style comparison of a guided sampler run below
+this threshold measures sample-then-project while reporting it as guidance. The condition is cheap
+to check and this thesis reports it for every configuration it evaluates; that this is \emph{our}
+condition and not the source method's is stated in \autoref{sec:rel:safety}.
+
+\section{Visual Observations}\label{sec:res:visual}
+
+This entry adds two increments to the foundation at once --- three-dimensional control and
+perception in place of state --- and \autoref{sec:disc:limitations} says plainly what that costs the
+transfer argument. Its regime is \textbf{all-fail}: no arm satisfies the constraint set, success and
+constraint satisfaction is floored on every arm including the baseline, and ranking therefore uses
+the funnel of \autoref{sec:setup:metrics}. Its protocol is ten enumerated contexts on one seed, which
+makes every comparison paired and every test below an exact one.
+
+\subsection*{The engine result, which is decisive}
+
+On plan quality --- funnel stage one, evaluated on the unguided arm, from an initial distance of
+$0.4530$\,m:
+
+\begin{itemize}
+  \item \textbf{MeanFlow beats the diffusion baseline decisively.} Median final distance $0.0741$\,m
+    against $0.4140$\,m; paired difference $-0.3744$\,m with the baseline better in \emph{none} of
+    the ten matched contexts, $p = 0.0020$ --- the smallest attainable two-sided value at ten pairs
+    --- and at $0.64\times$ the per-step cost. \dataref{Gen14 CLOSURE\_20260907 R.1}
+  \item \textbf{MeanFlow beats plain flow matching.} Paired difference $+0.216$\,m, nine of ten
+    contexts, $p = 0.0039$; flow matching freezes in five of ten contexts against MeanFlow's one.
+  \item \textbf{Flow matching and the baseline are tied.} $0.0055$\,m apart inside a band of roughly
+    $0.4$\,m, $p = 1.0000$. \guard{This is why \autoref{sec:res:state} states the flow-matching
+    result as a cost claim: the quality version of it is refuted here, and the two entries would
+    otherwise contradict each other.}
+\end{itemize}
+
+\textbf{The few-step objective, not transport, is what separates.} That is the cleanest statement of
+the engine result in this thesis, and this is the entry that makes it, because it is the entry with
+the dynamic range to separate anything at all.
+
+\subsection*{Flat in the budget, and why}
+
+MeanFlow improves as the budget rises, from $0.2354$\,m at two evaluations to $0.0741$\,m at twenty,
+while the bootstrapped target is flat or worsening on both of its floors --- $0.3738 \to 0.3918$\,m
+at $\alpha = 0.2$ and $0.3978 \to 0.4488$\,m at $\alpha = 0.05$. The derived mechanism is that the
+bootstrapped target closes its finite difference with the model's own frozen output, which
+contributes a field bias of order $(1-\alpha)$ that does not shrink as the interval does; the bias
+is therefore budget-independent, and raising the budget cannot integrate it away.
+\dataref{Gen14 CLOSURE\_20260907 \S5.1}
+
+\subsection*{The projector result: one operating point, and it is not the largest budget}
+
+\begin{quote}
+\textbf{At a step budget of ten, in-ODE endpoint projection delivers the baseline's safety and the
+baseline's distance at about 325\,ms per step less --- a clean sweep of nine matched pairs at
+$p = 0.0039$.}
+\end{quote}
+
+That is the one citable projector claim on this entry and it is a \emph{latency} claim at equal
+safety. It is strong because it is a clean sweep, not because it is large. At a budget of twenty the
+same comparison is at parity on latency ($p$ between $0.18$ and $1.00$), and the apparent safety
+advantage there --- ten of ten against nine of ten zero-violation rollouts --- is \emph{one
+discordant rollout} at $p = 1.0000$ and is not quoted as a result anywhere in this thesis.
+\dataref{Gen14 CLOSURE\_20260907 \S8.1; H10 \S10.4}
+
+What \emph{is} separately true at the largest budget is a property of the configuration rather than
+a margin: the endpoint arms are the only arms in the corpus that reach a zero-violation rate of
+$1.000$ with zero violations \emph{while still moving the box}. The flagship cell is MeanFlow at a
+budget of twenty on tightened geometry, at $275.3$\,ms per step, with two of ten contexts untouched;
+the baseline reaches comparable safety only at $2157.9$\,ms per step, $7.8\times$ more. One baseline
+variant also reaches $1.000$ --- by freezing in ten contexts out of ten, which disqualifies it, and
+that has to be said in the same breath as the number.
+\dataref{H10 \S10.5}
+
+\provisional{One table is held. The constraint comparison against the pinned baseline cannot be
+completed, because the baseline has no tightened cell at a budget of twenty on this entry. What is
+published here is the plan-quality ranking and the flagship cell; the constraint comparison against
+the baseline waits on one evaluation.}
+
+\guard{Everything in this section is one seed at ten contexts.} The constraint-family ablations
+present in the corpus are ablations and are never ranked against legal arms: they win by not
+enforcing. Minima are single rollouts against a measured reproducibility floor of about $0.4$\,m,
+which is the scale of the quantity being compared, so no minimum here is an estimate.
+
+\section{Aerial Trajectory Planning}\label{sec:res:uav}
+
+\subsection*{What this entry is for}
+
+The aerial entry answers the embodiment half of \textbf{RQ4}, and its contribution is the transfer
+itself: a planner and a projector developed against a fully actuated, statically stable,
+kinematically controlled manipulator are carried onto an underactuated, open-loop-unstable,
+second-order plant, and made to fly through static obstacle fields under a cascaded geometric
+controller at 33\,Hz planning against 100\,Hz physics. That transfer is the result, and it holds
+independently of which engine ranks highest on it.
+
+\guard{Every ordering sentence in this section rests on seed 6 at ten rollouts on one scene. A
+difference of 0.1 in mean success and constraint satisfaction there is one rollout.} The chapter is
+written; the ranking is not banked.
+
+\subsection*{The scenes occupy three different regimes, and only one of them ranks}
+
+\begin{itemize}
+  \item The \textbf{corridor} scene is \textbf{all-pass} and \emph{constraint-trivial}: violations
+    read zero and collision-free completion reads one on every arm, projected and unprojected alike,
+    while the same counters report violations in the hundreds on the pillars scene. Success and
+    constraint satisfaction therefore reduces to plain success there, and the engine ordering it
+    produces is statistically empty --- a spread of 2.4 control steps against a standard deviation
+    of 4.5 to 5.0, with the paired split five--five. It is not used to rank. \emph{That the projector
+    spends 155--202\,ms per step removing violations that never existed is a genuine finding, and it
+    is taken up in \autoref{sec:disc:threats}.}
+  \item The \textbf{pillars} scene at a budget of five is \textbf{discriminating} and carries the
+    ranking.
+  \item The \textbf{s-curve} scene is \textbf{all-fail} and is retained as the \emph{controller-limit
+    case} rather than as a ranking scene, which is a stronger use of it. Its ceiling is $0.100$
+    across forty configurations and no arm clears the second stage of the funnel; raising the budget
+    beyond five is non-monotone and does not rescue it. An earlier engine ordering on this scene was
+    \textbf{tracker-confounded and is retracted} --- which is itself the evidence that the scene
+    measures the controller and not the planner. \autoref{sec:disc:limitations} treats it as the
+    edge of the control stack.
+\end{itemize}
+
+\subsection*{The engine ranking, on the one scene that discriminates}
+
+Averaged over seventeen matched configurations on the pillars scene at a budget of five, mean
+success and constraint satisfaction is $0.635$ for MeanFlow, $0.359$ for plain flow matching and
+$0.235$ for the bootstrapped target; ceilings are $1.000$, $0.900$ and $0.700$; configurations at or
+above $0.8$ number seven, two and \emph{zero} of seventeen respectively.
+\dataref{Gen15 CLOSURE\_20260910 \S2}
+
+\provisional{Seed 6, ten rollouts, one scene. This is the ordering the corpus shows and it is not
+banked; two to three additional seeds on this scene are the one required run for this entry.}
+
+Two things about it are worth stating even at that strength. It is the fourth environment in which
+the bootstrapped target does not improve on MeanFlow, and the first in which it finishes
+\emph{behind plain flow matching} --- on the one aerial scene with dynamic range, and it is the only
+engine with no configuration above $0.8$. And the corridor scene's empty ordering reproduces, in a
+second environment and independently, the same absence of power that the state-based benchmark shows
+at low budget: same nominal order, same failure to separate. Two environments agreeing on a
+\emph{non}-result is worth more than either alone.
+
+\subsection*{The projector on the aerial entry: cost, and a safety finding that is new}
+
+Endpoint projection is $8.2$--$21.3\times$ cheaper to project than full-geometry iterate projection,
+and $5.6$--$12.4\times$ cheaper end to end, at parity on success and constraint satisfaction, with a
+non-dominated tally of eight to nine with one tie.
+\guard{Against the geometry-ablated variants of the iterate arm the two cost about the same
+(roughly 33.7 against 34.8\,ms), and there the endpoint arm's more expensive generator makes it
+about 27 per cent \emph{more} expensive end to end in all nine pairs. The cost advantage is against
+the full-geometry projector, and the text says which.}
+
+The finding this entry contributes that no other entry could is about safety:
+
+\begin{quote}
+\textbf{Every unsafe rollout in the study is an iterate-projection rollout.} Endpoint projection
+produced zero unsafe rollouts in 210; iterate projection produced 43 in 270. Seven of the eight
+failing configurations use the \emph{random} selection rule, which is simultaneously the most
+expensive projection row on every engine.
+\end{quote}
+
+\dataref{Gen15 T3 \S6; CLOSURE\_20260910 \S5}
+
+\guard{One scene, one seed.} It feeds the selection-rule argument of
+\autoref{sec:res:ablations} in a way the other two entries could not: the random rule is not merely
+redundant here, it is the only configuration that put the aircraft in an unsafe state, at the highest
+projection cost.
+
+Two qualifications complete the entry. Projection is not universally worth paying for: unprojected
+scores $0.000$ for the bootstrapped target, where projection is essential, $0.900$ for MeanFlow,
+where it is marginal, and $0.900$ for plain flow matching, whose best configuration is unprojected
+--- there, projection \emph{hurts}. And the single configuration reaching $1.000$ in the entire
+family is MeanFlow on a \textbf{geometry-ablated} projector: that ablation removes the geometric rows
+from the constraint program, violations are still measured against true geometry so the pass is
+real, but the cell demonstrates \emph{the generator}, not the constrained projector, and is labelled
+as such wherever it appears.
+
+\hole{No diffusion arm exists on any aerial scene, so the comparison against the pinned baseline is
+untestable on this entry; that half of the claim rests on the state-based benchmark. Reference rows
+for the baseline are in flight and, when they land, will be a reference for scale at deliberately
+unmatched budgets --- not a proof.}
+
+\section{Ablations}\label{sec:res:ablations}
+
+\subsection*{The selection machinery, at a fan of one, is exactly redundant}
+
+When the candidate fan is one, the three selection rules do not merely agree on average --- they are
+\textbf{bit-identical in all fifteen paired blocks}, on success and constraint satisfaction and on
+control steps alike, for every engine tested: the baseline, MeanFlow on both backbones, plain flow
+matching at two activation thresholds, and the bootstrapped target. This is predicted by the
+implementation, which selects index zero when there is only one candidate, and confirmed exactly
+rather than statistically. Every fan-one evaluation in this project therefore evaluates three
+rules that are the same rollout, and dropping to one is a threefold saving on the projection stage
+with no information lost.
+\dataref{DA\_20260827 \S6}
+
+\subsection*{The fan is free on the generator and linear on the projector}
+
+Decomposing per-step cost into generation and projection shows that the fan does not touch the
+generator --- drawing four candidates instead of one is a single batched forward pass, and generation
+moves by at most six per cent --- while projection scales by $3.2$--$4.9\times$ against an ideal of
+four, the shortfall being fixed per-solve overhead. The reason is in the implementation: the
+constraint program is solved in a serial loop, one solver call per candidate, on the CPU.
+\srcnote{diffuser/sampling/projection.py:132}
+
+The engineering consequence is that \textbf{the fan should be parallelised rather than shrunk}. On
+the flagship, parallelising four candidates would deliver the same latency as a fan of one
+($\approx 11.7$\,ms per step at a budget of one, against $18.1$ today) while keeping all four
+candidates and the banked success rate, whereas shrinking the fan buys the same latency and risks the
+number the principal claim rests on. \guard{The per-candidate cost model behind that figure is
+derived from two measured points, and the achievable speed-up depends on available cores, so it is a
+prediction to be measured rather than a result.}
+
+\subsection*{Which rule should be the default}
+
+The cumulative-projection-cost rule never earns its cost on the state-based benchmark, where
+temporal consistency is the right default and where the cost rule additionally carries the stall
+reported in \autoref{sec:res:state}. \guard{The default is task-dependent, not universal:} the
+random rule is the flagship rule on the vision-conditioned entry, and on the aerial entry it is the
+only rule associated with unsafe rollouts. What generalises is the \emph{strong} form --- at a fan of
+one the machinery is exactly redundant --- and not a single recommended rule.
+
+\section{Summary of Findings}\label{sec:res:summary}
+
+\begin{enumerate}
+  \item \textbf{The engine substitution pays, and it pays through the budget.} On the state-based
+    benchmark the MeanFlow engine Pareto-dominates the pinned baseline at a single network
+    evaluation: better on success and constraint satisfaction, sixteen per cent fewer control steps,
+    and $31\times$ less compute per step, architecture-matched, at 300 episodes against 220.
+    Decomposed, about $1.4\times$ of the compute factor is the engine at equal budget and about
+    $15\times$ is the budget the baseline cannot reach.
+  \item \textbf{The budget is inference-time for transport and training-time for diffusion.} The
+    transport engines hold their quality from twenty evaluations down to one; the baseline scores
+    $0.667$ at one against $1.000$ at ten, at its own published protocol.
+  \item \textbf{The few-step objective, not transport alone, is what separates the engines on
+    quality.} Plain flow matching matches the baseline --- a \emph{cost} result on the state-based
+    benchmark and an exact tie on the vision-conditioned one --- while MeanFlow beats the baseline
+    decisively where the task has the range to show it ($-0.3744$\,m, none of ten contexts lost,
+    $p = 0.0020$).
+  \item \textbf{The bootstrapped target does not improve on MeanFlow.} It is a pair with MeanFlow
+    where the task cannot separate them and behind it where the task can, in four environments, with
+    a derived mechanism. \autoref{sec:disc:negative} gives it as a negative result rather than a gap.
+  \item \textbf{The constraint-arm answer is regime-dependent and is stated per entry}: a cost
+    crossover at a budget of three on the state-based benchmark, a $325$\,ms-per-step latency win at
+    a budget of ten on the vision-conditioned entry, and an $8$--$21\times$ projection-cost advantage
+    plus zero unsafe rollouts in 210 on the aerial entry.
+  \item \textbf{A correctness condition for evaluating in-loop guided samplers}, derived and then
+    confirmed by the instrumentation at run time: below a computable number of genuine steps the
+    guided sampler is sample-then-project, and a comparison run there measures nothing.
+  \item \textbf{The selection machinery is exactly redundant at a fan of one}, in all fifteen blocks
+    and every engine, and the fan should be parallelised rather than removed.
+\end{enumerate}
+
+\hole{The cross-entry synthesis --- one table of the principal claim in all three entries --- is not
+written, and should not be until the aerial seeds and the fifty-context evaluation land. Writing it
+now would present three results of very different strengths in one visual register, which is exactly
+what \autoref{sec:setup:metrics} exists to prevent.}
+
+On the wall-clock figures throughout this chapter: they are indicative rather than a hardware
+benchmark, for the reasons given with the machine in \autoref{sec:setup:protocol}. Every ratio
+quoted has both of its sides measured on the same node under the same conditions, and the largest
+ratios --- factors of twenty and thirty --- are far outside any plausible contention effect. The
+factors near unity, in the matched-budget comparison specifically, are the ones for which that
+caveat is load-bearing, and they are the ones this chapter declines to build a claim on.

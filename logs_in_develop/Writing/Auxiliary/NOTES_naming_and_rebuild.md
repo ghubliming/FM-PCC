@@ -26,6 +26,9 @@ and every results table.
 
 ---
 
+> 📍 **The consolidated table now lives in [`Naming/NAMING_20260910_master_table.md`](Naming/NAMING_20260910_master_table.md) and is canonical.** This file is kept for its *rationale* — the code-flag traps and the standing rule on `Rebuild_repo/`. Where the two disagree, the master table wins.
+
+
 ## 1. Why this matters for the writing, not just for the code
 
 An implementation identifier that has hardened into a label can smuggle a claim into a paper. The

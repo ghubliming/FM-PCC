@@ -1,0 +1,403 @@
+\chapter{Background}\label{ch:background}
+% =============================================================================
+
+\emph{Chapter summary.} This chapter builds the argument of RQ2 before any experiment is
+described, as the target requires. It moves from behaviour cloning of trajectories, through
+the two generative families, to the mechanism that separates them on step count, and closes
+on the control-theoretic side that the constraint arms instantiate.
+
+\section{Learning Trajectory Policies from Demonstration}\label{sec:bg:il}
+
+Establishes the setting: a dataset of expert trajectories, a conditional model over
+horizon-length trajectory segments rather than single actions
+\parencite{janner2022planning,chi2023diffusion}, and receding-horizon execution. The benchmark
+family used throughout is \parencite{jia2024towards}, whose demonstrations are explicitly
+multimodal. The section makes two points that later chapters lean on. First, planning over a
+horizon rather than emitting one action is what makes constraint enforcement possible at
+all --- a per-action policy has nothing to project. Second, multi-modality in the
+demonstrations is the reason a generative model is used instead of a regressor, and it is
+also why a mean-seeking failure mode is a real risk when the sampler is truncated.
+
+\section{Diffusion Generative Models}\label{sec:bg:diffusion}
+
+Forward noising process, learned reverse denoiser, and the sampling loop, presented only to
+the depth the thesis needs. The section's purpose is to isolate one property: the reverse
+process is defined \emph{relative to a training-time noise schedule}, so the number of
+reverse steps is not free. This is stated here and used in \autoref{sec:bg:fewstep}; it is the
+reason the baseline cannot follow the step ladder downward.
+
+Let $\vect{x} \in \R^{n}$ denote the object being generated --- here, a whole
+horizon-length plan, flattened; the plan variable is defined properly in
+\autoref{sec:method:formalisation}. A denoising diffusion probabilistic model
+\parencite{sohl2015deep,ho2020denoising} introduces latent variables
+$\vect{x}^{1},\dots,\vect{x}^{\nfe}$ through a fixed Gaussian forward process
+\begin{equation}\label{eq:bg:ddpm:forward}
+  q\!\left(\vect{x}^{k} \mid \vect{x}^{k-1}\right)
+  = \Normal\!\left(\sqrt{1-\beta_{k}}\,\vect{x}^{k-1},\; \beta_{k}\Id{n}\right),
+  \qquad k = 1,\dots,\nfe ,
+\end{equation}
+whose step sizes $\beta_{1:\nfe} \in (0,1)^{\nfe}$ are set by a \emph{noise schedule}. Because
+the transitions are Gaussian, the marginal is available in closed form,
+\begin{equation}\label{eq:bg:ddpm:marginal}
+  q\!\left(\vect{x}^{k} \mid \vect{x}^{0}\right)
+  = \Normal\!\left(\sqrt{\bar{\alpha}_{k}}\,\vect{x}^{0},\;(1-\bar{\alpha}_{k})\Id{n}\right),
+  \qquad
+  \alpha_{k} = 1-\beta_{k}, \quad \bar{\alpha}_{k} = \prod_{i=1}^{k}\alpha_{i},
+\end{equation}
+and the schedule is chosen so that $q(\vect{x}^{\nfe}\mid\vect{x}^{0}) \approx \Normal(\vect{0},\Id{n})$.
+Generation reverses \eqref{eq:bg:ddpm:forward} with a learned Markov chain
+\begin{equation}\label{eq:bg:ddpm:reverse}
+  p_{\theta}\!\left(\vect{x}^{k-1}\mid\vect{x}^{k},k,\vect{c}\right)
+  = \Normal\!\left(\vect{\mu}_{\theta}\!\left(\vect{x}^{k},k,\vect{c}\right),\;\sigma_{k}^{2}\Id{n}\right),
+  \qquad p(\vect{x}^{\nfe}) = \Normal(\vect{0},\Id{n}),
+\end{equation}
+with $\vect{c}$ the conditioning context and the variance pinned to the forward posterior,
+$\sigma_{k}^{2} = \beta_{k}(1-\bar{\alpha}_{k-1})/(1-\bar{\alpha}_{k})$. The mean is learned
+indirectly by predicting the noise that was added \parencite{ho2020denoising}, in the form
+restated by \parencite[Sec.~4]{romer2025diffusion}:
+\begin{equation}\label{eq:bg:ddpm:loss}
+  \mathcal{L}(\theta)
+  = \E_{k \sim \Unif\{1,\nfe\},\; \vect{x}^{0}\sim q,\; \vect{\epsilon}\sim\Normal(\vect{0},\Id{n})}
+    \left\|\vect{\epsilon} - \vect{\epsilon}_{\theta}\!\left(
+      \sqrt{\bar{\alpha}_{k}}\,\vect{x}^{0} + \sqrt{1-\bar{\alpha}_{k}}\,\vect{\epsilon},\;k\right)\right\|_{2}^{2}.
+\end{equation}
+At sampling time the noise prediction is turned back into a mean in two steps --- an estimate of
+the clean sample, and the forward posterior evaluated at that estimate:
+\begin{align}
+  \hat{\vect{x}}^{0}\!\left(\vect{x}^{k},k\right)
+    &= \tfrac{1}{\sqrt{\bar{\alpha}_{k}}}\,\vect{x}^{k}
+       - \sqrt{\tfrac{1}{\bar{\alpha}_{k}}-1}\;\vect{\epsilon}_{\theta}\!\left(\vect{x}^{k},k,\vect{c}\right),
+       \label{eq:bg:ddpm:x0} \\[2pt]
+  \vect{\mu}_{\theta}\!\left(\vect{x}^{k},k,\vect{c}\right)
+    &= \frac{\beta_{k}\sqrt{\bar{\alpha}_{k-1}}}{1-\bar{\alpha}_{k}}\,\hat{\vect{x}}^{0}
+     + \frac{(1-\bar{\alpha}_{k-1})\sqrt{\alpha_{k}}}{1-\bar{\alpha}_{k}}\,\vect{x}^{k}.
+       \label{eq:bg:ddpm:mean}
+\end{align}
+\srcnote{\eqref{eq:bg:ddpm:x0}--\eqref{eq:bg:ddpm:mean} are the two functions
+\texttt{predict\_start\_from\_noise} and \texttt{q\_posterior} in
+\texttt{aux\_repo/dpcc/diffuser/models/diffusion.py:97--117}; they are what the baseline
+actually executes, and \autoref{sec:method:engine} replaces exactly this pair.}
+
+Three properties are carried forward. First, \emph{$\nfe$ is a training-time constant}: it
+indexes the schedule $\beta_{1:\nfe}$ that \eqref{eq:bg:ddpm:forward} and
+\eqref{eq:bg:ddpm:marginal} are defined by, so a model trained at $\nfe = 20$ has no
+well-defined $2$-step sampler. Reducing $\nfe$ after training requires a different sampler
+--- an implicit or distilled one \parencite{song2021denoising} --- and therefore a different
+model, not a different argument. This is the asymmetry \autoref{sec:bg:fewstep} turns on, and it
+is visible even in the configuration files: the baseline's step count is a \emph{training}
+key while the transport family's is an \emph{inference} key. \srcnote{\texttt{config/}:
+\texttt{n\_diffusion\_steps} sits in the training block, \texttt{flow\_steps\_v3} in the plan
+block.}
+Second, the reverse chain is \emph{stochastic}: each step injects fresh noise of scale
+$\sigma_{k}$, so two plans drawn from the same context differ. Third, the whole construction
+is a chain of Gaussians, which is what allows a constraint mechanism to be inserted between
+its steps --- \autoref{sec:bg:mpc} and \autoref{sec:method:dpcc}.
+
+The instance this thesis is measured against uses the cosine schedule of
+\parencite{nichol2021improved} with $\nfe = 20$ and a temporal U-Net denoiser
+\parencite{janner2022planning}, conditioned on the current state by inpainting rather than by
+classifier or classifier-free guidance \parencite{dhariwal2021diffusion,ho2022classifier}, following
+\parencite[Sec.~6.1]{romer2025diffusion}.
+
+\section{Flow Matching}\label{sec:bg:fm}
+
+Continuous-time transport between a simple prior and the data distribution, learned by
+regressing a velocity field along a prescribed interpolation path, and sampled by
+integrating an ODE. The section derives the training objective, notes that the conditional
+formulation makes the target available in closed form without simulation, and observes that
+sampling is now an ODE integration --- so the step count is a solver parameter and the
+sample is deterministic given the initial noise.
+
+\subsection*{Transport, and the field that generates it}
+
+Let $\ftime \in [0,1]$ be the \emph{transport time}, with $\ftime = 0$ at the prior and
+$\ftime = 1$ at the data --- the convention used throughout this thesis and by this work's
+implementation.\footnote{The opposite convention (noise at $\ftime=1$) is equally common;
+\parencite{geng2025meanflow} uses it. Every equation reproduced here has been mapped into the
+data-at-one convention, and the sign changes this induces are noted where they occur.}
+A time-dependent velocity field $\vfield_{\ftime}:\R^{n}\to\R^{n}$ defines a flow
+$\Phi$ through the ordinary differential equation
+\begin{equation}\label{eq:bg:fm:ode}
+  \frac{\dd}{\dd\ftime}\,\vect{x}_{\ftime} = \vfield_{\ftime}(\vect{x}_{\ftime}),
+  \qquad \vect{x}_{0} \sim p_{0},
+\end{equation}
+and the pushforward $p_{\ftime} = (\Phi_{0\to\ftime})_{\sharp}p_{0}$ is the probability path
+it generates, characterised by the continuity equation
+$\partial_{\ftime}p_{\ftime} + \nabla\!\cdot(p_{\ftime}\vfield_{\ftime}) = 0$
+\parencite[Sec.~2]{lipman2023flow}. Sampling is therefore integration: draw $\vect{x}_{0}\sim p_{0}$ and
+solve \eqref{eq:bg:fm:ode} to $\ftime = 1$.
+
+\subsection*{The objective, and why it is tractable}
+
+Flow matching \parencite[Eq.~(5)]{lipman2023flow} regresses a network $\vfield_{\ftime}^{\theta}$ onto the
+field that generates a prescribed path:
+\begin{equation}\label{eq:bg:fm:fm}
+  \mathcal{L}\sidx{FM}(\theta)
+  = \E_{\ftime\sim\Unif[0,1],\;\vect{x}\sim p_{\ftime}}
+    \left\|\vfield_{\ftime}^{\theta}(\vect{x}) - \vfield_{\ftime}(\vect{x})\right\|_{2}^{2}.
+\end{equation}
+This is not computable: the marginal field $\vfield_{\ftime}$ is an integral over the data
+distribution. The construction that makes it usable is to build the path as a mixture of
+\emph{per-sample} paths. Conditioning on a data point $\vect{x}_{1}$, one designs
+$p_{\ftime}(\vect{x}\mid\vect{x}_{1})$ and a conditional field
+$\vfield_{\ftime}(\vect{x}\mid\vect{x}_{1})$ that generates it; the marginals are then
+\begin{equation}\label{eq:bg:fm:marginal}
+  p_{\ftime}(\vect{x}) = \int p_{\ftime}(\vect{x}\mid\vect{x}_{1})\,q(\vect{x}_{1})\,\dd\vect{x}_{1},
+  \qquad
+  \vfield_{\ftime}(\vect{x}) = \int \vfield_{\ftime}(\vect{x}\mid\vect{x}_{1})
+    \frac{p_{\ftime}(\vect{x}\mid\vect{x}_{1})\,q(\vect{x}_{1})}{p_{\ftime}(\vect{x})}\,\dd\vect{x}_{1},
+\end{equation}
+and the marginal field so defined does generate the marginal path
+\parencite[Theorem~1]{lipman2023flow}. The \emph{conditional} objective
+\begin{equation}\label{eq:bg:fm:cfm}
+  \mathcal{L}\sidx{CFM}(\theta)
+  = \E_{\ftime\sim\Unif[0,1],\;\vect{x}_{1}\sim q,\;\vect{x}\sim p_{\ftime}(\cdot\mid\vect{x}_{1})}
+    \left\|\vfield_{\ftime}^{\theta}(\vect{x}) - \vfield_{\ftime}(\vect{x}\mid\vect{x}_{1})\right\|_{2}^{2}
+\end{equation}
+is an unbiased surrogate: it has the same gradient in $\theta$ as \eqref{eq:bg:fm:fm}
+\parencite[Theorem~2]{lipman2023flow}. Training is therefore \emph{simulation-free} --- no
+trajectory is ever integrated to form a target.
+
+\subsection*{The linear path}
+
+This thesis uses the linear (optimal-transport displacement, ``rectified'')
+path \parencite{lipman2023flow,liu2023flow}, with the noise--data coupling drawn independently:
+\begin{equation}\label{eq:bg:fm:path}
+  \vect{x}_{\ftime} = (1-\ftime)\,\vect{x}_{0} + \ftime\,\vect{x}_{1},
+  \qquad
+  \vfield_{\ftime}(\vect{x}_{\ftime}\mid \vect{x}_{0},\vect{x}_{1}) = \vect{x}_{1} - \vect{x}_{0},
+\end{equation}
+i.e.\ the special case $\sigma\sidx{min} = 0$ of \parencite[Eq.~(20)--(23)]{lipman2023flow}, read in
+the data-at-one direction. Substituting \eqref{eq:bg:fm:path} into \eqref{eq:bg:fm:cfm} gives
+the objective this work trains:
+\begin{equation}\label{eq:bg:fm:loss}
+  \mathcal{L}\sidx{FM}(\theta)
+  = \E_{\ftime,\;\vect{x}_{1}\sim q,\;\vect{x}_{0}\sim p_{0}}
+    \left\|\vfield_{\theta}\!\left((1-\ftime)\vect{x}_{0} + \ftime\vect{x}_{1},\;\ftime,\;\vect{c}\right)
+      - \left(\vect{x}_{1}-\vect{x}_{0}\right)\right\|_{2}^{2}.
+\end{equation}
+The regression target is a difference of two draws. Nothing in it depends on a schedule, and
+nothing in it depends on how many steps the sampler will later take.
+
+\subsection*{Sampling, and the two consequences that matter here}
+
+With $\vfield_{\theta}$ trained, a plan is produced by integrating \eqref{eq:bg:fm:ode}. With
+the explicit Euler scheme at a uniform grid $\ftime_{k} = k/\nfe$,
+\begin{equation}\label{eq:bg:fm:euler}
+  \vect{x}_{\ftime_{k+1}} = \vect{x}_{\ftime_{k}}
+    + \tfrac{1}{\nfe}\,\vfield_{\theta}\!\left(\vect{x}_{\ftime_{k}},\ftime_{k},\vect{c}\right),
+  \qquad k = 0,\dots,\nfe-1,
+\end{equation}
+which costs exactly $\nfe$ network evaluations. Two consequences carry the thesis.
+
+\emph{The budget moved.} $\nfe$ appears in \eqref{eq:bg:fm:euler} and nowhere in
+\eqref{eq:bg:fm:loss}. It is a solver argument, chosen after training and changeable per
+deployment, in contrast to \eqref{eq:bg:ddpm:forward}--\eqref{eq:bg:ddpm:loss} where it
+indexes the schedule the model was fitted to. What limits small $\nfe$ is now discretisation
+error of \eqref{eq:bg:fm:ode}, which is a property of the field's curvature rather than of the
+training objective --- and that is the quantity \autoref{sec:bg:fewstep} attacks.
+
+\emph{The sampler became deterministic.} \eqref{eq:bg:fm:euler} injects no noise: the plan is
+a function of $\vect{x}_{0}$ and $\vect{c}$ alone. This removes a source of run-to-run variance
+from a controller that replans at every timestep, and it changes what ``the same plan'' means
+when comparing constraint arms --- two arms started from the same $\vect{x}_{0}$ differ only by
+the constraint mechanism, which is what makes the arm comparison in \autoref{ch:results} a
+controlled one. It also means the candidate fan of \autoref{sec:method:selection} is a fan over
+$\vect{x}_{0}$, not over sampler noise.
+
+\section{Few-Step Generative Models}\label{sec:bg:fewstep}
+
+\textbf{The load-bearing section of the background.} It answers RQ2's mechanism half before
+any number appears.
+
+\subsection*{Why the step budget cannot simply be set to one}
+
+Flow matching moved $\nfe$ out of training, but it did not make $\nfe$ free. The conditional
+paths of \eqref{eq:bg:fm:path} are straight, yet the \emph{marginal} field
+\eqref{eq:bg:fm:marginal} that the network actually learns is an average over all
+$(\vect{x}_{0},\vect{x}_{1})$ pairs passing through a given point, and that average generally
+induces a curved trajectory \parencite[Sec.~3]{geng2025meanflow}. The curvature is a property of the
+ground-truth field, not an artefact of network error, so coarse Euler steps on
+\eqref{eq:bg:fm:euler} are inaccurate however well the network is fitted. Reducing $\nfe$
+therefore trades plan quality for compute along a curve that is fixed once the objective is
+fixed.
+
+\subsection*{Average velocity}
+
+The few-step family changes \emph{what the network predicts}. Following
+\parencite[Eq.~(3)]{geng2025meanflow}, define the \emph{average velocity} over an interval
+$[r,\ftime] \subseteq [0,1]$ as the displacement divided by the interval length,
+\begin{equation}\label{eq:bg:mf:def}
+  \afield(\vect{x}_{\ftime},r,\ftime)
+  \;\triangleq\; \frac{1}{\ftime-r}\int_{r}^{\ftime}\vfield(\vect{x}_{\varsigma},\varsigma)\,\dd\varsigma ,
+\end{equation}
+in contrast to the instantaneous velocity $\vfield$ of \autoref{sec:bg:fm}. The field $\afield$ is
+induced by $\vfield$; it involves no network. It satisfies the boundary condition
+$\lim_{r\to\ftime}\afield = \vfield$, and, by additivity of the integral, the consistency
+relation
+$(\ftime-r)\afield(\vect{x}_{\ftime},r,\ftime) = (s-r)\afield(\vect{x}_{s},r,s)
++ (\ftime-s)\afield(\vect{x}_{\ftime},s,\ftime)$ for any intermediate $s$
+\parencite[Sec.~4.1]{geng2025meanflow}. The point of \eqref{eq:bg:mf:def} is immediate: if a network
+approximates $\afield$ well, then
+\begin{equation}\label{eq:bg:mf:onestep}
+  \vect{x}_{1} = \vect{x}_{0} + \afield_{\theta}(\vect{x}_{0},0,1)
+\end{equation}
+traverses the entire path in a single evaluation. No integral is approximated at inference;
+the interval is a network input.
+
+\subsection*{The MeanFlow identity --- the target that makes it trainable}
+
+\eqref{eq:bg:mf:def} cannot be used as a regression target directly, because forming it
+requires integrating during training. The construction of \parencite[Eqs.~(4)--(6)]{geng2025meanflow}
+removes the
+integral. Write \eqref{eq:bg:mf:def} as
+$(\ftime-r)\,\afield(\vect{x}_{\ftime},r,\ftime) = \int_{r}^{\ftime}\vfield\,\dd\varsigma$ and
+differentiate both sides with respect to $\ftime$ at fixed $r$; the product rule on the left
+and the fundamental theorem of calculus on the right give the \emph{MeanFlow identity}
+\begin{equation}\label{eq:bg:mf:identity}
+  \underbrace{\afield(\vect{x}_{\ftime},r,\ftime)}_{\text{average velocity}}
+  \;=\;
+  \underbrace{\vfield(\vect{x}_{\ftime},\ftime)}_{\text{instantaneous velocity}}
+  \;-\;(\ftime-r)\,
+  \underbrace{\frac{\dd}{\dd\ftime}\afield(\vect{x}_{\ftime},r,\ftime)}_{\text{total time derivative}} .
+\end{equation}
+The identity is equivalent to the definition \eqref{eq:bg:mf:def} and contains no neural
+network. The total derivative expands, using $\dd\vect{x}_{\ftime}/\dd\ftime = \vfield$ and
+$\dd r/\dd\ftime = 0$, into
+\begin{equation}\label{eq:bg:mf:jvp}
+  \frac{\dd}{\dd\ftime}\afield(\vect{x}_{\ftime},r,\ftime)
+  = \vfield(\vect{x}_{\ftime},\ftime)\,\partial_{\vect{x}}\afield + \partial_{\ftime}\afield ,
+\end{equation}
+which is exactly a \ac{JVP} of $\afield$ with the tangent
+$(\vfield,\,0,\,1)$ --- computable in one forward-mode pass, at a cost comparable to one
+backward pass \parencite[Eqs.~(7)--(8)]{geng2025meanflow}.
+
+Parameterising $\afield$ by a network $\afield_{\theta}$ and substituting the conditional
+velocity of \eqref{eq:bg:fm:path} for the marginal one, as in \autoref{sec:bg:fm}, yields the
+objective
+\begin{equation}\label{eq:bg:mf:loss}
+  \mathcal{L}\sidx{MF}(\theta)
+  = \E\left\|\afield_{\theta}(\vect{x}_{\ftime},r,\ftime)
+      - \sg\!\left(\afield\sidx{tgt}\right)\right\|_{2}^{2},
+  \qquad
+  \afield\sidx{tgt} = \vfield_{\ftime} - (\ftime-r)\left(
+     \vfield_{\ftime}\,\partial_{\vect{x}}\afield_{\theta} + \partial_{\ftime}\afield_{\theta}\right),
+\end{equation}
+where $\sg$ is the stop-gradient. The stop-gradient is what keeps the method first-order: the
+\ac{JVP} enters only as a constant target, so no differentiation through it is
+required \parencite[Eqs.~(9)--(11)]{geng2025meanflow}.
+
+Three properties of \eqref{eq:bg:mf:loss} are used later in this thesis.
+
+\begin{itemize}
+  \item \textbf{It contains flow matching as the case $r = \ftime$.} The second term of
+    $\afield\sidx{tgt}$ carries the factor $(\ftime-r)$, so at $r=\ftime$ the target collapses to
+    $\vfield_{\ftime}$ and \eqref{eq:bg:mf:loss} becomes \eqref{eq:bg:fm:loss}. A MeanFlow model
+    is thus a strict generalisation of a flow-matching model, and the fraction of training
+    samples drawn with $r \neq \ftime$ is a genuine hyperparameter: at zero it is flow matching
+    \parencite[Tab.~1a]{geng2025meanflow}. \autoref{sec:method:engine} shows that the same collapse argument
+    applies, for a different reason, to this work's bootstrapped-target variant --- which is how a set of
+    earlier runs was found to be mislabelled.
+  \item \textbf{The interval is a network input, so the budget is chosen at inference.} As in
+    \autoref{sec:bg:fm}, $\nfe$ appears only in the sampler. Unlike \autoref{sec:bg:fm}, small $\nfe$ is
+    no longer paid for in discretisation error, because the field being queried is already the
+    exact average over the step. This is the mechanism claim of RQ2, and it is an argument about
+    what is learned, not a measurement.
+  \item \textbf{The objective differentiates through the network, which constrains the
+    architecture.} Everything inside the closure that \eqref{eq:bg:mf:jvp} differentiates must
+    be forward-mode differentiable. This is not a performance detail: it decides how a visual
+    encoder may be attached (\autoref{sec:method:backbone}).
+\end{itemize}
+
+Two implementation-level choices from \parencite[Sec.~4.3]{geng2025meanflow} are adopted unchanged and are
+recorded here because they are not cosmetic. The loss is reweighted adaptively,
+$w = (\|\Delta\|_{2}^{2}+c)^{-p}$ applied under a stop-gradient to the squared error $\Delta$,
+which normalises the gradient scale across the very different error magnitudes that $r=\ftime$
+and $r\ll\ftime$ samples produce; and the time pair is drawn from a logit-normal distribution
+rather than uniformly \parencite{esser2024scaling}, with the larger draw assigned to $\ftime$ and the
+smaller to $r$. A
+consequence of the first is that the reported training loss is pinned near its ceiling by
+construction and must never be read as a convergence signal --- the raw squared error is the
+quantity to monitor. \srcnote{Both are implemented in
+\texttt{flow\_matcher\_v3\_meanflow/models/mf\_diffusion.py} (\texttt{\_adaptive},
+\texttt{\_sample\_tau\_pair}); the convergence-signal warning is this work's own, from the
+Gen3v6 fix-2/fix-3 logs.}
+
+\subsection*{A bootstrapped target on the same objective}
+
+A further variant \parencite{zhang2025alphaflow} keeps the average-velocity objective but changes
+how its target is formed: rather than regressing the analytic target of
+\eqref{eq:bg:mf:loss} directly, it bootstraps a target from the network's own output and
+anneals a scalar that interpolates between the two regimes. It is presented neutrally here.
+\autoref{sec:method:engine} states why the distinction is a training-path difference and nothing
+else, and \autoref{sec:res:fewstep} reports that it does not pay off; per TARGET~\S8 it is carried
+as an ablation, not as a rung of a ladder. \emph{No mathematics is given for it in this draft
+--- it is deliberately deferred until the ablation's write-up is settled.}
+
+\subsection*{What separates the two families}
+
+The section closes with the comparison the whole thesis turns on. For the diffusion engine,
+$\nfe$ indexes the schedule $\beta_{1:\nfe}$ that \eqref{eq:bg:ddpm:forward} is defined by ---
+a trained property. For the transport family, $\nfe$ is the grid on which
+\eqref{eq:bg:fm:ode} is integrated --- a solver argument. And within the transport family, the
+average-velocity objective removes the accuracy penalty that made small $\nfe$ expensive.
+Everything in \autoref{ch:results} about cheap plans is a consequence of that pair of statements,
+and both are arguments, not measurements.
+
+\section{Model Predictive Control and Constrained Sampling}\label{sec:bg:mpc}
+
+Two threads. The first is standard receding-horizon control \parencite{morari1999model}: an
+optimisation over a finite horizon, executed one step at a time, re-solved each timestep. The
+second is the family of methods that make a \emph{learned} plan admissible --- soft guidance by
+gradient \parencite{carvalho2025motion}, hard projection onto a feasible set
+\parencite{power2023sampling,christopher2024constrained,romer2025diffusion}, and projection of a
+predicted endpoint interleaved with the sampler \parencite{li2025hardflow}.
+
+\subsection*{The feasible set, and the projection onto it}
+
+Let $\mathcal{Z} \subset \R^{n}$ collect the plans that satisfy the test-time state and action
+constraints, and let $\mathcal{Z}_{f} \subseteq \mathcal{Z}$ additionally impose the dynamics
+model. Following \parencite[Eq.~(9)]{romer2025diffusion}, the \emph{model-based} projection of a plan is the
+program
+\begin{align}
+  \proj{\mathcal{Z}_{f}}(\vect{x})
+    &= \arg\min_{\tilde{\vect{x}}\in\mathcal{Z}} \;\|\vect{x}-\tilde{\vect{x}}\|_{2}^{2}
+    \label{eq:bg:mpc:proj} \\
+  \text{s.t.}\quad & \vect{s}_{t'+1|t} = f\!\left(\vect{s}_{t'|t},\vect{a}_{t'|t}\right),
+    \qquad \forall t' \in \{t,\dots,t+H\},
+    \label{eq:bg:mpc:dyn}
+\end{align}
+with projection cost $c_{\mathcal{Z}_{f}}(\vect{x}) = \|\vect{x}-\proj{\mathcal{Z}_{f}}(\vect{x})\|_{2}^{2}$.
+Two facts about \eqref{eq:bg:mpc:proj} are used repeatedly. It is
+\emph{goal-independent} --- it knows nothing about the task, so it can only make a plan
+admissible, never better --- which is why both arms of \autoref{ch:method} are built to perturb the
+learned plan as little as possible. And it is a \emph{nonlinear} program whenever the geometric
+constraints are non-convex, as circular keep-out regions make them; the solver used throughout
+this thesis is \ac{SLSQP}
+\parencite{kraft1988software,virtanen2020scipy}, inherited from \parencite{romer2025diffusion}.
+
+\subsection*{Where the problem is posed --- the only difference between the arms}
+
+Arms~B and~C of \autoref{sec:intro:scope} solve \eqref{eq:bg:mpc:proj}--\eqref{eq:bg:mpc:dyn} with
+the same $\mathcal{Z}_{f}$, the same solver and the same tolerances. What differs is the point
+at which the program is posed:
+
+\begin{itemize}
+  \item \textbf{Iterate projection (arm~B)} applies $\proj{\mathcal{Z}_{f}}$ to the sampler's
+    own iterate, at selected steps of the generative process. At early transport times that
+    iterate is not a plan --- it is a partially formed one, far from the data manifold --- so
+    the program is being solved at a point the constraint geometry was never meant to describe.
+  \item \textbf{Endpoint projection (arm~C)} first forms the \emph{predicted clean
+    endpoint} implied by the current iterate and its velocity, poses the program there, and
+    pulls the correction back into the transport before the next step. It thereby always
+    optimises over an object that is at least a candidate plan \parencite{li2025hardflow}.
+\end{itemize}
+
+Because the constraints and the solver are held identical, any cost or quality difference
+between the arms is attributable to the linearisation point, not to the implementation. That
+framing is what makes the regime split of RQ3 a claim about algorithms. It also introduces the
+condition that \autoref{sec:method:degenerate} formalises: arm~C is only arm~C when it runs at least
+one \emph{non-terminal} guided step, because at the terminal time the lookahead vanishes and
+the pull-back has no subsequent step to act on.
+
+% =============================================================================

@@ -1,0 +1,156 @@
+% =============================================================================
+%  FM-PCC MASTER'S THESIS -- v2
+%  TUM, School of CIT, Chair I6
+% -----------------------------------------------------------------------------
+%  WHAT THIS FILE IS  (v2 = v1 + the mathematics + citations)
+%  Chapters 1-4 (Introduction, Background, Related Work, Method) are FILLED at
+%  *abstract density*: every section carries a summary that states what it will
+%  argue and in what order, in the thesis's own voice -- not finished prose.
+%  Chapters 5-8 (Setup, Results, Discussion, Conclusion) are left as the bone.
+%  Nothing there is settled and nothing there is written.
+%
+%  WHAT v2 ADDS OVER v1
+%    1. The three engine formulations are written out as mathematics, in one
+%       notation, with citations:  DPCC's diffusion engine (Sec. 2.2 / 4.1),
+%       flow matching (Sec. 2.3), MeanFlow's average-velocity objective
+%       (Sec. 2.4), and how each is instantiated here (Sec. 4.5).
+%       alpha-Flow carries NO mathematics in v2 -- deliberately deferred.
+%    2. The constrained-sampling problem, the projection NLP, the constraint
+%       tightening and the genuine-step boundary are stated as equations
+%       (Sec. 2.5, 4.2, 4.6, 4.8).
+%    3. A global notation convention (Sec. 4.2, Table 4.1) that resolves the
+%       t / k / tau / u collision flagged in NOTES_tum_formatting_rules.md.
+%    4. biblatex + bibliography.bib. Every equation taken from a paper carries
+%       its source; every equation taken from this repo's code carries a
+%       \srcnote pointing at the file.
+%
+%  SOURCING RULE OBSERVED IN v2
+%  Nothing here is invented. Paper equations are transcribed from the PDFs in
+%  /workspaces/aux_repo/PAPERS/ (re-derived into this thesis's notation, which
+%  is noted where the source's own notation differs). Implementation equations
+%  are transcribed from this repository's code, cited by file and function in a
+%  \srcnote. Where the two disagree, the disagreement is written down, not
+%  smoothed over.
+%
+%  BASIS: derives from DPCC (Diffusion Predictive Control with Constraints,
+%  L4DC 2025), which builds on Diffuser's temporal U-Net and the D3IL
+%  environments. DPCC is both the codebase this work starts from and the
+%  baseline it is measured against.
+%
+%  GOVERNED BY
+%    ../TARGET_20260905_thesis_claim_ladder.md   -- what must be proved
+%    ../../Auxiliary/Methodology_Sources/        -- the apparatus, per section
+%    ../../Auxiliary/NOTES_tum_formatting_rules.md
+%    ../../Auxiliary/NOTES_paper_map.md          -- which paper belongs where
+%    Data_Analysis/DA_Result_Curated_MD/NOTEBOOK_20260829_key_headlines.md
+%
+%  STRUCTURE DELTA vs. v1 -- see README.md in this folder.
+%
+%  BUILD: latexmk -pdf thesis_v2.tex
+%     or: pdflatex thesis_v2.tex ; biber thesis_v2 ; pdflatex x2
+% =============================================================================
+
+\newif\ifstandalone
+\standalonetrue   % set false once merged into a copy of the TUM template
+
+\documentclass[headsepline,footsepline,footinclude=false,oneside,fontsize=11pt,paper=a4,listof=totoc,bibliography=totoc]{scrbook}
+
+% -----------------------------------------------------------------------------
+% Metadata (same macro names as the TUM template's main.tex)
+% -----------------------------------------------------------------------------
+\newcommand*{\getUniversity}{Technische Universität München}
+\newcommand*{\getFaculty}{Informatics}
+\newcommand*{\getDegree}{Informatics}
+\newcommand*{\getSchool}{Computation, Information and Technology}
+
+% FIXED TITLE -- verbatim, no hyphens, no subtitle.
+\newcommand*{\getTitle}{Flow Matching Predictive Control with Constraints}
+\newcommand*{\getTitleGer}{Flow-Matching-basierte prädiktive Regelung unter Nebenbedingungen} % TODO: confirm
+
+\newcommand*{\getAuthor}{TODO: Author}
+\newcommand*{\getDoctype}{Master's Thesis in \getDegree}
+\newcommand*{\getSupervisor}{TODO: Supervisor}
+\newcommand*{\getAdvisor}{TODO: Advisor}
+\newcommand*{\getKeywords}{flow matching;predictive control;constrained sampling;imitation learning}
+\newcommand*{\getSubmissionDate}{TODO: Submission date}
+\newcommand*{\getSubmissionLocation}{Munich}
+
+% -----------------------------------------------------------------------------
+\ifstandalone
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+  \usepackage[sc]{mathpazo}
+  \usepackage[ngerman,american]{babel}
+  \usepackage[autostyle]{csquotes}
+  \usepackage{amsmath,amssymb,amsthm}
+  \usepackage{graphicx}
+  \usepackage{booktabs}
+  \usepackage{xcolor}
+  \usepackage[printonlyused]{acronym}
+  \usepackage[final]{microtype}
+  % Citation style per NOTES_tum_formatting_rules.md: alphabetic + biber.
+  % These options are copied verbatim from Template_DONT_CHANGE/settings.tex
+  % so that merging this file into the template changes nothing.
+  \usepackage[%
+    backend=biber,
+    url=false,
+    style=alphabetic,
+    maxnames=4,
+    minnames=3,
+    maxbibnames=99,
+    giveninits,
+    uniquename=init]{biblatex}
+  \usepackage{hyperref}
+  \hypersetup{hidelinks}
+  \setkomafont{disposition}{\normalfont\bfseries}
+  \linespread{1.05}
+  % settings.tex already registers the .bib in the merged build (its line 68,
+  % \bibliography{bibliography}, is biblatex's legacy form of \addbibresource).
+  % Registering it a second time there would duplicate the resource, so this
+  % line stays inside the standalone branch.
+  \addbibresource{bibliography.bib}
+\else
+  \RequirePackage[l2tabu,orthodox]{nag}
+  \input{settings}
+  \usepackage{amsmath,amssymb,amsthm}
+  \usepackage{xcolor}
+\fi
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[chapter]
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}[chapter]
+\newtheorem{theorem}{Theorem}[chapter]
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}[chapter]
+
+% -----------------------------------------------------------------------------
+% Notation (kept identical to Bone/thesis_bone.tex -- do not diverge)
+% -----------------------------------------------------------------------------
+\newcommand{\vect}[1]{\boldsymbol{#1}}
+\newcommand{\matr}[1]{\boldsymbol{#1}}
+\newcommand{\trans}{^{\textrm{T}}}
+\newcommand{\sidx}[1]{_{\textrm{#1}}}
+\newcommand{\Id}[1]{\textbf{Id}_{#1}}
+\newcommand{\unitvec}[1]{\textbf{e}_{#1}}
+
+% --- v2 additions. Fixes the t / k / tau / u collision named in
+% --- NOTES_tum_formatting_rules.md. The convention is stated once in
+% --- Table~\autoref{tab:notation} (\autoref{sec:method:formalisation}) and used
+% --- everywhere. Do not introduce a second symbol for any of these.
+\newcommand{\R}{\mathbb{R}}                    % reals
+\newcommand{\E}{\mathbb{E}}                    % expectation
+\newcommand{\Unif}{\mathcal{U}}                % uniform distribution
+\newcommand{\Normal}{\mathcal{N}}              % Gaussian
+\newcommand{\sg}{\operatorname{sg}}            % stop-gradient
+\newcommand{\proj}[1]{\Pi_{#1}}                % Euclidean projection onto a set
+\newcommand{\dd}{\mathrm{d}}                   % upright differential
+\newcommand{\vfield}{v}                        % instantaneous velocity field
+\newcommand{\afield}{u}                        % average velocity field
+\newcommand{\ftime}{\tau}                      % transport (generative) time in [0,1]
+\newcommand{\nfe}{K}                           % step budget = number of network evals
+
+% Drafting aids -- REMOVE BOTH BEFORE SUBMISSION
+\newcommand{\hole}[1]{\textcolor{red}{\textbf{[HOLE:} #1\textbf{]}}}
+\newcommand{\srcnote}[1]{\textcolor{gray}{\footnotesize\textsf{[src: #1]}}}
+

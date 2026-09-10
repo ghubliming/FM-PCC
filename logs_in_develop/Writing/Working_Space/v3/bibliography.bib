@@ -1,0 +1,305 @@
+% =============================================================================
+%  FM-PCC thesis bibliography -- v2
+% -----------------------------------------------------------------------------
+%  PROVENANCE OF EVERY ENTRY
+%  Each entry carries one of two markers:
+%
+%    file = {...}   the paper is in /workspaces/aux_repo/PAPERS/. The path is
+%                   relative to that folder. Title, authors, year and any arXiv
+%                   identifier below were read off THAT COPY's own title page
+%                   (pypdf text extraction, 2026-09-08), not from memory and not
+%                   from the bootstrap .bib. These are the papers this thesis
+%                   actually read.
+%
+%    % NO LOCAL COPY  harvested from the curated bibliography of the HardFlow
+%                   paper, PAPERS/Recommand_Paper/HF/reference.bib, per
+%                   Auxiliary/NOTES_paper_map.md. Not independently verified --
+%                   check against the publisher record before submission.
+%
+%  `file` is not printed by biblatex's alphabetic style; it exists so the
+%  citation can be traced back to the exact PDF in one step (and so Zotero/
+%  JabRef resolve it).
+%
+%  Key scheme: author_year_shorttitle, inherited from the HF .bib. Keep it.
+% =============================================================================
+
+% ---------------------------------------------------------------- ancestry ---
+@inproceedings{romer2025diffusion,
+  title     = {Diffusion Predictive Control with Constraints},
+  author    = {R{\"o}mer, Ralf and Rohr, Alexander von and Schoellig, Angela P.},
+  booktitle = {Proceedings of the 7th Annual Learning for Dynamics \& Control Conference},
+  editor    = {Ozay, Necmiye and Balzano, Laura and Panagou, Dimitra and Abate, Alessandro},
+  volume    = {283},
+  series    = {Proceedings of Machine Learning Research},
+  pages     = {791--803},
+  publisher = {PMLR},
+  year      = {2025},
+  eprint    = {2412.09342},
+  eprinttype= {arXiv},
+  file      = {in Proposual/DPCC.pdf},
+}
+
+@inproceedings{janner2022planning,
+  title     = {Planning with Diffusion for Flexible Behavior Synthesis},
+  author    = {Janner, Michael and Du, Yilun and Tenenbaum, Joshua B. and Levine, Sergey},
+  booktitle = {Proceedings of the 39th International Conference on Machine Learning},
+  volume    = {162},
+  series    = {Proceedings of Machine Learning Research},
+  pages     = {9902--9915},
+  publisher = {PMLR},
+  year      = {2022},
+  eprint    = {2205.09991},
+  eprinttype= {arXiv},
+  file      = {in Proposual/Diffuser_Janner.pdf},
+}
+
+@inproceedings{jia2024towards,
+  title     = {Towards Diverse Behaviors: A Benchmark for Imitation Learning with Human Demonstrations},
+  author    = {Jia, Xiaogang and Blessing, Denis and Jiang, Xinkai and Reuss, Moritz and Donat, Atalay and Lioutikov, Rudolf and Neumann, Gerhard},
+  booktitle = {The Twelfth International Conference on Learning Representations (ICLR)},
+  year      = {2024},
+  eprint    = {2402.14606},
+  eprinttype= {arXiv},
+  file      = {auxiliary_papers/D3IL_relevant/D3IL.pdf},
+}
+
+% --------------------------------------------------------------- diffusion ---
+% NO LOCAL COPY
+@inproceedings{sohl2015deep,
+  title        = {Deep unsupervised learning using nonequilibrium thermodynamics},
+  author       = {Sohl-Dickstein, Jascha and Weiss, Eric and Maheswaranathan, Niru and Ganguli, Surya},
+  booktitle    = {Proceedings of the 32nd International Conference on Machine Learning},
+  pages        = {2256--2265},
+  year         = {2015},
+  organization = {PMLR},
+}
+
+% NO LOCAL COPY
+@article{ho2020denoising,
+  title   = {Denoising diffusion probabilistic models},
+  author  = {Ho, Jonathan and Jain, Ajay and Abbeel, Pieter},
+  journal = {Advances in Neural Information Processing Systems},
+  volume  = {33},
+  pages   = {6840--6851},
+  year    = {2020},
+}
+
+% NO LOCAL COPY -- cosine noise schedule; the schedule DPCC Sec. 6.1 names.
+@inproceedings{nichol2021improved,
+  title     = {Improved Denoising Diffusion Probabilistic Models},
+  author    = {Nichol, Alexander Quinn and Dhariwal, Prafulla},
+  booktitle = {Proceedings of the 38th International Conference on Machine Learning},
+  volume    = {139},
+  series    = {Proceedings of Machine Learning Research},
+  pages     = {8162--8171},
+  publisher = {PMLR},
+  year      = {2021},
+}
+
+% NO LOCAL COPY
+@article{dhariwal2021diffusion,
+  title   = {Diffusion models beat {GAN}s on image synthesis},
+  author  = {Dhariwal, Prafulla and Nichol, Alexander},
+  journal = {Advances in Neural Information Processing Systems},
+  volume  = {34},
+  pages   = {8780--8794},
+  year    = {2021},
+}
+
+% NO LOCAL COPY
+@article{ho2022classifier,
+  title   = {Classifier-free diffusion guidance},
+  author  = {Ho, Jonathan and Salimans, Tim},
+  journal = {arXiv preprint arXiv:2207.12598},
+  year    = {2022},
+}
+
+% NO LOCAL COPY
+@inproceedings{song2021denoising,
+  title     = {Denoising Diffusion Implicit Models},
+  author    = {Song, Jiaming and Meng, Chenlin and Ermon, Stefano},
+  booktitle = {The Ninth International Conference on Learning Representations (ICLR)},
+  year      = {2021},
+}
+
+% NO LOCAL COPY
+@article{chi2023diffusion,
+  title     = {Diffusion policy: Visuomotor policy learning via action diffusion},
+  author    = {Chi, Cheng and Xu, Zhenjia and Feng, Siyuan and Cousineau, Eric and Du, Yilun and Burchfiel, Benjamin and Tedrake, Russ and Song, Shuran},
+  journal   = {The International Journal of Robotics Research},
+  year      = {2023},
+  publisher = {SAGE},
+}
+
+% ----------------------------------------------------------- flow matching ---
+@inproceedings{lipman2023flow,
+  title     = {Flow Matching for Generative Modeling},
+  author    = {Lipman, Yaron and Chen, Ricky T. Q. and Ben-Hamu, Heli and Nickel, Maximilian and Le, Matthew},
+  booktitle = {The Eleventh International Conference on Learning Representations (ICLR)},
+  year      = {2023},
+  eprint    = {2210.02747},
+  eprinttype= {arXiv},
+  file      = {in Proposual/FM.pdf},
+}
+
+% NO LOCAL COPY
+@inproceedings{liu2023flow,
+  title     = {Flow Straight and Fast: Learning to Generate and Transfer Data with Rectified Flow},
+  author    = {Liu, Xingchao and Gong, Chengyue and Liu, Qiang},
+  booktitle = {The Eleventh International Conference on Learning Representations (ICLR)},
+  year      = {2023},
+}
+
+% NO LOCAL COPY -- logit-normal time sampling; MeanFlow's own reference [11].
+@inproceedings{esser2024scaling,
+  title     = {Scaling rectified flow transformers for high-resolution image synthesis},
+  author    = {Esser, Patrick and Kulal, Sumith and Blattmann, Andreas and Entezari, Rahim and M{\"u}ller, Jonas and Saini, Harry and Levi, Yam and Lorenz, Dominik and Sauer, Axel and Boesel, Frederic and others},
+  booktitle = {Proceedings of the 41st International Conference on Machine Learning},
+  year      = {2024},
+}
+
+@article{geng2025meanflow,
+  title      = {Mean Flows for One-step Generative Modeling},
+  author     = {Geng, Zhengyang and Deng, Mingyang and Bai, Xingjian and Kolter, J. Zico and He, Kaiming},
+  journal    = {arXiv preprint},
+  year       = {2025},
+  eprint     = {2505.13447},
+  eprinttype = {arXiv},
+  note       = {Carnegie Mellon University and MIT},
+  file       = {auxiliary_papers/DGM/MeanFlow.pdf},
+}
+
+@article{zhang2025alphaflow,
+  title      = {{AlphaFlow}: Understanding and Improving {MeanFlow} Models},
+  author     = {Zhang, Huijie and Siarohin, Aliaksandr and Menapace, Willi and Vasilkovsky, Michael and Tulyakov, Sergey and Qu, Qing and Skorokhodov, Ivan},
+  journal    = {arXiv preprint},
+  year       = {2025},
+  eprint     = {2510.20771},
+  eprinttype = {arXiv},
+  note       = {Snap Inc. and University of Michigan},
+  file       = {auxiliary_papers/DGM/AlphaFlow.pdf},
+}
+
+% ------------------------------------------------ constrained sampling / OC ---
+@article{li2025hardflow,
+  title      = {{HardFlow}: Hard-Constrained Sampling for Flow-Matching Models via Trajectory Optimization},
+  author     = {Li, Zeyang and Alim, Kaveh and Azizan, Navid},
+  journal    = {arXiv preprint},
+  year       = {2025},
+  eprint     = {2511.08425},
+  eprinttype = {arXiv},
+  note       = {Massachusetts Institute of Technology. LaTeX source and bibliography in PAPERS/Recommand\_Paper/HF/},
+  file       = {Recommand_Paper/HardFlow_Pub.pdf},
+}
+
+@article{yang2025safeflowmatcher,
+  title      = {{SafeFlowMatcher}: Safe and Fast Planning using Flow Matching with Control Barrier Functions},
+  author     = {Yang, Jeongyong and Jang, Seunghwan and Han, SooJean},
+  journal    = {arXiv preprint},
+  year       = {2025},
+  eprint     = {2509.24243},
+  eprinttype = {arXiv},
+  note       = {Korea Advanced Institute of Science and Technology},
+  file       = {Recommand_Paper/SafeFlowMatcher.pdf},
+}
+
+% NO LOCAL COPY
+@article{christopher2024constrained,
+  title   = {Constrained synthesis with projected diffusion models},
+  author  = {Christopher, Jacob K. and Baek, Stephen and Fioretto, Nando},
+  journal = {Advances in Neural Information Processing Systems},
+  volume  = {37},
+  pages   = {89307--89333},
+  year    = {2024},
+}
+
+% NO LOCAL COPY
+@inproceedings{power2023sampling,
+  title     = {Sampling constrained trajectories using composable diffusion models},
+  author    = {Power, Thomas and Soltani-Zarrin, Rana and Iba, Soshi and Berenson, Dmitry},
+  booktitle = {IROS 2023 Workshop on Differentiable Probabilistic Robotics},
+  year      = {2023},
+}
+
+% NO LOCAL COPY
+@article{carvalho2025motion,
+  title     = {Motion planning diffusion: Learning and adapting robot motion planning with diffusion models},
+  author    = {Carvalho, Joao and Le, An T. and Kicki, Piotr and Koert, Dorothea and Peters, Jan},
+  journal   = {IEEE Transactions on Robotics},
+  year      = {2025},
+  publisher = {IEEE},
+}
+
+% NO LOCAL COPY
+@article{morari1999model,
+  title     = {Model predictive control: past, present and future},
+  author    = {Morari, Manfred and Lee, Jay H.},
+  journal   = {Computers \& Chemical Engineering},
+  volume    = {23},
+  number    = {4-5},
+  pages     = {667--682},
+  year      = {1999},
+  publisher = {Elsevier},
+}
+
+% ------------------------------------------------------- embodiment / control ---
+% The quadrotor attitude law this work's cascade implements. The copy in PAPERS/
+% is the arXiv preprint (v4); the closely related CDC 2010 paper by the same
+% authors carries a different title, so this entry deliberately cites the
+% preprint that was actually read rather than guessing a venue.
+@article{lee2010geometric,
+  title      = {Control of Complex Maneuvers for a Quadrotor {UAV} using Geometric Methods on {SE(3)}},
+  author     = {Lee, Taeyoung and Leok, Melvin and McClamroch, N. Harris},
+  journal    = {arXiv preprint},
+  year       = {2010},
+  eprint     = {1003.2005},
+  eprinttype = {arXiv},
+  file       = {auxiliary_papers/Drone/PID_Control_UAV.pdf},
+}
+
+@article{howell2022predictive,
+  title      = {Predictive Sampling: Real-time Behaviour Synthesis with {MuJoCo}},
+  author     = {Howell, Taylor and Gileadi, Nimrod and Tunyasuvunakool, Saran and Zakka, Kevin and Erez, Tom and Tassa, Yuval},
+  journal    = {arXiv preprint},
+  year       = {2022},
+  eprint     = {2212.00541},
+  eprinttype = {arXiv},
+  note       = {Stanford University, DeepMind and UC Berkeley},
+  file       = {auxiliary_papers/Mujuco/Mujuco_MPC.pdf},
+}
+
+% ---------------------------------------------------------------- solvers ----
+% NO LOCAL COPY -- the NLP solver HardFlow's published experiments use, where this
+% work uses SLSQP. Named only to record the difference.
+@article{wachter2006implementation,
+  title     = {On the implementation of an interior-point filter line-search algorithm for large-scale nonlinear programming},
+  author    = {W{\"a}chter, Andreas and Biegler, Lorenz T.},
+  journal   = {Mathematical Programming},
+  volume    = {106},
+  number    = {1},
+  pages     = {25--57},
+  year      = {2006},
+  publisher = {Springer},
+}
+
+% NO LOCAL COPY -- the SLSQP solver DPCC's projection uses, and its SciPy wrapper.
+@techreport{kraft1988software,
+  title       = {A software package for sequential quadratic programming},
+  author      = {Kraft, Dieter},
+  institution = {DFVLR},
+  number      = {DFVLR-FB 88-28},
+  address     = {Oberpfaffenhofen, Germany},
+  year        = {1988},
+}
+
+% NO LOCAL COPY
+@article{virtanen2020scipy,
+  title     = {{SciPy} 1.0: fundamental algorithms for scientific computing in {Python}},
+  author    = {Virtanen, Pauli and Gommers, Ralf and Oliphant, Travis E. and others},
+  journal   = {Nature Methods},
+  volume    = {17},
+  number    = {3},
+  pages     = {261--272},
+  year      = {2020},
+  publisher = {Nature Publishing Group},
+}

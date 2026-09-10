@@ -1,0 +1,205 @@
+% =============================================================================
+%  CHAPTER 7 -- DISCUSSION                                             [v3 OWNS]
+% -----------------------------------------------------------------------------
+%  All four sections are writable today (DATASTATUS section 7). Two of them --
+%  sec:disc:negative and sec:disc:threats -- carry material that exists ONLY
+%  because results were kept rather than discarded, and they are the reason the
+%  contribution list in Chapter 1 says two of six contributions are negative or
+%  methodological.
+% =============================================================================
+
+\chapter{Discussion}\label{ch:discussion}
+
+\section{Interpretation}\label{sec:disc:interpretation}
+
+\subsection*{Two goals of this thesis pull in opposite directions}
+
+The engine result says: push the step budget down, because that is where the compute factor lives
+--- about fifteen of the twenty-one-fold advantage in \autoref{sec:res:state} comes from running at
+a budget the baseline cannot reach, and only about $1.4\times$ from the engine at equal budget. The
+constraint result says the opposite: the in-ODE endpoint arm needs \emph{genuine} steps to exist at
+all, and below the threshold of \autoref{sec:res:constraints:degenerate} it silently becomes
+sample-then-project. One goal wants the budget at one; the other requires it above a floor.
+
+They meet at a moderate budget with a low activation threshold. That is not a compromise imposed by
+the data --- it follows from the two mechanisms. The generator's quality is flat in the budget, so
+buying additional steps costs compute and returns nothing on quality; what those steps buy is
+\emph{opportunities to project}, which is a property of the constraint arm, not of the engine.
+Choosing the budget is therefore a constraint-enforcement decision that happens to be spelled as a
+sampler parameter, and this is the sharpest practical consequence of the whole thesis: with a
+diffusion engine the two decisions are welded together at training time, and with a transport engine
+they come apart.
+
+\subsection*{Where the advantage actually comes from}
+
+It is worth separating three claims that a single headline number tends to fuse. \emph{Transport
+instead of diffusion} buys about $1.4\times$ at equal budget and an exact tie on plan quality --- a
+real but modest engine effect, consistent with two networks of identical size doing comparable work
+per evaluation. \emph{The few-step objective} is what separates on quality, and only where the task
+has the dynamic range to show separation at all. \emph{The budget ladder} is where the order of
+magnitude is. Reporting only the product of the three, as a single ``$31\times$'', would be true and
+would explain nothing.
+
+\subsection*{Projection is not universally worth its price}
+
+The aerial entry shows the cleanest version of a result that is implicit in all three: whether the
+projector earns its cost is an engine-level question, not a global one. On that entry the
+bootstrapped target is at zero without projection --- projection is what makes it function at all
+--- MeanFlow is marginal, and plain flow matching's best configuration is \emph{unprojected}. A
+generator whose plans are nearly feasible pays the projector's price for very little, and one whose
+plans are not is rescued by it. This is the same quantity that appears in
+\autoref{sec:res:constraints} as the reason the endpoint arm is cheap --- how far the point handed
+to the solver is from the feasible set --- seen from the other end.
+
+\section{Negative and Inconclusive Results}\label{sec:disc:negative}
+
+\subsection*{The bootstrapped target does not improve on MeanFlow}
+
+This was a planned rung of the engine ladder and it did not hold. Stating it precisely matters more
+than stating it briefly, because the imprecise versions are all wrong in one direction or the other.
+
+\textbf{What was measured.} In four environments: on the state-based benchmark it is
+\emph{indistinguishable} from MeanFlow at low budget --- nominally ahead, $p = 0.231$, and a wash
+over all six projection rules; on the vision-conditioned entry it ties at a budget of two and is
+\emph{worse} at twenty; on the aerial pillars scene it finishes \emph{behind plain flow matching},
+the only engine with no configuration above $0.8$; and on the corridor scene nothing separates at
+all. \textbf{Better nowhere; equal where the task cannot separate.}
+
+\textbf{Name the floor.} ``The bootstrapped target'' is not one arm. Two floors were trained,
+$\alpha = 0.2$ and $\alpha = 0.05$, and they behave differently: on the vision-conditioned entry the
+significant result at a budget of twenty ($p = 0.0215$) is the $\alpha = 0.05$ arm, while
+$\alpha = 0.2$ shows a mean deficit of $3.4\times$ that the sign test does \emph{not} reject. A
+sentence that says ``$\alpha$-Flow is worse'' without naming the floor is not reproducible.
+
+\textbf{The mechanism, which is why this is a result and not a gap.} The target closes its finite
+difference with the model's own frozen output. The resulting field bias is of order $(1-\alpha)$ and
+does \emph{not} shrink as the interval shrinks, so it is independent of the step budget. That
+predicts exactly what \autoref{sec:res:visual} measures: MeanFlow improves from $0.2354$\,m to
+$0.0741$\,m as the budget rises tenfold, while both bootstrapped arms stay flat or worsen. An
+engine whose error cannot be integrated away is not one that a larger budget rescues.
+
+\guard{One selection effect must travel with the low-budget table:} two floors were trained and the
+better one is quoted there, on a single seed. That is not a defect of the experiment --- both arms
+are reported --- but it is a reason the low-budget comparison is a pair rather than an ordering.
+
+\subsection*{The quality version of the flow-matching claim is withdrawn}
+
+An earlier form of the engine ladder had plain flow matching beating the diffusion baseline on
+quality. That does not survive: on the vision-conditioned entry the two are $0.0055$\,m apart inside
+a band of roughly $0.4$\,m at $p = 1.0000$, an exact tie, and at matched budget on the state-based
+benchmark the pooled paired difference over thirty pairs is $-0.012$. What survives is the
+\emph{cost} form of the claim, on the state-based benchmark, and this thesis states only that form.
+The withdrawal is recorded rather than quietly dropped, because the cost claim and the quality claim
+have been conflated in this area before, including in earlier drafts of this work.
+
+\subsection*{A scene retired as a ranking instrument, and kept as something better}
+
+The aerial s-curve scene was built to be the hard case and cannot rank engines: its ceiling is
+$0.100$ across forty configurations, no arm clears the second funnel stage, and an ordering
+previously reported on it was \emph{tracker-confounded and is retracted}. Raising the budget beyond
+five is non-monotone and does not help. Retiring it as a ranking scene is the correct action, and
+keeping it as the demonstration of where the control stack runs out is a stronger use of it than a
+failed ranking would have been --- it is the evidence that the aerial entry's limit is the tracker
+and not the planner.
+
+\subsection*{Two claims explicitly not made}
+
+A safety advantage for endpoint projection at the largest budget on the vision-conditioned entry
+would be ten of ten against nine of ten zero-violation rollouts: \emph{one} discordant rollout at
+$p = 1.0000$. It is not claimed anywhere. And the improved-MeanFlow variant explored early in this
+project is out of scope rather than refuted: it was not carried into the matched-architecture
+protocol, so this thesis has no comparable evidence about it and makes no claim either way.
+
+\section{Threats to Validity}\label{sec:disc:threats}
+
+\subsection*{Task saturation, found in this work's own results}
+
+The most transferable methodological finding here is uncomfortable and general.
+\textbf{A benchmark can be simultaneously feasible, well-instrumented, and completely unable to
+support the comparison being run on it}, and nothing in the resulting numbers advertises the fact.
+
+The aerial corridor scene is the worked example. Every arm passes, projected and unprojected alike;
+violations read exactly zero on every row while the very same counters report violations in the
+hundreds on a sibling scene, so the instrument is demonstrably working. The primary metric there
+silently degenerates to plain success, and the engine ordering it produces --- a spread of 2.4
+control steps against a standard deviation near 5.0 --- is noise presented in the format of a result.
+Worse, the projector on that scene spends 155 to 202\,ms per control step removing violations that
+never existed. A reader shown only that table would see a well-behaved constrained-control
+experiment.
+
+The general form: \textbf{an engine comparison on a saturated benchmark measures the benchmark, not
+the engine}, and reporting the regime is the cheapest available defence. It costs one column --- the
+violation count on the \emph{unprojected} arm --- and it is why \autoref{sec:setup:tasks} defines
+the regime taxonomy before any result is shown. The same defence would have caught the low-budget
+ordering on the state-based benchmark, which shows the same shape independently.
+
+\subsection*{A guided sampler that is not guided}
+
+The condition of \autoref{sec:res:constraints:degenerate} is a threat to validity of a whole class of
+published comparisons, not only of ours. Where the number of genuine steps falls to zero, an in-loop
+guided sampler computes sample-then-project while being reported as guidance --- and the failure is
+silent, because both arms run, both produce plans, and both report timings. This work's
+instrumentation prints the count at run time and every configuration in \autoref{ch:results} is
+tagged by it. The condition is ours and is not claimed for the source method, whose published
+configuration sits comfortably above the floor.
+
+\subsection*{Scope and coverage}
+
+\emph{One entry carries the multi-seed evidence.} The state-based benchmark is the only entry with
+five seeds; the other two are single-seed, one of them compensating with pairing and one not
+compensating at all. Every claim outside the first entry is qualified in place, and the aerial
+ranking is explicitly not banked.
+
+\emph{The baseline's coverage is asymmetric.} On the hardest geometry of the first entry the
+baseline has one seed against the transport engines' five. The geometry-first aggregation makes the
+comparison possible; it does not make the baseline's hardest cell well-estimated.
+
+\emph{Two increments were added in one step.} The second entry changes both the control problem and
+the observation modality relative to the first. Its results therefore support ``the result survives
+a harder, differently-observed task'' and \emph{not} ``the result transfers from state to vision'',
+because the state version of that task was never run. \autoref{sec:disc:limitations} states what
+would separate them.
+
+\emph{Timing is measured on a shared, CPU-limited node.} The reasons are given with the machine in
+\autoref{sec:setup:protocol}. Ratios are same-node and same-condition, and the load-bearing ones are
+factors of twenty and thirty; the figures for which this caveat could matter are the near-unity ones,
+and no claim is built on those.
+
+\emph{One solver failure is open.} The constraint program fails to converge at one specific transport
+time in every configuration of the endpoint arm on the vision-conditioned entry --- twenty-four of
+twenty-four items across three objectives. Engine-side causes are therefore ruled out; the remaining
+suspect is the conditioning of the constraint Jacobian. It is documented rather than resolved.
+
+\section{Limitations}\label{sec:disc:limitations}
+
+\textbf{The control stack has an edge, and it was found.} The aerial s-curve scene is not trackable
+by the deployed controller at any budget tested. The binding element is the tracker, not the
+planner: that is what the retraction of the earlier ordering on that scene demonstrates. The
+consequence for this thesis is bounded and specific --- the embodiment transfer of \textbf{RQ4}
+holds on the scenes the control stack can hold, and stops where the reference becomes too aggressive
+for it.
+
+\textbf{One entry sits in the all-fail regime, and retraining would not move it.} No arm satisfies
+the constraint set on the vision-conditioned entry. Three of the four candidate causes are
+insensitive to training: an over-strict constraint set is a property of the geometry, the
+reproducibility floor is run-to-run variance, and ten contexts is a protocol choice --- all three
+unchanged by new weights. Only checkpoint quality is a training question, and it should be tested
+last and with a stated hypothesis, because a retrain that also changes the constraint set confounds
+the two effects and answers neither. \guard{If a retrain does not move the entry out of the all-fail
+regime, that is itself the finding: the over-strictness is a property of the constraint set, the
+funnel is the correct treatment, and it is not a defect awaiting a fix.}
+
+\textbf{The state-based leg of the second entry does not exist.} The three-dimensional state version
+of the aligning task has an environment but no configuration, no checkpoints and no evaluation
+corpus. It is what would separate \emph{harder control} from \emph{harder perception}, and without
+it the two increments are confounded. This is the largest single gap between the evidence and the
+claim structure, and it is stated here rather than papered over.
+
+\textbf{The aerial ranking is one seed of one scene.} Two to three additional seeds would settle it.
+Until they land, the aerial entry contributes the embodiment argument, the regime taxonomy, and the
+projection cost and safety result --- all of which are independent of the ranking --- and the
+ranking itself carries its seed depth in every sentence.
+
+\textbf{No smoothness or effort metric is reported.} Plan quality is measured by control steps to
+completion and by constraint satisfaction. Two plans with the same step count and the same violation
+record can differ in how much control effort they demand, and this thesis does not measure that.

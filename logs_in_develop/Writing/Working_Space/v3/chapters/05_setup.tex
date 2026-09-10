@@ -1,0 +1,420 @@
+% =============================================================================
+%  CHAPTER 5 -- EXPERIMENTAL SETUP                                     [v3 OWNS]
+% -----------------------------------------------------------------------------
+%  v2 left this chapter as bone with ONE exception, the compute-environment
+%  subsection, which is preserved verbatim at the end of sec:setup:protocol.
+%  v3 writes the rest.
+%
+%  SOURCES. Every factual claim here comes from one of:
+%    Writing/Auxiliary/Methodology_Sources/*.md   the apparatus
+%    Writing/Working_Space/data_status/DATASTATUS_20260910_*.md   what may be said
+%    Writing/Working_Space/TARGET_20260905_*.md   sections 5, 6 (the binding rules)
+%    Writing/Auxiliary/Naming/NAMING_20260910_master_table.md     the vocabulary
+%  Numbers additionally carry a \dataref to the batch or DA they came from.
+% =============================================================================
+
+\chapter{Experimental Setup}\label{ch:setup}
+
+This chapter fixes what is measured, on what, against what, and under which protocol. Three
+commitments in it are load-bearing for every table in \autoref{ch:results} and are stated here once
+rather than repeated: the baseline is pinned to a single configuration and never renegotiated per
+comparison (\autoref{sec:setup:baselines}); improvement means Pareto dominance at equal success and
+equal constraint satisfaction, not an improvement on one axis (\autoref{sec:setup:metrics}); and
+every reported cell names the protocol that produced it, because the three entries do not share one
+(\autoref{sec:setup:protocol}).
+
+\section{Tasks and Environments}\label{sec:setup:tasks}
+
+Three entries are evaluated. They are not three benchmarks chosen for coverage; they are one
+benchmark and two deliberate increments on top of it, and the chapter is organised by what each
+increment adds rather than by environment.
+
+\begin{description}
+  \item[Entry~1 --- the state-based manipulation benchmark.] The \emph{avoiding} task of the D3IL
+    suite \parencite{jia2024towards}, which is also the benchmark the \ac{DPCC} baseline reports on
+    \parencite{romer2025diffusion}. A planar manipulator must reach a goal line while avoiding a
+    field of obstacles, with the plan constrained by halfspaces the training data never contained.
+    The policy observes state. This entry is the foundation: it is the only one with multi-seed
+    data, and it is where the baseline is met on its own ground.
+  \item[Entry~2 --- the vision-conditioned manipulation task.] The \emph{aligning} task of the same
+    suite, in which a box must be pushed into a target pose, with the policy observing two RGB
+    camera streams instead of a state vector. Relative to Entry~1 this adds \emph{two} increments at
+    once: three-dimensional control, and perception in place of state.
+  \item[Entry~3 --- the aerial task.] A quadrotor embodiment built for this work around the Skydio
+    X2 model taken verbatim from \texttt{mujoco\_menagerie}, wrapped in static obstacle scenes.
+    The physics are third-party and unmodified; the scenes, the control stack and the demonstration
+    data are ours.
+    \srcnote{Writing/Auxiliary/Methodology\_Sources/AUX\_uav\_model\_and\_scenes.md}
+\end{description}
+
+\subsection*{Why the third entry is a different problem, not a harder one}
+
+The two manipulation entries and the aerial entry differ in a way that a table of task names hides,
+and it is the reason \textbf{RQ4} treats embodiment as a separate axis from modality. The
+manipulator is \emph{fully actuated} --- one actuator per degree of freedom --- and
+\emph{quasi-statically stable}: it holds its configuration under gravity compensation with no
+control input. A plan for it needs only to be \emph{kinematically} feasible, that is, a reachable
+sequence of setpoints, and one control loop at planner rate suffices.
+
+The quadrotor is \emph{underactuated}: four rotor inputs serve six pose degrees of freedom, and
+thrust acts along the body $z$-axis only, so the vehicle must tilt in order to translate. Hover is
+an \emph{open-loop unstable} equilibrium requiring continuous closed-loop stabilisation. A plan for
+it must be \emph{dynamically} feasible --- second-order, thrust- and attitude-limited --- and the
+loop is cascaded and multi-rate, at 33\,Hz for planning against 100\,Hz for physics
+(\autoref{sec:method:deployment}). The transfer claimed by Entry~3 is therefore from a fully
+actuated, statically stable, kinematically controlled plant to an underactuated, open-loop-unstable,
+second-order one. That is the content of the entry, independently of which engine wins on it.
+
+\subsection*{Constraint geometries}
+
+On Entry~1 the feasible set is instantiated as three halfspace geometries of increasing difficulty
+--- \emph{top-left-hard}, \emph{top-right-hard} and \emph{both-hard} --- and every result on this
+entry is reported per geometry and then aggregated across the three, never pooled over cells. On
+Entry~3 the scenes form a difficulty ladder: an unconstrained \emph{empty} scene used as the
+raw-generator denominator, a \emph{corridor} of two parallel walls with a 0.9\,m clear channel, an
+\emph{s-curve} of two offset corridor segments, and \emph{pillars}, six cylinders of radius
+0.12\,m arranged in three columns.
+\srcnote{AUX\_uav\_model\_and\_scenes.md \S2; AUX\_constraint\_geometry.md}
+
+Adding scene geometry does not perturb the vehicle dynamics: a tracking task re-run inside the empty
+scene reproduced its reference root-mean-square error bit-for-bit, because MuJoCo walls are passive
+rigid bodies with contact but no aerodynamic effect. This is what licenses attributing every
+cross-scene difference to geometry rather than to physics.
+
+\subsection*{The regime taxonomy}
+
+A single vocabulary is needed for something that recurs across all three entries and that a naive
+reading of a results table gets wrong. A scene, geometry or task is called
+
+\begin{description}
+  \item[all-pass] when every arm --- including the unconstrained one --- satisfies the constraint
+    set. The constraint half of the primary metric then carries no information, the metric collapses
+    to plain success, and \textbf{no constrained-control conclusion may be drawn}, however clean the
+    numbers look.
+  \item[discriminating] when the constraint set separates the arms: some configurations violate it
+    and some do not. This is the only regime in which the primary metric is a ranking instrument.
+  \item[all-fail] when no arm satisfies the constraint set. The primary metric is floored, ranking
+    by it is meaningless, and comparison must fall back to the staged funnel of
+    \autoref{sec:setup:metrics}.
+\end{description}
+
+The taxonomy is not a post-hoc excuse for weak cells. It is diagnostic, it is measured rather than
+asserted --- an all-pass scene is one where the violation counter reads zero on the
+\emph{unprojected} arm --- and it is used in three chapters. \autoref{ch:results} states the regime
+of every entry before reporting it; \autoref{sec:disc:threats} argues that failing to do so is a
+general threat to the validity of single-benchmark engine comparisons, on the evidence of this
+work's own results.
+
+\subsection*{Two caveats that belong to the tasks rather than to any result}
+
+\emph{The success criterion on Entry~2 is strict in a dimension no arm controls.} Binary success
+there requires a position error within 1.8\,cm \emph{and} a rotation error within
+$8.64^\circ$, and box rotation is uncontrolled on every arm evaluated, the baseline included. The
+consequence is structural: Entry~2 sits in the all-fail regime, and it does so as a property of the
+criterion and the constraint set rather than of any engine's weights.
+\srcnote{AUX\_visual\_aligning\_env.md \S6}
+
+\emph{One scene of Entry~3 is constraint-trivial.} On the corridor scene the violation counter reads
+zero and the collision-free-completion rate reads one on \emph{every} arm, projected and unprojected
+alike, while the same columns report violations in the hundreds on the pillars scene. The metric is
+therefore sensitive and the scene really is all-pass. It follows that the corridor scene cannot
+exercise the constrained-control problem this thesis is about, and it is not used to rank engines.
+\dataref{Gen15 CLOSURE\_20260910 \S1.1}
+
+\section{Datasets}\label{sec:setup:data}
+
+Entries~1 and 2 use the D3IL demonstration sets distributed with the benchmark
+\parencite{jia2024towards}, unmodified, so that the comparison against the baseline is a comparison
+of engines and not of data. Entry~3 has no public demonstration set and its expert data were
+generated for this work; the generation procedure, its acceptance criteria and its coverage are
+documented in the apparatus notes.
+\srcnote{Writing/Auxiliary/Methodology\_Sources/AUX\_uav\_expert\_data.md}
+
+\hole{State the demonstration counts and the train/validation split for all three entries, read off
+the dataset files rather than from a dev log. This is a book-keeping hole, not a blocked one.}
+
+Two properties of the data matter for how \autoref{ch:results} reads. First, the constraint sets on
+Entry~1 are \emph{novel at deployment}: the halfspaces are not present in the demonstrations, which
+is what makes constraint enforcement a task for the projector rather than something the policy could
+have learned. Second, every engine in a given comparison is trained on the same data with the same
+horizon and the same action weighting, so a difference between two rows of a table is a difference
+in objective or in constraint arm and in nothing else.
+
+\section{Baselines}\label{sec:setup:baselines}
+
+\subsection*{The pinned target}
+
+\textbf{The baseline is fixed once, here, and is never renegotiated per table.} It is \ac{DPCC}
+\parencite{romer2025diffusion} in the configuration its authors report: the Gaussian diffusion
+engine at a step budget of $\nfe = 20$, action weight 10, projector threshold $T = 0.5$, evaluated
+at its own best projection variant --- the cumulative-projection-cost rule on tightened geometry.
+Its performance on Entry~1, which every claim in \autoref{sec:res:state} is measured against, is
+given in \autoref{tab:target}.
+
+\begin{table}[htpb]
+  \caption[The pinned baseline]{The pinned baseline on the state-based manipulation benchmark:
+  the diffusion engine at its published configuration and at its own best projection variant.
+  Aggregation is per geometry and then across geometries; see \autoref{sec:setup:metrics}.}
+  \label{tab:target}
+  \centering
+  \begin{tabular}{lc}
+    \toprule
+    Property & Value \\
+    \midrule
+    Engine                       & Gaussian diffusion, $\varepsilon$-prediction \\
+    Backbone / parameters        & temporal U-Net / 4.0\,M \\
+    Step budget $\nfe$           & 20 \emph{(fixed at training time)} \\
+    Action weight                & 10 \\
+    Constraint arm               & per-step iterate projection, tightened geometry \\
+    Selection rule               & cumulative projection cost, fan $B = 4$ \\
+    \midrule
+    Success and constraints      & 0.983 \\
+    Control steps per episode    & 69.0 \\
+    Wall clock per control step  & 0.563\,s \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\dataref{temp/2508/batch\_avoiding\_combined\_20260825\_143212; reproduced by
+DA\_20260827 \S10.1 and, at $\nfe=20$, by DA\_20260906 \S3}
+
+One qualification travels with \autoref{tab:target} wherever it is quoted. The baseline's
+\emph{both-hard} cell is a single seed, not five: the baseline was evaluated at 5 seeds
+$\times$ 20 trials on the two single-halfspace geometries but completed only seed~6 on the hardest
+one. The transport engines are complete at 5 seeds on all three. So the comparisons in
+\autoref{sec:res:state} rest on 300 episodes on the transport side and 220 on the baseline side,
+and \emph{not}, as one of the underlying analyses states in summary, on 300 a side.
+\guard{Where a comparison depends on the both-hard geometry, it is one seed of baseline against five
+of ours, and the text says so at the point of use.}
+
+\subsection*{The internal comparators}
+
+Beyond the pinned baseline, three comparisons inside the transport family are reported, and each
+answers a different question. \emph{Flow matching} \parencite{lipman2023flow} is the engine that
+replaces diffusion with deterministic transport and nothing else; it is the control that separates
+``transport helps'' from ``the few-step objective helps''. \emph{MeanFlow}
+\parencite{geng2025meanflow} adds the average-velocity objective and is the flagship.
+\emph{The bootstrapped target} \parencite{zhang2025alphaflow} interpolates between the two, and is
+reported as an ablation --- its result is negative, and \autoref{sec:disc:negative} gives it with
+its mechanism rather than omitting it.
+
+\textbf{Every table carries the backbone and the parameter count}, and rows on a non-matching
+backbone are labelled as confounded rather than presented as a like-for-like result. The
+architecture-matched form of every claim in this thesis is the 4.0\,M temporal U-Net against the
+4.0\,M temporal U-Net of the baseline; transformer-backbone rows are secondary evidence.
+
+\section{Metrics}\label{sec:setup:metrics}
+
+\subsection*{The primary metric}
+
+The primary quantity is \emph{success and constraint satisfaction}: the fraction of episodes in
+which the task goal is reached \emph{and} no constraint violation is executed. It is a conjunction
+on purpose. Reporting task success alone rewards a planner that drives through an obstacle, and
+reporting violations alone rewards one that refuses to move --- a failure mode this work actually
+observes, and labels wherever it occurs.
+
+\subsection*{The cost axes, and what they are not}
+
+Two cost axes are reported and they are not interchangeable. \emph{Control steps per episode}
+counts steps of the closed loop and measures plan quality: a shorter path to the goal is a better
+plan. \emph{Wall clock per control step} measures compute. Their product, seconds per episode, is
+quoted where end-to-end cost is the point.
+
+\guard{Wall-clock figures in this thesis are indicative, not a hardware benchmark.} The reasons are
+properties of the machine and are stated with it at the end of this section: the evaluation node is
+shared, and the evaluation loop is plausibly CPU-limited rather than accelerator-limited. Where a
+compute ratio is quoted, both sides of it were measured on the same node under the same conditions,
+which is what makes the ratio meaningful even though the absolute figure is not portable.
+
+\textbf{One quantity is explicitly not a criterion.} The aerial entry logs a per-step budget in
+milliseconds derived from its 33\,Hz plan rate. That figure is a data-rate artefact compounded with
+cluster latency; it is \emph{never} read in this thesis as a real-time pass/fail criterion, and no
+claim anywhere depends on it.
+
+\subsection*{What ``better'' means}
+
+\begin{definition}[Improvement]\label{def:improvement}
+Configuration $A$ \emph{improves on} configuration $B$ when $A$ attains success and constraint
+satisfaction at least equal to $B$'s and is strictly better on at least one cost axis while being no
+worse on the other. Where that does not hold, the pair is a \emph{trade-off} and is reported as one.
+\end{definition}
+
+This is Pareto dominance with the quality axis as a gate rather than as a third objective, and it is
+strict by design: it makes ``fewer control steps'' worthless if bought with a lower success rate,
+which is exactly the trade the low-budget regime tempts one into. The word ``best'' is used only
+where \autoref{def:improvement} is satisfied; elsewhere the text says ``non-dominated'' or
+``trade-off''.
+
+In figures, the same definition appears as a comparability band: a configuration competes on cost
+only if its success-and-constraint score is within 0.05 of the best on the panel, and the frontier
+is the non-dominated staircase over those eligible points. Points outside the band are drawn hollow
+and are not on any frontier.
+
+\subsection*{The funnel, for the all-fail regime}
+
+In an all-fail regime \autoref{def:improvement} cannot discriminate, because its gate is floored for
+every arm. Ranking there uses a three-stage funnel, applied in order and stopping at the first stage
+that separates: \emph{(i)} distance to the goal, evaluated on the unguided arm, which measures the
+generator without the projector confounding it; \emph{(ii)} constraint violations; \emph{(iii)}
+wall clock. Stage~(i) is a plan-quality ranking and is labelled as one; it is not a success claim
+and is never written as one.
+
+\subsection*{Statistics, and the resolution of each entry}
+
+The three entries afford different statistics, and conflating them would be the easiest way to
+overstate a result.
+
+\begin{itemize}
+  \item \textbf{Entry~1} is the only multi-seed entry. Comparisons are across 5 seeds; the
+    across-seed standard error on the primary metric is about 0.07, so a difference below roughly
+    0.10 in success and constraint satisfaction is not a real difference and is reported as a tie.
+  \item \textbf{Entry~2} enumerates a fixed set of initial contexts rather than sampling random
+    initialisations, and resets to each context explicitly. Every arm therefore sees the
+    \emph{same} contexts, which makes every comparison \emph{paired}, and licenses exact paired sign
+    tests and sign-flip permutation tests over the matched pairs. This is a design decision and a
+    strength, not a substitute for seeds: random initialisation would have cost most of that power.
+    At the corpus of record's ten contexts, the smallest attainable two-sided sign-test $p$ is
+    0.002 and a 7--3 split is $p = 0.34$.
+  \item \textbf{Entry~3} is seeds $\times$ rollouts, one scene at a time. The corpus of record is a
+    single seed at ten rollouts, so a difference of 0.1 in mean success and constraint satisfaction
+    is \emph{one rollout}. Every ordering sentence in \autoref{sec:res:uav} carries that fact.
+\end{itemize}
+
+A measured reproducibility floor qualifies Entry~2's minima specifically: repeated evaluation of
+projected arms varies by about 0.4\,m in final distance, which is the scale of the quantity being
+compared. Minima there are therefore a capability ceiling of a single rollout, not an estimate.
+\dataref{Gen14 CLOSURE\_20260907 R.5}
+
+\section{Training and Evaluation Protocol}\label{sec:setup:protocol}
+
+\subsection*{Two protocol tiers on Entry~1, and why the difference is itself a result}
+
+Entry~1 is reported at two protocols. \textbf{Tier~1} is the baseline's own published evaluation, 5
+seeds $\times$ 2 trials, ten episodes per cell. \textbf{Tier~2} is this work's, 5 seeds $\times$ 20
+trials, one hundred episodes per cell. Every claim in this thesis rests on Tier~2; Tier~1 exists so
+that the question ``did you evaluate the baseline the way its authors did?'' is answered before it
+is asked.
+
+The shift between them was measured, and it is a methodological finding rather than a formality.
+\autoref{tab:tiers} gives it.
+
+\begin{table}[htpb]
+  \caption[The cost of the evaluation protocol]{What changes on the state-based benchmark when the
+  episode count per cell goes from ten to one hundred. Cells are the same configurations under the
+  same code; only the trial count differs.}
+  \label{tab:tiers}
+  \centering
+  \begin{tabular}{lcc}
+    \toprule
+    & 10 episodes/cell & 100 episodes/cell \\
+    \midrule
+    Baseline, cumulative-cost tightened, top-right & 1.00 & 0.95 \\
+    Baseline, temporal-consistency tightened, top-right & 1.00 & 0.92 \\
+    Untightened mid-range cells & \multicolumn{2}{c}{move by up to 0.35, in \emph{both} directions} \\
+    Tightened variants & \multicolumn{2}{c}{stable to $\approx 0.08$} \\
+    Unguided and ablation rows & \multicolumn{2}{c}{0.00--0.15 at both counts, unrankable} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\dataref{DA\_20260819 --- baseline at 10 vs.\ 100 episodes per cell}
+
+Two things follow. First, a score of 1.00 at ten episodes means ``at least 0.90, at a resolution of
+$\pm 0.10$'': the ceiling is an artefact of the episode count, and both of the baseline's apparent
+perfect cells fall below it when measured at one hundred. Second, and more consequential, the
+published protocol's resolution is coarser than most of the differences the literature reports on
+this benchmark. That belongs in a setup chapter rather than a discussion, because it changes what
+any table on this benchmark --- including ours --- is capable of showing.
+
+\provisional{The Tier-1 rows for the transport engines are owed. They exist only in pre-2026-08-19
+batches produced by an older evaluation binary under mixed configurations, and they cannot be
+recovered by subsampling Tier~2, because the corpus stores per-cell aggregates with the trial
+dimension already collapsed. A clean Tier~1 is one evaluation at two trials per seed across all
+engines on a single binary --- roughly one tenth the wall clock of the tier already paid for.
+Until it lands, \autoref{tab:tiers} rests on baseline rows only, and the low-budget baseline cells
+in \autoref{sec:res:fewstep} are quoted as a mechanism rather than as a powered comparison.}
+
+\subsection*{Entry~2: contexts, not trials}
+
+Entry~2 has no trial count by construction. Its evaluation enumerates $n_{\text{contexts}}$ initial
+box poses and resets to each explicitly, with $n_{\text{trajectories}}$ rollouts per context; more
+evaluation there means more contexts, not more trials.
+\srcnote{config/visual\_aligning\_eval.yaml:44--45; config/aligning-d3il-visual.py:166}
+The corpus of record is one seed at ten contexts with one trajectory each. The benchmark's own
+aligning protocol uses sixty contexts, and raising ours to fifty is the highest
+power-per-GPU-hour item outstanding on this entry: it multiplies the paired sample fivefold, needs
+no retraining, and lands close to the benchmark's own figure.
+
+\subsection*{Entry~3: seeds $\times$ rollouts, one scene at a time}
+
+The corpus of record is seed~6 at ten rollouts per cell, on the corrected scene geometry. Scenes are
+evaluated separately and never pooled: they occupy different regimes, and a pooled aerial number
+would average an all-pass scene, a discriminating one and an all-fail one into a quantity that
+describes none of them.
+
+\subsection*{Aggregation, stated once}
+
+Results on Entry~1 are aggregated \textbf{per geometry first, then across the three geometries},
+never as a flat mean over $(\text{seed} \times \text{geometry})$ cells. The two differ whenever a
+geometry carries a different number of seeds --- which is exactly the case for the pinned baseline
+--- and only the former is comparable across rows with unequal coverage. The unit of comparison is
+the cell $(\text{engine} \times \text{constraint arm} \times \text{geometry} \times \text{split})$;
+\textbf{results are never aggregated across constraint arms}, and a model-versus-model comparison
+uses each model's own best arm, always named.
+
+\subsection*{A residual question about the sampling prior}
+
+\autoref{sec:method:engine} records a discrepancy inherited from the baseline's sampler: it starts
+from a prior of half the unit scale and injects half the posterior standard deviation, and the naive
+flow-matching engine inherits that halved prior at sampling time while having been trained at unit
+scale. The MeanFlow engine uses unit scale at both ends.
+\provisional{The flow-matching numbers reported in \autoref{ch:results} were produced by the
+shipped sampler, that is, with the inherited prior, and were \emph{not} re-run at matched scale.
+The direction of the resulting bias is not established, so no result in this thesis is attributed to
+it; what can be said is that it applies to the flow-matching rows only, and that the flagship
+MeanFlow rows --- which carry the thesis's principal claim --- are unaffected. Resolving it is one
+evaluation of the flow-matching checkpoints at unit prior.}
+
+% -----------------------------------------------------------------------------
+% EXCEPTION to the "bone only" rule of Chapters 5-8 above. The compute
+% environment is NOT blocked on the run queue: it is a property of the machine,
+% settled and independently verifiable today (sinfo/scontrol/lscpu, 2026-09-09,
+% plus every sbatch log header). Written now so it does not have to be
+% reconstructed later. Source of record, with the raw command output:
+%   Writing/Auxiliary/Methodology_Sources/AUX_compute_environment.md
+% Everything else in Chapters 5-8 stays bone.
+% -----------------------------------------------------------------------------
+
+\subsection*{Compute environment}
+
+All training and evaluation reported in this thesis ran on a single shared GPU node of the
+institute's cluster, scheduled with SLURM. The node carries two 16-core AMD EPYC~7282 processors
+(32~physical cores, 64~hardware threads) and eight NVIDIA RTX~A5000 accelerators with 24~GB of
+device memory each. \textbf{Every job was allocated exactly one GPU}: no result in this thesis comes
+from a distributed or multi-GPU run. The full hardware and software inventory, including package
+versions, is given in \autoref{app:repro}, \autoref{tab:compute}.
+\srcnote{Slurm\_Codes/sbatch/templates/2026\_04\_30\_job\_template.sh; every log header in Slurm\_Codes/logs/}
+
+Two properties of this machine bear directly on how the wall-clock measurements in
+\autoref{ch:results} may be read, and both argue for reading them as \emph{indicative} rather than as
+a hardware benchmark.
+
+\emph{The node is shared.} It serves the institute's student and staff GPU queues simultaneously,
+and a snapshot taken while preparing this section found six of the eight accelerators and 42 of the
+64 threads already committed to other users' jobs. What this does \emph{not} affect is the
+accelerator itself: the scheduler neither oversubscribes GPUs nor preempts running jobs, so a job
+holds its device exclusively for its lifetime. Contention is therefore confined to the CPU, the
+memory system and I/O.
+
+\emph{The CPU-to-GPU ratio is low, and this work is CPU-bound.} Thirty-two physical cores serve
+eight accelerators, so a fully occupied node offers roughly four physical cores per GPU. Both halves
+of the evaluation loop --- the MuJoCo rollout and the per-step projection, which is solved by SLSQP
+on the CPU (\autoref{sec:method:proj}) --- run on those cores rather than on the accelerator.
+Evaluation throughput on this machine is thus plausibly limited by the CPU side and not by the
+RTX~A5000. This holds independently of contention, that is, it would hold on an idle node as well;
+it is the more fundamental of the two caveats.
+
+Both observations are recorded here rather than in \autoref{sec:disc:threats} because they concern
+the measurement apparatus rather than the validity of a claim. Their consequence for the timing
+figures specifically is taken up in \autoref{sec:res:summary}.
+

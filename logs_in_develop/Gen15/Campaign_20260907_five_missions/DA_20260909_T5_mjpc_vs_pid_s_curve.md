@@ -4,9 +4,13 @@
 Source batch: **`temp/0909/batch_uav_20260909_205118`** (`DA_UAV_v1`, 2026-09-09 20:51:50, 1288 units,
 0 failed). Candidates **C94** (`controller=mjpc`) vs **C95** (`controller=pid_stopgo`).*
 
-📄 **Paper-ready write-up:**
+📄 **Paper-ready write-up — the extended analysis lives there, not here:**
 [`Data_Analysis/DA_Result_Curated_MD/Report_20260909_MJPC_vs_PID_s_curve/README.md`](../../../Data_Analysis/DA_Result_Curated_MD/Report_20260909_MJPC_vs_PID_s_curve/README.md)
-(curated findings table F1–F6, figures + specs, LaTeX table)
+
+Beyond this file it carries: **§5** cost — wall-clock per executed step, the tracker isolated
+(MJPC ≈ **+119 ms/step**, ~20× PID) and cost per *successful* rollout · **§6** the direct controller
+comparison — per-variant divergence rates, the behavioural table, and what the batch cannot measure
+· plus findings F1–F7, figure specs and a LaTeX table.
 
 The question, in the user's words: *"select the worst failing S_curve example, run the mjpc solver vs
 the old pid solver … let's see if the controller is not powerful."*
@@ -76,9 +80,11 @@ Per rollout, PID (all 10) vs MJPC (the 3 paired indices):
 | 2 | 2.889 | 871 | **0.294** | **625** |
 | 3–9 | 2.617 – 2.873 | 871 ×7 | — | — |
 
-**All ten PID rollouts burn the full 871-step budget and stop ~2.8 m short.** Not one diverges, not
-one crashes: `phys_min_z` stays at 0.96–1.24 throughout. The drone is airborne, stable, and simply
-does not get there.
+🔴 **Not a stall — a loss of attitude control.** `divergence_aborted` fires on **all ten** rollouts
+at step **395–421** (`inverted: body z-axis · world z < 0`), ≈12 s into a ≈26 s traverse; `min_z`
+stays ~1.1 m because the aircraft is upside down *at altitude*, not on the ground. MJPC: **0/3**.
+On `dpcc-r` **both** controllers invert 100 %, which makes that plan dynamically infeasible rather
+than merely hard to track. Per-variant divergence rates are in the curated report §6.
 
 The diagnostic that names the mechanism is **`track_err`, which is anti-correlated with success**:
 
@@ -146,20 +152,9 @@ sliding along the floor. MJPC flies the same plans at ~1.1 m and reaches the goa
 but S&C requires success *and* a clean constraint record, and `n_violations` runs 28–63 on the very
 rollouts that arrive.
 
-Normalising by episode length shows the trade is **real, not a length artefact** — and that it
-reverses between variants:
-
-| variant | PID viol/step | MJPC viol/step | |
-|---|---|---|---|
-| `diffuser` | 13.7/871 = **0.0157** | 48.7/636 = **0.0765** | MJPC **4.9× worse** |
-| `dpcc-r` | 29.1/871 = 0.0334 | 59.0/871 = 0.0677 | MJPC 2.0× worse |
-| `hardflow_sls-r` | 166.9/709 = **0.2354** | 48.0/618 = **0.0777** | MJPC **3.0× better** |
-
-On the raw plan MJPC genuinely violates ~5× more per step: it buys progress with constraint
-adherence. On the HardFlow arm it violates 3× *less* per step while also flying at altitude — a
-strict improvement. Note too that MJPC's rate is near-constant across variants (0.068–0.077) while
-PID's spans 15× (0.016–0.235): PID's violation statistics are dictated by which pathology it falls
-into, whereas MJPC has a characteristic cost.
+Normalised by episode length the trade is real, not a length artefact — and it **reverses by
+variant** (MJPC ≈4.9× worse per step on the raw plan, ≈3.0× *better* on HardFlow). Table in the
+curated report §4.
 
 So mission 5 answers its own question — *yes, the controller was not powerful enough* — while
 **failing to rescue `s_curve` as a rankable scene.** The S&C floor at 0.00 that made `s_curve`

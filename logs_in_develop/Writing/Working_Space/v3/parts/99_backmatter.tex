@@ -1,0 +1,28 @@
+\microtypesetup{protrusion=false}
+
+\addchap{Abbreviations}
+\begin{acronym}
+  \itemsep-.25\baselineskip
+  % Long forms are sentence case for the ones that expand mid-sentence; proper
+  % nouns keep their capitals. Only acronyms actually reached by \ac{} appear in
+  % this list -- settings.tex loads acronym with `printonlyused'.
+  \acro{TUM}[TUM]{Technical University of Munich}
+  \acro{DPCC}[DPCC]{Diffusion Predictive Control with Constraints}
+  \acro{NFE}[NFE]{number of function evaluations}
+  \acro{ODE}[ODE]{ordinary differential equation}
+  \acro{JVP}[JVP]{Jacobian--vector product}
+  \acro{NLP}[NLP]{nonlinear program}
+  \acro{SLSQP}[SLSQP]{sequential least-squares quadratic programming}
+  \acro{IK}[IK]{inverse kinematics}
+  \acro{PID}[PID]{proportional--integral--derivative}
+  \acro{MJPC}[MJPC]{MuJoCo predictive control}
+  % TODO: extend as Chapters 5-8 are written. Declare an acronym only when the
+  % text really abbreviates it -- a declaration with no \ac{} never prints.
+\end{acronym}
+
+\listoffigures{}
+\listoftables{}
+
+\microtypesetup{protrusion=true}
+\printbibliography{}
+

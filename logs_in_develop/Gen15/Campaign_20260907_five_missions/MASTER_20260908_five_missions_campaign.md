@@ -124,9 +124,10 @@ on engine/scene/K=10/tag/seed, and **paired** (`rollout_idx` names the same init
 1. ✅ **The controller was the bottleneck on the raw plan.** `pid_stopgo` reaches the goal **0/10**;
    `mjpc` **3/3** on the same three initial conditions. `goal_dist` 2.86/2.72/2.89 → 0.299/0.298/0.294.
    Fisher-exact **p ≈ 0.0035**.
-2. The PID failure mode is a **progress stall, not divergence** — all 10 rollouts burn the full
-   871-step budget while holding the *best* `track_err` in the table (0.30). Tight tracking with zero
-   goal reach = following the reference without advancing along it.
+2. 🔴 The PID failure mode is **loss of attitude control**: 10/10 rollouts abort `inverted:
+   body z-axis · world z < 0` at step **395–421**, ≈12 s into a ≈26 s traverse. MJPC: 0/3.
+   (An earlier draft called this a stall — corrected 2026-09-10.) On `dpcc-r` **both** controllers
+   invert 100 %, which makes that plan dynamically infeasible, not merely hard to track.
 3. **`dpcc-r` is unflyable by either controller** (0/10 and 0/3). That is a **projector** defect, and
    mission 5 isolated it cleanly.
 4. On `hardflow_sls-r`, **PID "succeeds" by dragging along the floor** — `phys_min_z` ≈ 0 or negative
