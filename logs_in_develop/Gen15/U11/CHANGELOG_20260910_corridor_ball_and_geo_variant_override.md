@@ -114,3 +114,27 @@ can only narrow or re-point to entries the yaml already defines; it can never in
 zero violations. `corridor_ball` can: the unprojected plan is trained at z ∈ [0.90, 1.30] and should
 violate on essentially every rollout, while a projector that does real work must lift the plan into
 [1.41, 1.80]. That is the projected-vs-unprojected contrast the corridor scene has never supported.
+
+---
+
+## 7. First run — submitted 2026-09-10
+
+`bash Slurm_Codes/eval_20260910_corridor_ball.sh`, all six wrappers accepted.
+
+| tier | K | engine | wrapper | variants |
+|---|---|---|---|---|
+| **A** · PCC only | 2 | af | **25599** | 4 — `diffuser`, `dpcc-t-geo_free`, `dpcc-t`, `dpcc-t-tightened` |
+| A | 2 | mf | **25600** | 4 |
+| A | 2 | fm | **25601** | 4 |
+| **B** · PCC + HF-SLSQP | 5 | af | **25602** | 7 — the four above plus `hardflow_new`, `hardflow_new-t`, `hardflow_new-t-geo_free` |
+| B | 5 | mf | **25603** | 7 |
+| B | 5 | fm | **25604** | 7 |
+
+All: `geo=corridor_ball`, seed 6, n=10, `u7hg` eval tag, `UAV_EVAL_HOURS=24`.
+af carries `BONE_AF=unet`, `AF_ALPHA_END=0.2`, `EPOCH=latest` (resolves the same checkpoint as C30).
+
+Child job IDs are assigned by each wrapper and appear in its log — record them when the logs land.
+
+**Awaiting results.** Read the five first-run checks in §5 before any comparison, and gate everything
+on check 5: if `diffuser` still reports `n_violations = 0.00`, the ball is not binding and the
+geometry needs revisiting.
