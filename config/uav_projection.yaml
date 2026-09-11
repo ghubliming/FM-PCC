@@ -118,6 +118,30 @@ projection_variants: [
   'dpcc-r-geo_free',
   'dpcc-c-geo_free',
   'dpcc-t-geo_free',
+
+  # ── [Gen15 U12 2026-09-11] arm B'': DPCC with the ACTION BOUND off, geometry ON ──
+  # DIAGNOSTIC. `bounds_free` skips the action-magnitude family only (eval_mix_uav.py:1259);
+  # dynamics + geo_bounds + halfspace + obstacles all stay ON. It is the exact complement of
+  # `-geo_free`.
+  #
+  # WHY IT WAS ADDED. On `corridor_ball_v2` the projector left the plan's altitude untouched
+  # (`min_z == final_z` on 10/10 rollouts) and removed only 27.1 -> 25.8 violations. The eval's
+  # own line says why:
+  #     Fix_16 DEGENERATE actions[1]/[2]: constant in the expert data
+  #     action_bounds=auto -> lb=[1.24e-04 -2.20e-05 -2.20e-05] ub=[4.39e-02 2.20e-05 2.20e-05]
+  # The corridor expert flies a straight line at constant y AND constant z, so dy and dz have
+  # ZERO variance in training; `action_bounds='auto'` derives the projector's action cap from
+  # that range and leaves it ~2.2e-05 m/step in both axes — 8.7 mm over a 396-step episode,
+  # against the ~0.43 m detour the obstacle demands.
+  #
+  # This row tests that hypothesis directly: same obstacle, same geometry, action cap REMOVED.
+  #   collision_free > 0  -> the action bound was the blocker (fix = explicit `action_bounds`)
+  #   collision_free = 0  -> the blocker is elsewhere; the diagnosis above is wrong
+  #
+  # ⚠️ SHARED FILE (config/uav.py Gen11 + config/uav_mix.py Gen15 both read this list). One
+  # extra slot per job for anything that does NOT use UAV_MIX_VARIANTS; every current pipeline
+  # does use it, so the practical cost is zero.
+  'dpcc-t-bounds_free',
 ]
 
 # ── Constraints (E9) ────────────────────────────────────────────────────────

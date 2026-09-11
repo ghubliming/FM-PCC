@@ -41,6 +41,13 @@ Scope, across the three passes so far (see `CHANGELOG.md`):
   (two new paragraphs) and split into their own contributions (6 → 7); and the UAV controller gets
   its real name — **cascaded geometric tracking controller**, since `CascadedPID` has no integral
   term and a non-scalar inner loop (`Remark rem:pidname`).
+- **v2.8** — *"bootstrapped target"* was invented jargon; engine 3 is a **consistency target** and is
+  named after the family it belongs to. The Euler surrogate is contrasted with SafeFlowMPC's
+  exact-kinematics NLP (`Remark rem:eulermodel`). Method reordered bottom-up into **control
+  substrate → generative model → projection mechanism**.
+- **v2.9** — abstract **481 → 278 words**; and the prose stops justifying itself. Defensive
+  constructions (*"does not claim"*, *"must not be"*, *"worth stating"*, *"rather than left to be
+  discovered"*) removed throughout — no content lost, only the arguing.
 - **v2.6** — the **compute environment**: the cluster, node, CPU/GPU and software stack every number
   was produced on, plus the two caveats that follow from the machine. First prose written into
   Chapter 5 — a deliberate, scoped exception to the bone rule (see below).

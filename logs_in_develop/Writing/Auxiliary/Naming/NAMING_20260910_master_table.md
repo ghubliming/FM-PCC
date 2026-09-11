@@ -31,13 +31,19 @@ doc — **never cited**, see that note) · [`../Methodology_Sources/AUX_visual_a
 | `ddpm`, `diffusion`, `diffuser`, `GaussianDiffusion` | DDPM \[Ho et al. 2020\]; Diffuser \[Janner et al. 2022\] | the inherited denoising engine, cosine schedule, `K` fixed at training time → **"the diffusion engine"** / **"the DPCC baseline"**. 🚨 **never bare `diffuser`** — it means three different things (Janner's method, the ancestor codebase, *and* our no-projection row) |
 | `fm`, `FMv3ODE`, `flow_matcher_v3` | Flow Matching \[Lipman et al. 2023\]; Rectified Flow \[Liu et al. 2023\] | the **instantaneous-velocity** target; the `α = 1` endpoint of the target axis → **"flow matching"** (already descriptive — keep) |
 | `mf`, `MeanFlowODE`, `MeanFlowEngine` | MeanFlow \[Geng et al. 2025\] | the **analytic average-velocity** target via a JVP; the exact `α → 0` limit → **"MeanFlow"** (keep — published *and* descriptive; gloss once as *the average-velocity objective*) |
-| `af`, `AlphaFlowODE`, `alphaflow` | α-Flow / AlphaFlow \[Zhang et al. 2025\] | 🚨 **not a family, one target.** `u_tgt = α·v + (1−α)·u_next` with `u_next` a frozen forward pass — a finite difference closed with the model's **own** output; `0 < α < 1`, the interior of the same axis → first mention **"α-Flow \[cite\]"**, thereafter **"the bootstrapped target"**. The brand hides the mechanism, and **the mechanism is the whole negative result** |
+| `af`, `AlphaFlowODE`, `alphaflow` | α-Flow / AlphaFlow \[Zhang et al. 2025\] | 🚨 a **consistency target**: `u_tgt = α·v + (1−α)·u_next` with `u_next` a **stop-gradient** forward pass — the identity closed by a **finite difference at an intermediate time**, taken from the network's own output, where MeanFlow closes it with an **analytic derivative**. This is the **consistency-model family** \[Song et al. 2023\]; the source's own analysis decomposes MeanFlow into *trajectory flow matching* + *trajectory consistency* and calls α a **curriculum** between them. → first mention **"α-Flow \[cite\]"**, thereafter **"the consistency target"** |
 | `imf`, `iMF` | Improved MeanFlow | refuted variant → appears only as a **negative result** in `sec:disc:negative` |
 | `unet` · `dit` · `sit` · `mf_dit` | U-Net \[Janner et al.\]; DiT; SiT | backbone choice. Only `unet` is architecture-matched; transformer rows are **confounded secondary evidence** and carry parameter counts |
 
 > **The axis framing is the naming fix.** `fm`, `af`, `mf` are not three methods — they are
-> `α = 1`, `0 < α < 1`, `α = 0` on one target axis. Say that once and the engine chapter stops being
-> a shopping list.
+> `α = 1`, `0 < α < 1`, `α = 0` on one target axis, differing only in **how the average-velocity
+> target is closed**: instantaneous (no interval) / finite difference from a stop-gradient copy /
+> analytic derivative. Say that once and the engine chapter stops being a shopping list.
+>
+> ⚠️ **Do not coin a word for it.** An earlier draft called `af` "the bootstrapped target" — that was
+> **invented jargon, not a term of art**, and it hid the fact that this is ordinary *consistency
+> training*. Use the family's established name, and describe the failure mode plainly (*the target
+> inherits a fraction of the model's own error*) rather than naming it.
 
 ## 2. Constraint arms
 

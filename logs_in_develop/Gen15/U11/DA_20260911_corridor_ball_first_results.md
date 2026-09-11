@@ -7,7 +7,7 @@ Changelog: [`CHANGELOG_20260910_corridor_ball_and_geo_variant_override.md`](CHAN
 
 ## 0. TL;DR
 
-1. ✅ **The gate passes decisively.** The unprojected plan goes from **0.00 violations / S&C 1.000**
+1. ✅ **The gate passes decisively.** The unprojected plan goes from **0.00 violations / S&C 1.000**fuck
    on `corridor_hg` to **32.8–34.7 violations / S&C 0.000** on `corridor_ball`, on all six arms.
    The ball binds, `collision_free_completed` collapses 1.000 → 0.000. §2
 2. 🔴 **But nothing solves it: S&C = 0.000 in all 34 cells.** No projector — DPCC or HardFlow, at

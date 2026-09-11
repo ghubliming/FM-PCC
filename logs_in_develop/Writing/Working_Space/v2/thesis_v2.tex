@@ -190,57 +190,36 @@
 \fi
 
 % -----------------------------------------------------------------------------
-% ABSTRACT -- v2 sketch. Rewrite last, once Results is settled.
-% Pitches FOUR things, in this order: the engine swap, the modality extension,
-% the embodiment extension, then the methodological contributions. The two
-% middle paragraphs were added in v2.7 -- they were previously buried as half a
-% sentence in contribution 5.
+% ABSTRACT -- v2.9. Short and narrative: what was built, in order. No
+% justification, no "rather than", no arguing with a referee.
+% Budget: keep under ~300 words once the headline numbers land.
 % -----------------------------------------------------------------------------
 \ifstandalone
-Predictive control with a generative planner has to pay for its samples. Diffusion
-Predictive Control couples a denoising planner to a per-step projection enforcing dynamics
-and safety constraints, and inherits diffusion's step budget: the number of network
-evaluations is fixed at training time and cannot be reduced afterwards. This thesis replaces
-that engine with deterministic ODE transport --- flow matching and its average-velocity
-variants --- holding the backbone, the projector, the data and the evaluation harness fixed,
-so that the step budget becomes an inference-time choice.
+A generative planner pays for every plan it produces. Diffusion Predictive Control couples a
+denoising planner to a per-step projection that enforces dynamics and safety constraints, and its
+step budget is fixed when the model is trained. This thesis replaces that engine with deterministic
+ODE transport --- flow matching and its average-velocity variants --- holding the backbone, the
+projector, the data and the evaluation harness fixed. The step budget becomes a solver argument,
+chosen at deployment.
 
-The substitution is then carried across a change of \emph{observation modality}, on a
-vision-conditioned variant of the benchmark built for this work in which the policy sees two
-camera views instead of a state vector. The contribution is not the encoder, which is
-vendored unchanged, but the interface: perception is compressed to a fixed-width latent
-consumed as conditioning, so the generative backbone never sees an image and the claim that
-only the engine changed becomes verifiable rather than asserted. That boundary is also a
-\emph{requirement}, not a convenience --- the average-velocity objective differentiates
-through its own network, and an image encoder inside that derivative is both wrong and
-ruinously expensive, so the latent is what makes a few-step engine and a visual observation
-compatible at all.
+The same stack is then carried across two changes. First the observation: a vision-conditioned
+instance of the manipulation benchmark, in which two camera views are compressed to a fixed-width
+latent and the generative backbone never sees an image. That latent is also what makes a few-step
+engine usable here at all, because the average-velocity objective differentiates through its own
+network. Second the embodiment: from a position-controlled arm to an underactuated quadrotor. The
+planner emits a position increment, the increment accumulates into a setpoint, and a cascaded
+geometric tracking controller turns the setpoint into four rotor commands. Written this way the two
+robots are one control structure, one layer apart.
 
-It is then carried across a change of \emph{embodiment}, from a position-controlled
-manipulator to an underactuated quadrotor --- which forces the question a generative planner
-usually avoids: a flow model does not fly an aircraft, so what closes the loop? A three-layer
-chain, in which the planner never emits an actuator command. It emits a position increment;
-the increment accumulates into a setpoint; and a cascaded \emph{geometric} tracking
-controller --- a position PD outer loop resolving a thrust vector and an attitude, a
-geometric attitude-tracking inner loop on the rotation group, and a static
-thrust-and-moment allocation to the rotors --- turns that setpoint into four rotor commands,
-at a rate faster than the planner replans. Writing the manipulator and aerial chains as one
-structure, one layer apart, is what makes the transfer claim structural rather than
-anecdotal.
+Across all three settings the system is measured against the diffusion baseline under Pareto
+dominance at equal success and equal constraint satisfaction. \hole{Headline numbers --- write last.
+Keep the abstract under $\approx 300$ words.}
 
-Across all three settings the system is evaluated against the diffusion baseline under a
-strict definition of improvement: Pareto dominance at equal success and equal constraint
-satisfaction. \hole{Headline numbers --- write last, after Results is settled and the powered runs land.
-The abstract is $\approx 480$ words without them; keep the total under $\approx 550$, and trim
-paragraph~1 rather than the two transfer paragraphs if it runs over.}
-
-Three further contributions are methodological: a correctness condition for guided samplers,
-under which a step budget below a computable threshold degenerates the sampler to
-sample-then-project and a class of published-style comparisons measures nothing; a measured
-regime split between the two constraint-enforcement arms, explained by which point each hands
-to an identical projection operator; and retained negative results --- an engine that does not
-improve on its predecessor, and a defect in this work's own benchmark geometry, diagnosed by
-its own instrumentation and reported with its correction and that correction's limits.
+Three results are methodological: a computable budget below which a guided sampler silently
+degenerates to sample-then-project; a regime split between the two constraint arms, explained by
+which point each hands to an identical projection operator; and two retained negatives --- an engine
+that does not improve on its predecessor, and a geometry defect this work's own instrumentation
+found.
 \fi
 
 \microtypesetup{protrusion=false}
@@ -289,7 +268,7 @@ data, normalisation, horizon, seeds, projector and harness are all held constant
 that one constraint arm beats another is only meaningful if both arms see the same feasible
 set, the same solver, the same activation threshold and the same candidate budget. Most of
 the engineering behind this thesis exists to make those two sentences true, and the section
-says so plainly rather than leaving it to the reader to infer.
+says so plainly.
 
 \section{Research Questions}\label{sec:intro:rqs}
 
@@ -315,9 +294,8 @@ before any table'' item.}
 
 \section{Contributions}\label{sec:intro:contributions}
 
-The section lists seven contributions. Two are performance claims, two are constructions, and
-three are methodological or negative --- and the section says which is which rather than letting
-the list read as seven wins.
+Seven contributions: two performance claims, two constructions, three methodological or negative.
+The list below marks which is which.
 
 \begin{enumerate}
   \item \textbf{An architecture-matched engine substitution.} Deterministic transport
@@ -337,13 +315,13 @@ the list read as seven wins.
     solver differences.
   \item \textbf{Removal of the candidate-selection machinery.} The projector's selection
     rules are shown not to earn their computation, and the system ships with the redundancy
-    removed rather than retained ``just in case''.
+    removed.
   \item \textbf{A vision-conditioned instance of the same benchmark, and the interface that
     makes it comparable.} The manipulation task is rebuilt so the policy observes two camera views
     instead of a state vector. The encoder is vendored unchanged; what is contributed is the
     boundary --- perception is compressed to a fixed-width latent consumed as conditioning, so the
-    generative backbone never sees an image and ``only the engine changed'' is a checkable statement
-    rather than an assumption. The boundary is also shown to be \emph{necessary}: the
+    generative backbone never sees an image and ``only the engine changed'' becomes checkable. The
+    boundary is also necessary: the
     average-velocity objective differentiates through its own network, and an encoder inside that
     derivative is both incorrect and prohibitively expensive, so a few-step engine and a visual
     observation are incompatible without it.
@@ -356,10 +334,9 @@ the list read as seven wins.
     attitude $\rightarrow$ geometric attitude tracking on $SO(3)$ $\rightarrow$ static
     thrust-and-moment allocation) converts the setpoint into rotor commands at a faster rate than
     the planner replans. The manipulator and aerial chains are then presented as \emph{one}
-    structure one layer apart, which is what makes RQ4 a structural claim instead of two
-    unconnected case studies.
+    structure one layer apart, which is the form RQ4 takes.
   \item \textbf{Retained negative results.} An additional engine variant that does not
-    improve on its predecessor is reported as a clean negative rather than omitted, and a
+    improve on its predecessor is reported as a clean negative, and a
     defect in this work's own benchmark geometry, found by its own instrumentation, is
     reported with the correction and its limits.
 \end{enumerate}
@@ -597,8 +574,7 @@ training objective --- and that is the quantity \autoref{sec:bg:fewstep} attacks
 a function of $\vect{x}_{0}$ and $\vect{c}$ alone. This removes a source of run-to-run variance
 from a controller that replans at every timestep, and it changes what ``the same plan'' means
 when comparing constraint arms --- two arms started from the same $\vect{x}_{0}$ differ only by
-the constraint mechanism, which is what makes the arm comparison in \autoref{ch:results} a
-controlled one. It also means the candidate fan of \autoref{sec:method:selection} is a fan over
+the constraint mechanism, so the arm comparison in \autoref{ch:results} is controlled. It also means the candidate fan of \autoref{sec:method:selection} is a fan over
 $\vect{x}_{0}$, not over sampler noise.
 
 \section{Few-Step Generative Models}\label{sec:bg:fewstep}
@@ -692,7 +668,7 @@ Three properties of \eqref{eq:bg:mf:loss} are used later in this thesis.
     is thus a strict generalisation of a flow-matching model, and the fraction of training
     samples drawn with $r \neq \ftime$ is a genuine hyperparameter: at zero it is flow matching
     \parencite[Tab.~1a]{geng2025meanflow}. \autoref{sec:method:engine} shows that the same collapse argument
-    applies, for a different reason, to this work's bootstrapped-target variant --- which is how a set of
+    applies, for a different reason, to this work's consistency-target variant --- which is how a set of
     earlier runs was found to be mislabelled.
   \item \textbf{The interval is a network input, so the budget is chosen at inference.} As in
     \autoref{sec:bg:fm}, $\nfe$ appears only in the sampler. Unlike \autoref{sec:bg:fm}, small $\nfe$ is
@@ -719,12 +695,18 @@ quantity to monitor. \srcnote{Both are implemented in
 \texttt{\_sample\_tau\_pair}); the convergence-signal warning is this work's own, from the
 Gen3v6 fix-2/fix-3 logs.}
 
-\subsection*{A bootstrapped target on the same objective}
+\subsection*{A consistency target on the same objective}
 
-A further variant \parencite{zhang2025alphaflow} keeps the average-velocity objective but changes
-how its target is formed: rather than regressing the analytic target of
-\eqref{eq:bg:mf:loss} directly, it bootstraps a target from the network's own output and
-anneals a scalar that interpolates between the two regimes. It is presented neutrally here.
+A further variant \parencite{zhang2025alphaflow} keeps the average-velocity objective but forms its
+target differently. Where \eqref{eq:bg:mf:loss} closes the identity with an \emph{analytic}
+derivative, this variant closes it with a \emph{finite difference} evaluated at an intermediate
+transport time and taken from a stop-gradient copy of the network itself --- the construction of the
+consistency-model family \parencite{song2023consistency}, in which a network is trained to agree with
+its own output at a neighbouring time. Its scalar $\alpha$ places that intermediate time within the
+interval and anneals from one regime to the other. The source's own analysis is that the
+average-velocity objective decomposes into a flow-matching term and a \emph{trajectory-consistency}
+term, and that this variant is the family interpolating between them
+\parencite[\S1,\,\S3]{zhang2025alphaflow}. It is presented neutrally here.
 \autoref{sec:method:engine} states why the distinction is a training-path difference and nothing
 else, and \autoref{sec:res:fewstep} reports that it does not pay off; per TARGET~\S8 it is carried
 as an ablation, not as a rung of a ladder. \emph{No mathematics is given for it in this draft
@@ -791,7 +773,7 @@ at which the program is posed:
 
 Because the constraints and the solver are held identical, any cost or quality difference
 between the arms is attributable to the linearisation point, not to the implementation. That
-framing is what makes the regime split of RQ3 a claim about algorithms. It also introduces the
+framing makes the regime split of RQ3 a claim about algorithms. It also introduces the
 condition that \autoref{sec:method:degenerate} formalises: arm~C is only arm~C when it runs at least
 one \emph{non-terminal} guided step, because at the terminal time the lookahead vanishes and
 the pull-back has no subsequent step to act on.
@@ -853,12 +835,21 @@ the selection machinery.
 
 % =============================================================================
 \chapter{Method}\label{ch:method}
-% =============================================================================
 
 \emph{Chapter summary.} The chapter is written as a sequence of deltas from the inherited
 system. It states what was taken unchanged, what was replaced, and what was added, and it
 keeps those three categories visibly separate --- both because it is honest and because the
 validity of every comparison depends on the first category being large.
+
+It is ordered bottom-up, in three blocks, because that is the order in which the pieces constrain
+each other. \textbf{First the control substrate}: the plant, the first-order model the constraint
+machinery is written against, and the layer that turns a plan into a command --- inverse kinematics
+for the two manipulators, a geometric cascade for the quadrotor. That layer is common to every
+experiment and is what the other two blocks are bolted onto. \textbf{Then the generative model}: the
+engines that produce the plan, and the backbone and conditioning that let them consume an image.
+\textbf{Then the projection mechanism}: the two constraint arms, the condition under which comparing
+them is well-posed, and the candidate machinery. The first three sections below are common ground ---
+what is inherited, the notation, and the system as a whole --- and precede the blocks.
 
 \section{Starting Point: Diffusion Predictive Control}\label{sec:method:dpcc}
 
@@ -898,44 +889,6 @@ which gives deterministic constraint satisfaction at the steps where it is appli
 \parencite[Eq.~16]{romer2025diffusion}. \eqref{eq:method:dpcc:step} is the single equation this
 thesis replaces: \autoref{sec:method:engine} substitutes the engine that produces
 $\vect{\mu}_{\theta}$, and \autoref{sec:method:hardflow} substitutes the operator applied to it.
-
-\subsection*{The dynamics model: first-order Euler}
-
-The rows \eqref{eq:bg:mpc:dyn} need a concrete $f$. The inherited system does not use an identified
-model of the manipulator and its low-level controller; it uses a first-order (explicit Euler)
-integrator over the commanded quantity, and pushes everything it omits into the mismatch term
-$\vect{w}_{t}$ of \eqref{eq:method:plant}. For the two-dimensional manipulator benchmark, where the
-state stacks a commanded and a measured planar position and the action is a planar increment, that
-model is
-\begin{equation}\label{eq:method:dpcc:euler}
-  \vect{s}_{t+1}
-  = \vect{s}_{t} + \begin{bmatrix}\vect{a}_{t}\trans & \vect{a}_{t}\trans\end{bmatrix}\trans t\sidx{s}
-    + \vect{w}_{t},
-\end{equation}
-i.e.\ \emph{both} halves of the state are advanced by the \emph{same} action
-\parencite[Sec.~6.1]{romer2025diffusion}. Three things follow, and all three are inherited by every
-environment in this thesis.
-
-\begin{itemize}
-  \item \textbf{The model is deliberately crude, and that is the point.} $f$ has no knowledge of the
-    arm's kinematics, its impedance controller, or its integration error; $\gamma$ is estimated
-    empirically from unconstrained rollouts and the tightening of \eqref{eq:method:dpcc:tighten}
-    absorbs the rest. A projector built on a crude model plus an honest mismatch bound is a
-    different design from one built on an accurate model, and it is the design this thesis inherits.
-  \item \textbf{$t\sidx{s} = 1$, because the action is a displacement and not a velocity.} The
-    network's output is a per-step Cartesian increment, so the Euler update is already in the right
-    units and no physical timestep enters the constraint. Setting $t\sidx{s}$ to the simulator's
-    integration step --- a natural-looking mistake --- would rescale the entire feasible set.
-    \srcnote{\texttt{aux\_repo/dpcc/config/projection\_eval.yaml:14--16}, whose comment reads
-    \emph{``since $a = [\Delta x,\Delta y]$ and not $[v_{x},v_{y}]$''}; the same value and the same
-    reasoning are carried in \texttt{config/uav\_projection.yaml:125--127} and
-    \texttt{config/visual\_aligning\_eval.yaml}.}
-  \item \textbf{Anchoring both the commanded and the measured channel is what couples the plan to
-    the plant.} If only the measured position were constrained, the projector could return a plan
-    whose commanded channel is unreachable; if only the commanded one were, the plan would be
-    admissible in a space the robot never occupies. \autoref{sec:method:deployment} shows the same
-    two-channel structure in all three environments, and \autoref{sec:method:proj} gives the row form.
-\end{itemize}
 
 \subsection*{Constraint tightening}
 
@@ -1020,7 +973,7 @@ at $t+1$.
 
 This field's papers overload $t$, $u$ and $x$: control time, transport time, the velocity field
 and the control input all compete for the same letters. \autoref{tab:notation} fixes one
-convention for the whole thesis. Two decisions in it are worth stating explicitly. The plan is
+convention for the whole thesis. Two of its decisions carry through every chapter. The plan is
 $\vect{x}$, not $\tau$ as in \parencite{romer2025diffusion}, which frees $\ftime$ for transport time;
 and $\ftime$ runs \emph{data-at-one}, so the diffusion index $k$ of \autoref{sec:bg:diffusion}
 counts down to the data while the transport index $k$ of \autoref{sec:bg:fm} counts up to it. Every
@@ -1084,10 +1037,418 @@ $\rightarrow$ constraint mechanism $\rightarrow$ executed action, with the two s
 blocks marked and everything else marked as held fixed. The figure is referenced throughout
 the results chapter; it should be drawn once and drawn well.
 
+% =============================================================================
+%  BLOCK 1 --- THE CONTROL SUBSTRATE
+% =============================================================================
+\section{The Control Substrate: From Plan to Command}\label{sec:method:deployment}
+
+\emph{Block 1.} The plant, the model the constraint machinery is written against, and the layer that
+turns a plan into an actuator command --- for all three environments in one section, because the
+parallel is the substance of RQ4. Everything in the two blocks that follow is bolted onto what is
+described here, and the order matters: the first-order model below is what
+\autoref{sec:method:proj} turns into equality rows, and the increment-and-setpoint structure is what
+the generative engines of \autoref{sec:method:engine} are ultimately producing.
+
+\subsection*{The dynamics model: first-order Euler}
+
+The rows \eqref{eq:bg:mpc:dyn} need a concrete $f$. The inherited system does not use an identified
+model of the manipulator and its low-level controller; it uses a first-order (explicit Euler)
+integrator over the commanded quantity, and pushes everything it omits into the mismatch term
+$\vect{w}_{t}$ of \eqref{eq:method:plant}. For the two-dimensional manipulator benchmark, where the
+state stacks a commanded and a measured planar position and the action is a planar increment, that
+model is
+\begin{equation}\label{eq:method:dpcc:euler}
+  \vect{s}_{t+1}
+  = \vect{s}_{t} + \begin{bmatrix}\vect{a}_{t}\trans & \vect{a}_{t}\trans\end{bmatrix}\trans t\sidx{s}
+    + \vect{w}_{t},
+\end{equation}
+i.e.\ \emph{both} halves of the state are advanced by the \emph{same} action
+\parencite[Sec.~6.1]{romer2025diffusion}. Three things follow, and all three are inherited by every
+environment in this thesis.
+
+\begin{itemize}
+  \item \textbf{The model is deliberately crude, and that is the point.} $f$ has no knowledge of the
+    arm's kinematics, its impedance controller, or its integration error; $\gamma$ is estimated
+    empirically from unconstrained rollouts and the tightening of \eqref{eq:method:dpcc:tighten}
+    absorbs the rest. A projector built on a crude model plus an honest mismatch bound is a
+    different design from one built on an accurate model, and it is the design this thesis inherits.
+  \item \textbf{$t\sidx{s} = 1$, because the action is a displacement and not a velocity.} The
+    network's output is a per-step Cartesian increment, so the Euler update is already in the right
+    units and no physical timestep enters the constraint. Setting $t\sidx{s}$ to the simulator's
+    integration step --- a natural-looking mistake --- would rescale the entire feasible set.
+    \srcnote{\texttt{aux\_repo/dpcc/config/projection\_eval.yaml:14--16}, whose comment reads
+    \emph{``since $a = [\Delta x,\Delta y]$ and not $[v_{x},v_{y}]$''}; the same value and the same
+    reasoning are carried in \texttt{config/uav\_projection.yaml:125--127} and
+    \texttt{config/visual\_aligning\_eval.yaml}.}
+  \item \textbf{Anchoring both the commanded and the measured channel is what couples the plan to
+    the plant.} If only the measured position were constrained, the projector could return a plan
+    whose commanded channel is unreachable; if only the commanded one were, the plan would be
+    admissible in a space the robot never occupies. \autoref{sec:method:deployment} shows the same
+    two-channel structure in all three environments, and \autoref{sec:method:proj} gives the row form.
+\end{itemize}
+
+\begin{remark}[A stricter alternative to the surrogate]\label{rem:eulermodel}
+\eqref{eq:method:dpcc:euler} is the weakest defensible model of the plant: it knows nothing about the
+arm's kinematics, its joint limits, its impedance controller, or the integration error of the
+simulator, and everything it omits is pushed into $\gamma$ and absorbed by the tightening
+\eqref{eq:method:dpcc:tighten}. The alternative is to put the \emph{real} kinematics inside the
+optimisation, and at least one contemporary system does exactly that.
+\parencite{oelerich2026safeflowmpc} pairs a flow-matching planner with an online nonlinear program on
+a seven-degree-of-freedom manipulator, and plans in \emph{joint space}: the generated trajectory is a
+sequence of joint configurations, and the program carries the analytic forward kinematics, the
+Jacobian and per-link collision geometry, solved at every flow-matching step. There is no surrogate
+and no mismatch ball, because the constraint is imposed on the true kinematic chain.
+
+The two designs sit at opposite ends of one trade. Exact kinematics inside the program give
+feasibility on the real chain, and tie the program to one robot and the plan to that robot's joints.
+The surrogate gives an end-effector plan and a projector that transfer unchanged from a planar arm to
+a spatial one to a quadrotor, with feasibility that holds for the model and not for the plant. This
+thesis takes the second end: one projector, held fixed across two embodiments, is what RQ4 is about.
+$\gamma$ is where the cost is booked.
+\srcnote{Verified against the released code:
+\texttt{aux\_repo/SafeFlowMPC/safe\_flow\_mpc/RobotModel/} carries the \texttt{iiwa.urdf} and
+compiled CasADi functions for the forward kinematics, the Jacobian and ten per-link collision
+positions; \texttt{train\_imitation\_learning.py} generates \texttt{n\_horizon} $\times$ 7 joint
+trajectories. It plans \emph{joint configurations}, not motor torques --- the distinction matters and
+the thesis should not overstate it.}
+\end{remark}
+
+\subsection*{The shared skeleton: how a plan becomes a command}
+
+In every case the generative model replans at each control step, emits a \emph{position increment},
+and never emits an actuator command; everything below the increment is classical control --- a
+differential \ac{IK} loop feeding a joint-space PD law on the two manipulator environments, and a
+cascaded \emph{geometric} tracking controller, or optionally a sampling-based \ac{MJPC} tracker, on
+the quadrotor.
+
+Write $\Delta\vect{p}_{t}$ for the first action of the selected plan at control step $t$. All three
+environments run the same two-line recursion,
+\begin{align}
+  \vect{p}_{\textrm{des},t+1} &= \vect{p}_{\textrm{des},t} + \Delta\vect{p}_{t},
+    &&\vect{p}_{\textrm{des},0} = \vect{p}_{0},
+    \label{eq:method:dep:setpoint}\\
+  \vect{o}_{t} &= \left(\vect{p}_{\textrm{des},t},\;\vect{p}_{t},\;[\,\dot{\vect{p}}_{t}\,]\right),
+    \label{eq:method:dep:obs}
+\end{align}
+where $\vect{o}_{t}$ is the observation the model conditions on at the next step and the bracketed
+velocity block is present only for the aerial platform. Two structural properties follow, and they
+are the reason this section exists.
+
+\begin{itemize}
+  \item \textbf{\eqref{eq:method:dep:setpoint} is a free-running integrator driven by the model's own
+    past outputs.} $\vect{p}\sidx{des}$ is not read back from the plant. Plan error therefore
+    accumulates rather than being corrected, which is the structural reason the aerial task is the
+    fragile one and the reason a divergence guard is needed at all.
+  \item \textbf{\eqref{eq:method:dep:obs} feeds the commanded setpoint back alongside the measured
+    state}, so the model conditions on its own history. The gap
+    $\vect{p}_{\textrm{des},t} - \vect{p}_{t}$ is exactly the tracking error the low-level controller is
+    working on, and it is visible to the planner --- which is why the two channels are both
+    constrained in \eqref{eq:method:proj:deriv}.
+\end{itemize}
+
+\begin{table}[htpb]
+  \caption[Embodiment instantiation]{The same skeleton, instantiated three times. $t\sidx{s}$ is the
+  Euler sampling time of \eqref{eq:method:dpcc:euler}; ``rows'' counts the channel pairs of
+  \eqref{eq:method:proj:deriv}.}
+  \label{tab:embodiments}
+  \centering
+  \begin{tabular}{llll}
+    \toprule
+     & \texttt{avoiding-d3il} & \texttt{aligning-d3il-visual} & \texttt{uav} \\
+    \midrule
+    embodiment      & manipulator, planar   & manipulator, spatial      & quadrotor \\
+    observation     & state, $4$-D          & 2 RGB views $+$ $6$-D state & state, $9$-D \\
+    action          & $\Delta\vect{p}\in\R^{2}$ & $\Delta\vect{p}\in\R^{3}$ & $\Delta\vect{p}\in\R^{3}$ \\
+    plan width $d$  & $6$                   & $9$                       & $12$ \\
+    $\vect{o}$ layout & $(\vect{p}\sidx{des},\vect{p})$ & $(\vect{p}\sidx{des},\vect{p})$ & $(\vect{p}\sidx{des},\vect{p},\dot{\vect{p}})$ \\
+    $t\sidx{s}$     & $1$                   & $1$                       & $1$ \\
+    dynamics rows   & $4$                   & $6$                       & $6$ \\
+    low level       & differential IK $\rightarrow$ joint PD & same          & geometric cascade, or MJPC \\
+    plan rate       & one plan per env.\ step & one plan per env.\ step & $33\,\textrm{Hz}$ \\
+    inner rate      & $n\sidx{sub}$ sim substeps & $n\sidx{sub}$ sim substeps & $100\,\textrm{Hz}$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection*{Manipulator: the increment becomes a joint torque}
+
+The environment is commanded with an absolute Cartesian pose. The evaluation loop forms it from the
+increment and the \emph{commanded} channel of the observation --- not from the measured one, which
+is what makes \eqref{eq:method:dep:setpoint} the free-running recursion it is --- and holds the
+end-effector orientation and, on the planar benchmark, the height fixed.
+\srcnote{\texttt{aux\_repo/dpcc/scripts/eval.py:236--238}: \texttt{next\_pos\_des = action + obs[:2]}.}
+
+Below that setpoint sits the differential \ac{IK} loop. Let $\vect{q}\in\R^{7}$ be the joint
+positions, $\matr{J}(\vect{q})$ the end-effector Jacobian, and let the task-space error be a
+proportional term on position and orientation,
+\begin{equation}\label{eq:method:dep:taskerr}
+  \vect{\xi}(\vect{q})
+  = \begin{bmatrix}
+      k\sidx{p}\odot\operatorname{clip}\!\left(\vect{p}\sidx{des}-\vect{p}(\vect{q}),\,\pm\epsilon\sidx{p}\right)\\[2pt]
+      k\sidx{q}\odot\operatorname{clip}\!\left(\vect{e}\sidx{rot}(\vect{q}),\,\pm\epsilon\sidx{r}\right)
+    \end{bmatrix},
+\end{equation}
+with $\vect{p}(\vect{q})$ from forward kinematics and $\vect{e}\sidx{rot}$ the quaternion error to the
+commanded orientation. The joint increment is the weighted, damped least-squares solution with a
+null-space term that pulls the arm towards a rest posture,
+\begin{align}
+  \dot{\vect{q}}\sidx{null} &= k\sidx{null}\left(\vect{q}\sidx{rest}-\vect{q}\right),
+    \label{eq:method:dep:null}\\
+  \dot{\vect{q}}
+    &= \matr{W}\matr{J}\trans
+       \left(\matr{J}\matr{W}\matr{J}\trans + \lambda\Id{6}\right)^{-1}
+       \left(\vect{\xi} - \matr{J}\dot{\vect{q}}\sidx{null}\right)
+     + \dot{\vect{q}}\sidx{null},
+    \label{eq:method:dep:dls}
+\end{align}
+after which the singular values of $\matr{J}\matr{W}\matr{J}\trans + \lambda\Id{6}$ are clipped into
+$[\sigma\sidx{min},\sigma\sidx{max}]$ before the solve, $\|\dot{\vect{q}}\|$ is capped, and
+$\vect{q} \leftarrow \operatorname{clip}(\vect{q}+\eta\sidx{ik}\dot{\vect{q}},\,\vect{q}\sidx{min},\vect{q}\sidx{max})$
+is iterated $n\sidx{ik}$ times per control step. The resulting joint target, its finite-difference
+velocity and acceleration are handed to a joint-space PD law, and \emph{that} is what produces the
+torques the simulator integrates.
+
+The parameters are inherited from the benchmark and are listed once because the loop is otherwise
+not reproducible: $k\sidx{p} = (200,200,800)$, $k\sidx{q} = (30,30,30)$, $k\sidx{null} = 40$,
+$\lambda = 10^{-12}$, $\matr{W} = \Id{7}$, $[\sigma\sidx{min},\sigma\sidx{max}] = [10^{-2},10^{2}]$,
+$n\sidx{ik} = 3$, $\eta\sidx{ik} = 10^{-3}$, clips $\epsilon\sidx{p} = 0.01\,\textrm{m}$ and
+$\epsilon\sidx{r} = 0.1$, and joint PD gains
+$(120,120,120,120,50,30,10)$ / $(10,10,10,10,6,5,3)$.
+\srcnote{\texttt{d3il/environments/d3il/d3il\_sim/controllers/IKControllers.py:134--323}
+(\texttt{CartPosQuatImpedenceController}) and
+\texttt{.../controllers/Config/mujoco\_controller\_config.gin:6--37}.}
+
+Two consequences matter for the thesis. \eqref{eq:method:dep:dls} is a \emph{local} solve run three
+times per step, so the arm does not exactly reach $\vect{p}\sidx{des}$ within one step --- the residual
+is precisely the $\vect{w}_{t}$ that \eqref{eq:method:dpcc:euler} pushes into the mismatch bound and
+\eqref{eq:method:dpcc:tighten} then absorbs. And the null-space term makes the map from setpoint to
+joint configuration history-dependent, so two identical plans executed from different postures do not
+produce identical joint trajectories, even though they produce the same Cartesian trace.
+
+\subsection*{Visual aligning: the same chain, one dimension up}
+
+The spatial aligning environment uses the identical controller stack; what changes is the plan and
+the observation. The action is a three-dimensional increment $\Delta\vect{p}\in\R^{3}$, the state
+half of the observation is $(\vect{p}\sidx{des},\vect{p})\in\R^{6}$ --- commanded and measured
+end-effector position --- and the plan width is therefore $d = 9$ per horizon step, laid out as
+$(\vect{a},\vect{p}\sidx{des},\vect{p})$. The six dynamics rows of
+\eqref{eq:method:proj:deriv} are the pairs
+\begin{equation}\label{eq:method:dep:varows}
+  \left(d\sidx{pos},d\sidx{act}\right) \in
+  \{(3,0),(4,1),(5,2)\}\;\cup\;\{(6,0),(7,1),(8,2)\},
+\end{equation}
+i.e.\ the commanded triple and the measured triple both integrate the same action, which is
+\eqref{eq:method:dpcc:euler} written in three dimensions.
+\srcnote{\texttt{mix\_visual\_aligning\_test/eval\_mix\_visual\_aligning.py:272--279}.}
+
+Perception sits \emph{above} the plan, not inside the loop: two RGB views are encoded to a
+$128$-dimensional latent that conditions the backbone by concatenation with the time embedding
+\eqref{eq:method:backbone:concat} --- \emph{not} by FiLM, whatever the configuration flag is called
+(Remark~\ref{rem:naming}) --- and the generative backbone never sees an image
+(\autoref{sec:method:backbone}). The control chain below the setpoint is therefore
+byte-identical to the state-based benchmark's, so a change in results is a change of
+\emph{modality} and not of apparatus.
+\srcnote{Methodology\_Sources/AUX\_visual\_aligning\_env.md \S2.}
+
+\subsection*{Aerial: the increment becomes four rotor thrusts}
+
+The aerial chain is the same skeleton with two more layers underneath, and it is multi-rate: the
+plan is queried at the rate the expert data was recorded, and the physics and the low-level
+controller run faster, with the setpoint held constant in between,
+\begin{equation}\label{eq:method:dep:multirate}
+  n\sidx{dec} = \operatorname{round}\!\left(\frac{1}{\Delta t\sidx{phys}\,f\sidx{plan}}\right),
+  \qquad
+  f\sidx{plan} = 33\,\textrm{Hz},\quad \Delta t\sidx{phys} = 0.01\,\textrm{s}
+  \;\Rightarrow\; n\sidx{dec} = 3 .
+\end{equation}
+\srcnote{\texttt{mix\_uav\_test/eval\_mix\_uav.py:1454--1455};
+$\Delta t\sidx{phys}$ from \texttt{quadrotor\_modified.xml:4}.}
+
+The vehicle is the rigid body of \parencite[Eqs.~(2)--(5)]{lee2010geometric}: with mass $m$, body
+inertia $\matr{J}\sidx{b}$, attitude $\matr{R}\in SO(3)$ and body rates $\vect{\omega}$,
+\begin{equation}\label{eq:method:dep:plant}
+  m\ddot{\vect{p}} = m g\,\unitvec{3} - T\,\matr{R}\unitvec{3},
+  \qquad
+  \dot{\matr{R}} = \matr{R}\hat{\vect{\omega}},
+  \qquad
+  \matr{J}\sidx{b}\dot{\vect{\omega}} + \vect{\omega}\times\matr{J}\sidx{b}\vect{\omega} = \vect{\tau}\sidx{b},
+\end{equation}
+where $\hat{(\cdot)}$ is the hat map. The controller implemented here is the \emph{position-controlled
+flight mode} of that paper, instantiated on this model; each of the four steps below names the
+equation of \parencite{lee2010geometric} it realises, and the three deviations from it are
+marked.
+
+\paragraph{Outer loop --- position to thrust vector.} With $\vect{e}\sidx{p} = \vect{p}-\vect{p}\sidx{des}$
+and $\vect{e}\sidx{v} = \dot{\vect{p}}-\dot{\vect{p}}\sidx{des}$ --- the tracking errors of
+\parencite[Eqs.~(17)--(18)]{lee2010geometric} --- a diagonal PD with acceleration feed-forward gives
+the required world-frame force
+\begin{equation}\label{eq:method:dep:outer}
+  \vect{a}\sidx{cmd} = -\matr{K}\sidx{p}\vect{e}\sidx{p} - \matr{K}\sidx{d}\vect{e}\sidx{v} + \ddot{\vect{p}}\sidx{des},
+  \qquad
+  \vect{F} = m\left(\vect{a}\sidx{cmd} + g\,\unitvec{3}\right),
+\end{equation}
+which is the bracketed term of \parencite[Eq.~(23)]{lee2010geometric}. \textbf{Deviation 1 --- frame
+convention.} The source states \eqref{eq:method:dep:plant} with $\unitvec{3}$ pointing \emph{down}
+and the thrust acting along $-\vect{b}_{3}$, so its position and velocity terms carry the opposite
+sign to those written here; this implementation is $z$-up with thrust along $+\vect{b}_{3}$. The law
+is the same law, and the scalar gains are not transferable between the two statements without that
+flip. \textbf{Deviation 2 --- diagonal gains.} $\matr{K}\sidx{p}$ and $\matr{K}\sidx{d}$ are diagonal
+matrices here, where \parencite{lee2010geometric} proves stability for the scalar gains $k_{x},k_{v}$;
+the per-axis split (a stiffer vertical channel) is an engineering choice and is \emph{not} covered by
+the paper's stability statement.
+
+\paragraph{Attitude extraction.} The rotor disk must point along $\vect{F}$, and the remaining degree
+of freedom is fixed by the commanded yaw $\psi\sidx{des}$. This is
+\parencite[Eqs.~(22)--(23)]{lee2010geometric}, with the free axis $\vect{b}_{1c}$ --- there only
+required to be orthogonal to $\vect{b}_{3c}$ --- pinned here by projecting the yaw direction:
+\begin{equation}\label{eq:method:dep:att}
+  \vect{b}_{3} = \frac{\vect{F}}{\|\vect{F}\|},\quad
+  \vect{b}_{2} = \frac{\vect{b}_{3}\times\vect{x}\sidx{c}}{\|\vect{b}_{3}\times\vect{x}\sidx{c}\|},\quad
+  \vect{b}_{1} = \vect{b}_{2}\times\vect{b}_{3},\quad
+  \matr{R}\sidx{des} = \begin{bmatrix}\vect{b}_{1} & \vect{b}_{2} & \vect{b}_{3}\end{bmatrix},
+\end{equation}
+with $\vect{x}\sidx{c} = (\cos\psi\sidx{des},\sin\psi\sidx{des},0)\trans$.
+
+\paragraph{Inner loop --- geometric attitude control.} The attitude error is the coordinate-free
+error on $SO(3)$ of \parencite[Eq.~(21)]{lee2010geometric}, and the moment is its
+\parencite[Eq.~(20)]{lee2010geometric}:
+\begin{equation}\label{eq:method:dep:inner}
+  \vect{e}\sidx{R} = \tfrac{1}{2}\left(\matr{R}\sidx{des}\trans\matr{R} - \matr{R}\trans\matr{R}\sidx{des}\right)^{\vee},
+  \qquad
+  \vect{\tau}\sidx{b} = -\matr{K}\sidx{R}\vect{e}\sidx{R} - \matr{K}_{\omega}\vect{e}_{\omega}
+      + \vect{\omega}\times\matr{J}\sidx{b}\vect{\omega},
+\end{equation}
+where $(\cdot)^{\vee}$ is the inverse hat map. \textbf{Deviation 3 --- the attitude feed-forward is
+dropped.} The source defines
+$\vect{e}_{\omega} = \vect{\omega} - \matr{R}\trans\matr{R}\sidx{des}\vect{\omega}\sidx{des}$ and adds
+$-\matr{J}\sidx{b}(\hat{\vect{\omega}}\matr{R}\trans\matr{R}\sidx{des}\vect{\omega}\sidx{des}
+- \matr{R}\trans\matr{R}\sidx{des}\dot{\vect{\omega}}\sidx{des})$ to
+\eqref{eq:method:dep:inner}. This implementation sets $\vect{\omega}\sidx{des} \equiv \vect{0}$, so
+$\vect{e}_{\omega} = \vect{\omega}$ and the whole feed-forward term vanishes. That is legitimate only
+while the commanded attitude turns slowly --- and $\matr{R}\sidx{des}$ is driven by
+\eqref{eq:method:dep:att} from a setpoint the \emph{generative model} produces, so its rate is not
+under the controller's control. The almost-global exponential stability of
+\parencite[Prop.~1]{lee2010geometric} therefore does not transfer verbatim to what is run here.
+
+\paragraph{Allocation.} The collective thrust is the world force projected on the current body-$z$
+axis, floored so the vehicle cannot free-fall during recovery, and the wrench is distributed over the
+four rotors by a fixed geometry matrix:
+\begin{equation}\label{eq:method:dep:alloc}
+  T = \max\!\left(\vect{F}\trans\vect{b}_{3},\;T\sidx{floor}\right),
+  \qquad
+  \matr{M}\vect{u} = \begin{bmatrix}T\\ \vect{\tau}\sidx{b}\end{bmatrix},
+  \qquad
+  \matr{M}_{:,i} = \begin{bmatrix}1 & r_{i,y} & -r_{i,x} & \kappa_{i}\end{bmatrix}\trans,
+\end{equation}
+with $\vect{r}_{i}$ the $i$-th rotor site position and $\kappa_{i}$ its yaw-torque gear ratio, both
+read from the model file rather than hard-coded. \eqref{eq:method:dep:alloc} is
+\parencite[Eq.~(1)]{lee2010geometric} --- there written for four rotors at distance $d$ on a square,
+$[\,f\;\vect{\tau}\sidx{b}\,]\trans = \matr{M}\vect{f}\sidx{rotor}$ with
+$\matr{M}$ built from $\pm d$ and the thrust-to-torque constant --- generalised to arbitrary rotor
+placements by reading $\vect{r}_{i}$ and $\kappa_{i}$ off the vehicle model. It is invertible under
+the same non-degeneracy condition. When $\vect{u} = \matr{M}^{-1}[T;\vect{\tau}\sidx{b}]$
+leaves the actuator box, the command is rescaled \emph{thrust-first}: the mean is held and the
+torque component is shrunk by the largest factor that keeps every rotor in range, but never below
+one half, so attitude authority is never more than halved. Parameters of record:
+$\matr{K}\sidx{p} = \operatorname{diag}(4,4,8)$, $\matr{K}\sidx{d} = \operatorname{diag}(3,3,4)$,
+$\matr{K}\sidx{R} = \operatorname{diag}(70,70,4)$, $\matr{K}_{\omega} = \operatorname{diag}(2.5,2.5,1)$,
+$u\sidx{hover} = mg/4$, $u\sidx{max} = \max(2u\sidx{hover},6)$, $u\sidx{min} = 0$,
+$T\sidx{floor} = 0.1\,mg$, $g = 9.81\,\textrm{m}/\textrm{s}^{2}$; $m$ and $\matr{J}\sidx{b}$ are
+read from the vehicle model.
+\srcnote{\texttt{uav\_env\_test/flight\_controller.py:33--155}. The class is named
+\texttt{CascadedPID}, which is a misnomer on three counts and is \emph{not} the name used here ---
+see Remark~\ref{rem:pidname}.}
+
+\begin{remark}[The controller is not a PID]\label{rem:pidname}
+The implementation calls this class \texttt{CascadedPID}, and the run tags say \texttt{pid}. Three
+things are wrong with that.
+\textbf{(i)} There is \emph{no integral term anywhere} --- the four gains are
+$\matr{K}\sidx{p},\matr{K}\sidx{d}$ on position and $\matr{K}\sidx{R},\matr{K}_{\omega}$ on attitude
+and rate, all proportional or derivative, so it is at most a PD cascade. \textbf{(ii)} The inner loop
+is not a scalar loop at all: \eqref{eq:method:dep:inner} is a coordinate-free error on $SO(3)$ with a
+gyroscopic feed-forward, which no arrangement of scalar PID channels reproduces. \textbf{(iii)}
+``cascaded PID'' suggests nested scalar loops, where this is a two-level geometric cascade closed by a
+\emph{static} allocation matrix \eqref{eq:method:dep:alloc}. The thesis therefore calls it a
+\textbf{cascaded geometric tracking controller}, after the lineage it implements
+\parencite{lee2010geometric}, and treats \texttt{pid} purely as an artefact tag.
+\end{remark}
+
+\paragraph{The velocity setpoint is synthesised, not planned.} \eqref{eq:method:dep:outer} needs
+$\dot{\vect{p}}\sidx{des}$, which the plan does not supply --- it supplies displacements. Three
+policies are implemented and the choice is a recorded experimental factor, not an implementation
+detail:
+\begin{equation}\label{eq:method:dep:vdes}
+  \dot{\vect{p}}\sidx{des} =
+  \begin{cases}
+    \Delta\vect{p}_{t}\,f\sidx{plan} & \text{default --- the increment read as a mean velocity,}\\
+    \vect{0} & \text{stop-and-go --- brake to rest at every plan step,}\\
+    \dfrac{\Delta\vect{p}_{t}}{\|\Delta\vect{p}_{t}\|}\,\bar{v} & \text{constant-speed, with }
+      \bar{v} = f\sidx{plan}\,\overline{\|\Delta\vect{p}\|}\text{ from the dataset.}
+  \end{cases}
+\end{equation}
+The third is timing-free by construction and calibrates itself to whatever data it is given; its
+magnitude is the mean of the first policy, so the three differ in \emph{profile}, not in average
+speed. \srcnote{\texttt{mix\_uav\_test/eval\_mix\_uav.py:1551--1563, 1822--1832}.}
+
+\paragraph{The alternative low-level controller.} A sampling-based predictive controller is
+implemented behind the same interface, so it can be swapped for the geometric cascade without
+touching the plan layer. It is the \emph{Predictive Sampling} planner of \parencite{howell2022predictive}, used
+as published; only the task is ours. Three pieces have to be named for the substitution to be
+readable.
+
+\emph{The objective.} The planner minimises the finite-horizon sum
+$J = \sum_{i} c(\vect{x}_{i},\vect{u}_{i})$ over a rollout of the true simulator dynamics
+\parencite[Eq.~(3)]{howell2022predictive}, with the running cost a weighted sum of twice-differentiable
+norms of \emph{residuals} --- quantities that are small when the task is solved
+\parencite[Eq.~(4)]{howell2022predictive}. The task defined here has two residual terms, both under a
+quadratic norm and at risk-neutral setting ($R = 0$ in
+\parencite[Eq.~(5)]{howell2022predictive}, so the risk transform is the identity):
+\begin{equation}\label{eq:method:dep:mjpc}
+  J = \sum_{i=1}^{H\sidx{mjpc}}
+      \Big(\underbrace{\left\|\vect{p}_{i}-\vect{p}\sidx{des}\right\|_{2}^{2}}_{r_{1},\;w_{1}=1}
+      + \underbrace{w_{v}\left\|\dot{\vect{p}}_{i}\right\|_{2}^{2}}_{r_{2},\;w_{2}=w_{v}}\Big),
+\end{equation}
+with $\vect{p}\sidx{des}$ passed in as the instruction. The velocity residual is not decoration: it
+plays the role of the geometric cascade's derivative gain, and without it the planner reaches the setpoint at
+full thrust and overshoots --- minimum cumulative position error being achieved by arriving as fast
+as possible.
+
+\emph{The plan and its parameterisation.} The plan is a time-indexed spline over control knots
+$\vect{\theta}$ rather than a raw action sequence \parencite[\S3.3]{howell2022predictive}; the
+zero-order-hold interpolant is used here, with one knot per horizon step, so the spline degenerates
+to the action sequence itself and the parameterisation buys nothing but interface uniformity.
+
+\emph{The search.} Each call performs a fixed number of iterations of Algorithm~4 of
+\parencite{howell2022predictive}: draw $N-1$ perturbations
+$\vect{\theta}_{i} \sim \Normal(\vect{\theta},\sigma^{2})$, roll out all $N$ candidates --- the
+incumbent included --- from the measured state, and keep
+$\vect{\theta} \leftarrow \arg\min_{i} J(\vect{\theta}^{(i)})$. It is derivative-free and zero-order;
+its authors present it as an elementary baseline. Between control steps the plan is shifted forward
+and re-sampled, which is the warm-start of
+\parencite[Alg.~1]{howell2022predictive} and the reason a few iterations per step suffice.
+
+\emph{One deliberate departure.} Contacts are disabled in the planner's copy of the model. The
+tracker therefore plans against the vehicle's free-flight dynamics only, and obstacle avoidance
+remains entirely the projector's job. This is not a shortcut: it keeps the constraint mechanism a
+single identifiable component, so that swapping the tracker cannot silently change how constraints
+are enforced, so the swap stays a controlled comparison.
+Defaults: $N = 16$, $H\sidx{mjpc} = 0.3\,\textrm{s}$ of physics steps, five improvement iterations
+per call, $\sigma = 0.3$, $w_{v} = 0.1$.
+\srcnote{\texttt{mix\_uav\_test/mjpc\_tracker.py:70--155}, which wraps
+\texttt{mujoco\_mpc.mjx.predictive\_sampling} unmodified.}
+
+\hole{State once, in \autoref{sec:setup:protocol}, which controller produced each reported UAV
+number. The apparatus notes record that every dataset and every reported result to date uses the
+geometric cascade, and that the predictive controller was built and studied but is not the source of a
+reported number --- confirm this against the run ledger before the claim is made in print.}
+
+% =============================================================================
+%  BLOCK 2 --- THE GENERATIVE MODEL
+% =============================================================================
 \section{Generative Engine}\label{sec:method:engine}
 
 The substitution itself. Three engines are instantiated behind one interface: naive flow
-matching, the average-velocity few-step objective, and the bootstrapped-target variant.
+matching, the average-velocity objective, and the consistency-target variant.
 The section gives each one's training target, states what changes in the sampler for each,
 and --- the point of the section --- shows that \emph{nothing outside the target and the
 integration loop changes}.
@@ -1205,7 +1566,7 @@ query inside the $\{\ftime,h\ge 0,\ \ftime+h\le 1\}$ domain the model was traine
 \srcnote{\texttt{mf\_diffusion.py:189--300}; the guardrail and the sub-stage interval rule are
 this work's own, from the Gen3v6 U3/U8 audits.}
 
-\subsection*{Engine 3 --- the bootstrapped target}
+\subsection*{Engine 3 --- the consistency target}
 
 Presented as an \emph{ablation and a negative result}, per TARGET~\S8 kill criterion~1: with the
 architecture matched and its annealed scalar provably live, it ties the average-velocity engine
@@ -1217,7 +1578,12 @@ written in this draft}; \autoref{sec:res:fewstep} and \autoref{sec:disc:negative
 One structural point about it is needed here regardless, because it invalidated a set of this
 work's earlier runs: its interpolation scalar appears \emph{only in training}, and at one
 setting the two targets coincide branch for branch. A checkpoint trained at that setting
-\emph{is} the predecessor engine, whatever the directory is called. The same collapse argument
+\emph{is} the predecessor engine, whatever the directory is called. The second is the mechanism the
+negative result turns on. A finite-difference target closed with the network's own stop-gradient
+output inherits a fraction of that network's error, so the objective contracts error at a rate set by
+$\alpha$ and admits self-consistent fields that are wrong. The analytic target of
+\eqref{eq:method:engine:mftgt} carries no such term. This is a property of consistency training, and
+it is the reason the variant is named after it. The same collapse argument
 appears in \autoref{sec:bg:fewstep} for the $r=\ftime$ fraction; both are cases of a hyperparameter
 whose extreme value silently changes which engine is being measured, and both are checked by
 assertion rather than by convention.
@@ -1229,11 +1595,10 @@ The inherited sampler does not start from the standard normal: it draws
 $\vect{x}^{\nfe}\sim\Normal(\vect{0},\tfrac{1}{4}\Id{n})$ and injects half the posterior
 standard deviation at each reverse step. The naive flow-matching engine inherits the same
 $\tfrac{1}{2}$ prior scale at sampling time while its training draws $\vect{x}_{0}\sim
-\Normal(\vect{0},\Id{n})$; the MeanFlow engine uses unit scale at both ends. The discrepancy is
-recorded here rather than smoothed over, because a prior-scale mismatch between arms is exactly
-the kind of confound the matched-architecture discipline exists to exclude --- and because it
-has already caused one measurable defect in this work, when a constraint arm was ported between
-generations together with the wrong scale.
+\Normal(\vect{0},\Id{n})$; the MeanFlow engine uses unit scale at both ends. A prior-scale mismatch
+between arms is a confound the matched-architecture discipline exists to exclude, and it has already
+caused one measurable defect here, when a constraint arm was ported between generations with the
+wrong scale.
 \srcnote{\texttt{aux\_repo/dpcc/diffuser/models/diffusion.py:158,168};
 \texttt{flow\_matcher\_v3/models/diffusion.py:164};
 \texttt{flow\_matcher\_v3\_meanflow/models/mf\_diffusion.py:204}; the porting defect is
@@ -1265,8 +1630,8 @@ and convolution runs along \emph{time}, not along the state dimension. Channel w
 $\left(c_{0},\dots,c_{L}\right) = \left(d,\;w,\;2w,\;4w,\;8w\right)$ for a base width $w$, with
 three stride-two down/up stages and skip concatenations. The horizon is zero-padded up to the next
 multiple of eight before the network and cropped back afterwards, because three halvings require it;
-$H = 8$ needs no padding, but the code path exists and is worth naming, since a padded frame that
-reached the conditioning average would dilute it.
+$H = 8$ needs no padding; the code path exists because a padded frame reaching the conditioning
+average would dilute it.
 
 Every level is a pair of residual blocks. Writing $\vect{h}\in\R^{c\sidx{in}\times H}$ for a block's
 input, $\mathcal{B}$ for a $\left(\text{Conv1d}\to\text{GroupNorm}\to\text{Mish}\right)$ unit and
@@ -1300,9 +1665,9 @@ is padded, giving one latent per plan,
   \;\in\;\R^{128}.
 \end{equation}
 $\vect{e}$ is the \textbf{entire} interface between perception and generation: the U-Net's input
-channels are the plan's $d$, never an image. That is what makes the architecture-matched claim
-checkable rather than asserted --- the perception stack above \eqref{eq:method:backbone:latent} is
-identical across every engine, and everything below it is encoder-agnostic.
+channels are the plan's $d$, never an image. The perception stack above
+\eqref{eq:method:backbone:latent} is therefore identical across every engine, and everything below it
+is encoder-agnostic: the architecture-matched claim is checkable.
 
 Two ways of injecting $\vect{e}$ are implemented, and the thesis reports the first as the method and
 the second as an ablation:
@@ -1337,9 +1702,7 @@ linear modulation is by definition the affine map with a learned multiplicative 
 \eqref{eq:method:backbone:film} is FiLM. In this work's code both arms are selected by a flag named
 \texttt{film\_mode} (\texttt{'v1'} and \texttt{'v2'}), which makes the default look like FiLM in every
 configuration file, every checkpoint tag and every log line. \textbf{The thesis uses the mechanism
-names, not the flag values}, and every table reports the arm by mechanism. This is one instance of a
-general hazard the write-up guards against: an implementation identifier that has hardened into a
-label can smuggle a claim into a paper.
+names, not the flag values}, and every table reports the arm by mechanism.
 \srcnote{Verified against the code, not against a design document:
 \texttt{mix\_visual\_aligning/models/visual\_unet.py:64--97} selects the branch and comments them
 \emph{``fake FiLM''} / \emph{``true FiLM''};
@@ -1380,6 +1743,9 @@ Transformer-style backbones are declared out of scope with a reason rather than 
 using them properly requires spatial features and cross-attention rather than a pooled
 latent, which is a different architecture and would break the parameter match.
 
+% =============================================================================
+%  BLOCK 3 --- THE PROJECTION MECHANISM
+% =============================================================================
 \section{Constraint Enforcement I: Per-Step Iterate Projection}\label{sec:method:proj}
 
 Arm~B, inherited. The section states the program that is actually solved, the schedule on which
@@ -1490,10 +1856,8 @@ and the next one.
 
 Arm~C: \emph{in-ODE endpoint projection}, the mechanism introduced by
 \parencite{li2025hardflow} (their \texttt{hardflow\_new} mode), re-derived here on this work's own
-constraint set. The name is the mechanism rather than the source's, for two reasons that
-\autoref{sec:method:hardflow} makes good on below: what runs here solves no objective, so calling it
-an optimisation would over-describe it; and the solver it happens to use is a backend flag, so
-naming the arm after the solver would assert a contribution that is not there. The same feasible set
+constraint set. What runs here solves no objective, and the solver it uses is a backend flag, so
+the arm is named after its mechanism. The same feasible set
 \eqref{eq:method:feasible} and the same solver as \autoref{sec:method:proj}, but the optimisation is
 posed on the \emph{predicted clean endpoint} implied by the current iterate and velocity ---
 $\hat{\vect{x}}_{1} = \vect{x}_{\ftime} + (1-\ftime)\,\vfield_{\theta}(\vect{x}_{\ftime},\ftime,\vect{c})$
@@ -1507,31 +1871,27 @@ instance \parencite[Problem~5]{li2025hardflow}: an Euler reference step, then an
 decision variable is the \emph{predicted endpoint} rather than the iterate --- which is what keeps
 the constraint $h$ undistorted by the network --- followed by the inverse map back into the
 transport. Two departures from the source are deliberate and are what make the arm comparison
-controlled: the program is built from the same constraint list arm~B consumes rather than from the
-source's own hard-coded geometry, and the optional terminal cost $C(\cdot)$ is dropped, so both arms
-solve \emph{the same feasible-set problem} and differ only in where it is posed. With $C$ dropped
-the remaining objective is a pure quadratic proximity term, whose minimiser is independent of its
-weight; what actually damps the early steps is the linear factor in the pull-back, not the
-weighting.
+controlled: the program is built from the same constraint list arm~B consumes, not from the source's
+own hard-coded geometry, and the optional terminal cost $C(\cdot)$ is dropped. Both arms then solve
+the same feasible-set problem and differ only in where it is posed. With $C$ dropped the remaining
+objective is a pure quadratic proximity term whose minimiser is independent of its weight; the linear
+factor in the pull-back is what damps the early steps.
 \srcnote{\texttt{flow\_matcher\_v3\_meanflow/sampling/hardflow\_projection.py:1--40}, which records
 the port decisions and the mode chosen (\texttt{hardflow\_new}, the only one that calls the network
 as a black box outside the solver).} The section makes the structural
 comparison to arm~B explicit --- identical constraints, identical solver, different
-linearisation point --- because that is what licenses attributing any cost difference to the
-algorithm.
+linearisation point. Any cost difference is therefore attributable to the algorithm.
 
 The section also accounts honestly for what arm~C spends: it evaluates the network an extra
 time per guided step to form the endpoint estimate, so the two arms are \emph{not}
-evaluation-matched even when their step budgets are equal. This is stated here so that no
-results table has to carry the caveat.
+evaluation-matched even when their step budgets are equal. Every timing figure in
+\autoref{ch:results} carries that extra evaluation.
 
 \subsection*{What differs from the published configuration}
 
-Arm~C is the published algorithm run inside \emph{this} thesis's apparatus, not the published
-\emph{experiment}. The two are easy to conflate, because the source evaluates on the same
-benchmark and cites the same predecessor \parencite{romer2025diffusion} for its constraint set. They
-are not the same setup, and the differences are large enough that no number reported here may be
-placed in a table beside a number reported there.
+Arm~C is the published algorithm running inside this thesis's apparatus. The experimental
+configuration around it differs from the published one on five axes. Numbers from the two setups
+therefore do not belong in the same table.
 
 \begin{table}[htpb]
   \caption[HardFlow: published setup vs.\ this work]{Arm~C as published
@@ -1555,63 +1915,50 @@ placed in a table beside a number reported there.
   \end{tabular}
 \end{table}
 
-Three of these rows change what the arm \emph{is}, and each is a deliberate choice made so that the
-comparison inside this thesis is controlled --- at the price of comparability outside it.
+Four of these rows change what the arm does, and each follows from holding the two arms identical
+everywhere except the point they project.
 
 \begin{itemize}
   \item \textbf{Plan length and replanning ($16/8$ against $8/1$).} The published experiment plans
     sixteen steps and executes eight of them before replanning; this work plans eight and executes
-    one, which is the inherited receding-horizon convention of \parencite{romer2025diffusion} and is
-    what every other arm in this thesis does. The consequence is not cosmetic in either direction.
-    A longer plan gives the endpoint optimisation more room --- the constraint geometry is imposed
-    over sixteen future states rather than eight --- so the arm is being asked an easier question
-    there. But executing one action instead of eight means the whole sampler-plus-projector stack
-    runs \emph{eight times more often per environment step} here, which inflates every wall-clock
-    figure relative to the published ones and is the reason a per-replan timing and a per-step
-    timing must never be tabulated together. Matching the engines to each other was judged more
-    important than matching this thesis to the source; the alternative would have been to run every
-    engine at $16/8$ and abandon the inherited baseline.
+    one, following the inherited receding-horizon convention of \parencite{romer2025diffusion},
+    which every other arm in this thesis also follows. Both halves of that difference matter. The
+    longer plan imposes the constraint geometry over sixteen future states instead of eight, giving
+    the endpoint solve more room. Executing one action instead of eight runs the whole
+    sampler-plus-projector stack \emph{eight times more often per environment step}, which inflates
+    every wall-clock figure here relative to the published ones: a per-replan timing and a per-step
+    timing measure different things.
   \item \textbf{The dynamics rows.} The source fits a linear model
     $\vect{s}_{i+1} = \matr{A}\vect{s}_{i}+\matr{B}\vect{a}_{i}+\vect{c}$ by least squares on the
     demonstration data. This work keeps the inherited first-order Euler model
-    \eqref{eq:method:dpcc:euler} instead, because arm~B is defined on it: giving the two arms
-    different dynamics rows would have made the arm comparison --- the thing RQ3 asks --- a
-    comparison of feasible sets rather than of algorithms.
+    \eqref{eq:method:dpcc:euler} instead, because arm~B is defined on it. Two arms with different
+    dynamics rows would compare feasible sets, not algorithms.
   \item \textbf{The solver.} SLSQP throughout, rather than the source's interior-point solver, for
-    the same reason: it is arm~B's solver. It is a backend, not a method: the activation gate that
-    decides whether the algorithm runs at all is solver-agnostic, and putting the solver in the arm's
-    name would assert that the solver is the contribution. It is not.
+    the same reason: it is arm~B's solver. The activation gate that decides whether the algorithm
+    runs at all is solver-agnostic, which is why the solver stays out of the arm's name.
   \item \textbf{The terminal cost, and what its removal costs.} The source's formulation admits an
     optional terminal objective $C(\cdot)$ --- on this benchmark, the squared distance from the last
     predicted state to the target --- which it uses to \emph{improve sample quality}, not to enforce
-    constraints. This work drops it, because arm~B has no such term: the inherited projection
-    \eqref{eq:bg:mpc:proj} is pure proximity, and an arm~C carrying a goal-seeking objective would
-    beat it on task metrics for a reason that has nothing to do with where the program is posed.
-    Dropping $C$ is therefore what makes the arm comparison a comparison.
+    constraints. This work drops it. Arm~B has no such term --- the inherited projection
+    \eqref{eq:bg:mpc:proj} is pure proximity --- and an arm~C with a goal-seeking objective would win
+    on task metrics for a reason unrelated to where its program is posed.
 
-    Two consequences follow, and both are stated here rather than discovered in
-    \autoref{ch:results}. First, with $C$ removed the objective is a pure quadratic proximity term,
-    whose minimiser does not depend on its weight --- so arm~C's per-step program is \emph{exactly}
-    $\proj{\mathcal{Z}_{f}}(\hat{\vect{x}}_{1})$, the same operator as arm~B applied at a different
-    point. The claim ``identical constraints, identical solver, different linearisation point'' is
-    then literally true rather than approximately true, and what distinguishes arm~C is the lookahead
-    and the damped pull-back, not any optimisation of an objective.
-    Second, and less comfortably: the source's headline result on this benchmark is that its method
-    reaches the target in \emph{fewer} steps than unguided sampling, and that result is produced by
-    $C$. The shape of its own table makes the attribution hard to avoid --- every projection-only
-    baseline there \emph{lengthens} the path relative to unguided sampling, and only the arm carrying
-    $C$ shortens it. \textbf{Arm~C as run here has no mechanism that shortens paths.} If it shows no
-    task-performance advantage over arm~B, that is the expected consequence of a deliberate
-    simplification, and it must not be reported as evidence against the published method.
+    Two things follow. With $C$ removed the objective is a pure quadratic proximity term whose
+    minimiser is independent of its weight, so arm~C's per-step program is \emph{exactly}
+    $\proj{\mathcal{Z}_{f}}(\hat{\vect{x}}_{1})$: arm~B's operator, at a different point. Identical
+    constraints, identical solver, different linearisation point is then literally true, and what
+    distinguishes arm~C is the lookahead and the damped pull-back. And the source's headline on this
+    benchmark --- reaching the target in \emph{fewer} steps than unguided sampling --- comes from
+    $C$: in its own table every projection-only baseline \emph{lengthens} the path, and only the arm
+    carrying $C$ shortens it. Arm~C as run here has no mechanism that shortens paths, so a null
+    task-performance result against arm~B says nothing about the published method.
 \end{itemize}
 
-The one row that does agree is the activation convention, and it is the load-bearing one. The
-published configuration activates on the second half of a ten-step budget, which by
-\eqref{eq:method:degen:ngen} gives $n\sidx{act} = 5$ and $n\sidx{gen} = 4$ --- comfortably inside the
-admissible regime of \autoref{sec:method:degenerate}. The degeneracy this thesis characterises is
-therefore \emph{not} a defect of the published experiment; it is a property of the convention that
-appears once the step budget is pushed below what that experiment used, which is exactly what a
-budget sweep does. Saying this plainly is the difference between a contribution and an accusation.
+The activation convention is the one row that agrees, and the load-bearing one. The published
+configuration activates on the second half of a ten-step budget, which by
+\eqref{eq:method:degen:ngen} gives $n\sidx{act} = 5$ and $n\sidx{gen} = 4$: inside the admissible
+regime of \autoref{sec:method:degenerate}. The degeneracy characterised there is a property of the
+convention at budgets below that one, which is where a sweep goes.
 
 \srcnote{Every row of \autoref{tab:hardflow-setup} was read from the source's own LaTeX
 (\texttt{PAPERS/Recommand\_Paper/HF/main.tex:1242}, the \emph{Experiment Details} appendix) and
@@ -1670,14 +2017,12 @@ evaluation gates, not left to the reader.}
 \subsection*{The reporting rule, applied to this work's own results}
 
 Rows with $n\sidx{gen} = 0$ are tagged and excluded from every claim; rows with
-$n\sidx{gen} = 1$ are marked as carrying no attributable signal; neither is ever averaged into a
-cell. Two consequences are stated here rather than buried. First, the rule invalidates several of
-this work's own earlier measurements --- notably every low-budget row of the endpoint-projection arm at the
-shipped threshold, which was reported before the boundary was derived. Those rows are named in
-\autoref{sec:res:constraints:degenerate} and withdrawn there. Second, the same arithmetic applies to
-any published comparison that uses this activation convention at a small step budget, which is
-why the condition is presented as a contribution rather than as an implementation note: it is a
-computable property of $(\nfe,\eta)$ that decides whether a comparison measures anything at all.
+$n\sidx{gen} = 1$ are marked as carrying no attributable signal; neither is averaged into a cell.
+The rule invalidates several of this work's own earlier measurements --- every low-budget row of the
+endpoint-projection arm at the shipped threshold, reported before the boundary was derived. Those
+rows are named and withdrawn in \autoref{sec:res:constraints:degenerate}. The same arithmetic applies
+to any comparison using this activation convention at a small step budget: $n\sidx{gen}$ is a
+computable property of $(\nfe,\eta)$ that decides whether the comparison measures anything.
 
 \section{Candidate Selection}\label{sec:method:selection}
 
@@ -1695,340 +2040,6 @@ what the ablation later confirms empirically: at $B=1$ all three of
 \eqref{eq:method:sel:rules} return the same index, so they are the \emph{same computation} and
 evaluating all three is pure waste. This is stated as a proof obligation discharged here, so that the
 results chapter only has to handle the fan-greater-than-one case.
-
-\section{Closed-Loop Deployment}\label{sec:method:deployment}
-
-How a plan becomes a command, for all three environments, in one section --- because the parallel
-is the substance of RQ4. In every case the generative model replans at each control step, emits a
-\emph{position increment}, and never emits an actuator command; everything below the increment is
-classical control --- a differential \ac{IK} loop feeding a joint-space PD law on the two
-manipulator environments, and a cascaded \emph{geometric} tracking controller, or optionally a
-sampling-based \ac{MJPC} tracker, on the quadrotor.
-
-\subsection*{The shared skeleton}
-
-Write $\Delta\vect{p}_{t}$ for the first action of the selected plan at control step $t$. All three
-environments run the same two-line recursion,
-\begin{align}
-  \vect{p}_{\textrm{des},t+1} &= \vect{p}_{\textrm{des},t} + \Delta\vect{p}_{t},
-    &&\vect{p}_{\textrm{des},0} = \vect{p}_{0},
-    \label{eq:method:dep:setpoint}\\
-  \vect{o}_{t} &= \left(\vect{p}_{\textrm{des},t},\;\vect{p}_{t},\;[\,\dot{\vect{p}}_{t}\,]\right),
-    \label{eq:method:dep:obs}
-\end{align}
-where $\vect{o}_{t}$ is the observation the model conditions on at the next step and the bracketed
-velocity block is present only for the aerial platform. Two structural properties follow, and they
-are the reason this section exists rather than being a footnote in the setup chapter.
-
-\begin{itemize}
-  \item \textbf{\eqref{eq:method:dep:setpoint} is a free-running integrator driven by the model's own
-    past outputs.} $\vect{p}\sidx{des}$ is not read back from the plant. Plan error therefore
-    accumulates rather than being corrected, which is the structural reason the aerial task is the
-    fragile one and the reason a divergence guard is needed at all.
-  \item \textbf{\eqref{eq:method:dep:obs} feeds the commanded setpoint back alongside the measured
-    state}, so the model conditions on its own history. The gap
-    $\vect{p}_{\textrm{des},t} - \vect{p}_{t}$ is exactly the tracking error the low-level controller is
-    working on, and it is visible to the planner --- which is why the two channels are both
-    constrained in \eqref{eq:method:proj:deriv}.
-\end{itemize}
-
-\begin{table}[htpb]
-  \caption[Embodiment instantiation]{The same skeleton, instantiated three times. $t\sidx{s}$ is the
-  Euler sampling time of \eqref{eq:method:dpcc:euler}; ``rows'' counts the channel pairs of
-  \eqref{eq:method:proj:deriv}.}
-  \label{tab:embodiments}
-  \centering
-  \begin{tabular}{llll}
-    \toprule
-     & \texttt{avoiding-d3il} & \texttt{aligning-d3il-visual} & \texttt{uav} \\
-    \midrule
-    embodiment      & manipulator, planar   & manipulator, spatial      & quadrotor \\
-    observation     & state, $4$-D          & 2 RGB views $+$ $6$-D state & state, $9$-D \\
-    action          & $\Delta\vect{p}\in\R^{2}$ & $\Delta\vect{p}\in\R^{3}$ & $\Delta\vect{p}\in\R^{3}$ \\
-    plan width $d$  & $6$                   & $9$                       & $12$ \\
-    $\vect{o}$ layout & $(\vect{p}\sidx{des},\vect{p})$ & $(\vect{p}\sidx{des},\vect{p})$ & $(\vect{p}\sidx{des},\vect{p},\dot{\vect{p}})$ \\
-    $t\sidx{s}$     & $1$                   & $1$                       & $1$ \\
-    dynamics rows   & $4$                   & $6$                       & $6$ \\
-    low level       & differential IK $\rightarrow$ joint PD & same          & geometric cascade, or MJPC \\
-    plan rate       & one plan per env.\ step & one plan per env.\ step & $33\,\textrm{Hz}$ \\
-    inner rate      & $n\sidx{sub}$ sim substeps & $n\sidx{sub}$ sim substeps & $100\,\textrm{Hz}$ \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-\subsection*{Manipulator: the increment becomes a joint torque}
-
-The environment is commanded with an absolute Cartesian pose. The evaluation loop forms it from the
-increment and the \emph{commanded} channel of the observation --- not from the measured one, which
-is what makes \eqref{eq:method:dep:setpoint} the free-running recursion it is --- and holds the
-end-effector orientation and, on the planar benchmark, the height fixed.
-\srcnote{\texttt{aux\_repo/dpcc/scripts/eval.py:236--238}: \texttt{next\_pos\_des = action + obs[:2]}.}
-
-Below that setpoint sits the differential \ac{IK} loop. Let $\vect{q}\in\R^{7}$ be the joint
-positions, $\matr{J}(\vect{q})$ the end-effector Jacobian, and let the task-space error be a
-proportional term on position and orientation,
-\begin{equation}\label{eq:method:dep:taskerr}
-  \vect{\xi}(\vect{q})
-  = \begin{bmatrix}
-      k\sidx{p}\odot\operatorname{clip}\!\left(\vect{p}\sidx{des}-\vect{p}(\vect{q}),\,\pm\epsilon\sidx{p}\right)\\[2pt]
-      k\sidx{q}\odot\operatorname{clip}\!\left(\vect{e}\sidx{rot}(\vect{q}),\,\pm\epsilon\sidx{r}\right)
-    \end{bmatrix},
-\end{equation}
-with $\vect{p}(\vect{q})$ from forward kinematics and $\vect{e}\sidx{rot}$ the quaternion error to the
-commanded orientation. The joint increment is the weighted, damped least-squares solution with a
-null-space term that pulls the arm towards a rest posture,
-\begin{align}
-  \dot{\vect{q}}\sidx{null} &= k\sidx{null}\left(\vect{q}\sidx{rest}-\vect{q}\right),
-    \label{eq:method:dep:null}\\
-  \dot{\vect{q}}
-    &= \matr{W}\matr{J}\trans
-       \left(\matr{J}\matr{W}\matr{J}\trans + \lambda\Id{6}\right)^{-1}
-       \left(\vect{\xi} - \matr{J}\dot{\vect{q}}\sidx{null}\right)
-     + \dot{\vect{q}}\sidx{null},
-    \label{eq:method:dep:dls}
-\end{align}
-after which the singular values of $\matr{J}\matr{W}\matr{J}\trans + \lambda\Id{6}$ are clipped into
-$[\sigma\sidx{min},\sigma\sidx{max}]$ before the solve, $\|\dot{\vect{q}}\|$ is capped, and
-$\vect{q} \leftarrow \operatorname{clip}(\vect{q}+\eta\sidx{ik}\dot{\vect{q}},\,\vect{q}\sidx{min},\vect{q}\sidx{max})$
-is iterated $n\sidx{ik}$ times per control step. The resulting joint target, its finite-difference
-velocity and acceleration are handed to a joint-space PD law, and \emph{that} is what produces the
-torques the simulator integrates.
-
-The parameters are inherited from the benchmark and are listed once because the loop is otherwise
-not reproducible: $k\sidx{p} = (200,200,800)$, $k\sidx{q} = (30,30,30)$, $k\sidx{null} = 40$,
-$\lambda = 10^{-12}$, $\matr{W} = \Id{7}$, $[\sigma\sidx{min},\sigma\sidx{max}] = [10^{-2},10^{2}]$,
-$n\sidx{ik} = 3$, $\eta\sidx{ik} = 10^{-3}$, clips $\epsilon\sidx{p} = 0.01\,\textrm{m}$ and
-$\epsilon\sidx{r} = 0.1$, and joint PD gains
-$(120,120,120,120,50,30,10)$ / $(10,10,10,10,6,5,3)$.
-\srcnote{\texttt{d3il/environments/d3il/d3il\_sim/controllers/IKControllers.py:134--323}
-(\texttt{CartPosQuatImpedenceController}) and
-\texttt{.../controllers/Config/mujoco\_controller\_config.gin:6--37}.}
-
-Two consequences matter for the thesis. \eqref{eq:method:dep:dls} is a \emph{local} solve run three
-times per step, so the arm does not exactly reach $\vect{p}\sidx{des}$ within one step --- the residual
-is precisely the $\vect{w}_{t}$ that \eqref{eq:method:dpcc:euler} pushes into the mismatch bound and
-\eqref{eq:method:dpcc:tighten} then absorbs. And the null-space term makes the map from setpoint to
-joint configuration history-dependent, so two identical plans executed from different postures do not
-produce identical joint trajectories, even though they produce the same Cartesian trace.
-
-\subsection*{Visual aligning: the same chain, one dimension up}
-
-The spatial aligning environment uses the identical controller stack; what changes is the plan and
-the observation. The action is a three-dimensional increment $\Delta\vect{p}\in\R^{3}$, the state
-half of the observation is $(\vect{p}\sidx{des},\vect{p})\in\R^{6}$ --- commanded and measured
-end-effector position --- and the plan width is therefore $d = 9$ per horizon step, laid out as
-$(\vect{a},\vect{p}\sidx{des},\vect{p})$. The six dynamics rows of
-\eqref{eq:method:proj:deriv} are the pairs
-\begin{equation}\label{eq:method:dep:varows}
-  \left(d\sidx{pos},d\sidx{act}\right) \in
-  \{(3,0),(4,1),(5,2)\}\;\cup\;\{(6,0),(7,1),(8,2)\},
-\end{equation}
-i.e.\ the commanded triple and the measured triple both integrate the same action, which is
-\eqref{eq:method:dpcc:euler} written in three dimensions.
-\srcnote{\texttt{mix\_visual\_aligning\_test/eval\_mix\_visual\_aligning.py:272--279}.}
-
-Perception sits \emph{above} the plan, not inside the loop: two RGB views are encoded to a
-$128$-dimensional latent that conditions the backbone by concatenation with the time embedding
-\eqref{eq:method:backbone:concat} --- \emph{not} by FiLM, whatever the configuration flag is called
-(Remark~\ref{rem:naming}) --- and the generative backbone never sees an image
-(\autoref{sec:method:backbone}). The control chain below the setpoint is therefore
-byte-identical to the state-based benchmark's, which is what licenses reading a change in results as
-a change of \emph{modality} rather than of apparatus.
-\srcnote{Methodology\_Sources/AUX\_visual\_aligning\_env.md \S2.}
-
-\subsection*{Aerial: the increment becomes four rotor thrusts}
-
-The aerial chain is the same skeleton with two more layers underneath, and it is multi-rate: the
-plan is queried at the rate the expert data was recorded, and the physics and the low-level
-controller run faster, with the setpoint held constant in between,
-\begin{equation}\label{eq:method:dep:multirate}
-  n\sidx{dec} = \operatorname{round}\!\left(\frac{1}{\Delta t\sidx{phys}\,f\sidx{plan}}\right),
-  \qquad
-  f\sidx{plan} = 33\,\textrm{Hz},\quad \Delta t\sidx{phys} = 0.01\,\textrm{s}
-  \;\Rightarrow\; n\sidx{dec} = 3 .
-\end{equation}
-\srcnote{\texttt{mix\_uav\_test/eval\_mix\_uav.py:1454--1455};
-$\Delta t\sidx{phys}$ from \texttt{quadrotor\_modified.xml:4}.}
-
-The vehicle is the rigid body of \parencite[Eqs.~(2)--(5)]{lee2010geometric}: with mass $m$, body
-inertia $\matr{J}\sidx{b}$, attitude $\matr{R}\in SO(3)$ and body rates $\vect{\omega}$,
-\begin{equation}\label{eq:method:dep:plant}
-  m\ddot{\vect{p}} = m g\,\unitvec{3} - T\,\matr{R}\unitvec{3},
-  \qquad
-  \dot{\matr{R}} = \matr{R}\hat{\vect{\omega}},
-  \qquad
-  \matr{J}\sidx{b}\dot{\vect{\omega}} + \vect{\omega}\times\matr{J}\sidx{b}\vect{\omega} = \vect{\tau}\sidx{b},
-\end{equation}
-where $\hat{(\cdot)}$ is the hat map. The controller implemented here is the \emph{position-controlled
-flight mode} of that paper, instantiated on this model; each of the four steps below names the
-equation of \parencite{lee2010geometric} it realises, and the two places where the implementation
-departs from it are stated rather than left to be discovered.
-
-\paragraph{Outer loop --- position to thrust vector.} With $\vect{e}\sidx{p} = \vect{p}-\vect{p}\sidx{des}$
-and $\vect{e}\sidx{v} = \dot{\vect{p}}-\dot{\vect{p}}\sidx{des}$ --- the tracking errors of
-\parencite[Eqs.~(17)--(18)]{lee2010geometric} --- a diagonal PD with acceleration feed-forward gives
-the required world-frame force
-\begin{equation}\label{eq:method:dep:outer}
-  \vect{a}\sidx{cmd} = -\matr{K}\sidx{p}\vect{e}\sidx{p} - \matr{K}\sidx{d}\vect{e}\sidx{v} + \ddot{\vect{p}}\sidx{des},
-  \qquad
-  \vect{F} = m\left(\vect{a}\sidx{cmd} + g\,\unitvec{3}\right),
-\end{equation}
-which is the bracketed term of \parencite[Eq.~(23)]{lee2010geometric}. \textbf{Deviation 1 --- frame
-convention.} The source states \eqref{eq:method:dep:plant} with $\unitvec{3}$ pointing \emph{down}
-and the thrust acting along $-\vect{b}_{3}$, so its position and velocity terms carry the opposite
-sign to those written here; this implementation is $z$-up with thrust along $+\vect{b}_{3}$. The law
-is the same law, and the scalar gains are not transferable between the two statements without that
-flip. \textbf{Deviation 2 --- diagonal gains.} $\matr{K}\sidx{p}$ and $\matr{K}\sidx{d}$ are diagonal
-matrices here, where \parencite{lee2010geometric} proves stability for the scalar gains $k_{x},k_{v}$;
-the per-axis split (a stiffer vertical channel) is an engineering choice and is \emph{not} covered by
-the paper's stability statement.
-
-\paragraph{Attitude extraction.} The rotor disk must point along $\vect{F}$, and the remaining degree
-of freedom is fixed by the commanded yaw $\psi\sidx{des}$. This is
-\parencite[Eqs.~(22)--(23)]{lee2010geometric}, with the free axis $\vect{b}_{1c}$ --- there only
-required to be orthogonal to $\vect{b}_{3c}$ --- pinned here by projecting the yaw direction:
-\begin{equation}\label{eq:method:dep:att}
-  \vect{b}_{3} = \frac{\vect{F}}{\|\vect{F}\|},\quad
-  \vect{b}_{2} = \frac{\vect{b}_{3}\times\vect{x}\sidx{c}}{\|\vect{b}_{3}\times\vect{x}\sidx{c}\|},\quad
-  \vect{b}_{1} = \vect{b}_{2}\times\vect{b}_{3},\quad
-  \matr{R}\sidx{des} = \begin{bmatrix}\vect{b}_{1} & \vect{b}_{2} & \vect{b}_{3}\end{bmatrix},
-\end{equation}
-with $\vect{x}\sidx{c} = (\cos\psi\sidx{des},\sin\psi\sidx{des},0)\trans$.
-
-\paragraph{Inner loop --- geometric attitude control.} The attitude error is the coordinate-free
-error on $SO(3)$ of \parencite[Eq.~(21)]{lee2010geometric}, and the moment is its
-\parencite[Eq.~(20)]{lee2010geometric}:
-\begin{equation}\label{eq:method:dep:inner}
-  \vect{e}\sidx{R} = \tfrac{1}{2}\left(\matr{R}\sidx{des}\trans\matr{R} - \matr{R}\trans\matr{R}\sidx{des}\right)^{\vee},
-  \qquad
-  \vect{\tau}\sidx{b} = -\matr{K}\sidx{R}\vect{e}\sidx{R} - \matr{K}_{\omega}\vect{e}_{\omega}
-      + \vect{\omega}\times\matr{J}\sidx{b}\vect{\omega},
-\end{equation}
-where $(\cdot)^{\vee}$ is the inverse hat map. \textbf{Deviation 3 --- the attitude feed-forward is
-dropped.} The source defines
-$\vect{e}_{\omega} = \vect{\omega} - \matr{R}\trans\matr{R}\sidx{des}\vect{\omega}\sidx{des}$ and adds
-$-\matr{J}\sidx{b}(\hat{\vect{\omega}}\matr{R}\trans\matr{R}\sidx{des}\vect{\omega}\sidx{des}
-- \matr{R}\trans\matr{R}\sidx{des}\dot{\vect{\omega}}\sidx{des})$ to
-\eqref{eq:method:dep:inner}. This implementation sets $\vect{\omega}\sidx{des} \equiv \vect{0}$, so
-$\vect{e}_{\omega} = \vect{\omega}$ and the whole feed-forward term vanishes. That is legitimate only
-while the commanded attitude turns slowly --- and $\matr{R}\sidx{des}$ is driven by
-\eqref{eq:method:dep:att} from a setpoint the \emph{generative model} produces, so its rate is not
-under the controller's control. The almost-global exponential stability of
-\parencite[Prop.~1]{lee2010geometric} therefore does not transfer verbatim to what is run here, and
-the thesis does not claim it.
-
-\paragraph{Allocation.} The collective thrust is the world force projected on the current body-$z$
-axis, floored so the vehicle cannot free-fall during recovery, and the wrench is distributed over the
-four rotors by a fixed geometry matrix:
-\begin{equation}\label{eq:method:dep:alloc}
-  T = \max\!\left(\vect{F}\trans\vect{b}_{3},\;T\sidx{floor}\right),
-  \qquad
-  \matr{M}\vect{u} = \begin{bmatrix}T\\ \vect{\tau}\sidx{b}\end{bmatrix},
-  \qquad
-  \matr{M}_{:,i} = \begin{bmatrix}1 & r_{i,y} & -r_{i,x} & \kappa_{i}\end{bmatrix}\trans,
-\end{equation}
-with $\vect{r}_{i}$ the $i$-th rotor site position and $\kappa_{i}$ its yaw-torque gear ratio, both
-read from the model file rather than hard-coded. \eqref{eq:method:dep:alloc} is
-\parencite[Eq.~(1)]{lee2010geometric} --- there written for four rotors at distance $d$ on a square,
-$[\,f\;\vect{\tau}\sidx{b}\,]\trans = \matr{M}\vect{f}\sidx{rotor}$ with
-$\matr{M}$ built from $\pm d$ and the thrust-to-torque constant --- generalised to arbitrary rotor
-placements by reading $\vect{r}_{i}$ and $\kappa_{i}$ off the vehicle model. It is invertible under
-the same non-degeneracy condition. When $\vect{u} = \matr{M}^{-1}[T;\vect{\tau}\sidx{b}]$
-leaves the actuator box, the command is rescaled \emph{thrust-first}: the mean is held and the
-torque component is shrunk by the largest factor that keeps every rotor in range, but never below
-one half, so attitude authority is never more than halved. Parameters of record:
-$\matr{K}\sidx{p} = \operatorname{diag}(4,4,8)$, $\matr{K}\sidx{d} = \operatorname{diag}(3,3,4)$,
-$\matr{K}\sidx{R} = \operatorname{diag}(70,70,4)$, $\matr{K}_{\omega} = \operatorname{diag}(2.5,2.5,1)$,
-$u\sidx{hover} = mg/4$, $u\sidx{max} = \max(2u\sidx{hover},6)$, $u\sidx{min} = 0$,
-$T\sidx{floor} = 0.1\,mg$, $g = 9.81\,\textrm{m}/\textrm{s}^{2}$; $m$ and $\matr{J}\sidx{b}$ are
-read from the vehicle model.
-\srcnote{\texttt{uav\_env\_test/flight\_controller.py:33--155}. The class is named
-\texttt{CascadedPID}, which is a misnomer on three counts and is \emph{not} the name used here ---
-see Remark~\ref{rem:pidname}.}
-
-\begin{remark}[The controller is not a PID]\label{rem:pidname}
-The implementation calls this class \texttt{CascadedPID}, and the run tags say \texttt{pid}. Three
-things are wrong with that, and they are recorded here for the same reason as
-Remark~\ref{rem:naming}: an identifier that has hardened into a label can smuggle a claim.
-\textbf{(i)} There is \emph{no integral term anywhere} --- the four gains are
-$\matr{K}\sidx{p},\matr{K}\sidx{d}$ on position and $\matr{K}\sidx{R},\matr{K}_{\omega}$ on attitude
-and rate, all proportional or derivative, so it is at most a PD cascade. \textbf{(ii)} The inner loop
-is not a scalar loop at all: \eqref{eq:method:dep:inner} is a coordinate-free error on $SO(3)$ with a
-gyroscopic feed-forward, which no arrangement of scalar PID channels reproduces. \textbf{(iii)}
-``cascaded PID'' suggests nested scalar loops, where this is a two-level geometric cascade closed by a
-\emph{static} allocation matrix \eqref{eq:method:dep:alloc}. The thesis therefore calls it a
-\textbf{cascaded geometric tracking controller}, after the lineage it implements
-\parencite{lee2010geometric}, and treats \texttt{pid} purely as an artefact tag.
-\end{remark}
-
-\paragraph{The velocity setpoint is synthesised, not planned.} \eqref{eq:method:dep:outer} needs
-$\dot{\vect{p}}\sidx{des}$, which the plan does not supply --- it supplies displacements. Three
-policies are implemented and the choice is a recorded experimental factor, not an implementation
-detail:
-\begin{equation}\label{eq:method:dep:vdes}
-  \dot{\vect{p}}\sidx{des} =
-  \begin{cases}
-    \Delta\vect{p}_{t}\,f\sidx{plan} & \text{default --- the increment read as a mean velocity,}\\
-    \vect{0} & \text{stop-and-go --- brake to rest at every plan step,}\\
-    \dfrac{\Delta\vect{p}_{t}}{\|\Delta\vect{p}_{t}\|}\,\bar{v} & \text{constant-speed, with }
-      \bar{v} = f\sidx{plan}\,\overline{\|\Delta\vect{p}\|}\text{ from the dataset.}
-  \end{cases}
-\end{equation}
-The third is timing-free by construction and calibrates itself to whatever data it is given; its
-magnitude is the mean of the first policy, so the three differ in \emph{profile}, not in average
-speed. \srcnote{\texttt{mix\_uav\_test/eval\_mix\_uav.py:1551--1563, 1822--1832}.}
-
-\paragraph{The alternative low-level controller.} A sampling-based predictive controller is
-implemented behind the same interface, so it can be swapped for the geometric cascade without
-touching the plan layer. It is the \emph{Predictive Sampling} planner of \parencite{howell2022predictive}, used
-as published; only the task is ours. Three pieces have to be named for the substitution to be
-readable.
-
-\emph{The objective.} The planner minimises the finite-horizon sum
-$J = \sum_{i} c(\vect{x}_{i},\vect{u}_{i})$ over a rollout of the true simulator dynamics
-\parencite[Eq.~(3)]{howell2022predictive}, with the running cost a weighted sum of twice-differentiable
-norms of \emph{residuals} --- quantities that are small when the task is solved
-\parencite[Eq.~(4)]{howell2022predictive}. The task defined here has two residual terms, both under a
-quadratic norm and at risk-neutral setting ($R = 0$ in
-\parencite[Eq.~(5)]{howell2022predictive}, so the risk transform is the identity):
-\begin{equation}\label{eq:method:dep:mjpc}
-  J = \sum_{i=1}^{H\sidx{mjpc}}
-      \Big(\underbrace{\left\|\vect{p}_{i}-\vect{p}\sidx{des}\right\|_{2}^{2}}_{r_{1},\;w_{1}=1}
-      + \underbrace{w_{v}\left\|\dot{\vect{p}}_{i}\right\|_{2}^{2}}_{r_{2},\;w_{2}=w_{v}}\Big),
-\end{equation}
-with $\vect{p}\sidx{des}$ passed in as the instruction. The velocity residual is not decoration: it
-plays the role of the geometric cascade's derivative gain, and without it the planner reaches the setpoint at
-full thrust and overshoots --- minimum cumulative position error being achieved by arriving as fast
-as possible.
-
-\emph{The plan and its parameterisation.} The plan is a time-indexed spline over control knots
-$\vect{\theta}$ rather than a raw action sequence \parencite[\S3.3]{howell2022predictive}; the
-zero-order-hold interpolant is used here, with one knot per horizon step, so the spline degenerates
-to the action sequence itself and the parameterisation buys nothing but interface uniformity.
-
-\emph{The search.} Each call performs a fixed number of iterations of Algorithm~4 of
-\parencite{howell2022predictive}: draw $N-1$ perturbations
-$\vect{\theta}_{i} \sim \Normal(\vect{\theta},\sigma^{2})$, roll out all $N$ candidates --- the
-incumbent included --- from the measured state, and keep
-$\vect{\theta} \leftarrow \arg\min_{i} J(\vect{\theta}^{(i)})$. It is derivative-free and zero-order;
-its authors present it as an elementary baseline. Between control steps the plan is shifted forward
-and re-sampled, which is the warm-start of
-\parencite[Alg.~1]{howell2022predictive} and the reason a few iterations per step suffice.
-
-\emph{One deliberate departure.} Contacts are disabled in the planner's copy of the model. The
-tracker therefore plans against the vehicle's free-flight dynamics only, and obstacle avoidance
-remains entirely the projector's job. This is not a shortcut: it keeps the constraint mechanism a
-single identifiable component, so that swapping the tracker cannot silently change how constraints
-are enforced --- which is what makes the swap a controlled comparison rather than a confound.
-Defaults: $N = 16$, $H\sidx{mjpc} = 0.3\,\textrm{s}$ of physics steps, five improvement iterations
-per call, $\sigma = 0.3$, $w_{v} = 0.1$.
-\srcnote{\texttt{mix\_uav\_test/mjpc\_tracker.py:70--155}, which wraps
-\texttt{mujoco\_mpc.mjx.predictive\_sampling} unmodified.}
-
-\hole{State once, in \autoref{sec:setup:protocol}, which controller produced each reported UAV
-number. The apparatus notes record that every dataset and every reported result to date uses the
-geometric cascade, and that the predictive controller was built and studied but is not the source of a
-reported number --- confirm this against the run ledger before the claim is made in print.}
 
 % =============================================================================
 % CHAPTERS 5-8: BONE ONLY -- DELIBERATELY NOT WRITTEN

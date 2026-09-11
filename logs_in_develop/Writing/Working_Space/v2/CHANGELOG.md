@@ -97,6 +97,154 @@ none of the other 38 starred subsections is labelled.
 
 ---
 
+## v2.9 — 2026-09-11 · abstract halved; the prose stops arguing with a referee
+
+**Asked for:** the abstract is too long; and the tone is wrong — the chapters should *tell the story*
+(*"we use this, because …, or even without the because"*), not justify. No *"why not that, why not
+this"*.
+
+### Abstract: 481 → 278 words
+
+Rewritten as four short paragraphs that say what was built, in order: engine swap → observation
+change → embodiment change → how it is measured, plus one paragraph of methodological results. Every
+defensive clause is gone. The `\hole` now carries a hard budget (**keep under ~300 words** once the
+headline numbers land) instead of the previous ~550.
+
+### The tone problem, and what was actually wrong
+
+The draft had accumulated a habit of pre-empting objections in the body text: explaining why a choice
+was *not* wrong, saying what the thesis *does not* claim, and flagging that something was being stated
+*"rather than left to be discovered."* That is arguing with an imagined examiner, and it belongs in a
+rebuttal, not a method chapter. Removed across five passes. **No content was dropped — every fact,
+number, caveat and deviation is still there; only the defending is gone.**
+
+| pattern | before | after |
+|---|---|---|
+| `"does not claim"` | 2 | **0** |
+| `"must not be …"` | 2 | **0** |
+| `"worth stating / worth naming / worth drawing"` | 4 | **0** |
+| `"is not a defect / not a concession"` | 2 | **0** |
+| `"easy to conflate"`, `"left to be discovered"`, `"is stated here so that"` | 3 | **0** |
+| `"is what makes / is what licenses"` (justifying form) | 9 | 3 (all plain explanation in Background) |
+| `"rather than"` | 50 | 27 (the survivors are factual contrasts: *joint space rather than task space*) |
+
+Representative rewrites:
+
+- *"The comparison is worth drawing because it locates this thesis honestly rather than flatteringly …
+  **Neither is strictly better, and this thesis does not claim its choice is.** What it claims is …"*
+  → *"The two designs sit at opposite ends of one trade. … This thesis takes the second end: one
+  projector, held fixed across two embodiments, is what RQ4 is about. `γ` is where the cost is
+  booked."*
+- *"Saying this plainly is the difference between a contribution and an accusation."* → deleted; the
+  sentence before it already states the fact.
+- *"Matching the engines to each other was judged more important than matching this thesis to the
+  source; the alternative would have been to …"* → deleted. The configuration is stated; the
+  road-not-taken is not.
+- *"The name is the mechanism rather than the source's, for two reasons that … makes good on below:
+  … would over-describe it; and … would assert a contribution that is not there."* → *"What runs here
+  solves no objective, and the solver it uses is a backend flag, so the arm is named after its
+  mechanism."*
+- Remark titles: *"The surrogate is a choice, and there is a stricter alternative"* → *"A stricter
+  alternative to the surrogate"*.
+
+### One factual error caught while sweeping
+
+The aerial section announced *"the **two** places where the implementation departs from"*
+\parencite{lee2010geometric} and then listed **three** deviations. Fixed to three. Same for the
+HardFlow setup delta: *"Three of these rows change what the arm is"* → **four** (the dropped terminal
+cost was added in v2.6 and the count was never updated).
+
+### Still open
+
+The draft is impersonal throughout (*"this thesis"*, passive). The request's phrasing (*"we use
+this"*) would also read well in first-person plural, which is common at I6 — but switching person is a
+whole-document decision, so it was **not** done here. One `sed` if wanted.
+
+### Checks
+
+`env balanced · braces 0 · $ parity even · dangling refs 0 · missing bib keys 0 · uncited entries 0 ·
+acronyms declared-not-used: TUM only`. 2274 → 2220 lines, abstract 278 words. **Not compiled.**
+
+---
+
+## v2.8 — 2026-09-11 · invented jargon removed, Method reordered into three blocks
+
+**Asked for:** (1) *"bootstrapped target" is invented jargon — name the real scientific
+methodology*; (2) the first-order Euler model is an interesting point — contrast it with SafeFlowMPC,
+and check whether they train directly on motors; (3) reorder Method into **control substrate →
+generative model (with visual as a sub-topic) → projection mechanism**, using de-facto names
+throughout.
+
+### 1 · "Bootstrapped target" was my coinage. Removed.
+
+It was **not a term of art** and it hid what the method actually is. Checked the source paper:
+
+- `AlphaFlow.pdf` p. 1 — the MeanFlow objective *"decomposes into two parts: **trajectory flow
+  matching** and **trajectory consistency**"*.
+- p. 3 — lays out the **consistency-model** family explicitly: CM \[Song et al. 2023\], discrete-time
+  **Consistency Training (CT)** with `f_θ⁻ := stopgrad(f_θ)`, and **Consistency Trajectory Models**
+  (Shortcut model, MeanFlow).
+- p. 6 — α anneals *"from 1 to 0"*, giving *"a family of models in the interpolation between
+  trajectory flow matching and MeanFlow"*; they call it a **curriculum learning strategy**.
+
+⇒ The real name is a **consistency target**: the identity closed by a **finite difference at an
+intermediate transport time**, taken from a **stop-gradient copy of the network**, where MeanFlow
+closes it with an **analytic derivative**. That is ordinary consistency training, not something this
+thesis invented a word for.
+
+Applied: §2.4 subsection → *"A consistency target on the same objective"*; §4 → *"Engine 3 — the
+consistency target"*; the failure mode now stated plainly (*a finite-difference target closed with
+the network's own stop-gradient output inherits a fraction of that network's error*) instead of
+being named. `song2023consistency` added to the bibliography (`NO LOCAL COPY`, flagged).
+**Zero occurrences of "bootstrap" remain in the tex.** Naming table §1 corrected, with a standing
+warning: *do not coin a word for it.*
+
+### 2 · The Euler model vs SafeFlowMPC — checked, and the answer is "close, but not motors"
+
+**Not** direct motor/torque training. Verified in the released code
+(`aux_repo/SafeFlowMPC/`): the flow-matching model generates **`n_horizon × 7` joint-configuration
+trajectories** (`train_imitation_learning.py`, `max_delta_q = 0.1`) for a KUKA 7-DoF arm — joint
+*positions*, not torques. What **is** true, and is the sharper contrast: the NLP carries the
+**analytic forward kinematics, the Jacobian and ten per-link collision positions** as compiled
+CasADi functions (`safe_flow_mpc/RobotModel/`, `iiwa.urdf`), solved with Acados at **every
+flow-matching step**. No surrogate, no mismatch ball — the constraint is imposed on the true
+kinematic chain.
+
+Added as `Remark rem:eulermodel`, and written as a **located trade-off, not a concession**: exact
+feasibility on one robot's real chain, at the cost of a program built around that robot and a
+planner whose output space is its joints — versus an end-effector plan and a projector that transfer
+unchanged from a planar arm to a spatial one to a quadrotor, which is what makes RQ4 askable, at the
+cost of feasibility holding only for the surrogate. **Neither is strictly better and the thesis does
+not claim its choice is**; what it claims is that the surrogate is *why* one projector can be held
+fixed across two embodiments, and that `γ` is where the cost is booked.
+`oelerich2026safeflowmpc` added (verified against the PDF title page: Oelerich, Ebmer, Hartl-Nesic,
+Kugi; ICRA 2026; arXiv 2602.12794).
+
+### 3 · Method chapter reordered — bottom-up, three blocks
+
+Common ground first (**Starting Point → Problem Formalisation → System Overview**), then:
+
+| block | sections | what it is |
+|---|---|---|
+| **1 · The control substrate** | `sec:method:deployment`, retitled **"The Control Substrate: From Plan to Command"** | first-order Euler model (**moved here** from Starting Point — it is the substrate's model, not the engine's), the shared increment→setpoint skeleton, manipulator differential IK, the 3-D visual instantiation, the aerial geometric cascade, and MJPC |
+| **2 · The generative model** | `sec:method:engine`, `sec:method:backbone` | the three engines; **visual conditioning as the sub-topic**, where it belongs |
+| **3 · The projection mechanism** | `sec:method:proj`, `sec:method:hardflow`, `sec:method:degenerate`, `sec:method:selection` | iterate projection, endpoint projection, the well-posedness condition, the candidate machinery |
+
+The chapter summary now states the ordering and *why*: each block is bolted onto the one before, so
+the substrate has to be on the page first. Block boundaries are marked with banner comments in the
+source; no new sectioning level was invented (the template numbers subsections, and adding a level
+would change the outline the bone budgeted).
+
+De-facto names throughout — no section or subsection title now carries a brand or a coined term.
+
+### Checks
+
+`env balanced · braces 0 · $ parity even · dangling refs 0 · duplicate labels 0 · missing bib keys 0 ·
+uncited entries 0 · acronyms declared-not-used: TUM only · "bootstrap": 0`.
+2209 → 2274 lines; 28 bibliography entries. **Not compiled.**
+
+---
+
 ## v2.7 — 2026-09-11 · the two transfer contributions get pitched, and the UAV controller gets its real name
 
 **Asked for:** the abstract and the main focus should also carry (a) the **visual** contribution and
