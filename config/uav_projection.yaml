@@ -427,6 +427,81 @@ geo_constraint_variants:
       # 🔴 the VIRTUAL centre ball — 3-D, forces the climb-over detour (see header)
       - {type: sphere_outside, dimensions: ['x', 'y', 'z'], center: [0.0, 0.0, 0.75], radius: 0.35}
 
+  # ══════════════════════════════════════════════════════════════════════════════
+  # [Gen15 U12 2026-09-11] corridor_ball_v2 — supersedes U11's `corridor_ball`
+  #
+  # WHY U11 FAILED. `corridor_ball` scored S&C 0/34 because it was geometrically unreachable,
+  # not because any policy/projector/tracker failed. Root cause (DA_20260911 §6): the margin
+  # that inflates an obstacle ALSO shrinks the workspace box —
+  #     eval_mix_uav.py:1316   sphere radius := radius + margin       (margin = r_drone = 0.31)
+  #     eval_mix_uav.py:1256   box          := [lb + margin, ub - margin]
+  # so U11's escape slot was 0.080 m, not the 0.39 m its changelog claimed. With ~0.30-0.50 m
+  # of tracking error that is 7.5x too tight — worse than anything U7 called infeasible.
+  #
+  # 🔴 AND NO BALL SIZE FIXED IT. With ub_z = 1.80 the centre band is only [0.61, 1.49] = 0.88 m.
+  # Blocking the trained altitudes needs z_c + r >= 0.59; leaving a slot of even 1x track_err
+  # needs z_c + r <= 0.88; a ball centred ON the flown path (z_c ~ 1.13) needs z_c + r >= 1.13.
+  # Those do not overlap. The binding quantity was the CEILING, not the radius.
+  #
+  # WHAT U12 CHANGES — two things, both minimal:
+  #   1. ball placed ON the measured raw trajectory, and made SMALL (r = 0.12, not 0.35);
+  #   2. `workspace_bounds.ub[2]` 1.80 -> 2.80.
+  #
+  # 🔴 RAISING THE CEILING IS A SYNTHETIC EDIT, WHICH IS WHY IT IS ALLOWED. scene_corridor.xml
+  # contains a floor plane and two walls (pos z=0.75, half-height 0.75 -> walls span z in
+  # [0, 1.5]) and NO CEILING GEOM. 1.80 was an invented number, exactly the class U7 permits
+  # changing — it is how `pillars` went y +/-1.5 -> +/-2.5. No physical geom is touched.
+  #
+  # THE BALL IS ON THE TRAJECTORY, measured not guessed. Over 100 corridor `diffuser` rollouts
+  # (batch_uav_20260911_202307_TEMP) `phys_min_z` == `phys_final_z` on EVERY rollout: the drone
+  # holds a constant altitude, z in [0.956, 1.236], mean 1.127. Hence z_c = 1.13, and x = y = 0
+  # is mid-corridor on the centre channel (CORRIDOR_CHANNELS C = 0.0; L/R are only +/-0.12).
+  #
+  # THE NUMBERS (drone r = 0.31 planning; ub_z = 2.80 -> centre band z in [0.61, 2.49]):
+  #   keep-out radius   = 0.12 + 0.31 = 0.43 m   (ball itself 0.24 m across, in a 0.90 m corridor)
+  #   blocked at y=0    = z in [0.70, 1.56]      -> covers the flown band [0.96, 1.24] entirely,
+  #                                                 with 0.26 m of margin at each end
+  #   escape slot       = z in [1.56, 2.49] = 0.93 m   (half-width 0.465)
+  #   required climb    = 1.13 -> 1.56 = 0.43 m   (= r + r_drone; irreducible for an on-path ball)
+  #   under the ball    = [0.61, 0.70] = 0.09 m   -> not a route; the detour is over the top
+  #
+  # The ball is deliberately SMALL. The drone's own 0.31 m inflation does the blocking: even
+  # r = 0 would block z in [0.82, 1.44] and still cover the flown band. r = 0.12 adds margin
+  # without eating the slot — U11's r = 0.35 bought nothing and cost 0.46 m of headroom.
+  #
+  # 🔴 THE SPHERE IS VIRTUAL (no geom in the XML). The drone flies through it in MuJoCo; it is
+  # scored as a constraint violation only. This tests whether the PROJECTOR routes around a
+  # constraint the policy has never seen — no retraining, no change to physics.
+  #
+  # KNOWN CONSERVATISM: the wall halfspaces carry no `z_active`, so the planner treats the
+  # 1.5 m walls as infinitely tall and still pins |y| <= 0.14 at z > 1.5 where no wall exists.
+  # That constrains MORE than physics, never less, so it cannot manufacture false feasibility.
+  # Left in deliberately to keep this diff to the two changes above.
+  #
+  # NOT in `active_geo_variants` — select per job with UAV_MIX_GEO_VARIANTS (U11).
+  # Changelog: logs_in_develop/Gen15/U12/
+  # ══════════════════════════════════════════════════════════════════════════════
+
+  - name: corridor_ball_v2
+    scene: corridor
+    geo_tag_suffix: '_hgb2'       # distinct folder — cannot pool with _hg or U11's _hgb
+    constraint_types: ['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds']
+    planning_inflation: {r_drone: 0.31, margin_base: 0.0}
+    workspace_bounds:             # ONLY ub[2] differs from corridor_hg: 1.80 -> 2.80 (synthetic)
+      lb: [-4.0, -.inf, 0.30]
+      ub: [ 4.0,  .inf, 2.80]
+    halfspace_constraints:        # identical to corridor_hg — PHYSICAL wall inner faces
+      - {line: [[-2.0, -0.45], [2.0, -0.45]], side: 'above', x_active: [-2.0, 2.0]}
+      - {line: [[-2.0,  0.45], [2.0,  0.45]], side: 'below', x_active: [-2.0, 2.0]}
+    obstacle_constraints:
+      # the four PHYSICAL wall-end caps — unchanged from corridor_hg
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0, -0.5], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0, -0.5], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0,  0.5], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0,  0.5], radius: 0.05}
+      # 🔴 the VIRTUAL ball — small, and centred ON the measured raw trajectory
+      - {type: sphere_outside, dimensions: ['x', 'y', 'z'], center: [0.0, 0.0, 1.13], radius: 0.12}
+
   - name: s_curve_hg
     scene: s_curve
     geo_tag_suffix: '_hg'

@@ -83,3 +83,48 @@
 \providecommand{\chapterautorefname}{Chapter}
 \let\fmpccorigappendix\appendix
 \renewcommand{\appendix}{\fmpccorigappendix\def\chapterautorefname{Appendix}}
+
+% -----------------------------------------------------------------------------
+%  TEMPLATE PARITY: the capitalised \autoref names
+% -----------------------------------------------------------------------------
+%  Template_DONT_CHANGE/settings.tex:44-52 capitalises the \autoref names
+%  through the babel language hook:
+%      \addto\extrasamerican{\def\chapterautorefname{Chapter} ...}
+%  The standalone branch never loads settings.tex, so a standalone build gets
+%  hyperref's own defaults instead and renders "section 5.2" where the merged
+%  template build renders "Section 5.2". With 133 \autoref calls in the draft
+%  that is a visible difference between the two builds of the same source.
+%
+%  Mirrored here through the SAME hook, so it behaves identically and is not
+%  overwritten when babel selects the language at \begin{document} -- a plain
+%  \providecommand in the preamble would be. Guarded by \ifstandalone so that
+%  the merged build takes settings.tex's copy and this never fires twice.
+\ifstandalone
+  \addto\extrasamerican{%
+    \def\chapterautorefname{Chapter}%
+    \def\sectionautorefname{Section}%
+    \def\subsectionautorefname{Subsection}%
+    \def\subsubsectionautorefname{Subsubsection}%
+  }
+\fi
+
+% -----------------------------------------------------------------------------
+%  \todofigure -- a figure that is PLANNED but does not exist yet
+% -----------------------------------------------------------------------------
+%  Distinct from \fmpccgraphic's fallback, which handles "the file should be
+%  here and is not". This one means "nobody has made this yet", and it carries
+%  the SPEC: what the panel must show, and where the asset has to come from.
+%  Written into the draft rather than into a side file so the gap is visible on
+%  every read of the chapter, and so whoever renders it does not have to guess.
+%  Counted by tools/check.py; must reach zero before submission.
+%
+%  #1 (optional) box height, default 0.30\textwidth · #2 the specification
+\newcommand{\todofigure}[2][0.30\textwidth]{%
+  \fcolorbox{red}{white}{%
+    \parbox[c][#1][c]{0.90\linewidth}{%
+      \centering
+      {\color{red}\textbf{[FIGURE TO BE MADE]}}\\[0.7em]
+      {\footnotesize #2}%
+    }%
+  }%
+}

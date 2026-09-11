@@ -37,7 +37,7 @@ RE_BEGIN = re.compile(r'\\begin\{([^}]+)\}')
 RE_END = re.compile(r'\\end\{([^}]+)\}')
 RE_GRAPHIC = re.compile(r'\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}')
 RE_BIBKEY = re.compile(r'^\s*@\w+\s*\{\s*([^,\s]+)\s*,', re.M)
-DRAFT_MACROS = ['hole', 'provisional', 'guard', 'srcnote', 'dataref']
+DRAFT_MACROS = ['hole', 'provisional', 'guard', 'srcnote', 'dataref', 'todofigure']
 
 
 def strip_comments(text):
@@ -140,7 +140,11 @@ def main():
           f'{len(cited)} distinct citations of {len(bibkeys)} bib entries, '
           f'{len(wanted)} figure(s).')
 
-    counts = {m: sum(len(re.findall(r'\\' + m + r'\{', s)) for s in clean.values())
+    # The optional-argument form matters: \todofigure[0.3\textwidth]{...} does not
+    # match a bare \macro{ pattern, and counting it as zero would quietly hide
+    # every planned-but-unmade figure from the pre-submission check.
+    counts = {m: sum(len(re.findall(r'\\' + m + r'(?:\[[^\]]*\])?\{', s))
+                     for s in clean.values())
               for m in DRAFT_MACROS}
     print('drafting macros (all must be 0 before submission): '
           + ', '.join(f'{m} {c}' for m, c in counts.items()))

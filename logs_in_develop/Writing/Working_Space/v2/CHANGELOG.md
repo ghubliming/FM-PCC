@@ -97,6 +97,71 @@ none of the other 38 starred subsections is labelled.
 
 ---
 
+## v2.7 — 2026-09-11 · the two transfer contributions get pitched, and the UAV controller gets its real name
+
+**Asked for:** the abstract and the main focus should also carry (a) the **visual** contribution and
+(b) the **arm → UAV** extension, including *how* we control it — and the real technical name for the
+"UAV PID". Both were worth a pitch and neither was getting one.
+
+### The gap
+
+The visual work and the whole aerial control stack were sharing **half of one sentence** —
+contribution 5, *"Two constructed benchmark environments … and a low-level controller"*. The abstract
+mentioned them only as a list of three settings the engine was tried on. A reader would have taken
+both as evaluation venues rather than contributions.
+
+### Abstract — now pitches four things, in order
+
+Was 3 paragraphs; now 5, with two new middle ones. ~480 words (the `\hole` carries a length budget:
+keep under ~550 once headline numbers land, and trim paragraph 1, not the transfer paragraphs).
+
+- **P2, modality.** The contribution is *not* the encoder (vendored unchanged) but the **interface** —
+  perception compressed to a fixed-width latent, so the backbone never sees an image and *"only the
+  engine changed"* becomes checkable rather than assumed. And that boundary is a **requirement, not a
+  convenience**: the average-velocity objective differentiates through its own network, so an encoder
+  inside that derivative is both wrong and ruinous. A few-step engine and a visual observation are
+  **incompatible without it**.
+- **P3, embodiment.** Opens on the question a generative planner usually avoids — *a flow model does
+  not fly an aircraft, so what closes the loop?* — and answers it: planner emits a position increment
+  and never an actuator command → increment accumulates into a setpoint → **cascaded geometric
+  tracking controller** (position PD → thrust vector + attitude → geometric attitude tracking on
+  `SO(3)` → static thrust/moment allocation) → four rotor commands, faster than the planner replans.
+  Closes on why writing the manipulator and aerial chains as **one structure one layer apart** makes
+  RQ4 structural rather than two case studies.
+
+### Contributions — 6 → 7
+
+Contribution 5 split into two standalone items, each with its own argument rather than a noun phrase.
+The section header now says **which** items are performance claims (2), constructions (2) and
+methodological/negative (3), so the list does not read as seven wins.
+
+### 🚨 The UAV controller's real name — `CascadedPID` is a misnomer on three counts
+
+Checked the code for this pass (`uav_env_test/flight_controller.py:65-70, 120-135`):
+
+1. **There is no integral term anywhere.** The complete gain set is `Kp_pos`, `Kd_pos`, `Kp_att`,
+   `Kp_omega` — all proportional or derivative. It is at most a **PD** cascade.
+2. **The inner loop is not a scalar loop at all** — a coordinate-free `SO(3)` error plus a gyroscopic
+   feed-forward. No arrangement of scalar PID channels reproduces it.
+3. **"Cascaded PID" implies nested scalar loops**; this is a two-level **geometric** cascade closed by
+   a **static allocation matrix**.
+
+**Thesis name: "the cascaded geometric tracking controller"**, after the lineage it implements
+\parencite{lee2010geometric}. `pid` is an artefact tag only. Applied throughout the tex (the
+`\acro{PID}` declaration is deleted — it was asserting the wrong thing) and written up as
+**`Remark rem:pidname`**, the fourth false name this draft has had to correct.
+
+Recorded in `Auxiliary/Naming/NAMING_20260910_master_table.md` §6 (now the fourth 🚨 row),
+`Naming/README.md` (three → four false names) and `AUX_uav_control_stack.md` (new §"It is not a PID").
+
+### Checks
+
+`env balanced · braces 0 · $ parity even · dangling refs 0 · missing bib keys 0 · uncited entries 0 ·
+acronyms declared-not-used: TUM only · bare "PID" appears only inside the remark that discusses it`.
+2152 → 2209 lines. **Not compiled.**
+
+---
+
 ## v2.6 — 2026-09-10 · the dropped terminal cost, and names that were claims
 
 **Asked for:** (1) put the dropped terminal cost `C` into the HardFlow difference section; (2)

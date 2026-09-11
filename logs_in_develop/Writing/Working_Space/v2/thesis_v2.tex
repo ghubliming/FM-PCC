@@ -190,33 +190,57 @@
 \fi
 
 % -----------------------------------------------------------------------------
-% ABSTRACT -- v1 sketch. Rewrite last, once Results is settled.
+% ABSTRACT -- v2 sketch. Rewrite last, once Results is settled.
+% Pitches FOUR things, in this order: the engine swap, the modality extension,
+% the embodiment extension, then the methodological contributions. The two
+% middle paragraphs were added in v2.7 -- they were previously buried as half a
+% sentence in contribution 5.
 % -----------------------------------------------------------------------------
 \ifstandalone
 Predictive control with a generative planner has to pay for its samples. Diffusion
-Predictive Control couples a denoising planner to a per-step projection that enforces
-dynamics and safety constraints, and inherits diffusion's step budget: the number of
-network evaluations is fixed at training time and cannot be reduced afterwards. This
-thesis replaces that engine with deterministic ODE transport --- flow matching and its
-few-step variants --- while holding the backbone, the projector, the data and the
-evaluation harness fixed, so that the step budget becomes an inference-time choice.
+Predictive Control couples a denoising planner to a per-step projection enforcing dynamics
+and safety constraints, and inherits diffusion's step budget: the number of network
+evaluations is fixed at training time and cannot be reduced afterwards. This thesis replaces
+that engine with deterministic ODE transport --- flow matching and its average-velocity
+variants --- holding the backbone, the projector, the data and the evaluation harness fixed,
+so that the step budget becomes an inference-time choice.
 
-Across a state-based manipulator benchmark, a vision-conditioned variant of it, and an
-aerial embodiment built for this work, the resulting system is evaluated against the
-diffusion baseline under a strict definition of improvement: Pareto dominance at equal
-success and equal constraint satisfaction. \hole{Headline numbers -- write last, after
-Results is settled and the powered runs land.}
+The substitution is then carried across a change of \emph{observation modality}, on a
+vision-conditioned variant of the benchmark built for this work in which the policy sees two
+camera views instead of a state vector. The contribution is not the encoder, which is
+vendored unchanged, but the interface: perception is compressed to a fixed-width latent
+consumed as conditioning, so the generative backbone never sees an image and the claim that
+only the engine changed becomes verifiable rather than asserted. That boundary is also a
+\emph{requirement}, not a convenience --- the average-velocity objective differentiates
+through its own network, and an image encoder inside that derivative is both wrong and
+ruinously expensive, so the latent is what makes a few-step engine and a visual observation
+compatible at all.
 
-The thesis makes three further contributions beyond the engine swap. First, a
-correctness condition for evaluating in-loop guided samplers: a step budget below a
-computable threshold reduces the guided sampler to sample-then-project, so that a
-substantial class of published-style comparisons measures nothing. Second, a measured
-regime split between the two constraint-enforcement arms, with a mechanism that explains
-it: projecting a predicted clean endpoint is cheaper per solve than projecting an
-off-manifold iterate, and the advantage appears exactly where the guided sampler becomes
-well-defined. Third, negative results are retained rather than discarded --- an
-additional engine that does not improve on its predecessor, and a benchmark defect
-diagnosed by this work's own instrumentation.
+It is then carried across a change of \emph{embodiment}, from a position-controlled
+manipulator to an underactuated quadrotor --- which forces the question a generative planner
+usually avoids: a flow model does not fly an aircraft, so what closes the loop? A three-layer
+chain, in which the planner never emits an actuator command. It emits a position increment;
+the increment accumulates into a setpoint; and a cascaded \emph{geometric} tracking
+controller --- a position PD outer loop resolving a thrust vector and an attitude, a
+geometric attitude-tracking inner loop on the rotation group, and a static
+thrust-and-moment allocation to the rotors --- turns that setpoint into four rotor commands,
+at a rate faster than the planner replans. Writing the manipulator and aerial chains as one
+structure, one layer apart, is what makes the transfer claim structural rather than
+anecdotal.
+
+Across all three settings the system is evaluated against the diffusion baseline under a
+strict definition of improvement: Pareto dominance at equal success and equal constraint
+satisfaction. \hole{Headline numbers --- write last, after Results is settled and the powered runs land.
+The abstract is $\approx 480$ words without them; keep the total under $\approx 550$, and trim
+paragraph~1 rather than the two transfer paragraphs if it runs over.}
+
+Three further contributions are methodological: a correctness condition for guided samplers,
+under which a step budget below a computable threshold degenerates the sampler to
+sample-then-project and a class of published-style comparisons measures nothing; a measured
+regime split between the two constraint-enforcement arms, explained by which point each hands
+to an identical projection operator; and retained negative results --- an engine that does not
+improve on its predecessor, and a defect in this work's own benchmark geometry, diagnosed by
+its own instrumentation and reported with its correction and that correction's limits.
 \fi
 
 \microtypesetup{protrusion=false}
@@ -291,8 +315,9 @@ before any table'' item.}
 
 \section{Contributions}\label{sec:intro:contributions}
 
-The section lists six contributions and is explicit that two of them are negative or
-methodological rather than performance claims.
+The section lists seven contributions. Two are performance claims, two are constructions, and
+three are methodological or negative --- and the section says which is which rather than letting
+the list read as seven wins.
 
 \begin{enumerate}
   \item \textbf{An architecture-matched engine substitution.} Deterministic transport
@@ -313,10 +338,26 @@ methodological rather than performance claims.
   \item \textbf{Removal of the candidate-selection machinery.} The projector's selection
     rules are shown not to earn their computation, and the system ships with the redundancy
     removed rather than retained ``just in case''.
-  \item \textbf{Two constructed benchmark environments} --- a vision-conditioned
-    manipulation task and an aerial task with four scenes, expert data, constraint geometry
-    and a low-level controller --- together with their construction documented as
-    methodology.
+  \item \textbf{A vision-conditioned instance of the same benchmark, and the interface that
+    makes it comparable.} The manipulation task is rebuilt so the policy observes two camera views
+    instead of a state vector. The encoder is vendored unchanged; what is contributed is the
+    boundary --- perception is compressed to a fixed-width latent consumed as conditioning, so the
+    generative backbone never sees an image and ``only the engine changed'' is a checkable statement
+    rather than an assumption. The boundary is also shown to be \emph{necessary}: the
+    average-velocity objective differentiates through its own network, and an encoder inside that
+    derivative is both incorrect and prohibitively expensive, so a few-step engine and a visual
+    observation are incompatible without it.
+  \item \textbf{An extension of the whole stack from a manipulator to an underactuated aerial
+    vehicle, with the control chain that makes it possible.} A quadrotor embodiment is built for
+    this work --- four scenes, expert data, constraint geometry --- and, more to the point, the
+    layer that a generative planner usually leaves unstated is written down: the planner emits a
+    position increment and never an actuator command; the increment accumulates into a setpoint; and
+    a cascaded \emph{geometric} tracking controller (position PD $\rightarrow$ thrust vector and
+    attitude $\rightarrow$ geometric attitude tracking on $SO(3)$ $\rightarrow$ static
+    thrust-and-moment allocation) converts the setpoint into rotor commands at a faster rate than
+    the planner replans. The manipulator and aerial chains are then presented as \emph{one}
+    structure one layer apart, which is what makes RQ4 a structural claim instead of two
+    unconnected case studies.
   \item \textbf{Retained negative results.} An additional engine variant that does not
     improve on its predecessor is reported as a clean negative rather than omitted, and a
     defect in this work's own benchmark geometry, found by its own instrumentation, is
@@ -1661,8 +1702,8 @@ How a plan becomes a command, for all three environments, in one section --- bec
 is the substance of RQ4. In every case the generative model replans at each control step, emits a
 \emph{position increment}, and never emits an actuator command; everything below the increment is
 classical control --- a differential \ac{IK} loop feeding a joint-space PD law on the two
-manipulator environments, and a cascaded \ac{PID} controller, or optionally a sampling-based
-\ac{MJPC} tracker, on the quadrotor.
+manipulator environments, and a cascaded \emph{geometric} tracking controller, or optionally a
+sampling-based \ac{MJPC} tracker, on the quadrotor.
 
 \subsection*{The shared skeleton}
 
@@ -1708,7 +1749,7 @@ are the reason this section exists rather than being a footnote in the setup cha
     $\vect{o}$ layout & $(\vect{p}\sidx{des},\vect{p})$ & $(\vect{p}\sidx{des},\vect{p})$ & $(\vect{p}\sidx{des},\vect{p},\dot{\vect{p}})$ \\
     $t\sidx{s}$     & $1$                   & $1$                       & $1$ \\
     dynamics rows   & $4$                   & $6$                       & $6$ \\
-    low level       & differential IK $\rightarrow$ joint PD & same          & cascaded PID, or MJPC \\
+    low level       & differential IK $\rightarrow$ joint PD & same          & geometric cascade, or MJPC \\
     plan rate       & one plan per env.\ step & one plan per env.\ step & $33\,\textrm{Hz}$ \\
     inner rate      & $n\sidx{sub}$ sim substeps & $n\sidx{sub}$ sim substeps & $100\,\textrm{Hz}$ \\
     \bottomrule
@@ -1901,7 +1942,24 @@ $\matr{K}\sidx{R} = \operatorname{diag}(70,70,4)$, $\matr{K}_{\omega} = \operato
 $u\sidx{hover} = mg/4$, $u\sidx{max} = \max(2u\sidx{hover},6)$, $u\sidx{min} = 0$,
 $T\sidx{floor} = 0.1\,mg$, $g = 9.81\,\textrm{m}/\textrm{s}^{2}$; $m$ and $\matr{J}\sidx{b}$ are
 read from the vehicle model.
-\srcnote{\texttt{uav\_env\_test/flight\_controller.py:33--155} (\texttt{CascadedPID}).}
+\srcnote{\texttt{uav\_env\_test/flight\_controller.py:33--155}. The class is named
+\texttt{CascadedPID}, which is a misnomer on three counts and is \emph{not} the name used here ---
+see Remark~\ref{rem:pidname}.}
+
+\begin{remark}[The controller is not a PID]\label{rem:pidname}
+The implementation calls this class \texttt{CascadedPID}, and the run tags say \texttt{pid}. Three
+things are wrong with that, and they are recorded here for the same reason as
+Remark~\ref{rem:naming}: an identifier that has hardened into a label can smuggle a claim.
+\textbf{(i)} There is \emph{no integral term anywhere} --- the four gains are
+$\matr{K}\sidx{p},\matr{K}\sidx{d}$ on position and $\matr{K}\sidx{R},\matr{K}_{\omega}$ on attitude
+and rate, all proportional or derivative, so it is at most a PD cascade. \textbf{(ii)} The inner loop
+is not a scalar loop at all: \eqref{eq:method:dep:inner} is a coordinate-free error on $SO(3)$ with a
+gyroscopic feed-forward, which no arrangement of scalar PID channels reproduces. \textbf{(iii)}
+``cascaded PID'' suggests nested scalar loops, where this is a two-level geometric cascade closed by a
+\emph{static} allocation matrix \eqref{eq:method:dep:alloc}. The thesis therefore calls it a
+\textbf{cascaded geometric tracking controller}, after the lineage it implements
+\parencite{lee2010geometric}, and treats \texttt{pid} purely as an artefact tag.
+\end{remark}
 
 \paragraph{The velocity setpoint is synthesised, not planned.} \eqref{eq:method:dep:outer} needs
 $\dot{\vect{p}}\sidx{des}$, which the plan does not supply --- it supplies displacements. Three
@@ -1921,8 +1979,8 @@ magnitude is the mean of the first policy, so the three differ in \emph{profile}
 speed. \srcnote{\texttt{mix\_uav\_test/eval\_mix\_uav.py:1551--1563, 1822--1832}.}
 
 \paragraph{The alternative low-level controller.} A sampling-based predictive controller is
-implemented behind the same interface, so it can be swapped for the cascade without touching the
-plan layer. It is the \emph{Predictive Sampling} planner of \parencite{howell2022predictive}, used
+implemented behind the same interface, so it can be swapped for the geometric cascade without
+touching the plan layer. It is the \emph{Predictive Sampling} planner of \parencite{howell2022predictive}, used
 as published; only the task is ours. Three pieces have to be named for the substitution to be
 readable.
 
@@ -1939,7 +1997,7 @@ quadratic norm and at risk-neutral setting ($R = 0$ in
       + \underbrace{w_{v}\left\|\dot{\vect{p}}_{i}\right\|_{2}^{2}}_{r_{2},\;w_{2}=w_{v}}\Big),
 \end{equation}
 with $\vect{p}\sidx{des}$ passed in as the instruction. The velocity residual is not decoration: it
-plays the role of the cascade's derivative gain, and without it the planner reaches the setpoint at
+plays the role of the geometric cascade's derivative gain, and without it the planner reaches the setpoint at
 full thrust and overshoots --- minimum cumulative position error being achieved by arriving as fast
 as possible.
 
@@ -1969,7 +2027,7 @@ per call, $\sigma = 0.3$, $w_{v} = 0.1$.
 
 \hole{State once, in \autoref{sec:setup:protocol}, which controller produced each reported UAV
 number. The apparatus notes record that every dataset and every reported result to date uses the
-cascade, and that the predictive controller was built and studied but is not the source of a
+geometric cascade, and that the predictive controller was built and studied but is not the source of a
 reported number --- confirm this against the run ledger before the claim is made in print.}
 
 % =============================================================================
@@ -2136,7 +2194,6 @@ record both a start and an end; re-derive it with \texttt{sacct} before stating 
   \acro{NLP}[NLP]{nonlinear program}
   \acro{SLSQP}[SLSQP]{sequential least-squares quadratic programming}
   \acro{IK}[IK]{inverse kinematics}
-  \acro{PID}[PID]{proportional--integral--derivative}
   \acro{MJPC}[MJPC]{MuJoCo predictive control}
   % TODO: extend as Chapters 5-8 are written. Declare an acronym only when the
   % text really abbreviates it -- a declaration with no \ac{} never prints.

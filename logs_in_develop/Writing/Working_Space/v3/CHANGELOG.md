@@ -17,6 +17,123 @@ is sourced from · what it left open.
 
 ---
 
+## v3.3 — 2026-09-11 · the environments and their constraint sets, shown rather than only described
+
+**Asked for:** the setup section should carry an image and a description of the environment *and* the
+constraint set, for `avoiding`, `aligning` and each of the three aerial scenes, with placeholders
+marked TODO where no image exists — plus a demonstration of the different constraints.
+
+**Found:** the chapter described all three environments and showed nothing. It also under-described
+the constraint sets, which are the more important half — the projector is inherited and held fixed,
+so **the geometry is the part that had to be designed**, and it was getting one paragraph.
+
+### 🔴 The finding that changes what may be shipped
+
+`figures/avoiding.png`, `figures/avoiding_constraints.png` and `figures/avoiding_data.png` exist in
+this repository and are exactly the panels the chapter needs. **All three are byte-identical to the
+baseline authors' own copies in `aux_repo/dpcc/figures/`** (`cmp` verified); they arrived with the
+"Add DPCC Code" commit. They are the baseline's artefacts, not ours, and shipping them as this
+thesis's environment figures would be the visual form of the error the naming rules exist to prevent.
+
+**The remedy is cheap and is recorded in the figure specs:** the script that produces them,
+`scripts/visualize_data_constraints.py`, is in this repository and regenerates both panels from our
+own configuration and dataset. It needs numpy/matplotlib and the vendored environment, so it is a
+**cluster job**, not something runnable here. Re-running it makes the figure ours.
+
+### Added
+
+- **`\todofigure[height]{spec}`** in `parts/00_preamble_v3.tex`: a red-bordered box for a figure that
+  is *planned but does not exist*. Distinct from `\fmpccgraphic`'s fallback, which means "this file
+  should be here and is not". It carries the **specification** — what the panel must show and where
+  the asset comes from — in the draft itself, so the gap is visible on every read and whoever renders
+  it does not have to guess. Counted by `tools/check.py`.
+- **Five specified figures** in `sec:setup:tasks`: the state-based benchmark, the vision-conditioned
+  task (specified to show *the policy's own two camera streams*, not a third-person render, because
+  what the network sees is what distinguishes the entry), the three aerial scenes at a common scale
+  with the vehicle drawn to scale, the three halfspace geometries with the tightened margin drawn as
+  a ring, and the scene-clearance-against-tracking-error panel.
+- **A proper `Constraint sets` subsection**, replacing the three-sentence one: `tab:constraint-families`
+  giving the five families and marking which three are ours; the ablation rule; tightening written up
+  as an **experimental factor** with the measured claim that it is a larger lever than the choice of
+  constraint arm; and the honest-geometry defect — 0.000/0.060/0.120\,m of clearance against a
+  0.30--0.49\,m tracking error — with the gate that could not tell "safe" from "exactly on the edge".
+
+### Two holes this pass makes visible rather than fixes
+
+- 🔴 **The vision-conditioned feasible set is undefined in prose** — not here and not in the
+  methodology sources — although every table on that entry is measured against it. Now an explicit
+  `\hole` that names it as **the largest single gap in the methodology of this thesis**.
+- The numeric tightening margin, in metres, for both embodiments, and what the projector-threshold
+  sweep varies. Configuration values, not derived quantities.
+
+### Checks
+
+`tools/check.py`: 3 871 lines, 143 labels, all references resolve, all citations resolve, braces and
+environments balanced. Drafting macros now 14 `\hole`, 5 `\provisional`, 18 `\guard`, 35
+`\srcnote`, 18 `\dataref`, **5 `\todofigure`**.
+
+🔴 **A second tooling bug, caught by the tooling:** `make_bundle.py --verify` undid the
+`\\includegraphics` → `\\fmpccgraphic` rewrite on whole lines, while the rewrite itself only touches
+the part of a line TeX executes. The moment this pass added a *comment* mentioning `\\fmpccgraphic`
+by name, verify corrupted that comment and reported a mismatch against an untouched file. The two
+now share one `split_comment` helper, so the inverse is a real inverse.
+
+🔴 **A counter bug fixed in passing:** `check.py` counted drafting macros with a bare `\\macro\{`
+pattern, which does not match `\todofigure[0.3\textwidth]{...}`. It reported **zero** planned
+figures while five existed — a pre-submission check that silently hides exactly what it exists to
+find. Now matches the optional-argument form.
+
+---
+
+## v3.2 — 2026-09-11 · template-conformance audit
+
+**Asked for:** sanity check that the TUM template is still preserved in v3.
+
+**Answer: yes.** `Template_DONT_CHANGE/` is untouched (clean `git status`, last touched by
+`c721f7d4`), and the `\ifstandalone`/`\else` merge bridge survives verbatim in both
+`parts/00_preamble.tex` and `parts/01_frontmatter.tex` — v3 inherits them byte-for-byte and
+`sync_v2.py status` confirms no drift. v3 adds **no packages**.
+
+### One real divergence found, and fixed
+
+`settings.tex:44-52` capitalises the `\autoref` names through babel's language hook. The standalone
+branch never loads `settings.tex`, so a standalone build fell back to hyperref's own lowercase
+defaults: **"section 5.2" where the merged template build says "Section 5.2"**, across 133 `\autoref`
+calls. Mirrored into `parts/00_preamble_v3.tex` using the *same* `\addto\extrasamerican` hook — a
+plain `\providecommand` in the preamble would be overwritten when babel selects the language at
+`\begin{document}` — and guarded by `\ifstandalone` so the merged build still takes `settings.tex`'s
+copy and it never fires twice.
+
+### 🔴 Known, inherited from v2, NOT fixed: the standalone build is not PDF/A
+
+`settings.tex` loads `\usepackage[a-2u]{pdfx}` and the template ships `main.xmpdata`; the standalone
+branch loads neither. So **a bundle built here is not PDF/A-2u**, and if the submission requires it
+the final PDF must come from the template path, not from the Overleaf bundle. This is a v2 divergence
+that v2's own README does not list among its declared ones. Left as-is deliberately: adding `pdfx`
+would change the standalone build substantially and risks breaking the Overleaf compile that v3.1
+exists to enable. Flagged rather than silently carried.
+
+Also absent from the standalone branch, and harmless because the draft uses none of them: `listings`,
+`lstautogobble`, `scrhack`, `tikz`, `pgfplots`, `pgfplotstable`, `caption`, `ifthen`, `pagecolor`,
+the TUM corporate colours and the `\BeforeTOCHead` PDF bookmark. All arrive with `settings.tex` on
+merge.
+
+### The merge path, restated for the split layout
+
+v2's bridge assumed one file. v3 is fourteen — but `bundle/make_bundle.py` reconstructs exactly that
+single-file shape, so the bridge is intact and in fact simpler to execute than before: **flatten, set
+`\standalonefalse`, drop the bundle at the root of a template copy.** Its `\else` branch then pulls
+`settings.tex`, `pages/cover`, `pages/title` and the rest from the template, which is why those
+`\input`s are deliberately left unresolved in the bundle. `parts/00_preamble_v3.tex` folds into
+`settings.tex` at that point, together with v2's own `amsmath`/`amssymb`/`amsthm` addition.
+
+### Checks
+
+`tools/check.py` passes; `make_bundle.py --verify`: 13 inlined sources, byte-faithful. Both bundles
+rebuilt.
+
+---
+
 ## v3.1 — 2026-09-10 · a flattened build, because the split draft would not compile
 
 **Asked for:** the split draft cannot be compiled on a remote Overleaf. Write a tool — not an

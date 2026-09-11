@@ -90,6 +90,22 @@ properly-instrumented measurement.
 | physics timestep | `0.01` s (⇒ 100 Hz physics + PID) | `d3il/.../quadrotor/quadrotor_modified.xml:4` |
 | plan rate | `DATASET_HZ = 33` ⇒ `decim = round(1/(dt·33)) = 3` physics steps per FM query, `p_des` zero-order held between | `uav_expert_data_collect/dataset_writer.py:31`; `mix_uav_test/eval_mix_uav.py:1454-1455` |
 
+### 🚨 It is not a PID (recorded 2026-09-11)
+
+`CascadedPID` is a misnomer on three counts, and the thesis does **not** use the name:
+
+1. **No integral term exists anywhere.** The gain table below is the complete set: `Kp_pos`,
+   `Kd_pos`, `Kp_att`, `Kp_omega` — all proportional or derivative. At most a **PD** cascade.
+2. **The inner loop is not a scalar loop.** It is a coordinate-free `SO(3)` attitude error plus a
+   gyroscopic feed-forward (`:120-125`) — no arrangement of scalar PID channels reproduces it.
+3. **"Cascaded PID" implies nested scalar loops.** This is a two-level **geometric** cascade closed
+   by a **static allocation matrix** (`:133-135`).
+
+**Thesis name: "the cascaded geometric tracking controller"**, after the lineage it implements
+(Lee et al., `PAPERS/auxiliary_papers/Drone/PID_Control_UAV.pdf`). `pid` stays as an artefact tag
+only. Rule: [`../Naming/NAMING_20260910_master_table.md`](../Naming/NAMING_20260910_master_table.md) §6;
+written up as `Remark rem:pidname` in `Working_Space/v2`.
+
 ### Controller gains (read from `uav_env_test/flight_controller.py`, 2026-09-08)
 
 | symbol | value | line |

@@ -130,6 +130,39 @@ Compiler **pdfLaTeX**, bibliography **Biber**. Full detail, including the two fi
 The bundle is **build output**: never edit it, and nothing reads it back. Its header lists every
 source file with a SHA-256 prefix, so any bundle can be traced to exactly what produced it.
 
+## Figures still to be made
+
+Five are specified in `sec:setup:tasks` as `\todofigure` boxes carrying their own spec; `tools/check.py`
+counts them. Two of the five can be produced by a script that already exists.
+
+| figure | what it needs |
+|---|---|
+| `fig:env-avoiding` | a render of the state-based benchmark |
+| `fig:constraints-avoiding` | the three halfspace geometries + the tightened margin — **`scripts/visualize_data_constraints.py` produces exactly this**; cluster job |
+| `fig:env-aligning` | the scene *plus the policy's own two camera streams* |
+| `fig:env-uav` | the three aerial scenes at a common scale, vehicle drawn to scale |
+| `fig:constraints-uav` | scene clearance annotated against the measured tracking error |
+
+🔴 **Do not ship `figures/avoiding*.png` from the repo root.** They are byte-identical to the baseline
+authors' copies in `aux_repo/dpcc/figures/` — their artefacts, not ours. Regenerate with the script
+above instead; that makes the figure ours. See `CHANGELOG.md` v3.3.
+
+## The TUM template
+
+`Template_DONT_CHANGE/` is untouched and v3 adds no packages. The `\ifstandalone`/`\else` bridge is
+inherited verbatim, so the merge path is intact:
+
+**flatten → set `\standalonefalse` → drop the bundle at the root of a template copy.** Its `\else`
+branch then pulls `settings.tex`, `pages/cover`, `pages/title` and the rest from the template — which
+is why those `\input`s are deliberately left unresolved by the bundler.
+`parts/00_preamble_v3.tex` folds into `settings.tex` at that point, together with v2's
+`amsmath`/`amssymb`/`amsthm`.
+
+🔴 **The standalone build is not PDF/A.** `settings.tex` loads `pdfx[a-2u]` and the template ships
+`main.xmpdata`; the standalone branch loads neither. If the submission requires PDF/A-2u, the final
+PDF must come through the template path, not from the Overleaf bundle. Inherited from v2, flagged in
+`CHANGELOG.md` v3.2.
+
 ## Drafting macros — all four must be gone before submission
 
 `tools/check.py` counts them on every run.

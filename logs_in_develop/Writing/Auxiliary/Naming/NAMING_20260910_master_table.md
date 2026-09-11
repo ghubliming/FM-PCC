@@ -52,6 +52,9 @@ doc — **never cited**, see that note) · [`../Methodology_Sources/AUX_visual_a
 gate is solver-agnostic); and "HardFlow" over-attributes, since what runs here is *our*
 implementation of *one* of their four modes on *our* constraint stack, with `C` removed.
 
+🚨 **`CascadedPID` is the third false name** (§6) — no integral term, and the inner loop is geometric,
+not scalar. Recorded in `thesis_v2.tex` as `Remark rem:pidname`.
+
 🚨 **"In-Loop Trajectory Optimisation" was also wrong** — it was the v2 section title until
 2026-09-10. Our port optimises no objective. Retitled **"In-ODE Endpoint Projection"**.
 
@@ -109,7 +112,7 @@ vs `unet1d_temporal_film.py:38-92` (affine).
 | `aligning-d3il-visual` | *Aligning* \[Jia et al. 2024\], vision pipeline theirs | 3-D, two RGB views; **the pairing is ours** → **"the vision-conditioned manipulation task"** |
 | `uav`, `uav_mix`, `mix_uav` | — (ours; Skydio X2 from `mujoco_menagerie`) | quadrotor embodiment → **"the aerial task"** |
 | `empty` · `corridor` · `s_curve` · `pillars` · `corridor_ball` | — (ours) | scene names are already descriptive → keep as-is, define the geometry once |
-| `pid`, `CascadedPID` | geometric SE(3) control \[Lee et al. 2010\] | 🚨 **not three scalar PID loops** — a geometric cascade: position PD → thrust vector → attitude extraction → SO(3) attitude error → moment → rotor allocation → **"the cascaded geometric controller"** |
+| `pid`, `CascadedPID`, run tag `pid` | geometric tracking control on SE(3) \[Lee et al. 2010\] | 🚨 **a misnomer on three counts.** (i) **No integral term exists** — the only gains are `Kp_pos`, `Kd_pos`, `Kp_att`, `Kp_omega` (`flight_controller.py:65-70`), so it is at most a **PD** cascade. (ii) The inner loop is not a scalar loop at all: a coordinate-free `SO(3)` error plus a gyroscopic feed-forward, which no arrangement of scalar PID channels reproduces. (iii) "cascaded PID" implies nested scalar loops; this is a **two-level geometric cascade** closed by a **static allocation matrix**. → **"the cascaded geometric tracking controller"** (position PD → thrust vector + attitude → geometric attitude tracking on `SO(3)` → thrust/moment allocation) |
 | `pid_stopgo`, `pid_const_v` | — (ours) | velocity-setpoint synthesis policies → **"brake-to-rest"** / **"constant-speed"** |
 | `mjpc`, MJX | MuJoCo MPC / *Predictive Sampling* \[Howell et al. 2022\] | zero-order sampling planner over spline knots → **"the sampling-based predictive tracker"** |
 

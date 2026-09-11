@@ -191,14 +191,24 @@ def flatten(path, seen, sources, depth=0):
     return out
 
 
+def split_comment(line):
+    """-> (code, comment). The part TeX executes, and the rest.
+
+    Used by BOTH the rewrite and its inverse in cmd_verify. They have to agree
+    exactly: verify once undid the rewrite on whole lines, which corrupted a
+    comment that happened to mention \\fmpccgraphic by name and reported a
+    mismatch against an untouched file.
+    """
+    m = re.search(r'(?<!\\)%', line)
+    return (line[:m.start()], line[m.start():]) if m else (line, '')
+
+
 def rewrite_graphics(lines):
     """\\includegraphics -> \\fmpccgraphic, outside comments. -> (lines, count)."""
     n = 0
     out = []
     for line in lines:
-        # Only touch the part of the line TeX will actually execute.
-        split = re.search(r'(?<!\\)%', line)
-        code, comment = (line[:split.start()], line[split.start():]) if split else (line, '')
+        code, comment = split_comment(line)
         code, k = RE_GRAPHIC.subn(
             lambda m: r'\fmpccgraphic' + (m.group('opts') or '') + '{' + m.group('name') + '}',
             code)
@@ -428,8 +438,11 @@ def cmd_verify(path):
             print(f'  GONE {name}  (inlined in the bundle, absent from the tree now)')
             bad += 1
             continue
-        got = trim(ln.replace(r'\fmpccgraphic', r'\includegraphics')
-                   for ln in lines[a:b])
+        def unrewrite(ln):
+            code, comment = split_comment(ln)
+            return code.replace(r'\fmpccgraphic', r'\includegraphics') + comment
+
+        got = trim(unrewrite(ln) for ln in lines[a:b])
         want = trim(open(src).read().split('\n'))
         if got == want:
             print(f'  OK   {name}  ({len(want)} lines)')
