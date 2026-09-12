@@ -118,7 +118,7 @@ Submitted 6 wrappers (3 engines x 2 tiers). First-run checks, in the CHILD eval 
   1  [ U11 ] geo variants for 'corridor': ['corridor_ball_v2']
   2  [ eval ] E9 geo 'corridor' <- variant 'corridor_ball_v2': ... (bounds=True, hs=2, obs=5)
                                                                               ^^^^^ 4 caps + ball
-  3  a results path containing  corridor_hgb_
+  3  a results path containing  corridor_hgb2_
   4  Tier B only: NO "[hardflow][BLOCKED] ... DEGENERATE" line, and hf_n_genuine = 2
   5  *** THE ONE THAT DECIDES THE TEST ***
      `diffuser` must now report n_violations > 0. If it is still 0.00 the ball is not

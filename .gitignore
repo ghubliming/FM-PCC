@@ -44,3 +44,6 @@ scratch/
 
 # Local Codex history and state backups (includes credentials)
 /.codex_history_backup/
+
+# One-off Slurm submit drivers (per-wave throwaways, not pipeline entry points)
+Slurm_Codes/temp_bash/

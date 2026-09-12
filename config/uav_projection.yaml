@@ -526,6 +526,78 @@ geo_constraint_variants:
       # 🔴 the VIRTUAL ball — small, and centred ON the measured raw trajectory
       - {type: sphere_outside, dimensions: ['x', 'y', 'z'], center: [0.0, 0.0, 1.13], radius: 0.12}
 
+  # ══════════════════════════════════════════════════════════════════════════════
+  # [Gen15 U13 2026-09-12] corridor_ball_v3 — small round ball ON the trajectory,
+  #                                           and the projector finally free to move it
+  #
+  # WHAT V1/V2 GOT WRONG, AND WHAT V3 CHANGES. Config only. No code is touched.
+  #
+  #   v1 `corridor_ball`    r=0.35 @ z=0.75   keep-out 0.66   escape slot 0.08 m   S&C 0/34
+  #   v2 `corridor_ball_v2` r=0.12 @ z=1.13   keep-out 0.43   escape slot 0.93 m   S&C 0/34
+  #   v3 `corridor_ball_v3` r=0.05 @ z=1.13   keep-out 0.36   escape slot 1.00 m   <- this
+  #
+  # v2 already put the ball dead centre on the measured flown path and opened a 0.93 m slot,
+  # and it STILL scored 0/34 with `phys_min_z` constant to 0.2 mm across 340 rollouts — the
+  # projector never moved the plan vertically by a millimetre. The reason is not the ball:
+  #
+  #     Fix_16 DEGENERATE actions[1]/[2]: constant in the expert data
+  #     action_bounds=auto -> lb=[1.24e-04 -2.20e-05 -2.20e-05] ub=[4.39e-02 2.20e-05 2.20e-05]
+  #
+  # The corridor expert flies a straight, level line, so dy and dz have ZERO variance in
+  # training. `action_bounds='auto'` derives the projector's per-step action cap from that
+  # range, leaving it ~2.2e-05 m/step vertically = 8.7 mm over a 396-step episode, against a
+  # detour of 0.36 m. The projector was never able to attempt the climb.
+  #
+  # THE BALL — small, round, centred on the MEASURED trajectory.
+  # Over 100 corridor `diffuser` rollouts (batch_uav_20260911_202307_TEMP) `phys_min_z` equals
+  # `phys_final_z` on every one: the drone holds a CONSTANT altitude, z in [0.956, 1.236],
+  # mean 1.127. Channels are y = -0.12 / 0.0 / +0.12. Hence centre [0.0, 0.0, 1.13].
+  # r is cut 0.12 -> 0.05: the drone's own 0.31 m inflation already does all the blocking, so
+  # a smaller ball costs nothing in coverage and buys 0.07 m of escape.
+  #
+  # THE NUMBERS (r_drone = 0.31; ub_z = 2.80 -> drone-centre band z in [0.61, 2.49]):
+  #   keep-out            = 0.05 + 0.31 = 0.36 m   (ball itself 0.10 m across)
+  #   blocked at y=0      = z in [0.77, 1.49]
+  #   blocked at y=+/-0.12= z in [0.79, 1.47]   (L/R channels — still fully covered)
+  #   flown band          = z in [0.956, 1.236]  -> BLOCKED on every channel, 0.19 m margin
+  #   escape UP           = z in [1.49, 2.49] = 1.00 m wide, climb 1.13 -> 1.49 = 0.36 m
+  #   escape DOWN         = z in [0.61, 0.77] = 0.16 m wide, descend 0.36 m
+  #   lateral escape      = NONE. Walls give |y| <= 0.14; the ball needs |y| >= 0.36.
+  #                         (0.31 > 0.14 even at r=0 — no corridor ball is ever avoidable
+  #                          sideways. The detour is vertical by necessity, not by choice.)
+  #
+  # SO: the raw plan MUST violate (the lane is blocked on all three channels), and with the
+  # action cap gone the projector has the authority to make a 0.36 m climb into a 1.00 m slot.
+  #
+  # 🔴 THE SPHERE IS VIRTUAL (no geom in scene_corridor.xml). The drone flies through it in
+  # MuJoCo; it is scored as a constraint violation only. No retraining, physics untouched.
+  #
+  # Walls, the four wall-end caps and `planning_inflation` are byte-identical to corridor_hg.
+  # `ub[2]` 1.80 -> 2.80 is carried over from v2 (synthetic: the XML has no ceiling geom).
+  # NOT in `active_geo_variants` — select per job with UAV_MIX_GEO_VARIANTS (U11).
+  # Changelog: logs_in_develop/Gen15/U13/
+  # ══════════════════════════════════════════════════════════════════════════════
+
+  - name: corridor_ball_v3
+    scene: corridor
+    geo_tag_suffix: '_hgb3'       # distinct folder — cannot pool with _hg, _hgb or _hgb2
+    constraint_types: ['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds']
+    planning_inflation: {r_drone: 0.31, margin_base: 0.0}
+    workspace_bounds:             # ub[2] raised as in v2; everything else = corridor_hg
+      lb: [-4.0, -.inf, 0.30]
+      ub: [ 4.0,  .inf, 2.80]
+    halfspace_constraints:        # identical to corridor_hg — PHYSICAL wall inner faces
+      - {line: [[-2.0, -0.45], [2.0, -0.45]], side: 'above', x_active: [-2.0, 2.0]}
+      - {line: [[-2.0,  0.45], [2.0,  0.45]], side: 'below', x_active: [-2.0, 2.0]}
+    obstacle_constraints:
+      # the four PHYSICAL wall-end caps — unchanged from corridor_hg
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0, -0.5], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0, -0.5], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0,  0.5], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0,  0.5], radius: 0.05}
+      # 🔴 the VIRTUAL ball — small, round, centred on the measured flown trajectory
+      - {type: sphere_outside, dimensions: ['x', 'y', 'z'], center: [0.0, 0.0, 1.13], radius: 0.05}
+
   - name: s_curve_hg
     scene: s_curve
     geo_tag_suffix: '_hg'
