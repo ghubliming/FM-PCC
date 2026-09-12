@@ -33,33 +33,36 @@
 \fi
 
 % -----------------------------------------------------------------------------
-% ABSTRACT -- v1 sketch. Rewrite last, once Results is settled.
+% ABSTRACT -- v2.9. Short and narrative: what was built, in order. No
+% justification, no "rather than", no arguing with a referee.
+% Budget: keep under ~300 words once the headline numbers land.
 % -----------------------------------------------------------------------------
 \ifstandalone
-Predictive control with a generative planner has to pay for its samples. Diffusion
-Predictive Control couples a denoising planner to a per-step projection that enforces
-dynamics and safety constraints, and inherits diffusion's step budget: the number of
-network evaluations is fixed at training time and cannot be reduced afterwards. This
-thesis replaces that engine with deterministic ODE transport --- flow matching and its
-few-step variants --- while holding the backbone, the projector, the data and the
-evaluation harness fixed, so that the step budget becomes an inference-time choice.
+A generative planner pays for every plan it produces. Diffusion Predictive Control couples a
+denoising planner to a per-step projection that enforces dynamics and safety constraints, and its
+step budget is fixed when the model is trained. This thesis replaces that engine with deterministic
+ODE transport --- flow matching and its average-velocity variants --- holding the backbone, the
+projector, the data and the evaluation harness fixed. The step budget becomes a solver argument,
+chosen at deployment.
 
-Across a state-based manipulator benchmark, a vision-conditioned variant of it, and an
-aerial embodiment built for this work, the resulting system is evaluated against the
-diffusion baseline under a strict definition of improvement: Pareto dominance at equal
-success and equal constraint satisfaction. \hole{Headline numbers -- write last, after
-Results is settled and the powered runs land.}
+The same stack is then carried across two changes. First the observation: a vision-conditioned
+instance of the manipulation benchmark, in which two camera views are compressed to a fixed-width
+latent and the generative backbone never sees an image. That latent is also what makes a few-step
+engine usable here at all, because the average-velocity objective differentiates through its own
+network. Second the embodiment: from a position-controlled arm to an underactuated quadrotor. The
+planner emits a position increment, the increment accumulates into a setpoint, and a cascaded
+geometric tracking controller turns the setpoint into four rotor commands. Written this way the two
+robots are one control structure, one layer apart.
 
-The thesis makes three further contributions beyond the engine swap. First, a
-correctness condition for evaluating in-loop guided samplers: a step budget below a
-computable threshold reduces the guided sampler to sample-then-project, so that a
-substantial class of published-style comparisons measures nothing. Second, a measured
-regime split between the two constraint-enforcement arms, with a mechanism that explains
-it: projecting a predicted clean endpoint is cheaper per solve than projecting an
-off-manifold iterate, and the advantage appears exactly where the guided sampler becomes
-well-defined. Third, negative results are retained rather than discarded --- an
-additional engine that does not improve on its predecessor, and a benchmark defect
-diagnosed by this work's own instrumentation.
+Across all three settings the system is measured against the diffusion baseline under Pareto
+dominance at equal success and equal constraint satisfaction. \hole{Headline numbers --- write last.
+Keep the abstract under $\approx 300$ words.}
+
+Three results are methodological: a computable budget below which a guided sampler silently
+degenerates to sample-then-project; a regime split between the two constraint arms, explained by
+which point each hands to an identical projection operator; and two retained negatives --- an engine
+that does not improve on its predecessor, and a geometry defect this work's own instrumentation
+found.
 \fi
 
 \microtypesetup{protrusion=false}

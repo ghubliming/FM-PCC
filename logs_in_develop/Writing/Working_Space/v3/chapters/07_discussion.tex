@@ -32,7 +32,7 @@ they come apart.
 
 \subsection*{Where the advantage actually comes from}
 
-It is worth separating three claims that a single headline number tends to fuse. \emph{Transport
+A single headline number fuses three claims. \emph{Transport
 instead of diffusion} buys about $1.4\times$ at equal budget and an exact tie on plan quality --- a
 real but modest engine effect, consistent with two networks of identical size doing comparable work
 per evaluation. \emph{The few-step objective} is what separates on quality, and only where the task
@@ -44,8 +44,8 @@ would explain nothing.
 
 The aerial entry shows the cleanest version of a result that is implicit in all three: whether the
 projector earns its cost is an engine-level question, not a global one. On that entry the
-bootstrapped target is at zero without projection --- projection is what makes it function at all
---- MeanFlow is marginal, and plain flow matching's best configuration is \emph{unprojected}. A
+consistency target is at zero without projection --- it does not function without it ---
+MeanFlow is marginal, and plain flow matching's best configuration is \emph{unprojected}. A
 generator whose plans are nearly feasible pays the projector's price for very little, and one whose
 plans are not is rescued by it. This is the same quantity that appears in
 \autoref{sec:res:constraints} as the reason the endpoint arm is cheap --- how far the point handed
@@ -53,7 +53,7 @@ to the solver is from the feasible set --- seen from the other end.
 
 \section{Negative and Inconclusive Results}\label{sec:disc:negative}
 
-\subsection*{The bootstrapped target does not improve on MeanFlow}
+\subsection*{The consistency target does not improve on MeanFlow}
 
 This was a planned rung of the engine ladder and it did not hold. Stating it precisely matters more
 than stating it briefly, because the imprecise versions are all wrong in one direction or the other.
@@ -65,22 +65,23 @@ over all six projection rules; on the vision-conditioned entry it ties at a budg
 the only engine with no configuration above $0.8$; and on the corridor scene nothing separates at
 all. \textbf{Better nowhere; equal where the task cannot separate.}
 
-\textbf{Name the floor.} ``The bootstrapped target'' is not one arm. Two floors were trained,
+\textbf{Name the floor.} ``The consistency target'' is not one arm. Two floors were trained,
 $\alpha = 0.2$ and $\alpha = 0.05$, and they behave differently: on the vision-conditioned entry the
 significant result at a budget of twenty ($p = 0.0215$) is the $\alpha = 0.05$ arm, while
 $\alpha = 0.2$ shows a mean deficit of $3.4\times$ that the sign test does \emph{not} reject. A
 sentence that says ``$\alpha$-Flow is worse'' without naming the floor is not reproducible.
 
-\textbf{The mechanism, which is why this is a result and not a gap.} The target closes its finite
-difference with the model's own frozen output. The resulting field bias is of order $(1-\alpha)$ and
-does \emph{not} shrink as the interval shrinks, so it is independent of the step budget. That
-predicts exactly what \autoref{sec:res:visual} measures: MeanFlow improves from $0.2354$\,m to
-$0.0741$\,m as the budget rises tenfold, while both bootstrapped arms stay flat or worsen. An
+\textbf{The mechanism.} The target closes its finite difference with a stop-gradient copy of the
+network, so it inherits a fraction of that network's own error, at a rate set by $\alpha$. The
+inherited term does not shrink as the interval shrinks, so it is independent of the step budget, and
+the objective admits self-consistent fields that are wrong. That predicts what
+\autoref{sec:res:visual} measures: MeanFlow improves from $0.2354$\,m to
+$0.0741$\,m as the budget rises tenfold, while both consistency arms stay flat or worsen. An
 engine whose error cannot be integrated away is not one that a larger budget rescues.
 
 \guard{One selection effect must travel with the low-budget table:} two floors were trained and the
-better one is quoted there, on a single seed. That is not a defect of the experiment --- both arms
-are reported --- but it is a reason the low-budget comparison is a pair rather than an ordering.
+better one is quoted there, on a single seed. Both arms are reported, and the comparison is a pair
+rather than an ordering.
 
 \subsection*{The quality version of the flow-matching claim is withdrawn}
 
@@ -89,26 +90,22 @@ quality. That does not survive: on the vision-conditioned entry the two are $0.0
 a band of roughly $0.4$\,m at $p = 1.0000$, an exact tie, and at matched budget on the state-based
 benchmark the pooled paired difference over thirty pairs is $-0.012$. What survives is the
 \emph{cost} form of the claim, on the state-based benchmark, and this thesis states only that form.
-The withdrawal is recorded rather than quietly dropped, because the cost claim and the quality claim
-have been conflated in this area before, including in earlier drafts of this work.
+The two have been conflated in this area before, including in earlier drafts of this work.
 
 \subsection*{A scene retired as a ranking instrument, and kept as something better}
 
 The aerial s-curve scene was built to be the hard case and cannot rank engines: its ceiling is
 $0.100$ across forty configurations, no arm clears the second funnel stage, and an ordering
 previously reported on it was \emph{tracker-confounded and is retracted}. Raising the budget beyond
-five is non-monotone and does not help. Retiring it as a ranking scene is the correct action, and
-keeping it as the demonstration of where the control stack runs out is a stronger use of it than a
-failed ranking would have been --- it is the evidence that the aerial entry's limit is the tracker
-and not the planner.
+five is non-monotone and does not help. It is kept as the demonstration of where the control stack runs out: the retraction is the evidence that the aerial entry's limit is the tracker and not the planner.
 
-\subsection*{Two claims explicitly not made}
+\subsection*{Two results that carry no claim}
 
 A safety advantage for endpoint projection at the largest budget on the vision-conditioned entry
-would be ten of ten against nine of ten zero-violation rollouts: \emph{one} discordant rollout at
-$p = 1.0000$. It is not claimed anywhere. And the improved-MeanFlow variant explored early in this
-project is out of scope rather than refuted: it was not carried into the matched-architecture
-protocol, so this thesis has no comparable evidence about it and makes no claim either way.
+would rest on ten of ten against nine of ten zero-violation rollouts --- \emph{one} discordant
+rollout, at $p = 1.0000$. The improved-MeanFlow variant explored early in this project is out of
+scope rather than refuted: it was never carried into the matched-architecture protocol, so there is
+no comparable evidence about it either way.
 
 \section{Threats to Validity}\label{sec:disc:threats}
 
@@ -132,6 +129,27 @@ the engine}, and reporting the regime is the cheapest available defence. It cost
 violation count on the \emph{unprojected} arm --- and it is why \autoref{sec:setup:tasks} defines
 the regime taxonomy before any result is shown. The same defence would have caught the low-budget
 ordering on the state-based benchmark, which shows the same shape independently.
+
+\subsection*{Downstream metrics can hide the generator}
+
+Every number in \autoref{ch:results} is measured after a projector and a tracking controller have
+acted on the plan. Both are low-pass: the projector pulls a plan toward the feasible set, and the
+controller converts a sequence of setpoints into commands through inverse kinematics or a cascaded
+geometric law. Either can absorb a great deal of incoherence in the plan it is given.
+
+\autoref{fig:raw-plans} shows what that conceals. At one network evaluation the diffusion baseline's
+plans are a high-frequency scribble across the workspace, and its \emph{commanded} traces are
+nonetheless smooth --- the controller integrates the noise away. A reader given only the executed
+trajectories and the success rates would see two comparable planners. Turning the projector off
+separates them by a factor of $4.7$ in violations at matched compute.
+
+The general form: \textbf{an evaluation that measures only what survives the control stack measures
+the control stack's tolerance as much as the planner's quality.} Reporting the unprojected arm costs
+one extra configuration per cell and is the cheapest available defence --- it is why the funnel of
+\autoref{sec:setup:metrics} evaluates its first stage there, and why this thesis reports raw plans at
+the budget where the engines are supposed to differ. The same argument bounds what the aerial entry
+can show: with a tracking error of 0.30--0.49\,m, that stack absorbs more than any of the scenes
+leave as clearance.
 
 \subsection*{A guided sampler that is not guided}
 
@@ -187,19 +205,25 @@ unchanged by new weights. Only checkpoint quality is a training question, and it
 last and with a stated hypothesis, because a retrain that also changes the constraint set confounds
 the two effects and answers neither. \guard{If a retrain does not move the entry out of the all-fail
 regime, that is itself the finding: the over-strictness is a property of the constraint set, the
-funnel is the correct treatment, and it is not a defect awaiting a fix.}
+funnel is the correct treatment.}
 
 \textbf{The state-based leg of the second entry does not exist.} The three-dimensional state version
 of the aligning task has an environment but no configuration, no checkpoints and no evaluation
 corpus. It is what would separate \emph{harder control} from \emph{harder perception}, and without
 it the two increments are confounded. This is the largest single gap between the evidence and the
-claim structure, and it is stated here rather than papered over.
+claim structure.
 
 \textbf{The aerial ranking is one seed of one scene.} Two to three additional seeds would settle it.
 Until they land, the aerial entry contributes the embodiment argument, the regime taxonomy, and the
 projection cost and safety result --- all of which are independent of the ranking --- and the
 ranking itself carries its seed depth in every sentence.
 
-\textbf{No smoothness or effort metric is reported.} Plan quality is measured by control steps to
-completion and by constraint satisfaction. Two plans with the same step count and the same violation
-record can differ in how much control effort they demand, and this thesis does not measure that.
+\textbf{No quantitative smoothness metric exists in this pipeline.} Plan quality is measured by
+control steps to completion, by constraint satisfaction, and --- on the unprojected arm --- by
+violation counts and by inspection of the plans themselves (\autoref{fig:raw-plans}). Two plans with
+the same step count and the same violation record can still differ in curvature, in jerk and in the
+control effort they demand, and none of those is measured. The specific missing measurement is jerk,
+path length or curvature computed over the saved plan files, which requires no new experiment ---
+only a pass over plans already on disk. Until it is taken, the plan-quality argument of
+\autoref{sec:res:state} rests on violation counts, which are quantitative, and on
+\autoref{fig:raw-plans}, which is not.

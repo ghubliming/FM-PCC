@@ -598,6 +598,58 @@ geo_constraint_variants:
       # 🔴 the VIRTUAL ball — small, round, centred on the measured flown trajectory
       - {type: sphere_outside, dimensions: ['x', 'y', 'z'], center: [0.0, 0.0, 1.13], radius: 0.05}
 
+  # ══════════════════════════════════════════════════════════════════════════════
+  # [Gen15 U13 2026-09-12] corridor_ball_v3_2 — the ball made genuinely tiny
+  #
+  # v3 used r = 0.05, which is the SAME radius as the four wall-end caps — not "small".
+  # v3_2 cuts it to r = 0.01: a 2 cm ball, 1/5 the caps, 1/31 the drone.
+  #
+  #   corridor_ball      r = 0.35  keep-out 0.66
+  #   corridor_ball_v2   r = 0.12  keep-out 0.43
+  #   corridor_ball_v3   r = 0.05  keep-out 0.36   (= wall-cap radius)
+  #   corridor_ball_v3_2 r = 0.01  keep-out 0.32   <- this
+  #
+  # Only the radius changes. Centre [0.0, 0.0, 1.13] (on the measured flown path), walls,
+  # wall caps, workspace box, constraint_types and planning_inflation are byte-identical
+  # to v2/v3.
+  #
+  # THE NUMBERS (r_drone = 0.31; ub_z = 2.80 -> drone-centre band z in [0.61, 2.49]):
+  #   keep-out             = 0.01 + 0.31 = 0.32 m   (ball itself 2 cm across)
+  #   blocked at y=0       = z in [0.81, 1.45]
+  #   blocked at y=+/-0.12 = z in [0.83, 1.43]
+  #   flown band           = z in [0.956, 1.236]  -> still fully blocked on all three channels
+  #   escape UP            = z in [1.45, 2.49] = 1.04 m wide, climb 1.13 -> 1.45 = 0.32 m
+  #   escape DOWN          = z in [0.61, 0.81] = 0.20 m wide
+  #   lateral escape       = NONE (walls give |y| <= 0.14; 0.31 > 0.14 even at r = 0)
+  #
+  # ⚠️ The keep-out is dominated by the drone's own 0.31 m inflation, so r 0.05 -> 0.01 moves
+  # it only 0.36 -> 0.32 and the required climb only 0.36 -> 0.32 m. Recorded so the result is
+  # read against the right expectation.
+  #
+  # 🔴 VIRTUAL (no geom in scene_corridor.xml) — scored as a constraint violation only.
+  # NOT in `active_geo_variants`; select per job with UAV_MIX_GEO_VARIANTS (U11).
+  # Changelog: logs_in_develop/Gen15/U13/
+  # ══════════════════════════════════════════════════════════════════════════════
+
+  - name: corridor_ball_v3_2
+    scene: corridor
+    geo_tag_suffix: '_hgb32'      # distinct folder — cannot pool with _hg/_hgb/_hgb2/_hgb3
+    constraint_types: ['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds']
+    planning_inflation: {r_drone: 0.31, margin_base: 0.0}
+    workspace_bounds:
+      lb: [-4.0, -.inf, 0.30]
+      ub: [ 4.0,  .inf, 2.80]
+    halfspace_constraints:
+      - {line: [[-2.0, -0.45], [2.0, -0.45]], side: 'above', x_active: [-2.0, 2.0]}
+      - {line: [[-2.0,  0.45], [2.0,  0.45]], side: 'below', x_active: [-2.0, 2.0]}
+    obstacle_constraints:
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0, -0.5], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0, -0.5], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0,  0.5], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0,  0.5], radius: 0.05}
+      # 🔴 the VIRTUAL ball — 2 cm across, centred on the measured flown trajectory
+      - {type: sphere_outside, dimensions: ['x', 'y', 'z'], center: [0.0, 0.0, 1.13], radius: 0.01}
+
   - name: s_curve_hg
     scene: s_curve
     geo_tag_suffix: '_hg'

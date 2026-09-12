@@ -201,8 +201,7 @@ training objective --- and that is the quantity \autoref{sec:bg:fewstep} attacks
 a function of $\vect{x}_{0}$ and $\vect{c}$ alone. This removes a source of run-to-run variance
 from a controller that replans at every timestep, and it changes what ``the same plan'' means
 when comparing constraint arms --- two arms started from the same $\vect{x}_{0}$ differ only by
-the constraint mechanism, which is what makes the arm comparison in \autoref{ch:results} a
-controlled one. It also means the candidate fan of \autoref{sec:method:selection} is a fan over
+the constraint mechanism, so the arm comparison in \autoref{ch:results} is controlled. It also means the candidate fan of \autoref{sec:method:selection} is a fan over
 $\vect{x}_{0}$, not over sampler noise.
 
 \section{Few-Step Generative Models}\label{sec:bg:fewstep}
@@ -296,7 +295,7 @@ Three properties of \eqref{eq:bg:mf:loss} are used later in this thesis.
     is thus a strict generalisation of a flow-matching model, and the fraction of training
     samples drawn with $r \neq \ftime$ is a genuine hyperparameter: at zero it is flow matching
     \parencite[Tab.~1a]{geng2025meanflow}. \autoref{sec:method:engine} shows that the same collapse argument
-    applies, for a different reason, to this work's bootstrapped-target variant --- which is how a set of
+    applies, for a different reason, to this work's consistency-target variant --- which is how a set of
     earlier runs was found to be mislabelled.
   \item \textbf{The interval is a network input, so the budget is chosen at inference.} As in
     \autoref{sec:bg:fm}, $\nfe$ appears only in the sampler. Unlike \autoref{sec:bg:fm}, small $\nfe$ is
@@ -323,12 +322,18 @@ quantity to monitor. \srcnote{Both are implemented in
 \texttt{\_sample\_tau\_pair}); the convergence-signal warning is this work's own, from the
 Gen3v6 fix-2/fix-3 logs.}
 
-\subsection*{A bootstrapped target on the same objective}
+\subsection*{A consistency target on the same objective}
 
-A further variant \parencite{zhang2025alphaflow} keeps the average-velocity objective but changes
-how its target is formed: rather than regressing the analytic target of
-\eqref{eq:bg:mf:loss} directly, it bootstraps a target from the network's own output and
-anneals a scalar that interpolates between the two regimes. It is presented neutrally here.
+A further variant \parencite{zhang2025alphaflow} keeps the average-velocity objective but forms its
+target differently. Where \eqref{eq:bg:mf:loss} closes the identity with an \emph{analytic}
+derivative, this variant closes it with a \emph{finite difference} evaluated at an intermediate
+transport time and taken from a stop-gradient copy of the network itself --- the construction of the
+consistency-model family \parencite{song2023consistency}, in which a network is trained to agree with
+its own output at a neighbouring time. Its scalar $\alpha$ places that intermediate time within the
+interval and anneals from one regime to the other. The source's own analysis is that the
+average-velocity objective decomposes into a flow-matching term and a \emph{trajectory-consistency}
+term, and that this variant is the family interpolating between them
+\parencite[\S1,\,\S3]{zhang2025alphaflow}. It is presented neutrally here.
 \autoref{sec:method:engine} states why the distinction is a training-path difference and nothing
 else, and \autoref{sec:res:fewstep} reports that it does not pay off; per TARGET~\S8 it is carried
 as an ablation, not as a rung of a ladder. \emph{No mathematics is given for it in this draft
@@ -395,7 +400,7 @@ at which the program is posed:
 
 Because the constraints and the solver are held identical, any cost or quality difference
 between the arms is attributable to the linearisation point, not to the implementation. That
-framing is what makes the regime split of RQ3 a claim about algorithms. It also introduces the
+framing makes the regime split of RQ3 a claim about algorithms. It also introduces the
 condition that \autoref{sec:method:degenerate} formalises: arm~C is only arm~C when it runs at least
 one \emph{non-terminal} guided step, because at the terminal time the lookahead vanishes and
 the pull-back has no subsequent step to act on.

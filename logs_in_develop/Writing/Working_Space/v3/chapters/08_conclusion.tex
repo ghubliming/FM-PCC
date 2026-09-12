@@ -58,7 +58,7 @@ three, and which one it is depends on whether the aerial seeds arrive.}
     transport improves the quality--cost frontier: the MeanFlow engine Pareto-dominates the pinned
     baseline on the state-based benchmark and beats it decisively on plan quality on the
     vision-conditioned one. The family is ordered as \emph{MeanFlow ahead of the rest}, with plain
-    flow matching and the bootstrapped target clustered behind it; the planned finer ordering
+    flow matching and the consistency target clustered behind it; the planned finer ordering
     between those two does not hold, and \autoref{sec:disc:negative} gives the measurement and the
     mechanism. Plain transport alone buys about $1.4\times$ at equal budget and ties the baseline on
     quality --- a cost result, not a quality one.
@@ -68,7 +68,7 @@ three, and which one it is depends on whether the aerial seeds arrive.}
     the baseline scores $0.667$ at one evaluation against $1.000$ at ten, at its own published
     protocol. For diffusion the budget is fixed when the noise schedule is discretised at training
     time; for transport it is a choice made by the integrator at inference, and the average-velocity
-    objective is what makes one Euler step of the learned field a usable plan. \guard{The
+    objective turns one Euler step of the learned field into a usable plan. \guard{The
     low-budget baseline cells are ten episodes per cell; the direction is far outside that
     resolution, the exact value is not, and a clean sweep at this work's protocol is outstanding.}
 

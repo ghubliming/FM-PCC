@@ -100,7 +100,7 @@ artefacts unable to match a row of \autoref{ch:results} to a run. \autoref{tab:n
     the diffusion engine / the baseline & \texttt{GaussianDiffusion}, \texttt{ddpm}, \texttt{diffusion} \\
     flow matching                       & \texttt{FlowMatchingODE}, \texttt{fm}, \texttt{flow\_matcher\_v3} \\
     MeanFlow                            & \texttt{MeanFlowODE}, \texttt{mf} \\
-    the bootstrapped target             & \texttt{AlphaFlowODE}, \texttt{af}; floor as \texttt{ae0.2} / \texttt{ae0.05} \\
+    the consistency target             & \texttt{AlphaFlowODE}, \texttt{af}; floor as \texttt{ae0.2} / \texttt{ae0.05} \\
     \midrule
     \multicolumn{2}{l}{\emph{constraint arms}}\\
     unguided (no projection)            & the \texttt{diffuser} variant row \\
@@ -149,7 +149,7 @@ cannot silently diverge.
     Entry / role & Batch & Protocol \\
     \midrule
     Entry 1, engine ladder & \texttt{batch\_avoiding\_combined\_20260825} & 5 seeds $\times$ 20 trials \\
-    Entry 1, bootstrapped target & \texttt{batch\_avoiding\_combined\_20260903} & seed 6, 20 trials \\
+    Entry 1, consistency target & \texttt{batch\_avoiding\_combined\_20260903} & seed 6, 20 trials \\
     Entry 1, budget floor & \texttt{batch\_avoiding\_combined\_20260906} & 4 seeds $\times$ 3 geom.\ $\times$ 2 trials \\
     Entry 2 & \texttt{batch\_va2\_20260907} & seed 6, 10 paired contexts \\
     Entry 3 & \texttt{batch\_uav\_20260910} & seed 6, 10 rollouts \\

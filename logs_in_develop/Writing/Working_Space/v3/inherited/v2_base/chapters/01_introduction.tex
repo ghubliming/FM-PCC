@@ -36,7 +36,7 @@ data, normalisation, horizon, seeds, projector and harness are all held constant
 that one constraint arm beats another is only meaningful if both arms see the same feasible
 set, the same solver, the same activation threshold and the same candidate budget. Most of
 the engineering behind this thesis exists to make those two sentences true, and the section
-says so plainly rather than leaving it to the reader to infer.
+says so plainly.
 
 \section{Research Questions}\label{sec:intro:rqs}
 
@@ -62,8 +62,8 @@ before any table'' item.}
 
 \section{Contributions}\label{sec:intro:contributions}
 
-The section lists six contributions and is explicit that two of them are negative or
-methodological rather than performance claims.
+Seven contributions: two performance claims, two constructions, three methodological or negative.
+The list below marks which is which.
 
 \begin{enumerate}
   \item \textbf{An architecture-matched engine substitution.} Deterministic transport
@@ -83,13 +83,28 @@ methodological rather than performance claims.
     solver differences.
   \item \textbf{Removal of the candidate-selection machinery.} The projector's selection
     rules are shown not to earn their computation, and the system ships with the redundancy
-    removed rather than retained ``just in case''.
-  \item \textbf{Two constructed benchmark environments} --- a vision-conditioned
-    manipulation task and an aerial task with four scenes, expert data, constraint geometry
-    and a low-level controller --- together with their construction documented as
-    methodology.
+    removed.
+  \item \textbf{A vision-conditioned instance of the same benchmark, and the interface that
+    makes it comparable.} The manipulation task is rebuilt so the policy observes two camera views
+    instead of a state vector. The encoder is vendored unchanged; what is contributed is the
+    boundary --- perception is compressed to a fixed-width latent consumed as conditioning, so the
+    generative backbone never sees an image and ``only the engine changed'' becomes checkable. The
+    boundary is also necessary: the
+    average-velocity objective differentiates through its own network, and an encoder inside that
+    derivative is both incorrect and prohibitively expensive, so a few-step engine and a visual
+    observation are incompatible without it.
+  \item \textbf{An extension of the whole stack from a manipulator to an underactuated aerial
+    vehicle, with the control chain that makes it possible.} A quadrotor embodiment is built for
+    this work --- four scenes, expert data, constraint geometry --- and, more to the point, the
+    layer that a generative planner usually leaves unstated is written down: the planner emits a
+    position increment and never an actuator command; the increment accumulates into a setpoint; and
+    a cascaded \emph{geometric} tracking controller (position PD $\rightarrow$ thrust vector and
+    attitude $\rightarrow$ geometric attitude tracking on $SO(3)$ $\rightarrow$ static
+    thrust-and-moment allocation) converts the setpoint into rotor commands at a faster rate than
+    the planner replans. The manipulator and aerial chains are then presented as \emph{one}
+    structure one layer apart, which is the form RQ4 takes.
   \item \textbf{Retained negative results.} An additional engine variant that does not
-    improve on its predecessor is reported as a clean negative rather than omitted, and a
+    improve on its predecessor is reported as a clean negative, and a
     defect in this work's own benchmark geometry, found by its own instrumentation, is
     reported with the correction and its limits.
 \end{enumerate}

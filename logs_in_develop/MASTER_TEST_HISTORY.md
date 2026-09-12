@@ -5961,3 +5961,25 @@ Comprehensive data analysis of the MPC candidate fan ($B=4$ vs $B=1$) on `avoidi
 3. **U11 adds a binding virtual-corridor test and isolates geometry per job** (CHANGELOG_20260910_corridor_ball_and_geo_variant_override.md):
    - Diagnosed corridor_hg as constraint-trivial (zero unprojected and projected violations), then added virtual corridor_ball, forcing a vertical route above $z=1.41$ m without changing MuJoCo physics, with output-path isolation.
    - Added validated UAV_MIX_GEO_VARIANTS propagation through evaluator and sbatch wrappers. Submitted six corridor_ball arms at PCC-only $K=2$ and genuine-HardFlow $K=5$ (jobs 25599–25604), gated on unprojected diffuser reporting violations; added robust temp-bash drivers for these tiers and diffusion/s_curve matrix-completeness rows.
+
+
+***
+
+## Gen15 U11–U13: corridor_ball Feasibility Audit and Vertical-Authority Diagnosis (September 11–12, 2026)
+
+**Keywords**: Gen15, U11, U12, U13, corridor_ball, corridor_ball_v2, corridor_ball_v3, virtual obstacle, action bounds, vertical authority, HardFlow, commits 5d14210c, a61ad544, 995a379a.
+
+1. **U11 proved that the first virtual-ball geometry binds but overshoots into infeasibility** (DA_20260911_corridor_ball_first_results.md, jobs 25599–25610):
+   - Relative to constraint-trivial corridor_hg, unprojected plans incurred 32.8–34.7 violations and fell from S&C 1.000 to 0.000 across all six arms, confirming that the virtual ball was active.
+   - No DPCC or genuine-HardFlow configuration obtained a clean successful rollout in 34 cells. DPCC at K=5 reduced only 2–4 violations at roughly tenfold the K=2 effort, while HardFlow remained within -0.4 to +0.2 violations of the unprojected plan.
+   - The original ball forced an unavailable climb above the policy's trained altitude band, so U12 redesigned the geometry rather than treating the all-fail score as an engine comparison.
+
+2. **U12 moved and shrank the ball, opened the ceiling, and isolated the actual blocker** (CHANGELOG_20260911_corridor_ball_v2_on_trajectory.md, DA_20260912_corridor_ball_v2_full_wave.md, jobs 25657 and 25663–25674):
+   - corridor_ball_v2 placed a radius-0.12 virtual ball directly on the measured flight path at z=1.13 and raised the synthetic ceiling to z=2.80, creating a 0.93 m upper escape slot while retaining output isolation under corridor_hgb2.
+   - The full 34-cell wave again passed the binding gate (25.5–27.3 unprojected violations) but failed the avoidance gate: S&C remained 0.000 throughout and collision-free completion was zero in 32 cells.
+   - The decisive telemetry was phys_min_z = 1.1264–1.1266 m over 340 rollouts: three engines, two budgets, and seven projector modes changed altitude by at most 0.2 mm although clearing the ball requires z >= 1.56 m. DPCC was active along x, removing up to 5.7 violations and 53 steps at up to 1.8 s per step, but could not make a vertical detour.
+   - Diagnosed auto-derived action bounds from straight, level corridor demonstrations as the leading cause: dy and dz authority are about 2.2e-05 m/step, or 8.7 mm over an episode, versus a required 0.43 m climb. Submitted the bounds-free probe (job 25682) to test this causal mechanism directly; no further ranking claim is licensed pending that result.
+
+3. **U13 narrows the remaining geometric alternative without broadening scope** (CHANGELOG_20260912_corridor_ball_v3.md):
+   - Added config-only corridor_ball_v3, retaining v2's centre and constraints but reducing radius 0.12 -> 0.05. The drone inflation still blocks the full flown band while reducing the necessary climb 0.43 -> 0.36 m and widening the escape slot to 1.00 m.
+   - Submitted the matched mf K=2 injection test (job 25689), gated on both positive unprojected violations and a projected collision-free rollout. Its interpretation is explicitly paired with the bounds-free probe: if vertical authority remains absent, another ball-size iteration is not warranted.

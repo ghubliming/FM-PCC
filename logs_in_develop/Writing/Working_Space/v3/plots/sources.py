@@ -78,7 +78,7 @@ CORPORA = {
         'temp/0309/batch_avoiding_combined_20260903_133730',
         'seed 6, 20 trials',
         'partial',
-        'The bootstrapped target on the architecture-matched U-Net. Single seed: '
+        'The consistency target on the architecture-matched U-Net. Single seed: '
         'the mf/af separation here is p = 0.231 and must never be drawn as a ladder.'),
     'avoiding_minK': Corpus(
         'avoiding_minK',
@@ -119,6 +119,44 @@ CORPORA = {
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+#  VENDORED FIGURES -- assets copied in, not generated here
+# ═══════════════════════════════════════════════════════════════════════════
+# Some panels were produced by the evaluation's own diagnostics rather than by
+# this pipeline, and cannot be regenerated from a CSV. They are copied rather
+# than redrawn, and every one carries its PROVENANCE, because a figure whose
+# origin is unrecorded is how the baseline authors' own plots nearly ended up in
+# this thesis presented as ours (see CHANGELOG v3.3).
+#
+# RULE: nothing goes in here until it has been checked against
+# /workspaces/aux_repo/ and shown to be ours. All four below were.
+VENDORED = {
+    'fig_raw_plans_meanflow_K1': (
+        'Data_Analysis/DA_Result_Curated_MD/Report_20260819_MF_UNet/'
+        'fig6a_plans_mfunet_K1_seed6_both-hard.png',
+        'Report_20260819_MF_UNet fig 6a; per-episode MPC diagnostics, unprojected arm, '
+        'seed 6, both-hard, K=1. Ours; verified absent from aux_repo.'),
+    'fig_raw_plans_diffusion_K1': (
+        'Data_Analysis/DA_Result_Curated_MD/Report_20260819_MF_UNet/'
+        'fig6b_plans_dpcc_K1_seed6_both-hard.png',
+        'Report_20260819_MF_UNet fig 6b; same protocol, diffusion baseline at K=1. '
+        'Ours; verified absent from aux_repo.'),
+    'fig_raw_plans_meanflow_K2': (
+        'Data_Analysis/DA_Result_Curated_MD/Report_20260819_MF_UNet/'
+        'fig6c_plans_mfunet_K2_seed6_both-hard.png',
+        'Report_20260819_MF_UNet fig 6c; same protocol, K=2. '
+        'Ours; verified absent from aux_repo.'),
+    'fig_raw_goal_reached_K1': (
+        'Data_Analysis/DA_Result_Curated_MD/Report_20260903_AF_UNet/fig7_raw_diffuser_K1.svg',
+        'Report_20260903_AF_UNet fig 7; goal reached on the unprojected arm at K=1, '
+        'top-right-hard, seed 6, 20 trials. Ours; verified absent from aux_repo.'),
+}
+
+
+def vendored_path(key):
+    return os.path.join(REPO, VENDORED[key][0])
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 #  ENGINES, ARMS AND RULES -- the plotting vocabulary
 # ═══════════════════════════════════════════════════════════════════════════
 # Thesis names, per Auxiliary/Naming/NAMING_20260910_master_table.md. Code tokens
@@ -127,13 +165,13 @@ ENGINE_COLOUR = {
     'diffusion': '#c0392b',   # the inherited denoising engine -- the pinned baseline
     'fm':        '#2471a3',   # flow matching        (alpha = 1)
     'mf':        '#1e8449',   # MeanFlow             (alpha = 0)
-    'af':        '#6c3483',   # the bootstrapped target (0 < alpha < 1)
+    'af':        '#6c3483',   # the consistency target  (0 < alpha < 1)
 }
 ENGINE_LABEL = {
     'diffusion': 'diffusion (DPCC baseline)',
     'fm':        'flow matching',
     'mf':        'MeanFlow',
-    'af':        'bootstrapped target',
+    'af':        'consistency target',
 }
 
 # Folder-name pattern per engine, with %d for the step budget K. These ARE code

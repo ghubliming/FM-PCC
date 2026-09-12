@@ -20,7 +20,7 @@
 %   4 degenerate rows tagged, never averaged in
 %   5 the aerial per-step budget is never a pass/fail criterion
 %   6 nominal orderings inside noise are tagged as such -- never "wins"
-%   7 never "the bootstrapped target fails"; write "does not improve on
+%   7 never "the consistency target fails"; write "does not improve on
 %     MeanFlow", and NAME THE FLOOR (0.2 and 0.05 are different arms)
 %   8 constraint-family ablations are labelled and never ranked against legal arms
 %   9 mechanism names, never code tags (Auxiliary/Naming/NAMING_20260910)
@@ -96,9 +96,9 @@ its gate rather than its margin.}
 \guard{The coverage asymmetry stated in \autoref{sec:setup:baselines} applies to this table.} The
 MeanFlow rows are complete at five seeds on all three geometries, 300 episodes; the baseline
 completed five seeds on the two single-halfspace geometries and only seed~6 on \emph{both-hard}, 220
-episodes. The geometry-first aggregation is what makes the two rows comparable at all, and the
-deficit is on the baseline's hardest geometry, which is the one where a single seed is least
-representative.
+episodes. The geometry-first aggregation of \autoref{sec:setup:protocol} is what the two rows are
+compared under, and the deficit falls on the baseline's hardest geometry --- the one where a single
+seed is least representative.
 
 \subsection*{Flow matching alone: a cost result, and only a cost result}
 
@@ -165,7 +165,7 @@ ladder rather than about the engine --- which is what \autoref{sec:res:fewstep} 
 \subsection*{The low-budget pair}
 
 At the cheapest configuration reaching perfect success and constraint satisfaction, the two
-few-step objectives --- MeanFlow and the bootstrapped target --- both improve on plain flow matching
+few-step objectives --- MeanFlow and the consistency target --- both improve on plain flow matching
 on both cost axes at once. On the architecture-matched U-Net, on \emph{top-left-hard}, at a budget of
 one, on temporal-consistency tightened geometry, with every row at S\&C $=1.00$:
 
@@ -179,8 +179,8 @@ one, on temporal-consistency tightened geometry, with every row at S\&C $=1.00$:
     \toprule
     Engine & Steps & s/episode & vs.\ baseline \\
     \midrule
-    Bootstrapped target, floor $\alpha = 0.2$   & 57.20 & 1.07 & $33.3\times$ \\
-    Bootstrapped target, floor $\alpha = 0.05$  & 58.20 & 1.09 & $32.7\times$ \\
+    Consistency target, floor $\alpha = 0.2$   & 57.20 & 1.07 & $33.3\times$ \\
+    Consistency target, floor $\alpha = 0.05$  & 58.20 & 1.09 & $32.7\times$ \\
     MeanFlow                                    & 60.75 & 1.13 & $31.6\times$ \\
     Flow matching                               & 65.65 & 1.31 & $27.2\times$ \\
     Diffusion \emph{(pinned baseline)}, $\nfe = 20$ & 61.00 & 35.66 & --- \\
@@ -197,11 +197,70 @@ one, on temporal-consistency tightened geometry, with every row at S\&C $=1.00$:
 The nominal separation between the two few-step rows is 3.55 steps on a single seed; the exact test
 on the underlying cell gives $p = 0.231$. Averaged over all six projection rules rather than the
 best one, the two engines are a wash --- eight non-dominated cells against nine. And two floors of
-the bootstrapped target were trained and \emph{the better of the two is quoted here}, which is a
+the consistency target were trained and \emph{the better of the two is quoted here}, which is a
 selection effect that a single-seed comparison has no power to absorb. What the table supports is
 that \emph{both} few-step objectives beat plain flow matching at the lowest budget, on both cost
 axes; it does not support an ordering between them. \autoref{sec:disc:negative} takes up what
 happens to that pair on the other two entries, where the task does have power to separate.
+
+\subsection*{The plans themselves, before any projection}
+
+Everything above is measured after the projector has run. Switching the projector off measures the
+generator directly, and it is where the engine substitution shows its clearest effect ---
+\autoref{fig:raw-plans}.
+
+\begin{figure}[htpb]
+  \centering
+  \begin{minipage}{0.49\linewidth}\centering
+    \includegraphics[width=\linewidth]{fig_raw_plans_meanflow_K1}\\[0.3em]
+    {\footnotesize MeanFlow, one evaluation}
+  \end{minipage}\hfill
+  \begin{minipage}{0.49\linewidth}\centering
+    \includegraphics[width=\linewidth]{fig_raw_plans_diffusion_K1}\\[0.3em]
+    {\footnotesize Diffusion baseline, one evaluation}
+  \end{minipage}
+  \caption[Raw plans at one network evaluation]{Every plan the generator emitted along one rollout,
+  overlaid, with the projector switched \emph{off}. Left: the MeanFlow engine's replans form a tight
+  ribbon around the executed path, each plan a bounded, goal-directed curve. Right: the diffusion
+  baseline at the same budget emits a high-frequency scribble spanning the workspace. Both panels are
+  the same backbone size at the same budget and, on this cell, the same unprojected compute ---
+  0.0097 against 0.0094\,s per control step, three per cent apart.
+  \guard{Seed 6, both-hard, 10 episodes; both arms are unconstrained, so both violate. The
+  comparison is plan quality, not constraint satisfaction.}}
+  \label{fig:raw-plans}
+\end{figure}
+
+\dataref{Report\_20260819\_MF\_UNet \S7, figs 6a--6c}
+
+The quantitative form of the difference is the violation count before any projection: \textbf{6.0
+for MeanFlow against 28.0 for the diffusion baseline}, a factor of $4.7$, at 58.0 against 56.5
+control steps and at matched compute. A second evaluation tightens the MeanFlow ribbon further and
+brings it to 12.0, which places the one-evaluation panel at the low end of a well-behaved trend
+rather than at a lucky sample.
+
+\textbf{The right-hand panel is the point, and it generalises beyond this thesis.} The diffusion
+baseline's \emph{commanded} traces are smooth --- but they are smooth because the downstream
+controller integrates the scribble away, not because the plan was good. Every metric reported in
+this chapter is measured after that controller, so a generator that emits chaotic plans and a
+generator that emits clean ones can post similar downstream numbers. The consequence for reading
+\autoref{tab:state-headline} is that the MeanFlow engine is not merely cheaper at one evaluation: it
+is cheaper \emph{and} its plans are usable at one evaluation, where the baseline's are not.
+\autoref{sec:disc:threats} takes this up as a threat to the validity of downstream-only evaluation.
+
+On the same unprojected arm the consistency target reaches the goal in 20 of 20 episodes at one
+evaluation against MeanFlow's and plain flow matching's 17 of 20, and the diffusion baseline's 12 of
+20 at its full budget of twenty.
+\dataref{Report\_20260903\_AF\_UNet \S7, fig 7; successes-only step basis}
+\guard{Three episodes on one seed, and the margin does not survive projection --- under the
+projector the program repairs both plans toward the same place, which is consistent with the
+negative result of \autoref{sec:disc:negative}. What the raw arm supports is that the few-step
+objectives draw better plans than diffusion at one evaluation; it does not order them against each
+other.}
+
+\hole{No quantitative smoothness measure exists anywhere in this pipeline, so
+\autoref{fig:raw-plans} carries the argument qualitatively and the violation counts carry it
+numerically. Jerk, path length or curvature computed on the saved plan files is the missing
+measurement; it needs no new runs, only a pass over plans already on disk.}
 
 \subsection*{An engine-independent finding about the selection rules}
 
@@ -209,7 +268,7 @@ One row of \autoref{tab:state-headline} deserves separate mention because it is 
 result. On the MeanFlow flagship the cumulative-projection-cost rule stalls: 98.0 control steps at a
 budget of two and 72.0 at a budget of one, against roughly 61 for every other tightened arm, and at
 a lower success and constraint satisfaction as well (0.927 and 0.943 against 0.993). The same
-signature appears on the bootstrapped target and does \emph{not} appear on the baseline, despite all
+signature appears on the consistency target and does \emph{not} appear on the baseline, despite all
 three sharing a backbone. The sign of the effect therefore tracks the projection-cost landscape
 rather than the architecture. This is why \autoref{tab:state-headline} names its selection rule
 rather than reporting a best-over-rules number, and it is picked up in
@@ -242,8 +301,8 @@ The asymmetry is structural rather than empirical. For the diffusion engine the 
 evaluations is a property of the trained model: the noise schedule is discretised at training time,
 and sampling with fewer steps than were trained is sampling from a different chain. For the
 transport engines the budget is a property of the \emph{integrator}, chosen at inference; the
-learned object is a velocity field, and the average-velocity objective is what makes a single Euler
-step of that field a usable plan rather than a coarse one.
+learned object is a velocity field, and the average-velocity objective turns a single Euler step of
+that field into a usable plan.
 
 Measured, at the published protocol, the baseline scores $0.667$ at a budget of one and $1.000$ at
 ten and at twenty; the transport engines hold $0.99$--$1.00$ from one to twenty.
@@ -304,7 +363,7 @@ control steps at $7.4\times$ less compute, architecture-matched, and it satisfie
 \autoref{def:improvement}.
 \dataref{temp/0609/I/batch\_avoiding\_combined\_20260906\_125724, job 25444; DA\_20260906 \S3}
 
-\provisional{This row is underpowered and must not be quoted as the entry's headline. It rests on
+\provisional{This row is underpowered and is not the entry's headline. It rests on
 24 rollouts --- 4 seeds $\times$ 3 geometries $\times$ 2 trials --- and \textbf{seed 6 is absent},
 while the pinned baseline pools five seeds, so the comparison is not seed-matched. The
 \emph{timing} differences survive that: they are factors of two and seven against run-to-run
@@ -312,7 +371,7 @@ variation of a few per cent. The \emph{safety} difference does not: $1.000$ agai
 rollouts out of 24 and is not significant. The powered version is a budget sweep at this work's
 protocol across all five seeds.}
 
-The mechanism follows from the name and is worth stating because it predicts the sign. The endpoint
+The mechanism follows from the name, and it predicts the sign. The endpoint
 is near-feasible at every transport time, so the solver starts close to its answer and converges in
 few iterations; the iterate is off-manifold early, so it does not. \guard{This mechanism is
 currently \emph{inferred from timing}: per-solve time and iteration counts are not exported for the
@@ -380,11 +439,12 @@ the dynamic range to separate anything at all.
 \subsection*{Flat in the budget, and why}
 
 MeanFlow improves as the budget rises, from $0.2354$\,m at two evaluations to $0.0741$\,m at twenty,
-while the bootstrapped target is flat or worsening on both of its floors --- $0.3738 \to 0.3918$\,m
-at $\alpha = 0.2$ and $0.3978 \to 0.4488$\,m at $\alpha = 0.05$. The derived mechanism is that the
-bootstrapped target closes its finite difference with the model's own frozen output, which
-contributes a field bias of order $(1-\alpha)$ that does not shrink as the interval does; the bias
-is therefore budget-independent, and raising the budget cannot integrate it away.
+while the consistency target is flat or worsening on both of its floors --- $0.3738 \to 0.3918$\,m
+at $\alpha = 0.2$ and $0.3978 \to 0.4488$\,m at $\alpha = 0.05$. The mechanism is the one
+\autoref{sec:method:engine} states: a finite-difference target closed with the network's own
+stop-gradient output inherits a fraction of that network's error, at a rate set by $\alpha$. That
+inherited term does not shrink as the interval shrinks, so it is independent of the step budget, and
+a larger budget cannot integrate it away. The analytic target carries no such term.
 \dataref{Gen14 CLOSURE\_20260907 \S5.1}
 
 \subsection*{The projector result: one operating point, and it is not the largest budget}
@@ -450,7 +510,7 @@ written; the ranking is not banked.
   \item The \textbf{pillars} scene at a budget of five is \textbf{discriminating} and carries the
     ranking.
   \item The \textbf{s-curve} scene is \textbf{all-fail} and is retained as the \emph{controller-limit
-    case} rather than as a ranking scene, which is a stronger use of it. Its ceiling is $0.100$
+    case} rather than as a ranking scene. Its ceiling is $0.100$
     across forty configurations and no arm clears the second stage of the funnel; raising the budget
     beyond five is non-monotone and does not rescue it. An earlier engine ordering on this scene was
     \textbf{tracker-confounded and is retracted} --- which is itself the evidence that the scene
@@ -462,15 +522,15 @@ written; the ranking is not banked.
 
 Averaged over seventeen matched configurations on the pillars scene at a budget of five, mean
 success and constraint satisfaction is $0.635$ for MeanFlow, $0.359$ for plain flow matching and
-$0.235$ for the bootstrapped target; ceilings are $1.000$, $0.900$ and $0.700$; configurations at or
+$0.235$ for the consistency target; ceilings are $1.000$, $0.900$ and $0.700$; configurations at or
 above $0.8$ number seven, two and \emph{zero} of seventeen respectively.
 \dataref{Gen15 CLOSURE\_20260910 \S2}
 
 \provisional{Seed 6, ten rollouts, one scene. This is the ordering the corpus shows and it is not
 banked; two to three additional seeds on this scene are the one required run for this entry.}
 
-Two things about it are worth stating even at that strength. It is the fourth environment in which
-the bootstrapped target does not improve on MeanFlow, and the first in which it finishes
+Two things hold even at that strength. It is the fourth environment in which
+the consistency target does not improve on MeanFlow, and the first in which it finishes
 \emph{behind plain flow matching} --- on the one aerial scene with dynamic range, and it is the only
 engine with no configuration above $0.8$. And the corridor scene's empty ordering reproduces, in a
 second environment and independently, the same absence of power that the state-based benchmark shows
@@ -504,7 +564,7 @@ redundant here, it is the only configuration that put the aircraft in an unsafe 
 projection cost.
 
 Two qualifications complete the entry. Projection is not universally worth paying for: unprojected
-scores $0.000$ for the bootstrapped target, where projection is essential, $0.900$ for MeanFlow,
+scores $0.000$ for the consistency target, where projection is essential, $0.900$ for MeanFlow,
 where it is marginal, and $0.900$ for plain flow matching, whose best configuration is unprojected
 --- there, projection \emph{hurts}. And the single configuration reaching $1.000$ in the entire
 family is MeanFlow on a \textbf{geometry-ablated} projector: that ablation removes the geometric rows
@@ -524,7 +584,7 @@ unmatched budgets --- not a proof.}
 When the candidate fan is one, the three selection rules do not merely agree on average --- they are
 \textbf{bit-identical in all fifteen paired blocks}, on success and constraint satisfaction and on
 control steps alike, for every engine tested: the baseline, MeanFlow on both backbones, plain flow
-matching at two activation thresholds, and the bootstrapped target. This is predicted by the
+matching at two activation thresholds, and the consistency target. This is predicted by the
 implementation, which selects index zero when there is only one candidate, and confirmed exactly
 rather than statistically. Every fan-one evaluation in this project therefore evaluates three
 rules that are the same rollout, and dropping to one is a threefold saving on the projection stage
@@ -574,7 +634,7 @@ one the machinery is exactly redundant --- and not a single recommended rule.
     benchmark and an exact tie on the vision-conditioned one --- while MeanFlow beats the baseline
     decisively where the task has the range to show it ($-0.3744$\,m, none of ten contexts lost,
     $p = 0.0020$).
-  \item \textbf{The bootstrapped target does not improve on MeanFlow.} It is a pair with MeanFlow
+  \item \textbf{The consistency target does not improve on MeanFlow.} It is a pair with MeanFlow
     where the task cannot separate them and behind it where the task can, in four environments, with
     a derived mechanism. \autoref{sec:disc:negative} gives it as a negative result rather than a gap.
   \item \textbf{The constraint-arm answer is regime-dependent and is stated per entry}: a cost

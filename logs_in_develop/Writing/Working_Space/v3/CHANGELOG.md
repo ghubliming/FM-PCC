@@ -17,6 +17,187 @@ is sourced from · what it left open.
 
 ---
 
+## v3.5 — 2026-09-12 · raw plan quality: the half of the headline that was missing
+
+**Asked for:** the smoothness of the raw network output matters — a chaotic, low-quality plan can be
+masked downstream by the IK/controller, while MeanFlow holds the same or better quality — with the
+figures from `Report_20260819_MF_UNet` (and the consistency target, if applicable). Write it into the
+tex if absent, and into a note so it is not lost. Skip either if already done.
+
+**Checked first, as asked: neither was done.** The tex mentioned smoothness exactly once, in
+`sec:disc:limitations`, and only to say no metric exists — the *argument* was absent. v2's tex: zero.
+The notes: one clause inside the readiness ledger's list of limits. So both jobs were needed.
+
+### Why this was a real gap, not a nice-to-have
+
+Every number in \autoref{ch:results} is measured after a projector **and** a tracking controller,
+and both are low-pass. Without this section a reader can reasonably ask whether the $31\times$ is
+bought by degrading the plan. The evidence says the opposite, and it is the missing half of the
+headline: **the MeanFlow engine is not merely cheaper at one evaluation — its plans are usable at one
+evaluation, where the baseline's are not.**
+
+### 1 · `sec:res:state` — a new subsection, *The plans themselves, before any projection*
+
+With `fig:raw-plans`, two panels side by side at one network evaluation, projector off: MeanFlow's
+replans form a tight ribbon around the executed path; the diffusion baseline's are a high-frequency
+scribble across the workspace. Matched backbone size, matched budget, and on this cell matched
+compute — 0.0097 against 0.0094\,s per step, three per cent apart.
+
+Quantitatively: **6.0 unprojected violations against 28.0, a factor of 4.7**, at 58.0 against 56.5
+steps. A second evaluation brings MeanFlow to 12.0 and tightens the ribbon, so the one-evaluation
+panel is the low end of a trend, not a lucky sample.
+\dataref{Report\_20260819\_MF\_UNet \S7}
+
+**The load-bearing sentence:** the baseline's *commanded* traces are smooth, but they are smooth
+because the controller integrates the scribble away, not because the plan was good.
+
+The consistency target's raw arm is reported too — 20/20 goals at one evaluation against MeanFlow's
+and flow matching's 17/20 and the baseline's 12/20 at its full budget — with a `\guard` stating that
+this is three episodes on one seed, that **the margin does not survive projection**, and that the raw
+arm therefore supports *the few-step objectives draw better plans than diffusion* and **not** an
+ordering among them. That keeps it consistent with the standing negative result.
+⚠️ The successes-only step basis is named, because the toolchain has two `n_steps` definitions and
+mixing them is a real error.
+
+### 2 · `sec:disc:threats` — the general form
+
+New subsection, *Downstream metrics can hide the generator*: an evaluation that measures only what
+survives the control stack measures **the stack's tolerance** as much as the planner's quality.
+Reporting the unprojected arm costs one configuration per cell. This also bounds the aerial entry —
+with a tracking error of 0.30--0.49\,m, that stack absorbs more than any scene leaves as clearance.
+
+### 3 · Two smaller consequences
+
+`sec:setup:metrics` now says *why* stage 1 of the funnel is evaluated on the unprojected arm, and
+that the reason applies beyond the all-fail regime. `sec:disc:limitations` was upgraded from "no
+smoothness metric is reported" to naming the specific missing measurement — **jerk, path length or
+curvature over the saved plan files, which needs no new runs**, only a pass over plans already on
+disk. It is now the cheapest outstanding measurement in the project.
+
+### 4 · Vendored figures, with provenance enforced
+
+These four panels come from the evaluation's own diagnostics and cannot be rebuilt from a CSV, so
+they are **copied, not redrawn**. `plots/sources.py` gains a `VENDORED` registry — destination name,
+source path, and a provenance string — and `make_figs.py` copies them and prints them in their own
+table in `figures/MANIFEST.md`.
+
+🚨 **The registry exists because of the v3.3 near-miss.** All four were checked against
+`/workspaces/aux_repo/` and are ours; the rule is now explicit in the registry's own header, since
+`figures/avoiding*.png` at the repo root are byte-identical to the baseline authors' copies.
+
+### 5 · The note
+
+`Auxiliary/NOTES_plan_quality_and_smoothness.md`, registered in `Auxiliary/README.md`: the claim, the
+two tables, the ladder warning, the `n_steps`-basis trap, the owed measurement, the figure-provenance
+rule, and the standing caveats (unprojected arms are unconstrained, so raw violation counts are never
+a safety result; the raw gap and the projected gap are different sizes).
+
+### 🔴 A bug I introduced, caught by the tooling rather than by reading
+
+The new figure was written with `\fmpccgraphic` in the **source**. That macro is injected by
+`bundle/make_bundle.py` and does not exist in a direct build of `thesis_v3.tex`, so the bundle would
+have compiled while the split draft failed — the worst way for this to break, because the artefact
+that gets uploaded still works.
+
+`make_bundle.py --verify` flagged it: it un-rewrites `\fmpccgraphic` to `\includegraphics` before
+diffing, so a source that already said `\fmpccgraphic` came back as a mismatch. `check.py` also
+under-counted the figures, since it looks for `\includegraphics`. Both symptoms, one cause.
+
+Fixed to `\includegraphics`, and **`check.py` now fails on any bundler-only macro appearing in a
+source file** — tested by reintroducing it, which the guard catches by name and file.
+
+### Checks
+
+`tools/check.py`: 4 019 lines, 146 labels, **4 figure references**, 15 `\hole`, 20 `\guard`,
+20 `\dataref`; all references and citations resolve; braces and environments balanced.
+6 generated + 4 vendored figures. Both bundles rebuilt; `--verify` byte-faithful. **Not compiled.**
+
+---
+
+## v3.4 — 2026-09-12 · absorbed v2.7–v2.9, and applied their critique to v3's own chapters
+
+**Asked for:** two jobs. (1) Sync v2's updates into v3 and move the version marker. (2) See whether
+v2's new critiques — the *"bootstrapped target is jargon, not the scientific name"* one in
+particular — also apply to the sections v3 wrote.
+
+### Job 1 · Sync
+
+Six files moved in v2 (`01_frontmatter`, `99_backmatter`, `01_introduction`, `02_background`,
+`04_method`, `bibliography.bib`), all **fast-forwards** — v3 had edited none of them. Merged clean.
+Absorbed v2.7, v2.8 and v2.9; baseline stamped at **v2.9**. 3 939 lines; 28 bibliography entries,
+all cited.
+
+🔴 **The stamp was wrong on the first attempt, and the tool was at fault.** `v2_version()` took the
+*first* `## v2` heading, and v2's changelog is not strictly newest-first — a stale `v2.6` entry sits
+above `v2.9`. v3 would have recorded itself as inheriting from v2.6 while in fact holding v2.9. The
+parser now takes the **highest** version, and `status` prints a note when the changelog is out of
+descending order. A version marker that can be silently wrong is worse than no marker.
+
+One thing the merge could have broken and did not: v2.7 **deleted the `\acro{PID}` declaration**
+(the controller is not a PID). No v3 chapter used `\ac{PID}`, so nothing dangled.
+
+### Job 2 · v2's critique, applied to Chapters 5–8
+
+**A · The coinage. `bootstrap` 21 → 0.** v2.8 established that *"bootstrapped target"* was this
+draft's own coinage and hid the method: it is ordinary **consistency training** — the identity closed
+by a **finite difference at an intermediate transport time, taken from a stop-gradient copy of the
+network**, where MeanFlow closes it with an analytic derivative. v3 was still using the retired term
+21 times across five chapters, in prose, in a results table, and in `tab:names`.
+
+Renamed to **the consistency target** throughout, and the two places that state the *mechanism* were
+rewritten to v2's account rather than merely relabelled — the old text explained the failure as a
+*"field bias of order $(1-\alpha)$"*, which was my own formulation of it. It now reads: a
+finite-difference target closed with the network's own stop-gradient output **inherits a fraction of
+that network's error**, at a rate set by $\alpha$; the inherited term does not shrink as the interval
+shrinks, so it is budget-independent, and the objective admits self-consistent fields that are wrong.
+`plots/sources.py` renamed with it, so figure legends and prose cannot diverge.
+
+**B · The controller's name.** v2.7 established that `CascadedPID` is a misnomer on three counts (no
+integral term anywhere; the inner loop is a coordinate-free $SO(3)$ error, not a scalar loop; and
+"cascaded PID" implies nested scalar loops). v3 said *"cascaded geometric controller"*; now
+**"the cascaded geometric tracking controller"**, matching v2 exactly.
+
+**C · The tone.** v2.9's finding — the prose had been arguing with an imagined examiner — applied to
+v3's chapters at least as much. Swept to zero:
+
+| pattern | before | after |
+|---|---|---|
+| `"worth stating / worth naming"` · `"It is worth"` | 4 | **0** |
+| `"is not a defect"` · `"is not a post-hoc excuse"` | 3 | **0** |
+| `"must not be"` · `"does not claim"` · `"makes no claim"` | 3 | **0** |
+| `"is what makes"` (justifying form) | 8 | **0** |
+| `"rather than"` | 58 | **48** (survivors are factual contrasts: *CPU-limited rather than accelerator-limited*) |
+
+Representative rewrites, keeping every fact and dropping the defending:
+
+- *"The taxonomy is not a post-hoc excuse for weak cells. It is diagnostic, it is measured rather than
+  asserted … and it is used in three chapters."* → *"The regime is measured, not assigned: an
+  all-pass scene is one where the violation counter reads zero on the unprojected arm."*
+- *"Retiring it as a ranking scene is the correct action, and keeping it as the demonstration … is a
+  stronger use of it than a failed ranking would have been"* → *"It is kept as the demonstration of
+  where the control stack runs out."*
+- *"That is not a defect of the experiment — both arms are reported — but it is a reason …"* → *"Both
+  arms are reported, and the comparison is a pair rather than an ordering."*
+- *"Two claims explicitly not made"* → *"Two results that carry no claim"*, with the defending
+  sentences deleted and the numbers left to speak.
+- One real redundancy surfaced by the sweep: the sentence explaining that the halfspaces are absent
+  from the demonstrations appeared **twice**, 130 lines apart. One survives.
+
+### Not done
+
+v2 §2.4 still carries *"No mathematics is given for it in this draft"* for the consistency target,
+so the deferral v3.0 logged as *"first item of v3.1"* is still open **in v2**, which owns that
+chapter. v2.8 did add the mechanism to Engine 3, so the inconsistency is smaller than it was. The
+one-way rule holds: that edit belongs in v2 and syncs down.
+
+### Checks
+
+`tools/check.py`: 14 files, 145 labels, all references and citations resolve, braces and environments
+balanced, `bootstrap` 0. `sync_v2.py status`: clean at v2.9. Both bundles rebuilt;
+`make_bundle.py --verify`: 13 inlined sources, byte-faithful. **Not compiled.**
+
+---
+
 ## v3.3 — 2026-09-11 · the environments and their constraint sets, shown rather than only described
 
 **Asked for:** the setup section should carry an image and a description of the environment *and* the

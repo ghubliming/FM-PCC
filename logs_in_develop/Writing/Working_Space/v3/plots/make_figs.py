@@ -17,6 +17,7 @@ Stdlib only, by design: see fmpcc_svg.py.
 import argparse
 import datetime
 import os
+import shutil
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -28,7 +29,7 @@ import sources as S       # noqa: E402
 DEFAULT_OUT = os.path.normpath(os.path.join(HERE, '..', 'figures'))
 
 
-def write_manifest(outdir, built, skipped):
+def write_manifest(outdir, built, skipped, vendored=()):
     lines = [
         '# Figure manifest — generated, do not edit',
         '',
@@ -42,6 +43,13 @@ def write_manifest(outdir, built, skipped):
     for name, prov in built:
         corpus, _, protocol = prov.partition(' | ')
         lines.append(f'| `{name}.svg` | `{corpus}` | {protocol} |')
+    if vendored:
+        lines += ['', '## Vendored — copied in, not generated', '',
+                  'These were produced by the evaluation\'s own diagnostics and cannot be rebuilt',
+                  'from a CSV. Each was checked against `/workspaces/aux_repo/` and is ours.', '',
+                  '| figure | source | provenance |', '| :-- | :-- | :-- |']
+        for key, rel, prov in vendored:
+            lines.append(f'| `{key}` | `{rel}` | {prov} |')
     if skipped:
         lines += ['', '## Not built', '',
                   'Its corpus is not on this machine. `temp/` is a local drop directory and is',
@@ -91,6 +99,21 @@ def main():
 
     os.makedirs(a.out, exist_ok=True)
     built, skipped = [], []
+
+    # Vendored panels first: copied, never redrawn, each with its provenance.
+    vendored = []
+    for key, (rel, prov) in S.VENDORED.items():
+        if a.match and a.match not in key:
+            continue
+        src = os.path.join(S.REPO, rel)
+        if not os.path.isfile(src):
+            print(f'skip  {key}  (source asset absent)')
+            skipped.append((key, f'vendored source absent: {rel}'))
+            continue
+        dst = os.path.join(a.out, key + os.path.splitext(src)[1])
+        shutil.copyfile(src, dst)
+        print(f'copied {os.path.basename(dst)}   <- {rel}')
+        vendored.append((key, rel, prov))
     for name, fn in todo:
         try:
             res = fn(a.out)
@@ -106,8 +129,9 @@ def main():
         print(f'wrote {os.path.basename(path)}   <- {prov}')
         built.append((name, prov))
 
-    write_manifest(a.out, built, skipped)
-    print(f'\n{len(built)} figure(s) in {a.out}; manifest updated.')
+    write_manifest(a.out, built, skipped, vendored)
+    print(f'\n{len(built)} generated + {len(vendored)} vendored figure(s) in {a.out}; '
+          f'manifest updated.')
     return 0
 
 

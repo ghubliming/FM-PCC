@@ -28,6 +28,7 @@ import datetime
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -66,20 +67,38 @@ POLICY = {
 STATE = os.path.join(V3, 'inherited', 'SYNC_STATE.json')
 
 
-def v2_version():
-    """The newest version heading in v2's CHANGELOG, e.g. 'v2.6 - 2026-09-10 - ...'.
+RE_V2_HEADING = re.compile(r'^## v(\d+)\.(\d+)\b(.*)$')
 
-    This is the human-readable answer to "which v2 is the inherited half of v3
-    at?", and it is what gets stamped into SYNC_STATE.json.
+
+def v2_version():
+    """The HIGHEST version heading in v2's CHANGELOG, e.g. 'v2.9 - ... - ...'.
+
+    Highest, not first. The changelog is meant to be newest-first, but it is
+    hand-maintained and has not always been: a stale v2.6 entry once sat above
+    v2.9, and taking the first heading stamped v3 as inheriting from v2.6 while
+    it had in fact just absorbed v2.9. A version marker that can be silently
+    wrong is worse than none, so this sorts.
+
+    Returns (version_string, out_of_order_flag).
     """
+    best, first = None, None
     try:
         with open(os.path.normpath(os.path.join(V3, '..', 'v2', 'CHANGELOG.md'))) as f:
             for ln in f:
-                if ln.startswith('## v2'):
-                    return ln[3:].strip()
+                m = RE_V2_HEADING.match(ln)
+                if not m:
+                    continue
+                key = (int(m.group(1)), int(m.group(2)))
+                text = ln[3:].strip()
+                if first is None:
+                    first = (key, text)
+                if best is None or key > best[0]:
+                    best = (key, text)
     except OSError:
         pass
-    return 'unknown'
+    if best is None:
+        return 'unknown', False
+    return best[1], first[0] != best[0]
 
 
 def digest(path):
@@ -104,7 +123,7 @@ def save_state(**kw):
     st = load_state()
     st.update(kw)
     st['synced_at'] = datetime.date.today().isoformat()
-    st['v2_version'] = v2_version()
+    st['v2_version'], _ = v2_version()
     st['thesis_v2_sha256_16'] = digest(V2_TEX)
     st['bibliography_sha256_16'] = digest(V2_BIB)
     with open(STATE, 'w') as f:
@@ -149,9 +168,12 @@ def cmd_status(_a, tmp):
     st = load_state()
     print(f'inherited half is at : {st.get("v2_version", "NOT STAMPED")}')
     print(f'last synced          : {st.get("synced_at", "-")}')
-    now = v2_version()
+    now, out_of_order = v2_version()
     if st.get('v2_version') and now != st['v2_version']:
         print(f'v2 is now at         : {now}   <-- moved')
+    if out_of_order:
+        print("note                 : v2's CHANGELOG is not in descending version order; "
+              'the highest entry is used, not the first.')
     print()
     rows = classify(tmp)
     w = max(len(r[0]) for r in rows)

@@ -125,6 +125,15 @@ def main():
         if delta:
             problems.append((f'brace delta in {n}', [str(delta)]))
 
+    # --- bundler-only macros must not appear in the sources -----------------
+    # \fmpccgraphic is injected by bundle/make_bundle.py and is undefined in a
+    # direct build of thesis_v3.tex. Writing it into a chapter breaks the split
+    # build while leaving the bundle working, which is the worst way to break.
+    leaked = sorted({n for n, s2 in clean.items() if '\\fmpccgraphic' in s2})
+    if leaked:
+        problems.append(('bundler-only macro \\fmpccgraphic used in a source file '
+                         '(use \\includegraphics; the bundler rewrites it)', leaked))
+
     # --- figures ------------------------------------------------------------
     figdir = os.path.join(V3, 'figures')
     wanted = {g for s in clean.values() for g in RE_GRAPHIC.findall(s)}
