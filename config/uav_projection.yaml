@@ -666,3 +666,73 @@ geo_constraint_variants:
     obstacle_constraints:         # PHYSICAL: inside corners at the crossover
       - {type: sphere_outside, dimensions: ['x', 'y'], center: [-0.5, -0.3], radius: 0.05}
       - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 0.5,  0.3], radius: 0.05}
+
+  # ══════════════════════════════════════════════════════════════════════════════
+  # [Gen15 U14 2026-09-12] corridor_gate — a SLANTED HALFSPACE across the corridor
+  #
+  # WHY A HALFSPACE AND NOT ANOTHER BALL. U11/U12/U13 put a sphere on the corridor route at
+  # r = 0.35 / 0.12 / 0.05 / 0.01 and every one returned collision_free = 0.000 with the
+  # executed path BIT-IDENTICAL to the unprojected arm (max |dy| = 0.0000 m, max |dz| =
+  # 0.0010 m). Radius, altitude, ceiling, the action-magnitude cap (`bounds_free`) and the
+  # projection threshold (T=1) were each ruled out. A halfspace is the one constraint family
+  # left that is KNOWN to bite on this stack — on `pillars` it takes af from 197.70 to 22.90
+  # violations (rate 0.3118 -> 0.0584) and collision_free 0.000 -> 0.900.
+  #
+  # THE GEOMETRY (all numbers verified against the flown route, not assumed):
+  #   corridor_path(x_start=-2.8, x_end=2.8)  ->  flight is LEFT to RIGHT.
+  #   The gate rises left->right and is active from x=+0.40, so the drone meets the TIGHTEST
+  #   point first (a head-on wall) and the wedge opens behind it. Mirroring it in x matters:
+  #   the descending version eases the drone in and squeezes it last, which is not the demo.
+  #
+  #   raw line y = 0.15 + 0.20x   (slope 0.20, +11.31 deg, sec = 1.0198)
+  #   effective boundary = raw - margin*sec      side 'below'  ->  drone centre must be UNDER it
+  #     planner (margin 0.31): eff = 0.20x - 0.1661
+  #     scorer  (margin 0.33): eff = 0.20x - 0.1865
+  #
+  #   x_active STARTS AT 0.40, NOT 0.13. 0.13 is where the PLANNER's slot opens; the SCORER
+  #   uses margin 0.33 (r_drone + margin_base) and its slot does not open until x = 0.3327.
+  #   Starting at 0.13 would score violations on x in [0.13, 0.33] that NO path can avoid, so
+  #   collision_free could never reach 1 even for a perfect run. 0.40 clears that by 67 mm.
+  #
+  # WHAT IT DOES TO THE THREE TRAINED CHANNELS (scorer basis, margin 0.33):
+  #     L  y = -0.12   CLEAN for all x            <- the escape route, and it is TRAINED data
+  #     C  y =  0.00   blocked x in [0.40, 0.93]
+  #     R  y = +0.12   blocked x in [0.40, 1.53]
+  #   This is deliberately the EASIEST solvable form: the detour target is not a novel path,
+  #   it is the L channel the generator already has demonstrations for. The projector only has
+  #   to move the plan 0.120 m in y, onto a route the model has seen.
+  #
+  # 🔴 THE PREDICTION, ON RECORD BEFORE THE RUN. `action_bounds='auto'` derives the projector's
+  # per-step action cap from this dataset's own observed range, and the corridor expert flies a
+  # dead-straight line, so dy is degenerate:
+  #     temp/0809/2026-09-07/00_05_59_uav_mix_eval_25495.log  (uav-corridor)
+  #     action_bounds=auto -> lb=[ 1.24e-04 -2.20e-05 -2.20e-05] ub=[4.3886e-02 2.2e-05 2.2e-05]
+  #   Riding this boundary needs dy/step = 0.20 * 4.3886e-02 = 8.78e-03  ->  399x the cap.
+  #   Reaching L at all needs 0.120 m of lateral travel; 271 steps x 2.2e-05 = 6.0 mm available,
+  #   i.e. 20x short. Compare pillars, where the SAME derivation gives dy = 3.97e-02 (1805x
+  #   corridor's) and the projector does solve the geometry.
+  #   So the honest expectation is that this FAILS like U11-U13 — and if it does, that is the
+  #   result: the blocker is the DATASET's action range, not the constraint family, not the
+  #   shape, and not the angle. A pass would refute that and is the more interesting outcome.
+  #
+  # GATES.  diffuser  n_violations > 0            (the gate actually bites)
+  #         dpcc-t    collision_free_completed > 0 (the projector actually solves it)
+  #         dpcc-t    executed path differs from diffuser in y by > 1 mm   <- the real question
+  # ══════════════════════════════════════════════════════════════════════════════
+  - name: corridor_gate
+    scene: corridor
+    geo_tag_suffix: '_hgg'
+    constraint_types: ['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds']
+    planning_inflation: {r_drone: 0.31, margin_base: 0.0}
+    workspace_bounds:             # unchanged from corridor_hg; y left to the wall halfspaces
+      lb: [-4.0, -.inf, 0.30]
+      ub: [ 4.0,  .inf, 1.80]
+    halfspace_constraints:        # the two corridor walls, UNCHANGED, + the new gate
+      - {line: [[-2.0, -0.45], [2.0, -0.45]], side: 'above', x_active: [-2.0, 2.0]}
+      - {line: [[-2.0,  0.45], [2.0,  0.45]], side: 'below', x_active: [-2.0, 2.0]}
+      - {line: [[-2.0, -0.25], [2.0,  0.55]], side: 'below', x_active: [ 0.40, 2.0]}   # U14 gate
+    obstacle_constraints:         # UNCHANGED from corridor_hg — the finite wall-end caps
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0, -0.5], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0, -0.5], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0,  0.5], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0,  0.5], radius: 0.05}
