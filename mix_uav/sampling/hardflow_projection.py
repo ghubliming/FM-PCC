@@ -801,7 +801,8 @@ def hardflow_skip_note(variant, flow_steps, activation_threshold, reason):
 # Suffixes that may legally follow the selector token in an arm-C variant name. Stripped
 # before the `-r`/`-c`/`-t` test so a toggle never masks the selector. Keep in sync with the
 # variant-name gates in mix_uav_test/eval_mix_uav.py::setup_dpcc_projector.
-_TOGGLE_SUFFIXES = ('_train_set', '-tightened', '-geo_free', '-bounds_free', '-model_free')
+_TOGGLE_SUFFIXES = ('_train_set', '-tightened', '-geo_free', '-bounds_free', '-model_free',
+                    '-pdes')   # [Gen15 U16 fix] geometry bound to p_des — see setup_dpcc_projector
 
 
 def resolve_hf_batch_size(variant, configured_batch):

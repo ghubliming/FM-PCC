@@ -686,7 +686,10 @@ def _load_base_cfg(scene, seed):
     if _var_env:
         _avail = list(cfg.get('projection_variants') or [])
         _want = [v.strip() for v in _var_env.split(',') if v.strip()]
-        _unknown = [v for v in _want if v not in _avail]
+        # [Gen15 U16 fix] `<known variant>-pdes` is accepted without listing it anywhere: it is a
+        # binding toggle on an existing variant (see setup_dpcc_projector), not a new variant.
+        _unknown = [v for v in _want
+                    if v not in _avail and not (v.endswith('-pdes') and v[:-len('-pdes')] in _avail)]
         if _unknown:
             print(f'[ ERROR ] UAV_MIX_VARIANTS names {len(_unknown)} variant(s) that do not '
                   f'exist for this job: {_unknown}')
@@ -1235,6 +1238,26 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
 
     _DIM = {'dx': 0, 'dy': 1, 'dz': 2, 'x': 6, 'y': 7, 'z': 8}   # x,y,z = actual position p
     pad = trajectory_dim - 9
+    # ── [Gen15 U16 fix] `-pdes` toggle: bind the GEOMETRIC families to the setpoint p_des ──────
+    # Default (no token) is unchanged: halfspace / obstacles / workspace box on the ACTUAL
+    # position p (dims 6,7,8), the DPCC-faithful binding of
+    # logs_in_develop/Gen11/Epoch9_PCC_Constraints/Plan/STUDY_DPCC_constraint_dim_binding.md §4.
+    # That study's argument is that p and p_des are "the running Euler integral of the same
+    # action from the same initial state", so constraining p drags p_des along. On the UAV they do
+    # NOT start from the same state: the drone lags its setpoint by ~0.4-0.5 m every plan (U16,
+    # corridor_v2_slide). The plan's p starts at the lagging drone and is modelled as moving by
+    # `act` instantly, so while the real drone is still catching up the projector keeps pushing
+    # `act`, and the setpoint winds up past the constraint. Measured: setpoint 0.44 m deeper than
+    # the drone when it first cleared the slide, and both projected arms ending at y -0.65 against
+    # a -0.37 limit.
+    # p_des IS the exact integral of the action (p_des <- act has no plant lag), so binding the
+    # geometry there constrains the thing the projector actually commands. Opt-in via a variant
+    # token, e.g. `dpcc-t-bounds_free-pdes`, `hardflow_new-pdes` (HardFlow reads this same list).
+    # Violations are still SCORED on the actual p (`_exec_constraint_violations`), unchanged.
+    _geo_on_pdes = 'pdes' in str(variant).split('-')
+    _goff = 3 if _geo_on_pdes else 6
+    if _geo_on_pdes:
+        _DIM = {'dx': 0, 'dy': 1, 'dz': 2, 'x': 3, 'y': 4, 'z': 5}   # x,y,z = setpoint p_des
     is_tightened = 'tightened' in variant
     tightening   = float(config.get('enlarge_constraints') or 0.0)
     enlarge      = tightening if is_tightened else 0.0
@@ -1258,8 +1281,9 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
         ws = config.get('workspace_bounds')
         if ws is not None:
             ws_lb = np.array(ws['lb'], dtype=float); ws_ub = np.array(ws['ub'], dtype=float)
-            lb = np.concatenate([np.full(6, -np.inf), ws_lb + margin, np.full(pad, -np.inf)])
-            ub = np.concatenate([np.full(6,  np.inf), ws_ub - margin, np.full(pad,  np.inf)])
+            _tail = trajectory_dim - _goff - 3            # == pad for the default p binding
+            lb = np.concatenate([np.full(_goff, -np.inf), ws_lb + margin, np.full(_tail, -np.inf)])
+            ub = np.concatenate([np.full(_goff,  np.inf), ws_ub - margin, np.full(_tail,  np.inf)])
             constraint_list += [['lb', lb], ['ub', ub]]
 
     if 'bounds' in ctypes and 'bounds_free' not in variant:
@@ -1637,7 +1661,10 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
         # replan (only when the scene declares x_active halfspaces — else rebuild_projector
         # is None and this is skipped, preserving the build-once path exactly).
         if rebuild_projector is not None:
-            policy.projector = rebuild_projector(float(p[0]))
+            # [Gen15 U16 fix] `-pdes` binds the geometry to the setpoint, so its x_active gate reads
+            # the setpoint's x too (it leads the drone by ~0.4 m). Default variants: drone x, unchanged.
+            _gate_x = float(p_des[0]) if 'pdes' in str(variant).split('-') else float(p[0])
+            policy.projector = rebuild_projector(_gate_x)
 
         t0 = time.perf_counter()
         action, traj = policy({0: obs}, batch_size=batch_size, horizon=horizon)

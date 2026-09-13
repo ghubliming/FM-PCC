@@ -77,4 +77,33 @@ Same as U15: `diffuser`, `dpcc-t-bounds_free`, `hardflow_new`; K = 3; 2 trials (
 
 | job | submitted | status |
 | --: | :-- | :-- |
-| — | — | not yet submitted |
+| (id not recorded) | 2026-09-13 | DONE. Results `temp/1309/corridor_cv2s_bounds+dynamics+geo_bounds+halfspace+obstacles/`, child log not downloaded |
+
+### 6.1 First read (2 trials × 3 arms, one seed, K = 3: injection, not a DA)
+
+**Scene check (indirect, no child log).** The projected drones flew at y ≈ −0.63 inside x ≤ 2 with
+contact_frac ≤ 0.001. In the original XML that position is through the wall, so `scene_corridor_v2.xml`
+was the scene simulated. FRAC = 1.0 reached the job: paths moved 0.5–0.7 m.
+
+| arm | success | S&C | collision-free | slide viol. steps | slide depth (max) | y at x = 2.0 (limit −0.37) | goal dist |
+| :-- | :-: | :-: | :-: | :-- | :-- | :-- | :-- |
+| diffuser | 2/2 | 0/2 | 0/2 | L 39, C 58 | 29 / 42 cm | −0.07 / +0.07 (drifts 6–7 cm, as U15) | 0.30 / 0.29 |
+| dpcc-t-bounds_free | **0/2** | 0/2 | 0/2 | L 30, C 30 (+3 bottom-wall) | **8 / 8 cm** | −0.62 / −0.63 | 0.73 / 0.77 |
+| hardflow_new | **0/2** | 0/2 | 0/2 | L 30, C 32 (+1 wall, +1 cap) | **8 / 9 cm** | −0.64 / −0.64 | 0.75 / 0.81 |
+
+No divergence aborts. **HardFlow did not flip this time.** No circuit-breaker trips.
+
+**Route C timeline** (y at x = −1, 0, 0.5, 1.0, 1.5, 2.0, 2.5, 2.8):
+- slide limit: +0.38, +0.13, +0.005, −0.12, −0.25, −0.37, n/a, n/a
+- dpcc: −0.01, +0.01, +0.01, **−0.05**, **−0.53**, −0.63, −0.60, −0.64
+
+**Reading:**
+- **Works:** both projectors now change the flight and cut slide penetration depth by ~75–80%
+  (29–42 cm → 8–9 cm), on L and C, with HardFlow stable.
+- **Fails 1, late:** the slide engages at x ≈ 0.45, but the drone only starts descending at x ≈ 1.0,
+  giving 30 shallow violation steps.
+- **Fails 2, overshoot + no return:** it then drops to the floor limit (−0.63 vs the −0.37 needed) and
+  stays there after the slide ends. The goal needs y ≥ −0.30 at x = 2.8, so success is 0/2 where the
+  diffuser gets 2/2. Consistent with the model being out of distribution at |y| > 0.13.
+
+**Verdict:** mechanism success, metric failure. Not ready for a paper run.
