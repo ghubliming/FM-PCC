@@ -434,6 +434,12 @@ VARIANT_ORDER = [
     'geo_free-bounds_free',
     'geo_free-model_free',
     'model_free-bounds_free', 'model_free-bounds_free-tightened',
+    # [Gen15 U17] corridor_v2 paper arms: geometry bound to the setpoint (`-pdes`) + DPCC tightening.
+    # `-tightened` is kept LAST so variant_parts() still reads it (endswith) -> ('...-pdes', True).
+    'dpcc-r-bounds_free-pdes-tightened', 'dpcc-c-bounds_free-pdes-tightened',
+    'dpcc-t-bounds_free-pdes-tightened',
+    'hardflow_sls-bounds_free-pdes-tightened', 'hardflow_sls-t-bounds_free-pdes-tightened',
+    'hardflow_new-bounds_free-pdes-tightened', 'hardflow_new-t-bounds_free-pdes-tightened',
 ]
 
 # Headline arms for the per-variant comparison table.
@@ -444,6 +450,11 @@ MAJOR_VARIANTS = [
     'hardflow_new', 'hardflow_new-c', 'hardflow_new-t',
     # [SolverSwap] SLSQP-backend twins — headline arms on the new default backend.
     'hardflow_sls', 'hardflow_sls-c', 'hardflow_sls-t',
+    # [Gen15 U17] corridor_v2 paper arms (see VARIANT_ORDER).
+    'dpcc-r-bounds_free-pdes-tightened', 'dpcc-c-bounds_free-pdes-tightened',
+    'dpcc-t-bounds_free-pdes-tightened',
+    'hardflow_sls-bounds_free-pdes-tightened', 'hardflow_sls-t-bounds_free-pdes-tightened',
+    'hardflow_new-bounds_free-pdes-tightened', 'hardflow_new-t-bounds_free-pdes-tightened',
 ]
 
 # Variants that run NO projector at all — their constraint columns describe the

@@ -1,5 +1,8 @@
 # U16 fix — `-pdes`: bind the geometry to the setpoint, not the lagging drone
 
+> 📋 **For review, read [`CHANGELOG_20260913_u16_fix1_fix2_FULL_REVIEW.md`](CHANGELOG_20260913_u16_fix1_fix2_FULL_REVIEW.md)** —
+> the consolidated account of both fixes. This file is the chronological working log.
+
 **Date:** 2026-09-13 · **Gen:** 15 · **Follows:** [`CHANGELOG_20260913_corridor_v2_wide_slide.md`](CHANGELOG_20260913_corridor_v2_wide_slide.md) §6.1
 **Run:** `Slurm_Codes/temp_bash/eval_20260913_u16fix_pdes.sh` (same scene, slide, K, trials and FRAC as U16)
 
@@ -147,3 +150,73 @@ If the fix passes, the next job is the **full corridor paper evaluation**, whose
 FM-PCC works on `corridor_v2`. An engine ranking of af > mf > fm > diffusion is a bonus, expected but
 not required. Every arm, including the diffusion K20 baseline, must run under the same settings:
 `corridor_v2` scene, `FMPCC_SAFE_EPS_FRAC=1.0`, and the same binding (`-pdes` or not).
+
+## 8. Decision (user, 2026-09-13): metrics identical to pillars / s_curve
+
+Success, S&C and violations stay exactly as the eval defines them for every other scene:
+- `success` = strict (goal reached within 0.30 m **and** safe);
+- `S&C` = `strict_and_constraints`;
+- violations scored on the actual drone.
+
+`relaxed_*` is only an extra column; it is not the demo criterion (§7's "demo criterion" is withdrawn).
+
+**Consequence for the current slide (`corridor_v2_slide`).** It pushes the drone to y ≈ −0.37 (−0.395 with
+`-tightened`) at the exit, and the corridor model never steers back sideways. So **route C cannot meet strict
+success on this geometry however well the projector works** (goal needs y ≥ −0.30 at x = 2.8); route R
+cannot either. Fix 2 therefore validates collision-freeness, and S&C can come only from L.
+
+**For the paper run** the slide exit must be goal-compatible for L, C and R. Sizing, to be checked before building:
+- the drone-centre limit at the exit is about −0.12 (tightened ride line ≈ −0.145);
+- the resulting goal distances are C ≈ 0.15 and R ≈ 0.27, both inside 0.30;
+- the red drone-centre line still crosses routes C and R; the raw orange line ends above them.
+
+## 9. Result of fix 2 (`temp/1309/corridor_cv2s_..._FIX2`, 2 trials, K = 3, one seed: injection, not a DA)
+
+| arm | route | success | S&C | collision-free | violations | closest slide clearance | y at x = 2.0 | goal dist |
+| :-- | :-- | :-: | :-: | :-: | --: | :-- | --: | --: |
+| diffuser | L / C | 1 / 1 | 0 / 0 | 0 / 0 | 39 / 58 | −290 / −418 mm | −0.07 / +0.07 | 0.30 / 0.29 |
+| dpcc-t-bounds_free-pdes | L / C | 1 / 0 | 0 / 0 | 0 / 0 | 37 / 49 | −22 / −21 mm | −0.35 / −0.35 | 0.30 / 0.42 |
+| **dpcc-t-bounds_free-tightened-pdes** | L / C | **1** / 0 | **1** / 0 | **1 / 1** | **0 / 0** | +3.1 / +5.5 mm | −0.37 / −0.37 | 0.30 / 0.42 |
+| hardflow_new-pdes (gating fixed) | L / C | 1 / 0 | 0 / 0 | 0 / 0 | 36 / 44 | −28 / −26 mm | −0.34 / −0.34 | 0.30 / 0.33 |
+| hardflow_new-tightened-pdes | L / C | 1 / 0 | 0 / 0 | 0 / 0 | **1 / 1** | **−1.5 / −1.5 mm** | −0.37 / −0.37 | 0.30 / 0.35 |
+
+No divergence aborts and no circuit-breaker trips in any arm.
+
+**Prediction check:**
+- ✅ **DPCC `-tightened-pdes` is collision-free on L and C:** 0 violations, where the diffuser has 39/58 and U16 had 30/33.
+- ✅ **HardFlow gating fix:** no more drift past the exit (y at x = 2.8 −0.35, was −0.57).
+- ❌ **HardFlow `-tightened-pdes` just misses:** exactly **one** violating step per route, **1.5 mm** deep.
+- ✅ **C cannot meet strict success** on this slide (§8): goal dist 0.35–0.42.
+
+**Where the last millimetres are.** Every arm's closest approach is at the corridor exit (x ≈ 1.98–2.00):
+HardFlow −1.5 mm, DPCC +3.1 / +5.5 mm. `-pdes` gates `x_active` by the setpoint, which leads the drone by
+~0.4 m, so the slide is released for the setpoint while the drone is still in the last ~0.4 m of it. The
+25 mm tightening margin is used up exactly there.
+
+**Paper geometry must therefore:**
+1. Keep the drone goal-reachable on L, C and R under strict success (§8).
+2. **End the slide with a flat run-out** instead of a release at its lowest point. A horizontal halfspace at
+   the exit level, continuing ~0.5 m past x = 2.0, holds the setpoint level until the drone has left the slide.
+   This is also the water-slide shape the user described.
+
+## 10. Geometry options for the full run, sized (2026-09-13)
+
+Assumptions: tightened ride line = drone-centre limit − 0.025; the drone settles 1.5 cm above it (measured in fix 2).
+
+| option | exit limit | angle / %cap | route pushes L / C / R | goal distance L / C / R (strict ≤ 0.30) |
+| :-- | --: | :-- | :-- | :-- |
+| **current** `corridor_v2_slide` | −0.37 | 14.0° / 50% | 0.26 / 0.38 / 0.50 m | 0.26 OK / 0.38 **MISS** / 0.50 **MISS** |
+| shallow + flat run-out | −0.12 | 10.7° / 38% | **0** (L not blocked) / 0.13 / 0.25 m | 0.01 / 0.13 / 0.25 all OK |
+
+**Ranking caveat (from `Campaign_20260907_five_missions/CLOSURE_20260910_uav_engine_ladder_final.md`):**
+- the original `corridor` was all-pass, and its ladder ordering sat inside noise (af ≥ mf: 2.4 steps vs σ ≈ 4.5);
+- mf > fm only because fm alone dropped to 0.800;
+- there was **no diffusion arm on corridor**.
+
+A shallow slide risks returning to that all-pass regime, where engines do not separate. The current slide caps
+strict success, but it is harder. **No engine other than mf has been run on corridor_v2 yet.**
+
+**Engine coverage on corridor (local scan of every `temp/` drop and `Slurm_Codes/logs/`, 2026-09-13):**
+- files mentioning a corridor path: `mix_uav_mf` 296, `mix_uav_fm` 275, `mix_uav_af` 241, **`mix_uav_diffusion` 0**;
+- so there is no trace of a corridor diffusion checkpoint or eval anywhere;
+- confirm on the cluster (`ls logs/UAV_MIX/uav-corridor/mix_uav_diffusion/`) before planning a full run with the baseline. It probably has to be trained first.
