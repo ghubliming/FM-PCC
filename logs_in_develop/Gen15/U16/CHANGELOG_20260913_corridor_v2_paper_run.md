@@ -1,6 +1,6 @@
-# U17 — corridor_v2 paper evaluation: setup and submission
+# U16 — corridor_v2 paper evaluation: setup and submission (final U16 stage)
 
-**Date:** 2026-09-13 · **Gen:** 15 · **Bench:** U16 `corridor_v2_slide` + fixes 1/2 ([`../U16/CHANGELOG_20260913_u16_fix1_fix2_FULL_REVIEW.md`](../U16/CHANGELOG_20260913_u16_fix1_fix2_FULL_REVIEW.md))
+**Date:** 2026-09-13 · **Gen:** 15 · **Bench:** U16 `corridor_v2_slide` + fixes 1/2 ([`CHANGELOG_20260913_u16_fix1_fix2_FULL_REVIEW.md`](CHANGELOG_20260913_u16_fix1_fix2_FULL_REVIEW.md))
 **Decision (user):** no further geometry or projector changes. Run the full evaluation on the bench that passed fix 2.
 Metrics are identical to pillars / s_curve.
 
@@ -8,10 +8,10 @@ Metrics are identical to pillars / s_curve.
 
 | file | change |
 | :-- | :-- |
-| `Slurm_Codes/temp_bash/eval_20260913_u17_corridor_v2_paper.sh` | **new** — `plan` (default, submits nothing) / `smoke` / `submit` |
-| `Data_Analysis/DA_UAV_v1/config.py` | the U17 arm names added to `VARIANT_ORDER` and `MAJOR_VARIANTS` (headline table). Discovery needs no list; this sets row order and headline inclusion only |
+| `Slurm_Codes/temp_bash/eval_20260913_u16_corridor_v2_paper.sh` | **new** — `plan` (default, submits nothing) / `smoke` / `submit` |
+| `Data_Analysis/DA_UAV_v1/config.py` | the paper-run arm names added to `VARIANT_ORDER` and `MAJOR_VARIANTS` (headline table). Discovery needs no list; this sets row order and headline inclusion only |
 
-No eval, projector, config or scene change. `config/uav_projection.yaml` and all U16 code are untouched.
+No eval, projector, config or scene change. `config/uav_projection.yaml` and all U16 fix code are untouched.
 
 ## 2. Fixed for every arm
 
@@ -22,7 +22,7 @@ No eval, projector, config or scene change. `config/uav_projection.yaml` and all
 | projector | `-bounds_free-pdes-tightened`: geometry on the setpoint, DPCC margin 0.025 m, action cap off. HardFlow gets the **same** stack, so the HF-vs-DPCC comparison is constraint-matched |
 | threshold | `diffusion_timestep_threshold: 0.5` (checked in pre-flight) |
 | metrics | strict success, S&C, violations on the real drone (unchanged) |
-| eval tag | `u17cv2` → `E<engine>_K<k>_mpc4_pid_stopgo_T0.5_u17cv2/`, never pooled with the U14–U16 injections (`u7hg`) |
+| eval tag | `u16cv2` → `E<engine>_K<k>_mpc4_pid_stopgo_T0.5_u16cv2/`, never pooled with the U14–U16 injections (`u7hg`) |
 | trials | 12 per (engine, K, seed, variant) = 4 per route (L, C, R) |
 | walls | `UAV_EVAL_HOURS=24` per job |
 
@@ -68,10 +68,10 @@ checkpoint dir `logs/UAV_MIX/uav-corridor/mix_uav_<engine>/*/<seed>`:
 
 ## 6. Order of operations
 
-1. `bash …/eval_20260913_u17_corridor_v2_paper.sh` → read the plan and the checkpoint lines.
-2. `bash … smoke` → one job: mf, K = 3, 3 trials (L, C, R), GIF on, tag `u17smoke`. Pass if both projected arms are collision-free on all three routes.
+1. `bash …/eval_20260913_u16_corridor_v2_paper.sh` → read the plan and the checkpoint lines.
+2. `bash … smoke` → one job: mf, K = 3, 3 trials (L, C, R), GIF on, tag `u16smoke`. Pass if both projected arms are collision-free on all three routes.
 3. `bash … submit` → the wave.
-4. DA once everything has finished (command printed by `submit`), scanning only the `_u17cv2` result folders.
+4. DA once everything has finished (command printed by `submit`), scanning only the `_u16cv2` result folders.
 
 ## 7. Run record
 
