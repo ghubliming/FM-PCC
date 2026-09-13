@@ -1410,10 +1410,70 @@ def _free_renderer(renderer):
         pass
 
 
-def _render_overhead(mujoco, model, data, renderer):
+def _add_virtual_geometry(mujoco, scn, geo_config, z, variant=''):
+    """[Gen15 U15] paint the ENFORCED halfspaces into a rendered MuJoCo frame — pixels only.
+
+    Virtual constraints from config/uav_projection.yaml (e.g. the corridor slide) are not bodies
+    in the scene XML, so the overhead GIF never showed what the projector was avoiding. This
+    appends visual-only geoms to the already-updated `mjvScene` (never to the model, so physics
+    is untouched): each halfspace segment (clipped to x_active) as a translucent orange wall,
+    and the drone-centre limit (the same line shifted by the scorer's r_drone toward the
+    feasible side) as a thin red strip. Skipped for `geo_free` variants (nothing enforced).
+    """
+    if not geo_config or 'geo_free' in (variant or ''):
+        return
+    if 'halfspace' not in (geo_config.get('constraint_types') or []):
+        return
+    r = float((geo_config.get('inflation') or {}).get('r_drone', 0.0))
+    for hs in geo_config.get('halfspace_constraints', []) or []:
+        triple, x_active = _normalize_halfspace(hs)
+        (x1, y1), (x2, y2), side = triple[0], triple[1], triple[2]
+        if abs(x2 - x1) < 1e-9:
+            continue
+        s = (y2 - y1) / (x2 - x1)
+        xa, xb = (x_active if x_active is not None else sorted((x1, x2)))
+        pa = np.array([xa, y1 + s * (xa - x1)]); pb = np.array([xb, y1 + s * (xb - x1)])
+        d = pb - pa; L = float(np.hypot(*d))
+        if L < 1e-6:
+            continue
+        nx, ny = -d[1] / L, d[0] / L                       # left normal = the 'above' side
+        feas = np.array([nx, ny]) * (1.0 if side == 'above' else -1.0)
+        yaw = float(np.arctan2(d[1], d[0])); c, sn = np.cos(yaw), np.sin(yaw)
+        mat = np.array([c, -sn, 0.0, sn, c, 0.0, 0.0, 0.0, 1.0])
+        for off, half_w, half_h, dz, rgba in ((0.0, 0.015, 0.30, 0.0, (1.0, 0.55, 0.0, 0.55)),   # the wall
+                                              (r, 0.008, 0.01, 0.35, (0.9, 0.05, 0.1, 0.95))):  # centre limit
+            if scn.ngeom >= scn.maxgeom:
+                return
+            mid = (pa + pb) / 2.0 + feas * off
+            mujoco.mjv_initGeom(scn.geoms[scn.ngeom], mujoco.mjtGeom.mjGEOM_BOX,
+                                np.array([L / 2.0, half_w, half_h]),
+                                np.array([mid[0], mid[1], z + dz]), mat,
+                                np.array(rgba, dtype=np.float32))
+            scn.ngeom += 1
+
+
+def _render_overhead(mujoco, model, data, renderer, geo_config=None, variant=''):
     """Single top-down frame. Reuses the PROVEN overhead camera from the expert GIF
     tool (uav_expert_data_collect/generate_trajectory_gifs._render_overhead); falls
-    back to the same camera inline only if that import is unavailable."""
+    back to the same camera inline only if that import is unavailable.
+
+    [Gen15 U15] with `geo_config`, the same camera is set up here so the enforced halfspaces can
+    be painted between update_scene() and render(). Any failure falls back to the plain frame."""
+    if geo_config:
+        try:
+            cam = mujoco.MjvCamera()
+            cam.type = mujoco.mjtCamera.mjCAMERA_FREE
+            cam.lookat[:] = data.qpos[:3]
+            cam.distance = 5.0
+            cam.azimuth = 0.0
+            cam.elevation = -90.0
+            renderer.update_scene(data, camera=cam)
+            _add_virtual_geometry(mujoco, renderer.scene, geo_config, float(data.qpos[2]), variant)
+            return renderer.render().copy()
+        except Exception as exc:                           # pragma: no cover - cluster-only
+            if not getattr(_render_overhead, '_overlay_warned', False):
+                print(f'[ eval ] geometry overlay on GIF frames failed ({exc}); plain frames')
+                _render_overhead._overlay_warned = True
     try:
         from uav_expert_data_collect.generate_trajectory_gifs import (
             _render_overhead as _proven_overhead)
@@ -1646,7 +1706,8 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
 
         if renderer is not None and (k % frame_stride == 0):
             try:
-                frame = _render_overhead(mujoco, model, data, renderer)
+                frame = _render_overhead(mujoco, model, data, renderer,
+                                         geo_config=geo_config, variant=variant)   # U15: paint enforced halfspaces
                 # U2b: GIF step-count overlay ('sK', top-left) — ported from visual-aligning's
                 # Aligning_Sim.capture_frame (`cv2.putText(frame, f's{self.step_counter}', ...)`),
                 # which the UAV GIFs were missing entirely. Same style: yellow, top-left, FONT_HERSHEY_PLAIN.
@@ -2092,7 +2153,10 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
         _SNAPSHOTTED_DIRS.add(_snap_dir)
 
     record = (args.record != 'none')
-    renderer = _make_overhead_renderer(mujoco, mj_model) if record else None
+    # [Gen15 U15] UAV_MIX_GIF_RES overrides the 140 px default (Fix_9) for a legible drone; if the
+    # model's offscreen buffer is smaller, Renderer() raises and _make_overhead_renderer returns None.
+    renderer = _make_overhead_renderer(mujoco, mj_model, res=int(os.environ.get('UAV_MIX_GIF_RES', '140'))) \
+        if record else None
     batch_size = int(config.get('mpc_batch_size', config.get('batch_size', 4)))
     # 🔴 B4_PARITY (2026-08-20) — arm C's fan comes from the variant NAME. Gen15 already gave
     # every arm the same `mpc_batch_size` (so it never had the Gen3v6/v7/Gen12 timing
@@ -2262,9 +2326,9 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
     artifacts.plot_overview(out_dir, variant_out, scene, rollouts, geo_config=config, variant_flags=variant)
     # [Gen15 U15] animated top-down GIF of the flown paths against that geometry, written next to
     # <variant>.png. Drawn from obs_traj (no EGL); a virtual constraint is not in the MuJoCo scene,
-    # so the existing --record gif could never show it. UAV_MIX_TRAJ_GIF=0 turns it off. Never
-    # allowed to fail the eval.
-    if os.environ.get('UAV_MIX_TRAJ_GIF', '1') != '0':
+    # so the existing --record gif could never show it. OFF BY DEFAULT (user decision 2026-09-13):
+    # set UAV_MIX_TRAJ_GIF=1 to write it. Never allowed to fail the eval.
+    if os.environ.get('UAV_MIX_TRAJ_GIF', '0') == '1':
         try:
             _traj_gif = artifacts.save_trajectory_gif(out_dir, variant_out, scene, rollouts,
                                                       geo_config=config, variant_flags=variant)
