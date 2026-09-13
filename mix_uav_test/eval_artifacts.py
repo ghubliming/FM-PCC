@@ -381,6 +381,8 @@ def plot_overview(out_dir, variant, scene, rollouts, geo_config=None, variant_fl
             _draw_obstacles, _homotopy_color)
         import uav_expert_data_collect.generator as gen
         obstacles = gen.SCENE_OBSTACLES.get(scene, [])
+        if (geo_config or {}).get('scene_obstacles') is not None:     # [Gen15 U16] per-entry scene_xml
+            obstacles = geo_config['scene_obstacles']
     except Exception as exc:          # pragma: no cover - cluster-only deps
         print(f'[ artifacts ] obstacle/colour helpers unavailable ({exc}); plain plot')
         _draw_obstacles = None
@@ -792,6 +794,8 @@ def write_mpc_foresight(diag_dir, idx, rollout, scene, stride=6, geo_config=None
         from uav_expert_data_collect.generate_overview_plots import _draw_obstacles
         import uav_expert_data_collect.generator as _gen
         obstacles = _gen.SCENE_OBSTACLES.get(scene, [])
+        if (geo_config or {}).get('scene_obstacles') is not None:     # [Gen15 U16] per-entry scene_xml
+            obstacles = geo_config['scene_obstacles']
     except Exception:
         obstacles = []
         _draw_obstacles = None

@@ -508,6 +508,7 @@ def _apply_geo_entry(cfg, scene, entry):
     # entry-is-None fallback). Set before the branch, overwritten inside it.
     cfg['geo_tag_suffix']     = ''
     cfg['planning_inflation'] = None
+    cfg['scene_xml']          = None     # [Gen15 U16] optional per-entry MuJoCo scene (see eval_scene)
     if entry is not None:
         cfg['constraint_types']      = list(entry.get('constraint_types', cfg['constraint_types']))
         cfg['workspace_bounds']      = entry.get('workspace_bounds', None)
@@ -526,6 +527,11 @@ def _apply_geo_entry(cfg, scene, entry):
         #                        would make any such A/B meaningless.
         cfg['geo_tag_suffix']     = str(entry.get('geo_tag_suffix', '') or '')
         cfg['planning_inflation'] = entry.get('planning_inflation', None)
+        # [Gen15 U16] `scene_xml` — OPTIONAL, absent from every pre-U16 entry (behaviour unchanged).
+        # A file name in the same scenes/ folder as gen.SCENE_XMLS[scene]. It swaps ONLY the MuJoCo
+        # physics/render scene for this entry; dataset, checkpoint, routes, starts, goals and the
+        # episode budget still come from `scene` (e.g. corridor_v2 = wider walls, same trained model).
+        cfg['scene_xml']          = entry.get('scene_xml', None)
         print(f"[ eval ] E9 geo '{scene}' ← variant '{entry['name']}': "
               f"constraint_types={cfg['constraint_types']} "
               f"(bounds={cfg['workspace_bounds'] is not None}, "
@@ -1450,6 +1456,25 @@ def _add_virtual_geometry(mujoco, scn, geo_config, z, variant=''):
                                 np.array([mid[0], mid[1], z + dz]), mat,
                                 np.array(rgba, dtype=np.float32))
             scn.ngeom += 1
+
+
+def _scene_obstacles_from_model(mujoco, model):
+    """[Gen15 U16] static box geoms on the world body, in SCENE_OBSTACLES format (plots only).
+
+    uav_expert_data_collect.generator.SCENE_OBSTACLES is a hand-written table keyed by scene name,
+    so an entry with its own `scene_xml` would be drawn with the ORIGINAL walls. Reading the walls
+    back from the model that is actually simulated keeps the plots and the physics in agreement.
+    Plain Python floats so the config stays JSON-serialisable.
+    """
+    out = []
+    for i in range(model.ngeom):
+        if int(model.geom_bodyid[i]) != 0 or int(model.geom_type[i]) != int(mujoco.mjtGeom.mjGEOM_BOX):
+            continue
+        name = mujoco.mj_id2name(model, mujoco.mjtObj.mjOBJ_GEOM, i) or f'geom_{i}'
+        out.append({'type': 'box', 'name': name,
+                    'center': [float(v) for v in model.geom_pos[i]],
+                    'half_extents': [float(v) for v in model.geom_size[i]]})
+    return out
 
 
 def _render_overhead(mujoco, model, data, renderer, geo_config=None, variant=''):
@@ -2456,6 +2481,20 @@ def eval_scene(scene, args):
                   f'\'{entry["name"] if entry is not None else "(none)"}\'')
         config = _apply_geo_entry(base_cfg, scene, entry)
 
+        # [Gen15 U16] per-entry MuJoCo scene. Default: the scene's own XML, loaded once above.
+        _entry_mj_model = mj_model
+        config['scene_obstacles'] = None
+        if config.get('scene_xml'):
+            _xml = os.path.join(os.path.dirname(gen.SCENE_XMLS[scene]), str(config['scene_xml']))
+            if not os.path.isfile(_xml):
+                raise FileNotFoundError(f"geo entry '{entry['name']}' scene_xml not found: {_xml}")
+            _entry_mj_model = mujoco.MjModel.from_xml_path(_xml)
+            config['scene_obstacles'] = _scene_obstacles_from_model(mujoco, _entry_mj_model)
+            print(f"[ U16 ] geo entry '{entry['name']}': MuJoCo scene {_xml} (dataset/model/routes still "
+                  f"'{scene}'); walls: " + ', '.join(
+                      f"{o['name']} y={o['center'][1]:+.2f} half={o['half_extents'][1]:.2f}"
+                      for o in config['scene_obstacles']), flush=True)
+
         # cond_mode is a MODEL property (obs layout baked into the normalizer at train time).
         # Lock it to what the checkpoint was actually trained with — ignore the plan block
         # value, which is user-editable and can silently mismatch (crash: shapes (9,) vs (6,)).
@@ -2491,7 +2530,7 @@ def eval_scene(scene, args):
             print(f'[ eval ] {scene} [geo_tag={config["geo_tag"]}] '
                   f'>>> variant {_vi + 1}/{_n_variants}: \'{variant}\'  (n_trials={args.n_trials})')
             summaries[variant] = _run_variant(scene, variant, model_fm, dataset, parsed, horizon,
-                                              config, args, mj_model, mujoco, homotopies)
+                                              config, args, _entry_mj_model, mujoco, homotopies)
         all_summaries[entry['name'] if entry is not None else config['geo_tag']] = summaries
 
     # Preserve the pre-Fix_6 flat {variant: summary} shape for the single-geo-variant case

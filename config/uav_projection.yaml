@@ -793,3 +793,51 @@ geo_constraint_variants:
       - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0, -0.5], radius: 0.05}
       - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0,  0.5], radius: 0.05}
       - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0,  0.5], radius: 0.05}
+
+  # ══════════════════════════════════════════════════════════════════════════════
+  # [Gen15 U16 2026-09-13] corridor_v2_slide — WIDE corridor (new MuJoCo scene) + slide halfspace
+  #
+  # WHY. In `corridor` the walls are 0.90 m apart and the quadrotor is 0.62 m rotor tip to rotor
+  # tip (r_drone 0.31), leaving 0.28 m of centre-line room. Any halfspace that visibly crosses a
+  # route leaves no gap a drone fits through (U15 rev1/rev2). corridor_v2 moves BOTH walls outward
+  # in parallel and changes nothing else:
+  #   scene_corridor.xml    wall centres y = +/-0.5, inner faces +/-0.45, clear 0.90 m, centre band +/-0.14
+  #   scene_corridor_v2.xml wall centres y = +/-1.0, inner faces +/-0.95, clear 1.90 m, centre band +/-0.64
+  #
+  # NO RETRAINING. `scene: corridor` keeps the dataset, checkpoint, routes, start points, goals and
+  # episode budget of the trained corridor model (state-only policy: it never sees the walls).
+  # `scene_xml` swaps only the simulated MuJoCo scene for THIS entry (eval_mix_uav.py, U16). The
+  # original corridor, its XML and every other entry are untouched.
+  #
+  # THE SLIDE. From the top wall at the corridor entrance (-2.0, 0.95), descending 14.0 deg to
+  # (2.0, -0.05) at the exit. The raw line visibly crosses route C at x = 1.80, and it stays 0.90 m
+  # above the bottom wall at the exit, so the drone (0.62 m) fits under it.
+  #   drone-centre limit (raw - 0.31*sec): entrance +0.630, exit -0.370; 0.27 m of room below it
+  #   route L (y -0.12): blocked x in [1.01, 2.00], must drop 0.25 m
+  #   route C (y  0.00): blocked x in [0.53, 2.00], must drop 0.37 m
+  #   route R (y +0.12): blocked x in [0.05, 2.00], must drop 0.49 m
+  #   sliding needs dy/step 0.0110 = 50% of the FRAC=1.0 cap (0.0219). Run with FMPCC_SAFE_EPS_FRAC=1.0.
+  #   After the exit the goal (2.8, route y) needs only y >= -0.30 (goal radius 0.30).
+  #
+  # ⚠️ Out-of-distribution by construction: the corridor model never saw |y| > ~0.13. The deepest
+  # required drone centre (-0.37 m) is inside the projector's representable position box
+  # (+/-5 normalized, ~+/-0.65 m for a p_y half-width of ~0.13, estimated, not measured).
+  # ══════════════════════════════════════════════════════════════════════════════
+  - name: corridor_v2_slide
+    scene: corridor
+    scene_xml: scene_corridor_v2.xml
+    geo_tag_suffix: '_cv2s'
+    constraint_types: ['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds']
+    planning_inflation: {r_drone: 0.31, margin_base: 0.0}
+    workspace_bounds:             # same as corridor_hg; y is left to the wall halfspaces
+      lb: [-4.0, -.inf, 0.30]
+      ub: [ 4.0,  .inf, 1.80]
+    halfspace_constraints:        # the WIDE walls' inner faces + the slide
+      - {line: [[-2.0, -0.95], [2.0, -0.95]], side: 'above', x_active: [-2.0, 2.0]}
+      - {line: [[-2.0,  0.95], [2.0,  0.95]], side: 'below', x_active: [-2.0, 2.0]}
+      - {line: [[-2.0,  0.95], [2.0, -0.05]], side: 'below', x_active: [-2.0, 2.0]}   # U16 slide
+    obstacle_constraints:         # the wide walls' finite ends (same caps as corridor_hg, moved out)
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0, -1.0], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0, -1.0], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0,  1.0], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0,  1.0], radius: 0.05}

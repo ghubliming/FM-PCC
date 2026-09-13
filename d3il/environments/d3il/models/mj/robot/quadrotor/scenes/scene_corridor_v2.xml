@@ -1,0 +1,38 @@
+<mujoco model="UAV Corridor v2 Scene (wide)">
+  <!-- [Gen15 U16 2026-09-13] corridor_v2 - scene_corridor.xml with BOTH walls moved outward in
+       parallel, everything else identical (drone include, floor, lighting, wall length/height).
+         scene_corridor.xml    : wall centres y = +/-0.5, inner faces +/-0.45, clear width 0.90 m
+         scene_corridor_v2.xml : wall centres y = +/-1.0, inner faces +/-0.95, clear width 1.90 m
+       Why: the quadrotor spans 0.62 m rotor tip to rotor tip (r_drone 0.31), which left only 0.28 m
+       of centre-line room in the original corridor, too little for any avoidance to be visible.
+       The trained corridor model is reused unchanged: the policy is state-only (no vision), and the
+       start points, routes and goals come from scene 'corridor'. Selected per geo entry via
+       `scene_xml:` in config/uav_projection.yaml, never by default. -->
+  <include file="../quadrotor_modified.xml"/>
+  <compiler meshdir="../assets" texturedir="../assets"/>
+
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <global azimuth="120" elevation="-20"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="32" height="32"/>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge"
+             rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3" markrgb="0.8 0.8 0.8"
+             width="300" height="300"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5"/>
+    <material name="wall" rgba="0.7 0.7 0.7 1"/>
+  </asset>
+
+  <worldbody>
+    <light name="overhead" pos="0 0 5" dir="0 0 -1" diffuse="0.8 0.8 0.8"/>
+    <geom name="floor" type="plane" size="10 10 0.05" material="groundplane"/>
+
+    <!-- Two parallel walls 2 m apart on the y axis (was 1 m), 4 m long along x, 1.5 m tall.
+         Corridor centerline unchanged: (-2, 0, *) to (+2, 0, *). -->
+    <geom name="wall_y_neg" type="box" pos="0 -1.0 0.75" size="2.0 0.05 0.75" material="wall"/>
+    <geom name="wall_y_pos" type="box" pos="0  1.0 0.75" size="2.0 0.05 0.75" material="wall"/>
+  </worldbody>
+</mujoco>
