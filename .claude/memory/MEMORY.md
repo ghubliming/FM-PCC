@@ -20,5 +20,5 @@
 - [Never write URLs / publish artifacts unless asked](no-unrequested-urls-or-artifacts.md) — deliver repo files + terminal summary; no links by default
 - [Master's thesis writing (TUM I6)](master-thesis-writing-tum.md) — template is read-only; work in Writing/Working_Space, notes in Writing/Auxiliary; papers in aux_repo/PAPERS
 - [Reading papers / no LaTeX here](read-papers-with-python314-pypdf.md) — PDFs open only via `python3.14` + pypdf (Read tool can't); no pdflatex/biber, so .tex is never compiled locally
-- [DA requires the batch CSVs](da-requires-csv-never-from-logs.md) — never build a DA from sbatch/eval logs; no `batch_*` folder in the temp drop = no DA, wait for the download
+- [DA requires real result data](da-requires-csv-never-from-logs.md) — batch CSVs OR raw result folders (results.json/rollouts/npz) are OK; sbatch/eval console logs alone are not
 - [🚨 GATED: 2026-09-07 lost-history recovery](crisis-recovery-lost-chat-2026-09-07.md) — open the dossier ONLY when the user explicitly says "resume from the Claude Code crisis" / "continue the lost chat"; Sep-7 transcripts unrecoverable, 2 key sessions + a chat↔MD↔topic bridge table located in the 09-06 backup

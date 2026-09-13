@@ -736,3 +736,47 @@ geo_constraint_variants:
       - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0, -0.5], radius: 0.05}
       - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0,  0.5], radius: 0.05}
       - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0,  0.5], radius: 0.05}
+
+  # ══════════════════════════════════════════════════════════════════════════════
+  # [Gen15 U15 2026-09-13] corridor_gate_n1 — U14's gate, run with FMPCC_SAFE_EPS_FRAC=1.0
+  #
+  # GEOMETRY IS BYTE-IDENTICAL TO `corridor_gate` (U14). Only the name and geo_tag_suffix differ,
+  # so U15 results land in their own `corridor_hggn_` folder and never pool with U14's `_hgg`.
+  #
+  # 🔴 THIS ENTRY MEANS NOTHING WITHOUT THE ENV SETTING. The change under test is not geometry,
+  # it is `FMPCC_SAFE_EPS_FRAC=1.0` (default 1e-3), set per job in
+  # Slurm_Codes/temp_bash/eval_20260913_u15_corridor_gate_n1.sh. A geo entry cannot carry it
+  # (`_apply_geo_entry` copies six keys only), so the name is the reminder.
+  #
+  # WHY (U14 DA §5.3). The corridor expert never moves sideways, so actions[1] (dy) and
+  # actions[2] (dz) are constant in the data. Fix_16 `scaled` gives a constant channel a width of
+  # median(non-constant half-widths) x FRAC = 0.02188 x 1e-3 = 2.2e-05 m/step. The DPCC projector
+  # solves in normalized units inside a hard box z in [-5, 5] (mix_uav/sampling/projection.py:205,
+  # verbatim from upstream DPCC), which leaves 0.77 mm of sideways reach per plan — the gate needs
+  # ~100 mm, so no feasible solution exists and the unprojected plan is kept silently.
+  #
+  # FRAC=1.0 gives an unused action axis the SAME scale as the action axis the expert did use:
+  #   corridor dy/dz half-width 2.2e-05 -> 0.02188 m/step   (= the forward-step half-width)
+  #   projector reach per 7-step plan 0.77 mm -> 766 mm;  riding the gate needs 40% of the cap
+  # Same rule for every scene, no code change. A constant channel normalizes to 0 for ANY eps
+  # (normalization.py docstring), so the checkpoint and the generator's training target are
+  # unchanged. Pillars' dy is non-constant and is untouched by this setting; pillars' dz IS
+  # constant and would also widen — any claim spanning both scenes needs pillars re-run under it.
+  # ══════════════════════════════════════════════════════════════════════════════
+  - name: corridor_gate_n1
+    scene: corridor
+    geo_tag_suffix: '_hggn'
+    constraint_types: ['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds']
+    planning_inflation: {r_drone: 0.31, margin_base: 0.0}
+    workspace_bounds:             # identical to corridor_gate
+      lb: [-4.0, -.inf, 0.30]
+      ub: [ 4.0,  .inf, 1.80]
+    halfspace_constraints:        # identical to corridor_gate
+      - {line: [[-2.0, -0.45], [2.0, -0.45]], side: 'above', x_active: [-2.0, 2.0]}
+      - {line: [[-2.0,  0.45], [2.0,  0.45]], side: 'below', x_active: [-2.0, 2.0]}
+      - {line: [[-2.0, -0.25], [2.0,  0.55]], side: 'below', x_active: [ 0.40, 2.0]}   # U14 gate
+    obstacle_constraints:         # identical to corridor_gate
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0, -0.5], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0, -0.5], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0,  0.5], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0,  0.5], radius: 0.05}

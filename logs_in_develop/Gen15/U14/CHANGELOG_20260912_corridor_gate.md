@@ -123,3 +123,48 @@ what made the U11/U12 ball look like it was floating above the route.
 - the `cz_mid` plot bug (`eval_mix_uav.py:1157`, `eval_artifacts.py:488,507`) still unfixed —
   obstacles are drawn at workspace mid-height, not their true z. Fix reviewed in
   `temp/geo_demo/fixed/`, not applied: no code changes authorised.
+
+## 8. Run record
+
+| job | mode | engine | K | seed | variants | submitted | log dir |
+| --: | :-- | :-- | :-- | --: | --: | :-- | :-- |
+| **25706** | `full` | mf | 2, 5, 10 | 6 | 7 | 2026-09-13 (cluster) | `Slurm_Codes/logs/2026-09-13/` |
+
+Variants: `diffuser`, `dpcc-r`, `dpcc-c`, `dpcc-t`, `dpcc-t-tightened`, `dpcc-t-geo_free`,
+`dpcc-t-bounds_free`. → 21 cells (7 variants × 3 K).
+
+⚠️ The cluster rolled to **2026-09-13** at submit time; local date was 09-12. Logs and the
+batch folder are under the **09-13** directory.
+
+The injection step was skipped — `full` was submitted directly. Gate 1/2 can still be read off
+the K=2 `diffuser` / `dpcc-t` cells, which is exactly what the injection would have produced.
+
+**Status (2026-09-13): DA DONE — see §9 and the DA.** 25707/25708/25709 all ended "Job completed
+successfully", 7/7 variants each, no traceback / cancel / time-wall. Raw result folders downloaded
+to `temp/1309/` (21 `results.json`, 210 rollout logs; K identified by `fm_ms` ≈ 18 / 45 / 90 ms,
+since the K2 folder carries no suffix). **No `batch_*` folder yet** — the CSVs come from a separate
+`run_da_batch_uav.sh` job. No DA until the `batch_*` CSVs are downloaded
+(`da-requires-csv-never-from-logs`); gate 3 additionally needs the rollout logs, so pull the
+whole batch folder, not just the CSVs.
+
+## 9. 🔴 Corrections after the run (2026-09-13)
+
+Three statements above were wrong. The config entry itself is unaffected: the gate is valid and did
+exactly what it was designed to do (gate 1 passed).
+
+1. **Scorer margin is 0.31, not 0.33.** `_exec_constraint_violations` uses
+   `config['inflation']['r_drone']` only (`eval_mix_uav.py:783`), not `r_drone + margin_base`.
+   So the scorer slot opens at x = 0.1307, the same as the planner. The §3 argument for starting
+   `x_active` at 0.40 instead of 0.13 rested on the wrong margin. 0.40 is harmless, just more
+   conservative than needed. Corrected blocked ranges: **C x ∈ [0.40, 0.83], R x ∈ [0.40, 1.43]**
+   (not 0.93 / 1.53). L is still clean. The DA used the correct 0.31 and its recount matches the eval
+   205/210 exact, 210/210 within one step.
+2. **Gate 2 was mis-specified.** `collision_free_completed > 0` is satisfied by the L channel by
+   construction, so every cell read 0.40 without the projector doing anything. The DA counts C/R only.
+3. **The §4 mechanism is refuted.** The failure was predicted correctly, but the stated cause
+   (the `action_bounds='auto'` constraint) is ruled out by this wave's own `dpcc-t-bounds_free`
+   control, whose executed path is identical to `dpcc-t`. See DA §5.1. The degenerate Δy channel
+   still correlates with the null result. The route it acts through is open (DA §5.3).
+
+**Result:** [`DA_20260913_corridor_gate_full_wave.md`](DA_20260913_corridor_gate_full_wave.md). All
+three original gates evaluated: 1 PASS, 2 FAIL (0/90 C/R), 3 FAIL (max 1.0 mm, `-tightened` 3.0 mm).
