@@ -1,5 +1,10 @@
 # DA — Mission 5: `mjpc` vs `pid_stopgo` on `s_curve` (jobs 25514 → 25554 vs 25502)
 
+> 🔴 **2026-09-13, HardFlow rows in this file are invalid.** HardFlow ignored `x_active`: its NLP was built once
+> with every switched s_curve wall active at every x, an infeasible set. DPCC rows are not affected. See
+> [`../U16/CHANGELOG_20260913_u16fix_pdes_binding.md`](../U16/CHANGELOG_20260913_u16fix_pdes_binding.md) §6.
+> Re-run HardFlow on s_curve after that fix before citing any HardFlow s_curve number.
+
 *Gen15 · campaign `Campaign_20260907_five_missions` · 2026-09-09.
 Source batch: **`temp/0909/batch_uav_20260909_205118`** (`DA_UAV_v1`, 2026-09-09 20:51:50, 1288 units,
 0 failed). Candidates **C94** (`controller=mjpc`) vs **C95** (`controller=pid_stopgo`).*

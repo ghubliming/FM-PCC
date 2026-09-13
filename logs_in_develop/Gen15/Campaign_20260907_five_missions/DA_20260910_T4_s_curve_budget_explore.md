@@ -1,5 +1,10 @@
 # DA — Mission 4: is the `s_curve` failure a **budget** failure?
 
+> 🔴 **2026-09-13, HardFlow rows in this file are invalid.** HardFlow ignored `x_active`: its NLP was built once
+> with every switched s_curve wall active at every x, an infeasible set. DPCC rows are not affected. See
+> [`../U16/CHANGELOG_20260913_u16fix_pdes_binding.md`](../U16/CHANGELOG_20260913_u16fix_pdes_binding.md) §6.
+> Re-run HardFlow on s_curve after that fix before citing any HardFlow s_curve number.
+
 *Gen15 · campaign `Campaign_20260907_five_missions` · 2026-09-10.
 Source batch: **`temp/0909/batch_uav_20260910_092309`**. Candidates **C93** (fm K=2) · **C92** (fm K=20) ·
 **C96** (mf K=2) · **C95** (mf K=10) — all `s_curve`, `u7hg`, `pid_stopgo`, seed 6, n=10.*

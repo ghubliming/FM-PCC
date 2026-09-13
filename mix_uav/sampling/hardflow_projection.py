@@ -438,6 +438,27 @@ class HardFlowNLP:
             return self._solve_slsqp(x1_ref, tau)
         return self._solve_ipopt(x1_ref, tau)
 
+    def update_constraint_list(self, constraint_list):
+        """[Gen15 U16 fix] swap the active constraint set between replans (x_active scenes).
+
+        The NLP used to be built ONCE from a list assembled with `current_x=None`, which makes
+        `setup_dpcc_projector` include EVERY x_active halfspace everywhere. The eval's per-replan
+        rebuild only replaced `policy.projector`, which this arm never reads, so HardFlow silently
+        enforced all switched walls at every x (s_curve: both segments' walls at once; corridor
+        slides: the slide line kept pushing past the corridor exit).
+        slsqp backend: the DPCC projector is rebuilt from the new list, the same per-replan
+        rebuild the DPCC arm does. ipopt backend: the CasADi problem is built once in __init__
+        and is NOT rebuilt here (too costly per replan). Its constraints stay as built, and a
+        one-time warning says so instead of silently pretending.
+        """
+        self.constraint_list = constraint_list
+        if self.nlp_backend == 'slsqp':
+            self.projector = self._build_slsqp_projector(constraint_list)
+        elif not getattr(self, '_warned_static_constraints', False):
+            print('[hardflow] update_constraint_list: backend=ipopt keeps the constraint set it was '
+                  'built with -- x_active switching is NOT applied on this backend', flush=True)
+            self._warned_static_constraints = True
+
     def _build_slsqp_projector(self, constraint_list):
         """DPCC's scipy-SLSQP projector, pinned to the IPOPT path's geometry."""
         from .projection import Projector
@@ -1217,6 +1238,10 @@ class HardFlowPolicy:
 
         self.prev_observations = None
         self.last_info = {}
+
+    def update_constraint_list(self, constraint_list):
+        """[Gen15 U16 fix] per-replan active constraint set (x_active scenes) -> the NLP."""
+        self.nlp.update_constraint_list(constraint_list)
 
     def __call__(self, conditions, batch_size=1, horizon=None, test_ret=None,
                  constraints=None, disable_projection=False):

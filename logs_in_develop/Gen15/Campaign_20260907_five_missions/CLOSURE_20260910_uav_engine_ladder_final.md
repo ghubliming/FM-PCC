@@ -174,6 +174,8 @@ Three rescue hypotheses have now been tested and all fail at Stage 2:
 **The defect is the constraint set, and the funnel localises it precisely.** `s_curve` is retired as
 a ranking scene; if it is kept for any purpose, `phys_min_z` must be reported beside `goal_reached`
 (T4 §5: mf K=10 HardFlow rows reach the goal 0.900 of the time while flying at `min_z` ≤ 0.183).
+> 🔴 2026-09-13: every HardFlow s_curve row was run with all switched walls active at every x (HardFlow ignored
+> `x_active`, see `../U16/CHANGELOG_20260913_u16fix_pdes_binding.md` §6). Do not cite HardFlow s_curve numbers until re-run.
 
 ---
 

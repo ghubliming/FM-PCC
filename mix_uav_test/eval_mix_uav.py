@@ -688,8 +688,19 @@ def _load_base_cfg(scene, seed):
         _want = [v.strip() for v in _var_env.split(',') if v.strip()]
         # [Gen15 U16 fix] `<known variant>-pdes` is accepted without listing it anywhere: it is a
         # binding toggle on an existing variant (see setup_dpcc_projector), not a new variant.
-        _unknown = [v for v in _want
-                    if v not in _avail and not (v.endswith('-pdes') and v[:-len('-pdes')] in _avail)]
+        # Composed toggles (e.g. `hardflow_new-tightened-pdes`) resolve to their core name after
+        # stripping the variant-level toggle tokens that setup_dpcc_projector reads by substring.
+        _TOGGLES = ('-pdes', '-tightened', '-bounds_free', '-geo_free', '-model_free')
+        def _core(v):
+            _changed = True
+            while _changed:
+                _changed = False
+                for _t in _TOGGLES:
+                    if v.endswith(_t) and v != _t:
+                        v, _changed = v[:-len(_t)], True
+                        break
+            return v
+        _unknown = [v for v in _want if v not in _avail and (_core(v) not in _avail or _core(v) == 'diffuser')]
         if _unknown:
             print(f'[ ERROR ] UAV_MIX_VARIANTS names {len(_unknown)} variant(s) that do not '
                   f'exist for this job: {_unknown}')
@@ -1664,7 +1675,11 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
             # [Gen15 U16 fix] `-pdes` binds the geometry to the setpoint, so its x_active gate reads
             # the setpoint's x too (it leads the drone by ~0.4 m). Default variants: drone x, unchanged.
             _gate_x = float(p_des[0]) if 'pdes' in str(variant).split('-') else float(p[0])
-            policy.projector = rebuild_projector(_gate_x)
+            _rebuilt = rebuild_projector(_gate_x)
+            if hasattr(policy, 'update_constraint_list'):     # HardFlow arm: constraints live in its NLP
+                policy.update_constraint_list(_rebuilt)
+            else:                                              # DPCC arm: unchanged
+                policy.projector = _rebuilt
 
         t0 = time.perf_counter()
         action, traj = policy({0: obs}, batch_size=batch_size, horizon=horizon)
@@ -2078,12 +2093,17 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
         for hs in (config.get('halfspace_constraints') or []))
     rebuild_projector = None
     if _has_x_active:
+        # [Gen15 U16 fix] the HardFlow arm keeps its constraints inside its NLP, not in
+        # `policy.projector`, so for it the closure returns the CONSTRAINT LIST and rollout_one
+        # hands it to `policy.update_constraint_list`. Before this, HardFlow ignored x_active.
+        _rebuild_as_list = _is_hardflow(variant)
         def rebuild_projector(current_x, _tdim=int(dataset.observation_dim + dataset.action_dim)):
             return setup_dpcc_projector(
                 parsed, config,
                 dataset.normalizer.normalizers['observations'],
                 dataset.normalizer.normalizers['actions'],
-                variant, trajectory_dim=_tdim, current_x=current_x)
+                variant, trajectory_dim=_tdim, current_x=current_x,
+                return_constraint_list=_rebuild_as_list)
 
     # Path: scene_root / plans / <model_exp_noseed> / <eval_params> / <seed> / <geo_tag> / <variant> /
     # savepath = scene_root / mix_uav_<engine> / H8_...9D[_dp..._bb...] / <seed>
