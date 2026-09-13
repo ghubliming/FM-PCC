@@ -48,6 +48,9 @@ Scope, across the three passes so far (see `CHANGELOG.md`):
 - **v2.9** — abstract **481 → 278 words**; and the prose stops justifying itself. Defensive
   constructions (*"does not claim"*, *"must not be"*, *"worth stating"*, *"rather than left to be
   discovered"*) removed throughout — no content lost, only the arguing.
+- **v2.10** — a real abstract (**173 words**); "better" no longer defined, metrics stated in place;
+  **"arm A/B/C" replaced by unguided / iterate projection / endpoint projection** (69 hits);
+  self-talk and chapter-summary meta removed, Related Work rewritten as direct prose.
 - **v2.6** — the **compute environment**: the cluster, node, CPU/GPU and software stack every number
   was produced on, plus the two caveats that follow from the machine. First prose written into
   Chapter 5 — a deliberate, scoped exception to the bone rule (see below).

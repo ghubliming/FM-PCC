@@ -49,9 +49,9 @@ doc — **never cited**, see that note) · [`../Methodology_Sources/AUX_visual_a
 
 | ① code | ② paper | ③ what it really is → **thesis name** |
 |---|---|---|
-| *(no projector; `diffuser` variant row)* | — | no constraint enforcement → **arm A, "unguided"** |
-| `dpcc`, `dpcc-r/c/t`, `pcc` | DPCC per-step projection \[Römer et al. 2025\] | `Π_S` applied to the sampler's **current iterate**, which at early transport times is not yet a plan → **arm B, "per-step iterate projection"** (short form **IP**) |
-| `hardflow_sls`, `hardflow_new`, `HF`, **"HF-SLSQP"** | HardFlow \[Li et al. 2025\], mode `hardflow_new` = their Problem 5, *reversed receding-horizon* | 🚨 `Π_S` applied to the **predicted clean endpoint**, then a τ-damped pull-back. With the optional terminal cost `C` dropped, the NLP **is exactly `Π_S(x̂₁)`** — **a projection, not an optimisation** → **arm C, "in-ODE endpoint projection"** (short form **EP**) |
+| *(no projector; `diffuser` variant row)* | — | no constraint enforcement → **"unguided"** |
+| `dpcc`, `dpcc-r/c/t`, `pcc` | DPCC per-step projection \[Römer et al. 2025\] | `Π_S` applied to the sampler's **current iterate**, which at early transport times is not yet a plan → **"iterate projection"** |
+| `hardflow_sls`, `hardflow_new`, `HF`, **"HF-SLSQP"** | HardFlow \[Li et al. 2025\], mode `hardflow_new` = their Problem 5, *reversed receding-horizon* | 🚨 `Π_S` applied to the **predicted clean endpoint**, then a τ-damped pull-back. With the optional terminal cost `C` dropped, the NLP **is exactly `Π_S(x̂₁)`** — **a projection, not an optimisation** → **"endpoint projection"** |
 
 🚨 **Three things are wrong with "HF-SLSQP".** It leans on a brand (says nothing); it puts a
 **solver** in a method name (asserts the solver is the contribution — it is not, and the activation
@@ -69,8 +69,14 @@ an identical operator. `iterate` / `endpoint` says that in one adjective each, a
 degeneracy result readable from the names alone: at the terminal step the endpoint **is** the
 iterate, so EP collapses to IP.
 
-**Credit line to use at first mention of arm C:** *"…the endpoint projection introduced by
+**Credit line to use at first mention of endpoint projection:** *"…the endpoint projection introduced by
 \parencite{li2025hardflow} (their `hardflow_new` mode), re-derived here on our constraint set."*
+
+🚨 **"arm A / B / C" is DA shorthand, not a thesis word.** It borrows clinical-trial vocabulary and
+names nothing; a reader has to look up what "arm C" is every time. The artefacts may keep it; the
+thesis says **unguided / iterate projection / endpoint projection**, and "the two projection
+methods" for the pair. Removed from `thesis_v2.tex` in v2.10 (69 occurrences; the 6 left are the
+literal robot arm). Same for **"candidate fan"** → **"candidate plans"**.
 
 ## 3. Candidate selection
 

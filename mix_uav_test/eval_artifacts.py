@@ -275,7 +275,96 @@ def save_npz(out_dir, variant, rollouts, args_dict):
 
 # ── 2-D overview (top-down x,y + side x,z) — the GIF replacement ──────────────
 
-def plot_overview(out_dir, variant, scene, rollouts):
+# ── [Gen15 U15] what actually blocks the drone: body-width boundaries + per-step violation ─
+# The overview used to draw the flown path as a thin centre line and none of the enforced
+# geometry, so a halfspace that cut 12 cm into the drone's BODY looked like it missed the route
+# entirely ("0 block"). These helpers draw the surface the drone CENTRE may not cross (the raw
+# line offset by the scorer's r_drone) and flag the steps that violate, using the same rule as
+# `_exec_constraint_violations` (eval_mix_uav.py): raw geometry ⊕ inflation.r_drone only.
+
+def _scorer_r_drone(geo_config):
+    return float(((geo_config or {}).get('inflation') or {}).get('r_drone', 0.0))
+
+
+def halfspace_body_boundaries(geo_config, variant=''):
+    """[(xs, raw_y, body_y, side), ...] for every enforced halfspace, clipped to x_active.
+
+    body_y is the line the drone CENTRE must stay on the feasible side of. Near-vertical lines
+    (no y = f(x) form) are skipped — none of the UAV scenes use one.
+    """
+    if not geo_config or 'geo_free' in (variant or ''):
+        return []
+    if 'halfspace' not in (geo_config.get('constraint_types') or []):
+        return []
+    r = _scorer_r_drone(geo_config)
+    out = []
+    for hs in geo_config.get('halfspace_constraints', []) or []:
+        (x1, y1), (x2, y2), side, x_active = _fs_wall_xy(hs)
+        if abs(x2 - x1) < 1e-9:
+            continue
+        s = (y2 - y1) / (x2 - x1)
+        lo, hi = (x_active if x_active is not None else sorted((x1, x2)))
+        xs = np.linspace(float(lo), float(hi), 60)
+        raw = y1 + s * (xs - x1)
+        off = r * np.hypot(1.0, s)
+        out.append((xs, raw, raw - off if side == 'below' else raw + off, side))
+    return out
+
+
+def step_violations(P, geo_config, variant=''):
+    """Bool per executed position P (N,3): violates any enforced spatial family (scorer rule)."""
+    P = np.asarray(P, dtype=float)
+    bad = np.zeros(len(P), dtype=bool)
+    if not geo_config or 'geo_free' in (variant or '') or len(P) == 0:
+        return bad
+    ct = set(geo_config.get('constraint_types') or [])
+    r = _scorer_r_drone(geo_config)
+    ws = geo_config.get('workspace_bounds')
+    if 'geo_bounds' in ct and ws is not None:
+        lb = np.array(ws['lb'], dtype=float); ub = np.array(ws['ub'], dtype=float)
+        for d in range(3):
+            if np.isfinite(lb[d]): bad |= P[:, d] < lb[d] + r
+            if np.isfinite(ub[d]): bad |= P[:, d] > ub[d] - r
+    if 'halfspace' in ct:
+        for hs in geo_config.get('halfspace_constraints', []) or []:
+            (x1, y1), (x2, y2), side, x_active = _fs_wall_xy(hs)
+            n = np.hypot(x2 - x1, y2 - y1)
+            if n < 1e-9:
+                continue
+            nx, ny = -(y2 - y1) / n, (x2 - x1) / n
+            signed = nx * (P[:, 0] - x1) + ny * (P[:, 1] - y1)
+            feas = signed if side == 'above' else -signed
+            live = np.ones(len(P), dtype=bool) if x_active is None else \
+                (P[:, 0] >= x_active[0]) & (P[:, 0] <= x_active[1])
+            bad |= live & (feas < r)
+    if 'obstacles' in ct:
+        idx = {'x': 0, 'y': 1, 'z': 2}
+        for ob in geo_config.get('obstacle_constraints', []) or []:
+            dims = [idx[d] if isinstance(d, str) else int(d) for d in ob['dimensions']]
+            dist = np.linalg.norm(P[:, dims] - np.asarray(ob['center'], dtype=float), axis=1)
+            if ob['type'] == 'sphere_outside':
+                bad |= dist < float(ob['radius']) + r
+            else:
+                bad |= dist > float(ob['radius']) - r
+    return bad
+
+
+def _draw_body_boundaries(ax, geo_config, variant=''):
+    """Dashed crimson body-width boundary + shaded blocked side for every enforced halfspace."""
+    from matplotlib.lines import Line2D as _Line2D
+    bnds = halfspace_body_boundaries(geo_config, variant)
+    for xs, raw, body, side in bnds:
+        ax.plot(xs, body, color='crimson', lw=1.4, ls='--', zorder=6)
+        # shade only the strip between the wall and the centre limit: where the drone CENTRE may
+        # not be even though the wall itself is further away (that gap is the drone's half-width)
+        ax.fill_between(xs, body, raw, color='crimson', alpha=0.13, lw=0, zorder=1)
+    if not bnds:
+        return []
+    return [_Line2D([0], [0], color='crimson', ls='--', lw=1.4,
+                    label=f'drone-centre limit (wall − r_drone {_scorer_r_drone(geo_config):.2f} m)')]
+
+
+def plot_overview(out_dir, variant, scene, rollouts, geo_config=None, variant_flags=None):
     """Top-down (x,y) path overview with obstacles + a side (x,z) altitude panel.
 
     The altitude panel with the airborne-gate line makes the UAV failure mode
@@ -299,6 +388,7 @@ def plot_overview(out_dir, variant, scene, rollouts):
         obstacles = []
 
     fig, (ax_xy, ax_xz) = plt.subplots(1, 2, figsize=(16, 8))
+    _vflags = variant_flags if variant_flags is not None else variant
     palette = {}
     _all_x, _all_y, _all_z = [], [], []      # Div_Abort: view-window bookkeeping
     for r in rollouts:
@@ -311,8 +401,17 @@ def plot_overview(out_dir, variant, scene, rollouts):
         # `homotopy` label is only the expert route's tag; the unconditioned FM picks its own.
         _hlabel = r.get('homotopy_flown') or r.get('homotopy', '?')
         color = _homotopy_color(_hlabel, palette) if _homotopy_color else None
-        ax_xy.plot(x, y, color=color, lw=1.5, alpha=0.8)
+        _path_ln = ax_xy.plot(x, y, color=color, lw=1.5, alpha=0.8)[0]
         ax_xy.plot(x[0], y[0], 'o', color='#2ca02c', ms=5, zorder=5)   # start
+        if geo_config:
+            # [Gen15 U15] the drone is 2*r_drone wide — draw the swept body, not just its centre,
+            # and mark the steps the scorer counts as violations.
+            _r = _scorer_r_drone(geo_config)
+            _bl = _path_ln.get_color()
+            ax_xy.fill_between(x, y - _r, y + _r, color=_bl, alpha=0.10, lw=0, zorder=1)
+            _bad = step_violations(obs[:, P_X:P_Z + 1], geo_config, _vflags)
+            if _bad.any():
+                ax_xy.scatter(x[_bad], y[_bad], s=9, color='red', zorder=7)
         ax_xz.plot(x, z, color=color, lw=1.5, alpha=0.8)
 
         # Div_Abort: ✖ where this trial lost control (the trace stops there).
@@ -326,6 +425,22 @@ def plot_overview(out_dir, variant, scene, rollouts):
 
     if _draw_obstacles is not None:
         _draw_obstacles(ax_xy, obstacles)
+    _handles = []
+    if geo_config:
+        # [Gen15 U15] the ENFORCED geometry (halfspaces, obstacles, box) + where the drone centre
+        # actually has to stay. Without it a virtual constraint was invisible in this plot.
+        # xz panel deliberately NOT passed: the helper draws obstacles at workspace mid-height
+        # (`cz_mid`, known bug), which is wrong for x-y cylinders. Top-down only; altitude unchanged.
+        _xz_hidden = fig.add_axes([0, 0, 0.001, 0.001]); _xz_hidden.set_visible(False)
+        _handles += draw_projector_geometry(ax_xy, _xz_hidden, geo_config, _vflags)
+        _xz_hidden.remove()                     # keep tight_layout happy
+        _handles += _draw_body_boundaries(ax_xy, geo_config, _vflags)
+        from matplotlib.lines import Line2D as _L2
+        _handles += [_L2([0], [0], color='0.5', lw=6, alpha=0.3, label='drone body (2 × r_drone)'),
+                     _L2([0], [0], marker='o', color='w', markerfacecolor='red', ms=5,
+                         label='step in violation (scorer)')]
+        ax_xy.legend(handles=_handles, loc='upper center', bbox_to_anchor=(0.5, -0.14), ncol=3,
+                     fontsize=7, framealpha=0.9)
     ax_xy.set_title(f'{scene} — top-down (x, y)')
     ax_xy.set_xlabel('x [m]'); ax_xy.set_ylabel('y [m]')
     ax_xy.set_aspect('equal', 'box'); ax_xy.grid(True, alpha=0.3)
@@ -347,6 +462,17 @@ def plot_overview(out_dir, variant, scene, rollouts):
         ax_xy.set_xlim(*_xl); ax_xz.set_xlim(*_xl)
     if _yl:
         ax_xy.set_ylim(*_yl)
+    if geo_config and _all_y:
+        # [Gen15 U15] zoom y to the flown bodies + the enforced halfspaces, so a 0.9 m corridor is
+        # not a thin strip inside the scene-wide window and the slide/limit lines are readable.
+        _r = _scorer_r_drone(geo_config)
+        _ally = np.concatenate(_all_y)
+        _yfix = [float(np.nanpercentile(_ally, 2)) - _r - 0.1, float(np.nanpercentile(_ally, 98)) + _r + 0.1]
+        for _xs, _raw, _body, _sd in halfspace_body_boundaries(geo_config, _vflags):
+            _yfix += [float(np.clip(_raw.min(), -3, 3)), float(np.clip(_raw.max(), -3, 3))]
+        _yz = view_window(_all_y, fixed=_yfix, pad=0.1)
+        if _yz:
+            ax_xy.set_ylim(*_yz)
     if _zl:
         ax_xz.set_ylim(*_zl)
 
@@ -379,6 +505,90 @@ def plot_overview(out_dir, variant, scene, rollouts):
     # have to live one level up at <geo_tag>/). Nothing consumes it; removed to stop the confusion.
     plt.close(fig)
     return main
+
+
+def save_trajectory_gif(out_dir, variant, scene, rollouts, geo_config=None, variant_flags=None,
+                        fps=12, max_frames=110):
+    """[Gen15 U15] animated top-down GIF of every trial of one variant, against the ENFORCED geometry.
+
+    Drawn from the executed positions (obs_traj), not rendered from MuJoCo: the virtual
+    constraints (halfspaces/obstacles added in the yaml) are not objects in the scene, so an
+    overhead camera would never show them. Each trial is drawn as its drone body (circle of
+    r_drone) with a trail; the body turns red on steps the scorer counts as a violation.
+    Cheap (matplotlib + Pillow, no EGL). Returns the path, or None if nothing to draw.
+    """
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    import matplotlib.patches as _mpa
+    from matplotlib.animation import FuncAnimation, PillowWriter
+
+    vflags = variant_flags if variant_flags is not None else variant
+    tracks = []
+    for r in rollouts:
+        obs = np.asarray(r.get('obs_traj', []))
+        if obs.ndim != 2 or obs.shape[0] == 0:
+            continue
+        P = obs[:, P_X:P_Z + 1].astype(float)
+        tracks.append((r.get('homotopy_flown') or r.get('homotopy', '?'), P,
+                       step_violations(P, geo_config, vflags), bool(rollout_divergence(r))))
+    if not tracks:
+        return None
+    rad = _scorer_r_drone(geo_config) or 0.1
+    T = max(len(P) for _, P, _, _ in tracks)
+    stride = max(1, int(np.ceil(T / float(max_frames))))
+    frames = list(range(0, T, stride)) + [T - 1] * max(1, fps)
+
+    fig = plt.figure(figsize=(12, 4.6))
+    ax = fig.add_axes([0.06, 0.12, 0.92, 0.72])
+    _hidden = fig.add_axes([0, 0, 0.001, 0.001]); _hidden.set_visible(False)   # helper wants an xz axis
+    handles = draw_projector_geometry(ax, _hidden, geo_config, vflags) if geo_config else []
+    handles += _draw_body_boundaries(ax, geo_config, vflags) if geo_config else []
+
+    allx = np.concatenate([P[:, 0] for _, P, _, _ in tracks])
+    ally = np.concatenate([P[:, 1] for _, P, _, _ in tracks])
+    xl = view_window([allx], fixed=[float(np.min(allx)) - 0.2, float(np.max(allx)) + 0.2], pad=0.2)
+    yfix = [float(np.min(ally)) - rad - 0.1, float(np.max(ally)) + rad + 0.1]
+    for xs, raw, body, _side in halfspace_body_boundaries(geo_config, vflags):
+        if xl and (xs.max() >= xl[0] and xs.min() <= xl[1]):
+            yfix += [float(np.clip(raw.min(), -3, 3)), float(np.clip(raw.max(), -3, 3))]
+    yl = view_window([ally], fixed=yfix, pad=0.1)
+    if xl: ax.set_xlim(*xl)
+    if yl: ax.set_ylim(*yl)
+    ax.set_aspect('equal', adjustable='box'); ax.grid(alpha=0.25)
+    ax.set_xlabel('x [m]'); ax.set_ylabel('y [m]')
+
+    _pal = ['tab:blue', 'tab:green', 'tab:purple', 'tab:brown', 'tab:pink', 'tab:olive', 'tab:cyan', 'black']
+    cmap = lambda k: _pal[k % len(_pal)]   # no orange/red: those are the walls and violations
+    trails, bodies, dots = [], [], []
+    for k, (h, P, bad, _dv) in enumerate(tracks):
+        c = cmap(k)
+        ax.plot(P[:, 0], P[:, 1], color=c, lw=0.8, alpha=0.18, zorder=3)
+        trails.append(ax.plot([], [], color=c, lw=1.8, zorder=8, label=f'trial {k} ({h})')[0])
+        bodies.append(ax.add_patch(_mpa.Circle((P[0, 0], P[0, 1]), rad, facecolor=c, alpha=0.22,
+                                               edgecolor=c, lw=1.2, zorder=7)))
+        dots.append(ax.plot([], [], 'o', color=c, ms=5, mec='k', mew=0.5, zorder=9)[0])
+    ax.legend(handles=handles + trails, loc='lower left', fontsize=7, framealpha=0.9, ncol=2)
+    title = fig.suptitle('', fontsize=10)
+
+    def _draw(i):
+        parts = []
+        for k, (h, P, bad, dv) in enumerate(tracks):
+            j = min(i, len(P) - 1)
+            trails[k].set_data(P[:j + 1, 0], P[:j + 1, 1])
+            dots[k].set_data([P[j, 0]], [P[j, 1]])
+            bodies[k].center = (P[j, 0], P[j, 1])
+            v = bool(bad[j])
+            bodies[k].set_facecolor('red' if v else cmap(k)); bodies[k].set_alpha(0.45 if v else 0.22)
+            tag = 'ABORTED' if (dv and j == len(P) - 1 and i >= len(P) - 1) else ('IN VIOLATION' if v else 'ok')
+            parts.append(f'{h}: viol {int(bad[:j + 1].sum())} [{tag}]')
+        title.set_text(f'{scene} — {variant} — step {min(i, T - 1) + 1}/{T}\n' + '   |   '.join(parts))
+        return trails + dots
+
+    path = os.path.join(out_dir, f'{variant}_traj.gif')
+    FuncAnimation(fig, _draw, frames=frames, blit=False).save(path, writer=PillowWriter(fps=fps))
+    plt.close(fig)
+    return path
 
 
 # ── per-rollout diagnostics ──────────────────────────────────────────────────

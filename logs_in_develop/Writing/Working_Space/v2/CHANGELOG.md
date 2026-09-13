@@ -97,6 +97,85 @@ none of the other 38 starred subsections is labelled.
 
 ---
 
+## v2.10 — 2026-09-13 · a real abstract; no "better", no "arm", no self-talk
+
+**Asked for:** (1) the abstract is still a story, not an abstract; (2) do not define "better" — state
+what is compared where it is claimed; (3) *"What separates the two families"* is jargon and self-talk;
+(4) *"Where the problem is posed — the only difference between the arms"*: "arm" is the wrong word;
+(5) is "Backbone" correct?
+
+### 1 · Abstract: 278 → 173 words
+
+One paragraph, standard order: DPCC and its fixed step budget → replaced by flow matching and
+MeanFlow, everything else identical → the three settings (planar manipulation, vision-conditioned
+manipulation, quadrotor with a cascaded geometric controller) → `\hole` for results → the
+methodological contributions. Budget in the hole is now **~200 words**.
+
+### 2 · "Better" is no longer defined
+
+The `"Better". Pareto dominance …` bullet is deleted from *Scope and Terminology*. Contribution 1 now
+says each comparison *reports success rate, constraint satisfaction, network evaluations and
+wall-clock time together*; the engine-3 paragraph says it *matches MeanFlow at low step budgets and
+falls behind at high budgets* instead of *"better nowhere"*. `Pareto` appears **0** times in the tex.
+(The Pareto rule still governs the DA reports; it just is not thesis vocabulary.)
+
+### 3 · Self-talk removed
+
+*"What separates the two families"* → **"Where the step budget is set"**, three plain sentences.
+Also deleted or rewritten: the *"Chapter summary."* openers of Chapters 2–4; *"The load-bearing
+section of the background"*; the v1 summary paragraphs that sat above the math in §2.2 and §2.3
+(*"The section derives the training objective, notes that …"* — the math now says it); *"The section
+argues / makes two points / is careful about / positions this thesis / then states"*; *"One figure and
+one page"*, *"One page."*; two thesis-prose references to the internal `TARGET §8` file; and the
+*"proof obligation discharged here"* sentence in Candidate Selection. **Related Work was rewritten as
+direct prose** — it was entirely meta-description.
+
+### 4 · "Arm" → the methods' names
+
+**69 occurrences replaced; the 6 that remain are the literal robot arm.**
+
+| was | is |
+|---|---|
+| arm A | **unguided** |
+| arm B | **iterate projection** |
+| arm C | **endpoint projection** |
+| the two arms / constraint arms | **the two projection methods** |
+| §2.5 *"Where the problem is posed — the only difference between the arms"* | **"Iterate projection and endpoint projection"** |
+| Results bone *"Constraint Arms"* | **"Projection Methods"** (label unchanged) |
+| visual "arms" in the naming remark | **variants** |
+| candidate fan | **candidate plans** |
+| harness, step ladder, naive flow matching | evaluation code, —, flow matching |
+| Engine titles | **Flow matching · MeanFlow · α-Flow, consistency training** (de-facto names, not glosses) |
+
+### 5 · "Backbone" — correct, kept
+
+Checked in the sources: **DPCC** p. 8 *"We use a 1D U-Net … as the diffusion model backbone"*; **DiT**
+p. 1 *"a convolutional U-Net architecture as the de-facto choice of backbone"*; **MeanFlow** p. 8
+*"B/4 backbone"*.
+
+### Bugs caught during the sweep
+
+- `Chapter~\autoref{ch:method}` rendered **"Chapter Chapter 4"** (left over from the v2.1 autoref
+  conversion). Removed with the bullet it sat in.
+- A literal Unicode **α** in text mode would have failed under `inputenc`/T1 — now `$\alpha$-Flow`.
+  No non-ASCII characters remain in the document body.
+- The degeneracy section said endpoint projection at `n_gen = 0` is *"arm B's algorithm with a
+  different solver"* — outdated since both use SLSQP. Now: *"the post-processing baseline"*.
+- System overview and provenance table were described as if they existed; both are now `\hole`s.
+
+### Recorded for later sessions
+
+`Auxiliary/Naming/NAMING_20260910_master_table.md` — "arm A/B/C" and "candidate fan" marked as DA
+shorthand, not thesis words. New memory `thesis-prose-style` collects every style correction so far.
+
+### Checks
+
+`env balanced · braces 0 · $ parity even · dangling refs 0 · duplicate labels 0 · missing bib keys 0 ·
+uncited entries 0 · acronyms declared-not-used: TUM only · non-ASCII in body: none · non-robot "arm": 0`.
+2220 → 2139 lines; abstract 173 words. **Not compiled.**
+
+---
+
 ## v2.9 — 2026-09-11 · abstract halved; the prose stops arguing with a referee
 
 **Asked for:** the abstract is too long; and the tone is wrong — the chapters should *tell the story*

@@ -2257,7 +2257,22 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
         json.dump({'summary': summary, 'rollouts': json_rollouts}, f, indent=2)
     npz_path = artifacts.save_npz(out_dir, variant_out, rollouts, vars(args))
     artifacts.write_eval_log(out_dir, variant_out, summary, rollouts)
-    artifacts.plot_overview(out_dir, variant_out, scene, rollouts)
+    # [Gen15 U15] pass the enforced geometry: the overview now draws halfspaces/obstacles, the
+    # drone's body width and the scorer's violating steps (a virtual constraint was invisible).
+    artifacts.plot_overview(out_dir, variant_out, scene, rollouts, geo_config=config, variant_flags=variant)
+    # [Gen15 U15] animated top-down GIF of the flown paths against that geometry, written next to
+    # <variant>.png. Drawn from obs_traj (no EGL); a virtual constraint is not in the MuJoCo scene,
+    # so the existing --record gif could never show it. UAV_MIX_TRAJ_GIF=0 turns it off. Never
+    # allowed to fail the eval.
+    if os.environ.get('UAV_MIX_TRAJ_GIF', '1') != '0':
+        try:
+            _traj_gif = artifacts.save_trajectory_gif(out_dir, variant_out, scene, rollouts,
+                                                      geo_config=config, variant_flags=variant)
+            if _traj_gif:
+                print(f'[ eval ] {scene} variant={variant}: trajectory GIF → {_traj_gif}', flush=True)
+        except Exception as _gif_exc:
+            print(f'[ eval ] {scene} variant={variant}: trajectory GIF skipped '
+                  f'({type(_gif_exc).__name__}: {_gif_exc})', flush=True)
 
     # Fix_15.3: drop a greppable sentinel in the variant dir when the projection circuit breaker
     # tripped, so a tripped (UNPROJECTED, invalid-constraint) result is obvious from the file tree

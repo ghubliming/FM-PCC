@@ -738,13 +738,26 @@ geo_constraint_variants:
       - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0,  0.5], radius: 0.05}
 
   # ══════════════════════════════════════════════════════════════════════════════
-  # [Gen15 U15 2026-09-13] corridor_gate_n1 — U14's gate, run with FMPCC_SAFE_EPS_FRAC=1.0
+  # [Gen15 U15 2026-09-13, rev2] corridor_gate_n1 — a SLIDE from the top wall, run with FMPCC_SAFE_EPS_FRAC=1.0
   #
-  # GEOMETRY IS BYTE-IDENTICAL TO `corridor_gate` (U14). Only the name and geo_tag_suffix differ,
-  # so U15 results land in their own `corridor_hggn_` folder and never pool with U14's `_hgg`.
+  # rev2 (after job 25728): the U14 gate was replaced. U14's line started mid-corridor at
+  # (0.40, 0.23) and rose to the wall, so its free end pointed into the flight path like a spike.
+  # The rev2 line is a SLIDE instead: it leaves the top wall face flush at (0.0, 0.45) and descends
+  # 6.8 deg to (2.0, 0.212) at the corridor exit, so the drone is pushed down gradually and released
+  # where the walls end. Results of 25728 (U14 geometry) are superseded and were deleted on the remote.
   #
-  # 🔴 THIS ENTRY MEANS NOTHING WITHOUT THE ENV SETTING. The change under test is not geometry,
-  # it is `FMPCC_SAFE_EPS_FRAC=1.0` (default 1e-3), set per job in
+  # Sized so the drone body (r_drone 0.31, scorer and planner alike) is forced to y <= -0.100 at
+  # the exit:
+  #   raw y = 0.45 - 0.119 x ;  body boundary = raw - 0.31*1.0071
+  #   route L (y -0.12): clean for all x (19.8 mm spare)  <- the escape channel, trained data
+  #   route C (y  0.00): blocked x in [1.16, 2.00]
+  #   route R (y +0.12): blocked x in [0.15, 2.00]
+  #   sliding needs dy/step = 0.119 * 0.0439 = 5.2e-03 m = 24% of the FRAC=1.0 cap (0.0219)
+  # A line that visibly crosses a route in the plot leaves less than the 0.62 m drone in this
+  # 0.90 m corridor (temp/geo_demo/U15_block_truth.png), so the line must stay above the routes.
+  #
+  # 🔴 THIS ENTRY MEANS NOTHING WITHOUT THE ENV SETTING. The change under test is
+  # `FMPCC_SAFE_EPS_FRAC=1.0` (default 1e-3), set per job in
   # Slurm_Codes/temp_bash/eval_20260913_u15_corridor_gate_n1.sh. A geo entry cannot carry it
   # (`_apply_geo_entry` copies six keys only), so the name is the reminder.
   #
@@ -771,10 +784,10 @@ geo_constraint_variants:
     workspace_bounds:             # identical to corridor_gate
       lb: [-4.0, -.inf, 0.30]
       ub: [ 4.0,  .inf, 1.80]
-    halfspace_constraints:        # identical to corridor_gate
+    halfspace_constraints:        # the two corridor walls (unchanged) + the rev2 slide
       - {line: [[-2.0, -0.45], [2.0, -0.45]], side: 'above', x_active: [-2.0, 2.0]}
       - {line: [[-2.0,  0.45], [2.0,  0.45]], side: 'below', x_active: [-2.0, 2.0]}
-      - {line: [[-2.0, -0.25], [2.0,  0.55]], side: 'below', x_active: [ 0.40, 2.0]}   # U14 gate
+      - {line: [[ 0.0,  0.45], [2.0,  0.212]], side: 'below', x_active: [ 0.0, 2.0]}   # U15 slide
     obstacle_constraints:         # identical to corridor_gate
       - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0, -0.5], radius: 0.05}
       - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0, -0.5], radius: 0.05}

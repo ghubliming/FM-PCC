@@ -1,5 +1,9 @@
 # U15 — `corridor_gate_n1`: U14's gate, with `FMPCC_SAFE_EPS_FRAC=1.0`
 
+> ⚠️ **Superseded by rev2** ([`CHANGELOG_20260913_u15r2_slide_and_plots.md`](CHANGELOG_20260913_u15r2_slide_and_plots.md)):
+> the gate is now a slide from the top wall, and the eval draws the geometry + a GIF. §1–§6 below
+> describe rev1 (job 25728).
+
 **Date:** 2026-09-13 · **Gen:** 15 · **Scope:** config (one entry appended) + one submit script — **no code changed**
 
 ## 1. The one change under test
@@ -100,4 +104,29 @@ the gate. Built from the rollout traces, no cluster rendering. Tested on the U14
 
 | job | submitted | status |
 | --: | :-- | :-- |
-| — | — | not yet submitted |
+| **25728** | 2026-09-13 (cluster) | DONE — results in `temp/1309/Emf_K3_mpc4_pid_stopgo_T0.5_u7hg/6/`. |
+
+### 7.1 First read of 25728 (2 trials, not a DA)
+
+The setting reached the job. The child log with the eps line was not downloaded, but the path moved:
+`dpcc-t-bounds_free` C differs from `diffuser` by **273 mm** in y (U14: ≤ 1 mm).
+
+| arm | L | C | note |
+| :-- | :-- | :-- | :-- |
+| `diffuser` | clean, success | 24 viol steps, 12.3 cm deep, success | **drifts**: L y −0.122 → −0.058, C 0.008 → 0.075. Criterion 1 not clean |
+| `dpcc-t-bounds_free` | 2 viol, success | 16 viol, 9.8 cm deep, **no success** (396 steps, overshoots to y −0.377 after x = 2) | the projector now bends the path, but not cleanly |
+| `hardflow_new` (folder `hardflow_sls`) | divergence abort, **inverted** at step 166 | divergence abort, **inverted** at step 174 | HF loses the drone under this setting |
+
+**Verdict:**
+- Criterion 1 is borderline, with 6–7 cm drift in the unprojected arm.
+- Criterion 2 fails: moved but still violating, and missed the goal.
+- Criterion 3 fails: both rollouts flipped.
+
+The mechanism diagnosis (§2) is confirmed, since widening the scale unlocks sideways projection. The
+setting is not a clean fix.
+
+**Visual complaint (user):** "0 block" in the plots.
+- The eval's per-variant plot draws neither the gate nor the drone's width. The gate does block the
+  body (diffuser C, 24 steps, 12 cm).
+- A diagonal that visibly crosses the drawn route leaves a gap smaller than the 0.62 m drone in the
+  0.90 m corridor. See `temp/geo_demo/U15_block_truth.png`.
