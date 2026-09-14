@@ -5983,3 +5983,28 @@ Comprehensive data analysis of the MPC candidate fan ($B=4$ vs $B=1$) on `avoidi
 3. **U13 narrows the remaining geometric alternative without broadening scope** (CHANGELOG_20260912_corridor_ball_v3.md):
    - Added config-only corridor_ball_v3, retaining v2's centre and constraints but reducing radius 0.12 -> 0.05. The drone inflation still blocks the full flown band while reducing the necessary climb 0.43 -> 0.36 m and widening the escape slot to 1.00 m.
    - Submitted the matched mf K=2 injection test (job 25689), gated on both positive unprojected violations and a projected collision-free rollout. Its interpretation is explicitly paired with the bounds-free probe: if vertical authority remains absent, another ball-size iteration is not warranted.
+
+
+***
+
+## Gen15 U12–U16: Corridor Avoidance Closure, Solver-Scale Diagnosis & Diffusion Reference (September 12–13, 2026)
+
+**Keywords**: Gen15, corridor_ball, corridor_gate, corridor_v2, normalized solver box, U14, U16, DPCC diffusion reference, commits 1397cf4, 3aa9164, 8995caf, 074152e, 995a379a, ea50b6a.
+
+1. **Closed the corridor_ball investigation after four geometry scales and an uncapped control** (CLOSURE_20260912_corridor_obstacle_investigation.md):
+   - Ball radii 0.35 to 0.01, an 11.6x larger escape slot, placing the obstacle on the measured trajectory, and bounds-free projection all left collision-free completion at zero. Direct trace comparison showed zero lateral displacement and at most 1 mm vertical displacement against a required detour of 0.32 m.
+   - Earlier apparent violation reductions were retracted: projected episodes simply finished earlier, with unchanged violations per step. In contrast, the same projector on pillars reduced violation rate 5.4x and achieved 0.900 collision-free completion, proving the projector is not globally broken.
+   - The corridor geometry is structurally unsuitable for a lateral obstacle: its 0.90 m physical width leaves only 0.28 m of lateral slack after drone inflation, less than even a zero-radius obstacle requires.
+
+2. **U14 corridor_gate separated geometry from the failure mechanism and located a normalized-coordinate bottleneck** (DA_20260913_corridor_gate_full_wave.md, job 25706):
+   - The open-approach gate bound C/R homotopies (12.7/34.0 violation steps) while L passed by construction. Across K=2/5/10 and every selector, 0 of 90 projected C/R rollouts were collision-free; paths differed by at most 1 mm, or 3 mm for tightened projection.
+   - Removing the action-magnitude constraint via bounds_free made no difference, ruling out the initial auto-action-bound explanation. Code review instead found the SLSQP hard box is applied in normalized coordinates, whose corridor y range is only 4.4e-05 m: the resulting seven-step lateral allowance is 0.77 mm where the gate needs roughly 100–200 mm. This explains the null result and distinguishes it from pillars, whose lateral normalizer is 1800x wider.
+   - The inference that solves retain the near-unprojected iterate on non-convergence remains to be instrumented; no code fix was applied.
+
+3. **U15–U16 moved to a viable paper-run geometry and corrected projection semantics** (CHANGELOG_20260913_corridor_gate_n1.md, CHANGELOG_20260913_u15r2_slide_and_plots.md, CHANGELOG_20260913_corridor_v2_wide_slide.md, CHANGELOG_20260913_u16fix_pdes_binding.md, CHANGELOG_20260913_corridor_v2_paper_run.md):
+   - Added gate variants, rendered virtual geometry in rollout artifacts, and corrected plot positioning. U16 replaced the failed narrow corridor with corridor_v2, using widened walls and a slide halfspace, then repaired geometry binding to the planned setpoint rather than the lagging executed drone state, along with HardFlow constraint and x_active handling.
+   - Submitted the corrected U16 paper wave with distinct naming/tags and review checks. Results were not yet available, so it is recorded as an implementation and evaluation launch, not an empirical claim.
+
+4. **Established an architecture-matched pillars diffusion reference row** (DA_20260912_pillars_diffusion_baseline_reference.md, C59):
+   - The 3.96 M U-Net DDPM at K=20 converged in training (test loss 0.528 -> 0.00172) and crossed the finish line in 50/50 rollouts, but never passed within the 0.30 m strict-goal tolerance and had strict S&C 0.00 on all five variants; its best crossed-line S&C was 0.30 with dpcc-t-tightened.
+   - On honest-geometry pillars, K=5 mf, fm, and af each contain cells Pareto-dominant over that top diffusion projection row in S&C, steps, and time. This is a single-seed reference with intentionally unmatched budgets and action_weight=1, not a paper-faithful DPCC action_weight=10 reproduction.

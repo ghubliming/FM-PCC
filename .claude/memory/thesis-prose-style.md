@@ -9,8 +9,11 @@ Thesis prose (FM-PCC Master's thesis, `Writing/Working_Space/`) must read as **p
 storytelling**: say what is used and what it does, optionally with a short "because". The user has
 corrected each of the following explicitly, some more than once (2026-09-11 → 09-13):
 
-- **Abstract = an abstract.** Problem, approach, settings, results, contributions — under ~200
-  words. Not a multi-paragraph pitch.
+- **Abstract: NO NUMBERS, ever** (user was furious when v2.11 put them in). Model it on the
+  reference papers in `aux_repo/PAPERS` — DPCC, HardFlow, SafeFlowMPC, Diffuser all do the same: one
+  paragraph, ~150–220 words, context → "However," limitation → what this work does → how → what it
+  enables → one *qualitative* results sentence ("simulations show that X … as reliably as … at a
+  fraction of the cost"). Never list negative results in the abstract.
 - **No justification / rebuttal prose.** No "why not X", "does not claim", "must not be read as",
   "worth stating", "rather than left to be discovered", "Neither is strictly better".
 - **No self-talk.** No "The section argues…", "This chapter builds…", "the load-bearing section",
@@ -22,10 +25,18 @@ corrected each of the following explicitly, some more than once (2026-09-11 → 
   projection), not "candidate fan", "harness", "ladder", "bootstrapped target" (invented — it is
   consistency training). Use the de-facto scientific name, verified in the source paper.
 - **"Backbone" is fine** — DPCC, DiT and MeanFlow all use it.
+- **Branded method names only in Related Work** (user angry, 2026-09-14). Never write *α-Flow* or
+  *HardFlow* in the abstract, Ch 1, Ch 2, Positioning, Ch 4, titles or captions. Write the mechanism
+  instead (*consistency training*, *endpoint projection*) with an in-place `\parencite`. Keep labels
+  and code tokens unchanged. *Flow matching*, *MeanFlow* and *DPCC* stay named.
+- **Tell the evaluation as two stages: prove, then extend.** Obstacle avoidance is DPCC's benchmark,
+  used 1:1 to meet the baseline on its own ground. The vision-conditioned alignment task and the
+  quadrotor benchmark were **built** for this thesis (the quadrotor: everything but the Skydio X2
+  model). Never say they were *chosen*.
 
 **Why:** the user reads the draft as an examiner would; jargon, meta-commentary and defensive
 framing read as filler and obscure the method.
 
 **How to apply:** before writing or editing `thesis_v*.tex`, check new text against this list and
-the canonical name table `Writing/Auxiliary/Naming/NAMING_20260910_master_table.md`. See also
+the canonical name table `Writing/Auxiliary/Naming/TRANSLATION_20260914_dev_jargon_to_scientific.md`. See also
 [[master-thesis-writing-tum]].

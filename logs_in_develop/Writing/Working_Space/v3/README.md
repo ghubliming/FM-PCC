@@ -1,5 +1,7 @@
 # v3 — the experiments
 
+> 🚦 **Draft ownership:** v3 writes **Ch 5–8 and the appendix** (plus plots, bundle, tools) — never its copies of Ch 1–4, nothing under `v2/` or `v4/`. Rules: [`../DRAFT_OWNERSHIP.md`](../DRAFT_OWNERSHIP.md).
+
 **Created:** 2026-09-10 · **Master file:** [`thesis_v3.tex`](thesis_v3.tex) · **Change history:** [`CHANGELOG.md`](CHANGELOG.md)
 **Branched from:** [`../v2/thesis_v2.tex`](../v2/thesis_v2.tex) at **v2.6** — see [`inherited/SYNC_STATE.json`](inherited/SYNC_STATE.json)
 **Governed by:** [`../TARGET_20260905_thesis_claim_ladder.md`](../TARGET_20260905_thesis_claim_ladder.md) (goals) ·
@@ -118,12 +120,16 @@ bundle/                flattened builds — see bundle/README.md
 The split layout is for editing. **To build or upload, flatten it first:**
 
 ```bash
-python3 bundle/make_bundle.py                 # -> bundle/thesis_v3_<stamp>.tex + .zip
+python3 bundle/make_bundle.py                 # NEW sections only: v2 chapters collapsed to headings
+python3 bundle/make_bundle.py --full          # the complete document -> upload THIS for the thesis
 python3 bundle/make_bundle.py --svg-package   # same, with the SVG figures rendered
 python3 bundle/make_bundle.py --verify        # prove a bundle matches the tree, byte for byte
 ```
 
-Upload the `.zip` to Overleaf — it carries the flat `.tex`, both `.bib` files and `figures/`.
+The default build skips the v2 chapters, which v3 does not edit: each becomes its numbered headings
+plus a grey *"v2 SECTION"* box, so numbering and cross-references match the full build. A v2 chapter
+that v3 **has** edited is inlined in full automatically. Upload the `--full` `.zip` to Overleaf for
+the complete thesis — it carries the flat `.tex`, both `.bib` files and `figures/`.
 Compiler **pdfLaTeX**, bibliography **Biber**. Full detail, including the two figure modes and why
 `--svg-package` is opt-in, in [`bundle/README.md`](bundle/README.md).
 

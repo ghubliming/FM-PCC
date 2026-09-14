@@ -9,6 +9,8 @@ Everything thesis-writing related lives under `logs_in_develop/Writing/`.
 | `Working_Space/Bone/` | Structural skeleton: title, ToC, chapter/section tree. | Current phase. |
 | `Working_Space/v1/`, `v2/` | The earlier drafts (`thesis_v*.tex`), each with its own README/CHANGELOG. | `v2` is the live **mathematics** draft and remains upstream for Chapters 1–4. |
 | `Working_Space/v3/` | 🟢 **The live draft.** v2 split by chapter, plus the experiments: Chapters 5–8 are written. Master file `thesis_v3.tex`. | **v2 and v3 run in parallel.** v3 inherits Chapters 1–4 from v2 and owns 5–8; `v3/tools/sync_v2.py status` says whether v2 has moved, and `merge` three-way-merges it down. The dependency is one-way — a fix for both drafts is made in **v2** and synced down. See `v3/inherited/MANIFEST.md`. |
+| `Working_Space/v4/` | ⚪ **Planned, not started** — next steps, real-world practice, appendix material. Starts after v2 and v3 are finished. | Currently `notes.txt` only; nothing to edit yet. |
+| **`Working_Space/DRAFT_OWNERSHIP.md`** | 🚦 **Which draft writes which chapter.** v2 = Ch 1–4, v3 = Ch 5–8 + appendix, v4 = later. | **Read before editing any draft.** No chat edits another draft's files. |
 | `Working_Space/v3/plots/`, `v3/figures/` | The figure pipeline and its output. | Figures are **generated from the batch CSVs**, not drawn. New data lands ⇒ edit `v3/plots/sources.py` (the only file holding a path) and re-run `python3 plots/make_figs.py`. |
 | `Working_Space/data_status/`, `fallback_target/` | Entry-readiness and fallback-claim analyses feeding the TARGET ladder. | Analysis, not thesis prose. |
 | `Working_Space/future_work/` | Outlook material for `sec:conc:future`: perception→constraint front-end, zero-shot constraint re-tasking / sim2real. | 🟡 **Ideas, not results.** Deliberately outside `thesis_v2.tex`; see its README before citing anything from it. |
@@ -42,6 +44,10 @@ Harvest from it rather than hand-typing entries.
   and figures the Results chapter will cite.
 - `Slurm_Codes/logs/important_runs/important_runs.md` — which cluster runs the
   reported numbers actually came from. Needed for the reproducibility appendix.
+- `logs_in_develop/Obsidian_knowledge_vault/` — supplementary project notes. Treat
+  this vault as potentially outdated or unreliable: use it only to find leads, then
+  verify every fact against the current code, development logs, papers, or data of
+  record before using it in the thesis.
 - `logs_in_develop/Rebuild_repo/` — 🔴 **read-only insight, never a source.** A concept sketch for a
   unified rebuild: unbuilt, unstable, self-labelled *"CONCEPT / IDEAS — not a finalized plan"*.
   **Do not cite it in the thesis and do not point a chapter at it.** Its one contribution to the

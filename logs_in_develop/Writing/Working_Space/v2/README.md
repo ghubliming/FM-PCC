@@ -1,5 +1,7 @@
 # v2 — the mathematics, with citations
 
+> 🚦 **Draft ownership:** v2 writes **Ch 1–4**, abstract, preamble, acronyms, `bibliography.bib` — nothing under `v3/` or `v4/`, and not v2's own Ch 5–8 placeholders. Rules: [`../DRAFT_OWNERSHIP.md`](../DRAFT_OWNERSHIP.md).
+
 **Created:** 2026-09-08 · **File:** [`thesis_v2.tex`](thesis_v2.tex) · **Bibliography:** [`bibliography.bib`](bibliography.bib)
 **Change history:** [`CHANGELOG.md`](CHANGELOG.md) — *every pass gets an entry there; this README describes the current state only*
 **Built from:** [`../v1/thesis_v1.tex`](../v1/thesis_v1.tex) (copied, then extended — v1 is untouched)
@@ -51,6 +53,12 @@ Scope, across the three passes so far (see `CHANGELOG.md`):
 - **v2.10** — a real abstract (**173 words**); "better" no longer defined, metrics stated in place;
   **"arm A/B/C" replaced by unguided / iterate projection / endpoint projection** (69 hits);
   self-talk and chapter-summary meta removed, Related Work rewritten as direct prose.
+- **v2.11** — ~~numbers in the abstract~~ — reverted in v2.12.
+- **v2.12** — abstract rewritten on the pattern of the reference papers (DPCC, HardFlow, SafeFlowMPC,
+  Diffuser): one paragraph, **no numbers**, qualitative results only.
+- **v2.13** — Chapter 1 overhaul; see `changelogs/v2.13_20260914_chapter1.md`.
+- **v2.14** — Chapters 2–4 restructured (concepts · papers · mathematics); see `changelogs/v2.14_20260914_chapters2-4_restructure.md`.
+- **v2.15** — *α-Flow* / *HardFlow* named only in Related Work (mechanism name + citation elsewhere); the evaluation told as two stages — DPCC's benchmark unchanged first, then the alignment task and quadrotor benchmark built for this thesis; see `changelogs/v2.15_20260914_names_and_two_stages.md`.
 - **v2.6** — the **compute environment**: the cluster, node, CPU/GPU and software stack every number
   was produced on, plus the two caveats that follow from the machine. First prose written into
   Chapter 5 — a deliberate, scoped exception to the bone rule (see below).

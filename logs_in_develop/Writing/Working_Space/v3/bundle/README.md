@@ -5,18 +5,43 @@ wrong for uploading. **This folder holds the flattened build**, and a tool that 
 mechanically, so the flat file is never edited by hand and cannot drift from the split one.
 
 ```bash
-python3 bundle/make_bundle.py                 # flatten, verify, zip
+python3 bundle/make_bundle.py                 # NEW sections only -- v2 chapters collapsed
+python3 bundle/make_bundle.py --full          # the complete document
 python3 bundle/make_bundle.py --svg-package   # same, but render the SVG figures directly
 python3 bundle/make_bundle.py --verify        # prove the newest bundle matches the tree
 python3 bundle/make_bundle.py --list
 python3 bundle/make_bundle.py --prune 5       # keep only the 5 newest
 ```
 
-Each run writes a timestamped pair and appends a row to [`BUNDLE_LOG.md`](BUNDLE_LOG.md):
+## Default: new sections only
+
+v3 inherits Chapters 1–4 from v2 and normally never edits them, so by default the bundle **does not
+re-typeset them**. Each unchanged v2 chapter is collapsed to its numbered `\chapter`/`\section`
+headings plus a grey **"v2 SECTION — not built in this bundle"** box naming the file, its length and
+the v2 revision it came from. Result: roughly half the length (2 347 against 4 108 lines today), with
+the v3 text on the page.
+
+**Nothing about numbering changes.** The kept headings carry their labels, so chapter and section
+numbers are identical to the full build — checked: the 58 numbered headings appear in the same order
+in both — and every `\autoref` from a v3 chapter into a v2 one still resolves. The tool reports it if
+a reference ever lands inside collapsed text and would print `??`.
+
+Two guards keep "the v2 chapters are untouched" a checked fact rather than an assumption:
+
+| guard | why |
+| :-- | :-- |
+| only `chapters/` files that `tools/sync_v2.py` marks `inherit` or `merge` are candidates; `parts/` (preamble, front matter, back matter) is always inlined | the document does not compile without them |
+| a candidate collapses **only if byte-identical** to `inherited/v2_base/`; otherwise it is inlined in full and the build prints `inlined IN FULL because v3 has edited them` | `02_background` and `04_method` are *allowed* to be edited by v3. Collapsing an edited chapter would hide exactly the edit under review |
+
+**Use `--full` for the complete thesis** — the Overleaf upload of record, anything sent to a
+supervisor, and before submission. `--full` and `--svg-package` combine.
+
+Each run writes a timestamped pair, named `thesis_v3_<stamp>_new` or `_full`, and appends a row to [`BUNDLE_LOG.md`](BUNDLE_LOG.md):
 
 ```
-thesis_v3_<YYYYMMDD_HHMMSS>.tex     one self-contained file, ~3 700 lines
-thesis_v3_<YYYYMMDD_HHMMSS>.zip     that .tex + both .bib files + figures/
+thesis_v3_<YYYYMMDD_HHMMSS>_new.tex    new sections only (default)
+thesis_v3_<YYYYMMDD_HHMMSS>_full.tex   the complete document (--full)
+thesis_v3_<...>.zip                    that .tex + both .bib files + figures/
 ```
 
 ## For Overleaf
@@ -60,7 +85,9 @@ never requires touching the source.
    `\begin{document}` and `\end{document}`.
 
 3. **`--verify` is the check that matters.** It extracts every inlined source back out of a bundle
-   and diffs it against the tree, undoing the one transformation the tool applies. That proves the
+   and diffs it against the tree, undoing the one transformation the tool applies. A collapsed
+   chapter has no text to diff, so for those it checks that the source's SHA-256 still matches the
+   one recorded at build time. That proves the
    flattening is byte-faithful rather than merely well-formed. Run on an *older* bundle it answers a
    different and equally useful question — *was this built from what is on disk now?* — and a
    mismatch there is information, not a bug.

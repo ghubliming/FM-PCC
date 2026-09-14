@@ -24,6 +24,9 @@ doc — **never cited**, see that note) · [`../Methodology_Sources/AUX_visual_a
 
 ---
 
+> 📍 **Superseded as the working list on 2026-09-14** by [`TRANSLATION_20260914_dev_jargon_to_scientific.md`](TRANSLATION_20260914_dev_jargon_to_scientific.md), which carries every row below plus the new dev-jargon rows. This file is kept for its reasoning (§2 arguments, §8).
+
+
 ## 1. Generative engines
 
 | ① code | ② paper | ③ what it really is → **thesis name** |

@@ -1,6 +1,6 @@
 # FM-PCC — Key Headlines Notebook
 
-**Last updated:** 2026-09-07 · **Author:** curated from the reports in this directory  
+**Last updated:** 2026-09-13 · **Author:** curated from the reports in this directory  
 **Status:** 🟢 Visual aligning **closed** · 🟢 Avoiding **strongest result to date** · 🔴 UAV **unrankable**
 
 ## How to read this file
@@ -23,6 +23,20 @@ anything.
 
 ---
 
+## Status note — 2026-09-13
+
+- **UAV `pillars`:** honest-geometry (`_hg`) data with all engines and the DPCC-diffusion K=20 reference row are in
+  [`DA_20260913_uav_pillars_diffusion_baseline_reference`](DA_20260913_uav_pillars_diffusion_baseline_reference.md).
+- **UAV `corridor`:** paper run on the widened `corridor_v2` scene has been submitted (jobs 25750–25759, results pending;
+  see `logs_in_develop/Gen15/U16/`).
+- **HardFlow bug fixed:** HardFlow ignored `x_active` halfspaces. All HardFlow results on UAV `s_curve` so far are invalid until re-run.
+- Avoiding and visual aligning: unchanged (H9, H10).
+
+**Possibly outdated in this directory:**
+- `Report_20260909_MJPC_vs_PID_s_curve/`: its `hardflow_sls-r` rows (F4, part of F7) are affected by the `x_active` bug.
+- Headline 8 below ("UAV `pillars` unrankable"): describes the pre-`_hg` geometry; superseded by the `pillars` DA above.
+- The status line at the top ("🔴 UAV unrankable"): no longer accurate for `pillars`.
+
 ## Document index — this directory
 
 🟢 current · 🗄️ outdated (renamed `outdated_*`, banner at the top of each says what replaced it)
@@ -30,6 +44,7 @@ anything.
 | doc | covers | state |
 |---|---|---|
 | **this file** | the headline index | 🟢 |
+| [`DA_20260913_uav_pillars_diffusion_baseline_reference`](DA_20260913_uav_pillars_diffusion_baseline_reference.md) | UAV `pillars`: DPCC-diffusion K=20 reference row vs mf/fm/af | 🟢 newest |
 | [`Proposal_20260905_HF_minK_mf_af_unet/`](Proposal_20260905_HF_minK_mf_af_unet/README.md) → [`DA_20260906`](Proposal_20260905_HF_minK_mf_af_unet/DA_20260906_hf_minK_mfunet_A1_K2_K3_K5.md) | HardFlow's K floor + the result at it | 🟢 **newest result** |
 | [`Report_20260903_AF_UNet/`](Report_20260903_AF_UNet/README.md) | α-Flow with α actually on, avoiding | 🟢 |
 | [`Report_20260819_MF_UNet/`](Report_20260819_MF_UNet/README.md) | MF-UNet Pareto dominance, avoiding | 🟢 |

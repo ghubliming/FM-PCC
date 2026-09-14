@@ -17,6 +17,57 @@ is sourced from · what it left open.
 
 ---
 
+## v3.6 — 2026-09-14 · the default bundle builds only the new sections
+
+**Asked for:** since v3 does not touch the v2 sections in normal editing, the default bundle should
+build only the new sections and mark the v2 ones in the `.tex` as v2 — if that premise is right.
+
+**The premise is right, with one qualification that the tool now enforces.** All seven inherited
+files are byte-identical to `inherited/v2_base/` today. But `02_background` and `04_method` carry the
+`merge` policy — v3 is *allowed* to edit them (the planned `sec:bg:fewstep` change) — so "untouched"
+is true now, not guaranteed. The bundler therefore checks it on every build instead of assuming it.
+
+### What changed in `bundle/make_bundle.py`
+
+- **Default is now new-sections-only; `--full` builds everything.** Files are named `_new` / `_full`.
+- **A v2 chapter collapses to a skeleton:** its numbered `\chapter`/`\section` headings with their
+  labels, plus a grey `\fmpccvtwo` box — *"v2 SECTION — not built in this bundle"* — naming the file,
+  its length and the v2 revision it was inherited at (read from `SYNC_STATE.json`). The macro is
+  injected into the preamble only when something was collapsed.
+- **Guard 1 — only v2 content chapters are candidates.** Ownership comes from `tools/sync_v2.py`'s
+  `POLICY`, imported rather than restated, so the bundler cannot disagree with the sync tool.
+  `parts/` is always inlined: the document does not compile without the preamble, the front matter
+  (`\mainmatter`, the ToC) or the back matter (the acronym list).
+- **Guard 2 — collapse only if byte-identical to the v2 baseline.** An edited chapter is inlined in
+  full and the build prints `inlined IN FULL because v3 has edited them: …`.
+- **`--verify` understands collapsed chapters:** no text to diff, so it compares the source's SHA-256
+  against the one recorded in the banner.
+- `--list`, `--prune` and the `--verify` default order bundles by modification time, since a `_full`
+  and a `_new` built in the same second would otherwise sort by name.
+
+### Why the skeleton keeps headings rather than dropping the chapters
+
+Dropping Chapters 1–4 outright would renumber everything: *Experimental Setup* would become Chapter 1,
+and all nine `\autoref`s from v3 chapters into v2 ones would print `??`. Every one of those nine is a
+`sec:` reference, so keeping the numbered headings with their labels resolves all of them. Starred
+headings move no counter and are dropped.
+
+### Verified, not assumed
+
+| check | result |
+| :-- | :-- |
+| new-sections-only build | 10 files inlined, 4 v2 chapters collapsed (1 821 lines not built); 2 347 lines against 4 108 |
+| cross-references in the new-only build | **all resolve** |
+| numbered headings, new vs full | **58 and 58, identical sequence** — so every chapter and section number matches |
+| `--verify`, new-only bundle | 9 inlined byte-faithful + 4 collapsed unchanged |
+| `--verify`, full bundle | 13 inlined byte-faithful |
+| **guard test** — appended one line to `02_background.tex` | `--verify` on the old bundle: `DIFF … collapsed v2 section; the source has changed since the build`. Rebuild: `inlined IN FULL because v3 has edited them: chapters/02_background.tex`, the other three still collapsed. File restored, identical to baseline again |
+
+**Use `--full` for anything that has to be the whole thesis** — the Overleaf upload of record, a
+supervisor copy, and submission. **Not compiled.**
+
+---
+
 ## v3.5 — 2026-09-12 · raw plan quality: the half of the headline that was missing
 
 **Asked for:** the smoothness of the raw network output matters — a chaotic, low-quality plan can be

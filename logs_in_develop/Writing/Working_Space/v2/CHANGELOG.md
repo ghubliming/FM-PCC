@@ -97,6 +97,140 @@ none of the other 38 starred subsections is labelled.
 
 ---
 
+## v2.15 — 2026-09-14 · method names out of the body; prove on DPCC's ground, then extend → [`changelogs/v2.15_20260914_names_and_two_stages.md`](changelogs/v2.15_20260914_names_and_two_stages.md)
+
+Full KP-by-KP record in the file above: *α-Flow* / *HardFlow* removed from abstract, Ch 1, Ch 2,
+§3.7 Positioning and Ch 4 (names now only in Related Work §3.2, §3.4, credited elsewhere by
+`\parencite`) · the two-stage story (DPCC's avoiding benchmark unchanged first, then the alignment
+task and the quadrotor benchmark built for this thesis) written into the abstract, §1.2, §1.4, §3.7,
+§4.7 · v2.13's changelog given a refinement note.
+
+- **For v3:** **no label was removed or renamed.** Two *titles* changed: §4.3.4
+  `sec:method:alphaflow` is now **Consistency Training**, §4.5.3 `sec:method:hardflow` is now
+  **Endpoint Projection**; the short caption of `tab:hardflow-setup` is *Endpoint projection:
+  published setup vs. this work*.
+- **For v3:** the naming rule is now **branded names only in Related Work**. v3's Ch 5–8 prose should
+  write *consistency training* and *endpoint projection* with `\parencite{zhang2025alphaflow}` /
+  `\parencite{li2025hardflow}`, not *α-Flow* / *HardFlow*. Table headers may keep short forms after
+  definition. Rule 1 in `Auxiliary/Naming/TRANSLATION_20260914_dev_jargon_to_scientific.md` §8.
+  A read-only scan found one occurrence in v3's `07_discussion.tex`, and none in 05, 06 or 08.
+- **For v3:** Ch 1 and Ch 4.7 now frame the evaluation as two stages. The avoiding benchmark is
+  DPCC's setup unchanged and is where the baseline is met first; alignment and the quadrotor are
+  built for this thesis. v3's Ch 5 *Entry 1 … the foundation … met on its own ground* already agrees;
+  Ch 5 can reference `sec:method:envs` for the stage roles.
+- **For v3:** contribution titles 5 and 6 changed (*A vision-conditioned alignment task*, *A
+  quadrotor benchmark*); RQ1's label is *Generative model* (was *Engine*). v3's own section title
+  *Few-Step Engines* (`sec:res:fewstep`) still carries "engine"; v2 leaves its placeholder alone.
+- **Shared notes touched:** `Auxiliary/Naming/TRANSLATION_20260914_dev_jargon_to_scientific.md`
+  (header, α-Flow row, HardFlow row — implemented method is Algorithm 1, §8 rule 1).
+
+---
+
+## v2.14 — 2026-09-14 · Chapters 2–4 restructured → [`changelogs/v2.14_20260914_chapters2-4_restructure.md`](changelogs/v2.14_20260914_chapters2-4_restructure.md)
+
+Full KP-by-KP record in the file above: HardFlow expanded (concept in Ch 2.5, full derivation in
+4.5.3) · Ch 2 = concepts, Ch 3 = papers, Ch 4 = all math · Ch 4 regrouped into 7 sections /
+23 subsections · 19 new verified citations.
+
+- **For v3:** **no label was removed or renamed.** Five labels v3 cites now sit on *subsections*, so
+  `\autoref` renders "Subsection 4.x.y": `sec:method:proj` (4.5.1), `sec:method:dpcc` (4.5.2),
+  `sec:method:hardflow` (4.5.3), `sec:method:degenerate` (4.5.4), `sec:method:backbone` (4.3.6).
+  `sec:method:engine` (4.3) and `sec:method:deployment` (4.6) are still sections. If v3's prose says
+  "Section" by hand next to these, adjust it.
+- **For v3:** Ch 4.7 *Environments* (`sec:method:envs`, `sec:method:env:{avoiding,aligning,uav}`)
+  now holds the environment construction and the constraint sets as equations
+  (`eq:method:env:halfspace`, `eq:method:env:disk`, `eq:method:env:switched`). v3's Ch 5 *Constraint
+  sets* can reference them instead of restating the forms; its scene dimensions stay in Ch 5.
+- **For v3:** Ch 2.7 `sec:bg:quadrotor` and Ch 4.4.2 `sec:method:quadrotor` now describe the
+  fully-actuated vs underactuated distinction that Ch 5 *Why the third entry is a different problem*
+  also states — v3 may shorten that subsection to a reference.
+- **For v3:** HardFlow attribution corrected — the implemented method is HardFlow **Algorithm 1**
+  (derived through Problems 2–5), not "Problem 5". v3's chapters do not quote a problem number.
+- **For v3:** `bibliography.bib` grew from 31 to 50 entries (all verified against local PDFs).
+- **Shared notes touched:** `Auxiliary/Naming/TRANSLATION_20260914_dev_jargon_to_scientific.md`
+  (engine row, section number); `v4/REMINDER_20260914_glossary_appendix.md` (section numbers only —
+  a file this chat created in v2.13 at the author's request).
+
+---
+
+## v2.13 — 2026-09-14 · Chapter 1 overhaul → [`changelogs/v2.13_20260914_chapter1.md`](changelogs/v2.13_20260914_chapter1.md)
+
+Full KP-by-KP record in the file above: `\srcnote` switch · *backbone* + new translation list · NFE
+defined in the body · six contributions with result placeholders · *Scope and Terminology* removed.
+
+- **For v3:** `\label{sec:intro:scope}` is **removed**. v3's own Ch 5–8 do not reference it; v3's
+  inherited Ch 2 copy (`v3/chapters/02_background.tex:386`) still does, and resolves on the next sync
+  because v2's Ch 2 no longer references it.
+- **For v3:** Ch 1 §1.4 now has **six** contributions, each ending in a `\hole` result placeholder.
+  Supply one result sentence per contribution as a `For v2:` line once Ch 6 settles; v2 writes them in.
+- **For v3:** v2's preamble has a `\ifsubmission` switch (`\srcnote` disappears, leftover `\hole`s
+  warn). v3's own `parts/00_preamble_v3.tex` may want the same.
+- **For v3:** the canonical name list is now
+  `Auxiliary/Naming/TRANSLATION_20260914_dev_jargon_to_scientific.md` (supersedes the 2026-09-10 table).
+- **Shared notes touched:** `Auxiliary/Naming/` (new list, README, old table header), `Auxiliary/README.md`.
+- **Outside v2, on the author's explicit request:** new notes file
+  `v4/REMINDER_20260914_glossary_appendix.md` (no existing v4 file edited).
+
+---
+
+## v2.12 — 2026-09-13 · abstract rewritten after the reference papers — no numbers
+
+**v2.11 was the wrong call and is reverted:** numbers do not belong in the abstract. Checked the
+abstracts of the reference papers in `aux_repo/PAPERS` — **DPCC, HardFlow, SafeFlowMPC and Diffuser
+contain no numbers at all**, and all follow one arc: why the tool matters → *"However,"* its
+limitation → what the work does → how → what it enables → a single *qualitative* results sentence
+(DPCC: *"We show through simulations of a robot manipulator that DPCC outperforms existing methods in
+satisfying novel test-time constraints while maintaining performance on the learned control task"*).
+The writing guide gives the test the abstract must pass, not a format: a knowledgeable reader must be
+able to identify the problem, understand the approach, and judge the evidence
+(`Writing_Hints/complete-thesis-guide-reference.md:52`). The template's `pages/abstract.tex` is an
+empty `%TODO`.
+
+The new abstract follows DPCC's arc exactly: diffusion planners and DPCC → *however*, the step count
+is fixed at training and repeated every control step → replace with flow matching and MeanFlow,
+steps chosen at deployment → DPCC's projection, network and data retained → extended to camera
+observations and to a quadrotor → projection comparison and the step-budget condition → one
+qualitative results sentence (as reliable as DPCC at a fraction of the cost; more precise alignment
+from camera images). **213 words, zero digits, no negative results.** The `\srcnote` now carries
+evidence pointers only, no numbers.
+
+The style memory had recorded *"state results with numbers"* — corrected to **no numbers, ever**.
+
+---
+
+## v2.11 — 2026-09-13 · the abstract reports what the work brings
+
+**Asked for:** the abstract is still wrong — it should be objective storytelling that reports the
+results the work brings, and it should not list negative results.
+
+### What changed
+
+- **Negative results removed from the abstract** (the α-Flow ablation and the geometry defect stay in
+  Chapters 6–7, where they belong).
+- **Results stated, with numbers** — only those graded 🟢 in
+  `data_status/DATASTATUS_20260910_v3_entry_readiness.md`, and each **re-verified in its DA of record**
+  before use, not copied from the ledger:
+
+| sentence | numbers | DA of record |
+|---|---|---|
+| avoiding benchmark | MeanFlow 99.3 % safe completion vs 98.3 % for DPCC; 61 vs 69 steps; 18 vs 564 ms/step | `HF_Batch_Parity/DA_20260827_mpc1_full_seeds_state_avoiding.md` §10.1 — MeanFlow U-Net K=1 vs pinned DPCC K=20, 300 episodes a side |
+| vision-conditioned alignment | box median 0.07 m vs 0.41 m from target; 0.64× compute per step | `Gen14/CLOSURE_20260907_Gen14_V_A_engine_comparison_final.md` R.1 — unprojected, paired p = 0.0020 |
+| endpoint projection | same safety at 325 ms less per step | same file R.2 — MeanFlow K=10, endpoint vs iterate projection, 0/9, p = 0.0039 |
+
+- The distance was confirmed to be the **box's** final planar distance to its target
+  (`eval_mix_visual_aligning.py:1452-1457`, `final_box_xy` vs `target_xy`), so the abstract says
+  "box", not "end effector".
+- **No quadrotor number**: its engine ranking is one seed on one scene (DATASTATUS §4). The
+  quadrotor sentence describes the transfer and the controller only.
+- The two methodological results are phrased as what they deliver: the minimum step budget at which
+  endpoint projection takes effect; the selection rules coinciding for a single candidate.
+- A `\srcnote` under the abstract lists every number's source. The `\hole` is gone — the
+  abstract no longer waits on numbers.
+
+216 words, one paragraph. **Not compiled.**
+
+---
+
 ## v2.10 — 2026-09-13 · a real abstract; no "better", no "arm", no self-talk
 
 **Asked for:** (1) the abstract is still a story, not an abstract; (2) do not define "better" — state

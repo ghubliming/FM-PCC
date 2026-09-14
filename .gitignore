@@ -47,3 +47,6 @@ scratch/
 
 # One-off Slurm submit drivers (per-wave throwaways, not pipeline entry points)
 Slurm_Codes/temp_bash/
+
+# The Obsidian vault 
+logs_in_develop/Obsidian_knowledge_vault

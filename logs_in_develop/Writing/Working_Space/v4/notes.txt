@@ -1,5 +1,12 @@
 e.g. for next steps, IRL pratices.
 and in appendix things.
 
+---
+
+also the Gaps/drawbacks.
+I rememeber there is a sim2real gap not incl the IK solving (so is maybe hte PID solving time into consideration)
+(is it too minor normally wont be considered or real Gap need to be care when implement sim2real? need to 
+serch the repo I have previosu note and maybe the conclusion)
+
 etc.
 will do after v2 and v3 totally finished.

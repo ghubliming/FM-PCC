@@ -22,7 +22,7 @@ No eval, projector, config or scene change. `config/uav_projection.yaml` and all
 | projector | `-bounds_free-pdes-tightened`: geometry on the setpoint, DPCC margin 0.025 m, action cap off. HardFlow gets the **same** stack, so the HF-vs-DPCC comparison is constraint-matched |
 | threshold | `diffusion_timestep_threshold: 0.5` (checked in pre-flight) |
 | metrics | strict success, S&C, violations on the real drone (unchanged) |
-| eval tag | `u16cv2` → `E<engine>_K<k>_mpc4_pid_stopgo_T0.5_u16cv2/`, never pooled with the U14–U16 injections (`u7hg`) |
+| eval tag | `u17cv2` (see §7) → `E<engine>_K<k>_mpc4_pid_stopgo_T0.5_u16cv2/`, never pooled with the U14–U16 injections (`u7hg`) |
 | trials | 12 per (engine, K, seed, variant) = 4 per route (L, C, R) |
 | walls | `UAV_EVAL_HOURS=24` per job |
 
@@ -77,5 +77,36 @@ checkpoint dir `logs/UAV_MIX/uav-corridor/mix_uav_<engine>/*/<seed>`:
 
 | step | job(s) | status |
 | :-- | :-- | :-- |
-| smoke | — | not yet submitted |
-| submit | — | not yet submitted |
+| smoke | — | skipped (user went straight to `submit`) |
+| submit | 25750–25759 (2026-09-13) | **DONE** — all 16 evals + diffusion train completed; batch `temp/1409/batch_uav_20260914_091148` (52/52 cells, n = 12). **DA:** [`DA_20260914_corridor_v2_paper_full.md`](DA_20260914_corridor_v2_paper_full.md) |
+
+| job | engine | K | arms |
+| --: | :-- | :-- | :-- |
+| 25750 | mf | 1 | diffuser, dpcc-r/c/t |
+| 25751 | mf | 3, 5 | diffuser, dpcc-r, dpcc-c |
+| 25752 | mf | 3, 5 | dpcc-t, hardflow B = 1, hardflow-t B = 4 |
+| 25753 | fm | 1 | diffuser, dpcc-r/c/t |
+| 25754 | fm | 3, 5 | diffuser, dpcc-r, dpcc-c |
+| 25755 | fm | 3, 5 | dpcc-t, hardflow B = 1, hardflow-t B = 4 |
+| 25756 | af | 1 | diffuser, dpcc-r/c/t |
+| 25757 | af | 3, 5 | diffuser, dpcc-r, dpcc-c |
+| 25758 | af | 3, 5 | dpcc-t, hardflow B = 1, hardflow-t B = 4 |
+| 25759 | **diffusion** | 20 | **TRAIN + EVAL** pipeline (no corridor diffusion checkpoint existed); diffuser, dpcc-r/c/t in one eval job |
+
+All arms carry `-bounds_free-pdes-tightened`. 25750–25758 are `eval_k_sweep` parents; the K = 3/5 ones launch 2 children each.
+
+⚠️ **Tag actually used: `u17cv2`, not `u16cv2`.** The remote copy (`u16.sh`) was the pre-rename version of the
+script. Functionally identical; only the result-folder tag differs. The local script's `TAG` is set back to `u17cv2`
+so any later seeds or re-runs pool with this wave. **Results:**
+`logs/UAV_MIX/uav-corridor/plans/mix_uav_<engine>/<train-id>/E<engine>_K<k>_mpc4_pid_stopgo_T0.5_u17cv2/6/corridor_cv2s_…/`
+
+**Checkpoints found:**
+- mf: `H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet`
+- fm: `H8_Dmodels.diffusion.FlowMatchingODE_9D`
+- af: two dirs, `…AlphaFlowODE_9D_as1_ae0.2_bbunet` and `…as1_ae0_bbsit`. The knobs (`UAV_MIX_BONE_AF=unet UAV_MIX_AF_ALPHA_END=0.2`) select the unet/ae0.2 one. **Confirm in the af child logs which checkpoint was loaded.**
+- diffusion: none.
+
+**DA (after all finish):**
+```bash
+./Slurm_Codes/submit.sh Slurm_Codes/sbatch/DA/run_da_batch_uav.sh "$(ls -d logs/UAV_MIX/uav-corridor/plans/mix_uav_*/*/E*_u17cv2 | paste -sd, -)"
+```
