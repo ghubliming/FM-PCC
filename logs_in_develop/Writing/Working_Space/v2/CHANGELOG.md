@@ -97,6 +97,42 @@ none of the other 38 starred subsections is labelled.
 
 ---
 
+## v2.16 — 2026-09-14 · §4.3 remarks deleted, one conditioning, our endpoint-projection configuration only, UAV demonstrations → [`changelogs/v2.16_20260914_conditioning_endpoint_config_uav_demos.md`](changelogs/v2.16_20260914_conditioning_endpoint_config_uav_demos.md)
+
+Full KP-by-KP record in the file above:
+- **Removed:** the *Two facts that are not free choices* block (`rem:prior`, `rem:jvp`); the affine
+  variant, its equation and `rem:naming`; the published-vs-ours comparison in §4.5.3 (table, bullets,
+  activation paragraph).
+- **Renamed:** the conditioning is now **feature-wise conditional biasing** [Perez, §3].
+- **Rewritten:** §4.5.3 now gives our configuration only.
+- **Added:** §4.7.3 *Expert demonstrations* (reference path, speed profile, execution, rejection,
+  recording).
+- **Bibliography:** 50 → 49 (IPOPT entry removed).
+
+- **For v3:** **labels removed** — `rem:prior`, `rem:jvp`, `rem:naming`, `eq:method:backbone:film`.
+  None is referenced from v3's own chapters 05–09 (checked); v3's inherited copy of Ch 4 loses them
+  on sync. `tab:hardflow-setup` is **kept** but is now a one-column table of this thesis's
+  configuration; any v3 text calling it a comparison with the published setup must change.
+- **For v3:** **labels added** — `eq:method:env:uavref`, `eq:method:env:uavrefderiv`,
+  `eq:method:env:uavdata`. v3's `sec:setup:data` can reference them and keep only the values (r_f,
+  ranges, rejection thresholds, episode counts).
+- **For v3:** naming — the visual conditioning is **feature-wise conditional biasing**; the word
+  *FiLM* and the affine variant are not used in the thesis. `09_appendix.tex:122` still explains
+  `filmv1` against *"feature-wise linear modulation"* — v3 should restate it as *"feature-wise
+  conditional biasing"* without naming FiLM.
+- **For v3:** the published HardFlow setup is no longer described anywhere in Ch 4. v3 should not
+  compare its numbers or configuration with the source's.
+- **For v3:** the removed `rem:prior` carried a hole: *state whether the flow-matching numbers used the
+  inherited ½ prior scale*. The code confirms they do: flow matching trains at σ = 1 and samples at
+  σ = ½. That is now a protocol/threat item for v3's Ch 5, not a Ch 4 remark.
+- **Shared notes touched:**
+  - `Auxiliary/Naming/TRANSLATION_20260914_dev_jargon_to_scientific.md` §5: conditioning rows, and
+    🆕 rows for *shipped* and the defensive phrases.
+  - `Auxiliary/Methodology_Sources/AUX_uav_expert_data.md`: *cubic fillets* → circular arcs.
+  - `Auxiliary/Methodology_Sources/AUX_visual_aligning_env.md`: thesis-rule note.
+
+---
+
 ## v2.15 — 2026-09-14 · method names out of the body; prove on DPCC's ground, then extend → [`changelogs/v2.15_20260914_names_and_two_stages.md`](changelogs/v2.15_20260914_names_and_two_stages.md)
 
 Full KP-by-KP record in the file above: *α-Flow* / *HardFlow* removed from abstract, Ch 1, Ch 2,

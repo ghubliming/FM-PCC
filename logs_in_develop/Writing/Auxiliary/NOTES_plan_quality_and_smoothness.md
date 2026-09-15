@@ -83,7 +83,7 @@ on violation counts (quantitative) plus inspection of the plan panels (not).
 ## 4. Figure provenance — checked, and worth re-checking
 
 The four panels used are **ours**: verified absent from `/workspaces/aux_repo/`. They are registered
-in `Working_Space/v3/plots/sources.py` under `VENDORED`, each with its provenance string, and
+in `Data_Analysis/DA_in_Paper/plotting/sources.py` under `VENDORED`, each with its provenance string, and
 `figures/MANIFEST.md` prints them in their own table.
 
 > 🚨 **Why the registry exists.** `figures/avoiding*.png` at the repo root are **byte-identical to

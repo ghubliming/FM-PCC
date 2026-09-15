@@ -472,10 +472,10 @@ towards; this thesis calls it \emph{endpoint projection}. Plans generated with n
 
 A policy that observes images compresses each camera view into a feature vector with a convolutional
 encoder and conditions the generative model on that vector. D3IL \parencite{jia2024towards} provides
-such a vision pipeline for its tasks, in which ResNet encoders process each camera view. The features
-can be combined with the time embedding of the network, or they can modulate its intermediate
-activations through a learned feature-wise scale and shift, FiLM \parencite{perez2017film}. Transformer
-backbones operate on image patches instead of a pooled feature vector \parencite{peebles2022dit}.
+such a vision pipeline for its tasks, in which ResNet encoders process each camera view. Concatenated
+with the time embedding of the network, the features reach its layers as a feature-wise conditional
+bias \parencite[Sec.~3]{perez2017film}. Transformer backbones operate on image patches instead of a
+pooled feature vector \parencite{peebles2022dit}.
 
 \section{Quadrotor Dynamics and Control}\label{sec:bg:quadrotor}
 
@@ -562,8 +562,7 @@ author's knowledge, has not been characterised.
 D3IL provides manipulation tasks with diverse human demonstrations, including vision-based variants
 \parencite{jia2024towards}, and X-IL, from the same group, explores the design space of
 imitation-learning policies \parencite{jia2025xil}. Visuomotor diffusion policies condition the
-denoising network on image features \parencite{chi2023diffusion}. The conditioning ranges from
-feature-wise linear modulation, FiLM \parencite{perez2017film}, to transformer backbones that operate
+denoising network on image features \parencite{chi2023diffusion}, and transformer backbones operate
 on image patches \parencite{peebles2022dit}. Flow-matching policies follow the same path: VITA flows
 directly from visual representations to latent actions \parencite{gao2025vita}, and $\pi_0$ conditions
 a flow model on images and language \parencite{black2024pi0}.
@@ -1137,39 +1136,11 @@ of the other two. The three lines are the whole difference between the models.
 \texttt{flow\_matcher\_v3\_meanflow/models/mf\_diffusion.py:189--300}, against
 \texttt{aux\_repo/dpcc/diffuser/models/diffusion.py:119--203}.}
 
-\subsubsection*{Two facts that are not free choices}
-
-\begin{remark}[The prior scale differs between generative models]\label{rem:prior}
-The inherited sampler does not start from the standard normal: it draws
-$\vect{x}^{\nfe}\sim\Normal(\vect{0},\tfrac{1}{4}\Id{n})$ and injects half the posterior
-standard deviation at each reverse step. The flow-matching model inherits the same
-$\tfrac{1}{2}$ prior scale at sampling time while its training draws $\vect{x}_{0}\sim
-\Normal(\vect{0},\Id{n})$; the MeanFlow model uses unit scale at both ends. A prior-scale mismatch
-between models is a confound the matched architecture is meant to exclude, and it has already caused
-one measurable defect here, when a projection method was ported between generations with the
-wrong scale.
-\srcnote{\texttt{aux\_repo/dpcc/diffuser/models/diffusion.py:158,168};
-\texttt{flow\_matcher\_v3/models/diffusion.py:164};
-\texttt{flow\_matcher\_v3\_meanflow/models/mf\_diffusion.py:204}; the porting defect is
-Gen3v6 fix\_4.}
-\hole{State in \autoref{sec:setup:protocol} whether the reported flow-matching numbers were
-re-run at matched prior scale, or carry the inherited $\tfrac{1}{2}$. Do not claim
-prior-matching until that is checked.}
-\end{remark}
-
-\begin{remark}[The Jacobian--vector product constrains the architecture]\label{rem:jvp}
-\eqref{eq:method:engine:mftgt} differentiates through the network, so every component inside the
-differentiated closure must be forward-mode friendly. This is not a performance detail --- it
-determines how the visual encoder may be attached (\autoref{sec:method:backbone}).
-\end{remark}
-
 \subsection{Backbone and Conditioning}\label{sec:method:backbone}
 
 One temporal U-Net at one parameter count is used by every generative model, including the
-baseline. For the vision-conditioned
-task, perception is a vendored encoder producing a fixed-width latent, and the generative
-backbone never sees an image. The latent is the interface between perception and generation, so
-the claim that the backbone is shared can be checked.
+baseline. For the vision-conditioned task, a visual encoder produces a fixed-width latent, and the
+backbone never sees an image.
 
 \subsubsection*{The trajectory backbone}
 
@@ -1178,9 +1149,7 @@ The backbone is a one-dimensional temporal U-Net in the lineage of
 and convolution runs along \emph{time}, not along the state dimension. Channel widths follow
 $\left(c_{0},\dots,c_{L}\right) = \left(d,\;w,\;2w,\;4w,\;8w\right)$ for a base width $w$, with
 three stride-two down/up stages and skip concatenations. The horizon is zero-padded up to the next
-multiple of eight before the network and cropped back afterwards, because three halvings require it;
-$H = 8$ needs no padding; the code path exists because a padded frame reaching the conditioning
-average would dilute it.
+multiple of eight before the network and cropped back afterwards; $H = 8$ needs no padding.
 
 Every level is a pair of residual blocks. Writing $\vect{h}\in\R^{c\sidx{in}\times H}$ for a block's
 input, $\mathcal{B}$ for a $\left(\text{Conv1d}\to\text{GroupNorm}\to\text{Mish}\right)$ unit and
@@ -1192,105 +1161,58 @@ $\vect{z}$ for the block's conditioning vector,
 \end{equation}
 with $\varphi$ a pointwise nonlinearity, $\matr{P}$ a $1\times1$ channel-matching convolution, and
 $\vect{1}_{H}\trans$ broadcasting the projected embedding along the horizon. The conditioning
-therefore enters as a \emph{per-channel additive bias that is constant in time} --- a fact that
-matters in a moment.
+enters as a per-channel additive bias that is constant in time.
 
 \subsubsection*{The conditioning vector}
 
 For the state-based environments $\vect{z}$ is the transport-time embedding alone,
 $\vect{z} = \phi_{\ftime}(\ftime)$, a sinusoidal positional encoding followed by a two-layer MLP;
 conditioning on the current observation is done by inpainting
-(\autoref{sec:method:formalisation}), not through $\vect{z}$.
+(\autoref{sec:method:formalisation}).
 
 For the vision-conditioned environment, two RGB views are encoded per frame by independent
-ResNet-18 towers with group normalisation --- vendored from the benchmark unchanged, not
-re-implemented --- each producing $64$ features, concatenated to a per-frame descriptor. The
-descriptor is averaged over the $T\sidx{win}$-frame observation window \emph{before} the trajectory
-is padded, giving one latent per plan,
+ResNet-18 towers with group normalisation, taken from D3IL \parencite{jia2024towards}, each producing
+$64$ features that are concatenated to a per-frame descriptor. The descriptor is averaged over the
+$T\sidx{win}$-frame observation window, giving one latent per plan,
 \begin{equation}\label{eq:method:backbone:latent}
   \vect{e}
   = \frac{1}{T\sidx{win}}\sum_{i=1}^{T\sidx{win}}
     \Big[\,E\sidx{view1}(\matr{I}^{(1)}_{i})\;;\;E\sidx{view2}(\matr{I}^{(2)}_{i})\,\Big]
   \;\in\;\R^{128}.
 \end{equation}
-$\vect{e}$ is the \textbf{entire} interface between perception and generation: the U-Net's input
-channels are the plan's $d$, never an image. The perception stack above
-\eqref{eq:method:backbone:latent} is therefore identical across every generative model, and everything below it
-is encoder-agnostic: the architecture-matched claim is checkable.
+$\vect{e}$ is the entire interface between perception and generation: the input channels of the
+U-Net are the $d$ channels of the plan, and the perception stack is the same for every generative
+model.
 
-Two ways of injecting $\vect{e}$ are implemented, and the thesis reports the first as the method and
-the second as an ablation:
+The latent conditions the backbone by \emph{feature-wise conditional biasing}
+\parencite[Sec.~3]{perez2017film}. It is projected by its own MLP and concatenated with the time
+embedding,
+\begin{equation}\label{eq:method:backbone:concat}
+  \vect{z} = \big[\,\phi_{\ftime}(\ftime)\;;\;\phi\sidx{vis}(\vect{e})\,\big] \in \R^{2w},
+\end{equation}
+so that it reaches every residual block through the additive bias of
+\eqref{eq:method:backbone:block}.
+\srcnote{\texttt{models/unet1d\_temporal\_cond.py:53--82, 205--235};
+\texttt{mix\_visual\_aligning/models/visual\_unet.py:64--97}. Name mapping for the configuration flag
+and run tags: Auxiliary/Naming/TRANSLATION\_20260914\_dev\_jargon\_to\_scientific.md \S5.}
 
-\begin{description}
-  \item[Concatenated conditioning (the shipped default).] The latent is projected by its own MLP and
-    \emph{concatenated} with the time embedding, so the block embedding of
-    \eqref{eq:method:backbone:block} is
-    \begin{equation}\label{eq:method:backbone:concat}
-      \vect{z} = \big[\,\phi_{\ftime}(\ftime)\;;\;\phi\sidx{vis}(\vect{e})\,\big] \in \R^{2w},
-    \end{equation}
-    and the visual signal reaches the trajectory only through the additive bias in
-    \eqref{eq:method:backbone:block}.
-  \item[Affine (true FiLM) conditioning (the ablation).] The latent instead produces a per-channel
-    scale and shift applied after the second convolution,
-    \begin{equation}\label{eq:method:backbone:film}
-      \operatorname{Block}\sidx{FiLM}(\vect{h},\vect{z},\vect{e})
-      = \Big(\big(1+\vect{\gamma}(\vect{e})\big)\odot \tilde{\vect{h}} + \vect{\beta}(\vect{e})\Big)
-        + \matr{P}\vect{h},
-      \qquad
-      \big[\vect{\gamma};\vect{\beta}\big] = \phi\sidx{film}(\vect{e}),
-    \end{equation}
-    with $\tilde{\vect{h}}$ the pre-residual output of \eqref{eq:method:backbone:block} and
-    $\phi\sidx{film}$ zero-initialised, so training starts from the identity and the ablation is a
-    strict superset of nothing. Here $\vect{e}$ does \emph{not} enter $\vect{z}$.
-\end{description}
+\subsubsection*{Two-time models}
 
-\begin{remark}[The default is not FiLM, and the code's name for it says otherwise]\label{rem:naming}
-\eqref{eq:method:backbone:concat} is \emph{concatenated conditioning}: it produces one additive bias
-per channel, i.e.\ \eqref{eq:method:backbone:film} with $\vect{\gamma}\equiv\vect{0}$. Feature-wise
-linear modulation is by definition the affine map with a learned multiplicative term, so only
-\eqref{eq:method:backbone:film} is FiLM. In this work's code both variants are selected by a flag named
-\texttt{film\_mode} (\texttt{'v1'} and \texttt{'v2'}), which makes the default look like FiLM in every
-configuration file, every checkpoint tag and every log line. \textbf{The thesis uses the mechanism
-names, not the flag values}, and every table names the variant by mechanism.
-\srcnote{Verified against the code, not against a design document:
-\texttt{mix\_visual\_aligning/models/visual\_unet.py:64--97} selects the branch and comments them
-\emph{``fake FiLM''} / \emph{``true FiLM''};
-\texttt{unet1d\_temporal\_cond.py:53--82, 205--235} is the additive form,
-\texttt{unet1d\_temporal\_film.py:38--92} the affine one. The writing-side rule and the full
-artefact-to-thesis translation table are
-Auxiliary/Naming/TRANSLATION\_20260914\_dev\_jargon\_to\_scientific.md, which is canonical for every name in this thesis.}
-\end{remark}
-
-\subsubsection*{Two-time models: the extra input and the JVP constraint}
-
-MeanFlow and consistency training need $\afield_{\theta}(\cdot,\ftime,h)$, so the backbone takes a second time
-input. It is embedded by its own MLP and \emph{added} to the transport-time embedding, before the
-visual latent is concatenated:
+MeanFlow and consistency training need $\afield_{\theta}(\cdot,\ftime,h)$, so the backbone takes a
+second time input. It is embedded by its own MLP and added to the transport-time embedding, before
+the visual latent is concatenated:
 \begin{equation}\label{eq:method:backbone:twotime}
   \vect{z} = \big[\,\phi_{\ftime}(\ftime) + \phi_{h}(h)\;;\;\phi\sidx{vis}(\vect{e})\,\big].
 \end{equation}
-The order is not cosmetic --- $h$ modulates the time channel, not the visual one --- and it is the
-only structural change the two-time family makes to the backbone.
+This is the only structural change the two-time models make to the backbone.
 
-This forces the one non-obvious construction of the visual pipeline. The MeanFlow target
-\eqref{eq:method:engine:mftgt} differentiates the network with a forward-mode \ac{JVP} in
-$(\vect{x}_{r},r,h)$. If the closure still held raw images, the two ResNet towers would be
-differentiated too --- roughly doubling compute and activation memory for a derivative that is
-\emph{identically zero}, since $\vect{e}$ depends on none of the three, and forward-mode
-differentiation through the vendored encoder is not guaranteed to be implemented at all. The
-encoder is therefore evaluated \emph{once, outside} the closure and $\vect{e}$ passed down as a
-captured constant, so its tangent is zero by construction rather than by hope. The pre-encoding is
-deliberately \emph{not} placed under a no-gradient scope: the encoder is trained end-to-end and
-freezing it would change what is learned, whereas capturing the tensor only removes a tangent that
-was zero anyway.
-\srcnote{Methodology\_Sources/AUX\_visual\_aligning\_env.md \S3.1; the short-circuit and its
-rationale are in \texttt{mix\_visual\_aligning/models/visual\_unet\_twotime.py:1--45}, the block
-and conditioning arithmetic in \texttt{models/unet1d\_temporal\_cond.py:53--135, 205--235} and
-\texttt{models/unet1d\_temporal\_film.py:38--92}.}
-
-Transformer-style backbones are declared out of scope with a reason rather than by omission:
-using them properly requires spatial features and cross-attention rather than a pooled
-latent, which is a different architecture and would break the parameter match.
+The MeanFlow target \eqref{eq:method:engine:mftgt} differentiates the network with a forward-mode
+\ac{JVP} in $(\vect{x}_{r},r,h)$. The latent $\vect{e}$ depends on none of these inputs, so the encoder
+is evaluated once, outside the differentiated function, and $\vect{e}$ enters it as a constant with
+zero tangent. The two ResNet towers are therefore not differentiated by the \ac{JVP}, and they are
+still trained end-to-end through the loss.
+\srcnote{Methodology\_Sources/AUX\_visual\_aligning\_env.md \S3.1;
+\texttt{mix\_visual\_aligning/models/visual\_unet\_twotime.py:1--45}.}
 
 % =============================================================================
 %  PLANT DYNAMICS
@@ -1632,114 +1554,42 @@ $\ftime_{k+1}\hat{\vect{x}}_{1}^{\star} + (1-\ftime_{k+1})\,\mathcal{W}_{\ftime_
 written out --- pulls the correction back into the sampler, damped by $\ftime_{k+1}$. At the final step
 $\ftime_{\nfe} = 1$, so the output equals $\hat{\vect{x}}_{1}^{\star}\in\mathcal{Z}_{f}$ and satisfies the
 constraints \parencite[Prop.~1]{li2025hardflow}. The optimisation runs only in the later sampling
-steps, where the prediction \eqref{eq:method:hf:post} is accurate; the published experiments use the
-second half \parencite[App., \emph{Experiment Details}]{li2025hardflow}.
+steps, where the prediction \eqref{eq:method:hf:post} is accurate \parencite{li2025hardflow}.
 
-\subsubsection*{The instantiation used here}
+\subsubsection*{The configuration used here}
 
-Two departures from the source keep the comparison with iterate projection controlled. The program
-\eqref{eq:method:hf:solve} is built from the same constraint list as iterate projection
-(\autoref{sec:method:proj}), not from the source's own geometry, and the terminal cost is dropped,
-$C\equiv 0$. The remaining objective is a quadratic proximity term whose minimiser does not depend on
-its weight, so
+The program \eqref{eq:method:hf:solve} is built from the constraint list of iterate projection
+(\autoref{sec:method:proj}), and the terminal cost is zero, $C\equiv 0$. The objective is then a
+quadratic proximity term whose minimiser does not depend on its weight, so
 \begin{equation}\label{eq:method:hf:ours}
   \hat{\vect{x}}_{1}^{\star} = \proj{\mathcal{Z}_{f}}\!\left(\bar{\vect{x}}_{1}\right),
 \end{equation}
 the projection of \autoref{sec:method:proj} applied to the predicted final sample. Constraints and
-solver are identical to iterate projection and only the point of projection differs; the factor
-$\ftime_{k+1}$ in \eqref{eq:method:hf:pull}, not the weight, damps the early steps. Each guided step
-evaluates the network twice, in \eqref{eq:method:hf:ref} and \eqref{eq:method:hf:pred}, so the two
-methods are not evaluation-matched at equal step budgets, and every timing figure in
-\autoref{ch:results} carries that extra evaluation.
-\srcnote{\texttt{flow\_matcher\_v3\_meanflow/sampling/hardflow\_projection.py:1--40} records the port and
-the mode used (\texttt{hardflow\_new}); its four steps are \eqref{eq:method:hf:ref}--\eqref{eq:method:hf:pull}
-with $C\equiv0$. The algebra of \eqref{eq:method:hf:post} and \eqref{eq:method:hf:pull} follows from
-\parencite[Lemma~1, Algorithm~1]{li2025hardflow} with scheduler $(\ftime, 1-\ftime)$.}
-
-\subsubsection*{What differs from the published configuration}
-
-Endpoint projection here is the published algorithm running inside this thesis's apparatus. The experimental
-configuration around it differs from the published one on five axes. Numbers from the two setups
-therefore do not belong in the same table.
+solver are those of iterate projection, and only the point of projection differs; the factor
+$\ftime_{k+1}$ in \eqref{eq:method:hf:pull} damps the early steps. Each guided step evaluates the
+network twice, in \eqref{eq:method:hf:ref} and \eqref{eq:method:hf:pred}.
+\autoref{tab:hardflow-setup} lists the configuration.
 
 \begin{table}[htpb]
-  \caption[Endpoint projection: published setup vs.\ this work]{Endpoint projection as published
-  \parencite[App., \emph{Experiment Details}: Robotic Manipulation]{li2025hardflow} against endpoint
-  projection as run here. Only the activation convention agrees, so the analysis of
-  \autoref{sec:method:degenerate} applies to both.}
+  \caption[Configuration of endpoint projection]{Configuration of endpoint projection in this thesis.}
   \label{tab:hardflow-setup}
   \centering
-  \begin{tabular}{lll}
+  \begin{tabular}{ll}
     \toprule
-     & as published & as run here \\
-    \midrule
-    plan length             & $16$ steps                    & $8$ steps \\
-    actions executed per plan & $8$                         & $1$ \\
-    step budget             & $10$, fixed                   & swept, $1$--$20$ \\
-    solver                  & IPOPT \parencite{wachter2006implementation} & SLSQP \parencite{kraft1988software} \\
-    dynamics rows           & $\matr{A}\vect{s}_{i}+\matr{B}\vect{a}_{i}+\vect{c}$, least-squares fit & Euler, $t\sidx{s}=1$, \eqref{eq:method:dpcc:euler} \\
-    terminal cost $C$       & squared distance to target    & dropped \\
-    activation              & second half of the steps      & second half ($\eta = 0.5$) \\
+    plan length               & $8$ steps \\
+    actions executed per plan & $1$ \\
+    step budget $\nfe$        & $1$--$20$ \\
+    solver                    & SLSQP \parencite{kraft1988software} \\
+    dynamics rows             & Euler, $t\sidx{s}=1$, \eqref{eq:method:dpcc:euler} \\
+    terminal cost $C$         & none \\
+    activation                & second half of the steps, $\eta = 0.5$ \\
     \bottomrule
   \end{tabular}
 \end{table}
-
-Four of these rows change what the method does; each follows from keeping the two projection methods
-identical everywhere except the point they project.
-
-\begin{itemize}
-  \item \textbf{Plan length and replanning ($16/8$ against $8/1$).} The published experiment plans
-    sixteen steps and executes eight of them before replanning; this work plans eight and executes
-    one, following the inherited receding-horizon convention of \parencite{romer2025diffusion},
-    which every other method in this thesis also follows. Both halves of that difference matter. The
-    longer plan imposes the constraint geometry over sixteen future states instead of eight, giving
-    the endpoint solve more room. Executing one action instead of eight runs the whole
-    sampler-plus-projector stack \emph{eight times more often per environment step}, which inflates
-    every wall-clock figure here relative to the published ones: a per-replan timing and a per-step
-    timing measure different things.
-  \item \textbf{The dynamics rows.} The source fits a linear model
-    $\vect{s}_{i+1} = \matr{A}\vect{s}_{i}+\matr{B}\vect{a}_{i}+\vect{c}$ by least squares on the
-    demonstration data. This work keeps the inherited first-order Euler model
-    \eqref{eq:method:dpcc:euler} instead, because iterate projection is defined on it. Two methods with different
-    dynamics rows would compare feasible sets, not algorithms.
-  \item \textbf{The solver.} SLSQP throughout, rather than the source's interior-point solver, for
-    the same reason: it is the solver of iterate projection. The activation gate that decides whether the algorithm
-    runs at all is solver-agnostic, which is why the solver stays out of the method's name.
-  \item \textbf{The terminal cost, and what its removal costs.} The source's formulation admits an
-    optional terminal objective $C(\cdot)$ --- on this benchmark, the squared distance from the last
-    predicted state to the target --- which it uses to \emph{improve sample quality}, not to enforce
-    constraints. This work drops it. Iterate projection has no such term --- the inherited projection
-    \eqref{eq:bg:mpc:proj} is pure proximity --- and an endpoint projection with a goal-seeking objective would win
-    on task metrics for a reason unrelated to where its program is posed.
-
-    Two things follow. With $C$ removed the objective is a pure quadratic proximity term whose
-    minimiser is independent of its weight, so the per-step program of endpoint projection is \emph{exactly}
-    $\proj{\mathcal{Z}_{f}}(\hat{\vect{x}}_{1})$: the operator of iterate projection, at a different point. Identical
-    constraints, identical solver, different linearisation point is then literally true, and what
-    distinguishes endpoint projection is the lookahead and the damped pull-back. And the source's headline on this
-    benchmark --- reaching the target in \emph{fewer} steps than unguided sampling --- comes from
-    $C$: in its own table every projection-only baseline \emph{lengthens} the path, and only the method
-    carrying $C$ shortens it. Endpoint projection as run here has no mechanism that shortens paths,
-    so a null task-performance result against iterate projection says nothing about the published
-    method.
-\end{itemize}
-
-The activation convention is the one row that agrees, and it is the one that matters most. The published
-configuration activates on the second half of a ten-step budget, which by
-\eqref{eq:method:degen:ngen} gives $n\sidx{act} = 5$ and $n\sidx{gen} = 4$: inside the admissible
-regime of \autoref{sec:method:degenerate}. The degeneracy characterised there is a property of the
-convention at budgets below that one, which is where a sweep goes.
-
-\srcnote{Every row of \autoref{tab:hardflow-setup} was read from the source's own LaTeX
-(\texttt{PAPERS/Recommand\_Paper/HF/main.tex:1242}, the \emph{Experiment Details} appendix) and
-cross-checked against its released code
-(\texttt{aux\_repo/HardFlow/run\_scripts/eval\_hardflow\_new.sh:14,20} gives
-\texttt{horizon=16}, \texttt{replan\_steps=8}; \texttt{run/eval.py:390--391} is the
-replan-every-$T$-actions loop). This work's side: \texttt{config/avoiding-d3il.py:318} and the
-per-timestep replanning in \texttt{aux\_repo/dpcc/scripts/eval.py:203--241}.}
-
-\hole{If \autoref{ch:results} ever quotes a number from the source's own tables, it must appear in a
-separate table with \autoref{tab:hardflow-setup} referenced in the caption. Do not merge them.}
+\srcnote{\texttt{flow\_matcher\_v3\_meanflow/sampling/hardflow\_projection.py:1--40} (mode
+\texttt{hardflow\_new}, steps \eqref{eq:method:hf:ref}--\eqref{eq:method:hf:pull} with $C\equiv0$);
+\texttt{config/avoiding-d3il.py:318}; per-timestep replanning in
+\texttt{aux\_repo/dpcc/scripts/eval.py:203--241}.}
 
 \subsection{Genuine Steps}\label{sec:method:degenerate}
 
@@ -1783,15 +1633,12 @@ but nearly terminal.
 (\texttt{hardflow\_step\_budget}, \texttt{hardflow\_regime}); the tiering is enforced in the
 evaluation gates, not left to the reader.}
 
-\subsubsection*{The reporting rule, applied to this work's own results}
+\subsubsection*{Reporting rule}
 
 Rows with $n\sidx{gen} = 0$ are tagged and excluded from every claim; rows with
 $n\sidx{gen} = 1$ are marked as carrying no attributable signal; neither is averaged into a cell.
-The rule invalidates several of this work's own earlier measurements --- every low-budget
-endpoint-projection row at the shipped threshold, reported before the boundary was derived. Those
-rows are named and withdrawn in \autoref{sec:res:constraints:degenerate}. The same arithmetic applies
-to any comparison using this activation convention at a small step budget: $n\sidx{gen}$ is a
-computable property of $(\nfe,\eta)$ that decides whether the comparison measures anything.
+The endpoint-projection rows at small step budgets and $\eta = 0.5$ that fall into these two regimes
+are listed in \autoref{sec:res:constraints:degenerate}.
 
 \subsection{Candidate Selection}\label{sec:method:selection}
 
@@ -2195,13 +2042,10 @@ i.e.\ the commanded triple and the measured triple both integrate the same actio
 \eqref{eq:method:dpcc:euler} written in three dimensions.
 \srcnote{\texttt{mix\_visual\_aligning\_test/eval\_mix\_visual\_aligning.py:272--279}.}
 
-Perception sits \emph{above} the plan, not inside the loop: two RGB views are encoded to a
-$128$-dimensional latent that conditions the backbone by concatenation with the time embedding
-\eqref{eq:method:backbone:concat} --- \emph{not} by FiLM, whatever the configuration flag is called
-(Remark~\ref{rem:naming}) --- and the generative backbone never sees an image
-(\autoref{sec:method:backbone}). The control chain below the setpoint is therefore
-byte-identical to the state-based benchmark's, so a change in results is a change of
-\emph{modality} and not of apparatus.
+Perception sits above the plan: two RGB views are encoded to a $128$-dimensional latent that
+conditions the backbone through the feature-wise bias of \eqref{eq:method:backbone:concat}, and the
+backbone never sees an image (\autoref{sec:method:backbone}). Below the setpoint, the control chain is
+that of the state-based benchmark.
 \srcnote{Methodology\_Sources/AUX\_visual\_aligning\_env.md \S2.}
 
 Its constraint set is a workspace box on the planned end-effector position,
@@ -2240,6 +2084,61 @@ its body clear. The empty scene carries no constraints and serves as the unconst
 \srcnote{\texttt{config/uav\_projection.yaml}: \texttt{corridor\_hg}, \texttt{pillars\_hg},
 \texttt{s\_curve\_hg} (\texttt{planning\_inflation.r\_drone}, per-segment \texttt{x\_active}); model
 provenance in \texttt{Methodology\_Sources/AUX\_uav\_model\_and\_scenes.md}.}
+
+\subsubsection*{Expert demonstrations}
+
+The demonstrations are generated in two layers: a geometric reference trajectory, and its execution
+by the cascaded geometric tracking controller of \autoref{sec:method:geometric} in the MuJoCo scene.
+
+The reference of an episode is built from a chain of waypoints. The waypoints fix on which side of each
+obstacle the path passes; in scenes with several such classes, the classes are cycled across episodes.
+Consecutive waypoints are joined by straight segments, and every non-collinear interior waypoint is
+replaced by a circular arc of radius at most $r\sidx{f}$ tangent to both adjacent segments, with the
+radius reduced where the arc would otherwise use more than half of either segment. The result is a
+path $\vect{p}\sidx{path}:[0,L\sidx{path}]\to\R^{3}$ parametrised by arc length, travelled with one cosine
+speed profile over the episode duration $T\sidx{ep}$,
+\begin{equation}\label{eq:method:env:uavref}
+  \vect{p}\sidx{des}(t) = \vect{p}\sidx{path}\big(s(t)\big),
+  \qquad
+  s(t) = \frac{L\sidx{path}}{2}\left(1-\cos\frac{\pi t}{T\sidx{ep}}\right),
+  \qquad 0\le t\le T\sidx{ep},
+\end{equation}
+so the reference is at rest only at its start and its end. Its velocity and acceleration,
+\begin{equation}\label{eq:method:env:uavrefderiv}
+  \dot{\vect{p}}\sidx{des} = \vect{p}\sidx{path}'(s)\,\dot{s},
+  \qquad
+  \ddot{\vect{p}}\sidx{des} = \vect{p}\sidx{path}'(s)\,\ddot{s} + \vect{p}\sidx{path}''(s)\,\dot{s}^{2},
+\end{equation}
+are the feed-forward terms of \eqref{eq:method:dep:outer}; $\vect{p}\sidx{path}''$ vanishes on the segments
+and is the centripetal term on the arcs. The altitude and the duration are drawn at random per
+episode, together with the start and end points in the empty scene, a small lateral offset of the start
+in the centre lane of the corridor, and a small lateral offset of the whole path in the s-curve.
+
+The vehicle starts level and at rest, and the controller tracks
+\eqref{eq:method:env:uavref}--\eqref{eq:method:env:uavrefderiv} at the physics step $\Delta t\sidx{phys}$. An episode is discarded if the vehicle is in
+contact with an obstacle for more than a scene-specific fraction of its steps, or if it falls below a
+minimum altitude. The accepted rollouts are recorded at the planning rate, every $n\sidx{dec}$-th
+physics step of \eqref{eq:method:dep:multirate}, as
+\begin{equation}\label{eq:method:env:uavdata}
+  \vect{o}_{j} = \left(\vect{p}\sidx{des}(t_{j}),\;\vect{p}(t_{j}),\;\dot{\vect{p}}(t_{j})\right),
+  \qquad
+  \vect{a}_{j} = \vect{p}\sidx{des}(t_{j+1}) - \vect{p}\sidx{des}(t_{j}),
+  \qquad
+  t_{j} = j\,n\sidx{dec}\,\Delta t\sidx{phys},
+\end{equation}
+the form of \eqref{eq:method:dep:setpoint}--\eqref{eq:method:dep:obs}. The action is the increment of
+the reference, not an output of the controller: the generative model learns to plan the reference,
+and at deployment the same controller tracks it.
+\srcnote{Reference: \texttt{uav\_expert\_data\_collect/trajectories.py} (\texttt{pillar\_path},
+\texttt{corridor\_path}, \texttt{s\_curve\_scene\_path}, \texttt{empty\_path}),
+\texttt{uav\_env\_test/trajectories.py:67--90} (\texttt{traverse\_line}) and \texttt{:114--}
+(\texttt{blended\_path}, circular arcs, centripetal term). Execution and rejection:
+\texttt{uav\_expert\_data\_collect/generator.py} (\texttt{run\_trial}, \texttt{\_build\_traj\_and\_init},
+\texttt{SCENE\_MAX\_CONTACT\_FRACTION}, \texttt{Z\_FLOOR\_MARGIN}); homotopy cycling in
+\texttt{collect.py}. Recording: \texttt{dataset\_writer.py} (\texttt{\_downsample}, stride 3;
+\texttt{actions = np.diff(targets)}). The per-episode offset on \texttt{targets} is not stated: it is
+added before the difference and cancels in it, and \texttt{obs} is built from the un-offset
+reference. Values of $r\sidx{f}$, thresholds and ranges belong to \autoref{sec:setup:data}.}
 
 % =============================================================================
 % CHAPTERS 5-8: BONE ONLY -- DELIBERATELY NOT WRITTEN

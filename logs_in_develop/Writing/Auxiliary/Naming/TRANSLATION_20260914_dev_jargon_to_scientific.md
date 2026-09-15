@@ -1,6 +1,6 @@
 # TRANSLATION — dev jargon of this repo → its scientific name
 
-**Created:** 2026-09-14 · **Status:** 🟢 **canonical translation list for all drafts** (v2, v3, v4).
+**Created:** 2026-09-14 · **Last extended:** 2026-09-14 by v3.7 (analysis vocabulary, §6) · **Status:** 🟢 **canonical translation list for all drafts** (v2, v3, v4).
 **Supersedes as the working list:** [`NAMING_20260910_master_table.md`](NAMING_20260910_master_table.md)
 — every row of that table is carried over below (§2–§7), and the new rows are marked 🆕. The old file
 is kept for its argument, not as a second list.
@@ -87,8 +87,10 @@ in thesis text.
 | `VisualUNet` | — (ours) | **vision-conditioned temporal U-Net** | 🔁 |
 | `VisualUNetTwoTime` | — (ours) | its two-time variant (takes the interval `h`) | 🔁 |
 | 🆕 "visual layer" | — | **visual encoder** (two ResNet-18 towers → 128-D latent) | 🔁 |
-| `film_mode='v1'`, `filmv1`, `UNet1DTemporalCondModel` | — (misuses FiLM) | 🚨 **not FiLM**: latent concatenated with the time embedding ⇒ additive per-channel bias → **"concatenated conditioning"** | 🔁🚨 |
-| `film_mode='v2'`, `UNet1DTemporalFiLMModel` | FiLM [Perez 2018] | per-block scale and shift → **"FiLM conditioning"** | ✅ |
+| `film_mode='v1'`, `filmv1`, `UNet1DTemporalCondModel`, "FiLM", "fake FiLM", ~~"concatenated conditioning"~~, "the shipped default" | *feature-wise conditional bias* — FiLM paper [Perez 2018, §3]: *"concatenating conditioning information with fully-connected layer input amounts to a feature-wise conditional bias"* (verified, `VLA/FiLM.pdf` p. 3) | 🚨 **not FiLM**: latent concatenated with the time embedding ⇒ additive per-channel bias, constant in time → **"feature-wise conditional biasing"** with `\parencite[Sec.~3]{perez2017film}`. The only conditioning the thesis has (v2.16) | 🔁🚨 |
+| `film_mode='v2'`, `UNet1DTemporalFiLMModel` | FiLM [Perez 2018] | 🚫 **never in the thesis** (author, v2.16): no reported run uses it. The word *FiLM* does not appear in thesis prose | 🚫 |
+| 🆕 **shipped**, "shipped default", "shipped threshold" | — | release vocabulary → name the value (*η = 0.5*) or say nothing | 🚫 |
+| 🆕 **Two facts that are not free choices**, "not cosmetic", "by construction rather than by hope", "rather than by omission" | — | defensive meta-prose — delete, state the fact | 🚫 |
 | 🆕 `aw`, `action_weight` | Diffuser/DPCC loss weighting | **action loss weight** | 🔁 |
 | 🆕 `H8`, `horizon` | — | **planning horizon of 8 steps** | 🔁 |
 
@@ -103,6 +105,18 @@ in thesis text.
 | 🆕 **Pareto / "better"** | — | never defined globally in the thesis; state the metrics compared where a claim is made | 🚫 |
 | 🆕 ladder, rung, kill criterion, fallback, gate, DA, cell, row | — | internal planning vocabulary | 🚫 |
 | 🆕 Gen11, U7, Fix_N, Epoch, campaign, mission, job id | — | development history — only in `app:repro` if at all | 🚫 |
+| 🆕 **funnel**, "three-stage funnel", "Stage 1 / 2 / 3" (v3, V_A and UAV analyses) | — | a comparison order, not a method. Write what is compared: *"the generative models are compared on the final box-to-target distance of plans executed without projection; constraint violations and wall-clock time are compared separately"*. (v3.7) | 🚫 |
+| 🆕 **regime**, "all-pass", "discriminating", "all-fail" (scene / task taxonomy) | — | coined labels. State the fact instead: *"every configuration satisfies the constraints"*, *"no configuration satisfies the full constraint set in every context"*. (v3.7) | 🚫 |
+| 🆕 **Entry 1 / 2 / 3**, "the three entries" | — | the environment names: **obstacle avoidance**, **vision-conditioned alignment**, **quadrotor benchmark**. (v3.7) | 🔁 |
+| 🆕 **Tier 1 / Tier 2** (protocol tiers) | DPCC §6.1: *five training seeds and ten test seeds* | **the evaluation protocol of DPCC** (5 training seeds, 10 test episodes per geometry) / **the protocol of this thesis** (5 training seeds × 20 episodes). (v3.7) | 🔁 |
+| 🆕 **strict S&C**, **crossed-line S&C**, `cfree`, "crossed" (UAV) | — | **success with constraint satisfaction**, with success = *reaching within 0.30 m of the goal point* or *crossing the finish line*; `cfree` = **collision-free flight**. (v3.7) | 🔁 |
+| 🆕 `untouched`, `frozen` (V_A) | — | **the box is not moved**. (v3.7) | 🔁 |
+| 🆕 `min_xy_dist`, `context_final_xy_dist`, MIN / median (V_A) | — | **final distance between box and target in the table plane**, summarised by its **minimum** and **median** over the contexts. Box angle: **final orientation of the box relative to the target**. (v3.7) | 🔁 |
+| 🆕 "reproducibility floor" (~0.4 m, V_A) | — | **run-to-run variation** of repeated evaluations. (v3.7) | 🔁 |
+| 🆕 "controller-limit case" (s_curve) | — | say what is observed: *"the tracking controller does not follow the plans through the turns"*. (v3.7) | 🚫 |
+| 🆕 "the slide", `corridor_v2_slide`, `cv2s` | — | **the slide**: a sloping test-time halfspace in the corridor, defined once in Ch 5 (`tab:uav-scenes`); `corridor_v2` is the corridor with walls 1.90 m apart. (v3.7) | ✅ |
+| 🆕 "the consistency target" (v3.4 only) | — | superseded — write **consistency training** (§2). (v3.7) | 🔁 |
+| 🆕 "headline", "the foundation", "the paper's foundation", "held table" | — | planning vocabulary. (v3.7) | 🚫 |
 
 ## 7. Environments, embodiment and control
 

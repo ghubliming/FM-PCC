@@ -24,10 +24,10 @@ in its own sentence rather than in a footnote.
 | chapter | v2 | v3 |
 |---|---|---|
 | 1 Introduction · 2 Background · 3 Related Work · 4 Method | filled + mathematics + citations | **inherited unchanged** |
-| 5 Experimental Setup | bone, except the compute environment | **written** — tasks, the regime taxonomy, the pinned baseline, the definition of "better", the two protocol tiers |
-| 6 Results | bone | **written** — foundation entry in full; the other two to grade |
-| 7 Discussion | bone | **written** — interpretation, negative results with mechanisms, threats, limitations |
-| 8 Conclusion | bone | **written** — RQ answers settled; headline numbers left for last |
+| 5 Experimental Setup | bone, except the compute environment | **written** — five sections, each split by environment (obstacle avoidance · alignment · quadrotor); DPCC's baseline reproduced (v3.7) |
+| 6 Results | bone | **written** — one section per environment + a cross-environment comparison (v3.7) |
+| 7 Discussion | bone | **headings only — owned by v4** (v3.7); earlier prose in `handover/` |
+| 8 Conclusion | bone | **concise draft** — v4 refines (v3.7) |
 | Appendix | `app:repro` opened | **extended** — the reverse name map, the corpora of record |
 
 3634 lines against v2's 2151. 6 generated figures, 5 new tables, 12 `\hole`s, 5 `\provisional`s.
@@ -51,7 +51,7 @@ python3 tools/sync_v2.py status    # has v2 moved? which files? which need a rea
 python3 tools/sync_v2.py diff      # what exactly did v2 change
 python3 tools/sync_v2.py merge     # three-way-merge it in, advance the baseline, re-stamp
 python3 tools/check.py             # labels, citations, environments, braces, figures
-python3 plots/make_figs.py         # rebuild every figure from the batch CSVs
+python3 ../../../../Data_Analysis/DA_in_Paper/plotting/export_to_draft.py v3   # copy in the figures v3 uses
 ```
 
 `status` prints which v2 revision the inherited half is at, so the answer to *"which v2 is in this
@@ -107,9 +107,8 @@ tools/
   split_v2.py          content-based splitter (markers, never line numbers)
   sync_v2.py           status / diff / merge / stamp
   check.py             mechanical checks — NOT a compiler
-  svg2pdf.sh           figures for the LaTeX build
-plots/                 the figure pipeline — see plots/README.md
-figures/               generated SVG + MANIFEST.md saying what came from where
+plots/                 (moved 2026-09-14 → Data_Analysis/DA_in_Paper/plotting)
+figures/               COPIES of the figures v3 uses, exported from DA_in_Paper; EXPORTED.md lists them
 bundle/                flattened builds — see bundle/README.md
   make_bundle.py       inlines every \input, verifies, zips for Overleaf
   thesis_v3_<stamp>.tex/.zip   build output. NEVER edit these; rebuild instead.
@@ -191,7 +190,7 @@ PDF must come through the template path, not from the Overleaf bundle. Inherited
    as a note rather than as the derivation, would have been worse than not doing it.
 2. **Entry-2 and Entry-3 figures.** Their sections quote paired tests and per-scene tables, and both
    entries have owed runs that would change what the right figure is. Their corpora are already
-   registered in `plots/sources.py`.
+   registered in `Data_Analysis/DA_in_Paper/plotting/sources.py`.
 3. **The abstract and the headline numbers.** Rewritten last, in whichever version ships.
 4. **The cross-entry synthesis table** in `sec:res:summary`. Writing it now would put three results
    of very different strengths into one visual register, which is the thing `sec:setup:metrics`

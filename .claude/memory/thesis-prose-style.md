@@ -29,6 +29,13 @@ corrected each of the following explicitly, some more than once (2026-09-11 → 
   *HardFlow* in the abstract, Ch 1, Ch 2, Positioning, Ch 4, titles or captions. Write the mechanism
   instead (*consistency training*, *endpoint projection*) with an in-place `\parencite`. Keep labels
   and code tokens unchanged. *Flow matching*, *MeanFlow* and *DPCC* stay named.
+- **Describe only what this thesis has and does** (user angry again, 2026-09-14). Never compare our
+  configuration with a paper's published configuration ("what differs from the published…", "as
+  published", "departures from the source"), and never explain why a choice was made. Never
+  describe variants that no reported run uses (e.g. the affine/FiLM conditioning — the thesis has
+  one conditioning, *feature-wise conditional biasing*). No defensive remark blocks ("facts that
+  are not free choices", "not cosmetic", "rather than by omission"), no "shipped". If such a
+  remark hides a real defect, tell the user in chat instead of writing it into the thesis.
 - **Tell the evaluation as two stages: prove, then extend.** Obstacle avoidance is DPCC's benchmark,
   used 1:1 to meet the baseline on its own ground. The vision-conditioned alignment task and the
   quadrotor benchmark were **built** for this thesis (the quadrotor: everything but the Skydio X2

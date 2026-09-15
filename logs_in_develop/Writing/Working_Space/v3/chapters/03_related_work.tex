@@ -1,55 +1,97 @@
 \chapter{Related Work}\label{ch:related}
 % =============================================================================
 
-\emph{Chapter summary.} Four bodies of work converge on this thesis; the chapter treats each
-as a line the thesis extends or corrects, and closes by stating precisely which gap is left.
+\section{Diffusion Planners and Policies}\label{sec:rel:diffusion}
 
-\section{Diffusion-Based Planners and Policies}\label{sec:rel:diffusion}
+Diffusion was first used to plan whole trajectories \parencite{janner2022planning} and then to learn
+visuomotor policies \parencite{chi2023diffusion}. Motion planning diffusion constructs cost functions
+for safe robot motion and biases the sampler towards them \parencite{carvalho2025motion}. \ac{DPCC}
+combines a trajectory diffusion model with a model-based projection at every denoising step and with
+constraint tightening \parencite{romer2025diffusion}. It is both the codebase this thesis starts from
+and the baseline it is measured against.
 
-Trajectory-level diffusion planning \parencite{janner2022planning} and its policy-level
-descendants \parencite{chi2023diffusion}, up to the constrained-projection variant that this work
-starts from \parencite{romer2025diffusion}. The section is careful about a
-dual role that recurs throughout: the immediate predecessor is simultaneously the
-\emph{codebase} inherited and the \emph{baseline} measured against. Both roles are declared
-here so no later table looks like a straw man.
+\section{Flow Matching and Few-Step Policies}\label{sec:rel:fm}
 
-\section{Flow Matching for Robot Control}\label{sec:rel:fm}
+Flow matching \parencite{lipman2023flow,lipman2024guide} and rectified flow \parencite{liu2023flow}
+replace the denoising chain by an ordinary differential equation, and robot policies have adopted them
+to act in few steps. FlowPolicy uses consistency flow matching on 3-D point clouds
+\parencite{zhang2024flowpolicy}; ManiFlow combines flow matching with consistency training to generate
+dexterous actions in one or two steps from visual, language and proprioceptive inputs
+\parencite{yan2025maniflow}; Streaming Flow Policy treats the action trajectory itself as the flow
+trajectory \parencite{jiang2025streaming}. VFP captures multimodality with a variational latent prior
+\parencite{zhai2025vfp}, real-time chunking enables smooth asynchronous execution of flow policies
+\parencite{black2025rtc}, $\pi_0$ is a vision-language-action flow model for general robot control
+\parencite{black2024pi0}, and flow policies have also been trained with policy gradients
+\parencite{yi2026fpg}. Most of these policies enforce no hard constraints on the generated
+trajectory.
 
-Transport-based generative models \parencite{lipman2023flow,liu2023flow} applied to control and
-manipulation, including few-step variants \parencite{geng2025meanflow,zhang2025alphaflow} and their
-reported step budgets. The section positions this thesis
-against them on one axis: most report the engine improvement \emph{without} a hard
-constraint mechanism, so the interaction between a cheap sampler and an expensive projector
---- the interaction this thesis finds to be decisive --- is not visible in them.
-
-\section{Safety Filters and Hard-Constrained Sampling}\label{sec:rel:safety}
-
-Projection-based safety filters
-\parencite{power2023sampling,christopher2024constrained,romer2025diffusion}, control-barrier
-approaches \parencite{yang2025safeflowmatcher}, and samplers that interleave optimisation with
-generation \parencite{li2025hardflow}. This is where arm~C's ancestry is set out --- the idea of
-projecting a \emph{predicted endpoint} inside the sampler is theirs, and is credited as theirs
-wherever the arm is introduced --- and where the
-thesis's degeneracy contribution is positioned: the activation-threshold convention these
-methods use has a low-budget regime in which the method reduces to its own baseline, and
-that regime is not, to the author's knowledge, characterised in the literature.
+On the generative-modelling side, MeanFlow learns average velocities for one-step generation
+\parencite{geng2025meanflow}, Improved MeanFlow recasts its objective as a loss on the instantaneous
+velocity with a network that predicts the average velocity \parencite{geng2025imf}, and $\alpha$-Flow
+unifies trajectory flow matching, shortcut models and MeanFlow in one family trained with a curriculum
+\parencite{zhang2025alphaflow}.
 
 \section{Accelerating Generative Planners}\label{sec:rel:accel}
 
-Distillation, consistency-style objectives, solver improvements and caching, together with
-the implicit samplers that retro-fit a shorter chain onto a trained diffusion model
-\parencite{song2021denoising}. The section
-distinguishes these from the present approach: they accelerate a model \emph{post hoc},
-whereas the few-step objective changes what is learned, and --- more importantly for a
-controller --- leaves the budget adjustable at deployment rather than baking in a new one.
+Implicit samplers shorten the chain of a trained diffusion model \parencite{song2021denoising}, and
+distillation compresses it further: One-Step Diffusion Policy distils a pre-trained diffusion policy
+into a single-step action generator \parencite{wang2024onedp}. Both accelerate a model after it is
+trained. Consistency models \parencite{song2023consistency} and MeanFlow \parencite{geng2025meanflow}
+instead learn a few-step generator directly, and with flow matching the step budget remains a choice at
+deployment.
+
+\section{Constrained and Safe Generative Planning}\label{sec:rel:safety}
+
+Constraints on generated trajectories are enforced by guidance, by projection, or by acting inside the
+sampler. Guidance biases the sampler with the gradient of a cost \parencite{carvalho2025motion}.
+Projection maps a sample onto the feasible set after sampling \parencite{power2023sampling} or at every
+step \parencite{christopher2024constrained,romer2025diffusion}. Among the methods that act inside the
+sampler, SafeFlowMatcher combines flow matching with control barrier functions
+\parencite{yang2025safeflowmatcher}; Physics-Constrained Flow Matching enforces arbitrary nonlinear
+constraints in pretrained flow-based models without retraining \parencite{utkarsh2025pcfm}; SAD-Flower
+generates safe, admissible and dynamically consistent trajectories \parencite{huang2025sadflower};
+UniConFlow incorporates equality and inequality constraints in one constrained flow-matching framework
+\parencite{yang2025uniconflow}; XFlowMP is a task-conditioned generative motion planner built on
+Schr\"odinger bridges \parencite{nguyen2025xflowmp}; and SafeFlowMPC couples flow matching with online
+optimisation on a real seven-degree-of-freedom manipulator \parencite{oelerich2026safeflowmpc}.
+
+HardFlow reformulates hard-constrained sampling of flow-matching models as trajectory optimisation and
+projects the plan the sampler is predicted to reach \parencite{li2025hardflow}. It applies this
+optimisation only in the later sampling steps. At a small step budget that convention leaves no step
+before the final one, and the method reduces to projecting a finished sample --- a regime that, to the
+author's knowledge, has not been characterised.
+
+\section{Vision-Conditioned Imitation Learning}\label{sec:rel:visual}
+
+D3IL provides manipulation tasks with diverse human demonstrations, including vision-based variants
+\parencite{jia2024towards}, and X-IL, from the same group, explores the design space of
+imitation-learning policies \parencite{jia2025xil}. Visuomotor diffusion policies condition the
+denoising network on image features \parencite{chi2023diffusion}, and transformer backbones operate
+on image patches \parencite{peebles2022dit}. Flow-matching policies follow the same path: VITA flows
+directly from visual representations to latent actions \parencite{gao2025vita}, and $\pi_0$ conditions
+a flow model on images and language \parencite{black2024pi0}.
+
+\section{Learning-Based Planning and Control for Aerial Vehicles}\label{sec:rel:aerial}
+
+Imitation learning for aerial vehicles covers language-guided short-range flight, for which UAV-Flow
+Colosseo provides a real-world benchmark \parencite{wang2025uavflow}, and trajectory planning: CGD
+guides diffusion policies for UAV trajectories with constraints never encountered in training
+\parencite{kondo2024cgd}. Below the planner, geometric tracking control on the special Euclidean group
+tracks position and attitude without the singularities of local coordinates
+\parencite{lee2010geometric}, and predictive sampling offers derivative-free model predictive control in
+simulation \parencite{howell2022predictive}. The quadrotor model used here is the Skydio X2 from MuJoCo
+Menagerie \parencite{zakka2022menagerie}.
 
 \section{Positioning of This Thesis}\label{sec:rel:positioning}
 
-One page. The gap in one sentence: \emph{the engine question and the constraint question have
-been studied separately, and the interaction between them --- which is where the cost
-actually lives in a receding-horizon controller --- has not been measured under matched
-conditions.} The section then states what this thesis adds that is not a combination of the
-above: the genuine-step condition, the regime split with its mechanism, and the removal of
-the selection machinery.
+Fast generative sampling, hard constraint enforcement, visual conditioning and aerial embodiment have
+each been studied, but in a receding-horizon controller the cost of fast sampling and the cost of
+constraint enforcement interact, and that interaction has not been measured under matched conditions.
+This thesis places flow matching, MeanFlow and consistency training inside the constrained controller
+of \ac{DPCC} and compares its per-step projection with endpoint projection \parencite{li2025hardflow}
+on the same feasible set, first on the benchmark of \ac{DPCC} with its setup unchanged. It then carries
+the resulting controller to a vision-conditioned alignment task and to a quadrotor benchmark, both built
+for this thesis, and adds the step-budget condition under which endpoint projection reduces to
+projecting a finished sample.
 
 % =============================================================================

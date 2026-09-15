@@ -11,7 +11,7 @@ by the same code that drew the figures in the reports of record and match them
 pixel semantics for pixel semantics.
 
 Stdlib only. Output is plain SVG with no external assets, so a figure renders in
-a browser, in a Markdown preview and in LaTeX (after ``tools/svg2pdf.sh``)
+a browser, in a Markdown preview and in LaTeX (after ``svg/svg2pdf.sh``)
 without anything else being installed.
 
 Coordinates: ``axes()`` fixes the data range, ``X()``/``Y()`` map data to pixels,
@@ -22,13 +22,17 @@ import math
 import os
 from xml.sax.saxutils import escape as _esc
 
-__all__ = ['Fig', 'dec_ticks', 'fmt_num', 'legend']
+__all__ = ['Fig', 'dec_ticks', 'fmt_num', 'legend', 'save_grid', 'clip_halfplane']
 
 
 class Fig:
     """One SVG figure. Build with axes() -> frame() -> marks -> save()."""
 
-    def __init__(self, w, h, ml=76, mr=16, mt=44, mb=54):
+    def __init__(self, w, h, ml=76, mr=16, mt=44, mb=54, font=1.0):
+        # `font` scales every font size and line width drawn by frame/text. The
+        # default 1.0 leaves existing figures byte-identical; composite figures
+        # printed at \textwidth use ~1.4 so their text stays legible.
+        self.font = font
         self.w, self.h = w, h
         self.L, self.R, self.T, self.B = ml, w - mr, mt, h - mb
         self.s = [f'<rect x="0" y="0" width="{w}" height="{h}" fill="#ffffff"/>']
@@ -48,6 +52,13 @@ class Fig:
         v = math.log10(v) if self.ylog else v
         return self.B - (v - self.y0) / (self.y1 - self.y0) * (self.B - self.T)
 
+    def _k(self, v):
+        """Scale a length by the font factor; at 1.0 return it untouched so output is byte-identical."""
+        return v * self.font if self.font != 1.0 else v
+
+    def _fs(self, v):
+        return f'{v * self.font:g}' if self.font != 1.0 else f'{v}'
+
     def frame(self, xt, yt, xlab, ylab, title, sub='', xfmt=str, yfmt=str):
         """Gridlines, tick labels, box, axis labels, title and one subtitle line.
 
@@ -58,29 +69,29 @@ class Fig:
             x = self.X(v)
             self.s.append(f'<line x1="{x:.1f}" y1="{self.T}" x2="{x:.1f}" y2="{self.B}" '
                           f'stroke="#e6e6e6" stroke-width="1"/>')
-            self.s.append(f'<text x="{x:.1f}" y="{self.B + 16}" font-size="10.5" fill="#222" '
+            self.s.append(f'<text x="{x:.1f}" y="{self.B + self._k(16)}" font-size="{self._fs(10.5)}" fill="#222" '
                           f'text-anchor="middle" font-family="Helvetica,Arial,sans-serif">'
                           f'{_esc(str(xfmt(v)))}</text>')
         for v in yt:
             y = self.Y(v)
             self.s.append(f'<line x1="{self.L}" y1="{y:.1f}" x2="{self.R}" y2="{y:.1f}" '
                           f'stroke="#e6e6e6" stroke-width="1"/>')
-            self.s.append(f'<text x="{self.L - 7}" y="{y + 3.5:.1f}" font-size="10.5" fill="#222" '
+            self.s.append(f'<text x="{self.L - 7}" y="{y + self._k(3.5):.1f}" font-size="{self._fs(10.5)}" fill="#222" '
                           f'text-anchor="end" font-family="Helvetica,Arial,sans-serif">'
                           f'{_esc(str(yfmt(v)))}</text>')
         self.s.append(f'<rect x="{self.L}" y="{self.T}" width="{self.R - self.L}" '
                       f'height="{self.B - self.T}" fill="none" stroke="#111" stroke-width="1.2"/>')
-        self.s.append(f'<text x="{(self.L + self.R) / 2}" y="{self.B + 38}" font-size="11.5" '
+        self.s.append(f'<text x="{(self.L + self.R) / 2}" y="{self.B + self._k(38)}" font-size="{self._fs(11.5)}" '
                       f'fill="#111" text-anchor="middle" '
                       f'font-family="Helvetica,Arial,sans-serif">{_esc(xlab)}</text>')
         my = (self.T + self.B) / 2
-        self.s.append(f'<text x="16" y="{my}" font-size="11.5" fill="#111" text-anchor="middle" '
-                      f'font-family="Helvetica,Arial,sans-serif" transform="rotate(-90 16 {my})">'
+        self.s.append(f'<text x="{self._k(16)}" y="{my}" font-size="{self._fs(11.5)}" fill="#111" text-anchor="middle" '
+                      f'font-family="Helvetica,Arial,sans-serif" transform="rotate(-90 {self._k(16)} {my})">'
                       f'{_esc(ylab)}</text>')
-        self.s.append(f'<text x="{self.L}" y="20" font-size="13" font-weight="bold" fill="#111" '
+        self.s.append(f'<text x="{self.L}" y="{self._k(20)}" font-size="{self._fs(13)}" font-weight="bold" fill="#111" '
                       f'font-family="Helvetica,Arial,sans-serif">{_esc(title)}</text>')
         if sub:
-            self.s.append(f'<text x="{self.L}" y="35" font-size="10.5" fill="#555" '
+            self.s.append(f'<text x="{self.L}" y="{self._k(35)}" font-size="{self._fs(10.5)}" fill="#555" '
                           f'font-family="Helvetica,Arial,sans-serif">{_esc(sub)}</text>')
 
     # --------------------------------------------------------------- marks ---
@@ -121,9 +132,43 @@ class Fig:
 
     def text(self, x, y, t, size=9.5, color='#333', anchor='start', bold=False):
         b = ' font-weight="bold"' if bold else ''
-        self.s.append(f'<text x="{x:.1f}" y="{y:.1f}" font-size="{size}" fill="{color}" '
+        self.s.append(f'<text x="{x:.1f}" y="{y:.1f}" font-size="{self._fs(size)}" fill="{color}" '
                       f'text-anchor="{anchor}" font-family="Helvetica,Arial,sans-serif"{b}>'
                       f'{_esc(str(t))}</text>')
+
+    # ------------------------------------------------ data-space primitives ---
+    def px_len(self, d):
+        """A length in data units along x, in pixels (linear x axis only)."""
+        return d / (self.x1 - self.x0) * (self.R - self.L)
+
+    def polygon(self, pts, fill, opacity=1.0, stroke='none', w=0.0, dash=''):
+        """pts in DATA coordinates."""
+        d = ' '.join(f'{self.X(x):.1f},{self.Y(y):.1f}' for x, y in pts)
+        da = f' stroke-dasharray="{dash}"' if dash else ''
+        self.s.append(f'<polygon points="{d}" fill="{fill}" fill-opacity="{opacity}" stroke="{stroke}" '
+                      f'stroke-width="{w}"{da}/>')
+
+    def circle(self, cx, cy, r, fill='none', opacity=1.0, stroke='none', w=0.0, dash=''):
+        """Centre and radius in DATA units (equal-aspect axes)."""
+        da = f' stroke-dasharray="{dash}"' if dash else ''
+        self.s.append(f'<circle cx="{self.X(cx):.1f}" cy="{self.Y(cy):.1f}" r="{self.px_len(r):.2f}" '
+                      f'fill="{fill}" fill-opacity="{opacity}" stroke="{stroke}" stroke-width="{w}"{da}/>')
+
+    def dline(self, pts, color, w=1.4, dash='', opacity=1.0):
+        """Polyline in DATA coordinates."""
+        d = ' '.join(f'{self.X(x):.1f},{self.Y(y):.1f}' for x, y in pts)
+        da = f' stroke-dasharray="{dash}"' if dash else ''
+        self.s.append(f'<polyline points="{d}" fill="none" stroke="{color}" stroke-width="{w}" '
+                      f'stroke-opacity="{opacity}"{da}/>')
+
+    def clip_to_box(self):
+        """Open a clip group on the plot area; close it with end_clip()."""
+        cid = f'c{id(self) % 10**8}'
+        self.s.append(f'<clipPath id="{cid}"><rect x="{self.L}" y="{self.T}" width="{self.R - self.L}" '
+                      f'height="{self.B - self.T}"/></clipPath><g clip-path="url(#{cid})">')
+
+    def end_clip(self):
+        self.s.append('</g>')
 
     # ---------------------------------------------------------------- save ---
     def save(self, path):
@@ -157,3 +202,45 @@ def legend(f, x, y, entries, dy=17):
         yy = y + i * dy
         f.marker(x + 7, yy, kind, col, filled=True, r=5.0)
         f.text(x + 18, yy + 3.5, lab, 9.5, '#111')
+
+
+def clip_halfplane(poly, keep):
+    """Sutherland-Hodgman: clip a polygon to the half-plane where keep(x, y) >= 0.
+    `keep` must be affine, e.g. lambda x, y: (m * x + b) - y for 'y below the line'."""
+    out = []
+    for i, (px, py) in enumerate(poly):
+        qx, qy = poly[(i + 1) % len(poly)]
+        fp, fq = keep(px, py), keep(qx, qy)
+        if fp >= 0:
+            out.append((px, py))
+        if (fp >= 0) != (fq >= 0):
+            t = fp / (fp - fq)
+            out.append((px + t * (qx - px), py + t * (qy - py)))
+    return out
+
+
+def save_grid(figs, path, cols, gap=10, header=None):
+    """Compose several Fig panels into one SVG, row-major, `cols` per row.
+
+    Panels in a row share its height (the tallest). `header` is an optional Fig
+    placed above the grid across its full width (used for a shared legend).
+    """
+    rows = [figs[i:i + cols] for i in range(0, len(figs), cols)]
+    width = max(sum(f.w for f in r) + gap * (len(r) - 1) for r in rows)
+    y, parts = 0, []
+    if header is not None:
+        parts.append(f'<g transform="translate(0,0)">' + ''.join(header.s) + '</g>')
+        y = header.h + gap
+    for r in rows:
+        x = 0
+        for f in r:
+            parts.append(f'<g transform="translate({x},{y})">' + ''.join(f.s) + '</g>')
+            x += f.w + gap
+        y += max(f.h for f in r) + gap
+    height = y - gap
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    with open(path, 'w') as fh:
+        fh.write(f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
+                 f'viewBox="0 0 {width} {height}"><rect x="0" y="0" width="{width}" height="{height}" '
+                 f'fill="#ffffff"/>' + ''.join(parts) + '</svg>')
+    return path

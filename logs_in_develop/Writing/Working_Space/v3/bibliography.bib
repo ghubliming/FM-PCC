@@ -142,6 +142,17 @@
   file      = {in Proposual/FM.pdf},
 }
 
+@article{lipman2024guide,
+  title      = {Flow Matching Guide and Code},
+  author     = {Lipman, Yaron and Havasi, Marton and Holderrieth, Peter and Shaul, Neta and Le, Matt and Karrer, Brian and Chen, Ricky T. Q. and Lopez-Paz, David and Ben-Hamu, Heli and Gat, Itai},
+  journal    = {arXiv preprint},
+  year       = {2024},
+  eprint     = {2412.06264},
+  eprinttype = {arXiv},
+  note       = {FAIR at Meta, MIT CSAIL and Weizmann Institute of Science},
+  file       = {in Proposual/FM_Guide.pdf},
+}
+
 % NO LOCAL COPY
 @inproceedings{liu2023flow,
   title     = {Flow Straight and Fast: Learning to Generate and Transfer Data with Rectified Flow},
@@ -293,20 +304,221 @@
   file       = {auxiliary_papers/Mujuco/Mujuco_MPC.pdf},
 }
 
-% ---------------------------------------------------------------- solvers ----
-% NO LOCAL COPY -- the NLP solver HardFlow's published experiments use, where this
-% work uses SLSQP. Named only to record the difference.
-@article{wachter2006implementation,
-  title     = {On the implementation of an interior-point filter line-search algorithm for large-scale nonlinear programming},
-  author    = {W{\"a}chter, Andreas and Biegler, Lorenz T.},
-  journal   = {Mathematical Programming},
-  volume    = {106},
-  number    = {1},
-  pages     = {25--57},
-  year      = {2006},
-  publisher = {Springer},
+% NO LOCAL COPY -- the simulator. Standard citation; verify against the IROS 2012 record.
+@inproceedings{todorov2012mujoco,
+  title     = {{MuJoCo}: A physics engine for model-based control},
+  author    = {Todorov, Emanuel and Erez, Tom and Tassa, Yuval},
+  booktitle = {IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
+  pages     = {5026--5033},
+  year      = {2012},
 }
 
+% NO LOCAL COPY -- source of the Skydio X2 quadrotor model (repository
+% google-deepmind/mujoco_menagerie, Apache-2.0; see logs_in_develop/Gen11/Epoch1_UAV_model/notes.md).
+% Citation block typed from the repository's documented form; verify before submission.
+@misc{zakka2022menagerie,
+  title        = {{MuJoCo Menagerie}: A collection of high-quality simulation models for {MuJoCo}},
+  author       = {Zakka, Kevin and Tassa, Yuval and {MuJoCo Menagerie Contributors}},
+  year         = {2022},
+  howpublished = {\url{https://github.com/google-deepmind/mujoco_menagerie}},
+}
+
+% ------------------------------------------------ added in v2.14 (Chapter 3) ---
+% All typed from each PDF's own title page (pypdf, 2026-09-14); arXiv ids read off the PDF.
+% Venues are given only where the title page states one; otherwise arXiv preprint.
+
+@article{zhang2024flowpolicy,
+  title      = {{FlowPolicy}: Enabling Fast and Robust {3D} Flow-based Policy via Consistency Flow Matching for Robot Manipulation},
+  author     = {Zhang, Qinglun and Liu, Zhen and Fan, Haoqiang and Liu, Guanghui and Zeng, Bing and Liu, Shuaicheng},
+  journal    = {arXiv preprint},
+  year       = {2024},
+  eprint     = {2412.04987},
+  eprinttype = {arXiv},
+  file       = {auxiliary_papers/FlowPolicy_U_e_cn.pdf},
+}
+
+@article{jiang2025streaming,
+  title      = {Streaming Flow Policy: Simplifying Diffusion/Flow-Matching Policies by Treating Action Trajectories as Flow Trajectories},
+  author     = {Jiang, Sunshine and Fang, Xiaolin and Roy, Nicholas and Lozano-P{\'e}rez, Tom{\'a}s and Kaelbling, Leslie and Ancha, Siddharth},
+  journal    = {arXiv preprint},
+  year       = {2025},
+  eprint     = {2505.21851},
+  eprinttype = {arXiv},
+  file       = {auxiliary_papers/Streaming Flow Policy_MIT.pdf},
+}
+
+@article{yan2025maniflow,
+  title      = {{ManiFlow}: A General Robot Manipulation Policy via Consistency Flow Training},
+  author     = {Yan, Ge and Zhu, Jiyue and Deng, Yuquan and Yang, Shiqi and Qiu, Ri-Zhao and Cheng, Xuxin and Memmel, Marius and Krishna, Ranjay and Goyal, Ankit and Wang, Xiaolong and Fox, Dieter},
+  journal    = {arXiv preprint},
+  year       = {2025},
+  eprint     = {2509.01819},
+  eprinttype = {arXiv},
+  file       = {auxiliary_papers/UWA_ManiFlow.pdf},
+}
+
+@article{zhai2025vfp,
+  title      = {{VFP}: Variational Flow-Matching Policy for Multi-Modal Robot Manipulation},
+  author     = {Zhai, Xuanran and Zhao, Qianyou and Yu, Qiaojun and Hao, Ce},
+  journal    = {arXiv preprint},
+  year       = {2025},
+  eprint     = {2508.01622},
+  eprinttype = {arXiv},
+  file       = {auxiliary_papers/VFP.pdf},
+}
+
+@article{black2025rtc,
+  title      = {Real-Time Execution of Action Chunking Flow Policies},
+  author     = {Black, Kevin and Galliker, Manuel Y. and Levine, Sergey},
+  journal    = {arXiv preprint},
+  year       = {2025},
+  eprint     = {2506.07339},
+  eprinttype = {arXiv},
+  file       = {auxiliary_papers/D3IL_relevant/Real-Time Execution of Action Chunking Flow Policies.pdf},
+}
+
+@article{yi2026fpg,
+  title      = {Flow Policy Gradients for Robot Control},
+  author     = {Yi, Brent and Choi, Hongsuk and Singh, Himanshu Gaurav and Huang, Xiaoyu and Truong, Takara E. and Sferrazza, Carmelo and Ma, Yi and Duan, Rocky and Abbeel, Pieter and Shi, Guanya and Liu, Karen and Kanazawa, Angjoo},
+  journal    = {arXiv preprint},
+  year       = {2026},
+  eprint     = {2602.02481},
+  eprinttype = {arXiv},
+  file       = {auxiliary_papers/Flow Policy Gradients for Robot Control.pdf},
+}
+
+@article{black2024pi0,
+  title      = {{$\pi_0$}: A Vision-Language-Action Flow Model for General Robot Control},
+  author     = {Black, Kevin and Brown, Noah and Driess, Danny and Esmail, Adnan and Equi, Michael and Finn, Chelsea and Fusai, Niccolo and Groom, Lachy and Hausman, Karol and Ichter, Brian and Jakubczak, Szymon and Jones, Tim and Ke, Liyiming and Levine, Sergey and others},
+  journal    = {arXiv preprint},
+  year       = {2024},
+  eprint     = {2410.24164},
+  eprinttype = {arXiv},
+  note       = {Physical Intelligence},
+  file       = {auxiliary_papers/VLA/Pi_0.pdf},
+}
+
+@article{geng2025imf,
+  title      = {Improved Mean Flows: On the Challenges of Fastforward Generative Models},
+  author     = {Geng, Zhengyang and Lu, Yiyang and Wu, Zongze and Shechtman, Eli and Kolter, J. Zico and He, Kaiming},
+  journal    = {arXiv preprint},
+  year       = {2025},
+  eprint     = {2512.02012},
+  eprinttype = {arXiv},
+  file       = {auxiliary_papers/DGM/Improved Mean Flows On the Challenges of Fastforward Generative Models.pdf},
+}
+
+@article{wang2024onedp,
+  title      = {One-Step Diffusion Policy: Fast Visuomotor Policies via Diffusion Distillation},
+  author     = {Wang, Zhendong and Li, Zhaoshuo and Mandlekar, Ajay and Xu, Zhenjia and Fan, Jiaojiao and Narang, Yashraj and Fan, Linxi and Zhu, Yuke and Balaji, Yogesh and Zhou, Mingyuan and Liu, Ming-Yu and Zeng, Yu},
+  journal    = {arXiv preprint},
+  year       = {2024},
+  eprint     = {2410.21257},
+  eprinttype = {arXiv},
+  file       = {auxiliary_papers/OneStep_Diffusion.pdf},
+}
+
+@article{kondo2024cgd,
+  title      = {{CGD}: Constraint-Guided Diffusion Policies for {UAV} Trajectory Planning},
+  author     = {Kondo, Kota and Tagliabue, Andrea and Cai, Xiaoyi and Tewari, Claudius and Garcia, Olivia and Espitia-Alvarez, Marcos and How, Jonathan P.},
+  journal    = {arXiv preprint},
+  year       = {2024},
+  eprint     = {2405.01758},
+  eprinttype = {arXiv},
+  file       = {auxiliary_papers/Drone/CGD Constraint-Guided Diffusion Policies.pdf},
+}
+
+@article{utkarsh2025pcfm,
+  title      = {Physics-Constrained Flow Matching: Sampling Generative Models with Hard Constraints},
+  author     = {{Utkarsh} and Cai, Pengfei and Edelman, Alan and Gomez-Bombarelli, Rafael and Rackauckas, Christopher Vincent},
+  journal    = {arXiv preprint},
+  year       = {2025},
+  eprint     = {2506.04171},
+  eprinttype = {arXiv},
+  file       = {Recommand_Paper/Physics-Constrained Flow Matching Sampling Generative Models with Hard Constraints.pdf},
+}
+
+@article{huang2025sadflower,
+  title      = {{SAD-Flower}: Flow Matching for Safe, Admissible, and Dynamically Consistent Planning},
+  author     = {Huang, Tzu-Yuan and Lederer, Armin and Wu, Dai-Jie and Dai, Xiaobing and Zhang, Sihua and Sosnowski, Stefan and Sun, Shao-Hua and Hirche, Sandra},
+  journal    = {arXiv preprint},
+  year       = {2025},
+  eprint     = {2511.05355},
+  eprinttype = {arXiv},
+  file       = {auxiliary_papers/SAD_flower.pdf},
+}
+
+@article{yang2025uniconflow,
+  title      = {{UniConFlow}: A Unified Constrained Flow-Matching Framework for Certified Motion Planning},
+  author     = {Yang, Zewen and Dai, Xiaobing and Yu, Dian and Li, Zhijun and Khadiv, Majid and Hirche, Sandra and Haddadin, Sami},
+  journal    = {arXiv preprint},
+  year       = {2025},
+  eprint     = {2506.02955},
+  eprinttype = {arXiv},
+  file       = {auxiliary_papers/unicon.pdf},
+}
+
+@article{nguyen2025xflowmp,
+  title      = {{XFlowMP}: Task-Conditioned Motion Fields for Generative Robot Planning with Schr{\"o}dinger Bridges},
+  author     = {Nguyen, Khang and Vu, Minh Nhat},
+  journal    = {arXiv preprint},
+  year       = {2025},
+  eprint     = {2512.00022},
+  eprinttype = {arXiv},
+  file       = {auxiliary_papers/XFlowMP.pdf},
+}
+
+@article{jia2025xil,
+  title      = {{X-IL}: Exploring the Design Space of Imitation Learning Policies},
+  author     = {Jia, Xiaogang and Donat, Atalay and Huang, Xi and Zhao, Xuan and Blessing, Denis and Zhou, Hongyi and Wang, Han A. and Zhang, Hanyi and Wang, Qian and Lioutikov, Rudolf and Neumann, Gerhard},
+  journal    = {arXiv preprint},
+  year       = {2025},
+  eprint     = {2502.12330},
+  eprinttype = {arXiv},
+  file       = {auxiliary_papers/D3IL_relevant/X-IL(D3IL V2).pdf},
+}
+
+@article{perez2017film,
+  title      = {{FiLM}: Visual Reasoning with a General Conditioning Layer},
+  author     = {Perez, Ethan and Strub, Florian and de Vries, Harm and Dumoulin, Vincent and Courville, Aaron},
+  journal    = {arXiv preprint},
+  year       = {2017},
+  eprint     = {1709.07871},
+  eprinttype = {arXiv},
+  file       = {auxiliary_papers/VLA/FiLM.pdf},
+}
+
+@article{peebles2022dit,
+  title      = {Scalable Diffusion Models with Transformers},
+  author     = {Peebles, William and Xie, Saining},
+  journal    = {arXiv preprint},
+  year       = {2022},
+  eprint     = {2212.09748},
+  eprinttype = {arXiv},
+  file       = {auxiliary_papers/VLA/DiT.pdf},
+}
+
+@inproceedings{gao2025vita,
+  title      = {{VITA}: Vision-to-Action Flow Matching Policy},
+  author     = {Gao, Dechen and Zhao, Boqi and Lee, Andrew and Chuang, Ian and Zhou, Hanchu and Wang, Hang and Zhao, Zhe and Zhang, Junshan and Soltani, Iman},
+  booktitle  = {International Conference on Learning Representations (ICLR)},
+  year       = {2026},
+  eprint     = {2507.13231},
+  eprinttype = {arXiv},
+  file       = {auxiliary_papers/VITA.pdf},
+}
+
+@article{wang2025uavflow,
+  title      = {{UAV-Flow} {Colosseo}: A Real-World Benchmark for Flying-on-a-Word {UAV} Imitation Learning},
+  author     = {Wang, Xiangyu and Yang, Donglin and Liao, Yue and Zheng, Wenhao and Dai, Bin and Wu, Wenjun and Li, Hongsheng and Liu, Si},
+  journal    = {arXiv preprint},
+  year       = {2025},
+  eprint     = {2505.15725},
+  eprinttype = {arXiv},
+  file       = {auxiliary_papers/Drone/UAV-Flow Colosse.pdf},
+}
+
+% ---------------------------------------------------------------- solvers ----
 % NO LOCAL COPY -- the SLSQP solver DPCC's projection uses, and its SciPy wrapper.
 @techreport{kraft1988software,
   title       = {A software package for sequential quadratic programming},

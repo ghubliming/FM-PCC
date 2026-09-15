@@ -134,6 +134,32 @@ def main():
         problems.append(('bundler-only macro \\fmpccgraphic used in a source file '
                          '(use \\includegraphics; the bundler rewrites it)', leaked))
 
+    # --- table width (warning) ----------------------------------------------
+    # Table 6.1 once ran past the right margin: a plain `tabular` is as wide as its
+    # widest row, and a \multicolumn{..}{l}{...} note never wraps. Estimate both and
+    # warn; the text width of the TUM template at 11pt is about 14.7 cm.
+    TEXTWIDTH_CM, CHAR_CM = 14.7, 0.19
+    warn = []
+    for n, s2 in clean.items():
+        for m in re.finditer(r'\\begin\{(tabular|tabularx)\}(\{[^}]*\})?\{([^}]*)\}(.*?)\\end\{\1\}', s2, re.S):
+            kind, spec, body = m.group(1), m.group(3), m.group(4)
+            scale = 0.83 if '\\footnotesize' in body else (0.91 if '\\small' in body else 1.0)
+            ncols = sum(spec.count(c) for c in 'lcrXL') + spec.count('p{')
+            for row in body.split('\\\\'):
+                mc = re.search(r'\\multicolumn\{\d+\}\{[^}]*\}\{(.*)\}\s*$', row.strip(), re.S)
+                text = mc.group(1) if mc else None
+                if text is not None:
+                    plain = re.sub(r'\\[a-zA-Z]+\*?(\[[^\]]*\])?|[{}$&]', '', text).strip()
+                    if len(plain) * CHAR_CM * scale > TEXTWIDTH_CM:
+                        warn.append(f'{n}: \\multicolumn text does not wrap and is about '
+                                    f'{len(plain) * CHAR_CM * scale:.1f} cm wide: "{plain[:60]}..."')
+                elif kind == 'tabular':
+                    plain = re.sub(r'\\[a-zA-Z]+\*?(\[[^\]]*\])?|[{}$]', '', row)
+                    widest = sum(len(c.strip()) for c in plain.split('&')) * CHAR_CM * scale + ncols * 0.42
+                    if widest > TEXTWIDTH_CM:
+                        warn.append(f'{n}: `tabular` row is about {widest:.1f} cm wide (text width is '
+                                    f'{TEXTWIDTH_CM} cm) -- use tabularx with an L column')
+
     # --- figures ------------------------------------------------------------
     figdir = os.path.join(V3, 'figures')
     wanted = {g for s in clean.values() for g in RE_GRAPHIC.findall(s)}
@@ -166,6 +192,8 @@ def main():
         for n, s in docs:
             print(f'  {s.count(chr(10)):5d}  {n}')
 
+    for w in dict.fromkeys(warn):
+        print(f'WARN  {w}')
     if not problems:
         print('\nAll mechanical checks pass. NOT COMPILED -- no TeX toolchain here.')
         return 0

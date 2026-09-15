@@ -6008,3 +6008,31 @@ Comprehensive data analysis of the MPC candidate fan ($B=4$ vs $B=1$) on `avoidi
 4. **Established an architecture-matched pillars diffusion reference row** (DA_20260912_pillars_diffusion_baseline_reference.md, C59):
    - The 3.96 M U-Net DDPM at K=20 converged in training (test loss 0.528 -> 0.00172) and crossed the finish line in 50/50 rollouts, but never passed within the 0.30 m strict-goal tolerance and had strict S&C 0.00 on all five variants; its best crossed-line S&C was 0.30 with dpcc-t-tightened.
    - On honest-geometry pillars, K=5 mf, fm, and af each contain cells Pareto-dominant over that top diffusion projection row in S&C, steps, and time. This is a single-seed reference with intentionally unmatched budgets and action_weight=1, not a paper-faithful DPCC action_weight=10 reproduction.
+
+
+***
+
+## Gen15 Corridor Gate Closure, U16 Corridor-v2 Paper Run & UAV Margin Clarification (September 13–14, 2026)
+
+**Keywords**: Gen15, U14, U15, U16, corridor_gate, corridor_v2, normalized SLSQP box, pdes binding, body inflation, commits 074152e, 07efb11, 85120d3, ee91069, ea50b6a, 456f69c.
+
+1. **Closed the corridor-ball line and corrected the diagnosis** (CLOSURE_20260912_corridor_obstacle_investigation.md, U14 DA):
+   - Four ball radii, enlarged ceilings, measured on-path placement, and bounds-free projection all produced zero useful avoidance. Direct trajectory comparison showed no lateral change and at most 1 mm vertical change; earlier violation-count reductions were episode-length artefacts, not obstacle avoidance.
+   - U14's corridor_gate reproduced the null result across K=2/5/10, selectors, and bounds_free. Code inspection identified the shared normalized SLSQP box as the structural bottleneck: corridor's 4.4e-05 m lateral normalizer permits only about 0.77 mm over the seven-step projected plan, versus a 100–200 mm gate detour. The same projector genuinely moves trajectories on pillars, whose lateral range is about 1800x wider.
+
+2. **U16 replaced the infeasible test with corridor_v2 and repaired geometry binding** (U16 changelogs and commits 074152e, 07efb11, 85120d3, ee91069, ea50b6a):
+   - Introduced a widened-wall corridor_v2 with a slide halfspace and distinct variant naming, then added the pdes toggle so geometry can bind to the planned setpoint rather than the lagging executed drone.
+   - Corrected HardFlow constraint handling and x_active interpretation, added review/fix coverage, and submitted the paper-run wave with separate tags and checks. Results were not yet available, so these are implementation and launch records rather than performance claims.
+   - Added MuJoCo GIF/virtual-geometry rendering support and path-visualization fixes to make the enforced geometry and executed trajectory inspectable.
+
+3. **Documented the UAV body-margin semantics used in all current geometry** (NOTE_20260914_body_margin_vs_dpcc_halfspace.md):
+   - The apparent 0.31 m gap between physical wall lines and UAV centre trajectories is intentional rotor/body inflation: current _hg and corridor_v2 planning/scoring use r_drone=0.31, while tightened variants add 0.025 m. This is the UAV analogue of DPCC's shifted halfspace, whose point-robot margin is zero.
+   - Updated interpretation guidance: distinguish physical surfaces from centre limits in figures, and do not compare UAV body-aware violations directly with point-robot avoiding results without stating the margin semantics.
+
+4. **Gen15 U16 corridor_v2 paper evaluation proves FM-PCC efficacy and establishes engine hierarchy** (DA_20260914_corridor_v2_paper_full.md, batch `batch_uav_20260914_091148`):
+   - Evaluated 52 cells across 4 architecture-matched U-Net models (3.96–3.97 M parameters; seed 6, n=12 per cell, routes L/C/R) in the widened-wall `corridor_v2_slide` environment with `-bounds_free-pdes-tightened` projection.
+   - **Projector effectiveness**: Without projection, every engine collides with the slide (0/12 collision-free, 42–56 violation steps). With DPCC projection at K=3 and 5, `mf`, `af`, and `diffusion` achieve 100% collision-free rollouts (12/12, p = 7 × 10⁻⁷ vs unprojected).
+   - **Flow vs. diffusion completion**: Projected flow engines complete the course reliably (12/12 crossed finish line), whereas projected diffusion stalls short of the line across all 396 budget steps (0/36 crossed-line completion). Consequently, crossed-line S&C is 1.00 for `mf` and `af` (K=3, 5) versus 0.00 for diffusion (p = 7 × 10⁻⁷).
+   - **Engine hierarchy**: Empirical ranking holds as `{af ≈ mf} > fm > diffusion`. `af` and `mf` dominate naive `fm` on collision-freeness (12/12 vs 0/12 at K=3, p = 7 × 10⁻⁷), while the `af` vs `mf` difference is within statistical noise (strict S&C 4/12 vs 3/12, p = 1.0).
+   - **Metric nuance & geometry limit**: Strict S&C (goal within 0.30 m + safe) is capped by geometry: after the forced slide detour, only route L can physically reach its goal point, which `af` K=3 achieves 4/4 times.
+   - **Efficiency and HardFlow trade-off**: Projected flow engines run in 29 ms (K=1), 86–102 ms (K=3), and 122–144 ms (K=5), delivering a 4.3–22× speedup over diffusion (625–651 ms/step). HardFlow runs faster (45–125 ms) with genuine NLP steps, but trades safety for speed (collision-free rate drops to 0.00–0.58).

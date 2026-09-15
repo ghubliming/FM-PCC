@@ -22,8 +22,9 @@
 %  (There is no TeX toolchain in the AI container -- this has never been
 %   compiled here. Build it on a machine that has one before believing it.)
 %
-%  FIGURES: plots/make_figs.py regenerates every figure from the batch CSVs.
-%  It emits SVG; \includegraphics needs PDF. See tools/svg2pdf.sh.
+%  FIGURES: produced only in Data_Analysis/DA_in_Paper/figures (plotting/make_figs.py)
+%  and copied into figures/ by plotting/export_to_draft.py v3. SVG -> PDF with
+%  DA_in_Paper/plotting/svg/svg2pdf.sh, then export again.
 % =============================================================================
 
 % --- preamble -----------------------------------------------------------------

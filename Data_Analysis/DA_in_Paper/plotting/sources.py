@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
-"""The single point of truth for *where the numbers come from*.
+"""The single point of truth for *where the thesis numbers and figures come from*.
+
+Part of Data_Analysis/DA_in_Paper/plotting -- the official figure pipeline of the
+thesis (live since 2026-09-14). Moved here from Working_Space/v3/plots/.
 
 ═══════════════════════════════════════════════════════════════════════════════
  WHEN NEW DATA LANDS, THIS IS THE ONLY FILE YOU EDIT.
 ═══════════════════════════════════════════════════════════════════════════════
 Point a ``Corpus`` at the new batch directory, update its ``protocol`` string,
-re-run ``python3 make_figs.py`` and every figure in ``../figures/`` is rebuilt
+re-run ``python3 make_figs.py`` and every figure in ``../figures/<group>/`` is rebuilt
 against the new data with its subtitle and provenance line updated. No figure
 script contains a path.
 
 The registry mirrors, one row for one row, section 10 ("Corpora of record") of
-``../../data_status/DATASTATUS_20260910_v3_entry_readiness.md``. If the two ever
+``logs_in_develop/Writing/Working_Space/data_status/DATASTATUS_20260910_v3_entry_readiness.md``,
+plus the corpora the thesis has cited since. If the two ever
 disagree, that file is right and this one is stale.
 
 A note on aggregation, because it is the one thing easy to get wrong here.
@@ -35,6 +39,10 @@ import re
 import statistics as st
 
 REPO = '/workspaces/FM-PCC'
+
+# Plain-JSON extracts written by plotting/extract/*.py (they need numpy / PyYAML, the
+# builders do not). Rebuild with: python3.14 plotting/extract/avoiding_scene.py
+AVOIDING_SCENE = os.path.join(REPO, 'Data_Analysis', 'DA_in_Paper', 'data', 'avoiding_scene.json')
 
 
 class Corpus:
@@ -78,7 +86,7 @@ CORPORA = {
         'temp/0309/batch_avoiding_combined_20260903_133730',
         'seed 6, 20 trials',
         'partial',
-        'The consistency target on the architecture-matched U-Net. Single seed: '
+        'Consistency training on the architecture-matched U-Net. Single seed: '
         'the mf/af separation here is p = 0.231 and must never be drawn as a ladder.'),
     'avoiding_minK': Corpus(
         'avoiding_minK',
@@ -115,6 +123,20 @@ CORPORA = {
         'One seed, one scene for the ranking. corridor is constraint-trivial; s_curve is '
         'the controller-limit case, never an engine table; pillars K=5 carries the '
         'ranking and is blocked on seeds.'),
+    'uav_corridor_v2': Corpus(
+        'uav_corridor_v2',
+        'temp/1409/batch_uav_20260914_091148',
+        'seed 6, 12 flights per configuration (4 per route L/C/R)',
+        'partial',
+        'Corridor with walls 1.90 m apart and a 14 deg test-time slide (U16). Projection '
+        'configuration differs from pillars/s_curve (-bounds_free-pdes-tightened): never pooled.'),
+    'uav_pillars_diffusion': Corpus(
+        'uav_pillars_diffusion',
+        'temp/1209/batch_uav_20260912_201035',
+        'seed 6, 10 flights per configuration',
+        'partial',
+        'Diffusion baseline reference on pillars, trained with action loss weight 1; budgets '
+        'unmatched by construction (training-time K vs inference-time K).'),
 }
 
 
@@ -129,23 +151,25 @@ CORPORA = {
 #
 # RULE: nothing goes in here until it has been checked against
 # /workspaces/aux_repo/ and shown to be ours. All four below were.
+#
+# Entry: name -> (group, source path relative to the repo, provenance).
 VENDORED = {
-    'fig_raw_plans_meanflow_K1': (
+    'fig_raw_plans_meanflow_K1': ('demo',
         'Data_Analysis/DA_Result_Curated_MD/Report_20260819_MF_UNet/'
         'fig6a_plans_mfunet_K1_seed6_both-hard.png',
         'Report_20260819_MF_UNet fig 6a; per-episode MPC diagnostics, unprojected arm, '
         'seed 6, both-hard, K=1. Ours; verified absent from aux_repo.'),
-    'fig_raw_plans_diffusion_K1': (
+    'fig_raw_plans_diffusion_K1': ('demo',
         'Data_Analysis/DA_Result_Curated_MD/Report_20260819_MF_UNet/'
         'fig6b_plans_dpcc_K1_seed6_both-hard.png',
         'Report_20260819_MF_UNet fig 6b; same protocol, diffusion baseline at K=1. '
         'Ours; verified absent from aux_repo.'),
-    'fig_raw_plans_meanflow_K2': (
+    'fig_raw_plans_meanflow_K2': ('demo',
         'Data_Analysis/DA_Result_Curated_MD/Report_20260819_MF_UNet/'
         'fig6c_plans_mfunet_K2_seed6_both-hard.png',
         'Report_20260819_MF_UNet fig 6c; same protocol, K=2. '
         'Ours; verified absent from aux_repo.'),
-    'fig_raw_goal_reached_K1': (
+    'fig_raw_goal_reached_K1': ('da',
         'Data_Analysis/DA_Result_Curated_MD/Report_20260903_AF_UNet/fig7_raw_diffuser_K1.svg',
         'Report_20260903_AF_UNet fig 7; goal reached on the unprojected arm at K=1, '
         'top-right-hard, seed 6, 20 trials. Ours; verified absent from aux_repo.'),
@@ -153,7 +177,35 @@ VENDORED = {
 
 
 def vendored_path(key):
-    return os.path.join(REPO, VENDORED[key][0])
+    return os.path.join(REPO, VENDORED[key][1])
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  PLANNED FIGURES -- specified in a draft, not yet made
+# ═══════════════════════════════════════════════════════════════════════════
+# Each mirrors a \todofigure box in a draft. When one is made, put the file into
+# ../figures/<group>/<name>.<ext>, switch the draft from \todofigure to
+# \includegraphics{<name>}, remove the entry here, and export.
+# Entry: name -> (group, where the draft asks for it, what it must show / how).
+PLANNED = {
+    'fig_env_aligning': ('env', 'v3 sec:setup:tasks:aligning (fig:env-aligning)',
+        'Alignment scene with box and target pose, next to the two camera images the policy '
+        'receives (overhead and in-hand).'),
+    'fig_env_uav': ('env', 'v3 sec:setup:tasks:uav (fig:env-uav)',
+        'Corridor (walls 1.90 m apart + 14 deg slide, routes L/C/R), pillars, s-curve: overhead, '
+        'common scale, vehicle drawn to scale (0.62 m across). Geometry: tab:uav-scenes.'),
+}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  EXCLUDED -- existing images that must NOT become thesis figures
+# ═══════════════════════════════════════════════════════════════════════════
+EXCLUDED = {
+    'figures/avoiding.png': 'byte-identical to aux_repo/dpcc/figures/avoiding.png -- the DPCC '
+                            "authors' figure (checked 2026-09-11, v3 CHANGELOG v3.3)",
+    'figures/avoiding_constraints.png': 'byte-identical to the DPCC copy; regenerate instead (PLANNED)',
+    'figures/avoiding_data.png': 'byte-identical to the DPCC copy',
+}
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -165,13 +217,13 @@ ENGINE_COLOUR = {
     'diffusion': '#c0392b',   # the inherited denoising engine -- the pinned baseline
     'fm':        '#2471a3',   # flow matching        (alpha = 1)
     'mf':        '#1e8449',   # MeanFlow             (alpha = 0)
-    'af':        '#6c3483',   # the consistency target  (0 < alpha < 1)
+    'af':        '#6c3483',   # consistency training    (0 < alpha < 1)
 }
 ENGINE_LABEL = {
-    'diffusion': 'diffusion (DPCC baseline)',
+    'diffusion': 'diffusion (DPCC)',
     'fm':        'flow matching',
     'mf':        'MeanFlow',
-    'af':        'consistency target',
+    'af':        'consistency training',
 }
 
 # Folder-name pattern per engine, with %d for the step budget K. These ARE code

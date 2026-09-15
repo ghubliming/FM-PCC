@@ -9,6 +9,14 @@
 %  Chapters 5-8 (Setup, Results, Discussion, Conclusion) are left as the bone.
 %  Nothing there is settled and nothing there is written.
 %
+%  STRUCTURE SINCE v2.14 -- one job per chapter, no duplication:
+%    Ch 1  introduction and the six contributions (the guideline)
+%    Ch 2  the concepts behind each contribution -- no equations
+%    Ch 3  the papers per aspect -- no equations
+%    Ch 4  all the mathematics, grouped: formulation, overview, generative models,
+%          plant dynamics, constraint projection, low-level control, environments
+%  Section numbers quoted below this line predate v2.14; the labels are unchanged.
+%
 %  WHAT v2 ADDS OVER v1
 %    1. The three engine formulations are written out as mathematics, in one
 %       notation, with citations:  DPCC's diffusion engine (Sec. 2.2 / 4.1),
@@ -150,7 +158,12 @@
 \newcommand{\ftime}{\tau}                      % transport (generative) time in [0,1]
 \newcommand{\nfe}{K}                           % step budget = number of network evals
 
-% Drafting aids -- REMOVE BOTH BEFORE SUBMISSION
-\newcommand{\hole}[1]{\textcolor{red}{\textbf{[HOLE:} #1\textbf{]}}}
-\newcommand{\srcnote}[1]{\textcolor{gray}{\footnotesize\textsf{[src: #1]}}}
+% Drafting aids. For the submitted build set \submissiontrue: every \srcnote then
+% prints nothing, and every \hole still left raises a LaTeX warning (and stays red)
+% so that no missing content can ship unnoticed.
+\newif\ifsubmission
+\submissionfalse
+\newcommand{\hole}[1]{\ifsubmission\GenericWarning{}{Thesis: a HOLE is left in the submitted build}\fi%
+  \textcolor{red}{\textbf{[HOLE:} #1\textbf{]}}}
+\newcommand{\srcnote}[1]{\ifsubmission\else\textcolor{gray}{\footnotesize\textsf{[src: #1]}}\fi}
 

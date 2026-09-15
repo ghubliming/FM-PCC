@@ -14,9 +14,15 @@ matters — and that a referee will probe — is that the demonstrations are **s
 decoupled layers**, geometry first and physics second:
 
 **Layer 1 — geometric reference.** A pure-mathematics function
-`traj_fn(t) → (p_des, v_des, a_des, yaw_des)`. No MuJoCo, no physics. It is a `blended_path`: cubic
-fillets through per-scene hard-coded waypoints, constructed so the path provably stays inside the
-intended homotopy channel with **≥ 8 cm clearance**.
+`traj_fn(t) → (p_des, v_des, a_des, yaw_des)`. No MuJoCo, no physics. Pillars and s-curve use
+`blended_path`: straight segments between per-scene hard-coded waypoints, each non-collinear corner
+cut by a **circular arc** (radius ≤ `BLEND_RADIUS`, clamped so the tangent offset uses ≤ ½ of either
+segment), one global cosine speed profile `s(t) = L·½(1 − cos(πt/T))`, and the centripetal term
+`ṡ²/r` in `a_des`. Corridor and empty use `traverse_line`, the same cosine profile on one straight
+segment. The path is constructed to stay inside the intended homotopy channel with **≥ 8 cm
+clearance**. *(Corrected 2026-09-14 by the v2 chat against `uav_env_test/trajectories.py:67–90, 114–`:
+an earlier version of this note said "cubic fillets"; the code has circular arcs. Written into
+thesis §4.7.3* Expert demonstrations *in v2.16.)*
 
 **Layer 2 — physics execution.** The cascaded PID tracks `p_des(t)` inside the MuJoCo scene at
 100 Hz, and the resulting rollout is recorded.

@@ -1,7 +1,7 @@
 # NOTES — where thesis figures and tables can come from
 
 **Created:** 2026-09-13 · **Type:** hint · **Applies to:** every draft's figure pipeline
-(currently `Working_Space/v3/plots/`)
+(`Data_Analysis/DA_in_Paper/plotting/`, official since 2026-09-14)
 
 > **Hint.** Thesis figures do not have to come only from the curated report plots in
 > `Data_Analysis/DA_Result_Curated_MD/`. The analysis **code** in `Data_Analysis/` — the DA pipelines
@@ -21,7 +21,8 @@
 
 - **The DA pipelines need matplotlib / numpy / pandas.** This container has none, so running them is
   a cluster job (`Slurm_Codes/sbatch/DA/`, `--no-plots` skips the slow PNGs and keeps the CSVs).
-  `Working_Space/v3/plots/` is stdlib-only for exactly this reason. Porting a DA plot therefore means
+  `DA_in_Paper/plotting/svg/` is stdlib-only for exactly this reason, and `DA_in_Paper/plotting/mpl/` is
+  where matplotlib scripts go. Porting a DA plot therefore means
   one of two things: re-implement its semantics in the stdlib pipeline, or run the DA on the cluster
   and bring the output in as a **vendored** figure with its provenance recorded.
 - **Principles already shared, keep them shared.** v3's Pareto band and front follow
@@ -39,5 +40,5 @@
 
 A copied panel is checked against `/workspaces/aux_repo/` before it enters a draft. The repo-root
 `figures/avoiding*.png` are byte-identical to the DPCC authors' own copies and were nearly used as this
-thesis's environment figures (`Working_Space/v3/CHANGELOG.md` v3.3). v3 records every copied panel in
-`plots/sources.py` → `VENDORED`, with its source path and provenance.
+thesis's environment figures (`Working_Space/v3/CHANGELOG.md` v3.3). Every copied panel is recorded in
+`Data_Analysis/DA_in_Paper/plotting/sources.py` → `VENDORED`, with its group, source path and provenance.

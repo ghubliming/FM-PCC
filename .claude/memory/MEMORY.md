@@ -19,8 +19,9 @@
 - [HardFlow low-K degeneracy](hardflow-low-K-degeneracy.md) — K1/K2 at A=0.5 run NO HardFlow math; tag rows ✅/❌ and build claims on ✅ only
 - [Never write URLs / publish artifacts unless asked](no-unrequested-urls-or-artifacts.md) — deliver repo files + terminal summary; no links by default
 - [Master's thesis writing (TUM I6)](master-thesis-writing-tum.md) — template is read-only; work in Writing/Working_Space, notes in Writing/Auxiliary; papers in aux_repo/PAPERS
-- [Thesis prose style](thesis-prose-style.md) — short abstract; storytelling not justification; no self-talk, no "arm"/coined jargon, never define "better" globally; α-Flow/HardFlow named only in Related Work; prove on DPCC's benchmark, then extend to self-built envs
-- [Thesis draft ownership v2/v3/v4](thesis-draft-ownership.md) — v2=Ch1–4, v3=Ch5–8+appendix, v4=later; separate chats, never cross-edit; read Working_Space/DRAFT_OWNERSHIP.md first
+- [Thesis prose style](thesis-prose-style.md) — short abstract; storytelling not justification; no self-talk, no "arm"/coined jargon, never define "better" globally; α-Flow/HardFlow named only in Related Work; prove on DPCC's benchmark, then extend to self-built envs; describe only OUR config (never vs published, no "why", no unused variants like FiLM)
+- [Thesis draft ownership v2/v3/v4](thesis-draft-ownership.md) — v2=Ch1–4, v3=Ch5–6+appendix+Ch8 draft, v4=Ch7 Discussion+Ch8 refine+later; separate chats, never cross-edit; read Working_Space/DRAFT_OWNERSHIP.md first
+- [DA_in_Paper = official thesis data + ALL figures](da-in-paper-official-store.md) — analysis/INDEX.md for numbers; plotting/ + figures/ for every figure; drafts only get copies via export_to_draft.py
 - [Reading papers / no LaTeX here](read-papers-with-python314-pypdf.md) — PDFs open only via `python3.14` + pypdf (Read tool can't); no pdflatex/biber, so .tex is never compiled locally
 - [DA requires real result data](da-requires-csv-never-from-logs.md) — batch CSVs OR raw result folders (results.json/rollouts/npz) are OK; sbatch/eval console logs alone are not
 - [🚨 GATED: 2026-09-07 lost-history recovery](crisis-recovery-lost-chat-2026-09-07.md) — open the dossier ONLY when the user explicitly says "resume from the Claude Code crisis" / "continue the lost chat"; Sep-7 transcripts unrecoverable, 2 key sessions + a chat↔MD↔topic bridge table located in the 09-06 backup

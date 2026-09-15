@@ -1,5 +1,7 @@
 # Data Analysis — batch tools + HTML visualizers
 
+> 🟢 **Thesis data and figures:** [`DA_in_Paper/`](DA_in_Paper/README.md) is the official, live store (2026-09-14) — the analysis index behind every thesis number, all figure code, and every thesis figure.
+
 Three batch-analysis pipelines, each pairing a Python CLI (discover → load → aggregate →
 plot → report) with a standalone browser-based visualizer that reads the CSVs the Python
 side writes. This doc covers running any of them in **visualizer-only mode** — skip the

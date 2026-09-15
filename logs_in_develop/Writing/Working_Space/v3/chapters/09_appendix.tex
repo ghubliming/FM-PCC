@@ -18,7 +18,7 @@ the pinned dependency list.
   node; every job was allocated one GPU.}
   \label{tab:compute}
   \centering
-  \begin{tabular}{ll}
+  \begin{tabularx}{\linewidth}{@{}L L@{}}
     \toprule
     Component & Configuration \\
     \midrule
@@ -48,7 +48,7 @@ the pinned dependency list.
     Diffusers / Transformers & 0.31.0 / 4.41.2 \\
     Gym / Gymnasium         & 0.26.2 / 0.29.1 \\
     \bottomrule
-  \end{tabular}
+  \end{tabularx}
 \end{table}
 
 Two qualifications belong with the table. The software block is a snapshot taken when the
@@ -81,80 +81,69 @@ record both a start and an end; re-derive it with \texttt{sacct} before stating 
 \section*{Names as they appear in the released artefacts}
 
 This thesis names methods by their mechanism and never by the tokens that identify them in
-configuration files, checkpoint paths and evaluation logs. That is deliberate --- a name that asserts
-something the code does not do should not be repeated --- but it leaves a reader of the released
-artefacts unable to match a row of \autoref{ch:results} to a run. \autoref{tab:names} is the map.
+configuration files, checkpoint paths and evaluation logs. \autoref{tab:names} maps the names used in \autoref{ch:results} to those tokens.
 
 \begin{table}[htpb]
   \caption[Thesis names and released artefact tokens]{Thesis name against the token a reader will
-  meet in the released configuration files, checkpoint directories and evaluation logs. The tokens
-  are deliberately \emph{not} renamed in the artefacts: renaming them would break every existing
-  cross-reference in the project's own run ledger.}
+  meet in the released configuration files, checkpoint directories and evaluation logs.}
   \label{tab:names}
   \centering
-  \begin{tabular}{ll}
+  \begin{tabularx}{\linewidth}{@{}L L@{}}
     \toprule
     Name used in this thesis & Token in the artefacts \\
     \midrule
-    \multicolumn{2}{l}{\emph{generative engines}}\\
-    the diffusion engine / the baseline & \texttt{GaussianDiffusion}, \texttt{ddpm}, \texttt{diffusion} \\
+    \multicolumn{2}{l}{\emph{generative models}}\\
+    the diffusion model (DPCC baseline) & \texttt{GaussianDiffusion}, \texttt{ddpm}, \texttt{diffusion} \\
     flow matching                       & \texttt{FlowMatchingODE}, \texttt{fm}, \texttt{flow\_matcher\_v3} \\
     MeanFlow                            & \texttt{MeanFlowODE}, \texttt{mf} \\
-    the consistency target             & \texttt{AlphaFlowODE}, \texttt{af}; floor as \texttt{ae0.2} / \texttt{ae0.05} \\
+    consistency training & \texttt{AlphaFlowODE}, \texttt{af}; final $\alpha$ as \texttt{ae0.2} / \texttt{ae0.05} \\
     \midrule
-    \multicolumn{2}{l}{\emph{constraint arms}}\\
-    unguided (no projection)            & the \texttt{diffuser} variant row \\
-    per-step iterate projection         & \texttt{dpcc-r} / \texttt{-c} / \texttt{-t} \\
-    in-ODE endpoint projection          & \texttt{hardflow\_sls-*}, \texttt{hardflow\_new-*} \\
-    tightened geometry                  & the \texttt{-tightened} suffix \\
+    \multicolumn{2}{l}{\emph{projection methods}}\\
+    unguided (no projection) & the \texttt{diffuser} variant \\
+    per-step projection (DPCC) & \texttt{dpcc-r} / \texttt{-c} / \texttt{-t} \\
+    endpoint projection & \texttt{hardflow\_sls-*}, \texttt{hardflow\_new-*} \\
+    tightened constraints & the \texttt{-tightened} suffix \\
     \midrule
     \multicolumn{2}{l}{\emph{selection rules}}\\
     random                              & the \texttt{-r} suffix \\
     cumulative projection cost          & the \texttt{-c} suffix \\
     temporal consistency                & the \texttt{-t} suffix \\
     \midrule
-    \multicolumn{2}{l}{\emph{knobs and ablations}}\\
+    \multicolumn{2}{l}{\emph{parameters and ablations}}\\
     step budget $\nfe$                  & \texttt{K}, \texttt{n\_diffusion\_steps}, \texttt{flow\_steps} \\
     activation threshold $\eta$         & \texttt{A}, \texttt{activation\_threshold} \\
     genuine steps                       & \texttt{n\_genuine} \\
     corrected scene geometry            & \texttt{u7hg}, ``honest geometry'' \\
     constraint-family ablations         & \texttt{geo\_free}, \texttt{bounds\_free}, \texttt{model\_free} \\
     \bottomrule
-  \end{tabular}
+  \end{tabularx}
 \end{table}
 
-Two tokens are traps and are called out rather than merely translated. The bare word
-\texttt{diffuser} means three different things in this project's artefacts --- the ancestor codebase,
-the published method it is named after, and this work's own no-projection variant row --- and is
-never used unqualified in this thesis. And the visual conditioning flag whose value is spelled
-\texttt{filmv1} does \emph{not} select feature-wise linear modulation: it concatenates the visual
-latent with the time embedding, which yields an additive per-channel bias and no scale term. Every
-reported visual number comes from that arm, and \autoref{sec:method:backbone} describes what it
-actually computes.
+Two tokens name something other than what the thesis means by the word. \texttt{diffuser} denotes the ancestor codebase, the published method of the same name, and the variant evaluated without projection. The conditioning flag \texttt{filmv1} selects the feature-wise conditional biasing of \autoref{sec:method:backbone}, which is what every reported visual result uses.
 
 \section*{Corpora of record}
 
 \autoref{tab:corpora} lists the evaluation batches every number in \autoref{ch:results} was computed
-from, with the protocol that produced each. The figure generation scripts read these directories
-directly and record the same information in their own manifest, so a figure and the text it supports
-cannot silently diverge.
+from, with the protocol that produced each. The figure scripts read these directories directly.
 
 \begin{table}[htpb]
   \caption[Corpora of record]{The evaluation batches behind the results, and their protocols.}
   \label{tab:corpora}
   \centering
   \small
-  \begin{tabular}{lll}
+  \begin{tabularx}{\linewidth}{@{}L L L@{}}
     \toprule
-    Entry / role & Batch & Protocol \\
+    Environment and results & Batch & Protocol \\
     \midrule
-    Entry 1, engine ladder & \texttt{batch\_avoiding\_combined\_20260825} & 5 seeds $\times$ 20 trials \\
-    Entry 1, consistency target & \texttt{batch\_avoiding\_combined\_20260903} & seed 6, 20 trials \\
-    Entry 1, budget floor & \texttt{batch\_avoiding\_combined\_20260906} & 4 seeds $\times$ 3 geom.\ $\times$ 2 trials \\
-    Entry 2 & \texttt{batch\_va2\_20260907} & seed 6, 10 paired contexts \\
-    Entry 3 & \texttt{batch\_uav\_20260910} & seed 6, 10 rollouts \\
+    Obstacle avoidance, generative models & \texttt{batch\_avoiding\_combined\_20260825} & 5 seeds $\times$ 20 episodes \\
+    Obstacle avoidance, consistency training & \texttt{batch\_avoiding\_combined\_20260903} & seed 6, 20 episodes \\
+    Obstacle avoidance, projection methods & \texttt{batch\_avoiding\_combined\_20260906} & 4 seeds $\times$ 3 geometries $\times$ 2 episodes \\
+    Vision-conditioned alignment & \texttt{batch\_va2\_20260907} & seed 6, 10 paired contexts \\
+    Quadrotor, corridor & \texttt{batch\_uav\_20260914} & seed 6, 12 flights (4 per route) \\
+    Quadrotor, pillars and s-curve & \texttt{batch\_uav\_20260910} & seed 6, 10 flights \\
+    Quadrotor, pillars diffusion baseline & \texttt{batch\_uav\_20260912} & seed 6, 10 flights \\
     \bottomrule
-  \end{tabular}
+  \end{tabularx}
 \end{table}
 
 \hole{Complete \autoref{tab:corpora} with the SLURM job identifiers and the git revision each batch

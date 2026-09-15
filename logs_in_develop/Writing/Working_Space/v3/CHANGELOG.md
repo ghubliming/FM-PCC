@@ -17,6 +17,69 @@ is sourced from · what it left open.
 
 ---
 
+## v3.9 — 2026-09-15 · quadrotor dataset values, tables that fit, all three geometries, avoiding figures → [`changelogs/v3.9_20260915_tables_geometries_avoiding_figures.md`](changelogs/v3.9_20260915_tables_geometries_avoiding_figures.md)
+
+- Synced v2.15 → **v2.16**; §5.2.3 now holds the quadrotor demonstration values (`tab:uav-demos`), read
+  from the collector code. *Cubic fillets* corrected to circular arcs of radius 0.45 m.
+- **Table 6.1's overflow fixed**: non-wrapping `\multicolumn` notes about 20 cm wide. All 13 tables are
+  now `tabularx` at `\linewidth`; notes moved into captions; `check.py` gained a width warning.
+- **All three geometries** in every obstacle-avoidance table, and a new `tab:avoiding-geometries` in
+  Chapter 5. 🔴 The claim that MeanFlow and consistency training are also *faster per episode* than flow
+  matching holds only on top-left-hard; corrected in the text and in `tab:summary-models`.
+- **Obstacle-avoidance figures built**: the scene with its 96 demonstrations, the three constraint
+  geometries, and the control-steps-against-time grid. New extraction step and an SVG preview renderer in
+  `DA_in_Paper/plotting`.
+
+- **For v2:** `tools/check.py`'s new table-width guard reports one row in Chapter 4's notation table
+  (`04_method.tex:106`): the `\multicolumn{3}{l}{\emph{deployment ... so the collisions are visible}}`
+  subheading is about 18.6 cm of unwrapping text against a text width of about 14.7 cm, so it likely runs
+  into the margin. A `p{}`/`tabularx` column or a shorter subheading fixes it.
+- **For v2:** v3's tables use `tabularx`; `\usepackage{tabularx}` and the `L` column type live in
+  `parts/00_preamble_v3.tex` and must be folded into `settings.tex` when the drafts merge.
+
+---
+
+## v3.8 — 2026-09-14 · figures and plotting moved to `Data_Analysis/DA_in_Paper` → [`changelogs/v3.8_20260914_figures_move_to_DA_in_Paper.md`](changelogs/v3.8_20260914_figures_move_to_DA_in_Paper.md)
+
+- `DA_in_Paper` is now the official store: `analysis/INDEX.md` (17 thesis results, links checked),
+  `plotting/` (moved from `v3/plots/` + `v3/tools/svg2pdf.sh`; output byte-identical), and
+  `figures/{da,demo,env,schematic}/`.
+- New `plotting/export_to_draft.py`: `v3/figures/` now holds only the four figures v3 includes, as
+  copies with `EXPORTED.md`.
+- Concise pointer note in `data_status/`.
+
+---
+
+## v3.7 — 2026-09-14 · Chapters 5–8 restructured by environment; Discussion handed to v4 → [`changelogs/v3.7_20260914_ch5-8_restructure.md`](changelogs/v3.7_20260914_ch5-8_restructure.md)
+
+Full KP-by-KP record in the file above.
+- **Synced first:** v2.9 → **v2.15**, inherited files merged one by one.
+- **Ch 5:** rebuilt as five sections × the three environments, in study order (DPCC's benchmark
+  unchanged → two environments built for this thesis). DPCC's published baseline row sits next to v3's
+  reproduction. The caveats, the regime taxonomy and the global definition of "better" are deleted.
+- **Ch 6:** one section per environment, plus 6.4 answering both comparisons per environment.
+  Quadrotor follows corridor (new U16 results) → pillars → s-curve.
+- **Ch 7:** headings only, now v4's; the old prose is in `handover/`.
+- **Ch 8:** concise.
+- **Shared notes:** 12 translation rows; `DRAFT_OWNERSHIP.md` revised.
+
+- **For v2:** no label v2 references was removed. Where they now sit:
+  - `sec:res:fewstep` → *Subsection* 6.1.2 *Step Budget*;
+  - `sec:res:constraints:degenerate` → *Subsection* 6.1.5 *Genuine Steps*;
+  - `sec:res:constraints` → *Subsection* 6.4.2 *Projection Methods*.
+
+  `\autoref` will print "Subsection" for these.
+- **For v2:** `sec:disc:interpretation` and `sec:disc:negative` are now headings with no text (Ch 7 is
+  v4's). Ch 4 line ~506 cites `sec:disc:negative` for the consistency-training result; that result is
+  in `sec:res:summary:models` (6.4.1).
+- **For v2:** two of Ch 4's `\hole`s point at `sec:setup:protocol` and are now answered in its
+  subsections: the sampling-prior question in `sec:setup:protocol:avoiding`, and which controller
+  produced the UAV results in `sec:setup:protocol:uav`.
+- **For v2:** v2.13 asked for one result sentence per contribution. Not yet — the alignment and
+  quadrotor results rest on one training seed.
+
+---
+
 ## v3.6 — 2026-09-14 · the default bundle builds only the new sections
 
 **Asked for:** since v3 does not touch the v2 sections in normal editing, the default bundle should

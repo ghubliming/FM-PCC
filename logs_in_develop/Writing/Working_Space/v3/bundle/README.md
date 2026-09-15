@@ -54,7 +54,7 @@ template's `settings.tex`.
 
 ### Figures — two modes, and which to use
 
-The figures are generated as SVG ([`../plots/`](../plots/README.md)) and `\includegraphics` cannot
+The figures are generated as SVG in [`Data_Analysis/DA_in_Paper/`](../../../../../Data_Analysis/DA_in_Paper/README.md) and copied into `../figures/` by its `plotting/export_to_draft.py` and `\includegraphics` cannot
 read SVG. No SVG converter exists in the container the thesis is written in, so the tool cannot just
 convert them for you. Instead it rewrites every `\includegraphics` call to `\fmpccgraphic` and
 injects that macro, which resolves in order: `.pdf` → `.png` → *(mode-dependent)* → placeholder box.
@@ -63,7 +63,7 @@ injects that macro, which resolves in order: `.pdf` → `.png` → *(mode-depend
 | :-- | :-- | :-- |
 | **it must compile anywhere** *(default)* | `make_bundle.py` | Each figure becomes a framed box naming the file it could not find. The document always builds. |
 | **real figures on Overleaf** | `make_bundle.py --svg-package` | Adds `\usepackage{svg}`; Overleaf runs Inkscape at build time and renders the SVGs. |
-| **real figures anywhere** | `../tools/svg2pdf.sh` then `make_bundle.py` | PDFs are produced once, land in `figures/`, and are picked up automatically. Best option if you have `rsvg-convert`, `inkscape` or `cairosvg` on any machine. |
+| **real figures anywhere** | `DA_in_Paper/plotting/svg/svg2pdf.sh`, `export_to_draft.py v3`, then `make_bundle.py` | PDFs are produced once in the store, exported into `figures/`, and picked up automatically. Best option if you have `rsvg-convert`, `inkscape` or `cairosvg` on any machine. |
 
 `--svg-package` is **opt-in, not the default**, because it is a property of the *build host* and not
 of the document: a TeX installation without Inkscape fails outright on it, and the default has to

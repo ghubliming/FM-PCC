@@ -6,50 +6,51 @@ A robot that plans with a generative model buys expressiveness with computation.
 planners \parencite{janner2022planning,chi2023diffusion} represent multi-modal demonstration data
 \parencite{jia2024towards} well and, when paired with a constrained projection step
 \parencite{romer2025diffusion}, can respect dynamics and safety at deployment. The price is the sampling
-loop: producing one plan costs tens to hundreds of network evaluations, and in a
-receding-horizon controller that cost is paid again at every timestep.
+loop: producing one plan costs tens to hundreds of network evaluations --- the \ac{NFE} of the
+sampler --- and in a receding-horizon controller that cost is paid again at every timestep.
 
-The section argues that this cost is not incidental but \emph{structural}, and that the
-structure is what makes it addressable. In a diffusion model the number of steps is a
+This cost is not incidental but \emph{structural}, and the structure is what makes it
+addressable. In a diffusion model the number of steps is a
 property of the trained noise schedule \parencite{ho2020denoising}; reducing it after training
 degrades the sample, and recovering quality needs a different sampler
 \parencite{song2021denoising}. In a deterministic transport model \parencite{lipman2023flow} the same
-quantity is a property of the \ac{ODE} solver, and is chosen at inference. The motivation of this thesis is therefore not ``make the planner
-faster'' but ``move the step budget from training time to inference time, and then find out
-what it costs.''
+quantity is a property of the \ac{ODE} solver, and is chosen at inference. This thesis moves the
+step budget from training time to inference time and measures what the move costs.
 
-A second motivation follows from the first. Once the budget is cheap, the constraint
-machinery --- not the generative model --- becomes the dominant cost, and the question of
-\emph{how} constraints are enforced stops being a footnote.
+Once sampling is cheap, constraint enforcement becomes the dominant cost, and how constraints are
+enforced becomes a question in its own right.
 
 \section{Problem Statement}\label{sec:intro:problem}
 
 The object of study is a closed-loop controller in which, at each timestep, a conditional
 generative model proposes a trajectory over a fixed horizon, a constraint mechanism makes
-that trajectory admissible, and the first action is executed. The thesis holds this
-architecture fixed and varies exactly two things: the generative engine, and the
-constraint mechanism.
+that trajectory admissible, and the first action is executed. This thesis holds that
+architecture fixed and varies two parts of it: the generative model and the projection method.
 
-Stating it this way exposes the methodological demand the rest of the thesis has to meet.
-A claim that one engine beats another is only meaningful if the backbone, parameter count,
-data, normalisation, horizon, seeds, projector and harness are all held constant. A claim
-that one constraint arm beats another is only meaningful if both arms see the same feasible
-set, the same solver, the same activation threshold and the same candidate budget. Most of
-the engineering behind this thesis exists to make those two sentences true, and the section
-says so plainly.
+\emph{Flow matching} in the title names the family of generative models that transport noise to data
+along an ordinary differential equation; MeanFlow and its consistency-training variant belong to it. The
+study covers two observation modalities, state and camera images, and two embodiments, a manipulator
+and a quadrotor.
+
+The study proceeds in two stages. It first takes over the setting of \ac{DPCC}
+\parencite{romer2025diffusion} unchanged --- the obstacle-avoidance task of D3IL
+\parencite{jia2024towards}, its constraint geometries and its baseline configuration --- and
+establishes the new generative models and projection methods against the diffusion baseline on its own
+benchmark. It then tests them further in two environments built for this thesis: a vision-conditioned
+alignment task on top of D3IL, and a quadrotor benchmark whose scenes, constraint sets, expert
+demonstrations and control loop were all built here.
 
 \section{Research Questions}\label{sec:intro:rqs}
 
 \begin{description}
-  \item[RQ1 --- Engine.] Under an identical backbone, projector, dataset and harness, does
-    replacing the diffusion engine with deterministic ODE transport improve the
+  \item[RQ1 --- Generative model.] Under an identical backbone, projection, dataset and evaluation code, does
+    replacing the diffusion model with deterministic ODE transport improve the
     quality--cost frontier of constrained predictive control, and does the improvement
-    order the engine family?
+    order the family of generative models?
   \item[RQ2 --- Budget.] How far can the \ac{NFE} be reduced before
-    plan quality degrades, and what mechanism explains why the flow family can follow that
-    ladder down while diffusion cannot?
-  \item[RQ3 --- Constraints.] Given one fixed feasible set, which constraint-enforcement
-    arm --- projection of the current \emph{iterate}, or projection of the predicted clean
+    plan quality degrades, and why can flow matching reduce it while diffusion cannot?
+  \item[RQ3 --- Constraints.] Given one fixed feasible set, which projection method ---
+    projection of the current \emph{iterate}, or projection of the predicted clean
     \emph{endpoint} inside the sampler --- should be used, and under what condition is the
     comparison even well-posed?
   \item[RQ4 --- Transfer.] Do the answers to RQ1--RQ3 survive a change of observation
@@ -62,77 +63,58 @@ before any table'' item.}
 
 \section{Contributions}\label{sec:intro:contributions}
 
-Seven contributions: two performance claims, two constructions, three methodological or negative.
-The list below marks which is which.
+This thesis makes six contributions.
 
 \begin{enumerate}
-  \item \textbf{An architecture-matched engine substitution.} Deterministic transport
-    engines \parencite{lipman2023flow,geng2025meanflow} are placed inside the \ac{DPCC} control stack
-    \parencite{romer2025diffusion} with the backbone, parameter count and constraint machinery held
-    fixed, so that the engine is the only moving part. The
-    resulting comparison is reported under Pareto dominance rather than a single metric.
-  \item \textbf{A correctness condition for evaluating in-loop guided samplers.} A guided
-    sampler that is only active near the end of its own integration performs no guidance at
-    all when the step budget is small: the sole active step is terminal, and what executes is
-    sample-then-project. The condition is a computable function of the step budget and the
-    activation threshold, and it disqualifies a class of comparisons that otherwise look
-    valid. This thesis derives it, instruments it, and enforces it in every table.
-  \item \textbf{A measured regime split between constraint arms, with a mechanism.} The two
-    arms are shown to swap places as a function of the same quantity, and the swap is
-    explained by \emph{which point} each arm hands to an identical projection operator, not by
-    solver differences.
-  \item \textbf{Removal of the candidate-selection machinery.} The projector's selection
-    rules are shown not to earn their computation, and the system ships with the redundancy
-    removed.
-  \item \textbf{A vision-conditioned instance of the same benchmark, and the interface that
-    makes it comparable.} The manipulation task is rebuilt so the policy observes two camera views
-    instead of a state vector. The encoder is vendored unchanged; what is contributed is the
-    boundary --- perception is compressed to a fixed-width latent consumed as conditioning, so the
-    generative backbone never sees an image and ``only the engine changed'' becomes checkable. The
-    boundary is also necessary: the
-    average-velocity objective differentiates through its own network, and an encoder inside that
-    derivative is both incorrect and prohibitively expensive, so a few-step engine and a visual
-    observation are incompatible without it.
-  \item \textbf{An extension of the whole stack from a manipulator to an underactuated aerial
-    vehicle, with the control chain that makes it possible.} A quadrotor embodiment is built for
-    this work --- four scenes, expert data, constraint geometry --- and, more to the point, the
-    layer that a generative planner usually leaves unstated is written down: the planner emits a
-    position increment and never an actuator command; the increment accumulates into a setpoint; and
-    a cascaded \emph{geometric} tracking controller (position PD $\rightarrow$ thrust vector and
-    attitude $\rightarrow$ geometric attitude tracking on $SO(3)$ $\rightarrow$ static
-    thrust-and-moment allocation) converts the setpoint into rotor commands at a faster rate than
-    the planner replans. The manipulator and aerial chains are then presented as \emph{one}
-    structure one layer apart, which is the form RQ4 takes.
-  \item \textbf{Retained negative results.} An additional engine variant that does not
-    improve on its predecessor is reported as a clean negative, and a
-    defect in this work's own benchmark geometry, found by its own instrumentation, is
-    reported with the correction and its limits.
+  \item \textbf{Flow matching in place of diffusion.} The diffusion model of \ac{DPCC}
+    \parencite{romer2025diffusion} is replaced by flow matching
+    \parencite{lipman2023flow,lipman2024guide}, which learns a velocity field and generates a
+    trajectory by integrating an ordinary differential equation. Backbone, projection, data and
+    evaluation protocol are kept, so the generative model is the only component that changes and the
+    number of network evaluations becomes a choice made at deployment. The comparison is made first on
+    the obstacle-avoidance benchmark of \ac{DPCC}, with its setup unchanged.
+    \hole{Result sentence for this contribution --- from Ch.~6, supplied by v3 as a \texttt{For v2:} line.}
+  \item \textbf{MeanFlow in place of flow matching.} MeanFlow \parencite{geng2025meanflow} learns the
+    average velocity over an interval instead of the instantaneous velocity, so that a single network
+    evaluation can cover the whole integration. It replaces flow matching within the same
+    architecture.
+    \hole{Result sentence for this contribution --- from Ch.~6, supplied by v3 as a \texttt{For v2:} line.}
+  \item \textbf{Consistency training between flow matching and MeanFlow.} A curriculum objective
+    \parencite{zhang2025alphaflow} anneals from flow matching to MeanFlow through a
+    trajectory-consistency term, a form of consistency training \parencite{song2023consistency}. This
+    objective and MeanFlow both achieve state-of-the-art one- and two-step image generation
+    \parencite{geng2025meanflow,zhang2025alphaflow}; this thesis evaluates both as planners inside a
+    constrained controller.
+    \hole{Result sentence for this contribution --- from Ch.~6, supplied by v3 as a \texttt{For v2:} line.}
+  \item \textbf{Endpoint projection against DPCC's per-step projection.} The central contribution of
+    DPCC is a model-based projection applied to each denoising step \parencite{romer2025diffusion}.
+    Endpoint projection \parencite{li2025hardflow} instead projects the trajectory the sampler is
+    predicted to reach and steers the sampler towards it. Both are implemented on the same feasible set
+    and solver and compared, together with the step budget below which endpoint projection reduces to
+    projection after sampling.
+    \hole{Result sentence for this contribution --- from Ch.~6, supplied by v3 as a \texttt{For v2:} line.}
+  \item \textbf{A vision-conditioned alignment task.} Once established on the state-based benchmark
+    of \ac{DPCC}, all generative models and both projection methods are tested on a more complex
+    task built for this thesis from the alignment task of D3IL, in which the robot observes two camera
+    views. The generative network is given a visual encoder, and the projection is given the dynamics
+    rows and the constraint set of the new task.
+    \hole{Result sentence for this contribution --- from Ch.~6, supplied by v3 as a \texttt{For v2:} line.}
+  \item \textbf{A quadrotor benchmark.} The controller is carried to an underactuated, open-loop
+    unstable system: the manipulator with inverse kinematics is replaced by a quadrotor commanded
+    through its rotor thrusts, and the stack is tested from state observations in three environments
+    of increasing difficulty. Apart from the vehicle model, everything in this benchmark was built for
+    this thesis.
+    \begin{enumerate}
+      \item The quadrotor model is the Skydio X2 from MuJoCo Menagerie
+        \parencite{todorov2012mujoco,zakka2022menagerie}.
+      \item It is controlled by a cascaded geometric tracking controller \parencite{lee2010geometric},
+        with sampling-based MuJoCo predictive control \parencite{howell2022predictive} as a baseline
+        controller.
+      \item The three environments, their constraint sets and the expert demonstrations are built on
+        top of D3IL and MuJoCo.
+    \end{enumerate}
+    \hole{Result sentence for this contribution --- from Ch.~6, supplied by v3 as a \texttt{For v2:} line.}
 \end{enumerate}
-
-\section{Scope and Terminology}\label{sec:intro:scope}
-
-A short section, placed before the background because the rest of the thesis is unreadable
-without it. It fixes the vocabulary that recurs in every chapter:
-
-\begin{itemize}
-  \item \textbf{Step budget $K$ / NFE.} The number of generative network evaluations spent
-    producing one plan. For the transport family this is a solver setting; for diffusion it
-    is fixed by training. \emph{$K$ is never the planner's candidate fan} --- a distinct
-    quantity, also swept, and a persistent source of confusion.
-  \item \textbf{Arms.} Arm~A is the \emph{unguided} plan (no constraint enforcement). Arm~B is
-    \emph{iterate projection}: the same projection applied to the sampler's current iterate. Arm~C
-    is \emph{endpoint projection}: the same projection applied inside the sampler to the predicted
-    clean endpoint, with a damped pull-back. The two names differ by one adjective because the two
-    algorithms differ by one thing --- the point handed to an identical operator.
-  \item \textbf{Genuine steps.} The number of sampler steps at which arm~C performs
-    non-terminal guided work; formalised in Chapter~\autoref{ch:method}. Zero genuine steps
-    means arm~C is not arm~C.
-  \item \textbf{Tightened geometry.} A stricter constraint margin applied to an otherwise
-    identical feasible set; an experimental factor, not a formatting suffix.
-  \item \textbf{``Better''.} Pareto dominance --- equal success \emph{and} equal constraint
-    satisfaction, with strictly fewer evaluations \emph{and} lower wall-clock. Anything else
-    is named a trade-off.
-\end{itemize}
 
 \section{Outline}\label{sec:intro:outline}
 

@@ -16,6 +16,11 @@ environment where the high-`K` regime lives, and therefore where Goal B is decid
 
 The section has to establish three things, in this order:
 
+> **Thesis rule, 2026-09-14 (v2.16, author):** the thesis describes **only** the `v1` conditioning,
+> under its scientific name **feature-wise conditional biasing** [Perez 2018, §3]. The `v2` affine
+> variant and the word *FiLM* do not appear in thesis prose. Point 3 below is kept as the engineering
+> record, not as writing guidance. Canonical row: `Naming/TRANSLATION_20260914_dev_jargon_to_scientific.md` §5.
+
 1. **The task is D3IL's, the vision *pipeline* is D3IL's, and the pairing is ours.** The upstream
    D3IL benchmark ships a native visual aligning pipeline (`run_vision.py`,
    `aligning_vision_config.yaml`, `Aligning_Img_Dataset`, `Aligning_Sim`). We did not re-implement
