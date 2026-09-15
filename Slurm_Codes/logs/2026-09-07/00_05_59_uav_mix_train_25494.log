@@ -1,0 +1,338 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+[ U6 ] af bone      = unet
+[ U6 ] af_alpha_end = 0.2  
+[ U6 ] checkpoint   = latest
+================================================================================
+JOB START: Mon Sep  7 04:22:34 UTC 2026  |  uav_mix_train  |  ID 25494  |  NODE i6-gpu-1
+ENGINE: af   SCENE: corridor   SEEDS: 6
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+GIT REV:   530eac7
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=0  MUJOCO_EGL_DEVICE_ID=0
+--------------------------------------------------------------------------------
+[ uav_mix_train ] engine=af scene=corridor seed=6  Mon Sep  7 04:22:34 UTC 2026
+[ uav_mix_train ] python mix_uav_test/train_mix_uav.py --engine af --scene corridor --seed 6 --use-wandb --wandb-project FM-PCC-uav-mix --wandb-group uav-af-corridor
+wandb: Currently logged in as: llmmail2021 (llmmail2021-technical-university-of-munich). Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.29.0 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.17.5
+wandb: Run data is saved locally in /data/home/llim/FMPCC/FM-PCC/wandb/run-20260907_042238-yarih4nd
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run uav-corridor-mix_uav_af-H8_Daf_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet-S6-slurm-25494
+wandb: ⭐️ View project at https://wandb.ai/llmmail2021-technical-university-of-munich/FM-PCC-uav-mix
+wandb: 🚀 View run at https://wandb.ai/llmmail2021-technical-university-of-munich/FM-PCC-uav-mix/runs/yarih4nd
+================================================================================
+[ train ] Gen15 UAV Mix-ML — engine: af  (alpha-Flow (Gen3v7, arXiv 2510.20771))
+[ train ] UAV scene: corridor  (dataset string: uav-corridor)
+[ train ] Seed source: cli --seed
+[ train ] Training seeds: [6]
+================================================================================
+[ utils/setup ] Made savepath: logs/UAV_MIX/uav-corridor/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/6
+[ train ] max_path_length: 750 → 360 (scene=corridor)
+[ train ] Saved seed manifest to: logs/UAV_MIX/uav-corridor/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/seeds_config.json
+
+[utils/config ] Config: <class 'mix_uav.datasets.sequence.SequenceDataset'>
+    cond_mode: pos_only
+    discount: 0.99
+    env: uav-corridor
+    horizon: 8
+    include_returns: False
+    max_path_length: 360
+    normalizer: SafeLimitsNormalizer
+    preprocess_fns: []
+    returns_scale: 360
+    use_padding: True
+
+[ utils/config ] Saved config to: logs/UAV_MIX/uav-corridor/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/6/dataset_config.pkl
+
+[ utils/config ] Saved config to: logs/UAV_MIX/uav-corridor/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/6/dataset_config.json
+
+[ utils/normalization ] Constant data in actions[1] | max = min = 3.2014213328934726e-13 → Fix_16 widened by eps=2.188e-05 (mode=scaled). unnormalize scale for this channel = 2.188e-05 data-units per unit output.
+[ utils/normalization ] Constant data in actions[2] | max = min = 3.2014213328934726e-13 → Fix_16 widened by eps=2.188e-05 (mode=scaled). unnormalize scale for this channel = 2.188e-05 data-units per unit output.
+[ utils/normalization ] ⚠ Fix_16: ALL dimensions constant — no reference scale; falling back to eps=1.0.
+[ utils/normalization ] Constant data in rewards[0] | max = min = 0.0 → Fix_16 widened by eps=1.000e+00 (mode=scaled). unnormalize scale for this channel = 1.000e+00 data-units per unit output.
+[ datasets/buffer ] Fields:
+    observations: (500, 360, 6)
+    actions: (500, 360, 3)
+    rewards: (500, 360, 1)
+    terminals: (500, 360, 1)
+    normed_observations: (500, 360, 6)
+    normed_actions: (500, 360, 3)
+
+[utils/config ] Config: <class 'mix_uav.models.af_engine.AlphaFlowEngine'>
+    depth: 8
+    dit_aux_head_depth: 2
+    dit_condition_on_t: False
+    dit_depth: 8
+    dit_hidden_size: 256
+    dit_num_heads: 4
+    dit_patch_size: 1
+    dropout_rate: 0.1
+    dual_head: True
+    freq_dim: 32
+    imf_backbone: unet
+    interval_cfg: False
+    mlp_dim: 256
+    num_heads: 4
+    seq_len: 8
+    state_dim: 9
+    time_dim: 256
+
+[ utils/config ] Saved config to: logs/UAV_MIX/uav-corridor/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/6/model_config.pkl
+
+[ utils/config ] Saved config to: logs/UAV_MIX/uav-corridor/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/6/model_config.json
+
+
+[utils/config ] Config: <class 'mix_uav.models.af_diffusion.AlphaFlowODE'>
+    action_dim: 3
+    action_weight: 1
+    af_adp_eps: 0.001
+    af_alpha_clamp: 0.005
+    af_alpha_end: 0.2
+    af_alpha_end_step: 100000
+    af_alpha_gamma: 25.0
+    af_alpha_init: 1.0
+    af_alpha_init_step: 0
+    af_alpha_scheduler: sigmoid
+    af_clamp_utgt: 4.0
+    af_n_train_steps: 100000
+    af_ratio_fm: 0.5
+    clip_denoised: False
+    condition_guidance_w: 0.0
+    flow_steps_v3: 10
+    goal_dim: 1
+    horizon: 8
+    loss_discount: 1.0
+    loss_schedule: balanced
+    loss_type: l2
+    observation_dim: 6
+    ode_inference_steps_v3: 10
+    p_mean: -0.4
+    p_std: 1.0
+    predict_epsilon: True
+    returns_condition: False
+    t_schedule: logit_normal
+    time_beta_alpha_v3: 1.0
+    time_beta_beta_v3: 1.0
+    transition_epochs: 0
+    u_loss_weight: 1.0
+    v_loss_weight: 1.0
+    warmup_epochs: 0
+
+[ utils/config ] Saved config to: logs/UAV_MIX/uav-corridor/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/6/diffusion_config.pkl
+
+[ utils/config ] Saved config to: logs/UAV_MIX/uav-corridor/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/6/diffusion_config.json
+
+
+[utils/config ] Config: <class 'mix_uav.utils.training_twotime.Trainer'>
+    ema_decay: 0.995
+    gradient_accumulate_every: 2
+    gradient_clip: 1.0
+    n_steps_per_epoch: 1000
+    n_train_steps: 100000
+    results_folder: logs/UAV_MIX/uav-corridor/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/6
+    split_seed: 42
+    train_batch_size: 8
+    train_lr: 0.0001
+    train_test_split: 0.9
+
+[ utils/config ] Saved config to: logs/UAV_MIX/uav-corridor/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/6/trainer_config.pkl
+
+[ utils/config ] Saved config to: logs/UAV_MIX/uav-corridor/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/6/trainer_config.json
+
+[ AFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ train ] engine=af  backbone=unet  params=3,969,222 (3.97 M)
+[ train ] savepath: logs/UAV_MIX/uav-corridor/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/6
+Initial test loss:   1.0000, a0 loss:   1.2674
+[ train ] epoch 0 step 1000/100000  loss=0.99998  diffusion_loss=2  a0_loss=1.0992  raw_mse=60.501  aux_loss=57.419  raw_mse_u=60.501  per_dim_rms_u=0.91667  alpha=1  discrete_frac=0.5  loss_test=0.99999  a0_loss_test=1.2674  lr=0.0001  step=999
+[ train ] epoch 1 step 2000/100000  loss=0.99997  diffusion_loss=1.9999  a0_loss=0.73318  raw_mse=42.089  aux_loss=41.357  raw_mse_u=42.089  per_dim_rms_u=0.76457  alpha=1  discrete_frac=0.25  loss_test=0.99998  a0_loss_test=1.0273  lr=9.9975e-05  step=1999
+[ train ] epoch 2 step 3000/100000  loss=0.99994  diffusion_loss=1.9999  a0_loss=0.74952  raw_mse=18.173  aux_loss=20.71  raw_mse_u=18.173  per_dim_rms_u=0.5024  alpha=1  discrete_frac=0.25  loss_test=0.99997  a0_loss_test=0.88668  lr=9.9899e-05  step=2999
+[ train ] epoch 3 step 4000/100000  loss=0.99992  diffusion_loss=1.9998  a0_loss=0.53113  raw_mse=12.575  aux_loss=13.898  raw_mse_u=12.575  per_dim_rms_u=0.41792  alpha=1  discrete_frac=1  loss_test=0.99995  a0_loss_test=0.81604  lr=9.9774e-05  step=3999
+[ train ] epoch 4 step 5000/100000  loss=0.99988  diffusion_loss=1.9998  a0_loss=0.23355  raw_mse=8.2438  aux_loss=8.9848  raw_mse_u=8.2438  per_dim_rms_u=0.33837  alpha=1  discrete_frac=0.5  loss_test=0.99992  a0_loss_test=0.51843  lr=9.9598e-05  step=4999
+[ train ] epoch 5 step 6000/100000  loss=0.99985  diffusion_loss=1.9997  a0_loss=0.23096  raw_mse=9.7418  aux_loss=9.1327  raw_mse_u=9.7418  per_dim_rms_u=0.36784  alpha=1  discrete_frac=0.25  loss_test=0.99989  a0_loss_test=0.3692  lr=9.9372e-05  step=5999
+[ train ] epoch 6 step 7000/100000  loss=0.99978  diffusion_loss=1.9996  a0_loss=0.11164  raw_mse=5.4098  aux_loss=5.2843  raw_mse_u=5.4098  per_dim_rms_u=0.27411  alpha=1  discrete_frac=0.625  loss_test=0.99983  a0_loss_test=0.15491  lr=9.9096e-05  step=6999
+[ train ] epoch 7 step 8000/100000  loss=0.99963  diffusion_loss=1.9993  a0_loss=0.058803  raw_mse=2.9773  aux_loss=3.2007  raw_mse_u=2.9773  per_dim_rms_u=0.20335  alpha=1  discrete_frac=0.75  loss_test=0.99976  a0_loss_test=0.14856  lr=9.8771e-05  step=7999
+[ train ] epoch 8 step 9000/100000  loss=0.99971  diffusion_loss=1.9994  a0_loss=0.12565  raw_mse=4.3727  aux_loss=4.0517  raw_mse_u=4.3727  per_dim_rms_u=0.24644  alpha=1  discrete_frac=0.625  loss_test=0.99971  a0_loss_test=0.10377  lr=9.8397e-05  step=8999
+[ train ] epoch 9 step 10000/100000  loss=0.99959  diffusion_loss=1.9992  a0_loss=0.11155  raw_mse=3.7977  aux_loss=3.5736  raw_mse_u=3.7977  per_dim_rms_u=0.22966  alpha=1  discrete_frac=0.75  loss_test=0.99964  a0_loss_test=0.096276  lr=9.7975e-05  step=9999
+[ train ] epoch 10 step 11000/100000  loss=0.99962  diffusion_loss=1.9992  a0_loss=0.068909  raw_mse=3.6247  aux_loss=3.8374  raw_mse_u=3.6247  per_dim_rms_u=0.22437  alpha=1  discrete_frac=0.625  loss_test=0.9996  a0_loss_test=0.1073  lr=9.7504e-05  step=10999
+[ train ] epoch 11 step 12000/100000  loss=0.9995  diffusion_loss=1.999  a0_loss=0.082057  raw_mse=3.5566  aux_loss=3.5697  raw_mse_u=3.5566  per_dim_rms_u=0.22226  alpha=1  discrete_frac=0.375  loss_test=0.99948  a0_loss_test=0.078494  lr=9.6985e-05  step=11999
+[ train ] epoch 12 step 13000/100000  loss=0.99937  diffusion_loss=1.9987  a0_loss=0.040501  raw_mse=1.6466  aux_loss=2.0267  raw_mse_u=1.6466  per_dim_rms_u=0.15122  alpha=1  discrete_frac=0.5  loss_test=0.99941  a0_loss_test=0.069977  lr=9.6418e-05  step=12999
+[ train ] epoch 13 step 14000/100000  loss=0.99916  diffusion_loss=1.9983  a0_loss=0.041828  raw_mse=1.8362  aux_loss=1.9112  raw_mse_u=1.8362  per_dim_rms_u=0.1597  alpha=1  discrete_frac=0.625  loss_test=0.99926  a0_loss_test=0.065351  lr=9.5805e-05  step=13999
+[ train ] epoch 14 step 15000/100000  loss=0.99925  diffusion_loss=1.9985  a0_loss=0.09482  raw_mse=2.7522  aux_loss=2.5638  raw_mse_u=2.7522  per_dim_rms_u=0.19551  alpha=1  discrete_frac=0.5  loss_test=0.99933  a0_loss_test=0.095384  lr=9.5146e-05  step=14999
+[ train ] epoch 15 step 16000/100000  loss=0.99916  diffusion_loss=1.9983  a0_loss=0.06171  raw_mse=1.9583  aux_loss=1.982  raw_mse_u=1.9583  per_dim_rms_u=0.16492  alpha=1  discrete_frac=0.5  loss_test=0.99916  a0_loss_test=0.05705  lr=9.4442e-05  step=15999
+[ train ] epoch 16 step 17000/100000  loss=0.99902  diffusion_loss=1.998  a0_loss=0.078906  raw_mse=1.662  aux_loss=1.7824  raw_mse_u=1.662  per_dim_rms_u=0.15193  alpha=1  discrete_frac=0.375  loss_test=0.99909  a0_loss_test=0.055451  lr=9.3692e-05  step=16999
+[ train ] epoch 17 step 18000/100000  loss=0.99898  diffusion_loss=1.998  a0_loss=0.045063  raw_mse=1.86  aux_loss=1.9435  raw_mse_u=1.86  per_dim_rms_u=0.16073  alpha=1  discrete_frac=0.375  loss_test=0.99903  a0_loss_test=0.058472  lr=9.2899e-05  step=17999
+[ train ] epoch 18 step 19000/100000  loss=0.99834  diffusion_loss=1.9967  a0_loss=0.02149  raw_mse=0.80127  aux_loss=0.79112  raw_mse_u=0.80127  per_dim_rms_u=0.10549  alpha=1  discrete_frac=0.875  loss_test=0.99898  a0_loss_test=0.072639  lr=9.2063e-05  step=18999
+[ train ] epoch 19 step 20000/100000  loss=0.99938  diffusion_loss=1.9988  a0_loss=0.10277  raw_mse=2.9436  aux_loss=2.8207  raw_mse_u=2.9436  per_dim_rms_u=0.2022  alpha=1  discrete_frac=0.5  loss_test=0.99882  a0_loss_test=0.055976  lr=9.1184e-05  step=19999
+[ train ] epoch 20 step 21000/100000  loss=0.99877  diffusion_loss=1.9975  a0_loss=0.07428  raw_mse=1.4869  aux_loss=1.5863  raw_mse_u=1.4869  per_dim_rms_u=0.14371  alpha=1  discrete_frac=0.375  loss_test=0.99885  a0_loss_test=0.057337  lr=9.0264e-05  step=20999
+[ train ] epoch 21 step 22000/100000  loss=0.99876  diffusion_loss=1.9975  a0_loss=0.1342  raw_mse=3.5997  aux_loss=3.7286  raw_mse_u=3.5997  per_dim_rms_u=0.2236  alpha=1  discrete_frac=0.5  loss_test=0.99883  a0_loss_test=0.053732  lr=8.9303e-05  step=21999
+[ train ] epoch 22 step 23000/100000  loss=0.99905  diffusion_loss=1.9981  a0_loss=0.070508  raw_mse=1.9968  aux_loss=2.0536  raw_mse_u=1.9968  per_dim_rms_u=0.16653  alpha=1  discrete_frac=0.625  loss_test=0.99876  a0_loss_test=0.059788  lr=8.8302e-05  step=22999
+[ train ] epoch 23 step 24000/100000  loss=0.99843  diffusion_loss=1.9969  a0_loss=0.02786  raw_mse=0.79651  aux_loss=0.8714  raw_mse_u=0.79651  per_dim_rms_u=0.10518  alpha=1  discrete_frac=0.5  loss_test=0.99862  a0_loss_test=0.046838  lr=8.7263e-05  step=23999
+[ train ] epoch 24 step 25000/100000  loss=0.99871  diffusion_loss=1.9974  a0_loss=0.05592  raw_mse=1.6074  aux_loss=1.7214  raw_mse_u=1.6074  per_dim_rms_u=0.14942  alpha=1  discrete_frac=0.625  loss_test=0.99865  a0_loss_test=0.056671  lr=8.6187e-05  step=24999
+[ train ] epoch 25 step 26000/100000  loss=0.99828  diffusion_loss=1.9966  a0_loss=0.023349  raw_mse=0.77894  aux_loss=0.82301  raw_mse_u=0.77894  per_dim_rms_u=0.10401  alpha=1  discrete_frac=0.75  loss_test=0.99835  a0_loss_test=0.059539  lr=8.5074e-05  step=25999
+[ train ] epoch 26 step 27000/100000  loss=0.99899  diffusion_loss=1.998  a0_loss=0.05644  raw_mse=1.4817  aux_loss=1.5327  raw_mse_u=1.4817  per_dim_rms_u=0.14345  alpha=1  discrete_frac=0.125  loss_test=0.99826  a0_loss_test=0.048071  lr=8.3925e-05  step=26999
+[ train ] epoch 27 step 28000/100000  loss=0.99772  diffusion_loss=1.9954  a0_loss=0.028881  raw_mse=0.95772  aux_loss=0.86167  raw_mse_u=0.95772  per_dim_rms_u=0.11533  alpha=1  discrete_frac=0.625  loss_test=0.99838  a0_loss_test=0.044892  lr=8.2743e-05  step=27999
+[ train ] epoch 28 step 29000/100000  loss=0.99783  diffusion_loss=1.9957  a0_loss=0.05083  raw_mse=1.3392  aux_loss=1.4005  raw_mse_u=1.3392  per_dim_rms_u=0.13638  alpha=1  discrete_frac=0.75  loss_test=0.99836  a0_loss_test=0.044798  lr=8.1528e-05  step=28999
+[ train ] epoch 29 step 30000/100000  loss=0.99678  diffusion_loss=1.9936  a0_loss=0.055438  raw_mse=1.554  aux_loss=1.5244  raw_mse_u=1.554  per_dim_rms_u=0.14691  alpha=0.99465  discrete_frac=0.5  loss_test=0.99834  a0_loss_test=0.042049  lr=8.028e-05  step=29999
+[ train ] epoch 30 step 31000/100000  loss=0.99553  diffusion_loss=1.9911  a0_loss=0.043256  raw_mse=1.3831  aux_loss=1.2786  raw_mse_u=1.3831  per_dim_rms_u=0.1386  alpha=0.99314  discrete_frac=0.75  loss_test=0.99679  a0_loss_test=0.045634  lr=7.9003e-05  step=30999
+[ train ] epoch 31 step 32000/100000  loss=0.99595  diffusion_loss=1.9919  a0_loss=0.059141  raw_mse=1.7745  aux_loss=1.8262  raw_mse_u=1.7745  per_dim_rms_u=0.15699  alpha=0.99121  discrete_frac=0.625  loss_test=0.99649  a0_loss_test=0.041421  lr=7.7696e-05  step=31999
+[ train ] epoch 32 step 33000/100000  loss=0.99426  diffusion_loss=1.9885  a0_loss=0.07131  raw_mse=1.5808  aux_loss=1.4206  raw_mse_u=1.5808  per_dim_rms_u=0.14817  alpha=0.98875  discrete_frac=0.5  loss_test=0.9957  a0_loss_test=0.041472  lr=7.6361e-05  step=32999
+[ train ] epoch 33 step 34000/100000  loss=0.99317  diffusion_loss=1.9863  a0_loss=0.057698  raw_mse=1.979  aux_loss=1.968  raw_mse_u=1.979  per_dim_rms_u=0.16579  alpha=0.98561  discrete_frac=0.625  loss_test=0.99552  a0_loss_test=0.0671  lr=7.5e-05  step=33999
+[ train ] epoch 34 step 35000/100000  loss=0.99124  diffusion_loss=1.9825  a0_loss=0.048112  raw_mse=1.2286  aux_loss=1.343  raw_mse_u=1.2286  per_dim_rms_u=0.13063  alpha=0.98162  discrete_frac=0.625  loss_test=0.99459  a0_loss_test=0.051893  lr=7.3614e-05  step=34999
+[ train ] epoch 35 step 36000/100000  loss=0.989  diffusion_loss=1.978  a0_loss=0.042082  raw_mse=1.2219  aux_loss=1.2832  raw_mse_u=1.2219  per_dim_rms_u=0.13027  alpha=0.97656  discrete_frac=0.75  loss_test=0.99353  a0_loss_test=0.05255  lr=7.2203e-05  step=35999
+[ train ] epoch 36 step 37000/100000  loss=0.99281  diffusion_loss=1.9856  a0_loss=0.071717  raw_mse=1.7528  aux_loss=1.7523  raw_mse_u=1.7528  per_dim_rms_u=0.15603  alpha=0.97015  discrete_frac=0.375  loss_test=0.99239  a0_loss_test=0.042173  lr=7.0771e-05  step=36999
+[ train ] epoch 37 step 38000/100000  loss=0.99143  diffusion_loss=1.9829  a0_loss=0.050905  raw_mse=2.298  aux_loss=2.19  raw_mse_u=2.298  per_dim_rms_u=0.17865  alpha=0.96207  discrete_frac=0.375  loss_test=0.98981  a0_loss_test=0.037529  lr=6.9317e-05  step=37999
+[ train ] epoch 38 step 39000/100000  loss=0.98528  diffusion_loss=1.9706  a0_loss=0.02172  raw_mse=0.61395  aux_loss=0.63443  raw_mse_u=0.61395  per_dim_rms_u=0.092342  alpha=0.95194  discrete_frac=0.5  loss_test=0.98877  a0_loss_test=0.061353  lr=6.7844e-05  step=38999
+[ train ] epoch 39 step 40000/100000  loss=0.98205  diffusion_loss=1.9641  a0_loss=0.046041  raw_mse=0.78464  aux_loss=0.80484  raw_mse_u=0.78464  per_dim_rms_u=0.10439  alpha=0.93933  discrete_frac=0.5  loss_test=0.98593  a0_loss_test=0.048093  lr=6.6353e-05  step=39999
+[ train ] epoch 40 step 41000/100000  loss=0.98428  diffusion_loss=1.9686  a0_loss=0.070903  raw_mse=1.6534  aux_loss=1.6323  raw_mse_u=1.6534  per_dim_rms_u=0.15154  alpha=0.92374  discrete_frac=0.375  loss_test=0.98243  a0_loss_test=0.044611  lr=6.4846e-05  step=40999
+[ train ] epoch 41 step 42000/100000  loss=0.97919  diffusion_loss=1.9584  a0_loss=0.023063  raw_mse=0.57599  aux_loss=0.53623  raw_mse_u=0.57599  per_dim_rms_u=0.089442  alpha=0.90466  discrete_frac=0.375  loss_test=0.97785  a0_loss_test=0.038851  lr=6.3324e-05  step=41999
+[ train ] epoch 42 step 43000/100000  loss=0.97489  diffusion_loss=1.9498  a0_loss=0.024978  raw_mse=0.65254  aux_loss=0.76535  raw_mse_u=0.65254  per_dim_rms_u=0.0952  alpha=0.88159  discrete_frac=0.375  loss_test=0.97429  a0_loss_test=0.041248  lr=6.1788e-05  step=42999
+[ train ] epoch 43 step 44000/100000  loss=0.95282  diffusion_loss=1.9056  a0_loss=0.07131  raw_mse=1.9999  aux_loss=2.1848  raw_mse_u=1.9999  per_dim_rms_u=0.16666  alpha=0.85409  discrete_frac=0.625  loss_test=0.96725  a0_loss_test=0.042606  lr=6.024e-05  step=43999
+[ train ] epoch 44 step 45000/100000  loss=0.95348  diffusion_loss=1.907  a0_loss=0.023001  raw_mse=0.63114  aux_loss=0.76653  raw_mse_u=0.63114  per_dim_rms_u=0.093626  alpha=0.82187  discrete_frac=0.5  loss_test=0.96055  a0_loss_test=0.037069  lr=5.8682e-05  step=44999
+[ train ] epoch 45 step 46000/100000  loss=0.97008  diffusion_loss=1.9402  a0_loss=0.017385  raw_mse=0.67197  aux_loss=0.74174  raw_mse_u=0.67197  per_dim_rms_u=0.096607  alpha=0.78489  discrete_frac=0.25  loss_test=0.95079  a0_loss_test=0.03436  lr=5.7116e-05  step=45999
+[ train ] epoch 46 step 47000/100000  loss=0.96535  diffusion_loss=1.9307  a0_loss=0.019925  raw_mse=0.62105  aux_loss=0.83447  raw_mse_u=0.62105  per_dim_rms_u=0.092875  alpha=0.74339  discrete_frac=0.25  loss_test=0.94309  a0_loss_test=0.033592  lr=5.5542e-05  step=46999
+[ train ] epoch 47 step 48000/100000  loss=0.93773  diffusion_loss=1.8755  a0_loss=0.031759  raw_mse=0.88238  aux_loss=1.0108  raw_mse_u=0.88238  per_dim_rms_u=0.1107  alpha=0.69801  discrete_frac=0.375  loss_test=0.93281  a0_loss_test=0.034348  lr=5.3962e-05  step=47999
+[ train ] epoch 48 step 49000/100000  loss=0.93039  diffusion_loss=1.8608  a0_loss=0.037264  raw_mse=0.97  aux_loss=1.1726  raw_mse_u=0.97  per_dim_rms_u=0.11607  alpha=0.64979  discrete_frac=0.375  loss_test=0.91787  a0_loss_test=0.035271  lr=5.2379e-05  step=48999
+[ train ] epoch 49 step 50000/100000  loss=0.87142  diffusion_loss=1.7428  a0_loss=0.033562  raw_mse=1.6937  aux_loss=1.9379  raw_mse_u=1.6937  per_dim_rms_u=0.15337  alpha=0.60005  discrete_frac=0.625  loss_test=0.91162  a0_loss_test=0.026748  lr=5.0793e-05  step=49999
+[ train ] epoch 50 step 51000/100000  loss=0.82771  diffusion_loss=1.6554  a0_loss=0.022165  raw_mse=0.47438  aux_loss=0.89619  raw_mse_u=0.47438  per_dim_rms_u=0.08117  alpha=0.55031  discrete_frac=0.75  loss_test=0.89561  a0_loss_test=0.029317  lr=4.9207e-05  step=50999
+[ train ] epoch 51 step 52000/100000  loss=0.77595  diffusion_loss=1.5519  a0_loss=0.011941  raw_mse=0.32849  aux_loss=1.0618  raw_mse_u=0.32849  per_dim_rms_u=0.067546  alpha=0.50208  discrete_frac=0.875  loss_test=0.87376  a0_loss_test=0.025687  lr=4.7621e-05  step=51999
+[ train ] epoch 52 step 53000/100000  loss=0.89192  diffusion_loss=1.7838  a0_loss=0.017561  raw_mse=0.50168  aux_loss=0.63323  raw_mse_u=0.50168  per_dim_rms_u=0.083473  alpha=0.4567  discrete_frac=0.375  loss_test=0.86858  a0_loss_test=0.024388  lr=4.6038e-05  step=52999
+[ train ] epoch 53 step 54000/100000  loss=0.77367  diffusion_loss=1.5473  a0_loss=0.011747  raw_mse=0.34847  aux_loss=0.48217  raw_mse_u=0.34847  per_dim_rms_u=0.069569  alpha=0.41519  discrete_frac=0.75  loss_test=0.85784  a0_loss_test=0.024306  lr=4.4458e-05  step=53999
+[ train ] epoch 54 step 55000/100000  loss=0.88118  diffusion_loss=1.7624  a0_loss=0.037552  raw_mse=1.0217  aux_loss=1.899  raw_mse_u=1.0217  per_dim_rms_u=0.11912  alpha=0.37819  discrete_frac=0.375  loss_test=0.85802  a0_loss_test=0.023804  lr=4.2884e-05  step=54999
+[ train ] epoch 55 step 56000/100000  loss=0.87265  diffusion_loss=1.7453  a0_loss=0.019789  raw_mse=0.60971  aux_loss=0.7532  raw_mse_u=0.60971  per_dim_rms_u=0.092023  alpha=0.34597  discrete_frac=0.375  loss_test=0.83197  a0_loss_test=0.022989  lr=4.1318e-05  step=55999
+[ train ] epoch 56 step 57000/100000  loss=0.86805  diffusion_loss=1.7361  a0_loss=0.036278  raw_mse=0.99925  aux_loss=1.5689  raw_mse_u=0.99925  per_dim_rms_u=0.11781  alpha=0.31846  discrete_frac=0.375  loss_test=0.82712  a0_loss_test=0.022842  lr=3.976e-05  step=56999
+[ train ] epoch 57 step 58000/100000  loss=0.86223  diffusion_loss=1.7245  a0_loss=0.011123  raw_mse=0.35215  aux_loss=0.41178  raw_mse_u=0.35215  per_dim_rms_u=0.069936  alpha=0.29538  discrete_frac=0.375  loss_test=0.82254  a0_loss_test=0.029707  lr=3.8212e-05  step=57999
+[ train ] epoch 58 step 59000/100000  loss=0.90499  diffusion_loss=1.81  a0_loss=0.017376  raw_mse=0.53994  aux_loss=0.66163  raw_mse_u=0.53994  per_dim_rms_u=0.086598  alpha=0.2763  discrete_frac=0.25  loss_test=0.82959  a0_loss_test=0.032662  lr=3.6676e-05  step=58999
+[ train ] epoch 59 step 60000/100000  loss=0.76397  diffusion_loss=1.5279  a0_loss=0.014138  raw_mse=0.37972  aux_loss=0.66441  raw_mse_u=0.37972  per_dim_rms_u=0.072622  alpha=0.2607  discrete_frac=0.625  loss_test=0.81072  a0_loss_test=0.023268  lr=3.5154e-05  step=59999
+[ train ] epoch 60 step 61000/100000  loss=0.9019  diffusion_loss=1.8038  a0_loss=0.051032  raw_mse=1.3317  aux_loss=1.3534  raw_mse_u=1.3317  per_dim_rms_u=0.136  alpha=0.24808  discrete_frac=0.25  loss_test=0.80046  a0_loss_test=0.019476  lr=3.3647e-05  step=60999
+[ train ] epoch 61 step 62000/100000  loss=0.85096  diffusion_loss=1.7019  a0_loss=0.022886  raw_mse=0.53483  aux_loss=0.7733  raw_mse_u=0.53483  per_dim_rms_u=0.086187  alpha=0.23795  discrete_frac=0.375  loss_test=0.80055  a0_loss_test=0.019116  lr=3.2156e-05  step=61999
+[ train ] epoch 62 step 63000/100000  loss=0.84909  diffusion_loss=1.6982  a0_loss=0.033826  raw_mse=1.0846  aux_loss=1.2892  raw_mse_u=1.0846  per_dim_rms_u=0.12274  alpha=0.22987  discrete_frac=0.375  loss_test=0.80816  a0_loss_test=0.02409  lr=3.0683e-05  step=62999
+[ train ] epoch 63 step 64000/100000  loss=0.79595  diffusion_loss=1.5919  a0_loss=0.0082885  raw_mse=0.27201  aux_loss=0.34645  raw_mse_u=0.27201  per_dim_rms_u=0.061465  alpha=0.22346  discrete_frac=0.5  loss_test=0.80086  a0_loss_test=0.020757  lr=2.9229e-05  step=63999
+[ train ] epoch 64 step 65000/100000  loss=0.79943  diffusion_loss=1.5989  a0_loss=0.0092117  raw_mse=0.35348  aux_loss=0.82296  raw_mse_u=0.35348  per_dim_rms_u=0.070067  alpha=0.21839  discrete_frac=0.5  loss_test=0.78865  a0_loss_test=0.025298  lr=2.7797e-05  step=64999
+[ train ] epoch 65 step 66000/100000  loss=0.79342  diffusion_loss=1.5868  a0_loss=0.011148  raw_mse=0.50669  aux_loss=0.62444  raw_mse_u=0.50669  per_dim_rms_u=0.083889  alpha=0.21439  discrete_frac=0.5  loss_test=0.78977  a0_loss_test=0.018687  lr=2.6386e-05  step=65999
+[ train ] epoch 66 step 67000/100000  loss=0.69483  diffusion_loss=1.3897  a0_loss=0.0037131  raw_mse=0.10202  aux_loss=0.84657  raw_mse_u=0.10202  per_dim_rms_u=0.037643  alpha=0.21125  discrete_frac=0.75  loss_test=0.79689  a0_loss_test=0.019815  lr=2.5e-05  step=66999
+[ train ] epoch 67 step 68000/100000  loss=0.84428  diffusion_loss=1.6886  a0_loss=0.0067231  raw_mse=0.16224  aux_loss=0.2987  raw_mse_u=0.16224  per_dim_rms_u=0.04747  alpha=0.20879  discrete_frac=0.375  loss_test=0.79767  a0_loss_test=0.021268  lr=2.3639e-05  step=67999
+[ train ] epoch 68 step 69000/100000  loss=0.73748  diffusion_loss=1.475  a0_loss=0.0041806  raw_mse=0.13038  aux_loss=0.38433  raw_mse_u=0.13038  per_dim_rms_u=0.042554  alpha=0.20686  discrete_frac=0.625  loss_test=0.79138  a0_loss_test=0.018085  lr=2.2304e-05  step=68999
+[ train ] epoch 69 step 70000/100000  loss=0.74555  diffusion_loss=1.4911  a0_loss=0.0060721  raw_mse=0.19302  aux_loss=0.48659  raw_mse_u=0.19302  per_dim_rms_u=0.051777  alpha=0.20536  discrete_frac=0.625  loss_test=0.79371  a0_loss_test=0.022221  lr=2.0997e-05  step=69999
+[ train ] epoch 70 step 71000/100000  loss=0.79197  diffusion_loss=1.5839  a0_loss=0.039134  raw_mse=0.87476  aux_loss=1.3638  raw_mse_u=0.87476  per_dim_rms_u=0.11022  alpha=0.20418  discrete_frac=0.5  loss_test=0.79248  a0_loss_test=0.023071  lr=1.972e-05  step=70999
+[ train ] epoch 71 step 72000/100000  loss=0.79098  diffusion_loss=1.582  a0_loss=0.0078602  raw_mse=0.22996  aux_loss=0.49631  raw_mse_u=0.22996  per_dim_rms_u=0.056515  alpha=0.20326  discrete_frac=0.5  loss_test=0.78352  a0_loss_test=0.019153  lr=1.8472e-05  step=71999
+[ train ] epoch 72 step 73000/100000  loss=0.69079  diffusion_loss=1.3816  a0_loss=0.0015861  raw_mse=0.059028  aux_loss=0.27435  raw_mse_u=0.059028  per_dim_rms_u=0.028633  alpha=0.20254  discrete_frac=0.75  loss_test=0.79985  a0_loss_test=0.021815  lr=1.7257e-05  step=72999
+[ train ] epoch 73 step 74000/100000  loss=0.94352  diffusion_loss=1.887  a0_loss=0.027281  raw_mse=0.59409  aux_loss=0.59273  raw_mse_u=0.59409  per_dim_rms_u=0.090836  alpha=0.20198  discrete_frac=0.125  loss_test=0.79244  a0_loss_test=0.019313  lr=1.6075e-05  step=73999
+[ train ] epoch 74 step 75000/100000  loss=0.88767  diffusion_loss=1.7753  a0_loss=0.036671  raw_mse=0.91089  aux_loss=0.91618  raw_mse_u=0.91089  per_dim_rms_u=0.11248  alpha=0.20154  discrete_frac=0.25  loss_test=0.79085  a0_loss_test=0.022675  lr=1.4926e-05  step=74999
+[ train ] epoch 75 step 76000/100000  loss=0.89127  diffusion_loss=1.7825  a0_loss=0.0079417  raw_mse=0.32237  aux_loss=0.41183  raw_mse_u=0.32237  per_dim_rms_u=0.066913  alpha=0.2012  discrete_frac=0.25  loss_test=0.80383  a0_loss_test=0.025991  lr=1.3813e-05  step=75999
+[ train ] epoch 76 step 77000/100000  loss=0.83761  diffusion_loss=1.6752  a0_loss=0.0096883  raw_mse=0.27229  aux_loss=1.9328  raw_mse_u=0.27229  per_dim_rms_u=0.061496  alpha=0.20094  discrete_frac=0.375  loss_test=0.79444  a0_loss_test=0.025939  lr=1.2737e-05  step=76999
+[ train ] epoch 77 step 78000/100000  loss=0.78967  diffusion_loss=1.5793  a0_loss=0.010499  raw_mse=0.25289  aux_loss=0.35274  raw_mse_u=0.25289  per_dim_rms_u=0.059265  alpha=0.20073  discrete_frac=0.5  loss_test=0.79806  a0_loss_test=0.019485  lr=1.1698e-05  step=77999
+[ train ] epoch 78 step 79000/100000  loss=0.73347  diffusion_loss=1.4669  a0_loss=0.0012266  raw_mse=0.059692  aux_loss=0.49328  raw_mse_u=0.059692  per_dim_rms_u=0.028793  alpha=0.20057  discrete_frac=0.625  loss_test=0.78192  a0_loss_test=0.022085  lr=1.0697e-05  step=78999
+[ train ] epoch 79 step 80000/100000  loss=0.79318  diffusion_loss=1.5864  a0_loss=0.0066255  raw_mse=0.22501  aux_loss=0.49774  raw_mse_u=0.22501  per_dim_rms_u=0.055903  alpha=0.20044  discrete_frac=0.5  loss_test=0.7946  a0_loss_test=0.017112  lr=9.7365e-06  step=79999
+[ train ] epoch 80 step 81000/100000  loss=0.79123  diffusion_loss=1.5825  a0_loss=0.019055  raw_mse=0.43429  aux_loss=0.59216  raw_mse_u=0.43429  per_dim_rms_u=0.077665  alpha=0.20034  discrete_frac=0.5  loss_test=0.80315  a0_loss_test=0.024685  lr=8.8162e-06  step=80999
+[ train ] epoch 81 step 82000/100000  loss=0.74186  diffusion_loss=1.4837  a0_loss=0.015071  raw_mse=0.45927  aux_loss=0.98116  raw_mse_u=0.45927  per_dim_rms_u=0.079867  alpha=0.20027  discrete_frac=0.625  loss_test=0.78111  a0_loss_test=0.020142  lr=7.9373e-06  step=81999
+[ train ] epoch 82 step 83000/100000  loss=0.84203  diffusion_loss=1.6841  a0_loss=0.026188  raw_mse=0.51947  aux_loss=0.85577  raw_mse_u=0.51947  per_dim_rms_u=0.08494  alpha=0.20021  discrete_frac=0.375  loss_test=0.78571  a0_loss_test=0.025074  lr=7.1008e-06  step=82999
+[ train ] epoch 83 step 84000/100000  loss=0.73758  diffusion_loss=1.4752  a0_loss=0.031009  raw_mse=0.62441  aux_loss=1.1798  raw_mse_u=0.62441  per_dim_rms_u=0.093126  alpha=0.20016  discrete_frac=0.625  loss_test=0.784  a0_loss_test=0.021553  lr=6.3075e-06  step=83999
+[ train ] epoch 84 step 85000/100000  loss=0.84174  diffusion_loss=1.6835  a0_loss=0.0095906  raw_mse=0.23458  aux_loss=0.47757  raw_mse_u=0.23458  per_dim_rms_u=0.05708  alpha=0.20013  discrete_frac=0.375  loss_test=0.77633  a0_loss_test=0.018537  lr=5.5582e-06  step=84999
+[ train ] epoch 85 step 86000/100000  loss=0.84067  diffusion_loss=1.6813  a0_loss=0.029241  raw_mse=0.66115  aux_loss=0.98482  raw_mse_u=0.66115  per_dim_rms_u=0.095826  alpha=0.2001  discrete_frac=0.375  loss_test=0.78318  a0_loss_test=0.019618  lr=4.8537e-06  step=85999
+[ train ] epoch 86 step 87000/100000  loss=0.83662  diffusion_loss=1.6732  a0_loss=0.025832  raw_mse=0.74082  aux_loss=0.77269  raw_mse_u=0.74082  per_dim_rms_u=0.10144  alpha=0.20008  discrete_frac=0.375  loss_test=0.79001  a0_loss_test=0.019457  lr=4.1946e-06  step=86999
+[ train ] epoch 87 step 88000/100000  loss=0.78832  diffusion_loss=1.5766  a0_loss=0.0093509  raw_mse=0.20151  aux_loss=0.32424  raw_mse_u=0.20151  per_dim_rms_u=0.052903  alpha=0.20006  discrete_frac=0.5  loss_test=0.78443  a0_loss_test=0.019706  lr=3.5816e-06  step=87999
+[ train ] epoch 88 step 89000/100000  loss=0.79523  diffusion_loss=1.5905  a0_loss=0.010558  raw_mse=0.30553  aux_loss=0.62028  raw_mse_u=0.30553  per_dim_rms_u=0.065142  alpha=0.20005  discrete_frac=0.5  loss_test=0.78304  a0_loss_test=0.017707  lr=3.0154e-06  step=88999
+[ train ] epoch 89 step 90000/100000  loss=0.94341  diffusion_loss=1.8868  a0_loss=0.022242  raw_mse=0.55958  aux_loss=0.57575  raw_mse_u=0.55958  per_dim_rms_u=0.088158  alpha=0.20004  discrete_frac=0.125  loss_test=0.78777  a0_loss_test=0.019307  lr=2.4964e-06  step=89999
+[ train ] epoch 90 step 91000/100000  loss=0.78825  diffusion_loss=1.5765  a0_loss=0.012197  raw_mse=0.44668  aux_loss=0.70399  raw_mse_u=0.44668  per_dim_rms_u=0.078765  alpha=0.20003  discrete_frac=0.5  loss_test=0.78774  a0_loss_test=0.021263  lr=2.0254e-06  step=90999
+[ train ] epoch 91 step 92000/100000  loss=0.94241  diffusion_loss=1.8848  a0_loss=0.028195  raw_mse=0.74408  aux_loss=0.8381  raw_mse_u=0.74408  per_dim_rms_u=0.10166  alpha=0.20002  discrete_frac=0.125  loss_test=0.78717  a0_loss_test=0.019083  lr=1.6026e-06  step=91999
+[ train ] epoch 92 step 93000/100000  loss=0.94315  diffusion_loss=1.8863  a0_loss=0.053782  raw_mse=1.2695  aux_loss=1.2605  raw_mse_u=1.2695  per_dim_rms_u=0.13278  alpha=0.20002  discrete_frac=0.125  loss_test=0.78585  a0_loss_test=0.018811  lr=1.2285e-06  step=92999
+[ train ] epoch 93 step 94000/100000  loss=0.89325  diffusion_loss=1.7865  a0_loss=0.028179  raw_mse=0.45595  aux_loss=0.89739  raw_mse_u=0.45595  per_dim_rms_u=0.079578  alpha=0.20001  discrete_frac=0.25  loss_test=0.79068  a0_loss_test=0.020621  lr=9.0357e-07  step=93999
+[ train ] epoch 94 step 95000/100000  loss=0.73761  diffusion_loss=1.4752  a0_loss=0.011027  raw_mse=0.37633  aux_loss=0.83456  raw_mse_u=0.37633  per_dim_rms_u=0.072296  alpha=0.20001  discrete_frac=0.625  loss_test=0.7702  a0_loss_test=0.019398  lr=6.2806e-07  step=94999
+[ train ] epoch 95 step 96000/100000  loss=0.68198  diffusion_loss=1.364  a0_loss=0.035036  raw_mse=0.84006  aux_loss=1.1108  raw_mse_u=0.84006  per_dim_rms_u=0.10802  alpha=0.20001  discrete_frac=0.75  loss_test=0.79993  a0_loss_test=0.01849  lr=4.0226e-07  step=95999
+[ train ] epoch 96 step 97000/100000  loss=0.79308  diffusion_loss=1.5862  a0_loss=0.0094209  raw_mse=0.23987  aux_loss=0.86178  raw_mse_u=0.23987  per_dim_rms_u=0.05772  alpha=0.20001  discrete_frac=0.5  loss_test=0.78911  a0_loss_test=0.021471  lr=2.264e-07  step=96999
+[ train ] epoch 97 step 98000/100000  loss=0.83997  diffusion_loss=1.6799  a0_loss=0.037526  raw_mse=1.0816  aux_loss=1.2396  raw_mse_u=1.0816  per_dim_rms_u=0.12256  alpha=0.2  discrete_frac=0.375  loss_test=0.78323  a0_loss_test=0.020714  lr=1.0067e-07  step=97999
+[ train ] epoch 98 step 99000/100000  loss=0.83451  diffusion_loss=1.669  a0_loss=0.019627  raw_mse=0.43888  aux_loss=0.48674  raw_mse_u=0.43888  per_dim_rms_u=0.078074  alpha=0.2  discrete_frac=0.375  loss_test=0.78762  a0_loss_test=0.019645  lr=2.5173e-08  step=98999
+[ train ] epoch 99 step 100000/100000  loss=0.89359  diffusion_loss=1.7872  a0_loss=0.018684  raw_mse=0.43244  aux_loss=0.56581  raw_mse_u=0.43244  per_dim_rms_u=0.077499  alpha=0.2  discrete_frac=0.25  loss_test=0.78349  a0_loss_test=0.01765  lr=0  step=99999
+[ utils/training_twotime ] final checkpoint: step 100000 (the periodic save only reaches 80000); "latest" now resolves to the end of the schedule
+wandb: - 0.062 MB of 0.062 MB uploadedwandb: \ 0.062 MB of 0.062 MB uploadedwandb: | 0.062 MB of 0.062 MB uploadedwandb: / 0.076 MB of 0.090 MB uploaded (0.004 MB deduped)wandb: - 0.076 MB of 0.090 MB uploaded (0.004 MB deduped)wandb: \ 0.121 MB of 0.121 MB uploaded (0.004 MB deduped)wandb:                                                                                
+wandb: W&B sync reduced upload amount by 3.1%
+wandb: 
+wandb: Run history:
+wandb:        test/a0_loss █▆▃▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:          test/alpha ████████████████▇▇▆▅▄▃▃▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:            test/aux █▄▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:     test/clamp_frac ▁▁▁▁▁▁▁▁▁▁▁▁█▆▃▇▇▆█▄▃▇▄▅▅▅▇▃▄▃▅▄▅▅▇▄▄▄▇▄
+wandb:  test/discrete_frac ▄▆▃▃▃▅█▄▅▅▄▅█▁▃▄▅▆▇▇▅▆█▁▇▅▅▆▇▅▄▇▇▆▅▆▅▄▅▆
+wandb:        test/fm_frac ▅▃▆▆▆▄▁▅▄▄▅▄▁█▆▅▄▃▂▂▄▃▁█▂▄▄▃▂▄▅▂▂▃▄▃▄▅▄▃
+wandb:         test/h_mean ▁▂▃▃▄▃▄▂▃▃▃▄▅▂▃▂▅▄▅▆▄▄█▁▅▄▃▅▅▁▂▅▅▇▂▃▅▂▅▇
+wandb:       test/h_mse_b0 █▄▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:       test/h_mse_b1 █▃▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:       test/h_mse_b2 █▃▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:       test/h_mse_b3 █▃▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:           test/loss ████████████████▇▇▆▅▅▃▃▃▂▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:  test/per_dim_rms_u █▅▃▂▂▂▂▂▂▂▁▁▁▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:        test/raw_mse █▃▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:      test/raw_mse_u █▃▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:      test/raw_mse_v █▄▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:       train/a0_loss █▄▃▂▁▂▁▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:         train/alpha ████████████████▇▇▆▅▄▃▃▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:           train/aux █▄▂▁▁▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:    train/clamp_frac ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▇▁█▁▁▁▁▁▁▁▁
+wandb: train/discrete_frac ▇▇▇▆▃▃▃▅▆▅▆▅▅▂▆▃██▅▆▃▆▁▇▅▆▃█▂▆▅▅▃▆▃▇▅▃▅▆
+wandb:       train/fm_frac ▂▂▂▃▆▆▆▅▃▅▃▅▅▇▃▆▁▁▅▃▆▃█▂▅▃▆▁▇▃▅▅▆▃▆▂▅▆▅▃
+wandb:        train/h_mean ▃▄▃▄▃▂▂▃▃▄▄▂▃▁▃▂█▇▃▂▂▅▂▄▂▂▂▇▁▃▃▄▂▂▂▇▃▃▃▅
+wandb:      train/h_mse_b0 █▃▂▁▁▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:      train/h_mse_b1 █▃▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:      train/h_mse_b2 █▃▃▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:      train/h_mse_b3 █▃▂▃▄▁▁▁▁▁▁
+wandb:          train/loss ████████████████▇▇▇▆▆▅▇▃▄▃▅▁▆▃▄▄▅▃▅▂▄▅▄▃
+wandb: train/per_dim_rms_u █▅▃▂▂▃▂▂▂▂▂▂▁▁▂▂▂▁▂▂▁▁▁▁▁▁▁▁▁▁▁▂▁▁▂▁▁▂▂▁
+wandb:       train/raw_mse █▃▂▁▁▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:     train/raw_mse_u █▃▂▁▁▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb:     train/raw_mse_v █▄▂▁▁▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+wandb: 
+wandb: Run summary:
+wandb:              engine af
+wandb:     final_test_loss 0.78349
+wandb:    final_train_loss 0.73178
+wandb:                seed 6
+wandb:              status completed
+wandb:        test/a0_loss 0.01765
+wandb:          test/alpha 0.2
+wandb:            test/aux 0.68628
+wandb:     test/clamp_frac 0.00025
+wandb:  test/discrete_frac 0.51
+wandb:        test/fm_frac 0.49
+wandb:         test/h_mean 0.12752
+wandb:       test/h_mse_b0 0.88933
+wandb:       test/h_mse_b1 0.02375
+wandb:       test/h_mse_b2 0.03361
+wandb:       test/h_mse_b3 0.02692
+wandb:           test/loss 0.78349
+wandb:  test/per_dim_rms_u 0.07195
+wandb:        test/raw_mse 0.44242
+wandb:      test/raw_mse_u 0.44242
+wandb:      test/raw_mse_v 0.68628
+wandb:       train/a0_loss 0.00168
+wandb:         train/alpha 0.2
+wandb:           train/aux 0.15715
+wandb:    train/clamp_frac 0.0
+wandb: train/discrete_frac 0.625
+wandb:       train/fm_frac 0.375
+wandb:        train/h_mean 0.17286
+wandb:      train/h_mse_b0 0.21972
+wandb:      train/h_mse_b1 0.0066
+wandb:      train/h_mse_b2 0.00418
+wandb:      train/h_mse_b3 0.03887
+wandb:          train/loss 0.73178
+wandb: train/per_dim_rms_u 0.03454
+wandb:       train/raw_mse 0.08592
+wandb:     train/raw_mse_u 0.08592
+wandb:     train/raw_mse_v 0.15715
+wandb: 
+wandb: 🚀 View run uav-corridor-mix_uav_af-H8_Daf_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet-S6-slurm-25494 at: https://wandb.ai/llmmail2021-technical-university-of-munich/FM-PCC-uav-mix/runs/yarih4nd
+wandb: ⭐️ View project at: https://wandb.ai/llmmail2021-technical-university-of-munich/FM-PCC-uav-mix
+wandb: Synced 6 W&B file(s), 0 media file(s), 3 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20260907_042238-yarih4nd/logs
+wandb: WARNING The new W&B backend becomes opt-out in version 0.18.0; try it out with `wandb.require("core")`! See https://wandb.me/wandb-core for more information.
+Gen15 UAV Mix-ML training completed (engine=af).
+Job completed successfully. Trained engine=af scene=corridor for seeds=[6]
+JOB END: Mon Sep  7 07:15:06 UTC 2026

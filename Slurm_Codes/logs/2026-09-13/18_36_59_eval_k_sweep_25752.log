@@ -1,0 +1,17 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+[ U9 ] variant subset = dpcc-t-bounds_free-pdes-tightened,hardflow_new-bounds_free-pdes-tightened,hardflow_new-t-bounds_free-pdes-tightened
+[ U11 ] geo variants = corridor_v2_slide
+[ U6 ] checkpoint   = best (default; no _EP fragment)
+[ fix_16 ] SAFE_EPS_MODE='scaled' SAFE_EPS_FRAC='1.0' EVAL_TAG='u17cv2'
+[ hardflow ] guard: FMPCC_HF_MIN_GENUINE='<default 1>' FMPCC_HF_ALLOW_DEGENERATE='<unset>' HFFM_ACT_THRESHOLD='<config default>'
+================================================================================
+UAV-MIX K SWEEP  Sun Sep 13 16:37:01 UTC 2026   engine=mf  scene=corridor  seeds=[6]  K=[3 5]  proj=fm_only  record=none
+  --time per eval job: 24:00:00  (override with UAV_EVAL_HOURS=<hours>)
+================================================================================
+  eval   engine=mf scene=corridor K=3  → Job 25775
+  eval   engine=mf scene=corridor K=5  → Job 25776
+--------------------------------------------------------------------------------
+Submitted 2 eval jobs (one per K).
+Results: logs/UAV_MIX/uav-<scene>/plans/mix_uav_mf/<train-id>/Emf_K<k>_.../<seed>/<variant>/results.json
+Repeat for every arm with the SAME K list, then compare at matched K.
+================================================================================

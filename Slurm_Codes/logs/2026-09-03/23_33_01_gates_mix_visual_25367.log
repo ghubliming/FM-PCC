@@ -1,0 +1,36 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu Sep  3 21:33:02 UTC 2026
+JOB NAME:  gates_mix_visual
+JOB ID:    25367
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   ba05cb7
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=5  MUJOCO_EGL_DEVICE_ID=5
+[ gates ] running: gb12
+
+=== G-B12: MIX_EPOCH is a results-path key, never a checkpoint key ===
+  ok   'diffusion_epoch_tag' registered LAST on the plan watch list
+  ok   epoch keys absent from the training watch list
+  ok   diffusion: ckpt path frozen; results 'Diffusion_VTrue_mpc4_filmv1_Ediffusion' + '_EPlatest'
+  ok   fm: ckpt path frozen; results 'sualFlowMatching_VTrue_mpc4_filmv1_Efm' + '_EPlatest'
+  ok   mf: ckpt path frozen; results 'n.VisualMeanFlow_VTrue_mpc4_filmv1_Emf' + '_EPlatest'
+  ok   af: ckpt path frozen; results '.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf' + '_EPlatest'
+  ok   explicit 'best' emits no fragment
+  ok   malformed selectors rejected at config time, not at torch.load time
+
+  G-B12 PASS
+
+============================================================
+  GB12: PASS
+============================================================
+Job completed successfully.

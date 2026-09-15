@@ -1,0 +1,76 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+[ U9 ] variant subset = dpcc-t-tightened
+[ U6 ] checkpoint   = best (default; no _EP fragment)
+================================================================================
+JOB START: Sat Sep 12 10:37:43 UTC 2026  |  eval_mix_uav  |  ID 25681  |  NODE i6-gpu-1
+ENGINE: diffusion   SCENE: pillars   SEEDS: 6   N_TRIALS:    K: <plan block>
+FIX_16:  SAFE_EPS_MODE=scaled  SAFE_EPS_FRAC=1e-3  EVAL_TAG=u7hg
+GIT REV:   995a379a
+================================================================================
+[ env-select ] config/uav.py controller='pid_stopgo' -> conda env 'FMPCC'
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=4  MUJOCO_EGL_DEVICE_ID=4
+--------------------------------------------------------------------------------
+[ uav_mix_eval ] seed 1/1: engine=diffusion scene=pillars seed=6  Sat Sep 12 10:37:43 UTC 2026
+[ uav_mix_eval ] python mix_uav_test/eval_mix_uav.py --engine diffusion --scene pillars --seed 6  --projection fm_only --record none 
+[ eval ] Gen15 UAV Mix-ML — engine: diffusion  (DDPM / DPCC baseline (GaussianDiffusion))
+[ eval ] checkpoint selector = 'best'  (config default; no _EP fragment)
+[ eval ] seed=6  (source: --seed CLI)
+[ eval ] n_trials=10  (source: /data/home/llim/FMPCC/FM-PCC/config/uav_projection.yaml)
+[ eval ] UAV_MIX_VARIANTS -> running 1/11 variants: ['dpcc-t-tightened']
+[ eval ]   dropped 10: ['diffuser', 'dpcc-r', 'dpcc-r-tightened', 'dpcc-c', 'dpcc-c-tightened', 'dpcc-t', 'dpcc-r-geo_free', 'dpcc-c-geo_free', 'dpcc-t-geo_free', 'dpcc-t-bounds_free']
+
+[ utils/serialization ] Loading model from logs/UAV_MIX/uav-pillars/mix_uav_diffusion/H8_Dmodels.ddpm_diffusion.GaussianDiffusion_9D_K20/6
+
+[ utils/normalization ] Constant data in actions[2] | max = min = 9.89530235095265e-13 → Fix_16 widened by eps=3.086e-05 (mode=scaled). unnormalize scale for this channel = 3.086e-05 data-units per unit output.
+[ utils/normalization ] ⚠ Fix_16: ALL dimensions constant — no reference scale; falling back to eps=1.0.
+[ utils/normalization ] Constant data in rewards[0] | max = min = 0.0 → Fix_16 widened by eps=1.000e+00 (mode=scaled). unnormalize scale for this channel = 1.000e+00 data-units per unit output.
+[ datasets/buffer ] Fields:
+    observations: (475, 560, 6)
+    actions: (475, 560, 3)
+    rewards: (475, 560, 1)
+    terminals: (475, 560, 1)
+    normed_observations: (475, 560, 6)
+    normed_actions: (475, 560, 3)
+[ utils/training ] Restored loss history from checkpoint at step 92000
+[ eval ] checkpoint = state_best.pt  (trained to step 92000)
+[ registry ] engine 'diffusion': K is train-time (n_timesteps=20); ignoring the eval-side flow_steps=20
+[ eval ] engine=diffusion  NFE budget K=20 pinned on the loaded model (flow_steps_v3 / ode_inference_steps_v3)
+[ eval ] E9 geo 'pillars' ← variant 'pillars_hg': constraint_types=['dynamics', 'geo_bounds', 'obstacles', 'bounds'] (bounds=True, hs=0, obs=6)
+[ eval ] cond_mode=pos_only  (source: train checkpoint args)
+[ eval ] pillars [geo_tag=pillars_hg_bounds+dynamics+geo_bounds+obstacles]: variants=['dpcc-t-tightened']  constraints=['dynamics', 'geo_bounds', 'obstacles', 'bounds']  batch_size=4
+[ eval ] pillars feasibility check: homotopy=(L,L,L) expert route NEAR-ZERO SLACK under planning margin 0.31 m — slack 0.078 m (need >= 0.30 m to absorb the policy tracking error)
+[ eval ] WARNING pillars homotopy=(L,L,L): the expert route clears the PLANNING set by only 0.078 m. Any rollout whose tracking error exceeds that violates the constraints even when it flies the trained route perfectly in expectation — success+constraints is bounded near 0 for reasons that have nothing to do with the engine. Widen the geometry or lower `planning_inflation` (see Gen15/U7).
+[ eval ] pillars feasibility check: homotopy=(L,R,L) expert route NEAR-ZERO SLACK under planning margin 0.31 m — slack 0.078 m (need >= 0.30 m to absorb the policy tracking error)
+[ eval ] WARNING pillars homotopy=(L,R,L): the expert route clears the PLANNING set by only 0.078 m. Any rollout whose tracking error exceeds that violates the constraints even when it flies the trained route perfectly in expectation — success+constraints is bounded near 0 for reasons that have nothing to do with the engine. Widen the geometry or lower `planning_inflation` (see Gen15/U7).
+[ eval ] pillars feasibility check: homotopy=(R,L,R) expert route NEAR-ZERO SLACK under planning margin 0.31 m — slack 0.078 m (need >= 0.30 m to absorb the policy tracking error)
+[ eval ] WARNING pillars homotopy=(R,L,R): the expert route clears the PLANNING set by only 0.078 m. Any rollout whose tracking error exceeds that violates the constraints even when it flies the trained route perfectly in expectation — success+constraints is bounded near 0 for reasons that have nothing to do with the engine. Widen the geometry or lower `planning_inflation` (see Gen15/U7).
+[ eval ] pillars feasibility check: homotopy=(R,R,R) expert route NEAR-ZERO SLACK under planning margin 0.31 m — slack 0.078 m (need >= 0.30 m to absorb the policy tracking error)
+[ eval ] WARNING pillars homotopy=(R,R,R): the expert route clears the PLANNING set by only 0.078 m. Any rollout whose tracking error exceeds that violates the constraints even when it flies the trained route perfectly in expectation — success+constraints is bounded near 0 for reasons that have nothing to do with the engine. Widen the geometry or lower `planning_inflation` (see Gen15/U7).
+[ eval ] pillars [geo_tag=pillars_hg_bounds+dynamics+geo_bounds+obstacles] >>> variant 1/1: 'dpcc-t-tightened'  (n_trials=10)
+[ eval ] Fix_16 DEGENERATE actions[2]: constant in the expert data — no training signal for this channel. Widened by eps=3.086e-05; a saturated model output on it commands +/-3.086e-05 data-units/step.
+[ eval ] Fix_16 projector action_bounds=auto → lb=[ 3.5000e-05 -3.9716e-02 -3.1000e-05] ub=[4.4061e-02 3.9704e-02 3.1000e-05]  (degenerate dims now bounded, not +/-1)
+[ provenance ] wrote logs/UAV_MIX/uav-pillars/plans/mix_uav_diffusion/H8_Dmodels.ddpm_diffusion.GaussianDiffusion_9D_K20/Ediffusion_K20_mpc4_pid_stopgo_T0.5_u7hg/6/run_provenance_3.json
+[ eval ] pillars variant=dpcc-t-tightened: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ utils/normalization ] ⚠ Fix_16: sample out of range on observations — clipping to [-1,1] | (-0.8928, 1.0057). Further occurrences silent; see `_clip_events` / `_clip_max`.
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+[ utils/normalization ] ⚠ Fix_16: sample out of range on actions — clipping to [-1,1] | (-1.0026, 0.0356). Further occurrences silent; see `_clip_events` / `_clip_max`.
+[ eval ] pillars variant=dpcc-t-tightened: trial 1/10 done  (2780.0s elapsed this variant, ~25019.7s to go)
+[ eval ] pillars variant=dpcc-t-tightened: trial 2/10 done  (5312.8s elapsed this variant, ~21251.3s to go)
+[ eval ] pillars variant=dpcc-t-tightened: trial 3/10 done  (8298.4s elapsed this variant, ~19362.9s to go)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ eval ] pillars variant=dpcc-t-tightened: trial 4/10 done  (10935.2s elapsed this variant, ~16402.8s to go)
+[ eval ] pillars variant=dpcc-t-tightened: trial 5/10 done  (13997.1s elapsed this variant, ~13997.1s to go)
+[ eval ] pillars variant=dpcc-t-tightened: trial 6/10 done  (16935.3s elapsed this variant, ~11290.2s to go)
+[ eval ] pillars variant=dpcc-t-tightened: trial 7/10 done  (20032.2s elapsed this variant, ~8585.2s to go)
+[ eval ] pillars variant=dpcc-t-tightened: trial 8/10 done  (22908.1s elapsed this variant, ~5727.0s to go)
+[ eval ] pillars variant=dpcc-t-tightened: trial 9/10 done  (25506.3s elapsed this variant, ~2834.0s to go)
+[ eval ] pillars variant=dpcc-t-tightened: trial 10/10 done  (28091.1s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=dpcc-t-tightened (B=4, proj=on, sel=temporal_consistency): success=0.000  success_relaxed=1.000  safe=1.000  goal_reached=0.000  steps_to_goal=nan/634  track_err=0.317  → logs/UAV_MIX/uav-pillars/plans/mix_uav_diffusion/H8_Dmodels.ddpm_diffusion.GaussianDiffusion_9D_K20/Ediffusion_K20_mpc4_pid_stopgo_T0.5_u7hg/6/pillars_hg_bounds+dynamics+geo_bounds+obstacles/dpcc-t-tightened/
+[ eval ] pillars variant=dpcc-t-tightened TIMING: fm_ms=176.1 proj_ms=4248.4 total_ms=4424.5 (p95=13370.7) budget=30.3ms → real_time_OVER×6340
+UAV Mix-ML eval complete (engine=diffusion).
+Job completed successfully. Evaluated engine=diffusion scene=pillars for seeds=[6]
+JOB END: Sat Sep 12 18:26:00 UTC 2026

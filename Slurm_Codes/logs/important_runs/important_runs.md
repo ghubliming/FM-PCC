@@ -1397,6 +1397,18 @@ Flagship — MeanFlow K20, T=0.2, arms B + C:
 
 mf K10thres0.4 25273
 
+- U12
+V_A af_unet
+25369
+25370
+25374
+
+---
+Refine af 
+25416/7
++
+25475
+
 # Gen0 
 - Fix2
 thres test 24279 T
@@ -1443,8 +1455,88 @@ diffu. 25134
 - Fix16 
 25294/5
 
+- u6
+25379 sit rerun
 
-# Gen16 
+25382+387 train + eval af_enable scurve
+failed 
+(25434 25439???? 2025-09-05)
+
+pillars 25392
+
+---
+
+- U7 
+25410-15 fm, mf runs 
+af PENDING
+
+---
+
+afUnet test on new constraints
+25486/7
+
+---
+HFSLSQP test
+25488/9 mf/fm
+90 af
+
+---
+
+S_Curve explore
+
+25491/2
+
+---
+25501 killed too long -> 25542 contine
+25500 killed too long -> 25543 conti. 
+
+---
+mjpc test in scurve
+25514
+
+---
+
+unfinished jobs...
+    1 — af pillars K=5 → closes task 1 (17/17) and task 3's af leg. ~11–14 h.
+
+    UAV_EVAL_HOURS=24 FMPCC_SAFE_EPS_MODE=scaled FMPCC_UAV_EVAL_TAG=u7hg UAV_MIX_BONE_AF=unet UAV_MIX_AF_ALPHA_END=0.2 UAV_MIX_EPOCH=latest UAV_MIX_VARIANTS='dpcc-t,dpcc-t-tightened,dpcc-r-
+    geo_free,dpcc-c-geo_free,dpcc-t-geo_free,hardflow_new,hardflow_new-r,hardflow_new-c,hardflow_new-t,hardflow_new-r-geo_free,hardflow_new-c-geo_free,hardflow_new-t-geo_free'
+    ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/eval_k_sweep.sh af pillars "6" "5"
+
+    2 — fm s_curve K=20 tail → closes task 4 (9/9 at n=10). ~4.7 h.
+
+    UAV_EVAL_HOURS=24 FMPCC_SAFE_EPS_MODE=scaled FMPCC_UAV_EVAL_TAG=u7hg UAV_MIX_VARIANTS='dpcc-t-geo_free,hardflow_new-t' ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/eval_k_sweep.sh
+    fm s_curve "6" "20"
+
+25586/7
+
+---
+
+- U11
+corridor runs
+25599-25604
+
+---
+
+Pillars - Diffu. Baseline & the S_Curve rest runs to mirror pillars
+25611-14
+
+- U12
+25657 inject fast test of new smaller ball
+
+- U13
+
+...
+v3.2 injection 25702
+...
+
+- U16 
+25740 SUCCESS
+25743 refine
+
+
+
+# Gen16 XXX
 24850? NO logging? what happened? -> 24583/4 PASS
 24855 GO FAIL
 24859 rerun
@@ -1458,3 +1550,9 @@ Eval:
 25072/73/75
 
 25077-84(low K Arm)
+
+
+---
+
+# HF min K test on mf/af -- UNET 
+25444

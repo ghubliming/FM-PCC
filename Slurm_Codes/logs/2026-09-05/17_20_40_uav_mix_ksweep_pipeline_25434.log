@@ -1,0 +1,19 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+[ pipeline ] UAV_MIX_BONE_AF=unet
+[ pipeline ] af bone = unet  (U6 default; 'sit' via UAV_MIX_BONE_AF=sit)
+[ pipeline ]   ⚠  af_alpha_end = 0.0 (shipped): alpha snaps to EXACTLY 0 from
+[ pipeline ]      ~71.2% of the budget on, so this run ends on the MEANFLOW
+[ pipeline ]      target. Set UAV_MIX_AF_ALPHA_END>0 to train alpha-Flow proper.
+================================================================================
+UAV-MIX K-SWEEP PIPELINE START: Sat Sep  5 15:20:42 UTC 2026
+  engine=af  scene=s_curve  seed=6  n_trials='yaml default'
+  projection=fm_only  record=none  K list=1 2 5
+================================================================================
+Step 1: train submitted — Job 25435
+Step 2.1: eval scheduled (afterok:25435) K=1 — Job 25436
+Step 2.2: eval scheduled (afterok:25435) K=2 — Job 25437
+Step 2.3: eval scheduled (afterok:25435) K=5 — Job 25438
+--------------------------------------------------------------------------------
+Submitted: 1 train + 3 eval job(s), all gated on train 25435
+Outputs: logs/UAV_MIX/uav-s_curve/mix_uav_af/.../6/  (+ plans/ per K)
+================================================================================

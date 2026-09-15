@@ -1,0 +1,216 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+[ U9 ] variant subset = diffuser,dpcc-r,hardflow_new-r
+[ U6 ] checkpoint   = best (default; no _EP fragment)
+================================================================================
+JOB START: Wed Sep  9 13:20:01 UTC 2026  |  uav_mix_eval  |  ID 25554  |  NODE i6-gpu-1
+ENGINE: mf   SCENE: s_curve   SEEDS: 6   N_TRIALS: 3   K: 10
+FIX_16:  SAFE_EPS_MODE=scaled  SAFE_EPS_FRAC=1e-3  EVAL_TAG=u7hg
+GIT REV:   97eec8a
+================================================================================
+[ U10 ] UAV_MIX_CONTROLLER='mjpc' (env override)
+[ env-select ] config/uav.py controller='mjpc' -> conda env 'FMPCC_mjx'
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=4  MUJOCO_EGL_DEVICE_ID=4
+--------------------------------------------------------------------------------
+[ uav_mix_eval ] seed 1/1: engine=mf scene=s_curve seed=6  Wed Sep  9 13:20:02 UTC 2026
+[ uav_mix_eval ] python mix_uav_test/eval_mix_uav.py --engine mf --scene s_curve --seed 6 --n-trials 3 --projection fm_only --record none --flow-steps 10
+[ eval ] Gen15 UAV Mix-ML — engine: mf  (MeanFlow (Gen3v6, arXiv 2505.13447))
+[ eval ] checkpoint selector = 'best'  (config default; no _EP fragment)
+[ eval ] K override from --flow-steps: 10
+[ eval ] seed=6  (source: --seed CLI)
+[ eval ] n_trials=3  (source: --n-trials CLI)
+[ eval ] HardFlow arm: +7 variants ['hardflow_new', 'hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t', 'hardflow_new-r-geo_free', 'hardflow_new-c-geo_free', 'hardflow_new-t-geo_free'] (from config/uav_mix.py, NOT the shared yaml)
+[ eval ] UAV_MIX_VARIANTS -> running 3/17 variants: ['diffuser', 'dpcc-r', 'hardflow_new-r']
+[ eval ]   dropped 14: ['dpcc-r-tightened', 'dpcc-c', 'dpcc-c-tightened', 'dpcc-t', 'dpcc-t-tightened', 'dpcc-r-geo_free', 'dpcc-c-geo_free', 'dpcc-t-geo_free', 'hardflow_new', 'hardflow_new-c', 'hardflow_new-t', 'hardflow_new-r-geo_free', 'hardflow_new-c-geo_free', 'hardflow_new-t-geo_free']
+[ U10 ] controller: 'pid_stopgo' (config) -> 'mjpc' (env override)
+
+[ utils/serialization ] Loading model from logs/UAV_MIX/uav-s_curve/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/6
+
+[ utils/normalization ] Constant data in actions[2] | max = min = -4.147295842252957e-13 → Fix_16 widened by eps=1.129e-05 (mode=scaled). unnormalize scale for this channel = 1.129e-05 data-units per unit output.
+[ utils/normalization ] ⚠ Fix_16: ALL dimensions constant — no reference scale; falling back to eps=1.0.
+[ utils/normalization ] Constant data in rewards[0] | max = min = 0.0 → Fix_16 widened by eps=1.000e+00 (mode=scaled). unnormalize scale for this channel = 1.000e+00 data-units per unit output.
+[ datasets/buffer ] Fields:
+    observations: (500, 750, 6)
+    actions: (500, 750, 3)
+    rewards: (500, 750, 1)
+    terminals: (500, 750, 1)
+    normed_observations: (500, 750, 6)
+    normed_actions: (500, 750, 3)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=6.278e-07)
+[ utils/training ] Restored loss history from checkpoint at step 95000
+[ eval ] checkpoint = state_best.pt  (trained to step 95000)
+[ eval ] ml bone = unet  (U6 default is 'unet', the 4.0 M arm matched to fm/mf; 'sit' is ~9.4 M and NOT parameter-matched)
+[ eval ] engine=mf  NFE budget K=10 pinned on the loaded model (flow_steps_v3 / ode_inference_steps_v3)
+[ eval ] E9 geo 's_curve' ← variant 's_curve_hg': constraint_types=['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds'] (bounds=True, hs=4, obs=2)
+[ eval ] cond_mode=pos_only  (source: train checkpoint args)
+[ eval ] s_curve [geo_tag=s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles]: variants=['diffuser', 'dpcc-r', 'hardflow_new-r']  constraints=['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds']  batch_size=4
+[ eval ] s_curve feasibility check: homotopy=default expert route NEAR-ZERO SLACK under planning margin 0.31 m — slack 0.121 m (need >= 0.30 m to absorb the policy tracking error)
+[ eval ] WARNING s_curve homotopy=default: the expert route clears the PLANNING set by only 0.121 m. Any rollout whose tracking error exceeds that violates the constraints even when it flies the trained route perfectly in expectation — success+constraints is bounded near 0 for reasons that have nothing to do with the engine. Widen the geometry or lower `planning_inflation` (see Gen15/U7).
+[ eval ] s_curve [geo_tag=s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 1/3: 'diffuser'  (n_trials=3)
+[ provenance ] wrote logs/UAV_MIX/uav-s_curve/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K10_mpc4_mjpc_T0.5_u7hg/6/run_provenance.json
+[ geo ] Constraint overview → logs/UAV_MIX/uav-s_curve/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K10_mpc4_mjpc_T0.5_u7hg/6/s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles/constraint_overview.png (+ .svg)
+[ eval ] s_curve variant=diffuser: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+Failed to import warp: No module named 'warp'
+Failed to import mujoco_warp: No module named 'warp'
+2026-09-09 13:20:08.996892: W external/xla/xla/service/gpu/nvptx_compiler.cc:760] The NVIDIA driver's CUDA version is 12.1 which is older than the ptxas CUDA version (12.9.86). Because the driver is older than the ptxas version, XLA is disabling parallel compilation, which may slow down compilation. You should update your NVIDIA driver or use the NVIDIA-provided CUDA forward compatibility packages.
+[ MJPCTracker ] init: scene=s_curve horizon=30 steps (0.30s @ dt=0.01s) n_samples=16 n_improve=5 vel_weight=0.1 nu=4
+[ MJPCTracker ] JIT warmup will happen on first compute() call (~5–10 s)
+[ utils/normalization ] ⚠ Fix_16: sample out of range on observations — clipping to [-1,1] | (-1.0072, 0.0636). Further occurrences silent; see `_clip_events` / `_clip_max`.
+[ utils/normalization ] ⚠ Fix_16: sample out of range on actions — clipping to [-1,1] | (-1.0031, 0.0104). Further occurrences silent; see `_clip_events` / `_clip_max`.
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:136: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qpos    = jnp.array([*p, *q], dtype=jnp.float64)   # 7D free joint
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:137: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qvel    = jnp.array([*v, *om], dtype=jnp.float64)  # 6D
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:138: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  p_des_j = jnp.array(p_des, dtype=jnp.float64)
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:136: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qpos    = jnp.array([*p, *q], dtype=jnp.float64)   # 7D free joint
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:137: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qvel    = jnp.array([*v, *om], dtype=jnp.float64)  # 6D
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:138: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  p_des_j = jnp.array(p_des, dtype=jnp.float64)
+[ eval ] s_curve variant=diffuser: trial 1/3 done  (136.9s elapsed this variant, ~273.8s to go)
+[ MJPCTracker ] init: scene=s_curve horizon=30 steps (0.30s @ dt=0.01s) n_samples=16 n_improve=5 vel_weight=0.1 nu=4
+[ MJPCTracker ] JIT warmup will happen on first compute() call (~5–10 s)
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:136: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qpos    = jnp.array([*p, *q], dtype=jnp.float64)   # 7D free joint
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:137: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qvel    = jnp.array([*v, *om], dtype=jnp.float64)  # 6D
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:138: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  p_des_j = jnp.array(p_des, dtype=jnp.float64)
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:136: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qpos    = jnp.array([*p, *q], dtype=jnp.float64)   # 7D free joint
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:137: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qvel    = jnp.array([*v, *om], dtype=jnp.float64)  # 6D
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:138: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  p_des_j = jnp.array(p_des, dtype=jnp.float64)
+[ eval ] s_curve variant=diffuser: trial 2/3 done  (276.7s elapsed this variant, ~138.4s to go)
+[ MJPCTracker ] init: scene=s_curve horizon=30 steps (0.30s @ dt=0.01s) n_samples=16 n_improve=5 vel_weight=0.1 nu=4
+[ MJPCTracker ] JIT warmup will happen on first compute() call (~5–10 s)
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:136: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qpos    = jnp.array([*p, *q], dtype=jnp.float64)   # 7D free joint
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:137: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qvel    = jnp.array([*v, *om], dtype=jnp.float64)  # 6D
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:138: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  p_des_j = jnp.array(p_des, dtype=jnp.float64)
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:136: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qpos    = jnp.array([*p, *q], dtype=jnp.float64)   # 7D free joint
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:137: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qvel    = jnp.array([*v, *om], dtype=jnp.float64)  # 6D
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:138: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  p_des_j = jnp.array(p_des, dtype=jnp.float64)
+[ eval ] s_curve variant=diffuser: trial 3/3 done  (411.4s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=diffuser (B=4, proj=off, sel=random): success=0.667  success_relaxed=0.667  safe=0.667  goal_reached=1.000  steps_to_goal=636/871  track_err=0.455  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K10_mpc4_mjpc_T0.5_u7hg/6/s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles/diffuser/
+[ eval ] s_curve variant=diffuser TIMING: fm_ms=89.8 proj_ms=0.0 total_ms=89.8 (p95=93.9) budget=30.3ms → real_time_OVER×1908
+[ eval ] s_curve [geo_tag=s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 2/3: 'dpcc-r'  (n_trials=3)
+[ eval ] Fix_16 DEGENERATE actions[2]: constant in the expert data — no training signal for this channel. Widened by eps=1.129e-05; a saturated model output on it commands +/-1.129e-05 data-units/step.
+[ eval ] Fix_16 projector action_bounds=auto → lb=[ 0.0e+00  0.0e+00 -1.1e-05] ub=[2.2238e-02 2.2927e-02 1.1000e-05]  (degenerate dims now bounded, not +/-1)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K10_mpc4_mjpc_T0.5_u7hg/6/run_provenance.json
+[ eval ] s_curve variant=dpcc-r: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ MJPCTracker ] init: scene=s_curve horizon=30 steps (0.30s @ dt=0.01s) n_samples=16 n_improve=5 vel_weight=0.1 nu=4
+[ MJPCTracker ] JIT warmup will happen on first compute() call (~5–10 s)
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:136: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qpos    = jnp.array([*p, *q], dtype=jnp.float64)   # 7D free joint
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:137: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qvel    = jnp.array([*v, *om], dtype=jnp.float64)  # 6D
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:138: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  p_des_j = jnp.array(p_des, dtype=jnp.float64)
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:136: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qpos    = jnp.array([*p, *q], dtype=jnp.float64)   # 7D free joint
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:137: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qvel    = jnp.array([*v, *om], dtype=jnp.float64)  # 6D
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:138: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  p_des_j = jnp.array(p_des, dtype=jnp.float64)
+[ eval ] s_curve variant=dpcc-r trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 401/871 (t=12.15s) — reason=inverted: body z-axis · world z = -0.02 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-r: trial 1/3 done  (1086.4s elapsed this variant, ~2172.8s to go)
+[ MJPCTracker ] init: scene=s_curve horizon=30 steps (0.30s @ dt=0.01s) n_samples=16 n_improve=5 vel_weight=0.1 nu=4
+[ MJPCTracker ] JIT warmup will happen on first compute() call (~5–10 s)
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:136: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qpos    = jnp.array([*p, *q], dtype=jnp.float64)   # 7D free joint
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:137: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qvel    = jnp.array([*v, *om], dtype=jnp.float64)  # 6D
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:138: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  p_des_j = jnp.array(p_des, dtype=jnp.float64)
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:136: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qpos    = jnp.array([*p, *q], dtype=jnp.float64)   # 7D free joint
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:137: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qvel    = jnp.array([*v, *om], dtype=jnp.float64)  # 6D
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:138: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  p_des_j = jnp.array(p_des, dtype=jnp.float64)
+[ eval ] s_curve variant=dpcc-r trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 400/871 (t=12.12s) — reason=inverted: body z-axis · world z = -0.05 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-r: trial 2/3 done  (2206.2s elapsed this variant, ~1103.1s to go)
+[ MJPCTracker ] init: scene=s_curve horizon=30 steps (0.30s @ dt=0.01s) n_samples=16 n_improve=5 vel_weight=0.1 nu=4
+[ MJPCTracker ] JIT warmup will happen on first compute() call (~5–10 s)
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:136: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qpos    = jnp.array([*p, *q], dtype=jnp.float64)   # 7D free joint
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:137: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qvel    = jnp.array([*v, *om], dtype=jnp.float64)  # 6D
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:138: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  p_des_j = jnp.array(p_des, dtype=jnp.float64)
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:136: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qpos    = jnp.array([*p, *q], dtype=jnp.float64)   # 7D free joint
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:137: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qvel    = jnp.array([*v, *om], dtype=jnp.float64)  # 6D
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:138: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  p_des_j = jnp.array(p_des, dtype=jnp.float64)
+[ eval ] s_curve variant=dpcc-r trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 451/871 (t=13.67s) — reason=inverted: body z-axis · world z = -0.13 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-r: trial 3/3 done  (3329.9s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=dpcc-r: ⚠ DIVERGENCE ABORT on 3/3 trials [0, 1, 2] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=dpcc-r (B=4, proj=on, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=0.585  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K10_mpc4_mjpc_T0.5_u7hg/6/s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r/
+[ eval ] s_curve variant=dpcc-r TIMING: fm_ms=92.6 proj_ms=2420.2 total_ms=2512.7 (p95=8733.7) budget=30.3ms → real_time_OVER×1255
+[ eval ] s_curve [geo_tag=s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 3/3: 'hardflow_new-r'  (n_trials=3)
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=66  reg_scale=1.0
+[hardflow] engine=mf K=10 noise_sigma=1.0 two_time=True dyn=deriv A=0.5 sel=random
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K10_mpc4_mjpc_T0.5_u7hg/6/run_provenance.json
+[ eval ] s_curve variant=hardflow_new-r: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ MJPCTracker ] init: scene=s_curve horizon=30 steps (0.30s @ dt=0.01s) n_samples=16 n_improve=5 vel_weight=0.1 nu=4
+[ MJPCTracker ] JIT warmup will happen on first compute() call (~5–10 s)
+[hardflow][NLP-FAILURE] first non-converged SLSQP solve at tau=0.600. Keeping scipy's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Same exposure as the IPOPT path. Further failures are silent; read `nlp_failures` in the run summary for the total.
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:136: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qpos    = jnp.array([*p, *q], dtype=jnp.float64)   # 7D free joint
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:137: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qvel    = jnp.array([*v, *om], dtype=jnp.float64)  # 6D
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:138: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  p_des_j = jnp.array(p_des, dtype=jnp.float64)
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:136: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qpos    = jnp.array([*p, *q], dtype=jnp.float64)   # 7D free joint
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:137: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qvel    = jnp.array([*v, *om], dtype=jnp.float64)  # 6D
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:138: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  p_des_j = jnp.array(p_des, dtype=jnp.float64)
+[ eval ] s_curve variant=hardflow_new-r: trial 1/3 done  (664.5s elapsed this variant, ~1328.9s to go)
+[ MJPCTracker ] init: scene=s_curve horizon=30 steps (0.30s @ dt=0.01s) n_samples=16 n_improve=5 vel_weight=0.1 nu=4
+[ MJPCTracker ] JIT warmup will happen on first compute() call (~5–10 s)
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:136: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qpos    = jnp.array([*p, *q], dtype=jnp.float64)   # 7D free joint
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:137: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qvel    = jnp.array([*v, *om], dtype=jnp.float64)  # 6D
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:138: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  p_des_j = jnp.array(p_des, dtype=jnp.float64)
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:136: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qpos    = jnp.array([*p, *q], dtype=jnp.float64)   # 7D free joint
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:137: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qvel    = jnp.array([*v, *om], dtype=jnp.float64)  # 6D
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:138: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  p_des_j = jnp.array(p_des, dtype=jnp.float64)
+[ eval ] s_curve variant=hardflow_new-r: trial 2/3 done  (1295.4s elapsed this variant, ~647.7s to go)
+[ MJPCTracker ] init: scene=s_curve horizon=30 steps (0.30s @ dt=0.01s) n_samples=16 n_improve=5 vel_weight=0.1 nu=4
+[ MJPCTracker ] JIT warmup will happen on first compute() call (~5–10 s)
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:136: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qpos    = jnp.array([*p, *q], dtype=jnp.float64)   # 7D free joint
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:137: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qvel    = jnp.array([*v, *om], dtype=jnp.float64)  # 6D
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:138: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  p_des_j = jnp.array(p_des, dtype=jnp.float64)
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:136: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qpos    = jnp.array([*p, *q], dtype=jnp.float64)   # 7D free joint
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:137: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  qvel    = jnp.array([*v, *om], dtype=jnp.float64)  # 6D
+/data/home/llim/FMPCC/FM-PCC/mix_uav_test/mjpc_tracker.py:138: UserWarning: Explicitly requested dtype <class 'jax.numpy.float64'> requested in array is not available, and will be truncated to dtype float32. To enable more dtypes, set the jax_enable_x64 configuration option or the JAX_ENABLE_X64 shell environment variable. See https://github.com/google/jax#current-gotchas for more.
+  p_des_j = jnp.array(p_des, dtype=jnp.float64)
+[ eval ] s_curve variant=hardflow_new-r: trial 3/3 done  (1918.0s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=hardflow_new-r (B=4, proj=off, sel=random): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=1.000  steps_to_goal=618/871  track_err=0.511  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K10_mpc4_mjpc_T0.5_u7hg/6/s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_sls-r/
+[ eval ] s_curve variant=hardflow_new-r TIMING: fm_ms=133.7 proj_ms=761.8 total_ms=895.5 (p95=1560.7) budget=30.3ms → real_time_OVER×1854
+UAV Mix-ML eval complete (engine=mf).
+Job completed successfully. Evaluated engine=mf scene=s_curve for seeds=[6]
+JOB END: Wed Sep  9 14:54:30 UTC 2026

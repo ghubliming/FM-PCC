@@ -1,0 +1,73 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu Sep  3 21:33:35 UTC 2026
+JOB NAME:  eval_mix_visual_aligning
+JOB ID:    25369
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   ba05cb7
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=5  MUJOCO_EGL_DEVICE_ID=5
+[ eval ] engine=af
+[ eval ] seeds='6'
+[ eval ] Recording mode set to: all
+[ eval ] film_mode = v1  (MIX_FILM_MODE_AF; must match the checkpoint)
+[ eval ] ml_bone = unet  (MIX_BONE_AF; must match the checkpoint)
+[ eval ] alpha schedule = SHIPPED DEFAULT -> resolving the alpha->0 checkpoint tree.
+[ eval ]   ⚠  If you trained with MIX_AF_ALPHA_*, set the SAME values here or this
+[ eval ]      job will look in the wrong directory.
+[ eval ] NFE override: flow_steps_v3 = 2
+[ eval ] projection threshold T = config default (0.5), single pass
+[ eval ] arm C (HardFlow) OFF — set HFFM_VARIANTS to enable
+[ eval ] checkpoint = latest  -> results dir gains '_EPlatest'
+[ eval ] Using d3il from: None
+[ eval ] D3IL_DIR set to: /data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il
+pybullet build time: Nov 28 2023 23:45:17
+[ eval ] seeds: [6]  (source: cli --seeds)
+[ eval ] engine=af | alpha-Flow (Gen3v7) | two_time=True | wraps_unet=True | nfe_key=flow_steps_v3 | source=flow_matcher_v3_alphaflow/ (Gen3v7)
+[ eval ] config block: plan_mix_visual_aligning_af
+[ config/aligning-d3il-visual ] custom_msg="ep_ab_s6" -> results dirs end in "_msgep_ab_s6"
+[ eval ] --flow-steps: flow_steps_v3 2 -> 2  (applies to the sampler AND the results folder name)
+[ eval ] --flow-steps: projection budget 1 -> 1 projector call(s) per replan at threshold T=0.5
+[ eval ] projection threshold T = 0.5  (source: config/visual_aligning_eval.yaml)
+[ eval ] --epoch: diffusion_epoch 'latest' -> 'latest'  (source: cli --epoch)
+[ eval ] checkpoint selector = 'latest'  (source: cli --epoch)  -> results dir carries _EPlatest
+
+=== Evaluating seed 1/1 (seed=6) ===
+[ utils/setup ] Made savepath: logs/aligning-d3il-visual/plans/mix_visual_aligning_af/H8_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Eaf_tslogit_normal_afschsigmoid/H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf_EPlatest_msgep_ab_s6/6
+
+[ eval loading ] Loading from logs/aligning-d3il-visual/mix_visual_aligning_af/H8_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Eaf_tslogit_normal_afschsigmoid/6
+
+[ eval loading ] ml_bone = unet (VisualUNetTwoTime / VisualUNet — FiLM) (from train-time model_config.pkl)
+[ eval loading ] film_mode = v1 (from train-time model_config.pkl; the backbone is rebuilt from the pkl, so it always matches the checkpoint)
+[ config->pkl ] INFO  flow_steps_v3: train=100 -> eval=2  (sampling knob; applied)
+Loading states:   0%|          | 0/900 [00:00<?, ?it/s]Loading states: 100%|██████████| 900/900 [00:00<00:00, 2992.98it/s]
+Loading images:   0%|          | 0/900 [00:00<?, ?it/s]Loading images:  13%|█▎        | 120/900 [00:10<01:05, 11.97it/s]Loading images:  27%|██▋       | 240/900 [00:20<00:56, 11.76it/s]Loading images:  40%|████      | 361/900 [00:30<00:45, 11.89it/s]Loading images:  55%|█████▌    | 496/900 [00:40<00:32, 12.50it/s]Loading images:  70%|███████   | 631/900 [00:52<00:22, 12.11it/s]Loading images:  83%|████████▎ | 747/900 [01:03<00:13, 11.53it/s]Loading images:  97%|█████████▋| 871/900 [01:13<00:02, 11.77it/s]Loading images: 100%|██████████| 900/900 [01:16<00:00, 11.76it/s]
+[ ParityAligningDataset ] 900 episodes, 168274 windows (horizon=8, traj_dim=9)
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /data/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+[ VisualUNetTwoTime ] MultiImageObsEncoder initialized — LATENT_DIM=128, imagenet_norm=True, share_rgb_model=False
+[ VisualUNetTwoTime ] vis_pretrained=False  (random init — pre-U9 behaviour)
+[ AFTrajectoryModel ] backbone=unet  vision=True  unet_width(freq_dim)=32  params=26.4M
+[ eval loading ] ERROR: --epoch latest found NO numeric state_<step>.pt in
+    logs/aligning-d3il-visual/mix_visual_aligning_af/H8_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Eaf_tslogit_normal_afschsigmoid/6
+  present: ['state_best.pt']
+  The periodic saves are missing, not the checkpoint: state_best.pt alone
+  cannot answer 'latest'. Either re-run with --epoch best / MIX_EPOCH=best
+  (⚠ on the af arm that deploys a MID-CURRICULUM model — see U12), or
+  retrain with MIX_SAVE_EVERY set so periodic checkpoints land on disk.

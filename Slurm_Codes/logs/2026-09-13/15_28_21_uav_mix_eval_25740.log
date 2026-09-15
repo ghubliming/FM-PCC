@@ -1,0 +1,91 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+[ U9 ] variant subset = diffuser,dpcc-t-bounds_free,hardflow_new
+[ U11 ] geo variants = corridor_v2_slide
+[ U6 ] checkpoint   = best (default; no _EP fragment)
+================================================================================
+JOB START: Sun Sep 13 13:28:22 UTC 2026  |  uav_mix_eval  |  ID 25740  |  NODE i6-gpu-1
+ENGINE: mf   SCENE: corridor   SEEDS: 6   N_TRIALS: 2   K: 3
+FIX_16:  SAFE_EPS_MODE=scaled  SAFE_EPS_FRAC=1.0  EVAL_TAG=u7hg
+GIT REV:   074152e3
+================================================================================
+[ env-select ] config/uav.py controller='pid_stopgo' -> conda env 'FMPCC'
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=0  MUJOCO_EGL_DEVICE_ID=0
+--------------------------------------------------------------------------------
+[ uav_mix_eval ] seed 1/1: engine=mf scene=corridor seed=6  Sun Sep 13 13:28:22 UTC 2026
+[ uav_mix_eval ] python mix_uav_test/eval_mix_uav.py --engine mf --scene corridor --seed 6 --n-trials 2 --projection fm_only --record gif --flow-steps 3
+[ eval ] Gen15 UAV Mix-ML — engine: mf  (MeanFlow (Gen3v6, arXiv 2505.13447))
+[ eval ] checkpoint selector = 'best'  (config default; no _EP fragment)
+[ eval ] K override from --flow-steps: 3
+[ eval ] seed=6  (source: --seed CLI)
+[ eval ] n_trials=2  (source: --n-trials CLI)
+[ eval ] HardFlow arm: +7 variants ['hardflow_new', 'hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t', 'hardflow_new-r-geo_free', 'hardflow_new-c-geo_free', 'hardflow_new-t-geo_free'] (from config/uav_mix.py, NOT the shared yaml)
+[ eval ] UAV_MIX_VARIANTS -> running 3/18 variants: ['diffuser', 'dpcc-t-bounds_free', 'hardflow_new']
+[ eval ]   dropped 15: ['dpcc-r', 'dpcc-r-tightened', 'dpcc-c', 'dpcc-c-tightened', 'dpcc-t', 'dpcc-t-tightened', 'dpcc-r-geo_free', 'dpcc-c-geo_free', 'dpcc-t-geo_free', 'hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t', 'hardflow_new-r-geo_free', 'hardflow_new-c-geo_free', 'hardflow_new-t-geo_free']
+
+[ utils/serialization ] Loading model from logs/UAV_MIX/uav-corridor/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/6
+
+[ utils/normalization ] Constant data in actions[1] | max = min = 0.0 → Fix_16 widened by eps=2.188e-02 (mode=scaled). unnormalize scale for this channel = 2.188e-02 data-units per unit output.
+[ utils/normalization ] Constant data in actions[2] | max = min = 0.0 → Fix_16 widened by eps=2.188e-02 (mode=scaled). unnormalize scale for this channel = 2.188e-02 data-units per unit output.
+[ utils/normalization ] ⚠ Fix_16: ALL dimensions constant — no reference scale; falling back to eps=1.0.
+[ utils/normalization ] Constant data in rewards[0] | max = min = 0.0 → Fix_16 widened by eps=1.000e+00 (mode=scaled). unnormalize scale for this channel = 1.000e+00 data-units per unit output.
+[ datasets/buffer ] Fields:
+    observations: (500, 360, 6)
+    actions: (500, 360, 3)
+    rewards: (500, 360, 1)
+    terminals: (500, 360, 1)
+    normed_observations: (500, 360, 6)
+    normed_actions: (500, 360, 3)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=2.512e-08)
+[ utils/training ] Restored loss history from checkpoint at step 99000
+[ eval ] checkpoint = state_best.pt  (trained to step 99000)
+[ eval ] ml bone = unet  (U6 default is 'unet', the 4.0 M arm matched to fm/mf; 'sit' is ~9.4 M and NOT parameter-matched)
+[ eval ] engine=mf  NFE budget K=3 pinned on the loaded model (flow_steps_v3 / ode_inference_steps_v3)
+[ U11 ] geo variants for 'corridor': ['corridor_v2_slide']  (env UAV_MIX_GEO_VARIANTS)
+[ eval ] E9 geo 'corridor' ← variant 'corridor_v2_slide': constraint_types=['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds'] (bounds=True, hs=3, obs=4)
+[ U16 ] geo entry 'corridor_v2_slide': MuJoCo scene /data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/quadrotor/scenes/scene_corridor_v2.xml (dataset/model/routes still 'corridor'); walls: wall_y_neg y=-1.00 half=0.05, wall_y_pos y=+1.00 half=0.05
+[ eval ] cond_mode=pos_only  (source: train checkpoint args)
+[ eval ] corridor [geo_tag=corridor_cv2s_bounds+dynamics+geo_bounds+halfspace+obstacles]: variants=['diffuser', 'dpcc-t-bounds_free', 'hardflow_new']  constraints=['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds']  batch_size=4
+[ eval ] WARNING corridor homotopy=L: expert route violates the PLANNING constraint set at 27/200 samples (total penetration 3.35 m·samples, margin 0.31 m) — the projector will fight the trained behavior; check geometry/inflation in config/uav_projection.yaml (Fix_12).
+[ eval ] WARNING corridor homotopy=C: expert route violates the PLANNING constraint set at 38/200 samples (total penetration 7.14 m·samples, margin 0.31 m) — the projector will fight the trained behavior; check geometry/inflation in config/uav_projection.yaml (Fix_12).
+[ eval ] WARNING corridor homotopy=R: expert route violates the PLANNING constraint set at 49/200 samples (total penetration 12.22 m·samples, margin 0.31 m) — the projector will fight the trained behavior; check geometry/inflation in config/uav_projection.yaml (Fix_12).
+[ eval ] corridor [geo_tag=corridor_cv2s_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 1/3: 'diffuser'  (n_trials=2)
+[ provenance ] wrote logs/UAV_MIX/uav-corridor/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K3_mpc4_pid_stopgo_T0.5_u7hg/6/run_provenance_2.json
+[ geo ] Constraint overview → logs/UAV_MIX/uav-corridor/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K3_mpc4_pid_stopgo_T0.5_u7hg/6/corridor_cv2s_bounds+dynamics+geo_bounds+halfspace+obstacles/constraint_overview.png (+ .svg)
+[ eval ] corridor variant=diffuser: max_episode_length=396 (U_13 fixed budget; source: SCENE default)
+[ utils/normalization ] ⚠ Fix_16: sample out of range on observations — clipping to [-1,1] | (-1.0250, 0.0479). Further occurrences silent; see `_clip_events` / `_clip_max`.
+[ utils/normalization ] ⚠ Fix_16: sample out of range on actions — clipping to [-1,1] | (-0.0251, 1.0092). Further occurrences silent; see `_clip_events` / `_clip_max`.
+[ eval ] corridor variant=diffuser: trial 1/2 done  (12.2s elapsed this variant, ~12.2s to go)
+[ eval ] corridor variant=diffuser: trial 2/2 done  (23.8s elapsed this variant, ~0.0s to go)
+[ eval ] corridor variant=diffuser (B=4, proj=off, sel=random): success=1.000  success_relaxed=1.000  safe=1.000  goal_reached=1.000  steps_to_goal=270/396  track_err=0.506  → logs/UAV_MIX/uav-corridor/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K3_mpc4_pid_stopgo_T0.5_u7hg/6/corridor_cv2s_bounds+dynamics+geo_bounds+halfspace+obstacles/diffuser/
+[ eval ] corridor variant=diffuser TIMING: fm_ms=28.1 proj_ms=0.0 total_ms=28.1 (p95=29.6) budget=30.3ms → real_time_OVER×11
+[ eval ] corridor [geo_tag=corridor_cv2s_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 2/3: 'dpcc-t-bounds_free'  (n_trials=2)
+[ eval ] UAV: overriding model_fm.goal_dim 1 → 0 (false-positive constant channel; UAV has no goal dims)
+[ eval ] Fix_16 DEGENERATE actions[1]: constant in the expert data — no training signal for this channel. Widened by eps=2.188e-02; a saturated model output on it commands +/-2.188e-02 data-units/step.
+[ eval ] Fix_16 DEGENERATE actions[2]: constant in the expert data — no training signal for this channel. Widened by eps=2.188e-02; a saturated model output on it commands +/-2.188e-02 data-units/step.
+[ eval ] Fix_16 projector action_bounds=auto → lb=[ 0.000124 -0.021881 -0.021881] ub=[0.043886 0.021881 0.021881]  (degenerate dims now bounded, not +/-1)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-corridor/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K3_mpc4_pid_stopgo_T0.5_u7hg/6/run_provenance_2.json
+[ eval ] corridor variant=dpcc-t-bounds_free: max_episode_length=396 (U_13 fixed budget; source: SCENE default)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ eval ] corridor variant=dpcc-t-bounds_free: trial 1/2 done  (69.9s elapsed this variant, ~69.9s to go)
+[ eval ] corridor variant=dpcc-t-bounds_free: trial 2/2 done  (140.9s elapsed this variant, ~0.0s to go)
+[ eval ] corridor variant=dpcc-t-bounds_free (B=4, proj=on, sel=temporal_consistency): success=0.000  success_relaxed=1.000  safe=1.000  goal_reached=0.000  steps_to_goal=nan/396  track_err=0.393  → logs/UAV_MIX/uav-corridor/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K3_mpc4_pid_stopgo_T0.5_u7hg/6/corridor_cv2s_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t-bounds_free/
+[ eval ] corridor variant=dpcc-t-bounds_free TIMING: fm_ms=27.6 proj_ms=126.4 total_ms=154.0 (p95=332.5) budget=30.3ms → real_time_OVER×792
+[ eval ] corridor [geo_tag=corridor_cv2s_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 3/3: 'hardflow_new'  (n_trials=2)
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=66  reg_scale=1.0
+[hardflow] engine=mf K=3 noise_sigma=1.0 two_time=True dyn=deriv A=0.5 sel=random
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-corridor/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K3_mpc4_pid_stopgo_T0.5_u7hg/6/run_provenance_2.json
+[ eval ] corridor variant=hardflow_new: max_episode_length=396 (U_13 fixed budget; source: SCENE default)
+[hardflow][THIN] K=3 A=0.5: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.33), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged SLSQP solve at tau=0.667. Keeping scipy's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Same exposure as the IPOPT path. Further failures are silent; read `nlp_failures` in the run summary for the total.
+[ eval ] corridor variant=hardflow_new: trial 1/2 done  (41.2s elapsed this variant, ~41.2s to go)
+[ eval ] corridor variant=hardflow_new: trial 2/2 done  (84.6s elapsed this variant, ~0.0s to go)
+[ eval ] corridor variant=hardflow_new (B=1, proj=off, sel=random): success=0.000  success_relaxed=1.000  safe=1.000  goal_reached=0.000  steps_to_goal=nan/396  track_err=0.401  → logs/UAV_MIX/uav-corridor/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K3_mpc4_pid_stopgo_T0.5_u7hg/6/corridor_cv2s_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_sls/
+[ eval ] corridor variant=hardflow_new TIMING: fm_ms=37.8 proj_ms=44.5 total_ms=82.3 (p95=176.5) budget=30.3ms → real_time_OVER×792
+UAV Mix-ML eval complete (engine=mf).
+Job completed successfully. Evaluated engine=mf scene=corridor for seeds=[6]
+JOB END: Sun Sep 13 13:32:39 UTC 2026

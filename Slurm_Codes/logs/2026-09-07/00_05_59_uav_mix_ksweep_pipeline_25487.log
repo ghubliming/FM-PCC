@@ -1,0 +1,17 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+[ pipeline ] UAV_MIX_BONE_AF=unet
+[ pipeline ] UAV_MIX_AF_ALPHA_END=0.2
+[ pipeline ] UAV_MIX_EPOCH=latest
+[ pipeline ] af bone = unet  (U6 default; 'sit' via UAV_MIX_BONE_AF=sit)
+================================================================================
+UAV-MIX K-SWEEP PIPELINE START: Mon Sep  7 04:21:38 UTC 2026
+  engine=af  scene=corridor  seed=6  n_trials='yaml default'
+  projection=fm_only  record=none  K list=1 2
+================================================================================
+Step 1: train submitted — Job 25494
+Step 2.1: eval scheduled (afterok:25494) K=1 — Job 25495
+Step 2.2: eval scheduled (afterok:25494) K=2 — Job 25498
+--------------------------------------------------------------------------------
+Submitted: 1 train + 2 eval job(s), all gated on train 25494
+Outputs: logs/UAV_MIX/uav-corridor/mix_uav_af/.../6/  (+ plans/ per K)
+================================================================================

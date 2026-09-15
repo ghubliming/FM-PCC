@@ -1,0 +1,181 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+[ U9 ] variant subset = diffuser,dpcc-t,dpcc-t-tightened,dpcc-t-geo_free,hardflow_new,hardflow_new-t,hardflow_new-t-geo_free
+[ U11 ] geo variants = corridor_ball_v2
+[ U6 ] checkpoint   = best (default; no _EP fragment)
+================================================================================
+JOB START: Sat Sep 12 01:27:05 UTC 2026  |  uav_mix_eval  |  ID 25672  |  NODE i6-gpu-1
+ENGINE: fm   SCENE: corridor   SEEDS: 6   N_TRIALS:    K: 5
+FIX_16:  SAFE_EPS_MODE=scaled  SAFE_EPS_FRAC=1e-3  EVAL_TAG=u7hg
+GIT REV:   a61ad544
+================================================================================
+[ env-select ] config/uav.py controller='pid_stopgo' -> conda env 'FMPCC'
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=6  MUJOCO_EGL_DEVICE_ID=6
+--------------------------------------------------------------------------------
+[ uav_mix_eval ] seed 1/1: engine=fm scene=corridor seed=6  Sat Sep 12 01:27:05 UTC 2026
+[ uav_mix_eval ] python mix_uav_test/eval_mix_uav.py --engine fm --scene corridor --seed 6  --projection fm_only --record none --flow-steps 5
+[ eval ] Gen15 UAV Mix-ML — engine: fm  (Flow Matching (Gen11 FMv3ODE))
+[ eval ] checkpoint selector = 'best'  (config default; no _EP fragment)
+[ eval ] K override from --flow-steps: 5
+[ eval ] seed=6  (source: --seed CLI)
+[ eval ] n_trials=10  (source: /data/home/llim/FMPCC/FM-PCC/config/uav_projection.yaml)
+[ eval ] HardFlow arm: +7 variants ['hardflow_new', 'hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t', 'hardflow_new-r-geo_free', 'hardflow_new-c-geo_free', 'hardflow_new-t-geo_free'] (from config/uav_mix.py, NOT the shared yaml)
+[ eval ] UAV_MIX_VARIANTS -> running 7/18 variants: ['diffuser', 'dpcc-t', 'dpcc-t-tightened', 'dpcc-t-geo_free', 'hardflow_new', 'hardflow_new-t', 'hardflow_new-t-geo_free']
+[ eval ]   dropped 11: ['dpcc-r', 'dpcc-r-tightened', 'dpcc-c', 'dpcc-c-tightened', 'dpcc-r-geo_free', 'dpcc-c-geo_free', 'dpcc-t-bounds_free', 'hardflow_new-r', 'hardflow_new-c', 'hardflow_new-r-geo_free', 'hardflow_new-c-geo_free']
+
+[ utils/serialization ] Loading model from logs/UAV_MIX/uav-corridor/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/6
+
+[ utils/normalization ] Constant data in actions[1] | max = min = 3.2014213328934726e-13 → Fix_16 widened by eps=2.188e-05 (mode=scaled). unnormalize scale for this channel = 2.188e-05 data-units per unit output.
+[ utils/normalization ] Constant data in actions[2] | max = min = 3.2014213328934726e-13 → Fix_16 widened by eps=2.188e-05 (mode=scaled). unnormalize scale for this channel = 2.188e-05 data-units per unit output.
+[ utils/normalization ] ⚠ Fix_16: ALL dimensions constant — no reference scale; falling back to eps=1.0.
+[ utils/normalization ] Constant data in rewards[0] | max = min = 0.0 → Fix_16 widened by eps=1.000e+00 (mode=scaled). unnormalize scale for this channel = 1.000e+00 data-units per unit output.
+[ datasets/buffer ] Fields:
+    observations: (500, 360, 6)
+    actions: (500, 360, 3)
+    rewards: (500, 360, 1)
+    terminals: (500, 360, 1)
+    normed_observations: (500, 360, 6)
+    normed_actions: (500, 360, 3)
+[ utils/training ] Restored loss history from checkpoint at step 94000
+[ eval ] checkpoint = state_best.pt  (trained to step 94000)
+[ eval ] engine=fm  NFE budget K=5 pinned on the loaded model (flow_steps_v3 / ode_inference_steps_v3)
+[ U11 ] geo variants for 'corridor': ['corridor_ball_v2']  (env UAV_MIX_GEO_VARIANTS)
+[ eval ] E9 geo 'corridor' ← variant 'corridor_ball_v2': constraint_types=['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds'] (bounds=True, hs=2, obs=5)
+[ eval ] cond_mode=pos_only  (source: train checkpoint args)
+[ eval ] corridor [geo_tag=corridor_hgb2_bounds+dynamics+geo_bounds+halfspace+obstacles]: variants=['diffuser', 'dpcc-t', 'dpcc-t-tightened', 'dpcc-t-geo_free', 'hardflow_new', 'hardflow_new-t', 'hardflow_new-t-geo_free']  constraints=['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds']  batch_size=4
+[ eval ] WARNING corridor homotopy=L: expert route violates the PLANNING constraint set at 18/200 samples (total penetration 3.36 m·samples, margin 0.31 m) — the projector will fight the trained behavior; check geometry/inflation in config/uav_projection.yaml (Fix_12).
+[ eval ] WARNING corridor homotopy=C: expert route violates the PLANNING constraint set at 16/200 samples (total penetration 2.26 m·samples, margin 0.31 m) — the projector will fight the trained behavior; check geometry/inflation in config/uav_projection.yaml (Fix_12).
+[ eval ] WARNING corridor homotopy=R: expert route violates the PLANNING constraint set at 18/200 samples (total penetration 2.69 m·samples, margin 0.31 m) — the projector will fight the trained behavior; check geometry/inflation in config/uav_projection.yaml (Fix_12).
+[ eval ] corridor [geo_tag=corridor_hgb2_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 1/7: 'diffuser'  (n_trials=10)
+[ provenance ] wrote logs/UAV_MIX/uav-corridor/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K5_mpc4_pid_stopgo_T0.5_u7hg/6/run_provenance_2.json
+[ geo ] Constraint overview → logs/UAV_MIX/uav-corridor/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K5_mpc4_pid_stopgo_T0.5_u7hg/6/corridor_hgb2_bounds+dynamics+geo_bounds+halfspace+obstacles/constraint_overview.png (+ .svg)
+[ eval ] corridor variant=diffuser: max_episode_length=396 (U_13 fixed budget; source: SCENE default)
+[ utils/normalization ] ⚠ Fix_16: sample out of range on observations — clipping to [-1,1] | (-1.0229, 0.0536). Further occurrences silent; see `_clip_events` / `_clip_max`.
+[ eval ] corridor variant=diffuser: trial 1/10 done  (14.0s elapsed this variant, ~125.8s to go)
+[ eval ] corridor variant=diffuser: trial 2/10 done  (27.7s elapsed this variant, ~110.7s to go)
+[ eval ] corridor variant=diffuser: trial 3/10 done  (41.0s elapsed this variant, ~95.7s to go)
+[ eval ] corridor variant=diffuser: trial 4/10 done  (54.9s elapsed this variant, ~82.4s to go)
+[ eval ] corridor variant=diffuser: trial 5/10 done  (68.7s elapsed this variant, ~68.7s to go)
+[ eval ] corridor variant=diffuser: trial 6/10 done  (82.4s elapsed this variant, ~54.9s to go)
+[ eval ] corridor variant=diffuser: trial 7/10 done  (95.9s elapsed this variant, ~41.1s to go)
+[ eval ] corridor variant=diffuser: trial 8/10 done  (109.7s elapsed this variant, ~27.4s to go)
+[ eval ] corridor variant=diffuser: trial 9/10 done  (123.4s elapsed this variant, ~13.7s to go)
+[ eval ] corridor variant=diffuser: trial 10/10 done  (136.9s elapsed this variant, ~0.0s to go)
+[ eval ] corridor variant=diffuser (B=4, proj=off, sel=random): success=1.000  success_relaxed=1.000  safe=1.000  goal_reached=1.000  steps_to_goal=272/396  track_err=0.502  → logs/UAV_MIX/uav-corridor/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K5_mpc4_pid_stopgo_T0.5_u7hg/6/corridor_hgb2_bounds+dynamics+geo_bounds+halfspace+obstacles/diffuser/
+[ eval ] corridor variant=diffuser TIMING: fm_ms=43.6 proj_ms=0.0 total_ms=43.6 (p95=45.1) budget=30.3ms → real_time_OVER×2717
+[ eval ] corridor [geo_tag=corridor_hgb2_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 2/7: 'dpcc-t'  (n_trials=10)
+[ eval ] UAV: overriding model_fm.goal_dim 1 → 0 (false-positive constant channel; UAV has no goal dims)
+[ eval ] Fix_16 DEGENERATE actions[1]: constant in the expert data — no training signal for this channel. Widened by eps=2.188e-05; a saturated model output on it commands +/-2.188e-05 data-units/step.
+[ eval ] Fix_16 DEGENERATE actions[2]: constant in the expert data — no training signal for this channel. Widened by eps=2.188e-05; a saturated model output on it commands +/-2.188e-05 data-units/step.
+[ eval ] Fix_16 projector action_bounds=auto → lb=[ 1.24e-04 -2.20e-05 -2.20e-05] ub=[4.3886e-02 2.2000e-05 2.2000e-05]  (degenerate dims now bounded, not +/-1)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-corridor/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K5_mpc4_pid_stopgo_T0.5_u7hg/6/run_provenance_2.json
+[ eval ] corridor variant=dpcc-t: max_episode_length=396 (U_13 fixed budget; source: SCENE default)
+[ utils/normalization ] ⚠ Fix_16: sample out of range on actions — clipping to [-1,1] | (-0.4754, 1.0198). Further occurrences silent; see `_clip_events` / `_clip_max`.
+[ eval ] corridor variant=dpcc-t: trial 1/10 done  (149.7s elapsed this variant, ~1347.6s to go)
+[ eval ] corridor variant=dpcc-t: trial 2/10 done  (284.0s elapsed this variant, ~1136.0s to go)
+[ eval ] corridor variant=dpcc-t: trial 3/10 done  (431.6s elapsed this variant, ~1007.1s to go)
+[ eval ] corridor variant=dpcc-t: trial 4/10 done  (578.8s elapsed this variant, ~868.3s to go)
+[ eval ] corridor variant=dpcc-t: trial 5/10 done  (721.3s elapsed this variant, ~721.3s to go)
+[ eval ] corridor variant=dpcc-t: trial 6/10 done  (868.6s elapsed this variant, ~579.1s to go)
+[ eval ] corridor variant=dpcc-t: trial 7/10 done  (1012.4s elapsed this variant, ~433.9s to go)
+[ eval ] corridor variant=dpcc-t: trial 8/10 done  (1163.8s elapsed this variant, ~290.9s to go)
+[ eval ] corridor variant=dpcc-t: trial 9/10 done  (1328.8s elapsed this variant, ~147.6s to go)
+[ eval ] corridor variant=dpcc-t: trial 10/10 done  (1476.6s elapsed this variant, ~0.0s to go)
+[ eval ] corridor variant=dpcc-t (B=4, proj=on, sel=temporal_consistency): success=1.000  success_relaxed=1.000  safe=1.000  goal_reached=1.000  steps_to_goal=246/396  track_err=0.555  → logs/UAV_MIX/uav-corridor/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K5_mpc4_pid_stopgo_T0.5_u7hg/6/corridor_hgb2_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t/
+[ eval ] corridor variant=dpcc-t TIMING: fm_ms=43.7 proj_ms=538.7 total_ms=582.4 (p95=2047.0) budget=30.3ms → real_time_OVER×2460
+[ eval ] corridor [geo_tag=corridor_hgb2_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 3/7: 'dpcc-t-tightened'  (n_trials=10)
+[ eval ] Fix_16 DEGENERATE actions[1]: constant in the expert data — no training signal for this channel. Widened by eps=2.188e-05; a saturated model output on it commands +/-2.188e-05 data-units/step.
+[ eval ] Fix_16 DEGENERATE actions[2]: constant in the expert data — no training signal for this channel. Widened by eps=2.188e-05; a saturated model output on it commands +/-2.188e-05 data-units/step.
+[ eval ] Fix_16 projector action_bounds=auto → lb=[ 1.24e-04 -2.20e-05 -2.20e-05] ub=[4.3886e-02 2.2000e-05 2.2000e-05]  (degenerate dims now bounded, not +/-1)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-corridor/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K5_mpc4_pid_stopgo_T0.5_u7hg/6/run_provenance_2.json
+[ geo ] Constraint overview → logs/UAV_MIX/uav-corridor/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K5_mpc4_pid_stopgo_T0.5_u7hg/6/corridor_hgb2_bounds+dynamics+geo_bounds+halfspace+obstacles/constraint_overview_tightened.png (+ .svg)
+[ eval ] corridor variant=dpcc-t-tightened: max_episode_length=396 (U_13 fixed budget; source: SCENE default)
+[ eval ] corridor variant=dpcc-t-tightened: trial 1/10 done  (273.8s elapsed this variant, ~2464.0s to go)
+[ eval ] corridor variant=dpcc-t-tightened: trial 2/10 done  (408.9s elapsed this variant, ~1635.8s to go)
+[ eval ] corridor variant=dpcc-t-tightened: trial 3/10 done  (714.7s elapsed this variant, ~1667.7s to go)
+[ eval ] corridor variant=dpcc-t-tightened: trial 4/10 done  (1009.8s elapsed this variant, ~1514.6s to go)
+[ eval ] corridor variant=dpcc-t-tightened: trial 5/10 done  (1177.4s elapsed this variant, ~1177.4s to go)
+[ eval ] corridor variant=dpcc-t-tightened: trial 6/10 done  (1501.6s elapsed this variant, ~1001.1s to go)
+[ eval ] corridor variant=dpcc-t-tightened: trial 7/10 done  (1829.9s elapsed this variant, ~784.2s to go)
+[ eval ] corridor variant=dpcc-t-tightened: trial 8/10 done  (1968.7s elapsed this variant, ~492.2s to go)
+[ eval ] corridor variant=dpcc-t-tightened: trial 9/10 done  (2292.1s elapsed this variant, ~254.7s to go)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ eval ] corridor variant=dpcc-t-tightened: trial 10/10 done  (2545.4s elapsed this variant, ~0.0s to go)
+[ eval ] corridor variant=dpcc-t-tightened (B=4, proj=on, sel=temporal_consistency): success=1.000  success_relaxed=1.000  safe=1.000  goal_reached=1.000  steps_to_goal=234/396  track_err=0.586  → logs/UAV_MIX/uav-corridor/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K5_mpc4_pid_stopgo_T0.5_u7hg/6/corridor_hgb2_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t-tightened/
+[ eval ] corridor variant=dpcc-t-tightened TIMING: fm_ms=43.8 proj_ms=1042.7 total_ms=1086.5 (p95=6629.1) budget=30.3ms → real_time_OVER×2338
+[ eval ] corridor [geo_tag=corridor_hgb2_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 4/7: 'dpcc-t-geo_free'  (n_trials=10)
+[ eval ] Fix_16 DEGENERATE actions[1]: constant in the expert data — no training signal for this channel. Widened by eps=2.188e-05; a saturated model output on it commands +/-2.188e-05 data-units/step.
+[ eval ] Fix_16 DEGENERATE actions[2]: constant in the expert data — no training signal for this channel. Widened by eps=2.188e-05; a saturated model output on it commands +/-2.188e-05 data-units/step.
+[ eval ] Fix_16 projector action_bounds=auto → lb=[ 1.24e-04 -2.20e-05 -2.20e-05] ub=[4.3886e-02 2.2000e-05 2.2000e-05]  (degenerate dims now bounded, not +/-1)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-corridor/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K5_mpc4_pid_stopgo_T0.5_u7hg/6/run_provenance_2.json
+[ eval ] corridor variant=dpcc-t-geo_free: max_episode_length=396 (U_13 fixed budget; source: SCENE default)
+[ eval ] corridor variant=dpcc-t-geo_free: trial 1/10 done  (23.0s elapsed this variant, ~206.9s to go)
+[ eval ] corridor variant=dpcc-t-geo_free: trial 2/10 done  (46.2s elapsed this variant, ~184.9s to go)
+[ eval ] corridor variant=dpcc-t-geo_free: trial 3/10 done  (69.9s elapsed this variant, ~163.2s to go)
+[ eval ] corridor variant=dpcc-t-geo_free: trial 4/10 done  (93.1s elapsed this variant, ~139.6s to go)
+[ eval ] corridor variant=dpcc-t-geo_free: trial 5/10 done  (116.7s elapsed this variant, ~116.7s to go)
+[ eval ] corridor variant=dpcc-t-geo_free: trial 6/10 done  (139.6s elapsed this variant, ~93.0s to go)
+[ eval ] corridor variant=dpcc-t-geo_free: trial 7/10 done  (161.6s elapsed this variant, ~69.2s to go)
+[ eval ] corridor variant=dpcc-t-geo_free: trial 8/10 done  (185.2s elapsed this variant, ~46.3s to go)
+[ eval ] corridor variant=dpcc-t-geo_free: trial 9/10 done  (208.9s elapsed this variant, ~23.2s to go)
+[ eval ] corridor variant=dpcc-t-geo_free: trial 10/10 done  (231.9s elapsed this variant, ~0.0s to go)
+[ eval ] corridor variant=dpcc-t-geo_free (B=4, proj=on, sel=temporal_consistency): success=1.000  success_relaxed=1.000  safe=1.000  goal_reached=1.000  steps_to_goal=256/396  track_err=0.534  → logs/UAV_MIX/uav-corridor/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K5_mpc4_pid_stopgo_T0.5_u7hg/6/corridor_hgb2_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t-geo_free/
+[ eval ] corridor variant=dpcc-t-geo_free TIMING: fm_ms=43.5 proj_ms=33.6 total_ms=77.1 (p95=77.6) budget=30.3ms → real_time_OVER×2558
+[ eval ] corridor [geo_tag=corridor_hgb2_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 5/7: 'hardflow_new'  (n_trials=10)
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=66  reg_scale=1.0
+[hardflow] engine=fm K=5 noise_sigma=0.5 two_time=False dyn=deriv A=0.5 sel=random
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-corridor/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K5_mpc4_pid_stopgo_T0.5_u7hg/6/run_provenance_2.json
+[ eval ] corridor variant=hardflow_new: max_episode_length=396 (U_13 fixed budget; source: SCENE default)
+[hardflow][NLP-FAILURE] first non-converged SLSQP solve at tau=0.600. Keeping scipy's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Same exposure as the IPOPT path. Further failures are silent; read `nlp_failures` in the run summary for the total.
+[ eval ] corridor variant=hardflow_new: trial 1/10 done  (37.4s elapsed this variant, ~336.4s to go)
+[ eval ] corridor variant=hardflow_new: trial 2/10 done  (75.3s elapsed this variant, ~301.1s to go)
+[ eval ] corridor variant=hardflow_new: trial 3/10 done  (114.2s elapsed this variant, ~266.4s to go)
+[ eval ] corridor variant=hardflow_new: trial 4/10 done  (151.3s elapsed this variant, ~227.0s to go)
+[ eval ] corridor variant=hardflow_new: trial 5/10 done  (189.6s elapsed this variant, ~189.6s to go)
+[ eval ] corridor variant=hardflow_new: trial 6/10 done  (228.2s elapsed this variant, ~152.1s to go)
+[ eval ] corridor variant=hardflow_new: trial 7/10 done  (267.0s elapsed this variant, ~114.4s to go)
+[ eval ] corridor variant=hardflow_new: trial 8/10 done  (304.7s elapsed this variant, ~76.2s to go)
+[ eval ] corridor variant=hardflow_new: trial 9/10 done  (341.0s elapsed this variant, ~37.9s to go)
+[ eval ] corridor variant=hardflow_new: trial 10/10 done  (378.5s elapsed this variant, ~0.0s to go)
+[ eval ] corridor variant=hardflow_new (B=1, proj=off, sel=random): success=1.000  success_relaxed=1.000  safe=1.000  goal_reached=1.000  steps_to_goal=265/396  track_err=0.517  → logs/UAV_MIX/uav-corridor/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K5_mpc4_pid_stopgo_T0.5_u7hg/6/corridor_hgb2_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_sls/
+[ eval ] corridor variant=hardflow_new TIMING: fm_ms=61.9 proj_ms=65.2 total_ms=127.2 (p95=450.3) budget=30.3ms → real_time_OVER×2653
+[ eval ] corridor [geo_tag=corridor_hgb2_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 6/7: 'hardflow_new-t'  (n_trials=10)
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=66  reg_scale=1.0
+[hardflow] engine=fm K=5 noise_sigma=0.5 two_time=False dyn=deriv A=0.5 sel=temporal_consistency
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-corridor/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K5_mpc4_pid_stopgo_T0.5_u7hg/6/run_provenance_2.json
+[ eval ] corridor variant=hardflow_new-t: max_episode_length=396 (U_13 fixed budget; source: SCENE default)
+[hardflow][NLP-FAILURE] first non-converged SLSQP solve at tau=0.600. Keeping scipy's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Same exposure as the IPOPT path. Further failures are silent; read `nlp_failures` in the run summary for the total.
+[ eval ] corridor variant=hardflow_new-t: trial 1/10 done  (90.6s elapsed this variant, ~815.6s to go)
+[ eval ] corridor variant=hardflow_new-t: trial 2/10 done  (179.8s elapsed this variant, ~719.2s to go)
+[ eval ] corridor variant=hardflow_new-t: trial 3/10 done  (268.1s elapsed this variant, ~625.5s to go)
+[ eval ] corridor variant=hardflow_new-t: trial 4/10 done  (359.4s elapsed this variant, ~539.1s to go)
+[ eval ] corridor variant=hardflow_new-t: trial 5/10 done  (455.4s elapsed this variant, ~455.4s to go)
+[ eval ] corridor variant=hardflow_new-t: trial 6/10 done  (565.4s elapsed this variant, ~376.9s to go)
+[ eval ] corridor variant=hardflow_new-t: trial 7/10 done  (667.6s elapsed this variant, ~286.1s to go)
+[ eval ] corridor variant=hardflow_new-t: trial 8/10 done  (753.7s elapsed this variant, ~188.4s to go)
+[ eval ] corridor variant=hardflow_new-t: trial 9/10 done  (847.4s elapsed this variant, ~94.2s to go)
+[ eval ] corridor variant=hardflow_new-t: trial 10/10 done  (934.8s elapsed this variant, ~0.0s to go)
+[ eval ] corridor variant=hardflow_new-t (B=4, proj=off, sel=temporal_consistency): success=1.000  success_relaxed=1.000  safe=1.000  goal_reached=1.000  steps_to_goal=258/396  track_err=0.530  → logs/UAV_MIX/uav-corridor/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K5_mpc4_pid_stopgo_T0.5_u7hg/6/corridor_hgb2_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_sls-t/
+[ eval ] corridor variant=hardflow_new-t TIMING: fm_ms=63.6 proj_ms=282.1 total_ms=345.7 (p95=1994.7) budget=30.3ms → real_time_OVER×2581
+[ eval ] corridor [geo_tag=corridor_hgb2_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 7/7: 'hardflow_new-t-geo_free'  (n_trials=10)
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=66  reg_scale=1.0
+[hardflow] engine=fm K=5 noise_sigma=0.5 two_time=False dyn=deriv A=0.5 sel=temporal_consistency
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-corridor/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K5_mpc4_pid_stopgo_T0.5_u7hg/6/run_provenance_2.json
+[ eval ] corridor variant=hardflow_new-t-geo_free: max_episode_length=396 (U_13 fixed budget; source: SCENE default)
+[ eval ] corridor variant=hardflow_new-t-geo_free: trial 1/10 done  (29.1s elapsed this variant, ~261.6s to go)
+[ eval ] corridor variant=hardflow_new-t-geo_free: trial 2/10 done  (58.8s elapsed this variant, ~235.4s to go)
+[ eval ] corridor variant=hardflow_new-t-geo_free: trial 3/10 done  (88.0s elapsed this variant, ~205.4s to go)
+[ eval ] corridor variant=hardflow_new-t-geo_free: trial 4/10 done  (118.6s elapsed this variant, ~178.0s to go)
+[ eval ] corridor variant=hardflow_new-t-geo_free: trial 5/10 done  (150.2s elapsed this variant, ~150.2s to go)
+[ eval ] corridor variant=hardflow_new-t-geo_free: trial 6/10 done  (178.2s elapsed this variant, ~118.8s to go)
+[ eval ] corridor variant=hardflow_new-t-geo_free: trial 7/10 done  (205.8s elapsed this variant, ~88.2s to go)
+[ eval ] corridor variant=hardflow_new-t-geo_free: trial 8/10 done  (236.4s elapsed this variant, ~59.1s to go)
+[ eval ] corridor variant=hardflow_new-t-geo_free: trial 9/10 done  (265.7s elapsed this variant, ~29.5s to go)
+[ eval ] corridor variant=hardflow_new-t-geo_free: trial 10/10 done  (295.3s elapsed this variant, ~0.0s to go)
+[ eval ] corridor variant=hardflow_new-t-geo_free (B=4, proj=off, sel=temporal_consistency): success=1.000  success_relaxed=1.000  safe=1.000  goal_reached=1.000  steps_to_goal=265/396  track_err=0.515  → logs/UAV_MIX/uav-corridor/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K5_mpc4_pid_stopgo_T0.5_u7hg/6/corridor_hgb2_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_sls-t-geo_free/
+[ eval ] corridor variant=hardflow_new-t-geo_free TIMING: fm_ms=63.1 proj_ms=34.8 total_ms=98.0 (p95=98.4) budget=30.3ms → real_time_OVER×2651
+UAV Mix-ML eval complete (engine=fm).
+Job completed successfully. Evaluated engine=fm scene=corridor for seeds=[6]
+JOB END: Sat Sep 12 03:07:14 UTC 2026

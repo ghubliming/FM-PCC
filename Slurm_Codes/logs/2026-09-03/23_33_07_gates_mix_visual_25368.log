@@ -1,0 +1,164 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Thu Sep  3 21:33:09 UTC 2026
+JOB NAME:  gates_mix_visual
+JOB ID:    25368
+NODE:      i6-gpu-1
+GPU INFO:
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+NVIDIA RTX A5000, 530.41.03, 24564 MiB
+GIT REV:   ba05cb7
+================================================================================
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=5  MUJOCO_EGL_DEVICE_ID=5
+[ gates ] running: static
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=ResNet18_Weights.IMAGENET1K_V1`. You can also use `weights=ResNet18_Weights.DEFAULT` to get the most up-to-date weights.
+  warnings.warn(msg)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
+  warnings.warn(msg)
+
+=== G-B1: cond_dim=0 leaves every bone unchanged ===
+  ok   MFDiTOfficialTrajectory: 47 params state-only; +3 visual (['vis_projector.bias', 'vis_projector.weight', 'vis_token']), grew=['pos_embed']
+  ok   AFSiTTrajectory: 39 params state-only; +3 visual (['vis_projector.bias', 'vis_projector.weight', 'vis_token']), grew=['pos_embed']
+  ok   MFDiTTrajectory: 82 params state-only; +3 visual (['vis_projector.linear.bias', 'vis_projector.linear.weight', 'vis_tokens']), grew=[]
+  ok   AFDiTTrajectory: 82 params state-only; +3 visual (['vis_projector.linear.bias', 'vis_projector.linear.weight', 'vis_tokens']), grew=[]
+  G-B1 PASS
+
+=== G-B6: prefix / pos-embed bookkeeping ===
+  ok   MFDiTOfficialTrajectory cond_dim=0: shapes clean, out=(2, 8, 9)
+  ok   MFDiTOfficialTrajectory cond_dim=128: shapes clean, out=(2, 8, 9)
+  ok   AFSiTTrajectory cond_dim=0: shapes clean, out=(2, 8, 9)
+  ok   AFSiTTrajectory cond_dim=128: shapes clean, out=(2, 8, 9)
+  ok   MFDiTTrajectory cond_dim=0: shapes clean, out=(2, 8, 9)
+  ok   MFDiTTrajectory cond_dim=128: shapes clean, out=(2, 8, 9)
+  ok   AFDiTTrajectory cond_dim=0: shapes clean, out=(2, 8, 9)
+  ok   AFDiTTrajectory cond_dim=128: shapes clean, out=(2, 8, 9)
+  G-B6 PASS
+
+=== G-B7: bone is a checkpoint-path key ===
+  ok   unet block omits ml_bone (pre-U8 paths preserved)
+  ok   film_mode absent from the DiT block
+  ok   unet block keeps film_mode='v1'
+  ok   distinct exp_name templates (bone fragment present)
+  G-B7 PASS
+
+=== G-B8: encoder spec identical across the two-time wrappers ===
+  ok   both wrappers: '_target_': 'agents.models.vision.model_getter.get_resnet', 'input_shape': [3, 96, 96], 'output_size': 64, 'pretrained': _vis_pretrained,
+
+  G-B8 PASS
+
+=== G-B11: pretrained weights actually loaded ===
+ROBOMIMIC WARNING(
+    No private macro file found!
+    It is recommended to use a private macro file
+    To setup, run: python /data/home/llim/FMPCC/FM-PCC/d3il/agents/models/robomimic/scripts/setup_macros.py
+)
+  ok   pretrained=True is seed-independent (120 tensors) -> weights came from a file, not the RNG
+  ok   pretrained=False IS seed-dependent -> the control is meaningful (a passing test above is not vacuous)
+  ok   pretrained and random trunks differ (max |dw| = 1.2718e+01)
+
+  G-B11 PASS
+
+=== G-B12: MIX_EPOCH is a results-path key, never a checkpoint key ===
+  ok   'diffusion_epoch_tag' registered LAST on the plan watch list
+  ok   epoch keys absent from the training watch list
+  ok   diffusion: ckpt path frozen; results 'Diffusion_VTrue_mpc4_filmv1_Ediffusion' + '_EPlatest'
+  ok   fm: ckpt path frozen; results 'sualFlowMatching_VTrue_mpc4_filmv1_Efm' + '_EPlatest'
+  ok   mf: ckpt path frozen; results 'n.VisualMeanFlow_VTrue_mpc4_filmv1_Emf' + '_EPlatest'
+  ok   af: ckpt path frozen; results '.VisualAlphaFlow_VTrue_mpc4_filmv1_Eaf' + '_EPlatest'
+  ok   explicit 'best' emits no fragment
+  ok   malformed selectors rejected at config time, not at torch.load time
+
+  G-B12 PASS
+
+=== G0: copy fidelity ===
+  ok   mix_visual_aligning/models/helpers.py
+  ok   mix_visual_aligning/models/unet1d_temporal_cond.py
+  ok   mix_visual_aligning/models/unet1d_temporal_film.py
+  ok   mix_visual_aligning/models/visual_unet.py
+  ok   mix_visual_aligning/models/fm_diffusion.py
+  ok   mix_visual_aligning/datasets/sequence.py
+  ok   mix_visual_aligning/datasets/normalization.py
+  ok   mix_visual_aligning/utils/arrays.py
+  ok   mix_visual_aligning/utils/serialization.py
+  ok   mix_visual_aligning/utils/setup.py
+  ok   mix_visual_aligning/utils/config.py
+  ok   mix_visual_aligning/models/diffusion.py
+  ok   mix_visual_aligning/models/visual_gaussian_diffusion.py
+  ok   mix_visual_aligning/models/mf_diffusion.py
+  ok   mix_visual_aligning/models/mlp.py
+  ok   mix_visual_aligning/models/af_diffusion.py
+
+  grafted, additive-only (U8 bones, 7 files):
+    ok   mix_visual_aligning/models/mf_dit_trajectory.py  <- Gen3v6 + U8 cond_dim visual PREFIX TOKEN (RoPE bone)  (+46 lines, -4)
+    ok   mix_visual_aligning/models/mf_dit_official_trajectory.py  <- Gen3v6 + U8 cond_dim visual token prepended before pos_embed (adaLN bone)  (+92 lines, -3)
+    ok   mix_visual_aligning/models/af_dit_trajectory.py  <- Gen3v7 + U8 cond_dim visual PREFIX TOKEN (RoPE bone, same graft as mf)  (+46 lines, -4)
+    ok   mix_visual_aligning/models/af_sit_trajectory.py  <- Gen3v7 + U8 cond_dim visual token; pos_embed stays frozen sincos (SiT fidelity)  (+86 lines, -3)
+    ok   mix_visual_aligning/utils/training.py  <- Gen7 + Fix_10 save_freq knob and atomic checkpoint writes  (+62 lines, -3)
+    ok   mix_visual_aligning/utils/training_twotime.py  <- Gen3v7 + Fix_10 save_freq knob and atomic checkpoint writes  (+132 lines, -3)
+    ok   mix_visual_aligning/sampling/projection.py  <- Gen7 + SolverSwap last_solve_success telemetry (additive, behaviour-neutral)  (+18 lines, -0)
+
+  grafted (diff expected, 5 files):
+    ok   mix_visual_aligning/models/unet1d_twotime_cond.py  <- Gen3v6 Flow_matcher_U_Net_v2 + Gen7 cond_mlp block (2 additive hunks)
+    ok   mix_visual_aligning/models/mf_trajectory_model.py  <- Gen3v6 + if_vision/vis_config visual branch
+    ok   mix_visual_aligning/models/af_trajectory_model.py  <- Gen3v7 + if_vision/vis_config visual branch (same graft, copied)
+    ok   mix_visual_aligning/models/mf_engine.py  <- Gen3v6 + if_vision/vis_config passthrough
+    ok   mix_visual_aligning/models/af_engine.py  <- Gen3v7 + if_vision/vis_config passthrough
+  new (6 files):
+    ok   mix_visual_aligning/models/engine_registry.py
+    ok   mix_visual_aligning/models/visual_unet_twotime.py
+    ok   mix_visual_aligning/models/unet1d_twotime_film.py
+    ok   mix_visual_aligning/models/visual_mf_diffusion.py
+    ok   mix_visual_aligning/models/visual_af_diffusion.py
+    ok   mix_visual_aligning/models/__init__.py
+
+  G0 PASS — 16 verbatim files match their sources.
+
+=== G1: reference-arm wiring ===
+  ok   diffusion: Diffusion / DDPM (Gen6V4)
+  ok   fm: Flow Matching ODE (Gen7)
+  ok   mf: MeanFlow (Gen3v6)
+  ok   af: alpha-Flow (Gen3v7)
+  G1 PASS
+
+=== G4: alpha spans the real budget ===
+  step       0 -> alpha 1.0000
+  step   25000 -> alpha 1.0000
+  step   50000 -> alpha 0.5000
+  step   75000 -> alpha 0.0000
+  step  100000 -> alpha 0.0000
+  G4 PASS
+
+=== G6: projector fires at K=1 (RUNTIME) ===
+  threshold = 0.5 (from config/visual_aligning_eval.yaml — the deployed value)
+  building state-only (if_vision=False) models on cpu: no vision encoder needed
+
+[ MFTrajectoryModel ] backbone=unet  vision=False  unet_width(freq_dim)=32  params=4.0M
+  ok   mf: project() called 1x at K=1
+[ AFTrajectoryModel ] backbone=unet  vision=False  unet_width(freq_dim)=32  params=4.0M
+  ok   af: project() called 1x at K=1
+  ok   fm: project() called 1x at K=1 (upstream Gen7 appears to have been fixed — update this gate)
+
+  G6 PASS (runtime)
+  End-to-end confirmation (optional): run eval with --engine mf and flow_steps_v3=1 and check projection_costs[0] is populated and non-trivial.
+
+============================================================
+  GB1: PASS
+  GB6: PASS
+  GB7: PASS
+  GB8: PASS
+  GB11: PASS
+  GB12: PASS
+  G0: PASS
+  G1: PASS
+  G4: PASS
+  G6: PASS
+============================================================
+Job completed successfully.

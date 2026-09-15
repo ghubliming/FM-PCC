@@ -91,6 +91,10 @@ du -h --max-depth=2 /u/home/llim
 ## clean weights
 python tools/clean_weights/clean_weights.py --apply
 
+## capture file tree
+python3 tools/capture_tree/capture_tree.py /u/home/llim/FMPCC/FM-PCC/logs/UAV_MIX -o uav_mix_tree.txt
+
+
 ## DA shortcut
 ./Slurm_Codes/submit.sh /u/home/llim/FMPCC/FM-PCC/Slurm_Codes/sbatch/DA/run_da_batch_avoiding_combined.sh
 

@@ -1,0 +1,284 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+[ U6 ] af bone      = unet
+[ U6 ] af_alpha_end = 0.2  
+[ U6 ] checkpoint   = latest
+================================================================================
+JOB START: Sun Sep  6 09:58:11 UTC 2026  |  uav_mix_eval  |  ID 25441  |  NODE i6-gpu-1
+ENGINE: af   SCENE: s_curve   SEEDS: 6   N_TRIALS:    K: 1
+FIX_16:  SAFE_EPS_MODE=scaled  SAFE_EPS_FRAC=1e-3  EVAL_TAG=u6unet_ae02
+GIT REV:   963faed
+================================================================================
+[ env-select ] config/uav.py controller='pid_stopgo' -> conda env 'FMPCC'
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=4  MUJOCO_EGL_DEVICE_ID=4
+--------------------------------------------------------------------------------
+[ uav_mix_eval ] seed 1/1: engine=af scene=s_curve seed=6  Sun Sep  6 09:58:12 UTC 2026
+[ uav_mix_eval ] python mix_uav_test/eval_mix_uav.py --engine af --scene s_curve --seed 6  --projection fm_only --record none --flow-steps 1
+[ eval ] Gen15 UAV Mix-ML — engine: af  (alpha-Flow (Gen3v7, arXiv 2510.20771))
+[ eval ] checkpoint selector = 'latest'  (source: env UAV_MIX_EPOCH)
+[ eval ] K override from --flow-steps: 1
+[ eval ] seed=6  (source: --seed CLI)
+[ eval ] n_trials=10  (source: /data/home/llim/FMPCC/FM-PCC/config/uav_projection.yaml)
+[ eval ][hardflow][BLOCKED] dropping 7 HardFlow variant(s) ['hardflow_new', 'hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t', 'hardflow_new-r-geo_free', 'hardflow_new-c-geo_free', 'hardflow_new-t-geo_free']: K=1 A=0.5 -> n_genuine=0 [DEGENERATE]: this arm runs NO HardFlow arithmetic (every NLP solve is the terminal tau=1 solve, so the arm is Pi_S(Euler sample) = sample-then-project, == DPCC modulo solver/variable-scope). No claim can cite it, so it is DISABLED. For a genuine arm use n_genuine>=1 (at A=0.5 that is K>=3; K>=5 for an attributable effect). To run it anyway — e.g. the A=0.0 projector control at matched K — set FMPCC_HF_ALLOW_DEGENERATE=1. See logs_in_develop/aggregated_hardflow_lowK/AUDIT_20260830_lowK_warning_coverage_and_UAV_degeneracy_check.md
+
+[ utils/serialization ] Loading model from logs/UAV_MIX/uav-s_curve/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/6
+
+[ utils/normalization ] Constant data in actions[2] | max = min = -4.147295842252957e-13 → Fix_16 widened by eps=1.129e-05 (mode=scaled). unnormalize scale for this channel = 1.129e-05 data-units per unit output.
+[ utils/normalization ] ⚠ Fix_16: ALL dimensions constant — no reference scale; falling back to eps=1.0.
+[ utils/normalization ] Constant data in rewards[0] | max = min = 0.0 → Fix_16 widened by eps=1.000e+00 (mode=scaled). unnormalize scale for this channel = 1.000e+00 data-units per unit output.
+[ datasets/buffer ] Fields:
+    observations: (500, 750, 6)
+    actions: (500, 750, 3)
+    rewards: (500, 750, 1)
+    terminals: (500, 750, 1)
+    normed_observations: (500, 750, 6)
+    normed_actions: (500, 750, 3)
+[ AFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=0.000e+00)
+[ utils/training ] Restored loss history from checkpoint at step 100000
+[ eval ] checkpoint = state_100000.pt  (trained to step 100000)
+[ eval ] alpha(step 100000) = 0.2000  [sigmoid 1.0 -> 0.2 over 100000 steps, clamp 0.005]
+[ eval ]   alpha-Flow objective ACTIVE at this checkpoint.
+[ eval ] ml bone = unet  (U6 default is 'unet', the 4.0 M arm matched to fm/mf; 'sit' is ~9.4 M and NOT parameter-matched)
+[ eval ] engine=af  NFE budget K=1 pinned on the loaded model (flow_steps_v3 / ode_inference_steps_v3)
+[ eval ] E9 geo 's_curve' ← variant 's_curve_hg': constraint_types=['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds'] (bounds=True, hs=4, obs=2)
+[ eval ] cond_mode=pos_only  (source: train checkpoint args)
+[ eval ] s_curve [geo_tag=s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles]: variants=['diffuser', 'dpcc-r', 'dpcc-r-tightened', 'dpcc-c', 'dpcc-c-tightened', 'dpcc-t', 'dpcc-t-tightened', 'dpcc-r-geo_free', 'dpcc-c-geo_free', 'dpcc-t-geo_free']  constraints=['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds']  batch_size=4
+[ eval ] s_curve feasibility check: homotopy=default expert route NEAR-ZERO SLACK under planning margin 0.31 m — slack 0.121 m (need >= 0.30 m to absorb the policy tracking error)
+[ eval ] WARNING s_curve homotopy=default: the expert route clears the PLANNING set by only 0.121 m. Any rollout whose tracking error exceeds that violates the constraints even when it flies the trained route perfectly in expectation — success+constraints is bounded near 0 for reasons that have nothing to do with the engine. Widen the geometry or lower `planning_inflation` (see Gen15/U7).
+[ eval ] s_curve [geo_tag=s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 1/10: 'diffuser'  (n_trials=10)
+[ provenance ] wrote logs/UAV_MIX/uav-s_curve/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K1_mpc4_pid_stopgo_T0.5_EPlatest_u6unet_ae02/6/run_provenance.json
+[ geo ] Constraint overview → logs/UAV_MIX/uav-s_curve/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K1_mpc4_pid_stopgo_T0.5_EPlatest_u6unet_ae02/6/s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles/constraint_overview.png (+ .svg)
+[ eval ] s_curve variant=diffuser: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ utils/normalization ] ⚠ Fix_16: sample out of range on observations — clipping to [-1,1] | (-1.0727, 0.1783). Further occurrences silent; see `_clip_events` / `_clip_max`.
+[ utils/normalization ] ⚠ Fix_16: sample out of range on actions — clipping to [-1,1] | (-1.0640, 0.0871). Further occurrences silent; see `_clip_events` / `_clip_max`.
+[ eval ] s_curve variant=diffuser: trial 1/10 done  (9.2s elapsed this variant, ~82.7s to go)
+[ eval ] s_curve variant=diffuser: trial 2/10 done  (18.2s elapsed this variant, ~72.6s to go)
+[ eval ] s_curve variant=diffuser trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 426/871 (t=12.91s) — reason=inverted: body z-axis · world z = -0.31 < 0 — the drone is upside down
+[ eval ] s_curve variant=diffuser: trial 3/10 done  (24.8s elapsed this variant, ~57.9s to go)
+[ eval ] s_curve variant=diffuser: trial 4/10 done  (33.7s elapsed this variant, ~50.5s to go)
+[ eval ] s_curve variant=diffuser trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 388/871 (t=11.76s) — reason=inverted: body z-axis · world z = -0.06 < 0 — the drone is upside down
+[ eval ] s_curve variant=diffuser: trial 5/10 done  (39.8s elapsed this variant, ~39.8s to go)
+[ eval ] s_curve variant=diffuser trial_seed=10005: ⚠ DIVERGENCE ABORT at FM step 409/871 (t=12.39s) — reason=inverted: body z-axis · world z = -0.10 < 0 — the drone is upside down
+[ eval ] s_curve variant=diffuser: trial 6/10 done  (46.2s elapsed this variant, ~30.8s to go)
+[ eval ] s_curve variant=diffuser: trial 7/10 done  (55.2s elapsed this variant, ~23.7s to go)
+[ eval ] s_curve variant=diffuser trial_seed=10007: ⚠ DIVERGENCE ABORT at FM step 392/871 (t=11.88s) — reason=inverted: body z-axis · world z = -0.14 < 0 — the drone is upside down
+[ eval ] s_curve variant=diffuser: trial 8/10 done  (61.2s elapsed this variant, ~15.3s to go)
+[ eval ] s_curve variant=diffuser: trial 9/10 done  (70.1s elapsed this variant, ~7.8s to go)
+[ eval ] s_curve variant=diffuser: trial 10/10 done  (79.1s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=diffuser: ⚠ DIVERGENCE ABORT on 4/10 trials [2, 4, 5, 7] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=diffuser (B=4, proj=off, sel=random): success=0.600  success_relaxed=0.600  safe=0.600  goal_reached=0.600  steps_to_goal=594/871  track_err=0.317  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K1_mpc4_pid_stopgo_T0.5_EPlatest_u6unet_ae02/6/s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles/diffuser/
+[ eval ] s_curve variant=diffuser TIMING: fm_ms=9.2 proj_ms=0.0 total_ms=9.2 (p95=9.3) budget=30.3ms → real_time_OVER×1
+[ eval ] s_curve [geo_tag=s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 2/10: 'dpcc-r'  (n_trials=10)
+[ eval ] Fix_16 DEGENERATE actions[2]: constant in the expert data — no training signal for this channel. Widened by eps=1.129e-05; a saturated model output on it commands +/-1.129e-05 data-units/step.
+[ eval ] Fix_16 projector action_bounds=auto → lb=[ 0.0e+00  0.0e+00 -1.1e-05] ub=[2.2238e-02 2.2927e-02 1.1000e-05]  (degenerate dims now bounded, not +/-1)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K1_mpc4_pid_stopgo_T0.5_EPlatest_u6unet_ae02/6/run_provenance.json
+[ eval ] s_curve variant=dpcc-r: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=dpcc-r trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 511/871 (t=15.48s) — reason=inverted: body z-axis · world z = -0.02 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-r: trial 1/10 done  (103.5s elapsed this variant, ~931.9s to go)
+[ eval ] s_curve variant=dpcc-r trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 436/871 (t=13.21s) — reason=inverted: body z-axis · world z = -0.08 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-r: trial 2/10 done  (238.9s elapsed this variant, ~955.8s to go)
+[ eval ] s_curve variant=dpcc-r trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 396/871 (t=12.00s) — reason=inverted: body z-axis · world z = -0.10 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-r: trial 3/10 done  (279.9s elapsed this variant, ~653.0s to go)
+[ eval ] s_curve variant=dpcc-r: trial 4/10 done  (342.1s elapsed this variant, ~513.2s to go)
+[ eval ] s_curve variant=dpcc-r trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 401/871 (t=12.15s) — reason=inverted: body z-axis · world z = -0.02 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-r: trial 5/10 done  (369.7s elapsed this variant, ~369.7s to go)
+[ eval ] s_curve variant=dpcc-r: trial 6/10 done  (503.8s elapsed this variant, ~335.9s to go)
+[ eval ] s_curve variant=dpcc-r: trial 7/10 done  (552.5s elapsed this variant, ~236.8s to go)
+[ eval ] s_curve variant=dpcc-r trial_seed=10007: ⚠ DIVERGENCE ABORT at FM step 391/871 (t=11.85s) — reason=inverted: body z-axis · world z = -0.02 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-r: trial 8/10 done  (580.1s elapsed this variant, ~145.0s to go)
+[ eval ] s_curve variant=dpcc-r trial_seed=10008: ⚠ DIVERGENCE ABORT at FM step 406/871 (t=12.30s) — reason=inverted: body z-axis · world z = -0.07 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-r: trial 9/10 done  (635.9s elapsed this variant, ~70.7s to go)
+[ eval ] s_curve variant=dpcc-r trial_seed=10009: ⚠ DIVERGENCE ABORT at FM step 632/871 (t=19.15s) — reason=inverted: body z-axis · world z = -0.04 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-r: trial 10/10 done  (790.6s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=dpcc-r: ⚠ DIVERGENCE ABORT on 7/10 trials [0, 1, 2, 4, 7, 8, 9] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=dpcc-r (B=4, proj=on, sel=random): success=0.300  success_relaxed=0.300  safe=0.300  goal_reached=0.300  steps_to_goal=639/871  track_err=0.367  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K1_mpc4_pid_stopgo_T0.5_EPlatest_u6unet_ae02/6/s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r/
+[ eval ] s_curve variant=dpcc-r TIMING: fm_ms=9.3 proj_ms=125.0 total_ms=134.4 (p95=738.3) budget=30.3ms → real_time_OVER×1631
+[ eval ] s_curve [geo_tag=s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 3/10: 'dpcc-r-tightened'  (n_trials=10)
+[ eval ] Fix_16 DEGENERATE actions[2]: constant in the expert data — no training signal for this channel. Widened by eps=1.129e-05; a saturated model output on it commands +/-1.129e-05 data-units/step.
+[ eval ] Fix_16 projector action_bounds=auto → lb=[ 0.0e+00  0.0e+00 -1.1e-05] ub=[2.2238e-02 2.2927e-02 1.1000e-05]  (degenerate dims now bounded, not +/-1)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K1_mpc4_pid_stopgo_T0.5_EPlatest_u6unet_ae02/6/run_provenance.json
+[ geo ] Constraint overview → logs/UAV_MIX/uav-s_curve/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K1_mpc4_pid_stopgo_T0.5_EPlatest_u6unet_ae02/6/s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles/constraint_overview_tightened.png (+ .svg)
+[ eval ] s_curve variant=dpcc-r-tightened: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=dpcc-r-tightened trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 439/871 (t=13.30s) — reason=inverted: body z-axis · world z = -0.07 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-r-tightened: trial 1/10 done  (65.3s elapsed this variant, ~588.0s to go)
+[ eval ] s_curve variant=dpcc-r-tightened trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 590/871 (t=17.88s) — reason=inverted: body z-axis · world z = -0.07 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-r-tightened: trial 2/10 done  (156.3s elapsed this variant, ~625.4s to go)
+[ eval ] s_curve variant=dpcc-r-tightened trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 384/871 (t=11.64s) — reason=inverted: body z-axis · world z = -0.09 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-r-tightened: trial 3/10 done  (182.7s elapsed this variant, ~426.2s to go)
+[ eval ] s_curve variant=dpcc-r-tightened: trial 4/10 done  (267.5s elapsed this variant, ~401.2s to go)
+[ eval ] s_curve variant=dpcc-r-tightened: trial 5/10 done  (366.7s elapsed this variant, ~366.7s to go)
+[ eval ] s_curve variant=dpcc-r-tightened trial_seed=10005: ⚠ DIVERGENCE ABORT at FM step 536/871 (t=16.24s) — reason=inverted: body z-axis · world z = -0.01 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-r-tightened: trial 6/10 done  (471.4s elapsed this variant, ~314.2s to go)
+[ eval ] s_curve variant=dpcc-r-tightened: trial 7/10 done  (619.5s elapsed this variant, ~265.5s to go)
+[ eval ] s_curve variant=dpcc-r-tightened trial_seed=10007: ⚠ DIVERGENCE ABORT at FM step 388/871 (t=11.76s) — reason=inverted: body z-axis · world z = -0.20 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-r-tightened: trial 8/10 done  (645.5s elapsed this variant, ~161.4s to go)
+[ eval ] s_curve variant=dpcc-r-tightened trial_seed=10008: ⚠ DIVERGENCE ABORT at FM step 570/871 (t=17.27s) — reason=inverted: body z-axis · world z = -0.02 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-r-tightened: trial 9/10 done  (801.8s elapsed this variant, ~89.1s to go)
+[ eval ] s_curve variant=dpcc-r-tightened trial_seed=10009: ⚠ DIVERGENCE ABORT at FM step 532/871 (t=16.12s) — reason=inverted: body z-axis · world z = -0.04 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-r-tightened: trial 10/10 done  (895.7s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=dpcc-r-tightened: ⚠ DIVERGENCE ABORT on 7/10 trials [0, 1, 2, 5, 7, 8, 9] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=dpcc-r-tightened (B=4, proj=on, sel=random): success=0.100  success_relaxed=0.100  safe=0.100  goal_reached=0.300  steps_to_goal=651/871  track_err=0.397  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K1_mpc4_pid_stopgo_T0.5_EPlatest_u6unet_ae02/6/s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r-tightened/
+[ eval ] s_curve variant=dpcc-r-tightened TIMING: fm_ms=9.4 proj_ms=132.3 total_ms=141.7 (p95=850.5) budget=30.3ms → real_time_OVER×2077
+[ eval ] s_curve [geo_tag=s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 4/10: 'dpcc-c'  (n_trials=10)
+[ eval ] Fix_16 DEGENERATE actions[2]: constant in the expert data — no training signal for this channel. Widened by eps=1.129e-05; a saturated model output on it commands +/-1.129e-05 data-units/step.
+[ eval ] Fix_16 projector action_bounds=auto → lb=[ 0.0e+00  0.0e+00 -1.1e-05] ub=[2.2238e-02 2.2927e-02 1.1000e-05]  (degenerate dims now bounded, not +/-1)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K1_mpc4_pid_stopgo_T0.5_EPlatest_u6unet_ae02/6/run_provenance.json
+[ eval ] s_curve variant=dpcc-c: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=dpcc-c trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 512/871 (t=15.52s) — reason=inverted: body z-axis · world z = -0.02 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-c: trial 1/10 done  (102.1s elapsed this variant, ~919.2s to go)
+[ eval ] s_curve variant=dpcc-c: trial 2/10 done  (162.5s elapsed this variant, ~650.0s to go)
+[ eval ] s_curve variant=dpcc-c trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 396/871 (t=12.00s) — reason=inverted: body z-axis · world z = -0.03 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-c: trial 3/10 done  (232.0s elapsed this variant, ~541.4s to go)
+[ eval ] s_curve variant=dpcc-c: trial 4/10 done  (422.3s elapsed this variant, ~633.4s to go)
+[ eval ] s_curve variant=dpcc-c trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 395/871 (t=11.97s) — reason=inverted: body z-axis · world z = -0.14 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-c: trial 5/10 done  (464.9s elapsed this variant, ~464.9s to go)
+[ eval ] s_curve variant=dpcc-c: trial 6/10 done  (525.3s elapsed this variant, ~350.2s to go)
+[ eval ] s_curve variant=dpcc-c: trial 7/10 done  (584.0s elapsed this variant, ~250.3s to go)
+[ eval ] s_curve variant=dpcc-c trial_seed=10007: ⚠ DIVERGENCE ABORT at FM step 388/871 (t=11.76s) — reason=inverted: body z-axis · world z = -0.01 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-c: trial 8/10 done  (611.0s elapsed this variant, ~152.7s to go)
+[ eval ] s_curve variant=dpcc-c trial_seed=10008: ⚠ DIVERGENCE ABORT at FM step 610/871 (t=18.48s) — reason=inverted: body z-axis · world z = -0.02 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-c: trial 9/10 done  (698.0s elapsed this variant, ~77.6s to go)
+[ eval ] s_curve variant=dpcc-c trial_seed=10009: ⚠ DIVERGENCE ABORT at FM step 556/871 (t=16.85s) — reason=inverted: body z-axis · world z = -0.03 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-c: trial 10/10 done  (787.1s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=dpcc-c: ⚠ DIVERGENCE ABORT on 6/10 trials [0, 2, 4, 7, 8, 9] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=dpcc-c (B=4, proj=on, sel=minimum_projection_cost): success=0.300  success_relaxed=0.300  safe=0.300  goal_reached=0.300  steps_to_goal=652/871  track_err=0.386  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K1_mpc4_pid_stopgo_T0.5_EPlatest_u6unet_ae02/6/s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c/
+[ eval ] s_curve variant=dpcc-c TIMING: fm_ms=9.4 proj_ms=107.9 total_ms=117.3 (p95=465.3) budget=30.3ms → real_time_OVER×1684
+[ eval ] s_curve [geo_tag=s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 5/10: 'dpcc-c-tightened'  (n_trials=10)
+[ eval ] Fix_16 DEGENERATE actions[2]: constant in the expert data — no training signal for this channel. Widened by eps=1.129e-05; a saturated model output on it commands +/-1.129e-05 data-units/step.
+[ eval ] Fix_16 projector action_bounds=auto → lb=[ 0.0e+00  0.0e+00 -1.1e-05] ub=[2.2238e-02 2.2927e-02 1.1000e-05]  (degenerate dims now bounded, not +/-1)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K1_mpc4_pid_stopgo_T0.5_EPlatest_u6unet_ae02/6/run_provenance.json
+[ eval ] s_curve variant=dpcc-c-tightened: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=dpcc-c-tightened trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 524/871 (t=15.88s) — reason=inverted: body z-axis · world z = -0.02 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-c-tightened: trial 1/10 done  (132.6s elapsed this variant, ~1193.3s to go)
+[ eval ] s_curve variant=dpcc-c-tightened trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 524/871 (t=15.88s) — reason=inverted: body z-axis · world z = -0.00 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-c-tightened: trial 2/10 done  (229.6s elapsed this variant, ~918.4s to go)
+[ eval ] s_curve variant=dpcc-c-tightened trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 391/871 (t=11.85s) — reason=inverted: body z-axis · world z = -0.02 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-c-tightened: trial 3/10 done  (279.8s elapsed this variant, ~653.0s to go)
+[ eval ] s_curve variant=dpcc-c-tightened: trial 4/10 done  (635.0s elapsed this variant, ~952.6s to go)
+[ eval ] s_curve variant=dpcc-c-tightened trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 389/871 (t=11.79s) — reason=inverted: body z-axis · world z = -0.14 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-c-tightened: trial 5/10 done  (675.5s elapsed this variant, ~675.5s to go)
+[ eval ] s_curve variant=dpcc-c-tightened trial_seed=10005: ⚠ DIVERGENCE ABORT at FM step 426/871 (t=12.91s) — reason=inverted: body z-axis · world z = -0.06 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-c-tightened: trial 6/10 done  (797.3s elapsed this variant, ~531.5s to go)
+[ eval ] s_curve variant=dpcc-c-tightened: trial 7/10 done  (866.3s elapsed this variant, ~371.3s to go)
+[ eval ] s_curve variant=dpcc-c-tightened trial_seed=10007: ⚠ DIVERGENCE ABORT at FM step 390/871 (t=11.82s) — reason=inverted: body z-axis · world z = -0.14 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-c-tightened: trial 8/10 done  (901.9s elapsed this variant, ~225.5s to go)
+[ eval ] s_curve variant=dpcc-c-tightened trial_seed=10008: ⚠ DIVERGENCE ABORT at FM step 559/871 (t=16.94s) — reason=inverted: body z-axis · world z = -0.05 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-c-tightened: trial 9/10 done  (1142.8s elapsed this variant, ~127.0s to go)
+[ eval ] s_curve variant=dpcc-c-tightened trial_seed=10009: ⚠ DIVERGENCE ABORT at FM step 519/871 (t=15.73s) — reason=inverted: body z-axis · world z = -0.11 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-c-tightened: trial 10/10 done  (1274.4s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=dpcc-c-tightened: ⚠ DIVERGENCE ABORT on 8/10 trials [0, 1, 2, 4, 5, 7, 8, 9] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=dpcc-c-tightened (B=4, proj=on, sel=minimum_projection_cost): success=0.100  success_relaxed=0.100  safe=0.100  goal_reached=0.100  steps_to_goal=660/871  track_err=0.384  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K1_mpc4_pid_stopgo_T0.5_EPlatest_u6unet_ae02/6/s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c-tightened/
+[ eval ] s_curve variant=dpcc-c-tightened TIMING: fm_ms=9.4 proj_ms=197.3 total_ms=206.6 (p95=2488.8) budget=30.3ms → real_time_OVER×1950
+[ eval ] s_curve [geo_tag=s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 6/10: 'dpcc-t'  (n_trials=10)
+[ eval ] Fix_16 DEGENERATE actions[2]: constant in the expert data — no training signal for this channel. Widened by eps=1.129e-05; a saturated model output on it commands +/-1.129e-05 data-units/step.
+[ eval ] Fix_16 projector action_bounds=auto → lb=[ 0.0e+00  0.0e+00 -1.1e-05] ub=[2.2238e-02 2.2927e-02 1.1000e-05]  (degenerate dims now bounded, not +/-1)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K1_mpc4_pid_stopgo_T0.5_EPlatest_u6unet_ae02/6/run_provenance.json
+[ eval ] s_curve variant=dpcc-t: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=dpcc-t: trial 1/10 done  (55.8s elapsed this variant, ~502.6s to go)
+[ eval ] s_curve variant=dpcc-t: trial 2/10 done  (106.8s elapsed this variant, ~427.1s to go)
+[ eval ] s_curve variant=dpcc-t: trial 3/10 done  (164.3s elapsed this variant, ~383.4s to go)
+[ eval ] s_curve variant=dpcc-t: trial 4/10 done  (229.7s elapsed this variant, ~344.6s to go)
+[ eval ] s_curve variant=dpcc-t: trial 5/10 done  (465.0s elapsed this variant, ~465.0s to go)
+[ eval ] s_curve variant=dpcc-t trial_seed=10005: ⚠ DIVERGENCE ABORT at FM step 536/871 (t=16.24s) — reason=inverted: body z-axis · world z = -0.04 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-t: trial 6/10 done  (552.4s elapsed this variant, ~368.3s to go)
+[ eval ] s_curve variant=dpcc-t: trial 7/10 done  (601.7s elapsed this variant, ~257.9s to go)
+[ eval ] s_curve variant=dpcc-t trial_seed=10007: ⚠ DIVERGENCE ABORT at FM step 383/871 (t=11.61s) — reason=inverted: body z-axis · world z = -0.14 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-t: trial 8/10 done  (642.3s elapsed this variant, ~160.6s to go)
+[ eval ] s_curve variant=dpcc-t trial_seed=10008: ⚠ DIVERGENCE ABORT at FM step 389/871 (t=11.79s) — reason=inverted: body z-axis · world z = -0.18 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-t: trial 9/10 done  (711.3s elapsed this variant, ~79.0s to go)
+[ eval ] s_curve variant=dpcc-t: trial 10/10 done  (766.7s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=dpcc-t: ⚠ DIVERGENCE ABORT on 3/10 trials [5, 7, 8] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=dpcc-t (B=4, proj=on, sel=temporal_consistency): success=0.600  success_relaxed=0.600  safe=0.600  goal_reached=0.700  steps_to_goal=625/871  track_err=0.393  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K1_mpc4_pid_stopgo_T0.5_EPlatest_u6unet_ae02/6/s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t/
+[ eval ] s_curve variant=dpcc-t TIMING: fm_ms=9.4 proj_ms=107.4 total_ms=116.7 (p95=2280.7) budget=30.3ms → real_time_OVER×1686
+[ eval ] s_curve [geo_tag=s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 7/10: 'dpcc-t-tightened'  (n_trials=10)
+[ eval ] Fix_16 DEGENERATE actions[2]: constant in the expert data — no training signal for this channel. Widened by eps=1.129e-05; a saturated model output on it commands +/-1.129e-05 data-units/step.
+[ eval ] Fix_16 projector action_bounds=auto → lb=[ 0.0e+00  0.0e+00 -1.1e-05] ub=[2.2238e-02 2.2927e-02 1.1000e-05]  (degenerate dims now bounded, not +/-1)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K1_mpc4_pid_stopgo_T0.5_EPlatest_u6unet_ae02/6/run_provenance.json
+[ eval ] s_curve variant=dpcc-t-tightened: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=dpcc-t-tightened: trial 1/10 done  (284.4s elapsed this variant, ~2559.8s to go)
+[ eval ] s_curve variant=dpcc-t-tightened: trial 2/10 done  (383.7s elapsed this variant, ~1534.9s to go)
+[ eval ] s_curve variant=dpcc-t-tightened trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 848/871 (t=25.70s) — reason=inverted: body z-axis · world z = -0.06 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-t-tightened: trial 3/10 done  (1129.4s elapsed this variant, ~2635.3s to go)
+[ eval ] s_curve variant=dpcc-t-tightened: trial 4/10 done  (1207.9s elapsed this variant, ~1811.9s to go)
+[ eval ] s_curve variant=dpcc-t-tightened trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 406/871 (t=12.30s) — reason=inverted: body z-axis · world z = -0.11 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-t-tightened: trial 5/10 done  (1266.1s elapsed this variant, ~1266.1s to go)
+[ eval ] s_curve variant=dpcc-t-tightened: trial 6/10 done  (1379.4s elapsed this variant, ~919.6s to go)
+[ eval ] s_curve variant=dpcc-t-tightened: trial 7/10 done  (1490.6s elapsed this variant, ~638.8s to go)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+[ eval ] s_curve variant=dpcc-t-tightened trial_seed=10007: ⚠ DIVERGENCE ABORT at FM step 374/871 (t=11.33s) — reason=inverted: body z-axis · world z = -0.05 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-t-tightened: trial 8/10 done  (1521.7s elapsed this variant, ~380.4s to go)
+[ eval ] s_curve variant=dpcc-t-tightened trial_seed=10008: ⚠ DIVERGENCE ABORT at FM step 540/871 (t=16.36s) — reason=inverted: body z-axis · world z = -0.03 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-t-tightened: trial 9/10 done  (1612.3s elapsed this variant, ~179.1s to go)
+[ eval ] s_curve variant=dpcc-t-tightened: trial 10/10 done  (1714.9s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=dpcc-t-tightened: ⚠ DIVERGENCE ABORT on 4/10 trials [2, 4, 7, 8] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=dpcc-t-tightened (B=4, proj=on, sel=temporal_consistency): success=0.500  success_relaxed=0.500  safe=0.500  goal_reached=0.500  steps_to_goal=626/871  track_err=0.423  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K1_mpc4_pid_stopgo_T0.5_EPlatest_u6unet_ae02/6/s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t-tightened/
+[ eval ] s_curve variant=dpcc-t-tightened TIMING: fm_ms=9.5 proj_ms=213.6 total_ms=223.0 (p95=5500.8) budget=30.3ms → real_time_OVER×2634
+[ eval ] s_curve [geo_tag=s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 8/10: 'dpcc-r-geo_free'  (n_trials=10)
+[ eval ] Fix_16 DEGENERATE actions[2]: constant in the expert data — no training signal for this channel. Widened by eps=1.129e-05; a saturated model output on it commands +/-1.129e-05 data-units/step.
+[ eval ] Fix_16 projector action_bounds=auto → lb=[ 0.0e+00  0.0e+00 -1.1e-05] ub=[2.2238e-02 2.2927e-02 1.1000e-05]  (degenerate dims now bounded, not +/-1)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K1_mpc4_pid_stopgo_T0.5_EPlatest_u6unet_ae02/6/run_provenance.json
+[ eval ] s_curve variant=dpcc-r-geo_free: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=dpcc-r-geo_free: trial 1/10 done  (19.8s elapsed this variant, ~177.8s to go)
+[ eval ] s_curve variant=dpcc-r-geo_free trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 401/871 (t=12.15s) — reason=inverted: body z-axis · world z = -0.05 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-r-geo_free: trial 2/10 done  (33.5s elapsed this variant, ~133.9s to go)
+[ eval ] s_curve variant=dpcc-r-geo_free trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 390/871 (t=11.82s) — reason=inverted: body z-axis · world z = -0.10 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-r-geo_free: trial 3/10 done  (46.7s elapsed this variant, ~109.0s to go)
+[ eval ] s_curve variant=dpcc-r-geo_free: trial 4/10 done  (66.7s elapsed this variant, ~100.1s to go)
+[ eval ] s_curve variant=dpcc-r-geo_free: trial 5/10 done  (86.7s elapsed this variant, ~86.7s to go)
+[ eval ] s_curve variant=dpcc-r-geo_free trial_seed=10005: ⚠ DIVERGENCE ABORT at FM step 407/871 (t=12.33s) — reason=inverted: body z-axis · world z = -0.11 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-r-geo_free: trial 6/10 done  (100.5s elapsed this variant, ~67.0s to go)
+[ eval ] s_curve variant=dpcc-r-geo_free: trial 7/10 done  (120.5s elapsed this variant, ~51.6s to go)
+[ eval ] s_curve variant=dpcc-r-geo_free trial_seed=10007: ⚠ DIVERGENCE ABORT at FM step 385/871 (t=11.67s) — reason=inverted: body z-axis · world z = -0.06 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-r-geo_free: trial 8/10 done  (133.6s elapsed this variant, ~33.4s to go)
+[ eval ] s_curve variant=dpcc-r-geo_free trial_seed=10008: ⚠ DIVERGENCE ABORT at FM step 397/871 (t=12.03s) — reason=inverted: body z-axis · world z = -0.24 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-r-geo_free: trial 9/10 done  (146.9s elapsed this variant, ~16.3s to go)
+[ eval ] s_curve variant=dpcc-r-geo_free: trial 10/10 done  (166.8s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=dpcc-r-geo_free: ⚠ DIVERGENCE ABORT on 5/10 trials [1, 2, 5, 7, 8] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=dpcc-r-geo_free (B=4, proj=on, sel=random): success=0.500  success_relaxed=0.500  safe=0.500  goal_reached=0.500  steps_to_goal=595/871  track_err=0.315  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K1_mpc4_pid_stopgo_T0.5_EPlatest_u6unet_ae02/6/s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-r-geo_free/
+[ eval ] s_curve variant=dpcc-r-geo_free TIMING: fm_ms=9.3 proj_ms=11.5 total_ms=20.8 (p95=21.1) budget=30.3ms → real_time_SAFE
+[ eval ] s_curve [geo_tag=s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 9/10: 'dpcc-c-geo_free'  (n_trials=10)
+[ eval ] Fix_16 DEGENERATE actions[2]: constant in the expert data — no training signal for this channel. Widened by eps=1.129e-05; a saturated model output on it commands +/-1.129e-05 data-units/step.
+[ eval ] Fix_16 projector action_bounds=auto → lb=[ 0.0e+00  0.0e+00 -1.1e-05] ub=[2.2238e-02 2.2927e-02 1.1000e-05]  (degenerate dims now bounded, not +/-1)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K1_mpc4_pid_stopgo_T0.5_EPlatest_u6unet_ae02/6/run_provenance.json
+[ eval ] s_curve variant=dpcc-c-geo_free: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=dpcc-c-geo_free trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 388/871 (t=11.76s) — reason=inverted: body z-axis · world z = -0.05 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-c-geo_free: trial 1/10 done  (13.2s elapsed this variant, ~119.1s to go)
+[ eval ] s_curve variant=dpcc-c-geo_free: trial 2/10 done  (33.2s elapsed this variant, ~132.6s to go)
+[ eval ] s_curve variant=dpcc-c-geo_free: trial 3/10 done  (53.1s elapsed this variant, ~123.9s to go)
+[ eval ] s_curve variant=dpcc-c-geo_free: trial 4/10 done  (73.2s elapsed this variant, ~109.9s to go)
+[ eval ] s_curve variant=dpcc-c-geo_free trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 392/871 (t=11.88s) — reason=inverted: body z-axis · world z = -0.07 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-c-geo_free: trial 5/10 done  (86.4s elapsed this variant, ~86.4s to go)
+[ eval ] s_curve variant=dpcc-c-geo_free: trial 6/10 done  (106.4s elapsed this variant, ~71.0s to go)
+[ eval ] s_curve variant=dpcc-c-geo_free: trial 7/10 done  (126.5s elapsed this variant, ~54.2s to go)
+[ eval ] s_curve variant=dpcc-c-geo_free trial_seed=10007: ⚠ DIVERGENCE ABORT at FM step 390/871 (t=11.82s) — reason=inverted: body z-axis · world z = -0.02 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-c-geo_free: trial 8/10 done  (139.7s elapsed this variant, ~34.9s to go)
+[ eval ] s_curve variant=dpcc-c-geo_free trial_seed=10008: ⚠ DIVERGENCE ABORT at FM step 632/871 (t=19.15s) — reason=inverted: body z-axis · world z = -0.07 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-c-geo_free: trial 9/10 done  (161.1s elapsed this variant, ~17.9s to go)
+[ eval ] s_curve variant=dpcc-c-geo_free trial_seed=10009: ⚠ DIVERGENCE ABORT at FM step 413/871 (t=12.52s) — reason=inverted: body z-axis · world z = -0.02 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-c-geo_free: trial 10/10 done  (175.2s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=dpcc-c-geo_free: ⚠ DIVERGENCE ABORT on 5/10 trials [0, 4, 7, 8, 9] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=dpcc-c-geo_free (B=4, proj=on, sel=minimum_projection_cost): success=0.500  success_relaxed=0.500  safe=0.500  goal_reached=0.500  steps_to_goal=595/871  track_err=0.387  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K1_mpc4_pid_stopgo_T0.5_EPlatest_u6unet_ae02/6/s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-c-geo_free/
+[ eval ] s_curve variant=dpcc-c-geo_free TIMING: fm_ms=9.4 proj_ms=11.5 total_ms=20.8 (p95=21.1) budget=30.3ms → real_time_SAFE
+[ eval ] s_curve [geo_tag=s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 10/10: 'dpcc-t-geo_free'  (n_trials=10)
+[ eval ] Fix_16 DEGENERATE actions[2]: constant in the expert data — no training signal for this channel. Widened by eps=1.129e-05; a saturated model output on it commands +/-1.129e-05 data-units/step.
+[ eval ] Fix_16 projector action_bounds=auto → lb=[ 0.0e+00  0.0e+00 -1.1e-05] ub=[2.2238e-02 2.2927e-02 1.1000e-05]  (degenerate dims now bounded, not +/-1)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K1_mpc4_pid_stopgo_T0.5_EPlatest_u6unet_ae02/6/run_provenance.json
+[ eval ] s_curve variant=dpcc-t-geo_free: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ eval ] s_curve variant=dpcc-t-geo_free: trial 1/10 done  (19.5s elapsed this variant, ~175.8s to go)
+[ eval ] s_curve variant=dpcc-t-geo_free: trial 2/10 done  (39.0s elapsed this variant, ~156.1s to go)
+[ eval ] s_curve variant=dpcc-t-geo_free trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 379/871 (t=11.48s) — reason=inverted: body z-axis · world z = -0.04 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-t-geo_free: trial 3/10 done  (51.8s elapsed this variant, ~120.8s to go)
+[ eval ] s_curve variant=dpcc-t-geo_free: trial 4/10 done  (71.2s elapsed this variant, ~106.9s to go)
+[ eval ] s_curve variant=dpcc-t-geo_free: trial 5/10 done  (91.1s elapsed this variant, ~91.1s to go)
+[ eval ] s_curve variant=dpcc-t-geo_free: trial 6/10 done  (110.4s elapsed this variant, ~73.6s to go)
+[ eval ] s_curve variant=dpcc-t-geo_free: trial 7/10 done  (130.2s elapsed this variant, ~55.8s to go)
+[ eval ] s_curve variant=dpcc-t-geo_free: trial 8/10 done  (155.1s elapsed this variant, ~38.8s to go)
+[ eval ] s_curve variant=dpcc-t-geo_free: trial 9/10 done  (174.6s elapsed this variant, ~19.4s to go)
+[ eval ] s_curve variant=dpcc-t-geo_free: trial 10/10 done  (194.1s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=dpcc-t-geo_free: ⚠ DIVERGENCE ABORT on 1/10 trials [2] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=dpcc-t-geo_free (B=4, proj=on, sel=temporal_consistency): success=0.800  success_relaxed=0.800  safe=0.800  goal_reached=0.900  steps_to_goal=587/871  track_err=0.341  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K1_mpc4_pid_stopgo_T0.5_EPlatest_u6unet_ae02/6/s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t-geo_free/
+[ eval ] s_curve variant=dpcc-t-geo_free TIMING: fm_ms=9.4 proj_ms=12.2 total_ms=21.5 (p95=21.2) budget=30.3ms → real_time_OVER×14
+UAV Mix-ML eval complete (engine=af).
+Job completed successfully. Evaluated engine=af scene=s_curve for seeds=[6]
+JOB END: Sun Sep  6 11:52:26 UTC 2026

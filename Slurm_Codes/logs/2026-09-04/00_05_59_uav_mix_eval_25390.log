@@ -1,0 +1,36 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Fri Sep  4 22:56:44 UTC 2026  |  uav_mix_eval  |  ID 25390  |  NODE i6-gpu-1
+ENGINE: af   SCENE: s_curve   SEEDS: 6   N_TRIALS:    K: 2
+FIX_16:  SAFE_EPS_MODE=scaled  SAFE_EPS_FRAC=1e-3  EVAL_TAG=u6unet_ae02
+GIT REV:   ca0eb31
+================================================================================
+[ env-select ] config/uav.py controller='pid_stopgo' -> conda env 'FMPCC'
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=0  MUJOCO_EGL_DEVICE_ID=0
+--------------------------------------------------------------------------------
+[ uav_mix_eval ] seed 1/1: engine=af scene=s_curve seed=6  Fri Sep  4 22:56:44 UTC 2026
+[ uav_mix_eval ] python mix_uav_test/eval_mix_uav.py --engine af --scene s_curve --seed 6  --projection fm_only --record none --flow-steps 2
+[ eval ] Gen15 UAV Mix-ML — engine: af  (alpha-Flow (Gen3v7, arXiv 2510.20771))
+[ eval ] checkpoint selector = 'latest'  (source: env UAV_MIX_EPOCH)
+[ eval ] K override from --flow-steps: 2
+[ eval ] seed=6  (source: --seed CLI)
+[ eval ] n_trials=10  (source: /data/home/llim/FMPCC/FM-PCC/config/uav_projection.yaml)
+[ eval ][hardflow][BLOCKED] dropping 7 HardFlow variant(s) ['hardflow_new', 'hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t', 'hardflow_new-r-geo_free', 'hardflow_new-c-geo_free', 'hardflow_new-t-geo_free']: K=2 A=0.5 -> n_genuine=0 [DEGENERATE]: this arm runs NO HardFlow arithmetic (every NLP solve is the terminal tau=1 solve, so the arm is Pi_S(Euler sample) = sample-then-project, == DPCC modulo solver/variable-scope). No claim can cite it, so it is DISABLED. For a genuine arm use n_genuine>=1 (at A=0.5 that is K>=3; K>=5 for an attributable effect). To run it anyway — e.g. the A=0.0 projector control at matched K — set FMPCC_HF_ALLOW_DEGENERATE=1. See logs_in_develop/aggregated_hardflow_lowK/AUDIT_20260830_lowK_warning_coverage_and_UAV_degeneracy_check.md
+
+[ utils/serialization ] Loading model from logs/UAV_MIX/uav-s_curve/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/6
+
+Traceback (most recent call last):
+  File "/data/home/llim/FMPCC/FM-PCC/mix_uav_test/eval_mix_uav.py", line 2344, in <module>
+    main()
+  File "/data/home/llim/FMPCC/FM-PCC/mix_uav_test/eval_mix_uav.py", line 2327, in main
+    summaries[_s] = eval_scene(_s, args)
+  File "/data/home/llim/FMPCC/FM-PCC/mix_uav_test/eval_mix_uav.py", line 2191, in eval_scene
+    model_fm, dataset, parsed, horizon = build_experiment(
+  File "/data/home/llim/FMPCC/FM-PCC/mix_uav_test/eval_mix_uav.py", line 396, in build_experiment
+    experiment = utils.load_diffusion(args.savepath, epoch=ep, device=device, override_args=args)
+  File "/data/home/llim/FMPCC/FM-PCC/mix_uav/utils/serialization.py", line 54, in load_diffusion
+    dataset_config = load_config(*loadpath, 'dataset_config.pkl')
+  File "/data/home/llim/FMPCC/FM-PCC/mix_uav/utils/serialization.py", line 36, in load_config
+    config = pickle.load(open(loadpath, 'rb'))
+FileNotFoundError: [Errno 2] No such file or directory: 'logs/UAV_MIX/uav-s_curve/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/6/dataset_config.pkl'
+JOB END: Fri Sep  4 22:56:48 UTC 2026
