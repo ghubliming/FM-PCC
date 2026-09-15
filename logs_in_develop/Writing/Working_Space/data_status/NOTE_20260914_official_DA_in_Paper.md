@@ -7,6 +7,7 @@
 | :-- | :-- |
 | the analysis behind a thesis number | [`DA_in_Paper/analysis/INDEX.md`](../../../../Data_Analysis/DA_in_Paper/analysis/INDEX.md) — one row per result, with its protocol |
 | a thesis figure, or the code that draws it | [`DA_in_Paper/figures/`](../../../../Data_Analysis/DA_in_Paper/figures/README.md) and [`DA_in_Paper/plotting/`](../../../../Data_Analysis/DA_in_Paper/plotting/README.md) |
+| the result data itself, for a new figure or number | [`Data_Analysis/analysis_results_checkpoint/15-09/`](../../../../Data_Analysis/analysis_results_checkpoint/15-09) — all three environments, committed, **2026-09-15**; supersedes the `temp/` batches |
 | which environment is ready to write, and at what strength | this folder — [`DATASTATUS_20260910_v3_entry_readiness.md`](DATASTATUS_20260910_v3_entry_readiness.md) |
 
 **Rules.**

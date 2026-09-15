@@ -11,9 +11,8 @@
 
     "mounts": [
         "source=claude-code-config,target=/home/vscode/.claude,type=volume",
-        "source=codex-config,target=/home/vscode/.codex,type=volume",
-        "source=gemini-config,target=/home/vscode/.gemini,type=volume"
+        "source=codex-config,target=/home/vscode/.codex,type=volume"
     ],
 
-    "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.claude /home/vscode/.codex /home/vscode/.gemini && npm install -g @anthropic-ai/claude-code @openai/codex && curl -fsSL https://antigravity.google/cli/install.sh | bash"
+    "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.claude /home/vscode/.codex && npm install -g @anthropic-ai/claude-code @openai/codex"
 }

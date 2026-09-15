@@ -10,6 +10,7 @@ Last built **2026-09-15**. Every thesis figure lives in this store; drafts recei
 | `fig_constraints_avoiding` | env | `Data_Analysis/DA_in_Paper/data/avoiding_scene.json` | config/projection_eval.yaml geometries; 96 D3IL demonstrations |
 | `fig_avoiding_tradeoff` | da | `temp/2508/batch_avoiding_combined_20260825_143212` | 5 seeds (6-10) x 20 trials = 100 episodes per cell |
 | `fig_avoiding_k_ladder` | da | `temp/2508/batch_avoiding_combined_20260825_143212` | 5 seeds (6-10) x 20 trials = 100 episodes per cell |
+| `fig_avoiding_raw_models` | da | `temp/0309/batch_avoiding_combined_20260903_133730` | seed 6, 20 trials, top-right-hard, no projection |
 | `fig_avoiding_projector_cost` | da | `temp/0609/I/batch_avoiding_combined_20260906_125724` | 4 seeds (7-10) x 3 geometries x 2 trials = 24 rollouts per row |
 
 ## Vendored — copied from where they were produced
@@ -18,15 +19,17 @@ Each was checked against `/workspaces/aux_repo/` before entering the store.
 
 | figure | group | source | provenance |
 | :-- | :-- | :-- | :-- |
-| `fig_raw_plans_meanflow_K1` | demo | `Data_Analysis/DA_Result_Curated_MD/Report_20260819_MF_UNet/fig6a_plans_mfunet_K1_seed6_both-hard.png` | Report_20260819_MF_UNet fig 6a; per-episode MPC diagnostics, unprojected arm, seed 6, both-hard, K=1. Ours; verified absent from aux_repo. |
-| `fig_raw_plans_diffusion_K1` | demo | `Data_Analysis/DA_Result_Curated_MD/Report_20260819_MF_UNet/fig6b_plans_dpcc_K1_seed6_both-hard.png` | Report_20260819_MF_UNet fig 6b; same protocol, diffusion baseline at K=1. Ours; verified absent from aux_repo. |
-| `fig_raw_plans_meanflow_K2` | demo | `Data_Analysis/DA_Result_Curated_MD/Report_20260819_MF_UNet/fig6c_plans_mfunet_K2_seed6_both-hard.png` | Report_20260819_MF_UNet fig 6c; same protocol, K=2. Ours; verified absent from aux_repo. |
-| `fig_raw_goal_reached_K1` | da | `Data_Analysis/DA_Result_Curated_MD/Report_20260903_AF_UNet/fig7_raw_diffuser_K1.svg` | Report_20260903_AF_UNet fig 7; goal reached on the unprojected arm at K=1, top-right-hard, seed 6, 20 trials. Ours; verified absent from aux_repo. |
+| `fig_raw_plans_meanflow_K1` | demo | `Data_Analysis/DA_Result_Curated_MD/Report_20260819_MF_UNet/fig6a_plans_mfunet_K1_seed6_both-hard.png` | Report_20260819_MF_UNet fig 6a; per-episode MPC diagnostics, no projection, seed 6, both-hard, K=1. Ours; verified absent from aux_repo. Cut to (2312, 92, 2715, 492): top row, last column: every plan of the episode overlaid on the scene. |
+| `fig_raw_plans_diffusion_K1` | demo | `Data_Analysis/DA_Result_Curated_MD/Report_20260819_MF_UNet/fig6b_plans_dpcc_K1_seed6_both-hard.png` | Report_20260819_MF_UNet fig 6b; same protocol, diffusion baseline at K=1. Ours; verified absent from aux_repo. Cut to (2312, 92, 2715, 492): top row, last column: every plan of the episode overlaid on the scene. |
+| `fig_raw_plans_meanflow_K2` | demo | `Data_Analysis/DA_Result_Curated_MD/Report_20260819_MF_UNet/fig6c_plans_mfunet_K2_seed6_both-hard.png` | Report_20260819_MF_UNet fig 6c; same protocol, K=2. Ours; verified absent from aux_repo. Cut to (2312, 92, 2715, 492): top row, last column: every plan of the episode overlaid on the scene. |
+| `fig_raw_goal_reached_K1` | da | `Data_Analysis/DA_Result_Curated_MD/Report_20260903_AF_UNet/fig7_raw_diffuser_K1.svg` | Report_20260903_AF_UNet fig 7; goal reached without projection at K=1, top-right-hard, seed 6, 20 trials. Ours; verified absent from aux_repo. |
 
 ## Planned — specified in a draft, not yet made
 
 | figure | group | asked for in | spec |
 | :-- | :-- | :-- | :-- |
+| `fig_raw_plans_fm_K1` | demo | v3 sec:res:avoiding:raw (fig:raw-plans) | The plan fan of one episode without projection, flow matching at K=1, seed 6, both-hard -- the third panel of fig:raw-plans, which today shows MeanFlow and diffusion only. Report_20260903_AF_UNet section 8 lists it as 8e and has never rendered it. Render from logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/.../H8_K1_.../6/ on the cluster, then crop to the plans panel the way VENDORED_CROP does for the existing two. |
+| `fig_raw_plans_af_K1` | demo | v3 sec:res:avoiding:raw (fig:raw-plans) | The same for consistency training at K=1 (report section 8, panel 8a), from logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_D..._ae0.2_ag25.0_rf0.5/H8_K1_..._msgafon02_s6/6/. Its 20-of-20 goal rate is the strongest raw-plan number in the study and it currently has no picture. |
 | `fig_env_aligning` | env | v3 sec:setup:tasks:aligning (fig:env-aligning) | Alignment scene with box and target pose, next to the two camera images the policy receives (overhead and in-hand). |
 | `fig_env_uav` | env | v3 sec:setup:tasks:uav (fig:env-uav) | Corridor (walls 1.90 m apart + 14 deg slide, routes L/C/R), pillars, s-curve: overhead, common scale, vehicle drawn to scale (0.62 m across). Geometry: tab:uav-scenes. |
 

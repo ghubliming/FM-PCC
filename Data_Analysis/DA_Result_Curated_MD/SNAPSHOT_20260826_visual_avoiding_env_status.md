@@ -1,5 +1,13 @@
 # `avoiding-d3il-visual` — env status, per projector, and the `af ~ mf > fm > dpcc` question
 
+> ## ⚠️ HISTORICAL SNAPSHOT — reviewed 2026-09-15
+>
+> Preserved as the 2026-08-26 whole-environment snapshot. It is not a current thesis result or
+> whole-project status page. Its own scope remains useful, especially the finding that fixed
+> obstacle geometry makes vision redundant for the tested constraint question. For paper/thesis
+> analyses, start at `Data_Analysis/DA_in_Paper/analysis/INDEX.md`; for the current retained batch
+> inventory, see `Data_Analysis/analysis_results_checkpoint/15-09/LEDGER_20260915.md`.
+
 > **SNAPSHOT 2026-08-26.** Whole-env status across every visual-avoiding candidate in
 > `batch_avoiding_combined_20260825_143212`. Regenerated as new batches land; use the newest
 > `SNAPSHOT_<date>_*` in this folder.

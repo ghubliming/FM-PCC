@@ -39,10 +39,12 @@ its constraint satisfaction depends on the environment.
     obstacle-avoidance benchmark, while the diffusion model loses it below its training budget
     (\autoref{sec:res:fewstep}). On alignment MeanFlow improves with more evaluations and consistency
     training does not.
-  \item[RQ3 --- Constraints.] Endpoint projection is well-posed only with at least one genuine step
-    (\autoref{sec:res:constraints:degenerate}). With enough genuine steps it is the faster method in
+  \item[RQ3 --- Constraints.] Endpoint projection is well-posed only with at least one guiding step
+    (\autoref{sec:res:constraints:degenerate}). With enough guiding steps it is the faster method in
     all environments; its constraint satisfaction is level with per-step projection on obstacle avoidance and alignment, higher on the pillars and lower on the corridor
-    (\autoref{sec:res:constraints}).
+    (\autoref{sec:res:constraints}). On obstacle avoidance that condition is not met at the budget the
+    task is run at: with one or two network evaluations there is no guiding step, so per-step projection
+    is the method there (\autoref{sec:res:avoiding:projection}).
   \item[RQ4 --- Transfer.] The order of the generative models carries over from state to camera
     observations and from the manipulator to the quadrotor. On the s-curve the tracking controller, not
     the plan, limits the result (\autoref{sec:res:uav:scurve}).

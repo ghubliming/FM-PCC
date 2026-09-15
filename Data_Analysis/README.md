@@ -1,6 +1,11 @@
 # Data Analysis — batch tools + HTML visualizers
 
 > 🟢 **Thesis data and figures:** [`DA_in_Paper/`](DA_in_Paper/README.md) is the official, live store (2026-09-14) — the analysis index behind every thesis number, all figure code, and every thesis figure.
+>
+> **Retained data checkpoint:** [`analysis_results_checkpoint/15-09/LEDGER_20260915.md`](analysis_results_checkpoint/15-09/LEDGER_20260915.md)
+> inventories today's avoiding, visual-aligning and UAV batch exports, including quality flags.
+> `DA_Result_Curated_MD/NOTEBOOK_20260829_key_headlines.md` remains a working notebook, not the
+> paper/thesis entry point.
 
 Three batch-analysis pipelines, each pairing a Python CLI (discover → load → aggregate →
 plot → report) with a standalone browser-based visualizer that reads the CSVs the Python

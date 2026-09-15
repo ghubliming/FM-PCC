@@ -316,11 +316,23 @@ Each flight is scored by
 
 \subsection{Obstacle Avoidance}\label{sec:setup:protocol:avoiding}
 
-\ac{DPCC} averages its results over five training seeds and ten test episodes for each constraint
-geometry \parencite[Sec.~6.1]{romer2025diffusion}. This thesis evaluates the same five training seeds
-with twenty episodes per seed, one hundred episodes per configuration and geometry. Results are averaged
-per geometry first and then across the three geometries. \autoref{tab:tiers} shows what the larger
-number of episodes changes for the baseline.
+\ac{DPCC} averages its results over \enquote{five training seeds and ten test seeds for each
+constraint set formulation} \parencite[Sec.~6.1]{romer2025diffusion}, which is fifty rollouts per
+geometry. This thesis uses the same five training seeds, 6 to 10, and reports two numbers of episodes
+per seed:
+
+\begin{description}
+  \item[Ten episodes per geometry.] Two episodes per training seed. This is the setting under which the
+    baseline was first reproduced, and the one in which a success rate can only take the values
+    $0, 0.1, \dots, 1$. It is smaller than the published fifty, not equal to it.
+  \item[One hundred episodes per geometry.] Twenty episodes per training seed, twice the published
+    number of rollouts, resolving a success rate to $0.01$. This is the setting of every headline
+    result in \autoref{sec:res:state}.
+\end{description}
+
+Results are averaged per geometry first and then across the three geometries, so a geometry evaluated
+with fewer training seeds does not carry more weight than its share. \autoref{tab:tiers} shows what the
+larger number of episodes changes for the baseline.
 
 \begin{table}[htpb]
   \caption[Effect of the number of episodes]{The baseline at ten and at one hundred episodes per
@@ -342,11 +354,14 @@ number of episodes changes for the baseline.
 \dataref{DA\_20260819 --- baseline at 10 against 100 episodes per geometry}
 
 At ten episodes a success rate of $1.00$ resolves to $\pm0.10$, and the baseline's perfect rates at ten
-episodes become $0.95$ and $0.92$ at one hundred.
+episodes become $0.95$ and $0.92$ at one hundred. A rate of $1.00$ at ten episodes is therefore not
+evidence of a rate of $1.00$, which is why the headline results are reported at one hundred.
 
-\provisional{The flow-based models have not yet been evaluated at the published number of episodes on
-the current evaluation code. Until that run is done, the low-budget baseline results in
-\autoref{sec:res:fewstep} are at ten episodes and the flow-based models at one hundred.}
+\provisional{The flow-based models have not been evaluated at ten episodes on the current evaluation
+code, so the low-budget baseline results in \autoref{sec:res:fewstep} are at ten episodes and the
+flow-based models at one hundred. Neither number of episodes reproduces the published fifty rollouts per
+geometry exactly; the comparison against the published values in \autoref{tab:target} is read with that
+in mind.}
 
 The flow-matching results were produced by the sampler inherited from the baseline, which draws the
 initial noise at half the unit scale while flow matching was trained at unit scale

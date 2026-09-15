@@ -15,6 +15,34 @@ Paths are relative to the repository root `/workspaces/FM-PCC` unless stated oth
 
 ---
 
+## 0. Data source of record — the 15-09 checkpoint
+
+**`Data_Analysis/analysis_results_checkpoint/15-09/`** is the corpus to read when a figure needs data.
+It arrived 2026-09-15 and supersedes the `temp/` batches for every new or regenerated figure. Use
+`temp/` only to reproduce a figure exactly as it stands today.
+
+| batch | environment | coverage |
+| :-- | :-- | :-- |
+| `batch_avoiding_combined_20260915_100757` | obstacle avoidance | 5 seeds (6–10) × 3 geometries, 185 candidates over 117 evaluation folders, 30 projection methods, $K \in \{1,2,3,5,10,20,40,50,100\}$ |
+| `batch_va2_20260915_100754` | vision-conditioned alignment | 7 seeds, train and test splits, 29 candidates; carries box angle and distance metrics |
+| `batch_uav_20260915_100816` | quadrotor | seed 6, 44 scene variants including corridor, pillars and s-curve; carries `fm_ms`, `track_err_mean`, `n_fm_steps` |
+
+Two reasons this is the better source: it is **committed to the repository** (the avoiding raw table is
+gzipped to stay under GitHub's file limit — commit `b6cb1870`), so a figure stays reproducible on a
+fresh clone, which is exactly what `temp/` cannot promise; and it is the first corpus that covers all
+three environments, including the two whose chapters still carry holes.
+
+**It is not drop-in.** The checkpoint's `candidates_multidimensional_raw.csv` is **long** — one row per
+`(seed, variant, constraint_type, halfspace_variant, metric, value)` — whereas the builders in
+[`sources.py`](sources.py) read the **wide** tables of the `temp/` batches, taking
+`n_success_and_constraints`, `n_steps` and `avg_time` as columns. Re-pointing a builder therefore means
+a loader that pivots long to wide, not a changed path. Column order also differs between the three
+batches, and the avoiding table is gzipped, so read them with `csv.DictReader` (plus `gzip.open`), never
+by column index.
+
+**Status.** No figure has been re-pointed yet: every figure below still names the `temp/` batch it was
+built from. Re-pointing is a code change to `sources.py` and the builders, to be made on request.
+
 ## 1. Obstacle avoidance — environment figures
 
 Both read one extract, `../data/avoiding_scene.json`, written by
@@ -93,6 +121,24 @@ The plan panels are per-episode diagnostics of `batch_avoiding_combined_20260818
 both-hard, from the runs `H8_K1_Meuler_T0.5_A0.5_B1_D…MeanFlowODE` and
 `H8_K1_T0.5_Dmodels.GaussianDiffusion` (report §7, candidate index rows 138 and 8).
 
+**The three `fig_raw_plans_*` sources are cut before use.** Each is a $3000\times1000$ diagnostic
+dashboard — two episodes × six columns: `x`, `y`, `x_des`, `y_des` time series, the executed path, and
+the overlaid plans. Only the last is a thesis figure. The box `(2312, 92, 2715, 492)` keeps the top row's
+last column, $403\times400$; it is declared in `VENDORED_CROP` in [`sources.py`](sources.py), applied by
+[`prep/crop_vendored.py`](prep/crop_vendored.py) into `../data/prepared/`, and `make_figs.py` copies that
+file and refuses to fall back to the uncut source. Boxes were read off the white gutters between panels;
+the column is `ax[i, 5]` in `scripts/eval.py:411–415`.
+
+What that panel actually contains: the renderer draws the plan fan every
+`plot_samples_every = max(1, horizon//2)` $= 4$ control steps, and at most four candidates per drawn
+step (`scripts/eval.py:410–411`) — **not** every plan of the episode. The caption of `fig:raw-plans` says
+so; it previously claimed "every plan".
+
+At $403\times400$ the cut is about 146 dpi at the printed width. That is the ceiling of the available
+sources — the report holds no vector version, and the panel is inherently ~400 px inside a 2×6 grid.
+A print-resolution version needs the plans panel re-rendered alone from the saved rollouts (the comment
+at `scripts/eval.py:279` notes the npz keeps every step), which is a cluster job.
+
 ## 4. Where the thesis uses each figure
 
 From `Working_Space/v3/figures/EXPORTED.md`, written by `export_to_draft.py`:
@@ -125,6 +171,7 @@ python3 plotting/make_figs.py               # rebuild; writes figures/MANIFEST.m
 python3.14 plotting/extract/avoiding_scene.py   # re-extract geometry + demonstrations, re-check eval.py
 python3 plotting/export_to_draft.py v3      # refresh a draft's copies and its EXPORTED.md
 python3.14 plotting/svg/preview_png.py ../figures/env/fig_env_avoiding.svg /tmp/x.png
+python3.14 plotting/prep/crop_vendored.py --check   # are the cut dashboards current?
 ```
 
 `temp/` is a local drop directory and is not version-controlled: on a fresh machine the batch

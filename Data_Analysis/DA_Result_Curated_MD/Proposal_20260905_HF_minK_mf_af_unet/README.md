@@ -1,5 +1,10 @@
 # Proposal — the minimum K at which HardFlow-SLSQP actually runs, and the MF/AF-UNet K-ladder that tests it
 
+> **STATUS UPDATE — 2026-09-15:** this proposal's “nothing submitted” line is historical.
+> The minimum-K experiment completed on 2026-09-06. Use
+> `DA_20260906_hf_minK_mfunet_A1_K2_K3_K5.md` for the result and its sample-size caveat;
+> retain this file for the preregistered reasoning and design.
+
 **Date:** 2026-09-05 · **Status:** proposal, nothing submitted · **Task:** `avoiding-d3il` (state, H8)
 **Gens:** Gen3v6 (MeanFlow, `flow_matcher_v3_meanflow`) · Gen3v7 (α-Flow, `flow_matcher_v3_alphaflow`) · arm C = the HardFlow sampler ported into both
 **Answers:** "what is the min K to let HF-SLSQP start to *really* run?" and "has this already been run in `temp/0309/batch_avoiding_combined_20260903_133730`?"

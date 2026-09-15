@@ -4,10 +4,11 @@ Exported **2026-09-15** from `Data_Analysis/DA_in_Paper/figures/`. These are cop
 
 | figure | group | formats | sha256 | used in |
 | :-- | :-- | :-- | :-- | :-- |
-| `fig_avoiding_k_ladder` | da | svg/png | `f3b89e02e378` | chapters/06_results.tex:146 |
-| `fig_avoiding_projector_cost` | da | svg/png | `6b7a4b62f941` | chapters/06_results.tex:253 |
-| `fig_avoiding_tradeoff` | da | svg/png | `401695acdca1` | chapters/06_results.tex:126 |
+| `fig_avoiding_k_ladder` | da | svg/png | `f3b89e02e378` | chapters/06_results.tex:181 |
+| `fig_avoiding_projector_cost` | da | svg/png | `993c750546f6` | chapters/06_results.tex:336 |
+| `fig_avoiding_raw_models` | da | svg/png | `bc55a9db22f5` | chapters/06_results.tex:302 |
+| `fig_avoiding_tradeoff` | da | svg/png | `401695acdca1` | chapters/06_results.tex:161 |
 | `fig_constraints_avoiding` | env | svg/png | `8e512d6d03af` | chapters/05_setup.tex:76 |
 | `fig_env_avoiding` | env | svg/png | `17f873309d26` | chapters/05_setup.tex:67 |
-| `fig_raw_plans_diffusion_K1` | demo | png | `9b9fd26537f7` | chapters/06_results.tex:221 |
-| `fig_raw_plans_meanflow_K1` | demo | png | `2a5cccbade17` | chapters/06_results.tex:217 |
+| `fig_raw_plans_diffusion_K1` | demo | png | `c18a97b6b757` | chapters/06_results.tex:272 |
+| `fig_raw_plans_meanflow_K1` | demo | png | `781e690261a9` | chapters/06_results.tex:268 |

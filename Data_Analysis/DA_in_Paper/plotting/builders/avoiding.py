@@ -21,6 +21,7 @@ To add a figure: write the builder, add it to ``ALL`` at the bottom, run
 ``export_to_draft.py`` for the draft that uses it.
 """
 import os
+import statistics as st
 
 import sources as S
 from svg.fmpcc_svg import Fig, dec_ticks, fmt_num, legend
@@ -335,12 +336,17 @@ def fig_avoiding_k_ladder(outdir):
 #  Fig 6 -- the two constraint arms, and where their costs cross
 # ═══════════════════════════════════════════════════════════════════════════
 def fig_avoiding_projector_cost(outdir):
-    """Per-step cost of iterate projection vs. endpoint projection against K.
+    """Per-step cost of per-step projection vs. endpoint projection against K.
 
-    The shaded band is the regime where the comparison is not well posed: at
-    K = 2 with a fully-open activation threshold the endpoint arm executes one
-    genuine step, so it is not running the mechanism it names. Greying it is the
-    figure's job, not the caption's.
+    The shaded band is the budget at which the comparison is not well posed: at
+    K = 2 the endpoint method has ONE guiding step, so it is barely running the
+    mechanism it names. Greying it is the figure's job, not the caption's.
+
+    Note which series the hollow marker belongs to. Degeneracy is a property of
+    ENDPOINT projection only -- per-step projection acts on every step and is
+    well posed at every budget -- so only the endpoint series is drawn hollow
+    there. An earlier version drew both hollow and implied a limitation that
+    per-step projection does not have.
     """
     c = S.CORPORA['avoiding_minK']
     if not c.available:
@@ -348,50 +354,136 @@ def fig_avoiding_projector_cost(outdir):
     cells = S.load_by_candidate(c, ['hfmink_A1_mfunet'])
     rows = S.geometry_mean(cells, lambda k: (k[0], k[3]), geom_index=2)  # -> (K, variant)
 
-    ARMS = [('dpcc-t-tightened', '#2471a3', 'per-step projection', 'o'),
-            ('hardflow_sls-t-tightened', '#1e8449', 'endpoint projection', 's')]
+    # (variant, colour, label, marker, degeneracy applies to this series)
+    ARMS = [('dpcc-t-tightened', '#2471a3', 'per-step projection', 'o', False),
+            ('hardflow_sls-t-tightened', '#1e8449', 'endpoint projection', 's', True)]
     ks = sorted({k for k, _v in rows})
     if not ks:
         return None
 
-    f = Fig(760, 470, ml=80, mr=196)
+    f = Fig(800, 470, ml=80, mr=210)
     ymax = max(r['avg_time'] for r in rows.values()) * 1.35
     f.axes((1.6, 6.0), (0.02, ymax), ylog=True)
     f.vspan(f.X(1.6), f.X(2.5))
     f.frame([2, 3, 5], dec_ticks(0.02, ymax),
-            'step budget K',
-            'per-step wall clock  [ s ]   (log, lower is better)',
+            'step budget K  [ network evaluations per plan ]',
+            'wall clock per control step  [ s ]   (log)',
             'Wall-clock time of the two projection methods, obstacle avoidance',
-            f'{c.protocol}; MeanFlow U-Net 4.0M, activation threshold 1.0, '
-            f'temporal-consistency rule, tightened.',
+            # Kept short: at 800 px this line is clipped past about 100 characters,
+            # and the model details are in the thesis caption anyway.
+            f'{c.protocol}; MeanFlow, U-Net 4.0M, tightened.',
             xfmt=lambda v: f'{v:.0f}', yfmt=lambda v: f'{v:g}')
     f.text(f.X(2.0), f.T + 14, 'K = 2:', 9.0, '#a04000', anchor='middle', bold=True)
-    f.text(f.X(2.0), f.T + 26, 'one genuine', 9.0, '#a04000', anchor='middle')
-    f.text(f.X(2.0), f.T + 38, 'step -- not', 9.0, '#a04000', anchor='middle')
-    f.text(f.X(2.0), f.T + 50, 'citable', 9.0, '#a04000', anchor='middle')
+    f.text(f.X(2.0), f.T + 26, 'one guiding', 9.0, '#a04000', anchor='middle')
+    f.text(f.X(2.0), f.T + 38, 'step', 9.0, '#a04000', anchor='middle')
 
-    for var, col, lab, mk in ARMS:
+    for var, col, lab, mk, degen in ARMS:
         pts = [(K, rows[(K, var)]['avg_time']) for K in ks if (K, var) in rows]
         if not pts:
             continue
         f.poly([(f.X(K), f.Y(t)) for K, t in pts], col, w=1.9)
         for K, t in pts:
-            f.marker(f.X(K), f.Y(t), mk, col, filled=(K >= 3), r=5.5)
+            f.marker(f.X(K), f.Y(t), mk, col, filled=not (degen and K < 3), r=5.5)
             f.text(f.X(K) + 9, f.Y(t) - 6, f'{t * 1000:.0f} ms', 8.0, '#111')
 
     lx = f.R + 14
     f.text(lx, f.T + 4, 'projection method', 10, '#111', bold=True)
-    legend(f, lx, f.T + 20, [(c_, l, m) for _v, c_, l, m in ARMS])
-    f.text(lx, f.T + 62, 'Same solver, same', 9, '#555')
-    f.text(lx, f.T + 74, 'constraint set, same', 9, '#555')
-    f.text(lx, f.T + 86, 'checkpoint, one job.', 9, '#555')
-    f.text(lx, f.T + 104, 'The endpoint arm does', 9, '#555')
-    f.text(lx, f.T + 116, 'MORE solves and costs', 9, '#555')
-    f.text(lx, f.T + 128, 'LESS: it is projecting', 9, '#555')
-    f.text(lx, f.T + 140, 'a near-feasible point.', 9, '#555')
-    f.text(lx, f.T + 164, 'hollow = degenerate', 9, '#a04000')
+    legend(f, lx, f.T + 20, [(c_, l, m) for _v, c_, l, m, _d in ARMS])
+    for j_, line in enumerate(['Same generative model,', 'same solver, same',
+                               'constraint set, one job.', '',
+                               'Endpoint projection solves', 'more programs per control',
+                               'step and takes less time:', 'the point it projects is',
+                               'already close to the', 'feasible set.']):
+        f.text(lx, f.T + 62 + 12 * j_, line, 9, '#555')
+    f.text(lx, f.T + 196, 'hollow: endpoint', 9, '#a04000')
+    f.text(lx, f.T + 208, 'projection has one', 9, '#a04000')
+    f.text(lx, f.T + 220, 'guiding step there', 9, '#a04000')
     path = f.save(os.path.join(outdir, 'fig_avoiding_projector_cost.svg'))
     return path, f'{c.rel} | {c.protocol}'
+
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  The four generative models with the projection switched OFF.
+# ═══════════════════════════════════════════════════════════════════════════
+def fig_avoiding_raw_models(outdir):
+    """Goal reached without projection, all four models, one network evaluation.
+
+    This is the only figure in which the generative models are compared with
+    nothing downstream of them. It exists because the projection and the tracking
+    controller absorb so much that the projected numbers cannot separate the
+    models (DPCC's own Table 2: a dynamics model wrong by 4x still satisfies the
+    constraints in 0.77 of episodes).
+
+    ONE geometry, not three. Without projection the plan does not depend on the
+    constraint set: the unprojected rows of top-left-hard and both-hard are equal
+    to the decimal and every model reaches the goal in 20 of 20 on both, so a
+    three-panel version would show two duplicate panels and one real one. See
+    sources.AVOIDING_RAW_GEOMETRY.
+    """
+    c = S.CORPORA['avoiding_af_unet']
+    if not c.available:
+        return None
+    order = ['af02', 'af05', 'mf', 'fm', 'diffusion']
+    rows = {}
+    for eng, pat in S.AVOIDING_AF_FOLDERS.items():
+        K = 20 if eng == 'diffusion' else 1
+        # SEED 6 ONLY, and that is not a detail. The consistency-training folders
+        # carry the _s6 tag and exist for seed 6 alone, while the MeanFlow, flow
+        # matching and diffusion folders in this same batch carry all five seeds.
+        # Averaging each model over the seeds it happens to have would compare a
+        # one-seed number with a five-seed number: it reads 0.97 / 0.97 / 0.92
+        # instead of 0.85 / 0.85 / 0.60 and silently flatters the comparators.
+        # load_by_candidate takes a LIST of substrings; keys are (K, seed, geometry, variant).
+        got = S.load_by_candidate(c, [pat % K], seeds=S.AVOIDING_AF_SEEDS)
+        cell = [m for (_K, _seed, geom, variant), m in got.items()
+                if variant == 'diffuser' and geom == S.AVOIDING_RAW_GEOMETRY]
+        if not cell:
+            continue
+        rows[eng] = (K, {k: st.mean([m[k] for m in cell if k in m])
+                         for k in ('n_success', 'n_steps')})
+    rows = {e: rows[e] for e in order if e in rows}
+    if len(rows) < 2:
+        return None
+
+    f = Fig(720, 430, ml=76, mr=200)
+    f.axes((-0.5, len(rows) - 0.5), (0.0, 1.16))
+    f.frame([], [0.0, 0.2, 0.4, 0.6, 0.8, 1.0], '', 'episodes reaching the goal',
+            'Without projection: the plan the model itself produces',
+            f'{c.protocol}; {S.AVOIDING_RAW_GEOMETRY}, no projection. '
+            f'U-Net 4.0M throughout; the baseline at its own budget.',
+            yfmt=lambda v: f'{v:.1f}')
+
+    bw = 0.56
+    for i, (eng, (K, m)) in enumerate(rows.items()):
+        v = m['n_success']
+        x0, x1 = f.X(i - bw / 2), f.X(i + bw / 2)
+        f.bar(x0, f.Y(v), x1 - x0, f.Y(0.0) - f.Y(v), S.AVOIDING_AF_COLOUR[eng])
+        f.text((x0 + x1) / 2, f.Y(v) - 8, f'{v:.2f}', 11.5, '#111', anchor='middle', bold=True)
+        f.text((x0 + x1) / 2, f.Y(v) - 22, f"{m['n_steps']:.1f} steps", 9.5, '#666', anchor='middle')
+        lab = S.AVOIDING_AF_LABEL[eng].replace('consistency training, ', 'consistency tr.\n')
+        for j, part in enumerate(lab.split('\n')):
+            f.text((x0 + x1) / 2, f.B + 18 + 13 * j, part, 10.0, '#222', anchor='middle')
+        f.text((x0 + x1) / 2, f.B + 18 + 13 * len(lab.split('\n')),
+               f'K = {K}', 9.5, '#666', anchor='middle')
+
+    lx = f.R + 14
+    f.text(lx, f.T + 14, 'read as', 10.5, '#111', bold=True)
+    for j, line in enumerate([
+            'Every model is run at one',
+            'network evaluation except',
+            'the baseline, which is at its',
+            'training budget of 20.',
+            '',
+            'On the other two geometries',
+            'every model reaches the goal',
+            'in 20 of 20 without',
+            'projection, so only this one',
+            'separates them.']):
+        f.text(lx, f.T + 34 + 14 * j, line, 9.5, '#444')
+
+    path = f.save(os.path.join(outdir, 'fig_avoiding_raw_models.svg'))
+    return path, f'{c.rel} | {c.protocol}, {S.AVOIDING_RAW_GEOMETRY}, no projection'
 
 
 # Registry. Order is the order they appear in the thesis.
@@ -401,5 +493,6 @@ ALL = [
     ('fig_constraints_avoiding', 'env', fig_constraints_avoiding),
     ('fig_avoiding_tradeoff', 'da', fig_avoiding_tradeoff),
     ('fig_avoiding_k_ladder', 'da', fig_avoiding_k_ladder),
+    ('fig_avoiding_raw_models', 'da', fig_avoiding_raw_models),
     ('fig_avoiding_projector_cost', 'da', fig_avoiding_projector_cost),
 ]

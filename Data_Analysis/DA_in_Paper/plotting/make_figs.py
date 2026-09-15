@@ -150,9 +150,28 @@ def main():
             print(f'skip   {name}  (source absent)')
             skipped.append((name, f'vendored source absent: {rel}'))
             continue
+        # A figure declared in VENDORED_CROP is a diagnostic dashboard: only the cut
+        # made by prep/crop_vendored.py may be used. Copying the source instead would
+        # put six panels where the chapter argues from one, so this SKIPS rather than
+        # falls back -- a missing figure is visible, a wrong one is not.
+        cut = S.prepared_path(name)
+        if cut is not None:
+            if not os.path.isfile(cut):
+                print(f'skip   {name}  (needs prep/crop_vendored.py)')
+                skipped.append((name, 'cut declared in VENDORED_CROP but data/prepared/ '
+                                      'has no file; run python3.14 plotting/prep/crop_vendored.py'))
+                continue
+            if os.path.getmtime(src) > os.path.getmtime(cut):
+                print(f'skip   {name}  (cut is older than its source)')
+                skipped.append((name, 'source is newer than the cut in data/prepared/; '
+                                      're-run python3.14 plotting/prep/crop_vendored.py'))
+                continue
+            box, keeps = S.VENDORED_CROP[name]
+            prov = f'{prov} Cut to {box}: {keeps}.'
+            src = cut
         dst = os.path.join(STORE, group, name + os.path.splitext(src)[1])
         shutil.copyfile(src, dst)
-        print(f'copied {group}/{os.path.basename(dst)}')
+        print(f'copied {group}/{os.path.basename(dst)}' + ('  (cut)' if cut else ''))
         vendored.append((name, group, rel, prov))
 
     for name, group, fn in builders.ALL:

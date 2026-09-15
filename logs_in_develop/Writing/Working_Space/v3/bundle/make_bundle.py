@@ -509,9 +509,18 @@ def build(args):
             if os.path.splitext(fn)[1].lower() in COMPILABLE + ('.svg',):
                 shutil.copyfile(os.path.join(FIGDIR, fn), os.path.join(dst, fn))
                 figs.append(fn)
-    usable = [f for f in figs if os.path.splitext(f)[1].lower() in COMPILABLE]
+    # Count FIGURES, not files. A figure is one stem; \fmpccgraphic resolves it to
+    # .pdf, else .png, else a placeholder, so a stem that ships both an .svg and a
+    # .png renders fine. Counting files called that figure SVG-only and printed a
+    # warning about placeholders for figures that were never going to be placeholders.
+    stems = {}
+    for f in figs:
+        stem, ext = os.path.splitext(f)
+        stems.setdefault(stem, set()).add(ext.lower())
+    usable = sorted(st for st, ex in stems.items() if ex & set(COMPILABLE))
+    placeholder = sorted(st for st in stems if st not in usable)
     print(f'  assets: {len(assets)} bibliography file(s), {len(figs)} figure file(s) '
-          f'({len(usable)} directly includable, {len(figs) - len(usable)} SVG-only)')
+          f'= {len(stems)} figure(s) ({len(usable)} render, {len(placeholder)} placeholder)')
     if args.svg_package:
         print('  figure mode: \\usepackage{svg} -- SVGs render directly if the host has Inkscape')
 
@@ -533,11 +542,12 @@ def build(args):
         f.write(f'| {stamp} | {len(sources)} | {src_lines} | {len(lines)} | '
                 f'{n_graphics} | {len(usable)}/{len(figs)} | `{base}.tex` |\n')
 
-    if len(usable) < len(figs) and not args.svg_package:
-        print(f'\nNOTE: {len(figs) - len(usable)} figure(s) are SVG-only, so they render as a '
-              f'labelled placeholder box.\n      For real figures either re-run with '
-              f'--svg-package (Overleaf has Inkscape),\n      or run DA_in_Paper/plotting/svg/svg2pdf.sh + export where a '
-              f'converter exists and rebuild.')
+    if placeholder and not args.svg_package:
+        print(f'\nNOTE: {len(placeholder)} figure(s) ship only as SVG and render as a labelled '
+              f'placeholder box:\n      ' + ', '.join(placeholder) +
+              '\n      For real figures either re-run with --svg-package (Overleaf has Inkscape),'
+              '\n      or run DA_in_Paper/plotting/svg/svg2pdf.sh + export where a converter '
+              'exists and rebuild.')
     return 0
 
 

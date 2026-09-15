@@ -17,6 +17,69 @@ is sourced from · what it left open.
 
 ---
 
+## v3.12 — 2026-09-15 · consistency training into the results, the protocol made exact, two figures rebuilt → [`changelogs/v3.12_20260915_af_results_protocol_and_figures.md`](changelogs/v3.12_20260915_af_results_protocol_and_figures.md)
+
+- **Consistency training was missing from the results.** Built in from `Report_20260903_AF_UNet`: the
+  new four-model Table 6.2 (`tab:state-models`) and a new figure `fig:avoiding-raw-models` — goal
+  reached with the projection off, 20/20 against MeanFlow's and flow matching's 17/20 and the baseline's
+  12/20. 🔴 Caught while building it: averaging each model over the seeds it happens to have reads
+  0.97/0.97/0.92 instead of 0.85/0.85/0.60, because only the consistency-training folders are seed-6-only.
+- 🔴 **§5.5.1: ten episodes is not "the published number".** The paper is five training seeds x ten test
+  seeds = **50 rollouts per geometry**; our two settings are 5x2 = 10 (smaller) and 5x20 = 100 (twice).
+  Set out explicitly, and the same wrong label removed from `sources.py`.
+- **Figure 6.3**: the flow-matching and consistency-training plan panels have never been rendered
+  (`Report_20260903` section 8, all eight still placeholders). Caption now says which models it shows;
+  both missing panels registered in `PLANNED` with their plan directories.
+- **Figure 6.4 rebuilt**: banned vocabulary on the canvas ("arm", "genuine", "degenerate", "not
+  citable"), "lower is better" in an axis label, a truncated subtitle, and 🔴 a semantic error — both
+  series were drawn hollow at K=2, though degeneracy applies only to endpoint projection.
+
+---
+
+## v3.11 — 2026-09-15 · v2 checked (unmoved), §6.1.1 renamed, smoothness argued with the baseline's own margin, endpoint projection at low budget → [`changelogs/v3.11_20260915_smoothness_margin_and_lowK_endpoint.md`](changelogs/v3.11_20260915_smoothness_margin_and_lowK_endpoint.md)
+
+- **v2 has not moved** — still v2.16, both hashes identical to `SYNC_STATE.json`; nothing to merge. Read
+  it anyway: it leaves a `\hole` at `:332` for a result sentence from Chapter 6, now supplied in
+  `handover/HANDOVER_20260915_for_v2_result_sentences.md`. ✅ **v2 is not missing the low-budget
+  endpoint-projection point** — Ch. 1 `:331`, Ch. 3 `:590` and §4.5.4 `:1594–1641` all carry it; what it
+  lacks is the result, which it explicitly delegates to v3.
+- **§6.1.1 "Generative Models against the Baseline" → "Flow Matching against Diffusion"**: the baseline
+  is a diffusion model, so the old title implied a distinction that does not exist.
+- **§6.1.3 → "Smoothness of the Plans before Projection"**, now with a number behind the claim that the
+  control stack hides plan quality: DPCC's own Table 2 — a dynamics model wrong by a factor of four
+  still satisfies the constraints in 0.77 of episodes. Cited as `\textcite{romer2025diffusion}` and read
+  off the PDF this pass.
+- **The $\nfe=10$ endpoint-projection evaluation existed and was missing from the draft.** Added as
+  `tab:hf-ladder` with the guiding-step count per budget, the measured solve counts confirming zero at
+  $\nfe\le2$, the bit-identical $\nfe=2$ parity run at 2.45× cost, and a `\guard` for the candidate-count
+  mismatch.
+- **Headline stated**: this task's operating point is one network evaluation, MeanFlow is at $0.993$
+  there, and endpoint projection has no step to act on at that budget — in §6.1's opening, §6.1.4's
+  close, §6.4.2 and RQ3.
+
+---
+
+## v3.10 — 2026-09-15 · the plans figure cut to its panel, "genuine steps" renamed, checkpoint data recorded → [`changelogs/v3.10_20260915_raw_plans_cut_and_guiding_steps.md`](changelogs/v3.10_20260915_raw_plans_cut_and_guiding_steps.md)
+
+- **Where the lines in the obstacle-avoidance figures come from**, settled by diffing against
+  `/workspaces/aux_repo/dpcc/`: the 96 curves are recorded D3IL demonstrations, the constraint geometry
+  is byte-identical to DPCC's config, the goal line and obstacles come from a helper identical to
+  DPCC's. No model output, nothing invented — the evidence for Chapter 5's "1:1" claim.
+- **Figure 6.3 rebuilt.** It was shipping a 3000x1000 six-panel diagnostic dashboard; the panel the
+  section argues from was ~12 mm wide. Now cut to that panel, with the cut **declared** in
+  `VENDORED_CROP` and applied by a new `plotting/prep/crop_vendored.py`; `make_figs.py` refuses to fall
+  back to the uncut image. 🔴 Its caption claimed "every plan" — the renderer draws every fourth control
+  step, up to four candidates each; corrected.
+- **"Genuine steps" renamed to guiding steps** ($n\sidx{guide}$), §6.1.5 retitled *Steps at Which
+  Projection Guides Sampling*; Chapter 8 and the appendix follow; recorded in the translation table.
+  Chapter 4 is v2's and is written up in `handover/HANDOVER_20260915_for_v2_ch4_naming.md`, not edited.
+- **`analysis_results_checkpoint/15-09` recorded** as the data source of record (committed, all three
+  environments); no figure re-pointed, and its long-format schema noted as the obstacle to doing so.
+- Fixed the bundler's figure accounting: it counted files, not figures, and warned about placeholders
+  that were not placeholders. This build: 7 figures, 7 render, 0 placeholder.
+
+---
+
 ## v3.9 — 2026-09-15 · quadrotor dataset values, tables that fit, all three geometries, avoiding figures → [`changelogs/v3.9_20260915_tables_geometries_avoiding_figures.md`](changelogs/v3.9_20260915_tables_geometries_avoiding_figures.md)
 
 - Synced v2.15 → **v2.16**; §5.2.3 now holds the quadrotor demonstration values (`tab:uav-demos`), read

@@ -1,5 +1,16 @@
 # The tracker, not the planner — `mjpc` vs `pid_stopgo` on UAV `s_curve`
 
+> ## ⚠️ PARTIALLY INVALID — 2026-09-13, indexed 2026-09-15
+>
+> **Every HardFlow row in this report is invalid for method comparison.** The pre-fix HardFlow
+> projector ignored `x_active` and enforced both switched s-curve wall segments simultaneously,
+> making its feasible set wrong. This invalidates F4 and every HardFlow-dependent part of F3, F6,
+> F7, the tables, and the end-to-end comparison. Re-run after the fix before citing them.
+>
+> The raw-plan and DPCC rows are outside that bug's scope and remain useful for the controller
+> diagnosis. The seven figures below are still placeholders. Source of the correction:
+> `logs_in_develop/Gen15/U16/CHANGELOG_20260913_u16_fix1_fix2_FULL_REVIEW.md` §3.1.
+
 **Date:** 2026-09-09 · **Task:** `uav-s_curve` (Gen15 UAV Mix-ML) · **Engine:** MeanFlow, U-Net backbone (`bbunet`), K=10
 **Batch:** `temp/0909/batch_uav_20260909_205118` · **Candidates:** C94 (`mjpc`) vs C95 (`pid_stopgo`)
 **Jobs:** 25514 → **25554** (mjpc, n=3) · **25502** (pid_stopgo, n=8 variants, n=10) — both completed
@@ -73,8 +84,10 @@ a cheap probe. A bare 3/3 carries a Wilson 95 % lower bound of only 0.29, so no 
 an MJPC rate in isolation — F1 survives because PID's 0/10 has an *upper* bound of 0.31 and the
 intervals are disjoint.
 
-**HardFlow genuineness:** at K=10 with activation threshold A=0.5 the arm is non-degenerate
-(`n_genuine ≥ 1`), so the `hardflow_sls-r` rows carry real HardFlow arithmetic and are citable. ✅
+**HardFlow step regime:** at K=10 with activation threshold A=0.5 the arm is mechanically
+non-degenerate (`n_genuine ≥ 1`). That fact does not repair the wrong feasible set: every
+`hardflow_sls-r` result in this report remains invalid because of the `x_active` bug described
+in the banner above. ❌
 
 ---
 

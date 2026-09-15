@@ -28,7 +28,18 @@ states its backbone and its evaluation protocol.
 All results in this section use five training seeds with twenty episodes each and are averaged per
 geometry, then across the three geometries (\autoref{sec:setup:protocol:avoiding}).
 
-\subsection{Generative Models against the Baseline}\label{sec:res:avoiding:models}
+The section reaches one operating point and stays there. On this benchmark MeanFlow reaches $0.993$
+success with constraint satisfaction at a single network evaluation, which is the smallest budget a
+model can be run at, and neither a second evaluation nor a larger one improves it. Two consequences
+follow and are shown below: the remaining differences between the generative models cannot be read off
+the success rates, because the projection and the tracking controller absorb them
+(\autoref{sec:res:avoiding:raw}); and endpoint projection, which needs a step on which to act before the
+last one, has none at this budget, so per-step projection is the method used here
+(\autoref{sec:res:avoiding:projection}).
+
+\subsection{Flow Matching against Diffusion}\label{sec:res:avoiding:models}
+
+Both sides of this comparison are generative models; what differs is the family and the number of network evaluations each needs. Each is run at the budget it is used at: the diffusion baseline at $\nfe=20$, the flow-based models at one and two.
 
 At a step budget of one, MeanFlow reaches a higher rate of success with constraint satisfaction than
 the \ac{DPCC} baseline, in fewer control steps, at one thirty-first of its wall-clock time per control
@@ -76,33 +87,57 @@ against $0.983$, lies within the across-seed standard error of about $0.07$; the
 time is a factor of $31$ per control step and $35$ per episode. The baseline covers the both-hard
 geometry with one training seed rather than five, which is why it has 220 episodes against 300.
 
-Flow matching alone, at a step budget of two, reaches the success of the baseline on all three
-geometries (\autoref{tab:state-fm}).
+All four generative models reach a configuration with no failures on this task, and they differ in
+what that configuration costs (\autoref{tab:state-models}). Taking each model's cheapest configuration
+that reaches a success rate with constraint satisfaction of $1.00$ on all three geometries, consistency
+training needs two network evaluations, MeanFlow and flow matching five, and the diffusion baseline
+twenty.
 
 \begin{table}[htpb]
-  \caption[Flow matching against the DPCC baseline]{Flow matching at $\nfe=2$ against the DPCC baseline
-  at $\nfe=20$, per geometry, both with cumulative projection cost on tightened constraints. Temporal
-  U-Net, 4.0\,M parameters; five training seeds $\times$ 20 episodes, except the baseline on both-hard
-  (one training seed).}
-  \label{tab:state-fm}
+  \caption[The four generative models at equal constraint satisfaction]{The four generative models on
+  obstacle avoidance, each at its cheapest configuration that reaches a success rate with constraint
+  satisfaction of $1.00$, averaged over the three geometries. Temporal U-Net, 4.0\,M parameters, identical
+  width, depth, action loss weight and time sampler; only the training target and the step budget differ.
+  Selection by temporal consistency on tightened constraints, except the baseline, which is at its own
+  best rule. One training seed (6) $\times$ 20 episodes per geometry.}
+  \label{tab:state-models}
   \centering
   \small
-  \begin{tabularx}{\linewidth}{@{}l L rrrr@{}}
+  \begin{tabularx}{\linewidth}{@{}L rrrrr@{}}
     \toprule
-    Geometry & Model & S\&C & Steps & s/step & s/episode \\
+    Model & $\nfe$ & S\&C & Steps & s/step & s/episode \\
     \midrule
-    top-left-hard  & Diffusion (DPCC) & 1.00 & 70.0 & 0.558 & 39.1 \\
-                   & Flow matching    & 1.00 & 65.5 & 0.028 & 1.8 \\
-    \midrule
-    top-right-hard & Diffusion (DPCC) & 0.95 & 77.6 & 0.517 & 40.2 \\
-                   & Flow matching    & 1.00 & 71.6 & 0.026 & 1.9 \\
-    \midrule
-    both-hard      & Diffusion (DPCC) & 1.00 & 59.4 & 0.616 & 36.6 \\
-                   & Flow matching    & 1.00 & 68.0 & 0.028 & 1.9 \\
+    Consistency training, floor $0.2$ & 2  & 1.00 & 59.68 & 0.0286 & 1.71 \\
+    MeanFlow                          & 5  & 1.00 & 60.17 & 0.2209 & 13.29 \\
+    Flow matching                     & 5  & 1.00 & 64.20 & 0.1121 & 7.20 \\
+    Diffusion (DPCC)                  & 20 & 1.00 & 60.57 & 0.5603 & 33.93 \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
+\dataref{temp/0309/batch\_avoiding\_combined\_20260903\_133730; Report\_20260903\_AF\_UNet \S4}
+
+At equal constraint satisfaction, consistency training takes fewer control steps and less time per step
+than every other model in the table: $0.49$ steps and a factor of $7.7$ against MeanFlow, $4.52$ steps
+and a factor of $3.9$ against flow matching, and $0.89$ steps and a factor of $19.6$ against the
+baseline. It is the only configuration in the table that no other configuration matches on both axes at
+once. MeanFlow likewise takes fewer steps and less time than the baseline. MeanFlow and flow matching do
+not separate: MeanFlow is $4.03$ steps shorter and flow matching a factor of two cheaper per step, so
+which is preferable depends on which of the two costs is scarce.
+
+\guard{This table rests on one training seed. The largest margin in it is three episodes, and the
+difference between consistency training and MeanFlow on the raw plans is not significant ($p=0.231$,
+Fisher, two-sided). It orders the models on cost at fixed constraint satisfaction; it is not evidence of
+a ranking among the three flow-based models, and the step budgets differ by row by construction.}
+
+Flow matching alone, at a step budget of two, reaches the success of the baseline on all three
+geometries at the full five training seeds: $1.00$ against $1.00$ on top-left-hard, $1.00$ against $0.95$
+on top-right-hard and $1.00$ against $1.00$ on both-hard, in $65.5$, $71.6$ and $68.0$ control steps
+against $70.0$, $77.6$ and $59.4$. It needs fewer control steps than the baseline on the two
+single-halfspace geometries and more on both-hard, where the baseline has one training seed, and its time
+per episode is 19 to 22 times lower on all three. The success difference on top-right-hard is inside seed
+noise, so what this supports is that flow matching matches the success of the baseline at a fraction of
+its time.
 \dataref{DA\_20260819, $n=20$ comparison, \S1}
 
 Flow matching needs fewer control steps than the baseline on the two single-halfspace geometries and
@@ -203,13 +238,29 @@ top-right-hard.
 difference between them has $p=0.231$ on one training seed, and averaged over all six selection rules
 they are level, eight non-dominated configurations against nine.
 
-\subsection{Plans before Projection}\label{sec:res:avoiding:raw}
+\subsection{Smoothness of the Plans before Projection}\label{sec:res:avoiding:raw}
 
-Executing the plans without projection shows the generative models directly (\autoref{fig:raw-plans}).
-At one network evaluation MeanFlow's successive plans form a narrow band around the executed path, each
-a bounded curve towards the goal. The diffusion baseline at the same budget produces plans that jump
-across the workspace from one control step to the next. Its executed path is nevertheless smooth,
-because the tracking controller filters the plan.
+Every number reported so far is measured after two stages that both smooth what the generative model
+produced. The projection pulls a plan towards the feasible set, and the tracking controller turns the
+remaining setpoints into joint commands through inverse kinematics. Both absorb incoherence, so two
+models whose plans differ greatly can post similar success rates, step counts and violation counts.
+The comparison in \autoref{tab:state-headline} therefore measures the tolerance of the control stack
+as much as the quality of the plan.
+
+How wide that tolerance is can be read off the baseline's own paper. \textcite{romer2025diffusion}
+vary the sampling time assumed by the dynamics model inside the projection against the true sampling
+time, and report success with constraint satisfaction of $0.99$ and $0.95$ when the assumption is wrong
+by a factor of two in either direction, and $0.86$ and $0.77$ when it is wrong by a factor of four.
+A dynamics model off by a factor of four still satisfies the constraints in three quarters of episodes.
+Whatever passes through this stack is corrected by a margin far larger than the difference between two
+generative models, which is why the plans themselves have to be looked at directly.
+
+Executed without projection, the two models separate (\autoref{fig:raw-plans}). At one network
+evaluation MeanFlow's successive plans form a narrow band around the executed path, each a bounded curve
+towards the goal. The diffusion baseline at the same budget produces plans that jump across the
+workspace from one control step to the next. Its executed path is nevertheless smooth, because the
+tracking controller filters the plan --- which is the point: the smoothness of the executed path is the
+controller's, not the model's.
 
 \begin{figure}[htpb]
   \centering
@@ -221,9 +272,13 @@ because the tracking controller filters the plan.
     \includegraphics[width=\linewidth]{fig_raw_plans_diffusion_K1}\\[0.3em]
     {\footnotesize Diffusion (DPCC), $\nfe=1$}
   \end{minipage}
-  \caption[Plans without projection at one network evaluation]{Every plan generated along one episode,
-  overlaid, executed without projection, \emph{both-hard}, training seed 6. Same backbone, same budget,
-  and 0.0097 against 0.0094\,s per control step.}
+  \caption[Plans without projection at one network evaluation]{Plans generated along one episode and
+  executed without projection, overlaid, \emph{both-hard}, training seed 6. The evaluation draws the plan
+  of every fourth control step, up to four candidates each, over the scene of
+  \autoref{fig:env-avoiding}; green marks the state the plan starts from. Same backbone, same budget,
+  and 0.0097 against 0.0094\,s per control step. Panels for flow matching and for consistency training
+  at the same budget have not been rendered; \autoref{fig:avoiding-raw-models} compares all four models
+  on this comparison numerically.}
   \label{fig:raw-plans}
 \end{figure}
 
@@ -231,14 +286,42 @@ because the tracking controller filters the plan.
 
 Without projection, MeanFlow violates the constraints on $6.0$ control steps per episode and the
 diffusion baseline on $28.0$, at $58.0$ and $56.5$ control steps. A second network evaluation brings
-MeanFlow to $12.0$ with a narrower band of plans. On the same unprojected plans at $\nfe=1$ on
-\emph{top-right-hard}, consistency training reaches the goal in 20 of 20 episodes, MeanFlow and flow
-matching in 17 of 20, and the diffusion baseline at $\nfe=20$ in 12 of 20; with projection the difference
-between consistency training and MeanFlow disappears.
-\dataref{Report\_20260903\_AF\_UNet \S7; step counts over successful episodes}
+MeanFlow to $12.0$ with a narrower band of plans.
+\dataref{Report\_20260819\_MF\_UNet \S7}
+
+All four models can be compared on this measurement, and it separates them where the projected results
+do not (\autoref{fig:avoiding-raw-models}). Executing the plan the model itself produces, consistency
+training with the floor at $0.2$ reaches the goal in 20 of 20 episodes, with the floor at $0.05$ in 18 of
+20, MeanFlow and flow matching in 17 of 20, and the diffusion baseline, at its own budget of twenty
+network evaluations, in 12 of 20. The ordering is the same one the projected results give, but the
+differences are large enough to see: the baseline fails to reach the goal in two episodes of five without
+the projection that the comparison in \autoref{tab:state-headline} gives it.
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=\linewidth]{fig_avoiding_raw_models}
+  \caption[The four models without projection]{Episodes reaching the goal with the projection switched
+  off, one network evaluation for the flow-based models and twenty for the diffusion baseline, which is
+  its training budget. Grey figures are control steps over the episodes that reach the goal. Temporal
+  U-Net, 4.0\,M parameters, identical width, depth, action loss weight and time sampler. One training
+  seed (6) $\times$ 20 episodes, \emph{top-right-hard}: without projection the plan does not depend on
+  the constraint set, and on the other two geometries every model reaches the goal in 20 of 20, so only
+  this geometry separates them.}
+  \label{fig:avoiding-raw-models}
+\end{figure}
+
+\dataref{temp/0309/batch\_avoiding\_combined\_20260903\_133730; Report\_20260903\_AF\_UNet \S7,
+step counts over successful episodes}
+\guard{One training seed and 20 episodes: the difference between consistency training and MeanFlow is
+three episodes, $p=0.231$ by a two-sided Fisher test. What this supports is that the flow-based models
+draw plans that reach the goal more often than the baseline's at one network evaluation, not an ordering
+among the three of them. Under projection the difference between consistency training and MeanFlow
+disappears, because the projection repairs both plans towards the same place.}
 
 \hole{Quantify plan smoothness --- jerk, path length or curvature over the saved plans --- to accompany
-\autoref{fig:raw-plans}. The plans are on disk; no new runs are needed.}
+\autoref{fig:raw-plans}. The plans are on disk; no new runs are needed. Until it exists, the smoothness
+of the plans is argued from the violation counts above, which are quantitative, and from the figure,
+which is not.}
 
 \subsection{Projection Methods}\label{sec:res:avoiding:projection}
 
@@ -253,7 +336,7 @@ close to the feasible set at every step, so the solver needs few iterations.
   \includegraphics[width=\textwidth]{fig_avoiding_projector_cost}
   \caption[Wall-clock time of the two projection methods]{Wall-clock time per control step of per-step
   and endpoint projection against the step budget; MeanFlow, temporal U-Net with 4.0\,M parameters,
-  activation threshold 1.0, temporal consistency, tightened. The shaded budget has a single genuine step
+  activation threshold 1.0, temporal consistency, tightened. The shaded budget has a single guiding step
   (\autoref{sec:res:constraints:degenerate}).}
   \label{fig:projector-cost}
 \end{figure}
@@ -267,19 +350,71 @@ episodes, 24 episodes per configuration. The difference in success with per-step
 budget, $1.000$ against $0.917$, is two episodes and not significant. The evaluation at five training
 seeds and twenty episodes is pending.}
 
-\subsection{Genuine Steps}\label{sec:res:constraints:degenerate}
+That result is at $\nfe=3$. The budget at which this task is actually run is lower, and there endpoint
+projection does not execute its own arithmetic at all. With the activation threshold at $0.5$ the
+guiding step count (\autoref{sec:res:constraints:degenerate}) is zero at $\nfe=1$ and at $\nfe=2$: the
+only active step is the terminal one, where the predicted endpoint is the finished sample and the
+method reduces to projection after sampling. This is measured, not inferred --- the evaluation records
+one program solved per plan at both budgets, against three at $\nfe=5$ and five at $\nfe=10$, matching
+the predicted count exactly. A run at $\nfe=2$ with both methods given the same number of candidate
+plans produced bit-identical rollouts, at $2.45$ times the cost.
 
-Endpoint projection needs sampling steps on which it is active and which are not the final step.
-Their number is
+Across the budgets at which it does run, endpoint projection shows no consistent advantage on this task
+(\autoref{tab:hf-ladder}). Untightened it reaches higher success with constraint satisfaction than all
+three selection rules of per-step projection only at $\nfe=10$; on tightened constraints it does so only
+at $\nfe=1$, where it runs no endpoint-projection arithmetic, and at $\nfe=10$ it is ahead of none of
+them. Its one systematic advantage is control steps, and the mechanism is not the projection: with four
+candidate plans the cumulative-projection-cost rule sometimes selects a stalled plan of 97 control steps,
+and endpoint projection, given one candidate, cannot make that selection.
+
+\begin{table}[htpb]
+  \caption[Endpoint projection across the step budget]{Endpoint projection against per-step projection on
+  obstacle avoidance, across the step budget. Success with constraint satisfaction, counted as how many of
+  the three selection rules of per-step projection endpoint projection is ahead of. MeanFlow, activation
+  threshold $0.5$, five training seeds $\times$ three geometries, 15 episodes per cell. Guiding steps are
+  the predicted count, confirmed against the recorded number of programs solved per plan.}
+  \label{tab:hf-ladder}
+  \centering
+  \small
+  \begin{tabularx}{\linewidth}{@{}rrL L@{}}
+    \toprule
+    $\nfe$ & Guiding steps & Untightened & Tightened \\
+    \midrule
+    1  & 0 & ahead of 2 of 3 & ahead of 3 of 3 \\
+    2  & 0 & ahead of 2 of 3 & ahead of 0 of 3 \\
+    5  & 2 & ahead of 2 of 3 & ahead of 2 of 3, level with 1 \\
+    10 & 4 & ahead of 3 of 3 & ahead of 0 of 3 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\dataref{temp/1108/Revised\_2/batch\_avoiding\_combined\_20260811\_221322; DA\_20260824 \S2--\S4}
+\guard{On this ladder endpoint projection was run with one candidate plan and per-step projection with
+four, so every row in which endpoint projection is ahead understates it and every row in which it is
+behind is confounded. The wall-clock columns of that evaluation are unusable for the same reason; the
+cost comparison quoted above is the one at equal candidate counts, where endpoint projection is $1.86$ to
+$3.57$ times the cost of per-step projection and never lower.}
+
+The consequence for this task is that the two methods answer different questions. At the budget where
+the flow-based models are strongest --- one network evaluation, where MeanFlow already reaches $0.993$
+with per-step projection --- endpoint projection has no step on which to act. It becomes available only
+by raising the budget, which is the cost the flow-based models were adopted to avoid.
+
+\subsection{Steps at Which Projection Guides Sampling}\label{sec:res:constraints:degenerate}
+
+Endpoint projection needs sampling steps on which it is active and which are not the final step: only
+there does a later step exist for the network to react to, so only there does projection steer the
+sample being generated rather than correct a finished one. Their number, the \emph{guiding step count},
+is
 \begin{equation*}
-  n_{\text{gen}} \;=\; \max\!\big(\nfe - \lfloor (1-\eta)\,\nfe \rfloor,\, 1\big) - 1
+  n\sidx{guide} \;=\; \max\!\big(\nfe - \lfloor (1-\eta)\,\nfe \rfloor,\, 1\big) - 1
 \end{equation*}
-(\autoref{sec:method:degenerate}). With $n_{\text{gen}}=0$ endpoint projection computes the same plan as
+(\autoref{sec:method:degenerate}). With $n\sidx{guide}=0$ endpoint projection computes the same plan as
 per-step projection, because at the final step the predicted endpoint is the current sample. The
 evaluation code reports the count at run time: with the activation threshold at $1.0$ it ran with one
-genuine step at $\nfe=2$, two at $\nfe=3$ and four at $\nfe=5$, and the number of solved programs grew as
-$1:1.51:2.52$ against the predicted $1:1.5:2.5$. A budget of $\nfe=1$ has no genuine step at any
-threshold. Configurations with $n_{\text{gen}}=0$ are reported separately and not averaged with others.
+guiding step at $\nfe=2$, two at $\nfe=3$ and four at $\nfe=5$, and the number of solved programs grew as
+$1:1.51:2.52$ against the predicted $1:1.5:2.5$. A budget of $\nfe=1$ has no guiding step at any
+threshold. Configurations with $n\sidx{guide}=0$ are reported separately and not averaged with others.
 \dataref{job 25444 evaluation log, 2026-09-06}
 
 \subsection{Candidate Plans and Selection Rules}\label{sec:res:ablations}
@@ -478,6 +613,9 @@ the corridor.
   \end{tabularx}
 \end{table}
 
-All endpoint-projection results above have at least two genuine steps
-(\autoref{sec:res:constraints:degenerate}). \provisional{Every entry except obstacle avoidance rests on
-one training seed.}
+All endpoint-projection results above have at least two guiding steps
+(\autoref{sec:res:constraints:degenerate}). That condition is what limits the method on obstacle
+avoidance: at the one and two network evaluations at which that task is run, no such step exists, and
+endpoint projection reduces to projection after sampling (\autoref{sec:res:avoiding:projection}). The
+environments in which it is ahead are the ones whose step budgets are large enough for it to run.
+\provisional{Every entry except obstacle avoidance rests on one training seed.}

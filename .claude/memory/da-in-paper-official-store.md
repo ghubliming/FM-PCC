@@ -13,4 +13,13 @@ Since 2026-09-14 (author's decision) `Data_Analysis/DA_in_Paper/` is the **offic
 
 **Why:** one place for figures and their provenance; drafts (v2/v3/v4) are edited by separate chats and must not each grow their own plotting code or figure versions.
 
+**Result data for figures (since 2026-09-15, author's instruction):** read
+`Data_Analysis/analysis_results_checkpoint/15-09/` — one batch per environment
+(`batch_avoiding_combined_20260915_100757`, `batch_va2_20260915_100754`, `batch_uav_20260915_100816`),
+committed to the repository, avoiding table gzipped. **Not** the `temp/` batches in `sources.py`: those
+are a local, uncommitted drop directory, kept only to reproduce existing figures. Use the checkpoint
+when data is actually needed — the author said not to re-point figures on spec. Caveat: its raw tables
+are **long** (`metric`/`value` rows) while the current builders read wide columns, column order differs
+between the three batches, and the avoiding one is gzipped — pivot with `csv.DictReader`, never by index.
+
 **How to apply:** never draw or edit a figure inside `Working_Space/<draft>/figures/`. Produce it in DA_in_Paper (`make_figs.py`, or a script in `mpl/`), then `python3 plotting/export_to_draft.py <draft>` copies only the figures that draft's .tex includes and writes `EXPORTED.md`. Copied-in panels are checked against `aux_repo/` first (repo-root `figures/avoiding*.png` are DPCC's and EXCLUDED). The old `v3/plots/` was moved here. Related: [[thesis-draft-ownership]], [[no-unrequested-urls-or-artifacts]].

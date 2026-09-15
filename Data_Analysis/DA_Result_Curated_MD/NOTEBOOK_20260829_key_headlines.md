@@ -1,41 +1,58 @@
 # FM-PCC — Key Headlines Notebook
 
-**Last updated:** 2026-09-13 · **Author:** curated from the reports in this directory  
-**Status:** 🟢 Visual aligning **closed** · 🟢 Avoiding **strongest result to date** · 🔴 UAV **unrankable**
+**Last updated:** 2026-09-15 · **Author:** curated from the reports in this directory
+**Role:** working notebook and historical headline index; **not the main entry for the thesis**.
+**Paper/thesis analyses:** `Data_Analysis/DA_in_Paper/analysis/INDEX.md`.
+**Paper figures and plotting code:** `Data_Analysis/DA_in_Paper/`.
+**Current checkpoint ledger:** `Data_Analysis/analysis_results_checkpoint/15-09/LEDGER_20260915.md`.
+**Status:** avoiding remains the foundation; visual-aligning closure is scoped to its measured
+protocol; UAV has scene-specific results on corrected pillars and corridor_v2, with one-seed limits.
 
 ## How to read this file
 
-Headlines are **append-only and numbered by the date they were written**, so a later headline can
-overturn an earlier one. Before quoting any number, check the 🔴/⚠️ banner on its headline.
+Headlines preserve their original numbering and dated evidence. Later notes can overturn earlier
+ones. Before quoting a number, check its warning and its source analysis. The September 15 status
+below is the current navigation summary; the historical evidence board is not a current run queue.
+Folder review and document status are recorded in `README.md` beside this notebook.
 
 | block | written | trust |
 |---|---|---|
-| **[Headlines 1–5](#headline-1--avoiding-state-based-meanflow-unet-is-pareto-dominant-)** | 2026-08-29 | ⚠️ H2 and H3 are **superseded** by H10; H1 and H5 stand |
+| **[Headlines 1–5](#headline-1--avoiding-state-based-meanflow-unet-is-pareto-dominant-)** | 2026-08-29 | ⚠️ H2/H3 superseded by H10; H4 is historical UAV context; H1's rounded quality values do not establish equivalence; H5 retains its protocol limits |
 | **[Headlines 6–8](#addendum-2026-09-05--evidence-against-the-thesis-target)** | 2026-09-05 | ✅ current; H6 is *strengthened* by H9 |
-| **[Headlines 9–10](#addendum-2026-09-07--two-results-that-close-two-questions)** | 2026-09-07 | ✅ **current — start here** |
+| **[Headlines 9–10](#addendum-2026-09-07--two-results-that-close-two-questions)** | 2026-09-07 | retained avoiding/aligning results, with their stated sample sizes; use the source analyses registered in DA_in_Paper |
 
-**The two-sentence state of the project.** On `avoiding-d3il`, MeanFlow-UNet with the HardFlow-SLSQP
-sampler at K = 3 **Pareto-dominates the pinned DPCC baseline** — equal safety, 16 % fewer steps,
-7.4× cheaper, architecture-matched (H9). On `aligning-d3il-visual`, MeanFlow is the flagship and the
-engine comparison is **closed**: α-Flow is never better, naive FM is excluded, and only MeanFlow
-separates from the diffusion baseline (H10). UAV remains the one environment that cannot yet rank
-anything.
+**Current reading.** Avoiding and visual-aligning retain the comparisons documented in H9/H10
+and their source analyses. UAV must be read per scene: corrected pillars has a diffusion reference,
+and corridor_v2 now has a completed paper evaluation. Neither the old blanket "UAV unrankable"
+verdict nor a single engine ordering across all environments describes that evidence.
 
 ---
 
-## Status note — 2026-09-13
+## Status note — 2026-09-15
 
 - **UAV `pillars`:** honest-geometry (`_hg`) data with all engines and the DPCC-diffusion K=20 reference row are in
   [`DA_20260913_uav_pillars_diffusion_baseline_reference`](DA_20260913_uav_pillars_diffusion_baseline_reference.md).
-- **UAV `corridor`:** paper run on the widened `corridor_v2` scene has been submitted (jobs 25750–25759, results pending;
-  see `logs_in_develop/Gen15/U16/`).
+- **UAV `corridor_v2`:** the paper run is complete. See
+  `logs_in_develop/Gen15/U16/DA_20260914_corridor_v2_paper_full.md`: 52 configurations,
+  12 flights each, seed 6. Today's checkpoint contains all 624 rollout rows and has zero
+  circuit-breaker, missing-timing or degenerate-HardFlow flags within the `u17cv2` selection.
+  With DPCC projection at K3/K5, mf/af cross collision-free on 12/12 flights per configuration;
+  diffusion K20 is collision-free but crosses on 0/12. Strict goal-point success is a different,
+  geometry-limited metric. The af/mf difference does not establish an ordering. Endpoint
+  projection is faster but less collision-free here: a trade-off, not a safety win.
 - **HardFlow bug fixed:** HardFlow ignored `x_active` halfspaces. All HardFlow results on UAV `s_curve` so far are invalid until re-run.
-- Avoiding and visual aligning: unchanged (H9, H10).
+- **Avoiding and visual aligning:** retain H9/H10 as dated results, not as proof that all
+  candidates in today's export are current or valid. The ledger inventories quality flags
+  and mixed legacy coverage; no whole-corpus ranking was recomputed in this maintenance pass.
 
-**Possibly outdated in this directory:**
-- `Report_20260909_MJPC_vs_PID_s_curve/`: its `hardflow_sls-r` rows (F4, part of F7) are affected by the `x_active` bug.
+**Outdated or restricted material in this directory:**
+- `Report_20260909_MJPC_vs_PID_s_curve/`: its HardFlow rows and every conclusion pooling those
+  rows are invalid for method comparisons until rerun after the `x_active` fix. A warning is
+  now present in that report itself. Its raw-plan and DPCC observations are outside this bug's scope.
 - Headline 8 below ("UAV `pillars` unrankable"): describes the pre-`_hg` geometry; superseded by the `pillars` DA above.
-- The status line at the top ("🔴 UAV unrankable"): no longer accurate for `pillars`.
+- The September 7 evidence board and run queue below are historical; the corrected pillars
+  and completed corridor_v2 studies supersede their UAV coverage statements.
+- The minimum-K proposal's "nothing submitted" status was superseded by its September 6 result.
 
 ## Document index — this directory
 
@@ -43,22 +60,24 @@ anything.
 
 | doc | covers | state |
 |---|---|---|
-| **this file** | the headline index | 🟢 |
+| **this file** | working notebook, not thesis entry | 🟢 navigation refreshed 2026-09-15 |
+| `README.md` | complete directory status review | 🟢 reviewed 2026-09-15 |
+| `Report_20260909_MJPC_vs_PID_s_curve/README.md` | tracker diagnostic study | ⚠️ partially invalid: HardFlow rows; missing figure placeholders |
 | [`DA_20260913_uav_pillars_diffusion_baseline_reference`](DA_20260913_uav_pillars_diffusion_baseline_reference.md) | UAV `pillars`: DPCC-diffusion K=20 reference row vs mf/fm/af | 🟢 newest |
-| [`Proposal_20260905_HF_minK_mf_af_unet/`](Proposal_20260905_HF_minK_mf_af_unet/README.md) → [`DA_20260906`](Proposal_20260905_HF_minK_mf_af_unet/DA_20260906_hf_minK_mfunet_A1_K2_K3_K5.md) | HardFlow's K floor + the result at it | 🟢 **newest result** |
+| [`Proposal_20260905_HF_minK_mf_af_unet/`](Proposal_20260905_HF_minK_mf_af_unet/README.md) → [`DA_20260906`](Proposal_20260905_HF_minK_mf_af_unet/DA_20260906_hf_minK_mfunet_A1_K2_K3_K5.md) | HardFlow's K floor + the result at it | proposal partly executed; result retains its small-sample caveat |
 | [`Report_20260903_AF_UNet/`](Report_20260903_AF_UNet/README.md) | α-Flow with α actually on, avoiding | 🟢 |
 | [`Report_20260819_MF_UNet/`](Report_20260819_MF_UNet/README.md) | MF-UNet Pareto dominance, avoiding | 🟢 |
 | [`DA_20260819_ntrials20_…`](DA_20260819_ntrials20_DPCC_vs_FM_vs_MeanFlow_vs_AlphaFlow.md) | n=20 cross-family, avoiding | 🟢 |
 | [`DA_20260819_DPCC_K20_aw10_ntrials20_vs_ntrials2`](DA_20260819_DPCC_K20_aw10_ntrials20_vs_ntrials2.md) | why n=2 overstates — pins the Target | 🟢 methodology |
 | [`DA_20260827_mpc_candidate_fan_avoiding`](DA_20260827_mpc_candidate_fan_avoiding.md) | the B=4 → B=1 fan study | 🟢 |
-| [`SNAPSHOT_20260826_visual_avoiding_env_status`](SNAPSHOT_20260826_visual_avoiding_env_status.md) | `avoiding-d3il-visual` — the only doc on it | 🟢 |
+| [`SNAPSHOT_20260826_visual_avoiding_env_status`](SNAPSHOT_20260826_visual_avoiding_env_status.md) | dated visual-avoiding snapshot | ⚠️ historical scope; not a current whole-project status |
 | [`ANALYSIS_20260829_alphaflow_vs_meanflow…`](ANALYSIS_20260829_alphaflow_vs_meanflow_visual_aligning_are_they_the_same.md) | α-Flow ≡ MeanFlow at α=0, from source | ⚠️ mechanism 🟢, open question **answered** |
 | [`outdated_RESPONSE_20260826_did_HardFlow_ever_beat_DPCC`](outdated_RESPONSE_20260826_did_HardFlow_ever_beat_DPCC.md) | "No" — measured on IPOPT at an unmatched threshold | 🗄️ **reversed** |
 | [`outdated_AUDIT_20260827_hardflow_paper_timing…`](outdated_AUDIT_20260827_hardflow_paper_timing_and_baselines.md) | "HF loses 1.4–14× to our SLSQP baseline" | 🗄️ **reversed** |
 | [`outdated_Report_20260829_VA_funnel/`](outdated_Report_20260829_VA_funnel/README.md) | the funnel that crowned `mf` K=2 | 🗄️ rankings stale, **method still standard** |
 | [`outdated_SNAPSHOT_20260823_visual_aligning_env_status`](outdated_SNAPSHOT_20260823_visual_aligning_env_status.md) | V_A whole-env, pre-closure | 🗄️ |
 | [`outdated_SNAPSHOT_20260813_avoiding_d3il_vs_DPCC_baseline`](outdated_SNAPSHOT_20260813_avoiding_d3il_vs_DPCC_baseline.md) | avoiding whole-env at the n=2 tier | 🗄️ |
-| [`outdated_SNAPSHOT_20260825_uav_mix_env_status_PILOT`](outdated_SNAPSHOT_20260825_uav_mix_env_status_PILOT.md) | UAV whole-env, pre-Fix_16 | 🗄️ **no replacement exists** |
+| [`outdated_SNAPSHOT_20260825_uav_mix_env_status_PILOT`](outdated_SNAPSHOT_20260825_uav_mix_env_status_PILOT.md) | UAV whole-env, pre-Fix_16 | 🗄️ use current per-scene analyses in DA_in_Paper |
 | [`outdated_DA_20260826_K_sampler_steps_visual_aligning`](outdated_DA_20260826_K_sampler_steps_visual_aligning.md) | the V_A K ladder, pre-α-live | 🗄️ |
 
 > External anchors this notebook leans on:
@@ -94,6 +113,10 @@ anything.
 ---
 
 ## Headline 1 — Avoiding (State-Based): MeanFlow-UNet is Pareto-Dominant ✅
+
+> **2026-09-15 qualification:** the 0.97 versus 1.00 values below are unequal observed rates;
+> the word "tied" is not an equivalence test. Retain this as a historical summary and use the
+> protocol-specific analysis registered in `DA_in_Paper/analysis/INDEX.md` for the thesis claim.
 
 > **Source:** [Report_20260819_MF_UNet](Report_20260819_MF_UNet/README.md) + [DA_20260819_ntrials20](DA_20260819_ntrials20_DPCC_vs_FM_vs_MeanFlow_vs_AlphaFlow.md)
 
@@ -508,6 +531,10 @@ The projector is **serial** — `diffuser/sampling/projection.py:132` runs one S
 
 ## Headline 8 — UAV `pillars`: the engine was fixed, the scene still is not 🟢🔴
 
+> **OUTDATED verdict — reviewed 2026-09-15.** This is the pre-corrected-geometry result.
+> The `_hg` campaign and diffusion reference supersede its "unrankable/no baseline" conclusion;
+> see `DA_20260913_uav_pillars_diffusion_baseline_reference.md`. One-seed limits still apply.
+
 > **Sources:** [`Gen15/DA/DA_20260903_fix16_AB_mf_pillars`](../../logs_in_develop/Gen15/DA/DA_20260903_fix16_AB_mf_pillars.md) ·
 > [`Gen15/DA/DA_20260830_pillars_K_sweep_fm_mf_af`](../../logs_in_develop/Gen15/DA/DA_20260830_pillars_K_sweep_fm_mf_af.md) ·
 > [`Gen15/U7/CHANGELOG_20260904_honest_geometry…`](../../logs_in_develop/Gen15/U7/CHANGELOG_20260904_honest_geometry_and_slack_gate.md)
@@ -735,7 +762,11 @@ Three findings that did not exist before this drop:
 
 ---
 
-## Live evidence board vs. the target (2026-09-07)
+## Historical evidence board vs. the target (2026-09-07)
+
+> **OUTDATED as a live status board or run queue — 2026-09-15.** Preserved as the September 7
+> record. Its UAV gaps, proposed queue and global engine ladder must be read against the current
+> status note above and the official `DA_in_Paper/analysis/INDEX.md`.
 
 🟢 supported · 🟡 partial / underpowered · 🔴 contradicted · ⛔ closed · ⬜ not measured
 

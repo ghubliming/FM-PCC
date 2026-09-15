@@ -2,7 +2,7 @@
 
 **Created:** 2026-09-12 · **Type:** a claim this writing must not lose, plus the measurement it owes
 **Thesis home:** `sec:res:state` (the result) · `sec:disc:threats` (the general form) ·
-`sec:setup:metrics` (why stage 1 of the funnel is the unprojected arm) · `sec:disc:limitations` (the gap)
+`sec:setup:metrics` (why the first comparison is made without projection) · `sec:disc:limitations` (the gap)
 **Written into:** [`../Working_Space/v3/`](../Working_Space/v3/README.md) as of **v3.5** — see that
 CHANGELOG before re-adding it anywhere.
 **Evidence of record:**
@@ -34,6 +34,33 @@ path, each a bounded goal-directed curve; the baseline's are a high-frequency sc
 workspace. **The baseline's *commanded* traces are smooth anyway — because the controller integrates
 the scribble away.**
 
+### 🆕 How wide the tolerance is — from the baseline's own paper
+
+The claim above ("both stages are low-pass") had no number attached to it. **DPCC's Table 2 supplies
+one.** \[Römer et al. 2025\], `aux_repo/PAPERS/in Proposual/DPCC.pdf` p. 10, vary the sampling time
+assumed by the dynamics model *inside the projection* against the true sampling time:
+
+| $\hat t_s / t_s$ | Timesteps | Goal | Constraints & goal | violations |
+| --: | --: | --: | --: | --: |
+| 0.25 | 85.7 ± 16.4 | 1.00 | **0.86** | 0.3 ± 0.8 |
+| 0.5 | 73.1 ± 9.8 | 1.00 | 0.99 | 0.0 ± 0.3 |
+| 1 | 69.0 ± 12.9 | 1.00 | 0.98 | 0.0 ± 0.3 |
+| 2 | 76.6 ± 14.8 | 0.99 | 0.95 | 0.3 ± 2.1 |
+| 4 | 152.0 ± 26.3 | 0.88 | **0.77** | 0.6 ± 1.8 |
+
+Their own reading: "even with a significant deviation by a factor of 4, the constraints can be satisfied
+in most cases". Ours: **the stack corrects a dynamics model that is wrong by 4× and still satisfies the
+constraints in three quarters of episodes.** That margin is far larger than any difference between two
+generative models, which is precisely why success-with-constraints cannot rank plan quality — and it is
+the baseline authors' own evidence, not ours, which makes it hard to argue with.
+
+⚠️ State it accurately: Table 2 varies the **projection's** dynamics model, not the tracking controller.
+It measures the tolerance of the closed loop as a whole; it is not a separate measurement of the
+controller's share.
+
+**Written into v3** as of v3.11 — `sec:res:avoiding:raw`, retitled *Smoothness of the Plans before
+Projection*, cites it as `\textcite{romer2025diffusion}`.
+
 > ### Why this matters more than it looks
 > It is not only "MeanFlow is better". It is that **the usual reporting cannot see the difference**.
 > An evaluation that measures only what survives the control stack measures *the stack's tolerance*
@@ -44,7 +71,7 @@ And it is the missing half of the headline: the MeanFlow engine is not merely **
 evaluation — its plans are **usable** at one evaluation, where the baseline's are not. Without this,
 a reader can reasonably ask whether the 31× is bought by degrading the plan.
 
-## 2. The consistency target on the same arm
+## 2. Consistency training, without projection
 
 | unprojected, $K = 1$, top-right-hard, seed 6, 20 trials, **successes-only** step basis | goal reached | steps |
 | :-- | --: | --: |
@@ -57,7 +84,7 @@ a reader can reasonably ask whether the 31× is bought by degrading the plan.
 🔴 **Do not turn this into a ladder.** Three episodes on one seed, and **the margin does not survive
 projection** — under the projector the program repairs both plans toward the same place. It is
 consistent with the standing negative result ([`Naming`](Naming/NAMING_20260910_master_table.md) §1,
-`FALLBACK_20260910` §2): what the raw arm supports is *the few-step objectives draw better plans
+`FALLBACK_20260910` §2): what the unprojected comparison supports is *the few-step objectives draw better plans
 than diffusion at one evaluation*, not an ordering among them.
 
 ⚠️ **Two `n_steps` definitions exist in the toolchain** — the eval log averages over *successful*
@@ -93,11 +120,10 @@ in `Data_Analysis/DA_in_Paper/plotting/sources.py` under `VENDORED`, each with i
 
 ## 5. Related standing rules
 
-- The comparison is **plan quality, not constraint satisfaction** — all unprojected arms are
-  unconstrained, so all of them violate. Never read the raw violation counts as a safety result.
+- The comparison is **plan quality, not constraint satisfaction** — nothing is constrained without projection, so all of them violate. Never read the raw violation counts as a safety result.
 - On `both-hard` the projector still recovers the baseline at $K=1$ to S&C 0.90–1.00; the larger
   collapse (0.50–0.60) is on `top-left-hard` / `top-right-hard`. The raw-plan gap and the projected
   gap are different sizes, and the text says which it is quoting.
-- This is why stage 1 of the funnel ([`../Working_Space/v3/chapters/05_setup.tex`](../Working_Space/v3/chapters/05_setup.tex),
-  `sec:setup:metrics`) is evaluated on the unprojected arm — a decision that predates this note and
+- This is why the first comparison ([`../Working_Space/v3/chapters/05_setup.tex`](../Working_Space/v3/chapters/05_setup.tex),
+  `sec:setup:metrics`) is made without projection — a decision that predates this note and
   is justified by it.

@@ -157,7 +157,7 @@ VENDORED = {
     'fig_raw_plans_meanflow_K1': ('demo',
         'Data_Analysis/DA_Result_Curated_MD/Report_20260819_MF_UNet/'
         'fig6a_plans_mfunet_K1_seed6_both-hard.png',
-        'Report_20260819_MF_UNet fig 6a; per-episode MPC diagnostics, unprojected arm, '
+        'Report_20260819_MF_UNet fig 6a; per-episode MPC diagnostics, no projection, '
         'seed 6, both-hard, K=1. Ours; verified absent from aux_repo.'),
     'fig_raw_plans_diffusion_K1': ('demo',
         'Data_Analysis/DA_Result_Curated_MD/Report_20260819_MF_UNet/'
@@ -171,13 +171,53 @@ VENDORED = {
         'Ours; verified absent from aux_repo.'),
     'fig_raw_goal_reached_K1': ('da',
         'Data_Analysis/DA_Result_Curated_MD/Report_20260903_AF_UNet/fig7_raw_diffuser_K1.svg',
-        'Report_20260903_AF_UNet fig 7; goal reached on the unprojected arm at K=1, '
+        'Report_20260903_AF_UNet fig 7; goal reached without projection at K=1, '
         'top-right-hard, seed 6, 20 trials. Ours; verified absent from aux_repo.'),
 }
 
 
 def vendored_path(key):
     return os.path.join(REPO, VENDORED[key][1])
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  VENDORED FIGURES THAT MUST BE CUT BEFORE USE
+# ═══════════════════════════════════════════════════════════════════════════
+# A diagnostic dashboard is not a thesis figure. fig6a/b/c of Report_20260819 are
+# 2x6 grids -- four per-axis time series, the executed path, and the overlaid
+# plans -- at 3000x1000. Dropped whole into a 0.49\linewidth minipage, the panel
+# the thesis actually argues from is about 12 mm wide and unreadable; that is what
+# reached the first build of fig:raw-plans.
+#
+# The cut is declared here, not done by hand, so that it is reproducible and so
+# that re-copying the source cannot quietly restore the dashboard.
+#   name -> ((left, top, right, bottom) in source pixels, what the box keeps)
+# Boxes were read off the white gutters between panels, not guessed: the plans
+# panel spans x 2349-2702 with its y tick labels at 2326-2348, and the top row
+# spans y 98-476 including its x tick labels.
+#
+# Applied by prep/crop_vendored.py (needs PIL -> python3.14); make_figs.py copies
+# the prepared file and REFUSES to fall back to the uncut source.
+VENDORED_CROP = {
+    'fig_raw_plans_meanflow_K1': ((2312, 92, 2715, 492),
+        'top row, last column: every plan of the episode overlaid on the scene'),
+    'fig_raw_plans_diffusion_K1': ((2312, 92, 2715, 492),
+        'top row, last column: every plan of the episode overlaid on the scene'),
+    'fig_raw_plans_meanflow_K2': ((2312, 92, 2715, 492),
+        'top row, last column: every plan of the episode overlaid on the scene'),
+}
+
+# Where prep/crop_vendored.py writes. Committed, like data/avoiding_scene.json, so
+# a fresh clone can build the store without PIL.
+PREPARED = os.path.join(REPO, 'Data_Analysis', 'DA_in_Paper', 'data', 'prepared')
+
+
+def prepared_path(key):
+    """The cut file make_figs.py must copy, or None when the figure needs no cut."""
+    if key not in VENDORED_CROP:
+        return None
+    ext = os.path.splitext(VENDORED[key][1])[1]
+    return os.path.join(PREPARED, key + ext)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -188,6 +228,18 @@ def vendored_path(key):
 # \includegraphics{<name>}, remove the entry here, and export.
 # Entry: name -> (group, where the draft asks for it, what it must show / how).
 PLANNED = {
+    'fig_raw_plans_fm_K1': ('demo', 'v3 sec:res:avoiding:raw (fig:raw-plans)',
+        'The plan fan of one episode without projection, flow matching at K=1, seed 6, both-hard -- '
+        'the third panel of fig:raw-plans, which today shows MeanFlow and diffusion only. '
+        'Report_20260903_AF_UNet section 8 lists it as 8e and has never rendered it. Render from '
+        'logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/.../H8_K1_.../6/ on the cluster, '
+        'then crop to the plans panel the way VENDORED_CROP does for the existing two.'),
+    'fig_raw_plans_af_K1': ('demo', 'v3 sec:res:avoiding:raw (fig:raw-plans)',
+        'The same for consistency training at K=1 (report section 8, panel 8a), from '
+        'logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_D..._ae0.2_ag25.0_rf0.5/'
+        'H8_K1_..._msgafon02_s6/6/. Its 20-of-20 goal rate is the strongest raw-plan number in the '
+        'study and it currently has no picture.'),
+
     'fig_env_aligning': ('env', 'v3 sec:setup:tasks:aligning (fig:env-aligning)',
         'Alignment scene with box and target pose, next to the two camera images the policy '
         'receives (overhead and in-hand).'),
@@ -252,12 +304,51 @@ AVOIDING_T2_BACKBONE = {'diffusion': 'U-Net 4.0M', 'fm': 'U-Net 4.0M',
 # 1.00, likewise as quoted. Cell means land on multiples of 0.1 across 5 seeds,
 # which is the granularity 2 trials per seed produces -- consistent with n=2 and
 # NOT with n=20.
+# The consistency-training corpus (temp/0309) is a DIFFERENT batch with its own folder
+# names: the run tag carries the alpha floor and the seed, and the candidate fan token
+# B4 is hf_batch_size, which no arm here uses (the MPC fan was 4 for every run).
+# Its `af` rows are the architecture-matched U-Net -- unlike AVOIDING_T2_FOLDERS['af'],
+# which is the SiT backbone and confounded. Do not mix the two.
+AVOIDING_AF_FOLDERS = {
+    'af02': 'H8_K%d_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgafon02_s6',
+    'af05': 'H8_K%d_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_alphaflow.models.AlphaFlowODE_msgafon005_s6',
+    'mf':   'H8_K%d_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msg20trials',
+    'fm':   'H8_K%d_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials',
+    'diffusion': 'H8_K%d_T0.5_Dmodels.GaussianDiffusion_msg20trials',
+}
+AVOIDING_AF_LABEL = {
+    'af02': 'consistency training, floor 0.2',
+    'af05': 'consistency training, floor 0.05',
+    'mf': 'MeanFlow', 'fm': 'flow matching', 'diffusion': 'diffusion (DPCC)',
+}
+AVOIDING_AF_COLOUR = {'af02': ENGINE_COLOUR['af'], 'af05': '#a569bd',
+                      'mf': ENGINE_COLOUR['mf'], 'fm': ENGINE_COLOUR['fm'],
+                      'diffusion': ENGINE_COLOUR['diffusion']}
+
+# Without projection the plan does not depend on the constraint set, so the
+# unprojected rows of top-left-hard and both-hard are identical to the decimal and
+# every model reaches the goal in 20 of 20 on both. Only top-right-hard separates
+# the models, which is why figures of the unprojected output use it alone rather
+# than showing three panels of which two are duplicates.
+AVOIDING_RAW_GEOMETRY = 'top-right-hard'
+
+# The one seed every model in that batch shares. The consistency-training runs are
+# tagged _s6 and exist for seed 6 only; MeanFlow, flow matching and diffusion carry
+# all five in the same batch. Any comparison across those models must be pinned
+# here, or it compares a one-seed number with a five-seed one.
+AVOIDING_AF_SEEDS = ['6']
+
 AVOIDING_T1_DIFFUSION_FOLDERS = {
     1:  'H8_K1_T0.5_Dmodels.GaussianDiffusion',
     10: 'H8_K10_Dmodels.GaussianDiffusion_aw10_thres0.5',
     20: 'H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5',
 }
-AVOIDING_T1_PROTOCOL = '5 seeds x 2 trials = 10 episodes per cell (the published protocol)'
+AVOIDING_T1_PROTOCOL = '5 seeds x 2 trials = 10 episodes per cell'
+# NOT the published protocol, despite what this constant used to say. DPCC reports
+# "five training seeds and ten test seeds for each constraint set formulation"
+# (Roemer et al. 2025, Sec. 6.1) = 50 rollouts per geometry. 5 x 2 = 10 is SMALLER
+# than theirs, and 5 x 20 = 100 is twice it. Figures must not call either one
+# "the published protocol".
 
 GEOMETRIES = ['top-left-hard', 'top-right-hard', 'both-hard']
 RULE_LABEL = {'dpcc-r': 'random', 'dpcc-c': 'cumulative projection cost',

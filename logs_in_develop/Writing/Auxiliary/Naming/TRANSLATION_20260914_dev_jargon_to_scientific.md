@@ -65,8 +65,8 @@ in thesis text.
 | 🆕 **S&C** | — | **success with constraint satisfaction** (the episode reaches the goal with no violation) | 🔁 |
 | 🆕 **Target** (DA sense), **flagship** | — | **the baseline configuration** / **the main configuration** | 🚫 |
 | `A`, `T`, `activation_threshold`, `diffusion_timestep_threshold` | the *second-half* heuristic [Li]; [Römer] | fraction of the sampling steps on which projection is active → **activation threshold `η`** | 🔁 |
-| `n_genuine`, "genuine steps" | — (ours) | active steps before the final one → **"genuine steps"**; our contribution, not the source's | ✅ |
-| 🆕 degenerate / thin / admissible (tiers) | — | `n_gen = 0` / `= 1` / `≥ 2` — define once in §4.5.4 (`sec:method:degenerate`), then usable | ✅ |
+| `n_genuine`, 🆕 "genuine steps", `n_gen` | — (ours) | 🚨 *genuine* is a value word: it says a step is real without saying what it does. The quantity counts active steps that are **not** the final one — the only steps where a later step still exists for the network to react to, so the only steps where projection steers the sample being generated instead of correcting a finished one. → **"guiding steps"**, the **guiding step count** $n\sidx{guide}$. Artefacts keep `n_genuine`. *(v3, 2026-09-15; §6.1.5 heading was "Genuine Steps" → "Steps at Which Projection Guides Sampling". Ch. 4 §4.5.4 still defines the old term — v2's to change.)* | 🔁 |
+| 🆕 degenerate / thin / admissible (tiers), 🆕 "three regimes" | — | the three cases of $n\sidx{guide}$: $0$ (no projection runs inside the ODE at all) / $1$ / $\ge 2$. Name them by the count, not by a tier word; *regime* and *tier* are on the banned list. Define once in §4.5.4 (`sec:method:degenerate`). *(Ch. 4 currently writes "Three regimes follow" — v2's to change.)* | 🔁 |
 | `post_processing` | DPCC's *Post-Processing* baseline | **projection after sampling** | 🔁 |
 | `model_free`, `bounds_free`, `geo_free` | — (ours) | constraint-family ablations, named by what they switch off; never ranked against full-constraint rows | 🔁 |
 | `tightened`, `-tightened` | DPCC Thm 2, `S̃ = S ⊖ B_γ` | constraint sets shrunk by the model-mismatch ball → **"tightened constraints"** | 🔁 |

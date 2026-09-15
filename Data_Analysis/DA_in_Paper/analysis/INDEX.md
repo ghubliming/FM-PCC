@@ -4,6 +4,9 @@
 The analyses stay where they were written; this index links them. When a thesis number changes, the
 analysis changes first and this row is updated with it.
 
+**This is the main analysis entry for the paper/thesis.** The curated headlines notebook is a
+historical working notebook and is not used as an analysis of record.
+
 Thesis sections refer to `Working_Space/v3` (Ch 5–6). Links are relative to this file and were checked
 to exist when the index was written.
 
@@ -21,7 +24,7 @@ to exist when the index was written.
 | §6.1.6 | candidate plans and selection rules | DA_20260827 §2, §6, §10.5 | [`DA_20260827_mpc1_full_seeds_state_avoiding.md`](../../../logs_in_develop/HF_Batch_Parity/DA_20260827_mpc1_full_seeds_state_avoiding.md) | 5 seeds × 2 episodes (fan study) |
 | §6.2.1–§6.2.3 | alignment: models, step budget, projection | Gen14 CLOSURE_20260907 | [`CLOSURE_20260907_Gen14_V_A_engine_comparison_final.md`](../../../logs_in_develop/Gen14/CLOSURE_20260907_Gen14_V_A_engine_comparison_final.md) | seed 6, 10 paired contexts |
 | §6.2.1 | consistency training vs MeanFlow at K=20 | DA_20260907 Gate 1 | [`DA_20260907_Gen14_Gate1_AF_vs_MF_K20_flagship_KILL.md`](../../../logs_in_develop/Gen14/DA_20260907_Gen14_Gate1_AF_vs_MF_K20_flagship_KILL.md) | seed 6, 10 paired contexts |
-| §6.2.3 | endpoint projection at K=10 and K=20 (H10) | NOTEBOOK H10 §10.4–10.5 | [`NOTEBOOK_20260829_key_headlines.md`](../../DA_Result_Curated_MD/NOTEBOOK_20260829_key_headlines.md) | seed 6, 10 paired contexts |
+| §6.2.3 | endpoint projection at K=10 and K=20 | Gen14 CLOSURE_20260907 R.2, §5 | [`CLOSURE_20260907_Gen14_V_A_engine_comparison_final.md`](../../../logs_in_develop/Gen14/CLOSURE_20260907_Gen14_V_A_engine_comparison_final.md) | seed 6, 10 paired contexts |
 | §6.3.1 | corridor with slide | U16 DA_20260914 corridor_v2 | [`DA_20260914_corridor_v2_paper_full.md`](../../../logs_in_develop/Gen15/U16/DA_20260914_corridor_v2_paper_full.md) | seed 6, 12 flights |
 | §6.3.2 | pillars: model means | Gen15 CLOSURE_20260910 §2 | [`CLOSURE_20260910_uav_engine_ladder_final.md`](../../../logs_in_develop/Gen15/Campaign_20260907_five_missions/CLOSURE_20260910_uav_engine_ladder_final.md) | seed 6, 10 flights |
 | §6.3.2 | pillars: endpoint vs per-step projection | T3 | [`DA_20260910_T3_hardflow_vs_dpcc_pillars_K5.md`](../../../logs_in_develop/Gen15/Campaign_20260907_five_missions/DA_20260910_T3_hardflow_vs_dpcc_pillars_K5.md) | seed 6, 10 flights |

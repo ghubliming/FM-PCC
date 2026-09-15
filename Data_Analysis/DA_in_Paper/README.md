@@ -30,6 +30,16 @@ python3 plotting/export_to_draft.py v3   # copy the figures v3 uses into Working
   must never be used — the repo-root `figures/avoiding*.png`, identical to the DPCC authors' copies — are
   listed there under `EXCLUDED`.
 
+## The rule for data
+
+**New and regenerated figures read `Data_Analysis/analysis_results_checkpoint/15-09/`** (arrived
+2026-09-15): one batch per environment, committed to the repository, the avoiding table gzipped. The
+`temp/` batches registered in `plotting/sources.py` are a local drop directory, are not committed, and
+are kept only to reproduce the figures that already exist. The checkpoint's raw tables are **long**
+(`metric`/`value` rows), not the wide tables the current builders read — see
+[`plotting/NOTEBOOK_20260915_figure_data_sources.md`](plotting/NOTEBOOK_20260915_figure_data_sources.md)
+section 0.
+
 ## The rule for numbers
 
 A thesis number is quoted from an analysis listed in [`analysis/INDEX.md`](analysis/INDEX.md). When the
