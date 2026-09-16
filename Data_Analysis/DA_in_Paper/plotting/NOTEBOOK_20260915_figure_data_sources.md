@@ -69,6 +69,60 @@ regenerated on the cluster, that copy is the one to use.
 | `env/fig_env_avoiding` | `builders/avoiding.py:186` | the scene from above: all 96 demonstrations, six obstacles, goal line, start points |
 | `env/fig_constraints_avoiding` | `builders/avoiding.py:204` | the three geometries: excluded region, tightened boundary, keep-out disk with its tightened ring, demonstrations in grey |
 
+Chapter 5 also uses an authentic simulator still, `env/fig_render_avoiding.png`. It is frame 0,
+crop `(0, 0, 320, 180)`, of the top-left tile in the tracked D3IL montage
+`d3il/figures/github_readme.gif`. The selection is declared in `sources.ENV_RENDER_FRAMES` and
+reproduced by `prep/extract_env_frames.py`.
+
+## 1a. Alignment and quadrotor environment figures
+
+The environment figures deliberately pair two kinds of evidence. A `fig_render_*` PNG is a frame from
+the simulator or an evaluation rollout. A `fig_scene_*` SVG is a clean orthographic reconstruction for
+reading the complete geometry; it is not labelled as a simulator screenshot.
+
+In the table, **alignment expert GIF** is the exact path registered in
+`sources.ENV_RENDER_FRAMES`: `temp/0408/mix_visual_aligning_mf/`
+`H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Emf_tslogit_normal/`
+`H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf/6/`
+`results_train_set/expert_references/expert_rollout_0.gif`.
+
+| figure | exact source | selection or builder |
+| :-- | :-- | :-- |
+| `env/fig_render_aligning` | `d3il/figures/github_readme.gif` | frame 0, crop `(640, 180, 960, 360)` |
+| `demo/fig_aligning_camera_overhead` | alignment expert GIF | expert demonstration frame 60, crop `(0, 0, 96, 96)`; the recorded `bp-cam` observation |
+| `demo/fig_aligning_camera_wrist` | the same expert demonstration and instant | crop `(96, 0, 192, 96)`; the recorded `inhand-cam` observation |
+| `env/fig_scene_aligning` | D3IL aligning scene primitives and `d3il/environments/dataset/data/aligning/test_contexts.pkl` | `builders/scenes.py`; first held-out context: box `(0.58057404, -0.20366790, -43.513584 deg)`, target `(0.49818864, 0.33333877, -58.283190 deg)` |
+| `env/fig_render_uav_corridor` | MuJoCo render of `d3il/.../quadrotor/scenes/scene_corridor_v2.xml` + Skydio X2 mesh; path from `uav_expert_data_collect/trajectories.py` `corridor_path('C', 1.1, 8.0)` | `prep/render_mujoco_scenes.py`, `sources.MUJOCO_RENDERS` |
+| `env/fig_scene_uav_corridor` | `d3il/environments/d3il/models/mj/robot/quadrotor/scenes/scene_corridor_v2.xml` | `builders/scenes.py`, oblique orthographic view |
+| `env/fig_render_uav_pillars` | MuJoCo render of `d3il/.../quadrotor/scenes/scene_pillars.xml` + Skydio X2 mesh; path from `uav_expert_data_collect/trajectories.py` `pillar_path(('L','R','L'), 1.1, 13.0)` | `prep/render_mujoco_scenes.py`, `sources.MUJOCO_RENDERS` |
+| `env/fig_scene_uav_pillars` | `d3il/environments/d3il/models/mj/robot/quadrotor/scenes/scene_pillars.xml` | `builders/scenes.py`, oblique orthographic view |
+| `env/fig_render_uav_scurve` | MuJoCo render of `d3il/.../quadrotor/scenes/scene_s_curve.xml` + Skydio X2 mesh; path from `uav_expert_data_collect/trajectories.py` `s_curve_scene_path(1.1, 19.0)` | `prep/render_mujoco_scenes.py`, `sources.MUJOCO_RENDERS` |
+| `env/fig_scene_uav_scurve` | `d3il/environments/d3il/models/mj/robot/quadrotor/scenes/scene_s_curve.xml` | `builders/scenes.py`, oblique orthographic view |
+
+**2026-09-16 — the three UAV stills are rendered, no longer cut from rollout GIFs.** The GIF frames
+were 140–320 px, the pillars one mostly black, and all carried the diagnostic step counter.
+`prep/render_mujoco_scenes.py` loads the scene MJCF in MuJoCo, places the X2 level at the first sample
+of the demonstration generator's reference path, draws that path as a thin tube, and renders
+offscreen at 1600×1100. Nothing is simulated and no model runs (`mj_forward` only places bodies).
+Camera and path arguments are declared in `sources.MUJOCO_RENDERS` and stamped in
+`data/prepared/MUJOCO_RENDERS.json`; `--check` reports a changed declaration as stale. Needs the
+`mujoco` wheel and OSMesa (`MUJOCO_GL=osmesa`), which the AI container now has in a scratch venv.
+The GIF declarations were removed from `ENV_RENDER_FRAMES`, so `extract_env_frames.py` cannot
+overwrite the renders.
+
+The two D3IL stills (`fig_render_avoiding`, `fig_render_aligning`) are still frames of
+`d3il/figures/github_readme.gif`, which is byte-identical to the upstream D3IL checkout — the D3IL
+authors' own README asset. ⚠️ Their captions must credit D3IL, or they must be replaced.
+
+The two `fig_aligning_camera_*` panels are not crops of the README montage. They are the two raw
+$96\times96$ views concatenated by the alignment evaluator while replaying an expert demonstration.
+They use the same instant and therefore show exactly the observation pair consumed by the visual
+policy. The ignored `temp/` GIF remains the declared source; the prepared PNGs are the portable record.
+
+The orthographic `fig_scene_uav_*` views carry geometry only: no path and no vehicle, since the render
+above each one shows the real path (an illustrative straight line through the pillars had contradicted
+it). Wall and pillar dimensions come from the MJCF.
+
 The per-panel counts — **0, 1 and 2 of 96** demonstrations satisfy top-left-hard, top-right-hard and
 both-hard — are computed in the extract with the check of `scripts/visualize_data_constraints.py`:
 every step must be on the feasible side of each halfspace and outside the disk enlarged by the
@@ -82,7 +136,7 @@ and use the columns `n_success_and_constraints`, `n_steps` and `avg_time`.
 | figure | builder | batch | protocol |
 | :-- | :-- | :-- | :-- |
 | `da/fig_avoiding_tradeoff` | `builders/avoiding.py:131` | `temp/2508/batch_avoiding_combined_20260825_143212` | 5 training seeds (6–10) × 20 episodes |
-| `da/fig_avoiding_k_ladder` | `builders/avoiding.py:262` | same, **plus** the baseline's published-protocol rows from the same batch | solid series 5 × 20; dashed series 5 × 2 |
+| `da/fig_avoiding_k_ladder` | `builders/avoiding.py:262` | same, **plus** the baseline's smaller-sample rows from the same batch | solid series 5 × 20; dashed series 5 × 2 |
 | `da/fig_avoiding_projector_cost` | `builders/avoiding.py:337` | `temp/0609/I/batch_avoiding_combined_20260906_125724` (job 25444) | 4 training seeds (7–10) × 3 geometries × 2 episodes |
 
 **Which rows are read.** A model is selected by the exact evaluation folder name, listed in
@@ -98,7 +152,9 @@ and use the columns `n_success_and_constraints`, `n_steps` and `avg_time`.
 The k-ladder's dashed series comes from three separate folders, because those runs were produced by
 different jobs: `H8_K1_T0.5_Dmodels.GaussianDiffusion`,
 `H8_K10_Dmodels.GaussianDiffusion_aw10_thres0.5`, `H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5`.
-They are the published 10-episode protocol and are drawn dashed and hollow for that reason.
+They form a smaller five-seed by two-episode sample and are drawn dashed and hollow so they cannot be
+mistaken for the powered comparison. They are a mechanism check, not the DPCC paper's published
+evaluation protocol (five seeds by ten episodes per geometry).
 `fig_avoiding_projector_cost` selects its rows by the run tag `hfmink_A1_mfunet` instead.
 
 **Aggregation.** Per geometry first, then across geometries (`geometry_mean`). A flat mean over
@@ -114,7 +170,7 @@ against `/workspaces/aux_repo/` and is ours.
 | :-- | :-- | :-- |
 | `demo/fig_raw_plans_meanflow_K1` | `Data_Analysis/DA_Result_Curated_MD/Report_20260819_MF_UNet/fig6a_plans_mfunet_K1_seed6_both-hard.png` | every plan of one episode, no projection, MeanFlow at $K=1$ |
 | `demo/fig_raw_plans_diffusion_K1` | same report, `fig6b_plans_dpcc_K1_seed6_both-hard.png` | the same for the diffusion baseline at $K=1$ |
-| `demo/fig_raw_plans_meanflow_K2` | same report, `fig6c_plans_mfunet_K2_seed6_both-hard.png` | the same at $K=2$ (not currently used by the draft) |
+| `demo/fig_raw_plans_meanflow_K2` | same report, `fig6c_plans_mfunet_K2_seed6_both-hard.png` | the same at $K=2$ |
 | `da/fig_raw_goal_reached_K1` | `Report_20260903_AF_UNet/fig7_raw_diffuser_K1.svg` | goal reached without projection at $K=1$, top-right-hard (not currently used by the draft) |
 
 The plan panels are per-episode diagnostics of `batch_avoiding_combined_20260818_152911`, seed 6,
@@ -145,15 +201,21 @@ From `Working_Space/v3/figures/EXPORTED.md`, written by `export_to_draft.py`:
 
 | figure | used in v3 |
 | :-- | :-- |
-| `fig_env_avoiding` | `chapters/05_setup.tex` — `fig:env-avoiding`, §5.1.1 |
+| `fig_render_avoiding`, `fig_env_avoiding` | `chapters/05_setup.tex` — `fig:env-avoiding`, §5.1.1 |
 | `fig_constraints_avoiding` | `chapters/05_setup.tex` — `fig:constraints-avoiding`, §5.1.1 |
+| `fig_render_aligning`, `fig_scene_aligning` | `chapters/05_setup.tex` — `fig:env-aligning`, §5.1.2 |
+| `fig_aligning_camera_overhead`, `fig_aligning_camera_wrist` | `chapters/05_setup.tex` — `fig:aligning-cameras`, alignment camera observations |
+| `fig_render_uav_corridor`, `fig_scene_uav_corridor`, `fig_render_uav_pillars`, `fig_scene_uav_pillars`, `fig_render_uav_scurve`, `fig_scene_uav_scurve` | `chapters/05_setup.tex` — `fig:env-uav`, §5.1.3 |
 | `fig_avoiding_tradeoff` | `chapters/06_results.tex` — `fig:avoiding-tradeoff`, §6.1.1 |
 | `fig_avoiding_k_ladder` | `chapters/06_results.tex` — `fig:k-ladder`, §6.1.2 |
-| `fig_raw_plans_meanflow_K1`, `fig_raw_plans_diffusion_K1` | `chapters/06_results.tex` — `fig:raw-plans`, §6.1.3 |
+| `fig_raw_plans_meanflow_K1`, `fig_raw_plans_meanflow_K2`, `fig_raw_plans_diffusion_K1` | `chapters/06_results.tex` — `fig:raw-plans`, §6.1.3 |
 | `fig_avoiding_projector_cost` | `chapters/06_results.tex` — `fig:projector-cost`, §6.1.4 |
 
-Figures still to be made are listed as `PLANNED` in `sources.py` and in `../figures/MANIFEST.md`:
-`fig_env_aligning` and `fig_env_uav`.
+Figures still to be made are listed as `PLANNED` in `sources.py` and in `../figures/MANIFEST.md`.
+For `fig:raw-plans`, these include flow matching at $K=1$ and $K=2$. Aggregate outcome rows exist,
+but neither diagnostic images nor saved per-control-step plan states are present in this checkout, so
+those panels cannot be reconstructed honestly here. `sources.PLANNED` records the corresponding
+cluster plan directories and rendering requirement.
 
 ## 5. Formats
 
@@ -172,6 +234,8 @@ python3.14 plotting/extract/avoiding_scene.py   # re-extract geometry + demonstr
 python3 plotting/export_to_draft.py v3      # refresh a draft's copies and its EXPORTED.md
 python3.14 plotting/svg/preview_png.py ../figures/env/fig_env_avoiding.svg /tmp/x.png
 python3.14 plotting/prep/crop_vendored.py --check   # are the cut dashboards current?
+MUJOCO_GL=osmesa <python with mujoco> plotting/prep/render_mujoco_scenes.py --check
+python3.14 plotting/prep/extract_env_frames.py --check # are selected simulator stills current?
 ```
 
 `temp/` is a local drop directory and is not version-controlled: on a fresh machine the batch

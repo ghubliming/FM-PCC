@@ -7,6 +7,7 @@ replaces (checked on all ten figures at the move).
 python3 make_figs.py                 # build everything into ../figures/<group>/
 python3 make_figs.py k_ladder        # only figures whose name contains this
 python3 make_figs.py --list          # corpora, builders, vendored, planned
+python3.14 prep/extract_env_frames.py # prepare registered stills from source GIFs
 python3 export_to_draft.py v3        # copy the figures v3 uses into the draft (--dry-run, --prune)
 svg/svg2pdf.sh                       # SVG -> PDF for the whole store
 ```
@@ -20,6 +21,7 @@ svg/svg2pdf.sh                       # SVG -> PDF for the whole store
 | `svg/` | `fmpcc_svg.py`, the stdlib SVG canvas (runs in the AI container); `svg2pdf.sh`. |
 | `mpl/` | matplotlib scripts, for figures that need it — run where matplotlib exists (cluster, laptop). See `mpl/README.md`. |
 | `extract/` | Steps that need numpy or PyYAML (so `python3.14`, not `python3`): they read configs, datasets and logs once and write plain JSON into `../data/`, which the builders then read. `avoiding_scene.py` writes the obstacle-avoidance geometry and its 96 demonstrations. |
+| `prep/` | Deterministic preparation of vendored inputs. `extract_env_frames.py` selects registered frames and crops from source GIFs, including the two $96\times96$ alignment camera observations from an expert demonstration; `crop_vendored.py` removes dashboard chrome. Both provide `--check`. |
 | `svg/preview_png.py` | Renders a figure SVG to PNG with PIL (`python3.14`), for checking it by eye — the container has no SVG rasteriser. A preview, not the print path. |
 | `make_figs.py` | Builds generated figures, copies vendored ones, writes `../figures/MANIFEST.md`. |
 | `export_to_draft.py` | Copies the figures a draft references into `<draft>/figures/`, writes `EXPORTED.md`, reports planned and missing figures (missing exits 1). |

@@ -279,11 +279,10 @@ def fig_avoiding_k_ladder(outdir):
             'step budget K  [ network evaluations per plan ]   (log)',
             'success and constraint satisfaction',
             'Success against step budget, obstacle avoidance',
-            f'{c.protocol}; geometry-mean over all three geometries, '
-            f'temporal-consistency rule, tightened. U-Net 4.0M throughout.',
+            '5 seeds (6-10) x 20 episodes; geometry mean; tightened; U-Net 4.0M.',
             xfmt=lambda v: f'{v:.0f}', yfmt=lambda v: f'{v:.2f}')
 
-    # The baseline at the published 10-episode protocol: the only measurement of
+    # The baseline in a smaller 5 x 2 sample: the only measurement of
     # what diffusion does below its training budget. Drawn dashed and hollow, and
     # named as a different protocol in the legend, because it is one -- mixing it
     # into the solid series would be the single most misleading thing this figure
@@ -319,9 +318,9 @@ def fig_avoiding_k_ladder(outdir):
     legend(f, lx, f.T + 20, [(S.ENGINE_COLOUR[k], S.ENGINE_LABEL[k], 's')
                              for k in ('mf', 'fm', 'diffusion')])
     f.text(lx, f.T + 84, 'dashed + hollow circles:', 9, '#555')
-    f.text(lx, f.T + 96, 'the baseline at the', 9, '#555')
-    f.text(lx, f.T + 108, 'PUBLISHED protocol,', 9, '#555')
-    f.text(lx, f.T + 120, '10 episodes per cell.', 9, '#555')
+    f.text(lx, f.T + 96, 'the baseline in a', 9, '#555')
+    f.text(lx, f.T + 108, 'smaller 5 seeds x 2', 9, '#555')
+    f.text(lx, f.T + 120, 'episodes sample.', 9, '#555')
     f.text(lx, f.T + 132, 'Mechanism, not a', 9, '#555')
     f.text(lx, f.T + 144, 'powered comparison.', 9, '#555')
     f.text(lx, f.T + 168, 'K is inference-time', 9.5, '#111', bold=True)

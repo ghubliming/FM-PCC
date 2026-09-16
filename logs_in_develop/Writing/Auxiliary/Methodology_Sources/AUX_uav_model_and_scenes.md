@@ -39,6 +39,10 @@ Three points carry the section:
 | task variant | `quadrotor.xml` + MJPC's `quadrotor.xml.patch` → **`quadrotor_modified.xml`** (the file every later epoch includes) | `Epoch1/METHODOLOGY.md` |
 | patch content | adds `quat="0 0 0 1"` (level, nose-forward spawn); removes the MJPC-only sensor block and hover keyframe | `Epoch1/METHODOLOGY.md` |
 | actuation | 4 rotors (MuJoCo actuators), `data.ctrl[:4]` | `Epoch4` generator |
+| simulated mass | **1.325 kg** = four $0.25$ kg rotor geoms + $0.325$ kg body inertial geom; visual mesh mass is zero | `quadrotor_modified.xml:8,43--47` |
+| rotor geometry | centres $(\pm0.14,\pm0.18)$ m; centre radius $0.228$ m; collision-disk radius $0.13$ m; full footprint $0.54\times0.62$ m | `quadrotor_modified.xml:16--17,43--46` |
+| rotor input | four controls in $[0,13]$ N; yaw moment arm coefficient $\pm0.0201$ | `quadrotor_modified.xml:9,56--59` |
+| physics step | $0.01$ s ($100$ Hz) | `quadrotor_modified.xml:4` |
 | scene files | `d3il/environments/.../scenes/scene_*.xml`, each `<include>`-ing `quadrotor_modified.xml` | `Epoch3/METHODOLOGY.md` |
 | obstacle metadata | `uav_expert_data_collect/generator.py` → `SCENE_OBSTACLES` | `Epoch3/METHODOLOGY.md` |
 
@@ -69,9 +73,10 @@ belongs in `app:repro`, not the main text, but it will bite anyone reproducing t
 
 ## 4. Holes — fill before writing
 
-- [ ] **X2 physical parameters are not tabulated anywhere in our logs** — mass, arm length, inertia
-      tensor, rotor thrust coefficient, control range. They live only inside the Menagerie XML. The
-      thesis needs a parameter table; read it out of `quadrotor_modified.xml` and cite Menagerie.
+- [x] **X2 parameters used by the experiment are tabulated above and in v3 `tab:platforms`**
+      (2026-09-16, v3.16): mass, rotor-centre radius, collision footprint, actuator range and physics
+      step are read directly from `quadrotor_modified.xml`. MuJoCo derives the inertia tensor from the
+      declared geoms; the XML does not contain a separate tensor to quote.
 - [ ] **`s_curve` geometry is stated two ways** (2 segments vs 4 wall segments). Settle from the XML.
 - [ ] **Licence for `mujoco_menagerie` and `mujoco_mpc`** — needed for `app:repro` (§5.3). Both are
       Apache-2.0 upstream; verify and cite the exact version/commit pulled.

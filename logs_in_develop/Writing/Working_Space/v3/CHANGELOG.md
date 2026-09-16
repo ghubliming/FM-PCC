@@ -17,6 +17,77 @@ is sourced from · what it left open.
 
 ---
 
+## v3.16b — 2026-09-16 · environment prefixes where environments appear together
+
+- Defined once at the start of §5.1: **D3IL-avoiding, D3IL-aligning, UAV-corridor, UAV-pillars, UAV-s-curve** (UAV spelled out).
+- Applied wherever several environments are shown or compared together: §6.4 prose and all three summary tables, the UAV conclusion and cross-scene consistency-training text, Ch 8 (summary and RQs), `tab:train` / `tab:eval` headers, §5.5.3, `tab:uav-scenes`, `tab:uav-demos`, Fig 5.4 panel labels, appendix `tab:corpora`. Single-environment sections keep plain names; object descriptions ("corridor walls") unchanged; `\autoref`/`\label`/`\texttt`/`\dataref` untouched.
+- Recorded in the translation table; v2 notified in `cross_draft/INBOX.md`. check.py pass; bundle 22/22.
+
+---
+
+## v3.16a — 2026-09-16 · review of v3.16 (Codex) + isolated platform renders
+
+- **Review: v3.16 holds.** Platform specs re-derived from `quadrotor_modified.xml` (1.325 kg, rotor centres 0.228 m, 0.54×0.62 m, 0–13 N) and `panda.xml` (wrist camera); camera frames are from our own expert-replay GIF; the Ch 6 conclusions match `va_results.py` / `uav_results.py`; check.py and bundle pass.
+- 🔴 **Fixed a silent defect of the restructure:** the new `\subsubsection` parts were unnumbered under `scrbook` defaults, so 13 `\autoref`s would print the parent subsection's number. `secnumdepth` raised in `parts/00_preamble_v3.tex`; logged for v2 in `cross_draft/INBOX.md`.
+- **Fig 5.1** now shows the Panda and the X2 on their own — MuJoCo renders of the model files with the background removed by the segmentation pass (`PLATFORM_RENDERS`, `prep/render_mujoco_scenes.py`). This also removes one use of the D3IL README GIF.
+- Fixed `render_mujoco_scenes.py --check`, which always reported the pillars render stale (nested tuples). 5/5 current.
+- Bundle `thesis_v3_20260916_142003_new.zip`: 22/22 figures render.
+- ⚠️ Still open: Figs 5.2 and 5.3 use crops of D3IL's own README GIF, captioned "authentic simulator frame", without credit.
+
+---
+
+## v3.16 — 2026-09-16 · platforms, alignment camera inputs, and two-part result structure → [`changelogs/v3.16_20260916_platforms_cameras_results_structure.md`](changelogs/v3.16_20260916_platforms_cameras_results_structure.md)
+
+- Chapter 5 now introduces the Panda and Skydio X2 with source-derived specifications and shows the two
+  actual $96\times96$ alignment observations from one expert-demonstration instant.
+- Every Chapter 6 environment now follows **Generative Models → Projection Methods → Conclusion**, with a
+  final table of supported model--projection operating points.
+- Obstacle avoidance explicitly keeps per-step projection at its one/two-evaluation operating point;
+  alignment and UAV state their supported combinations and evidence limits.
+- The s-curve section now isolates the tracking-controller effect and distinguishes the flyable
+  unprojected plan from the unresolved projected stack.
+
+---
+
+## v3.15 — 2026-09-16 · §6.2 alignment and §6.3 quadrotor rewritten from the 15-09 data → [`changelogs/v3.15_20260916_va_and_uav_results.md`](changelogs/v3.15_20260916_va_and_uav_results.md)
+
+- Every §6.2–6.3 number recomputed by two scripts in `DA_in_Paper/analysis/`; analyses of record reproduced exactly.
+- Alignment: MeanFlow ahead of both; flow matching ≈ diffusion; consistency training level at K2, behind at K20. Evaluated on **training** contexts — disclosed.
+- Quadrotor: corridor and pillars written in full (MeanFlow > flow matching > consistency training on pillars); s-curve as a listing with the controller discussion.
+- 🔴 Five false statements in the previous draft corrected (diffusion violation-freedom on alignment; pillars "left the constraint set"; MF>FM>diffusion on alignment; ≥2 guiding steps; pooled ablations).
+
+---
+
+## v3.14a — 2026-09-16 · plan matrix and Codex handover
+
+- **`fig:raw-plans` is now a 2×4 matrix**: MeanFlow, flow matching, diffusion, consistency training × $\nfe\in\{1,2\}$. Three panels exist (MeanFlow K1/K2, diffusion K1); the other five are visible `\todofigure` placeholders, registered in `PLANNED`, with the cluster runs in `DA_in_Paper/plotting/REQUEST_20260916_cluster_fm_plan_panels.md`. Laid out 2×4 rather than 4×2, which would not fit on a page.
+- `tools/check.py`: panel grids of minipages are now measured by their declared widths (the character estimate had flagged this figure as 35 cm wide); verified to warn at an oversized width.
+- **Plan** for §6.2 alignment and §6.3 quadrotor results (first written as a Codex handover, reassigned to v3 by the author): `plans/PLAN_20260916_VA_and_UAV_results.md` — sources, expected story, known traps (held-out split, an unexplained `d3il_baseline` engine in the alignment data, consistency training below flow matching on pillars, the partially invalid MPC-vs-PID report), rules and deliverables.
+
+---
+
+## v3.14 — 2026-09-16 · MuJoCo renders, §5.3 baselines, §5.5 parameters → [`changelogs/v3.14_20260916_mujoco_renders_baselines_protocol.md`](changelogs/v3.14_20260916_mujoco_renders_baselines_protocol.md)
+
+- Fig. 5.4 top row: real MuJoCo renders with the generator's reference path; 4 SVG-only figures given PNGs (18/18 render).
+- Fig. 6.3 flow matching: no plan data off the cluster; exact run request written, panels registered as planned.
+- §5.3.2 D3IL reference and `tab:va-vs-d3il`; §5.3.3 MuJoCo MPC quadrotor task as precedent.
+- §5.5 `tab:train` / `tab:eval` from the training logs. 🔴 Training is **not** uniform across models (batch, lr, action weight, EMA) — disclosed in a `\guard`.
+
+---
+
+## v3.13 — 2026-09-15 · authentic environment views, figure explanations, raw-plan source boundary → [`changelogs/v3.13_20260915_environment_renders_and_figure_explanations.md`](changelogs/v3.13_20260915_environment_renders_and_figure_explanations.md)
+
+- **Chapter 5 now shows all three environments.** Authentic D3IL frames cover obstacle avoidance and
+  alignment; authentic rollout frames cover corridor v2, pillars and s-curve. Alignment and UAV views
+  are paired with readable geometry reconstructions whose exact context/MJCF sources are audited.
+- **Figures 6.1 and 6.2 are explained in the prose.** Figure 6.2 no longer mislabels its smaller
+  five-seed by two-episode diffusion sample as the published DPCC protocol.
+- **Figure 6.3 now includes MeanFlow at $K=2$.** Naïve flow matching at $K=1$ and $K=2$ cannot be
+  rendered from this checkout: neither diagnostic panels nor saved plan states exist locally. Both
+  cluster render sources are registered as `PLANNED`; no panel was fabricated from aggregate rows.
+- Full figure store rebuilt and 18 referenced figures exported; mechanical checks pass with no
+  `\todofigure`. No TeX toolchain is installed, so this pass was not compiled.
+
 ## v3.12 — 2026-09-15 · consistency training into the results, the protocol made exact, two figures rebuilt → [`changelogs/v3.12_20260915_af_results_protocol_and_figures.md`](changelogs/v3.12_20260915_af_results_protocol_and_figures.md)
 
 - **Consistency training was missing from the results.** Built in from `Report_20260903_AF_UNet`: the

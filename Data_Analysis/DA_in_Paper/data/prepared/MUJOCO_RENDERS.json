@@ -1,0 +1,133 @@
+{
+  "fig_platform_panda": {
+    "azimuth": 140.0,
+    "distance": 2.0,
+    "elevation": -18.0,
+    "lookat": [
+      0.25,
+      0.0,
+      0.45
+    ],
+    "meshdir": "/workspaces/aux_repo/d3il/environments/d3il/models/mj/robot/assets",
+    "model": "/workspaces/aux_repo/d3il/environments/d3il/models/mj/robot/panda.xml",
+    "qpos_by_joint": {
+      "panda_joint1": 0.0,
+      "panda_joint2": -0.785,
+      "panda_joint3": 0.0,
+      "panda_joint4": -2.356,
+      "panda_joint5": 0.0,
+      "panda_joint6": 1.571,
+      "panda_joint7": 0.785
+    },
+    "size": [
+      1400,
+      1400
+    ],
+    "wrap_include": true
+  },
+  "fig_platform_x2": {
+    "azimuth": 135.0,
+    "distance": 1.1,
+    "elevation": -28.0,
+    "free_body_pos": [
+      0.0,
+      0.0,
+      0.5
+    ],
+    "lookat": [
+      0.0,
+      0.0,
+      0.5
+    ],
+    "model": "d3il/environments/d3il/models/mj/robot/quadrotor/quadrotor_modified.xml",
+    "size": [
+      1400,
+      1400
+    ],
+    "wrap_include": false
+  },
+  "fig_render_uav_corridor": {
+    "azimuth": 14.0,
+    "distance": 5.6,
+    "elevation": -24.0,
+    "lookat": [
+      -0.6,
+      0.0,
+      0.8
+    ],
+    "path_args": [
+      "C",
+      1.1,
+      8.0
+    ],
+    "path_fn": "corridor_path",
+    "path_rgba": [
+      0.2,
+      0.85,
+      0.35,
+      1.0
+    ],
+    "scene": "scene_corridor_v2.xml",
+    "size": [
+      1600,
+      1100
+    ]
+  },
+  "fig_render_uav_pillars": {
+    "azimuth": 28.0,
+    "distance": 6.6,
+    "elevation": -26.0,
+    "lookat": [
+      -0.6,
+      0.0,
+      0.8
+    ],
+    "path_args": [
+      [
+        "L",
+        "R",
+        "L"
+      ],
+      1.1,
+      13.0
+    ],
+    "path_fn": "pillar_path",
+    "path_rgba": [
+      0.2,
+      0.85,
+      0.35,
+      1.0
+    ],
+    "scene": "scene_pillars.xml",
+    "size": [
+      1600,
+      1100
+    ]
+  },
+  "fig_render_uav_scurve": {
+    "azimuth": 12.0,
+    "distance": 6.6,
+    "elevation": -34.0,
+    "lookat": [
+      -0.6,
+      -0.3,
+      0.7
+    ],
+    "path_args": [
+      1.1,
+      19.0
+    ],
+    "path_fn": "s_curve_scene_path",
+    "path_rgba": [
+      0.2,
+      0.85,
+      0.35,
+      1.0
+    ],
+    "scene": "scene_s_curve.xml",
+    "size": [
+      1600,
+      1100
+    ]
+  }
+}

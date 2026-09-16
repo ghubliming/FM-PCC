@@ -153,6 +153,14 @@ def main():
                     if len(plain) * CHAR_CM * scale > TEXTWIDTH_CM:
                         warn.append(f'{n}: \\multicolumn text does not wrap and is about '
                                     f'{len(plain) * CHAR_CM * scale:.1f} cm wide: "{plain[:60]}..."')
+                elif kind == 'tabular' and '\\begin{minipage}' in row:
+                    # A panel grid: cell widths are set by the minipages, not by the text, so the
+                    # character estimate is meaningless. Sum the declared minipage fractions instead.
+                    fr = [float(x) for x in re.findall(r'\\begin\{minipage\}(?:\[[^\]]*\])?\{([\d.]+)\\linewidth\}', row)]
+                    width = sum(fr) * TEXTWIDTH_CM + ncols * 0.14 + 1.2   # 2pt seps, one label column
+                    if width > TEXTWIDTH_CM:
+                        warn.append(f'{n}: panel row of minipages is about {width:.1f} cm wide '
+                                    f'(text width is {TEXTWIDTH_CM} cm)')
                 elif kind == 'tabular':
                     plain = re.sub(r'\\[a-zA-Z]+\*?(\[[^\]]*\])?|[{}$]', '', row)
                     widest = sum(len(c.strip()) for c in plain.split('&')) * CHAR_CM * scale + ncols * 0.42

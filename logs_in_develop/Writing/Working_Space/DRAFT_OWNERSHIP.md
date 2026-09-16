@@ -17,6 +17,12 @@ Each owns a fixed set of chapters; **no chat edits another draft's chapters or f
 **Flow is one-way: v2 → v3 → v4.** v3 inherits Ch 1–4 from v2 through `v3/tools/sync_v2.py`. v4 will
 branch off the finished v3 the same way.
 
+## Cross-draft findings → `cross_draft/`
+
+When a draft finds something another draft must change, it writes a note in `cross_draft/to_<target>/`
+and a line in `cross_draft/INBOX.md` — **never an edit in the other draft**. Every session starts by
+reading its section of `INBOX.md`. Rules: `cross_draft/README.md`.
+
 ## Rules for each chat
 
 ### v2
@@ -33,7 +39,7 @@ branch off the finished v3 the same way.
   `Data_Analysis/DA_in_Paper/`** (since 2026-09-14) and copied into `v3/figures/` with
   `plotting/export_to_draft.py v3` — never drawn or edited in the draft.
 - **Ch 7 Discussion is v4's.** v3 keeps its headings and labels (Ch 4 references them) and writes no
-  prose there. What v3 had written is in `v3/handover/HANDOVER_20260914_discussion_prose_for_v4.tex`.
+  prose there. What v3 had written is in `cross_draft/to_v4/FROM_v3_20260914_discussion_prose.tex`.
 - **Never edit v3's copies of Ch 1–4, `00_preamble`, `01_frontmatter`, `99_backmatter` or
   `bibliography.bib`** — not even the ones whose policy is `merge`. The change belongs in v2; sync it
   down with `python3 tools/sync_v2.py merge`. Editing the copy creates merge conflicts, and the

@@ -1,0 +1,57 @@
+{
+  "fig_aligning_camera_overhead": {
+    "crop": [
+      0,
+      0,
+      96,
+      96
+    ],
+    "frame": 60,
+    "source": "temp/0408/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Emf_tslogit_normal/H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf/6/results_train_set/expert_references/expert_rollout_0.gif"
+  },
+  "fig_aligning_camera_wrist": {
+    "crop": [
+      96,
+      0,
+      192,
+      96
+    ],
+    "frame": 60,
+    "source": "temp/0408/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Emf_tslogit_normal/H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf/6/results_train_set/expert_references/expert_rollout_0.gif"
+  },
+  "fig_render_aligning": {
+    "crop": [
+      640,
+      180,
+      960,
+      360
+    ],
+    "frame": 0,
+    "source": "d3il/figures/github_readme.gif"
+  },
+  "fig_render_avoiding": {
+    "crop": [
+      0,
+      0,
+      320,
+      180
+    ],
+    "frame": 0,
+    "source": "d3il/figures/github_readme.gif"
+  },
+  "fig_render_uav_corridor": {
+    "crop": null,
+    "frame": 0,
+    "source": "temp/1309/corridor_cv2s_bounds+dynamics+geo_bounds+halfspace+obstacles_FIX2/diffuser/diagnostics/rollout_0.gif"
+  },
+  "fig_render_uav_pillars": {
+    "crop": null,
+    "frame": 60,
+    "source": "temp/3008/uav-pillars/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K10_mpc4_pid_stopgo_T0.5/6/pillars_bounds+dynamics+geo_bounds+obstacles/diffuser/diagnostics/rollout_0.gif"
+  },
+  "fig_render_uav_scurve": {
+    "crop": null,
+    "frame": 124,
+    "source": "temp/1608/uav-s_curve/plans/mix_uav_mf/H8_Dmodels.mf_diffusion.MeanFlowODE_9D_dp0.5_bbunet/Emf_K10_mpc4_pid_stopgo_T0.5/6/s_curve_bounds+dynamics+geo_bounds+halfspace+obstacles/diffuser/diagnostics/rollout_0.gif"
+  }
+}

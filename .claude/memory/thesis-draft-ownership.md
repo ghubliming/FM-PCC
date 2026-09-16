@@ -17,3 +17,5 @@ The thesis drafts in `logs_in_develop/Writing/Working_Space/` are worked on by *
 **Why:** parallel chats editing the same chapters produce merge conflicts and silently overwrite each other's work; v3 already inherits Ch 1–4 from v2 through a one-way sync tool.
 
 **How to apply:** at the start of any Writing/v2, v3 or v4 task, read `Working_Space/DRAFT_OWNERSHIP.md`. If a request would touch another draft's file, stop and say so, and log the needed change as a `For v3:` / `For v2:` line in your own draft's CHANGELOG instead. Related: [[master-thesis-writing-tum]], [[thesis-prose-style]].
+
+**Cross-draft findings (since 2026-09-16):** never edit another draft — write `Working_Space/cross_draft/to_<v2|v3|v4>/FROM_<src>_<date>_<topic>.md` and a line in `cross_draft/INBOX.md`; read your INBOX section at session start. The target draft closes items (✅ + its version).

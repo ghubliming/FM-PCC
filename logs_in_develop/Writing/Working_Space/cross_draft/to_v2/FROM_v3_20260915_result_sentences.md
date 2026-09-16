@@ -37,5 +37,5 @@ these fits the sentence around it; both are supported by `sec:res:avoiding:proje
 that fall into these two regimes are listed in `\autoref{sec:res:constraints:degenerate}`". Chapter 6
 now lists them (`tab:hf-ladder` in `sec:res:avoiding:projection`, with the counts in
 `sec:res:constraints:degenerate`). No change needed in Chapter 4 for that — but see
-[`HANDOVER_20260915_for_v2_ch4_naming.md`](HANDOVER_20260915_for_v2_ch4_naming.md) for the two naming
+[`FROM_v3_20260915_ch4_naming.md`](FROM_v3_20260915_ch4_naming.md) for the two naming
 changes that section does need.

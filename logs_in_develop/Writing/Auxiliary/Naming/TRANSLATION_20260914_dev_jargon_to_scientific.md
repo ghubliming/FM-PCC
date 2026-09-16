@@ -138,6 +138,15 @@ in thesis text.
 
 ---
 
+### 🆕 Environment names when several appear together (v3.16b, 2026-09-16)
+
+| context | name |
+| :-- | :-- |
+| several environments shown or compared together (tables, summaries, conclusions, RQ answers) | **D3IL-avoiding**, **D3IL-aligning**, **UAV-corridor**, **UAV-pillars**, **UAV-s-curve** |
+| inside one environment's own section | plain names are fine: *the corridor*, *the pillars*, *obstacle avoidance* |
+
+Defined once at the start of v3 §5.1. `UAV` is spelled out there; it is not yet in the acronym list (v2).
+
 ## 8. Rules
 
 1. **The thesis names a method by its mechanism, and credits the paper by an in-place citation.**

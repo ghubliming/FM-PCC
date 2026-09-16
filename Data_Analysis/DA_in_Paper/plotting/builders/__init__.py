@@ -4,6 +4,6 @@ A builder is ``fn(outdir) -> (path, provenance) | None``. ``make_figs.py`` calls
 with ``../figures/<group>/``. Each environment module lists ``ALL = [(name, group,
 builder), ...]``; the group must be one of ``make_figs.GROUPS``.
 """
-from . import avoiding
+from . import avoiding, scenes
 
-ALL = list(avoiding.ALL)
+ALL = list(avoiding.ALL) + list(scenes.ALL)

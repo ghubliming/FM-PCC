@@ -70,6 +70,151 @@ class Corpus:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+#  SCENE GEOMETRY, for the environment figures
+# ═══════════════════════════════════════════════════════════════════════════
+# The quadrotor scenes are MJCF and are parsed straight out of this directory, so
+# nothing about them is duplicated here.
+UAV_SCENE_DIR = 'd3il/environments/d3il/models/mj/robot/quadrotor/scenes'
+
+# The two D3IL manipulation scenes are built in Python, not XML, so their
+# primitives are transcribed here WITH the symbol they come from. MuJoCo cylinder
+# size is (radius, half-height); a cylinder standing on the table therefore has
+# its centre one half-height above it.
+#
+#   avoiding  aux_repo/d3il/environments/d3il/envs/gym_avoiding_env/gym_avoiding/
+#             envs/objects/avoiding_objects.py :: get_obj_list, init_end_eff_pos
+#   aligning  .../gym_aligning_env/gym_aligning/envs/objects/aligning_objects.py
+#             :: box_pos, init_end_eff_pos, and the box geoms in
+#             models/mj/common-objects/robot_push_box/robot_push_box.xml
+D3IL_SCENES = {
+    'avoiding': {
+        'start': [0.525, -0.28, 0.12],
+        # mid 0.5, offset 0.075, first level y -0.1, level distance 0.18
+        'obstacles': [
+            {'pos': [0.500, -0.10, 0], 'size': [0.030, 0.07]},
+            {'pos': [0.425,  0.08, 0], 'size': [0.025, 0.10]},
+            {'pos': [0.575,  0.08, 0], 'size': [0.025, 0.10]},
+            {'pos': [0.350,  0.26, 0], 'size': [0.025, 0.10]},
+            {'pos': [0.500,  0.26, 0], 'size': [0.025, 0.10]},
+            {'pos': [0.650,  0.26, 0], 'size': [0.025, 0.10]},
+        ],
+        'finish_line': {'pos': [0.400, 0.35, 0], 'half': [0.5, 0.01, 0.005]},
+    },
+    'aligning': {
+        'start': [0.525, -0.35, 0.25],
+        # First held-out context, not the XML's coincident placeholder poses.
+        # d3il/environments/dataset/data/aligning/test_contexts.pkl, index 0.
+        'box_pos': [0.58057404, -0.20366790, 0.0],
+        'box_yaw_deg': -43.513584,
+        'target_pos': [0.49818864, 0.33333877, 0.0],
+        'target_yaw_deg': -58.283190,
+    },
+}
+
+# Frames extracted once into data/prepared/ by prep/extract_env_frames.py.  The
+# D3IL montage is tracked; the UAV diagnostics are local copies of real cluster
+# rollouts.  The prepared PNGs are committed so a fresh checkout can build the
+# thesis even when the ignored temp/ tree is absent.
+# Quadrotor scenes rendered by MuJoCo itself (prep/render_mujoco_scenes.py), from the
+# scene MJCF and the Skydio X2 mesh, with the demonstration generator's reference path
+# drawn in. These replace the frames once cut from rollout GIFs, which were 140 px,
+# mostly black and carried the diagnostic step counter. Camera values are MuJoCo free
+# camera conventions: azimuth/elevation in degrees, distance in metres.
+MUJOCO_RENDERS = {
+    # Camera behind the start (azimuth ~25 deg looks along +x), so the vehicle is in
+    # the foreground and the course runs away from the reader in the direction flown.
+    # Path in green: the pillars are orange in the scene file.
+    'fig_render_uav_corridor': {
+        'scene': 'scene_corridor_v2.xml', 'size': (1600, 1100),
+        'path_fn': 'corridor_path', 'path_args': ('C', 1.1, 8.0),
+        'lookat': (-0.6, 0.0, 0.8), 'distance': 5.6, 'azimuth': 14.0, 'elevation': -24.0,
+        'path_rgba': (0.20, 0.85, 0.35, 1.0),
+    },
+    'fig_render_uav_pillars': {
+        'scene': 'scene_pillars.xml', 'size': (1600, 1100),
+        'path_fn': 'pillar_path', 'path_args': (('L', 'R', 'L'), 1.1, 13.0),
+        'lookat': (-0.6, 0.0, 0.8), 'distance': 6.6, 'azimuth': 28.0, 'elevation': -26.0,
+        'path_rgba': (0.20, 0.85, 0.35, 1.0),
+    },
+    'fig_render_uav_scurve': {
+        'scene': 'scene_s_curve.xml', 'size': (1600, 1100),
+        'path_fn': 's_curve_scene_path', 'path_args': (1.1, 19.0),
+        'lookat': (-0.6, -0.3, 0.7), 'distance': 6.6, 'azimuth': 12.0, 'elevation': -34.0,
+        'path_rgba': (0.20, 0.85, 0.35, 1.0),
+    },
+}
+
+# The two simulated platforms on their own, for Fig. 5.1: no scene, no floor, no sky.
+# Rendered by prep/render_mujoco_scenes.py from the model files the simulators load; the
+# background is removed with MuJoCo's segmentation pass (every pixel that hits no geom is
+# set to white), and a thin contour is drawn along the mask so a white robot stays visible
+# on a white page. Poses are illustrative: the Panda in its standard ready configuration,
+# the X2 level.
+PLATFORM_RENDERS = {
+    'fig_platform_panda': {
+        'model': '/workspaces/aux_repo/d3il/environments/d3il/models/mj/robot/panda.xml',
+        'wrap_include': True,              # the file is a <mujocoinclude> fragment
+        'meshdir': '/workspaces/aux_repo/d3il/environments/d3il/models/mj/robot/assets',
+        'qpos_by_joint': {'panda_joint1': 0.0, 'panda_joint2': -0.785, 'panda_joint3': 0.0,
+                          'panda_joint4': -2.356, 'panda_joint5': 0.0, 'panda_joint6': 1.571,
+                          'panda_joint7': 0.785},
+        'lookat': (0.25, 0.0, 0.45), 'distance': 2.0, 'azimuth': 140.0, 'elevation': -18.0,
+        'size': (1400, 1400),
+    },
+    'fig_platform_x2': {
+        'model': 'd3il/environments/d3il/models/mj/robot/quadrotor/quadrotor_modified.xml',
+        'wrap_include': False,
+        'free_body_pos': (0.0, 0.0, 0.5),
+        'lookat': (0.0, 0.0, 0.5), 'distance': 1.1, 'azimuth': 135.0, 'elevation': -28.0,
+        'size': (1400, 1400),
+    },
+}
+
+ENV_RENDER_FRAMES = {
+    'fig_render_avoiding': {
+        'source': 'd3il/figures/github_readme.gif',
+        'frame': 0,
+        'crop': (0, 0, 320, 180),
+        'what': 'D3IL obstacle-avoidance simulator view',
+    },
+    'fig_render_aligning': {
+        'source': 'd3il/figures/github_readme.gif',
+        'frame': 0,
+        'crop': (640, 180, 960, 360),
+        'what': 'D3IL alignment simulator view',
+    },
+    # One frame of an expert demonstration recorded by the evaluation pipeline.
+    # The GIF is exactly the two 96x96 observations concatenated horizontally:
+    # bp-cam first, wrist-mounted inhand-cam second. Frame 60 shows the box in
+    # both views while the manipulator is approaching it.
+    'fig_aligning_camera_overhead': {
+        'source': 'temp/0408/mix_visual_aligning_mf/'
+                  'H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_'
+                  'a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Emf_tslogit_normal/'
+                  'H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.'
+                  'VisualMeanFlow_VTrue_mpc4_filmv1_Emf/6/results_train_set/'
+                  'expert_references/expert_rollout_0.gif',
+        'frame': 60,
+        'crop': (0, 0, 96, 96),
+        'what': 'D3IL alignment expert demonstration, fixed overhead camera observation',
+    },
+    'fig_aligning_camera_wrist': {
+        'source': 'temp/0408/mix_visual_aligning_mf/'
+                  'H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_'
+                  'a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Emf_tslogit_normal/'
+                  'H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.'
+                  'VisualMeanFlow_VTrue_mpc4_filmv1_Emf/6/results_train_set/'
+                  'expert_references/expert_rollout_0.gif',
+        'frame': 60,
+        'crop': (96, 0, 192, 96),
+        'what': 'D3IL alignment expert demonstration, wrist-mounted camera observation',
+    },
+
+
+
+}
+
+# ═══════════════════════════════════════════════════════════════════════════
 #  THE REGISTRY
 # ═══════════════════════════════════════════════════════════════════════════
 CORPORA = {
@@ -149,11 +294,21 @@ CORPORA = {
 # origin is unrecorded is how the baseline authors' own plots nearly ended up in
 # this thesis presented as ours (see CHANGELOG v3.3).
 #
-# RULE: nothing goes in here until it has been checked against
-# /workspaces/aux_repo/ and shown to be ours. All four below were.
+# RULE: diagnostic result panels do not go in here until they have been checked
+# against /workspaces/aux_repo/ and shown to be ours. The environment stills are
+# instead traced to their simulator media by ENV_RENDER_FRAMES above.
 #
 # Entry: name -> (group, source path relative to the repo, provenance).
 VENDORED = {
+    'fig_platform_panda': ('env',
+        'Data_Analysis/DA_in_Paper/data/prepared/fig_platform_panda.png',
+        'MuJoCo render of the D3IL Panda model file (aux_repo/d3il .../robot/panda.xml), ready pose, '
+        'background removed. prep/render_mujoco_scenes.py, PLATFORM_RENDERS. Rendered here.'),
+    'fig_platform_x2': ('env',
+        'Data_Analysis/DA_in_Paper/data/prepared/fig_platform_x2.png',
+        'MuJoCo render of quadrotor_modified.xml (Skydio X2, MuJoCo Menagerie), level, background '
+        'removed. prep/render_mujoco_scenes.py, PLATFORM_RENDERS. Rendered here.'),
+
     'fig_raw_plans_meanflow_K1': ('demo',
         'Data_Analysis/DA_Result_Curated_MD/Report_20260819_MF_UNet/'
         'fig6a_plans_mfunet_K1_seed6_both-hard.png',
@@ -173,6 +328,37 @@ VENDORED = {
         'Data_Analysis/DA_Result_Curated_MD/Report_20260903_AF_UNet/fig7_raw_diffuser_K1.svg',
         'Report_20260903_AF_UNet fig 7; goal reached without projection at K=1, '
         'top-right-hard, seed 6, 20 trials. Ours; verified absent from aux_repo.'),
+    'fig_render_avoiding': ('env',
+        'Data_Analysis/DA_in_Paper/data/prepared/fig_render_avoiding.png',
+        'D3IL tracked simulator montage, frame 0, top-left 320x180 tile; extracted by '
+        'prep/extract_env_frames.py.'),
+    'fig_render_aligning': ('env',
+        'Data_Analysis/DA_in_Paper/data/prepared/fig_render_aligning.png',
+        'D3IL tracked simulator montage, frame 0, alignment tile; extracted by '
+        'prep/extract_env_frames.py.'),
+    'fig_aligning_camera_overhead': ('demo',
+        'Data_Analysis/DA_in_Paper/data/prepared/fig_aligning_camera_overhead.png',
+        'D3IL expert alignment demonstration, rollout 0 frame 60, left 96x96 tile: the fixed '
+        'bp-cam observation consumed by the visual policy; extracted by prep/extract_env_frames.py.'),
+    'fig_aligning_camera_wrist': ('demo',
+        'Data_Analysis/DA_in_Paper/data/prepared/fig_aligning_camera_wrist.png',
+        'Same expert demonstration and instant, right 96x96 tile: the wrist-mounted inhand-cam '
+        'observation consumed by the visual policy; extracted by prep/extract_env_frames.py.'),
+    'fig_render_uav_corridor': ('env',
+        'Data_Analysis/DA_in_Paper/data/prepared/fig_render_uav_corridor.png',
+        'MuJoCo render of scene_corridor_v2.xml with the Skydio X2 mesh, vehicle placed at the start of '
+        'the generator reference path (uav_expert_data_collect/trajectories.py), path drawn in. '
+        'prep/render_mujoco_scenes.py, declared in MUJOCO_RENDERS. Ours.'),
+    'fig_render_uav_pillars': ('env',
+        'Data_Analysis/DA_in_Paper/data/prepared/fig_render_uav_pillars.png',
+        'MuJoCo render of scene_pillars.xml with the Skydio X2 mesh, vehicle placed at the start of '
+        'the generator reference path (uav_expert_data_collect/trajectories.py), path drawn in. '
+        'prep/render_mujoco_scenes.py, declared in MUJOCO_RENDERS. Ours.'),
+    'fig_render_uav_scurve': ('env',
+        'Data_Analysis/DA_in_Paper/data/prepared/fig_render_uav_scurve.png',
+        'MuJoCo render of scene_s_curve.xml with the Skydio X2 mesh, vehicle placed at the start of '
+        'the generator reference path (uav_expert_data_collect/trajectories.py), path drawn in. '
+        'prep/render_mujoco_scenes.py, declared in MUJOCO_RENDERS. Ours.'),
 }
 
 
@@ -228,24 +414,18 @@ def prepared_path(key):
 # \includegraphics{<name>}, remove the entry here, and export.
 # Entry: name -> (group, where the draft asks for it, what it must show / how).
 PLANNED = {
-    'fig_raw_plans_fm_K1': ('demo', 'v3 sec:res:avoiding:raw (fig:raw-plans)',
-        'The plan fan of one episode without projection, flow matching at K=1, seed 6, both-hard -- '
-        'the third panel of fig:raw-plans, which today shows MeanFlow and diffusion only. '
-        'Report_20260903_AF_UNet section 8 lists it as 8e and has never rendered it. Render from '
-        'logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/.../H8_K1_.../6/ on the cluster, '
-        'then crop to the plans panel the way VENDORED_CROP does for the existing two.'),
-    'fig_raw_plans_af_K1': ('demo', 'v3 sec:res:avoiding:raw (fig:raw-plans)',
-        'The same for consistency training at K=1 (report section 8, panel 8a), from '
-        'logs/avoiding-d3il/plans/flow_matching_v3_alphaflow/H8_D..._ae0.2_ag25.0_rf0.5/'
-        'H8_K1_..._msgafon02_s6/6/. Its 20-of-20 goal rate is the strongest raw-plan number in the '
-        'study and it currently has no picture.'),
-
-    'fig_env_aligning': ('env', 'v3 sec:setup:tasks:aligning (fig:env-aligning)',
-        'Alignment scene with box and target pose, next to the two camera images the policy '
-        'receives (overhead and in-hand).'),
-    'fig_env_uav': ('env', 'v3 sec:setup:tasks:uav (fig:env-uav)',
-        'Corridor (walls 1.90 m apart + 14 deg slide, routes L/C/R), pillars, s-curve: overhead, '
-        'common scale, vehicle drawn to scale (0.62 m across). Geometry: tab:uav-scenes.'),
+    # The five missing cells of the 2x4 matrix fig:raw-plans (MeanFlow K1/K2 and diffusion K1 exist).
+    # All need saved plans from a cluster evaluation: plotting/REQUEST_20260916_cluster_fm_plan_panels.md.
+    'fig_raw_plans_fm_K1': ('demo', 'v3 sec:res:avoiding:raw (fig:raw-plans), flow matching K=1',
+        'Plan fan without projection, seed 6, both-hard. Cluster run: see the request file.'),
+    'fig_raw_plans_fm_K2': ('demo', 'v3 sec:res:avoiding:raw (fig:raw-plans), flow matching K=2',
+        'As above at K=2.'),
+    'fig_raw_plans_diffusion_K2': ('demo', 'v3 sec:res:avoiding:raw (fig:raw-plans), diffusion K=2',
+        'As above for the diffusion model at K=2; the K=1 panel came from a model trained at K=1.'),
+    'fig_raw_plans_af_K1': ('demo', 'v3 sec:res:avoiding:raw (fig:raw-plans), consistency training K=1',
+        'As above for consistency training (U-Net, floor 0.2) at K=1; Report_20260903 section 8 panel 8a.'),
+    'fig_raw_plans_af_K2': ('demo', 'v3 sec:res:avoiding:raw (fig:raw-plans), consistency training K=2',
+        'As above at K=2; report panel 8b.'),
 }
 
 
@@ -291,7 +471,7 @@ AVOIDING_T2_BACKBONE = {'diffusion': 'U-Net 4.0M', 'fm': 'U-Net 4.0M',
                         'mf': 'U-Net 4.0M', 'af': 'SiT (confounded)'}
 
 # The baseline's low-budget cells, which live in the SAME batch directory but at
-# the PUBLISHED protocol (5 seeds x 2 trials = 10 episodes), not ours. They are
+# a smaller protocol (5 seeds x 2 trials = 10 episodes), not ours. They are
 # the only measurement of what the diffusion engine does below its training
 # budget, and DATASTATUS section 2.2 claim A4 is explicit about how to use them:
 # as the MECHANISM sentence, never as a powered comparison. A clean Tier 1 is an

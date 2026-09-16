@@ -18,8 +18,9 @@
 
 The results follow the order of the study: the obstacle-avoidance benchmark of \ac{DPCC} first, then
 the two environments built for this thesis. \autoref{sec:res:summary} brings the three together and
-answers, per environment, how the generative models and the projection methods compare. Each table
-states its backbone and its evaluation protocol.
+answers, per environment, how the generative models and the projection methods compare. Each
+environment is reported in those two parts and closes with the supported model--projection combination.
+Each table states its backbone and its evaluation protocol.
 
 % =============================================================================
 \section{Obstacle Avoidance}\label{sec:res:state}
@@ -37,7 +38,7 @@ the success rates, because the projection and the tracking controller absorb the
 last one, has none at this budget, so per-step projection is the method used here
 (\autoref{sec:res:avoiding:projection}).
 
-\subsection{Flow Matching against Diffusion}\label{sec:res:avoiding:models}
+\subsection{Generative Models}\label{sec:res:avoiding:models}
 
 Both sides of this comparison are generative models; what differs is the family and the number of network evaluations each needs. Each is run at the budget it is used at: the diffusion baseline at $\nfe=20$, the flow-based models at one and two.
 
@@ -167,7 +168,15 @@ model at equal budget and about $15$ from running at a budget of two.
   \label{fig:avoiding-tradeoff}
 \end{figure}
 
-\subsection{Step Budget}\label{sec:res:fewstep}
+The lower-left direction in each panel reduces both quantities on its axes; it is therefore a cost
+comparison, not a claim that one scalar objective has been optimised. Colour identifies the generative
+model, marker shape the selection rule, and the adjacent number the step budget. Filled markers retain
+only configurations whose success with constraint satisfaction is within $0.05$ of the best value in
+that panel. A ring then marks a point for which no other retained configuration is both faster and uses
+fewer control steps. This restriction matters: a fast point that reaches the goal less reliably is not
+presented as a favourable time--step trade-off.
+
+\subsubsection{Step Budget}\label{sec:res:fewstep}
 
 The flow-based models keep their success with constraint satisfaction as the step budget falls to a
 single network evaluation, while the diffusion baseline loses it below the budget it was trained with
@@ -185,6 +194,15 @@ at training time; for the flow-based models it is chosen by the ODE solver at in
   The baseline uses cumulative projection cost, the flow-based models temporal consistency.}
   \label{fig:k-ladder}
 \end{figure}
+
+The solid curves permit comparison at one common sampling depth: five training seeds and twenty
+episodes. Their nearly horizontal shape shows that reducing the inference budget does not materially
+change the flow-based models on this task. The dashed diffusion curve answers a narrower mechanism
+question with five seeds and two episodes: a diffusion model evaluated away from the discretisation
+used in training deteriorates as $K$ falls. Its hollow markers and dashed line deliberately separate
+that smaller sample from the powered comparison. Thus $K$ is an inference-time accuracy--cost dial for
+the flow-based ODEs, whereas changing it for diffusion also changes a discretisation fixed during
+training.
 
 \autoref{tab:state-lowk} gives, per geometry, the cheapest configuration of each model that reaches a
 success rate with constraint satisfaction of $1.00$.
@@ -238,7 +256,7 @@ top-right-hard.
 difference between them has $p=0.231$ on one training seed, and averaged over all six selection rules
 they are level, eight non-dominated configurations against nine.
 
-\subsection{Smoothness of the Plans before Projection}\label{sec:res:avoiding:raw}
+\subsubsection{Plans before Projection}\label{sec:res:avoiding:raw}
 
 Every number reported so far is measured after two stages that both smooth what the generative model
 produced. The projection pulls a plan towards the feasible set, and the tracking controller turns the
@@ -260,25 +278,48 @@ evaluation MeanFlow's successive plans form a narrow band around the executed pa
 towards the goal. The diffusion baseline at the same budget produces plans that jump across the
 workspace from one control step to the next. Its executed path is nevertheless smooth, because the
 tracking controller filters the plan --- which is the point: the smoothness of the executed path is the
-controller's, not the model's.
+controller's, not the model's. The MeanFlow panel at two evaluations shows that the second evaluation
+does not remove this coherence, but it does not reduce the violation count in this episode.
 
 \begin{figure}[htpb]
   \centering
-  \begin{minipage}{0.49\linewidth}\centering
-    \includegraphics[width=\linewidth]{fig_raw_plans_meanflow_K1}\\[0.3em]
-    {\footnotesize MeanFlow, $\nfe=1$}
-  \end{minipage}\hfill
-  \begin{minipage}{0.49\linewidth}\centering
-    \includegraphics[width=\linewidth]{fig_raw_plans_diffusion_K1}\\[0.3em]
-    {\footnotesize Diffusion (DPCC), $\nfe=1$}
-  \end{minipage}
-  \caption[Plans without projection at one network evaluation]{Plans generated along one episode and
-  executed without projection, overlaid, \emph{both-hard}, training seed 6. The evaluation draws the plan
-  of every fourth control step, up to four candidates each, over the scene of
-  \autoref{fig:env-avoiding}; green marks the state the plan starts from. Same backbone, same budget,
-  and 0.0097 against 0.0094\,s per control step. Panels for flow matching and for consistency training
-  at the same budget have not been rendered; \autoref{fig:avoiding-raw-models} compares all four models
-  on this comparison numerically.}
+  \setlength{\tabcolsep}{2pt}
+  \begin{tabular}{@{}c cccc@{}}
+    & {\footnotesize MeanFlow} & {\footnotesize Flow matching} & {\footnotesize Diffusion (DPCC)} & {\footnotesize Consistency tr.} \\[0.2em]
+    \raisebox{0.10\linewidth}{\footnotesize $\nfe=1$} &
+    \begin{minipage}[c]{0.21\linewidth}\centering
+    \includegraphics[width=\linewidth]{fig_raw_plans_meanflow_K1}
+    \end{minipage} &
+    \begin{minipage}[c]{0.21\linewidth}\centering
+    \todofigure[0.92\linewidth]{\scriptsize flow matching, $\nfe=1$}
+    \end{minipage} &
+    \begin{minipage}[c]{0.21\linewidth}\centering
+    \includegraphics[width=\linewidth]{fig_raw_plans_diffusion_K1}
+    \end{minipage} &
+    \begin{minipage}[c]{0.21\linewidth}\centering
+    \todofigure[0.92\linewidth]{\scriptsize consistency training, $\nfe=1$}
+    \end{minipage} \\
+    \raisebox{0.10\linewidth}{\footnotesize $\nfe=2$} &
+    \begin{minipage}[c]{0.21\linewidth}\centering
+    \includegraphics[width=\linewidth]{fig_raw_plans_meanflow_K2}
+    \end{minipage} &
+    \begin{minipage}[c]{0.21\linewidth}\centering
+    \todofigure[0.92\linewidth]{\scriptsize flow matching, $\nfe=2$}
+    \end{minipage} &
+    \begin{minipage}[c]{0.21\linewidth}\centering
+    \todofigure[0.92\linewidth]{\scriptsize diffusion, $\nfe=2$}
+    \end{minipage} &
+    \begin{minipage}[c]{0.21\linewidth}\centering
+    \todofigure[0.92\linewidth]{\scriptsize consistency training, $\nfe=2$}
+    \end{minipage} \\
+  \end{tabular}
+  \caption[Plans without projection, four models at one and two network evaluations]{Plans generated
+  along one episode and executed without projection, overlaid: the four generative models (columns) at
+  one and two network evaluations (rows), \emph{both-hard}, training seed 6. The evaluation draws the
+  plan of every fourth control step, up to four candidates each; green marks the state a plan starts
+  from. Same backbone for all four. Boxed panels have not been rendered yet; they need the saved plans
+  of an evaluation run. \autoref{fig:avoiding-raw-models} compares all four models numerically on
+  the same comparison.}
   \label{fig:raw-plans}
 \end{figure}
 
@@ -400,7 +441,7 @@ the flow-based models are strongest --- one network evaluation, where MeanFlow a
 with per-step projection --- endpoint projection has no step on which to act. It becomes available only
 by raising the budget, which is the cost the flow-based models were adopted to avoid.
 
-\subsection{Steps at Which Projection Guides Sampling}\label{sec:res:constraints:degenerate}
+\subsubsection{Steps at Which Projection Guides Sampling}\label{sec:res:constraints:degenerate}
 
 Endpoint projection needs sampling steps on which it is active and which are not the final step: only
 there does a later step exist for the network to react to, so only there does projection steer the
@@ -417,7 +458,7 @@ $1:1.51:2.52$ against the predicted $1:1.5:2.5$. A budget of $\nfe=1$ has no gui
 threshold. Configurations with $n\sidx{guide}=0$ are reported separately and not averaged with others.
 \dataref{job 25444 evaluation log, 2026-09-06}
 
-\subsection{Candidate Plans and Selection Rules}\label{sec:res:ablations}
+\subsubsection{Candidate Plans and Selection Rules}\label{sec:res:ablations}
 
 With a single candidate plan the three selection rules return the same plan: success and control steps
 are identical in all fifteen paired seed--geometry combinations, for the diffusion baseline, MeanFlow,
@@ -433,124 +474,366 @@ at $\nfe=1$, against about $61$ with the other rules, at success rates of $0.927
 happens for consistency training and not for the diffusion baseline. Temporal consistency is the
 selection rule for the flow-based models on this task.
 
+\subsection{Conclusion}\label{sec:res:avoiding:conclusion}
+
+The supported operating point on obstacle avoidance is a flow-based model at one or two network
+evaluations with the per-step projection of DPCC. MeanFlow at one evaluation provides the strongest
+multi-seed result: $0.993$ success with constraint satisfaction in $18.1$\,ms per control step. In the
+single-seed comparison, consistency training at two evaluations is the least expensive configuration
+that reaches $1.00$, but its advantage over MeanFlow is not statistically resolved. Endpoint projection
+is not needed at either operating budget. At one evaluation it has no guiding step, and at two it has
+only one; raising the budget so that it can guide sampling gives up the low-step advantage that decides
+this benchmark. The alignment and quadrotor tasks below require larger budgets and therefore test the
+projection method where it has several guiding steps.
+
 % =============================================================================
 \section{Vision-Conditioned Alignment}\label{sec:res:visual}
 % =============================================================================
 
-All results in this section use training seed 6 and the same ten contexts, and every difference is a
-paired test (\autoref{sec:setup:protocol:aligning}). The box starts $0.4530$\,m from its target. No
-configuration satisfies the full constraint set in every context, so the generative models are compared
-on the final box-to-target distance of plans executed without projection, and constraint violations and
-wall-clock time are compared separately.
+All results in this section use training seed 6 and the same ten contexts, and every difference is
+paired over those contexts (\autoref{sec:setup:protocol:aligning}). The box starts on average $0.4530$\,m
+from its target. The generative models are compared on the final box-to-target distance of plans executed
+without projection, on the untightened constraint set, which is the only one on which all four models
+were evaluated; constraint violations and wall-clock time are compared in
+\autoref{sec:res:aligning:projection}.
+\guard{The ten contexts are drawn from the training contexts of the D3IL task, not from its held-out set,
+so these results measure how well each model plans for initial poses of the kind it was trained on.}
 
 \subsection{Generative Models}\label{sec:res:aligning:models}
 
-MeanFlow brings the box closer to its target than the diffusion baseline in all ten contexts: median
-final distance $0.0741$ against $0.4140$\,m, paired difference $-0.3744$\,m, $p=0.0020$, at $0.64$ of the
-baseline's time per control step. It is also closer than flow matching, by $0.216$\,m, in nine contexts with none in favour of flow matching, $p=0.0039$; flow matching leaves the box unmoved in five contexts and MeanFlow in
-one. Flow matching and the diffusion baseline end $0.0055$\,m apart, $p=1.0000$.
-\dataref{Gen14 CLOSURE\_20260907 R.1, R.3}
+MeanFlow is the only model that moves the box close to its target (\autoref{tab:va-models}). At $\nfe=20$
+its median final distance is $0.0741$\,m, and it ends closer than the diffusion baseline in all ten
+contexts: paired difference $-0.3744$\,m, $p=0.0020$, at $0.64$ of the baseline's time per control step.
+It also ends closer than flow matching in nine of ten contexts, by $0.2333$\,m on average ($p=0.0215$ by
+the sign test, $p=0.0039$ by the permutation test), and it is the only model that moves the box in every
+context.
 
-Consistency training is level with MeanFlow at $\nfe=2$ and further from the target at $\nfe=20$. With
-the final $\alpha=0.05$ it is worse in nine of ten contexts ($p=0.0215$); with $\alpha=0.2$ its mean
-distance is $3.4$ times MeanFlow's, which the sign test does not reject.
-\dataref{DA\_20260907 Gate 1; CLOSURE\_20260907 R.4}
+Flow matching and the diffusion baseline are not separated. Their medians are $0.4085$ and $0.4140$\,m,
+the paired difference is $-0.1411$\,m with five contexts in favour of flow matching and four against, and
+$p=1.0000$; flow matching leaves the box unmoved in four of ten contexts, the diffusion baseline in ten
+of thirty episodes. Both barely move the box from where it starts. On this task the ordering is therefore
+MeanFlow ahead of flow matching and of the diffusion baseline, with the two of them level.
 
-\hole{Report the final orientation error of the box next to the final distance
-(\texttt{context\_final\_box\_angle\_deg} against \texttt{context\_target\_angle\_deg}).}
+\begin{table}[htpb]
+  \caption[Alignment: the generative models without projection]{The generative models on the alignment
+  task, plans executed without projection, untightened constraint set. Final box-to-target distance over
+  the ten contexts, from an initial $0.4530$\,m; \emph{unmoved}: episodes in which the box does not move.
+  Temporal U-Net, $4.0$\,M parameters, FiLM conditioning; training seed 6. The diffusion model has three
+  episodes per context.}
+  \label{tab:va-models}
+  \centering
+  \small
+  \begin{tabularx}{\linewidth}{@{}L r rrr r@{}}
+    \toprule
+    Model & $\nfe$ & Median [m] & Mean [m] & Unmoved & ms/step \\
+    \midrule
+    MeanFlow                          & 20 & 0.0741 & 0.0933 & 0/10  & 190.5 \\
+    Consistency training, floor $0.2$ & 20 & 0.3897 & 0.3249 & 2/10  & 189.1 \\
+    Flow matching                     & 20 & 0.4085 & 0.3266 & 4/10  & 295.8 \\
+    Diffusion (DPCC)                  & 20 & 0.4140 & 0.3901 & 10/30 & 298.3 \\
+    \midrule
+    MeanFlow                          & 2  & 0.2354 & 0.4192 & 1/30  & 27.9 \\
+    Consistency training, floor $0.2$ & 2  & 0.3738 & 0.3574 & 2/10  & 28.7 \\
+    Diffusion (DPCC)                  & 100 & 0.1849 & 0.2167 & 2/30 & 1526.6 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
 
-\subsection{Step Budget}\label{sec:res:aligning:budget}
+\dataref{analysis\_results\_checkpoint/15-09/batch\_va2\_20260915\_100754, recomputed by
+DA\_in\_Paper/analysis/va\_results.py; agrees with Gen14 CLOSURE\_20260907 \S1, R.1, R.3}
+\guard{One training seed and ten contexts. The ordering rests on MeanFlow's paired margins, which are
+large; the level result for flow matching and diffusion is an absence of evidence at this sample size, not
+evidence that they are equal.}
 
-MeanFlow's median final distance falls from $0.2354$\,m at $\nfe=2$ to $0.0741$\,m at $\nfe=20$.
-Consistency training does not improve with the budget: from $0.3738$ to $0.3918$\,m with $\alpha=0.2$,
-and from $0.3978$ to $0.4488$\,m with $\alpha=0.05$. Its training target takes a finite difference from a
-stop-gradient copy of the network, so it inherits part of that network's error, and that part does not
-shrink as the step size does (\autoref{sec:method:alphaflow}).
-\dataref{CLOSURE\_20260907 \S5.1}
+\hole{Final orientation error of the box next to the final distance. The angle columns of the evaluation
+record different values for the same context in different runs, so the orientation convention has to be
+checked before these numbers are reported.}
+
+\subsubsection{Step Budget}\label{sec:res:aligning:budget}
+
+MeanFlow improves with the budget: its median final distance falls from $0.2354$\,m at $\nfe=2$ to
+$0.1194$\,m at $\nfe=10$ and $0.0741$\,m at $\nfe=20$. The diffusion model reaches $0.1849$\,m only when
+it is trained and run with $100$ steps, at $1526.6$\,ms per control step, eight times MeanFlow's time at
+$\nfe=20$ and still further from the target. Unlike obstacle avoidance, where one network evaluation
+already saturates the task (\autoref{sec:res:state}), alignment rewards additional evaluations for MeanFlow.
+\dataref{va\_results.py; CLOSURE\_20260907 \S1, \S5.1}
+
+\subsubsection{Consistency Training}\label{sec:res:aligning:consistency}
+
+Consistency training is level with MeanFlow at the smallest budget and behind it at the largest, and it is
+ahead of MeanFlow in neither. At $\nfe=2$, with the floor of $\alpha$ at $0.2$, the paired difference is
+$-0.0102$\,m, five contexts each way, $p=1.0000$, and $+0.0240$\,m, $p=1.0000$, on the tightened
+constraint set. At $\nfe=20$ it ends further from the target than MeanFlow by $0.2316$\,m on average, in
+seven of ten contexts; the sign test does not reject ($p=0.3438$) and the permutation test does
+($p=0.0234$). With the floor at $0.05$ the gap at $\nfe=20$ is $0.3426$\,m, in nine of ten contexts,
+$p=0.0215$. At $\nfe=20$ consistency training is level with flow matching ($p=0.5078$) and with the
+diffusion baseline ($p=1.0000$).
+
+The reason is visible in the budget. MeanFlow improves from $\nfe=2$ to $\nfe=20$; consistency training does
+not, moving from $0.3738$ to $0.3897$\,m with the floor at $0.2$ and from $0.3978$ to $0.4488$\,m with the
+floor at $0.05$. Its training target is built from a stop-gradient copy of the network itself, so part of
+that network's error is carried into the field and does not shrink as the step size does
+(\autoref{sec:method:alphaflow}). Where more evaluations help, as here, that residual error decides the
+comparison; where one evaluation already saturates the task, as on obstacle avoidance, it does not show.
+\dataref{va\_results.py; Gen14 DA\_20260907 Gate 1; CLOSURE\_20260907 \S3, R.4}
+\guard{The level result at $\nfe=2$ is in paired distance only. Counting the contexts in which any
+configuration reaches the target, MeanFlow succeeds in seven and consistency training in two
+(CLOSURE\_20260907 R.4).}
 
 \subsection{Projection Methods}\label{sec:res:aligning:projection}
 
-At $\nfe=10$, endpoint projection matches the constraint satisfaction and the final distance of per-step
-projection and saves $325$\,ms per control step, in all nine contexts that differ ($p=0.0039$, random
-selection; $-320$\,ms and $p=0.0039$ with cumulative projection cost; $-211$\,ms and $p=0.0391$ with
-temporal consistency). At $\nfe=20$ the two methods take the same time ($p$ between $0.18$ and $1.00$).
-\dataref{CLOSURE\_20260907 \S8.1; H10 \S10.4}
+On MeanFlow at $\nfe=10$, endpoint projection matches the final distance of per-step projection and takes
+$325$\,ms less per control step, in all nine contexts whose time differs ($p=0.0039$, random selection;
+$-320$\,ms and $p=0.0039$ with cumulative projection cost; $-211$\,ms and $p=0.0391$ with temporal
+consistency). At $\nfe=20$ the two methods take the same time ($p$ between $0.18$ and $1.00$). The
+activation threshold is $0.4$ at $\nfe=10$ and $0.2$ at $\nfe=20$, which gives endpoint projection three
+guiding steps at both budgets, above the degenerate case of \autoref{sec:res:constraints:degenerate}.
 
-MeanFlow at $\nfe=20$ with endpoint projection on tightened constraints keeps every context free of
-violations, at $275.3$\,ms per control step, and moves the box in eight of ten contexts. The diffusion
-baseline reaches the same freedom from violations at $2157.9$\,ms per control step; one of its variants
-reaches it only by leaving the box unmoved in all ten contexts.
-\dataref{H10 \S10.5}
+At $\nfe=20$ on tightened constraints, endpoint projection with random selection keeps every context free
+of violations and moves the box in eight of ten, at $275.3$\,ms per control step; per-step projection with
+the same rule is free of violations in nine contexts, with $2.7$ violating steps per episode, at
+$265.9$\,ms. Executed without projection, the same plans violate a constraint on $31.6$ steps per episode.
+\dataref{va\_results.py projection block; CLOSURE\_20260907 \S2, R.2}
 
-\provisional{The diffusion baseline has not been evaluated on tightened constraints at $\nfe=20$, so the
-constraint comparison against the baseline is incomplete. Repeated evaluations of configurations with
-projection vary by about $0.4$\,m in final distance, so the minimum over contexts describes one episode.}
+The diffusion baseline with per-step projection was evaluated on the untightened constraint set only. There
+it is free of violations in $0.10$ of the episodes, with $130$ violating steps per episode, leaves the box
+unmoved in $21$ of $30$, and takes $2157.9$\,ms per control step.
+\provisional{Without a tightened evaluation of the diffusion baseline at $\nfe=20$, no constraint comparison
+between the baseline and the flow-based models is made on this task. Repeated evaluations of configurations
+with projection vary by about $0.4$\,m in final distance, so a minimum over contexts describes one episode.}
+
+\subsection{Conclusion}\label{sec:res:aligning:conclusion}
+
+The alignment results select MeanFlow as the generative model: at twenty evaluations it is closer to
+the target than both flow matching and diffusion on the paired contexts, whereas consistency training
+does not improve with the larger budget. On tightened constraints, the best observed combination is
+MeanFlow with endpoint projection and random selection at twenty evaluations: it moves the box in eight
+of ten contexts and keeps all ten free of violations. At ten evaluations endpoint projection also
+matches the final distance of per-step projection while reducing the time per control step. This
+conclusion is limited to one training seed and training-set contexts; the absent tightened-diffusion run
+prevents a constraint-matched comparison with the baseline.
 
 % =============================================================================
 \section{Quadrotor Benchmark}\label{sec:res:uav}
 % =============================================================================
 
 The three scenes are reported in increasing difficulty. All results use training seed 6
-(\autoref{sec:setup:protocol:uav}), and every generative model is a temporal U-Net with 3.96--3.97\,M
-parameters.
+(\autoref{sec:setup:protocol:uav}). Every generative model is a temporal U-Net with $3.96$--$3.97$\,M
+parameters, trained with the same optimiser settings (\autoref{tab:train}), and every flight is tracked by
+the cascaded geometric controller with brake-to-rest setpoints unless stated otherwise. The diffusion model
+is trained with $\nfe=20$ and action loss weight $1$; since its budget is fixed at training and the
+flow-based budgets are chosen at inference, it is compared at the budget it was trained with.
 
-\subsection{Corridor}\label{sec:res:uav:corridor}
+\subsection{Generative Models}\label{sec:res:uav:models}
 
-Without projection every model flies into the slide on every flight: none of the twelve flights is
-collision-free, with 42 to 56 violating control steps. With per-step projection at $\nfe=3$ and $\nfe=5$,
-MeanFlow, consistency training and the diffusion baseline are collision-free on all twelve flights
-($p=7\times10^{-7}$ against no projection).
+\subsubsection{Corridor}\label{sec:res:uav:corridor}
 
-The models differ in whether they complete the course. With projection, MeanFlow, consistency training
-and flow matching cross the finish line on twelve of twelve flights and the diffusion baseline on none of
-thirty-six: it stays collision-free but does not reach the line within the episode. Counting a flight
-as a success when it crosses the finish line collision-free, MeanFlow and consistency training reach
-$1.00$ at $\nfe=3$ and $\nfe=5$, flow matching at most $0.17$ because its flights are not collision-free,
-and the diffusion baseline $0.00$ ($p=7\times10^{-7}$ for MeanFlow and consistency training against
-either). Counting only flights that also reach the goal point, consistency training reaches $0.33$ and
-MeanFlow $0.25$ at $\nfe=3$; after the slide only route L can reach its goal point, and these differences
-are not significant. The flow-based models take $86$--$102$\,ms per control step at $\nfe=3$ and
-$122$--$144$\,ms at $\nfe=5$; the projected diffusion baseline takes $626$--$651$\,ms.
+The projection is what makes the corridor passable. Without it every model flies into the slide on every
+flight: none of the twelve flights of any model is collision-free, with $42$ to $56$ violating control
+steps per flight. With per-step projection, MeanFlow and consistency training at $\nfe\ge3$ and the diffusion baseline
+are collision-free on all twelve flights ($p=7\times10^{-7}$ against no projection); at $\nfe=1$ a single
+projected sampling step reduces the violations eight- to forty-fivefold but not to zero.
 
-Endpoint projection is $1.15$ to $2.1$ times faster than per-step projection on the same model and budget
---- $47$ and $76$\,ms against $99$\,ms for MeanFlow at $\nfe=3$ --- but collision-free on at most $0.58$ of
-the flights, against $1.00$ ($5$ of $12$ against $12$ of $12$, $p=0.005$), with $0.6$ to $3.2$ violating
-steps per flight.
-\dataref{Gen15/U16/DA\_20260914\_corridor\_v2\_paper\_full.md \S0--\S7; temp/1409/batch\_uav\_20260914\_091148}
-\guard{Twelve flights per configuration, four per route, one training seed. The diffusion model is trained
-with action loss weight 1.}
+The models then differ in whether they complete the course (\autoref{tab:uav-corridor}). MeanFlow and
+consistency training cross the finish line collision-free on all twelve flights at $\nfe=3$ and $\nfe=5$.
+Flow matching crosses the line on every flight too, but not collision-free: it keeps $1.5$ to $2.3$
+shallow violating steps per flight and is collision-free on at most two of twelve. The projected diffusion
+baseline stays collision-free and does not cross the line on any of its $36$ flights within the episode.
+MeanFlow is therefore ahead of flow matching on collision-free flights, $12/12$ against $0/12$ at
+$\nfe=3$ ($p=7\times10^{-7}$), and ahead of the diffusion baseline on completing the course, $12/12$ against
+$0/12$ ($p=7\times10^{-7}$), at $0.16$ of its time per control step.
 
-\subsection{Pillars}\label{sec:res:uav:pillars}
+\begin{table}[htpb]
+  \caption[Corridor: the generative models with projection]{Corridor with the slide: per-step projection
+  with temporal consistency on tightened constraints, twelve flights per row (four per route). \emph{Crossed}:
+  crosses the finish line collision-free. \emph{Goal}: comes within $0.30$\,m of the goal point of its route,
+  collision-free. \emph{Violating steps}: per flight. Training seed 6.}
+  \label{tab:uav-corridor}
+  \centering
+  \small
+  \begin{tabularx}{\linewidth}{@{}L r rrr rr@{}}
+    \toprule
+    Model & $\nfe$ & Collision-free & Crossed & Goal & Violating steps & ms/step \\
+    \midrule
+    MeanFlow                          & 3  & 12/12 & 12/12 & 3/12 & 0.0 & 99.1 \\
+    MeanFlow                          & 5  & 12/12 & 12/12 & 0/12 & 0.0 & 143.9 \\
+    Consistency training, floor $0.2$ & 3  & 12/12 & 12/12 & 4/12 & 0.0 & 101.9 \\
+    Consistency training, floor $0.2$ & 5  & 12/12 & 12/12 & 2/12 & 0.0 & 141.8 \\
+    Flow matching                     & 3  & 0/12  & 0/12  & 0/12 & 2.1 & 86.4 \\
+    Flow matching                     & 5  & 2/12  & 2/12  & 0/12 & 1.5 & 133.5 \\
+    Diffusion (DPCC)                  & 20 & 12/12 & 0/12  & 0/12 & 0.0 & 625.5 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
 
-Averaged over seventeen matched configurations at $\nfe=5$, the success rate with constraint satisfaction
-is $0.635$ for MeanFlow, $0.359$ for flow matching and $0.235$ for consistency training. With the full
-constraint set and projection, the best configurations reach $0.90$, $0.50$ and $0.70$; seven of
-MeanFlow's seventeen configurations reach $0.8$ or more, two of flow matching's, and none of consistency
-training's.
-\dataref{Gen15 CLOSURE\_20260910 \S2; DA\_20260912 pillars reference \S5.1}
+\dataref{analysis\_results\_checkpoint/15-09/batch\_uav\_20260915\_100816, tag u17cv2, recomputed by
+DA\_in\_Paper/analysis/uav\_results.py; agrees with Gen15/U16/DA\_20260914\_corridor\_v2\_paper\_full \S3--\S7}
 
-Endpoint projection takes $8.2$ to $21.3$ times less projection time than per-step projection with the
-full geometry ($5.6$ to $12.4$ times less in total), at comparable success. None of its 210 flights left
-the constraint set; 43 of the 270 flights with per-step projection did, and seven of the eight
-configurations with such flights used random selection.
-\dataref{Gen15 T3 \S3--\S6}
+Reaching the goal point is a weaker criterion here, because the slide pushes every route below the centre
+line and only route L can still reach its goal point afterwards. On it, consistency training at $\nfe=3$
+reaches the goal on four of four flights and MeanFlow on three; across all twelve flights this is four
+against three, which is not a difference ($p=1.0$).
 
-The diffusion baseline, trained at $\nfe=20$ with action loss weight 1, crosses the finish line on all
-fifty flights, never comes within $0.30$\,m of the goal point, and violates the pillar clearance on 101 to
-156 control steps per flight. Its success rate with constraint satisfaction is $0.00$ at the goal point
-and at most $0.30$ at the finish line, at $4425$\,ms per control step. At $\nfe=5$ the flow-based models reach up to $0.70$--$1.00$ and $0.90$--$1.00$ on the same two criteria, counting configurations without projection, and up to $0.50$--$0.90$ at the goal point with full projection.
-\dataref{DA\_20260912 pillars diffusion reference, rev.~2}
-\provisional{Ten flights per configuration on one training seed. The diffusion budget is a training-time
-choice and the flow-based budgets are inference-time choices, so the baseline appears here as a
-reference. The multi-seed evaluation is pending.}
+\subsubsection{Pillars}\label{sec:res:uav:pillars}
 
-\subsection{S-Curve}\label{sec:res:uav:scurve}
+Pillars is the scene that separates the flow-based models. Each model is evaluated at $\nfe=5$ under eleven
+projection configurations on the full constraint set --- per-step projection with each of the three
+selection rules on plain and on tightened constraints, endpoint projection with each rule and with a single
+candidate, and the plan without projection. \autoref{tab:uav-pillars} gives the success rate with
+constraint satisfaction at the goal point in each.
 
-The s-curve is the most difficult scene. Across forty configurations the success rate with constraint
-satisfaction is at most $0.100$, and raising the step budget beyond five does not increase it. The
-tracking controller does not follow the plans through the two sharp turns, and the order of the models
-on this scene changes with the controller used, so no ordering of the models is drawn from it.
-\dataref{Gen15 CLOSURE\_20260910 \S3, \S6; DA\_20260909 T5 controller comparison}
+\begin{table}[htpb]
+  \caption[Pillars: the flow-based models across projection configurations]{Pillars at $\nfe=5$: success with
+  constraint satisfaction at the goal point, ten flights per cell, full constraint set. $r$, $c$, $t$:
+  random selection, cumulative projection cost, temporal consistency. Consistency training with the floor
+  of $\alpha$ at $0.2$. Training seed 6.}
+  \label{tab:uav-pillars}
+  \centering
+  \small
+  \begin{tabularx}{\linewidth}{@{}L rrr@{}}
+    \toprule
+    Configuration & MeanFlow & Flow matching & Consistency training \\
+    \midrule
+    no projection                      & 0.90 & 0.90 & 0.00 \\
+    per-step, $r$ / $c$ / $t$          & 0.20 / 0.80 / 0.40 & 0.00 / 0.40 / 0.40 & 0.00 / 0.60 / 0.60 \\
+    per-step tightened, $r$ / $c$ / $t$ & 0.10 / 0.80 / 0.80 & 0.00 / 0.10 / 0.00 & 0.00 / 0.00 / 0.70 \\
+    endpoint, single candidate         & 0.50 & 0.40 & 0.10 \\
+    endpoint, $r$ / $c$ / $t$          & 0.90 / 0.70 / 0.70 & 0.40 / 0.50 / 0.50 & 0.20 / 0.10 / 0.10 \\
+    \midrule
+    mean over the eleven               & \textbf{0.618} & 0.327 & 0.218 \\
+    configurations at $\ge0.8$         & 5 of 11 & 1 of 11 & 0 of 11 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\dataref{batch\_uav\_20260915\_100816, tag u7hg, geometry pillars\_hg; uav\_results.py; agrees with
+Campaign CLOSURE\_20260910 \S2, whose means of $0.635$, $0.359$ and $0.235$ also include eight
+configurations that switch the obstacle constraints off inside the projection}
+
+MeanFlow is ahead of flow matching in nine of the eleven configurations and level in the other two;
+its mean is $0.618$ against $0.327$, and five of its configurations reach $0.8$ or more against one of flow
+matching's. The ordering MeanFlow ahead of flow matching therefore does not depend on which projection
+configuration is chosen.
+
+The diffusion baseline reaches the goal point on none of its fifty flights. It crosses the finish line on
+every flight, but ends on average $0.57$\,m from the goal point and violates the pillar clearance on $101$
+to $156$ control steps per flight, so its success with constraint satisfaction is $0.00$ at the goal point and
+at most $0.30$ at the finish line, at $4425$\,ms per control step with its best projection configuration.
+\dataref{uav\_results.py, diffusion rows; DA\_20260912 pillars diffusion reference, rev.~2, \S0--\S3}
+\provisional{Ten flights per configuration on one training seed. The multi-seed evaluation is pending.}
+
+\subsubsection{Consistency Training across Scenes}\label{sec:res:uav:consistency}
+
+Consistency training is level with MeanFlow on UAV-corridor and behind both MeanFlow and flow matching on
+UAV-pillars. On UAV-corridor the two are indistinguishable on everything the scene measures: both are
+collision-free and cross the line on all twelve flights at $\nfe=3$ and $\nfe=5$, at the same time per
+control step, and the goal-point difference is a single flight. On UAV-pillars, where the scene separates the
+models, consistency training has the lowest mean of the three ($0.218$), no configuration at $0.8$ or
+more, and a best configuration of $0.70$. Without projection it succeeds with constraint satisfaction on none of ten
+flights, where MeanFlow and flow matching succeed on nine.
+
+The budget does not change this: its mean is $0.057$ at $\nfe=1$, $0.300$ at $\nfe=2$ and $0.218$ at
+$\nfe=5$, below MeanFlow at both budgets at which the two were run ($0.429$ and $0.618$; seven
+configurations at the two lower budgets, eleven at $\nfe=5$). Together with the D3IL-aligning task
+(\autoref{sec:res:aligning:consistency}) and D3IL-avoiding (\autoref{tab:state-models}), consistency
+training is level with MeanFlow where the task is saturated or insensitive and behind it where the task
+separates the models; it is ahead of MeanFlow in none.
+\dataref{uav\_results.py, pillars K1/K2/K5; Campaign CLOSURE\_20260910 \S2, \S4; DA\_20260910 T1}
+
+\subsubsection{S-Curve and the Tracking Controller}\label{sec:res:uav:scurve}
+
+No configuration flies the s-curve both to the goal and within the constraints. Across the $66$ evaluated
+configurations without endpoint projection, success with constraint satisfaction is at most $0.10$, and
+nonzero in three. The scene is therefore reported as a listing, and what it shows is a limit of the
+tracking controller rather than an ordering of the models (\autoref{tab:uav-scurve}).
+
+\begin{table}[htpb]
+  \caption[S-curve: unprojected plans by controller]{S-curve, plans executed without projection. \emph{Goal}:
+  flights ending within $0.30$\,m of the goal point; \emph{safe}: no contact and no loss of altitude.
+  Brake-to-rest: the cascaded geometric controller used everywhere else; MPC: MuJoCo MPC as the tracking
+  controller. Training seed 6.}
+  \label{tab:uav-scurve}
+  \centering
+  \small
+  \begin{tabularx}{\linewidth}{@{}L r l r r r r@{}}
+    \toprule
+    Model & $\nfe$ & Controller & Flights & Goal & Distance [m] & Safe \\
+    \midrule
+    MeanFlow         & 10 & MPC            & 3  & 3/3  & 0.297 & 2/3 \\
+    MeanFlow         & 10 & brake-to-rest  & 10 & 0/10 & 2.809 & 0/10 \\
+    MeanFlow         & 2  & brake-to-rest  & 10 & 1/10 & 2.515 & 0/10 \\
+    Flow matching    & 2  & brake-to-rest  & 10 & 7/10 & 1.110 & 7/10 \\
+    Flow matching    & 20 & brake-to-rest  & 10 & 6/10 & 1.193 & 6/10 \\
+    Consistency tr.  & 1  & brake-to-rest  & 10 & 6/10 & 1.306 & 6/10 \\
+    Diffusion (DPCC) & 20 & brake-to-rest  & 10 & 0/10 & 2.432 & 0/10 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\dataref{batch\_uav\_20260915\_100816, geometry s\_curve\_hg; uav\_results.py, s-curve block; agrees with
+Campaign CLOSURE\_20260910 \S3}
+
+This comparison fixes the unprojected MeanFlow configuration at $\nfe=10$ and changes the tracking
+controller. With brake-to-rest tracking, none of ten flights reaches the goal. With MuJoCo MPC, all
+three evaluated flights do. The three matched initial conditions make the controller effect explicit:
+the final distances fall from $2.86$, $2.72$ and $2.89$\,m to $0.299$, $0.298$ and $0.294$\,m
+($p=0.0035$). The brake-to-rest failures are not wall collisions. On all ten flights the vehicle remains
+at altitude until it loses attitude control and inverts between control steps $395$ and $421$, about
+$12$\,s into the flight. MuJoCo MPC follows the same turn to the goal, so the unprojected path is
+flyable and the $0/10$ result identifies the tracking controller as the limiting component rather than
+the generative model.
+\dataref{Campaign DA\_20260909\_T5\_mjpc\_vs\_pid\_s\_curve F1, F2; Report\_20260909\_MJPC\_vs\_PID\_s\_curve}
+
+\subsection{Projection Methods}\label{sec:res:uav:projection}
+
+\subsubsection{Corridor}
+
+Endpoint projection is compared at $\nfe=5$, where it has two guiding steps; at $\nfe=3$ it has one, which
+carries no attributable signal (\autoref{sec:res:constraints:degenerate}). At $\nfe=5$ it is $1.15$ to
+$1.8$ times faster than per-step projection on the same model --- $79.0$ and $124.7$\,ms against
+$143.9$\,ms for MeanFlow --- but collision-free on at most two of twelve flights, against twelve for
+MeanFlow and consistency training with per-step projection ($p=7\times10^{-5}$), with $1.2$ to $2.6$ violating
+steps per flight. The time reduction therefore does not compensate for the loss of collision-free completion.
+\guard{Twelve flights per configuration, four per route, one training seed. The projection configuration
+of this scene differs from that of UAV-pillars and UAV-s-curve (\autoref{sec:setup:protocol:uav}), so the scenes
+are not pooled.}
+
+\subsubsection{Pillars}
+
+On pillars, endpoint projection spends $104$\,ms per control step in projection against $1611$\,ms for
+per-step projection, averaged over the configurations of \autoref{tab:uav-pillars}. None of its $120$
+flights loses physical safety --- no contact and no loss of altitude --- against $43$ of the $180$ flights
+with per-step projection. It is not free of constraint violations: $41$ of its flights violate the
+clearance at least once, against $89$ with per-step projection. With MeanFlow and random selection,
+endpoint projection also gives the highest projected success with constraint satisfaction in
+\autoref{tab:uav-pillars}, $0.90$ against at most $0.80$ for per-step projection.
+\dataref{uav\_results.py, K5 by projection method}
+
+\subsubsection{S-Curve}
+
+Changing the controller is not sufficient once projection changes the plan. With per-step projection,
+the MeanFlow plan reaches the goal on none of three flights under MuJoCo MPC and at most one of ten under
+the brake-to-rest controller, and no configuration is free of violations at the goal. MuJoCo MPC also
+adds about $119$\,ms per control step in this comparison. The unprojected experiment therefore isolates
+a controller limitation, while the projected experiment remains a failure of the combined planner,
+projection and tracking stack. It does not support an ordering of the generative models or a preferred
+projection method for this scene.
+\guard{Three flights with MuJoCo MPC. Endpoint-projection results on the s-curve predate a correction to how
+it handles the scene's switched wall constraints and are not reported.}
+\dataref{DA\_20260909\_T5 F3, F7; Gen15/U16/CHANGELOG\_20260913\_u16\_fix1\_fix2\_FULL\_REVIEW \S3.1}
+
+\subsection{Conclusion}\label{sec:res:uav:conclusion}
+
+The preferred combination depends on the scene. On UAV-corridor, MeanFlow or consistency training with
+per-step projection is the supported choice: both cross the finish line collision-free on all twelve
+flights, whereas endpoint projection is faster but collision-free on at most two. On UAV-pillars, MeanFlow
+is the strongest generative model across the eleven configurations, and MeanFlow with endpoint projection
+and random selection is the best observed projected combination, with $0.90$ success with constraint
+satisfaction and substantially lower projection time. UAV-s-curve has no supported best combination:
+the controller determines whether an unprojected MeanFlow path can be flown, and no projected
+configuration completes the task within the constraints. These conclusions use one training seed, so
+the UAV-corridor and UAV-pillars choices are operating points for the reported experiments rather than
+population-level rankings.
 
 % =============================================================================
 \section{Comparison across Environments}\label{sec:res:summary}
@@ -560,9 +843,9 @@ on this scene changes with the controller used, so no ordering of the models is 
 
 \autoref{tab:summary-models} collects, per environment, the four comparisons between the generative
 models. MeanFlow is ahead of flow matching and of the diffusion baseline in every environment.
-Consistency training is level with MeanFlow on obstacle avoidance and on the corridor, and behind it on
-alignment at $\nfe=20$ and on the pillars. Flow matching reaches the success of the baseline at a
-fraction of its time on obstacle avoidance, ends level with it on alignment, and completes the corridor
+Consistency training is level with MeanFlow on D3IL-avoiding and on UAV-corridor, and behind it on
+D3IL-aligning at $\nfe=20$ and on UAV-pillars. Flow matching reaches the success of the baseline at a
+fraction of its time on D3IL-avoiding, ends level with it on D3IL-aligning, and completes UAV-corridor
 where the projected baseline does not.
 
 \begin{table}[htpb]
@@ -576,28 +859,36 @@ where the projected baseline does not.
     \toprule
     Environment & Consistency training vs.\ MeanFlow & MeanFlow vs.\ flow matching & Flow matching vs.\ diffusion & MeanFlow vs.\ diffusion \\
     \midrule
-    Obstacle avoidance (5 seeds $\times$ 20) & $\approx$ ($p=0.231$) & $>$ fewer steps on all three geometries; time per episode depends on the geometry (seed 6) & $\approx$ success, $21\times$ faster & $>$ S\&C, fewer steps, $31\times$ faster \\
-    Alignment (seed 6, 10 contexts) & $\approx$ at $\nfe=2$; $<$ at $\nfe=20$ ($p=0.0215$) & $>$ $0.216$\,m, $p=0.0039$ & $\approx$ $p=1.0000$ & $>$ $0.374$\,m, $p=0.0020$ \\
-    Corridor (seed 6, 12 flights) & $\approx$ & $>$ collision-free $12/12$ vs.\ $0/12$ & completes $12/12$ vs.\ $0/36$ & $>$ $1.00$ vs.\ $0.00$, $p=7\times10^{-7}$ \\
-    Pillars (seed 6, 10 flights) & $<$ $0.235$ vs.\ $0.635$ & $>$ $0.635$ vs.\ $0.359$ & best configurations above the baseline & best configurations above the baseline \\
+    D3IL-avoiding (5 seeds $\times$ 20) & $\approx$ ($p=0.231$) & $>$ fewer steps on all three geometries; time per episode depends on the geometry (seed 6) & $\approx$ success, $21\times$ faster & $>$ S\&C, fewer steps, $31\times$ faster \\
+    D3IL-aligning (seed 6, 10 contexts) & $\approx$ at $\nfe=2$; $<$ at $\nfe=20$ (permutation $p=0.0234$) & $>$ $0.233$\,m, 9 of 10 contexts, $p=0.0215$ & $\approx$ $p=1.0000$ & $>$ $0.374$\,m, $p=0.0020$ \\
+    UAV-corridor (seed 6, 12 flights) & $\approx$ & $>$ collision-free $12/12$ vs.\ $0/12$ & mixed: completes $12/12$ vs.\ $0/36$, but collision-free on at most $2/12$ & $>$ $1.00$ vs.\ $0.00$, $p=7\times10^{-7}$ \\
+    UAV-pillars (seed 6, 10 flights) & $<$ $0.218$ vs.\ $0.618$ & $>$ $0.618$ vs.\ $0.327$, ahead in 9 of 11 configurations & $>$ best $0.90$ vs.\ $0.00$ at the goal point & $>$ best $0.90$ vs.\ $0.00$ at the goal point \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
-The order MeanFlow $>$ flow matching $>$ diffusion therefore holds in control steps on obstacle avoidance, in final distance on alignment, and in collision-free flights on the corridor. Consistency training is not ahead of MeanFlow in any
-environment. Where the task separates them, its finite-difference target leaves part of the network's
+MeanFlow is ahead of both flow matching and the diffusion baseline in every environment, on the measure
+each environment separates: control steps and time on D3IL-avoiding, final distance on D3IL-aligning,
+collision-free completion on UAV-corridor, and success at the goal point on UAV-pillars. Flow matching is
+ahead of the diffusion baseline on time on D3IL-avoiding and at the goal point on UAV-pillars, level
+with it on D3IL-aligning, and mixed on UAV-corridor. The full order MeanFlow $>$ flow matching $>$ diffusion
+therefore holds on D3IL-avoiding and on UAV-pillars, and MeanFlow $>$ \{flow matching, diffusion\}
+everywhere. Consistency training is not ahead of MeanFlow in any environment. Where the task separates them, its finite-difference target leaves part of the network's
 own error in the field regardless of the step budget (\autoref{sec:method:alphaflow}).
 
 \subsection{Projection Methods}\label{sec:res:constraints}
 
 \autoref{tab:summary-projection} compares endpoint projection with the per-step projection of \ac{DPCC}
-in each environment. Endpoint projection takes less time in all four. Its constraint satisfaction is
-level with per-step projection on obstacle avoidance and on alignment, higher on the pillars, and lower on
-the corridor.
+in each environment. The comparison depends on the step budget. Endpoint projection is inactive or has
+only one guiding step at the one- and two-evaluation budgets used for D3IL-avoiding. Where it has
+two or more guiding steps, it reduces time on D3IL-aligning and UAV-corridor and projection time on UAV-pillars,
+but its constraint result is task-dependent: level on D3IL-aligning, lower on UAV-corridor and higher on
+UAV-pillars.
 
 \begin{table}[htpb]
-  \caption[Projection methods across environments]{Endpoint projection against per-step projection, same
-  generative model and budget. Temporal U-Net, 3.96--4.0\,M parameters.}
+  \caption[Projection methods across environments]{Endpoint projection against per-step projection.
+  Rows with a numerical comparison use the same generative model and budget. Temporal U-Net,
+  3.96--4.0\,M parameters.}
   \label{tab:summary-projection}
   \centering
   \small
@@ -605,17 +896,53 @@ the corridor.
     \toprule
     Environment & Time & Constraint satisfaction \\
     \midrule
-    Obstacle avoidance, $\nfe=3$ (24 episodes) & $0.0745$ vs.\ $0.1478$\,s per step & S\&C $1.000$ vs.\ $0.917$, not significant \\
-    Alignment, $\nfe=10$ (10 contexts) & $325$\,ms per step less, $p=0.0039$ & level, same final distance \\
-    Corridor, $\nfe=3$ (12 flights) & $1.15$--$2.1\times$ less & collision-free $\le0.58$ vs.\ $1.00$, $p=0.005$ \\
-    Pillars, $\nfe=5$ (10 flights) & $8.2$--$21.3\times$ less projection time & $0/210$ vs.\ $43/270$ flights violating \\
+    D3IL-avoiding, $\nfe=1/2$ & not selected; zero/one guiding step & per-step projection gives S\&C $0.993$ at $\nfe=1$ \\
+    D3IL-aligning, $\nfe=10$ (10 contexts) & $325$\,ms per step less, $p=0.0039$ & level, same final distance \\
+    UAV-corridor, $\nfe=5$ (12 flights) & $1.15$--$1.8\times$ less & collision-free $\le2/12$ vs.\ $12/12$, $p=7\times10^{-5}$ \\
+    UAV-pillars, $\nfe=5$ (10 flights) & $104$ vs.\ $1611$\,ms projection per step & physically unsafe $0/120$ vs.\ $43/180$; with violations $41/120$ vs.\ $89/180$ \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
-All endpoint-projection results above have at least two guiding steps
-(\autoref{sec:res:constraints:degenerate}). That condition is what limits the method on obstacle
-avoidance: at the one and two network evaluations at which that task is run, no such step exists, and
-endpoint projection reduces to projection after sampling (\autoref{sec:res:avoiding:projection}). The
-environments in which it is ahead are the ones whose step budgets are large enough for it to run.
-\provisional{Every entry except obstacle avoidance rests on one training seed.}
+The numerical endpoint-projection rows in \autoref{tab:summary-projection} have at least two guiding
+steps (\autoref{sec:res:constraints:degenerate}): three on D3IL-aligning and two on UAV-corridor and UAV-pillars.
+D3IL-avoiding reaches its operating point before that condition holds, so its conclusion uses
+per-step projection instead of raising the model budget merely to activate another projection method
+(\autoref{sec:res:avoiding:conclusion}).
+\provisional{Every entry except D3IL-avoiding rests on one training seed.}
+
+\subsection{Conclusion}\label{sec:res:summary:conclusion}
+
+\autoref{tab:summary-combinations} collects the model--projection combinations supported by the
+individual sections. A single combination is not carried across all tasks: the smallest useful step
+budget and the projection result change with the plant and geometry.
+
+\begin{table}[htpb]
+  \caption[Supported model--projection combinations]{The supported operating point in each task.
+  These rows summarise the reported experiments; the evidence column preserves their different sample
+  sizes and prevents the single-seed rows from being read as multi-seed rankings.}
+  \label{tab:summary-combinations}
+  \centering
+  \small
+  \begin{tabularx}{\linewidth}{@{}p{2.5cm} L L@{}}
+    \toprule
+    Task & Supported combination & Evidence \\
+    \midrule
+    D3IL-avoiding
+      & MeanFlow, $\nfe=1$, per-step projection, temporal-consistency selection
+      & S\&C $0.993$, $18.1$\,ms/step; five seeds $\times$ twenty episodes \\
+    D3IL-aligning
+      & MeanFlow, $\nfe=20$, endpoint projection, random selection, tightened constraints
+      & box moved in $8/10$, violations absent in $10/10$; seed 6, training contexts \\
+    UAV-corridor
+      & MeanFlow or consistency training, $\nfe=3$, per-step projection
+      & collision-free finish-line crossing in $12/12$; seed 6 \\
+    UAV-pillars
+      & MeanFlow, $\nfe=5$, endpoint projection, random selection
+      & S\&C $0.90$, against at most $0.80$ for projected per-step rows; seed 6 \\
+    UAV-s-curve
+      & no supported combination
+      & controller-dependent unprojected result; no projected row completes within the constraints \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
