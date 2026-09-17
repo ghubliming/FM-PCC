@@ -137,6 +137,14 @@ def main():
     # --- table width (warning) ----------------------------------------------
     # Table 6.1 once ran past the right margin: a plain `tabular` is as wide as its
     # widest row, and a \multicolumn{..}{l}{...} note never wraps. Estimate both and
+    # Control characters. A regex replacement once turned every "\\alpha" into BEL + "lpha" (Python
+    # expanded "\\a" in the replacement string); LaTeX would have failed or printed garbage, and nothing
+    # else here noticed. Any byte below 0x20 other than tab/newline/CR is an error.
+    for n, s2 in clean.items():
+        bad = [i for i, ch in enumerate(s2) if ord(ch) < 32 and ch not in '\t\n\r']
+        if bad:
+            line = s2.count('\n', 0, bad[0]) + 1
+            problems.append((f'control characters in {n}', [f'{len(bad)} found, first at line {line}']))
     # warn; the text width of the TUM template at 11pt is about 14.7 cm.
     TEXTWIDTH_CM, CHAR_CM = 14.7, 0.19
     warn = []

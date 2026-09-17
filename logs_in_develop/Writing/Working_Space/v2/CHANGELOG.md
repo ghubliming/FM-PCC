@@ -14,6 +14,44 @@ Format: what changed · why · what it is sourced from · what it left open.
 
 ---
 
+## v2.20 — 2026-09-17 · translation table adopts the abstract's mechanism names → [`changelogs/v2.20_20260917_translation_table_mechanism_names.md`](changelogs/v2.20_20260917_translation_table_mechanism_names.md)
+
+The shared canonical translation table now maps `fm`, `mf` and `af` to **instantaneous-velocity
+objective**, **analytic average-velocity objective** and **intermediate finite-difference objective**.
+The MeanFlow and α-Flow brands remain only in the attribution column and Related Work; *flow
+matching* remains the transport-family name and part of the fixed title. Endpoint projection was
+already correctly named and was not changed.
+
+- **For v3:** apply the new mechanism names in v3-owned prose, tables and captions; see
+  `cross_draft/to_v3/FROM_v2_20260917_generative_objective_names.md`. No v3 file was edited.
+
+---
+
+## v2.19 — 2026-09-17 · abstract corrected to mechanism names → [`changelogs/v2.19_20260917_abstract_mechanism_names.md`](changelogs/v2.19_20260917_abstract_mechanism_names.md)
+
+Corrects v2.18: the abstract no longer names MeanFlow or α-Flow. It presents the generative-model
+study as one target-construction axis—instantaneous velocity, analytic average velocity, and an
+intermediate finite-difference objective—and retains iterate versus endpoint projection as the second
+axis. DPCC comparison metrics and the visual/UAV extensions are unchanged.
+
+- **For v3:** no label, citation key or inherited chapter interface changed. The next front-matter
+  sync should take the v2.19 abstract, which supersedes v2.18.
+
+---
+
+## v2.18 — 2026-09-17 · abstract: two method axes and the full evaluation scope → [`changelogs/v2.18_20260917_abstract_scope.md`](changelogs/v2.18_20260917_abstract_scope.md)
+
+The abstract now presents the work around two method axes: flow matching, MeanFlow and α-Flow as
+generative models, and per-step versus endpoint projection. It states the DPCC comparison in sampling
+steps, wall-clock time and control steps on the shared obstacle-avoidance task, then extends the scope
+to vision-conditioned alignment and the underactuated quadrotor. The result sentence remains
+qualitative and adds the supported projection-cost finding. **No numbers; abstract only.**
+
+- **For v3:** no label, citation key or inherited chapter interface changed. The next front-matter
+  sync should carry the revised abstract and its expanded draft-only evidence note.
+
+---
+
 ## v2.6 — 2026-09-09 · the compute environment, and the first prose written into Chapter 5
 
 **Asked for:** collect the cluster/hardware facts and put them somewhere the thesis can use.
@@ -94,6 +132,35 @@ starred heading binds to the enclosing counter, so `\autoref` would print a wron
 first draft of this pass made exactly that mistake with `\label{sec:setup:compute}` and it was
 removed. The appendix cross-reference points at `sec:setup:protocol` instead. This matches the file:
 none of the other 38 starred subsections is labelled.
+
+---
+
+## v2.17 — 2026-09-16 · visual-encoder provenance; cross-draft inbox closed → [`changelogs/v2.17_20260916_encoder_provenance_and_inbox.md`](changelogs/v2.17_20260916_encoder_provenance_and_inbox.md)
+
+Full KP-by-KP record in the file above:
+- **Encoder provenance.** The visual encoder is traced D3IL → Diffusion Policy §3.2 (ResNet-18,
+  spatial softmax, GroupNorm) and written into §2.6 and §4.3.6. Bibliography 49 → 52.
+- **Inbox.** All six `cross_draft/INBOX.md` → v2 items are acted on and marked ✅ v2.17: guiding steps,
+  the contribution-4 result sentence, training-uniformity wording, environment names plus `UAV`,
+  `secnumdepth`, the notation-table overflow.
+
+- **For v3:** **no label removed or renamed.** New *titles/symbols*: §4.5.4 `sec:method:degenerate` is
+  **Steps at Which Projection Guides Sampling**; `eq:method:degen:ngen` now defines `n\sidx{guide}`.
+  Both now match v3's Ch 6.
+- **For v3:** the v2 preamble now loads `tabularx`, defines the `L` column type and sets
+  `secnumdepth`/`tocdepth` as v3's preamble does. After the next sync, drop the duplicates from
+  `parts/00_preamble_v3.tex`, since `\newcolumntype{L}` would be defined twice.
+- **For v3:** new bib keys `he2016deep`, `mandlekar2021matters`, `wu2018group`; `chi2023diffusion`
+  has `eprint`. Ch 5 and the appendix can cite the encoder chain instead of restating it.
+- **For v3:** contribution 4's result sentence states no cost, because Ch 6 contradicts itself on
+  cost; see `cross_draft/to_v3/FROM_v2_20260916_projection_cost_and_encoder.md`.
+- **For v3:** `tab:embodiments` column headers now use D3IL-avoiding / D3IL-aligning / UAV-corridor,
+  UAV-pillars, UAV-s-curve; `\ac{UAV}` is in the acronym list.
+- **Shared notes touched:**
+  - `Auxiliary/Naming/TRANSLATION_20260914_dev_jargon_to_scientific.md`: guiding-steps rows marked
+    done; *visual encoder* row carries the provenance.
+  - `Auxiliary/Methodology_Sources/AUX_visual_aligning_env.md`: provenance block.
+  - `cross_draft/INBOX.md` and `cross_draft/to_v3/`.
 
 ---
 

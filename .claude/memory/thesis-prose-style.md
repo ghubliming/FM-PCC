@@ -25,10 +25,12 @@ corrected each of the following explicitly, some more than once (2026-09-11 → 
   projection), not "candidate fan", "harness", "ladder", "bootstrapped target" (invented — it is
   consistency training). Use the de-facto scientific name, verified in the source paper.
 - **"Backbone" is fine** — DPCC, DiT and MeanFlow all use it.
-- **Branded method names only in Related Work** (user angry, 2026-09-14). Never write *α-Flow* or
-  *HardFlow* in the abstract, Ch 1, Ch 2, Positioning, Ch 4, titles or captions. Write the mechanism
-  instead (*consistency training*, *endpoint projection*) with an in-place `\parencite`. Keep labels
-  and code tokens unchanged. *Flow matching*, *MeanFlow* and *DPCC* stay named.
+- **Branded method names only in Related Work** (user angry, 2026-09-14) — **now applies to *HardFlow*
+  only**. Never write *HardFlow* in the abstract, Ch 1, Ch 2, Positioning, Ch 4, titles or captions; write
+  *endpoint projection* with an in-place `\parencite`. *Flow matching*, *MeanFlow*, **α-Flow** and *DPCC*
+  stay named. **α-Flow exception (author, 2026-09-17):** "consistency training" was wrong (a different
+  published method) and unreadable in tables; write *α-Flow* and *α_end = 0.2*, never "floor". Keep labels
+  and code tokens unchanged.
 - **Describe only what this thesis has and does** (user angry again, 2026-09-14). Never compare our
   configuration with a paper's published configuration ("what differs from the published…", "as
   published", "departures from the source"), and never explain why a choice was made. Never

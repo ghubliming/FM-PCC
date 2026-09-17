@@ -4,6 +4,19 @@
 Closes thesis item **R1** in `Writing/Working_Space/data_status/PENDING_20260916_missing_data_and_analyses.md`
 (every quadrotor claim is single-seed). Training only; evaluation is a follow-up campaign step.*
 
+> ## ❌ IMPOSSIBLE — not run (2026-09-16)
+> **Blocked by cluster disk, not GPU time.** After `tools/clean_weights/clean_weights.py --apply`
+> (run log `logs/_clean_weights_runlogs/clean_weights_20260916_173211.log`): 100.3 GB used,
+> 1.5 GB free before, 5.7 GB freed → **≈ 7.2 GB free**.
+> - Training writes 6 periodic `state_<N>.pt` + `state_best.pt` per seed: ≈ 210 MiB (fm, diffusion) /
+>   ≈ 430 MiB (mf, af) → **≈ 15 GB for the 48 trainings** (≈ 4.4 GB even with best+latest pruning after every job).
+> - Evaluating seeds 7–10 adds tens of GB of `plans/` (`logs/UAV_MIX` is already 13.8 GiB, mostly plans).
+> - With `afterany` chaining, a full disk would silently fail every remaining job (cf. VA job 24838, `No space left on device`).
+>
+> **Decision: UAV stays at single seed (seed 6), stated as a limitation — same as Visual Aligning**
+> (`Gen14/Campaign_20260916_va_5seed_assessment/`). Thesis item R1 closes as *not feasible*.
+> `Slurm_Codes/sbatch/uav_mix/TEMP_train_5seed_missing.sh` was **never submitted**; the plan below is kept for the record only.
+
 ## 1. Plan
 
 **Grid:** 4 engines × 3 scenes × seeds 6–10. Seed 6 is already trained for every cell
@@ -33,7 +46,7 @@ bash Slurm_Codes/sbatch/uav_mix/TEMP_train_5seed_missing.sh --submit
 
 **Expected wall clock:** 48 jobs ≈ 188 GPU-h → ≈ 94 h per lane, **≈ 4 days** end to end (plus queue).
 
-## 2. Slurm job index
+## 2. Slurm job index — not used (never submitted)
 
 Submit date: _____ · git rev: _____ · Slurm logs: `Slurm_Codes/logs/<date>/`
 
@@ -56,9 +69,10 @@ Record `jobID (lane)` per cell, from the `--submit` output.
 
 ## 3. Issues / reruns
 
-_(none yet)_
+Campaign cancelled before submission — cluster disk (see banner).
 
 ## 4. Next
 
-- Verify each `<seed>/state_best.pt` + `losses.pkl` completed (not a timed-out partial).
-- Evaluation of seeds 7–10 on the paper protocols (corridor u17cv2, pillars, s_curve) — separate step.
+None. Reopen only if ≥ ~15 GB (training) plus evaluation space can be freed on the cluster.
+
+**Thesis (v3.17, 2026-09-16):** stated once in §5.5 (seed 6 within the available storage and compute); the across-seed variation is shown on D3IL-avoiding instead (`tab:seed-spread`); the single-seed caveats in Chapter 6 were removed. Ledger item closed ❌ in `Writing/Working_Space/data_status/PENDING_20260916_missing_data_and_analyses.md`.

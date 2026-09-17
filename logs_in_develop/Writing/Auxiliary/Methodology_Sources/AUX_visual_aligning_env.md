@@ -21,6 +21,19 @@ The section has to establish three things, in this order:
 > variant and the word *FiLM* do not appear in thesis prose. Point 3 below is kept as the engineering
 > record, not as writing guidance. Canonical row: `Naming/TRANSLATION_20260914_dev_jargon_to_scientific.md` §5.
 
+> **Encoder provenance, verified 2026-09-16 (v2.17):**
+> - **Papers.** D3IL (p. 6): *"We follow Chi et al. (2023) and use a ResNet-18 architecture as an image
+>   encoder for all methods."* Diffusion Policy (arXiv 2303.04137v5, §3.2 *Visual Encoder*): ResNet-18
+>   without pretraining, a separate encoder per camera view, global average pooling → **spatial
+>   softmax** [Mandlekar et al. 2021, robomimic], BatchNorm → **GroupNorm** [Wu & He 2018].
+> - **Code.** `d3il/agents/models/vision/model_getter.py:get_resnet` wraps robomimic `VisualCore`
+>   (`ResNet18Conv`, `SpatialSoftmax` with 32 keypoints, linear layer to 64).
+>   `multi_image_obs_encoder.py` is diffusion_policy's file (diff-verified, see
+>   `aux_repo/visual_transformer_refs_(Claude_pulled)/README.md`).
+> - **Our repo.** FM-PCC's vendored `model_getter.py` adds only an optional `pretrained` flag
+>   (Gen14 U9, default `False`; `visual_unet.py` does not pass it).
+> - **Thesis.** Written into §2.6 and §4.3.6.
+
 1. **The task is D3IL's, the vision *pipeline* is D3IL's, and the pairing is ours.** The upstream
    D3IL benchmark ships a native visual aligning pipeline (`run_vision.py`,
    `aligning_vision_config.yaml`, `Aligning_Img_Dataset`, `Aligning_Sim`). We did not re-implement

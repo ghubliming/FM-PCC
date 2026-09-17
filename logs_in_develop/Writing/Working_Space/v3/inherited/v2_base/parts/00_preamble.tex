@@ -124,6 +124,14 @@
   \usepackage{xcolor}
 \fi
 
+% Shared by both branches (from v3, cross_draft INBOX v3.9 / v3.16): tables that
+% wrap text columns, and numbered \subsubsection headings, which Ch 6 references.
+% Ch 4's \subsubsection* headings are unaffected.
+\usepackage{tabularx}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\setcounter{secnumdepth}{\subsubsectionnumdepth}
+\setcounter{tocdepth}{\subsectionnumdepth}
+
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}[chapter]
 \theoremstyle{plain}

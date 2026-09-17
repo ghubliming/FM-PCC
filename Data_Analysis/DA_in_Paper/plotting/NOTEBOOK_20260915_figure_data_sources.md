@@ -242,3 +242,10 @@ python3.14 plotting/prep/extract_env_frames.py --check # are selected simulator 
 directories are absent, the affected builders return nothing and say so, and the environment figures
 still build from `../data/avoiding_scene.json`, which lives in the repository and is not ignored
 (it is untracked only until `DA_in_Paper/` is first committed).
+
+## 2026-09-16 · attribution of the alignment camera panels (`fig:aligning-cameras`)
+
+`fig_aligning_camera_overhead` / `fig_aligning_camera_wrist` are frames of our own expert-replay GIF, but the
+camera set-up and the two views are D3IL's (front view and in-hand view, D3IL appendix Fig. 8, 96×96). The
+v3 caption now reads "Adapted from D3IL \parencite[appendix, Fig.~8]{jia2024towards}", the panel labels
+follow D3IL's names, and the text says "front view" instead of "overhead". The file names are unchanged.

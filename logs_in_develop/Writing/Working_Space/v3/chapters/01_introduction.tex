@@ -70,8 +70,8 @@ This thesis makes six contributions.
     \parencite{romer2025diffusion} is replaced by flow matching
     \parencite{lipman2023flow,lipman2024guide}, which learns a velocity field and generates a
     trajectory by integrating an ordinary differential equation. Backbone, projection, data and
-    evaluation protocol are kept, so the generative model is the only component that changes and the
-    number of network evaluations becomes a choice made at deployment. The comparison is made first on
+    evaluation protocol are kept, and the number of network evaluations becomes a choice made at
+    deployment. The comparison is made first on
     the obstacle-avoidance benchmark of \ac{DPCC}, with its setup unchanged.
     \hole{Result sentence for this contribution --- from Ch.~6, supplied by v3 as a \texttt{For v2:} line.}
   \item \textbf{MeanFlow in place of flow matching.} MeanFlow \parencite{geng2025meanflow} learns the
@@ -91,8 +91,11 @@ This thesis makes six contributions.
     Endpoint projection \parencite{li2025hardflow} instead projects the trajectory the sampler is
     predicted to reach and steers the sampler towards it. Both are implemented on the same feasible set
     and solver and compared, together with the step budget below which endpoint projection reduces to
-    projection after sampling.
-    \hole{Result sentence for this contribution --- from Ch.~6, supplied by v3 as a \texttt{For v2:} line.}
+    projection after sampling. On obstacle avoidance the guiding step count is zero at one and two
+    network evaluations, where endpoint projection reduces to projecting the finished sample; above that
+    budget, neither projection method leads consistently (\autoref{sec:res:constraints:degenerate}).
+    \srcnote{Result sentence from v3 Ch.~6 (\texttt{cross\_draft/to\_v2/FROM\_v3\_20260915\_result\_sentences.md}),
+    worded after \texttt{sec:res:avoiding:projection} and \texttt{tab:hf-ladder} as of v3.16.}
   \item \textbf{A vision-conditioned alignment task.} Once established on the state-based benchmark
     of \ac{DPCC}, all generative models and both projection methods are tested on a more complex
     task built for this thesis from the alignment task of D3IL, in which the robot observes two camera

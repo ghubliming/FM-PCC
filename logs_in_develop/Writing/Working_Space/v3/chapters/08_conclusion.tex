@@ -11,18 +11,19 @@
 
 \section{Summary}\label{sec:conc:summary}
 
-This thesis replaced the diffusion model of \ac{DPCC} with flow matching, MeanFlow and consistency
-training, keeping the backbone, the projection, the data and the evaluation code of the baseline. The
+This thesis replaced the diffusion model of \ac{DPCC} with instantaneous-velocity matching, analytic
+average-velocity matching and consistency-interpolated average-velocity matching, keeping the backbone,
+the projection, the data and the evaluation code of the baseline. The
 new models were first evaluated on the D3IL-avoiding benchmark of \ac{DPCC} with its setup
 unchanged, where the published baseline result was reproduced, and then on a vision-conditioned
 D3IL-aligning task and a quadrotor benchmark built for this thesis.
 
-On the benchmark of \ac{DPCC}, MeanFlow at a single network evaluation reaches the success with
+On the benchmark of \ac{DPCC}, analytic average-velocity matching at a single network evaluation reaches the success with
 constraint satisfaction of the baseline in fewer control steps and at a small fraction of its
 wall-clock time, and its plans are coherent before projection where those of the diffusion model at the
-same budget are not. On D3IL-aligning it brings the box closer to its target than the baseline and flow
-matching in every context, and on the quadrotor it completes UAV-corridor collision-free and leads on
-UAV-pillars. Consistency training is level with MeanFlow where the tasks cannot separate them and behind
+same budget are not. On D3IL-aligning it brings the box closer to its target than the baseline and
+instantaneous-velocity matching in every context, and on the quadrotor it completes UAV-corridor collision-free and leads on
+UAV-pillars. Consistency-interpolated average-velocity matching is level with analytic average-velocity matching where the tasks cannot separate them and behind
 it where they can. Endpoint projection is not used at the one- and two-evaluation operating point of
 D3IL-avoiding. At larger budgets it reduces time on D3IL-aligning and UAV-corridor and projection time
 on UAV-pillars, while its constraint result is level on D3IL-aligning, lower on UAV-corridor and higher on
@@ -34,13 +35,13 @@ UAV-pillars.
 
 \begin{description}
   \item[RQ1 --- Generative model.] With the backbone, projection, data and evaluation code held fixed,
-    MeanFlow is ahead of flow matching and of the diffusion baseline in every environment. Flow matching
-    is ahead of the baseline on D3IL-avoiding and UAV-pillars and level with it on D3IL-aligning. Consistency training is not ahead of MeanFlow in
+    analytic average-velocity matching is ahead of instantaneous-velocity matching and of the diffusion baseline in every environment. Instantaneous-velocity matching
+    is ahead of the baseline on D3IL-avoiding and UAV-pillars and level with it on D3IL-aligning. Consistency-interpolated average-velocity matching is not ahead of analytic average-velocity matching in
     any environment (\autoref{sec:res:summary:models}).
   \item[RQ2 --- Budget.] The flow-based models keep their success down to one network evaluation on the
-    obstacle-avoidance benchmark, while the diffusion model loses it below its training budget
-    (\autoref{sec:res:fewstep}). On D3IL-aligning MeanFlow improves with more evaluations and consistency
-    training does not.
+    D3IL-avoiding benchmark, while the diffusion model loses it below its training budget
+    (\autoref{sec:res:fewstep}). On D3IL-aligning analytic average-velocity matching improves with more
+    evaluations and consistency-interpolated average-velocity matching does not.
   \item[RQ3 --- Constraints.] Endpoint projection is well-posed only with at least one guiding step
     (\autoref{sec:res:constraints:degenerate}). With several guiding steps it reduces time on D3IL-aligning
     and UAV-corridor and projection time on UAV-pillars; its constraint satisfaction is level on D3IL-aligning,
@@ -48,13 +49,13 @@ UAV-pillars.
     already solved at one or two network evaluations, where endpoint projection has zero or at most one
     guiding step and no supported advantage, so per-step projection is the method there
     (\autoref{sec:res:avoiding:conclusion}).
-  \item[RQ4 --- Transfer.] MeanFlow's lead carries over from state to camera observations and from the
-    manipulator to the quadrotor; the step from flow matching to diffusion does not carry over to camera
+  \item[RQ4 --- Transfer.] The lead of analytic average-velocity matching carries over from state to camera observations and from the
+    manipulator to the quadrotor; the step from instantaneous-velocity matching to diffusion does not carry over to camera
     observations, where the two are level. On UAV-s-curve the tracking controller, not
     the plan, limits the result (\autoref{sec:res:uav:scurve}).
 \end{description}
 
-\hole{Refine in v4; results on D3IL-aligning and the quadrotor rest on one training seed.}
+\hole{Refine in v4.}
 
 \section{Future Work}\label{sec:conc:future}
 

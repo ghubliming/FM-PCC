@@ -12,9 +12,15 @@ Each is established in v3 Ch 5–6; v4 decides what to argue. Evidence in parent
    less collision-free on the corridor, physically safer on pillars. (§6.1.4, §6.4.2)
 4. **The tracking controller can be the bottleneck** (s-curve: same plan, MPC 3/3 vs brake-to-rest 0/10,
    inversion at altitude). A limitation of the whole stack, not the planner. (§6.3.4)
-5. **Threats to validity:** single seed outside obstacle avoidance; alignment on *training* contexts;
+5. **Threats to validity:** alignment on *training* contexts;
    non-uniform training settings (`tab:train`); no tightened diffusion run on alignment; D3IL's own image
    policy reproduced in our pipeline barely moves the box (0.44 m from 0.45 m, 44 % untouched) — author
    has not decided whether it is reported.
 6. **Flow matching ≈ diffusion on alignment**, while MeanFlow separates — the gain is the objective, not
    the ODE family alone. (§6.2.1)
+
+**Seed policy (author, 2026-09-16) — not a threat to argue:** D3IL-aligning and the UAV scenes are final at
+seed 6 (more seeds were assessed and ruled out: cluster disk for UAV, cost for alignment). The thesis shows the
+across-seed variation once, on D3IL-avoiding (`tab:seed-spread`: flow-based models vary little, diffusion more),
+states seed 6 once in §5.5, and does not justify it further. Keep the Discussion consistent with that: at most
+a short mention, no apology.

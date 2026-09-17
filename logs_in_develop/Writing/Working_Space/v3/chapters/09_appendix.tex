@@ -94,9 +94,9 @@ configuration files, checkpoint paths and evaluation logs. \autoref{tab:names} m
     \midrule
     \multicolumn{2}{l}{\emph{generative models}}\\
     the diffusion model (DPCC baseline) & \texttt{GaussianDiffusion}, \texttt{ddpm}, \texttt{diffusion} \\
-    flow matching                       & \texttt{FlowMatchingODE}, \texttt{fm}, \texttt{flow\_matcher\_v3} \\
-    MeanFlow                            & \texttt{MeanFlowODE}, \texttt{mf} \\
-    consistency training & \texttt{AlphaFlowODE}, \texttt{af}; final $\alpha$ as \texttt{ae0.2} / \texttt{ae0.05} \\
+    instantaneous-velocity matching                       & \texttt{FlowMatchingODE}, \texttt{fm}, \texttt{flow\_matcher\_v3} \\
+    analytic average-velocity matching                            & \texttt{MeanFlowODE}, \texttt{mf} \\
+    consistency-interpolated average-velocity matching & \texttt{AlphaFlowODE}, \texttt{af}; $\alpha_{\mathrm{end}}$ as \texttt{ae0.2} / \texttt{ae0.05} \\
     \midrule
     \multicolumn{2}{l}{\emph{projection methods}}\\
     unguided (no projection) & the \texttt{diffuser} variant \\
@@ -136,7 +136,7 @@ from, with the protocol that produced each. The figure scripts read these direct
     Environment and results & Batch & Protocol \\
     \midrule
     D3IL-avoiding, generative models & \texttt{batch\_avoiding\_combined\_20260825} & 5 seeds $\times$ 20 episodes \\
-    D3IL-avoiding, consistency training & \texttt{batch\_avoiding\_combined\_20260903} & seed 6, 20 episodes \\
+    D3IL-avoiding, consistency-interpolated average-velocity matching & \texttt{batch\_avoiding\_combined\_20260903} & seed 6, 20 episodes \\
     D3IL-avoiding, projection methods & \texttt{batch\_avoiding\_combined\_20260906} & 4 seeds $\times$ 3 geometries $\times$ 2 episodes \\
     D3IL-aligning & \texttt{batch\_va2\_20260907} & seed 6, 10 paired contexts \\
     UAV-corridor & \texttt{batch\_uav\_20260914} & seed 6, 12 flights (4 per route) \\

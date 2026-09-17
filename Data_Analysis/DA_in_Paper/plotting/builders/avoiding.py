@@ -427,9 +427,10 @@ def fig_avoiding_raw_models(outdir):
     rows = {}
     for eng, pat in S.AVOIDING_AF_FOLDERS.items():
         K = 20 if eng == 'diffusion' else 1
-        # SEED 6 ONLY, and that is not a detail. The consistency-training folders
-        # carry the _s6 tag and exist for seed 6 alone, while the MeanFlow, flow
-        # matching and diffusion folders in this same batch carry all five seeds.
+        # SEED 6 ONLY, and that is not a detail. The consistency-interpolated
+        # folders carry the _s6 tag and exist for seed 6 alone, while the analytic
+        # average-velocity, instantaneous-velocity and diffusion folders in this
+        # same batch carry all five seeds.
         # Averaging each model over the seeds it happens to have would compare a
         # one-seed number with a five-seed number: it reads 0.97 / 0.97 / 0.92
         # instead of 0.85 / 0.85 / 0.60 and silently flatters the comparators.
@@ -445,7 +446,7 @@ def fig_avoiding_raw_models(outdir):
     if len(rows) < 2:
         return None
 
-    f = Fig(720, 430, ml=76, mr=200)
+    f = Fig(720, 480, ml=76, mr=200, mb=95)
     f.axes((-0.5, len(rows) - 0.5), (0.0, 1.16))
     f.frame([], [0.0, 0.2, 0.4, 0.6, 0.8, 1.0], '', 'episodes reaching the goal',
             'Without projection: the plan the model itself produces',
@@ -460,11 +461,11 @@ def fig_avoiding_raw_models(outdir):
         f.bar(x0, f.Y(v), x1 - x0, f.Y(0.0) - f.Y(v), S.AVOIDING_AF_COLOUR[eng])
         f.text((x0 + x1) / 2, f.Y(v) - 8, f'{v:.2f}', 11.5, '#111', anchor='middle', bold=True)
         f.text((x0 + x1) / 2, f.Y(v) - 22, f"{m['n_steps']:.1f} steps", 9.5, '#666', anchor='middle')
-        lab = S.AVOIDING_AF_LABEL[eng].replace('consistency training, ', 'consistency tr.\n')
+        lab = S.AVOIDING_AF_LABEL[eng]
         for j, part in enumerate(lab.split('\n')):
-            f.text((x0 + x1) / 2, f.B + 18 + 13 * j, part, 10.0, '#222', anchor='middle')
-        f.text((x0 + x1) / 2, f.B + 18 + 13 * len(lab.split('\n')),
-               f'K = {K}', 9.5, '#666', anchor='middle')
+            f.text((x0 + x1) / 2, f.B + 14 + 11 * j, part, 7.8, '#222', anchor='middle')
+        f.text((x0 + x1) / 2, f.B + 16 + 11 * len(lab.split('\n')),
+               f'K = {K}', 8.6, '#666', anchor='middle')
 
     lx = f.R + 14
     f.text(lx, f.T + 14, 'read as', 10.5, '#111', bold=True)

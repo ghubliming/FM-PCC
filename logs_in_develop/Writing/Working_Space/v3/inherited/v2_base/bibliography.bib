@@ -124,11 +124,45 @@
 
 % NO LOCAL COPY
 @article{chi2023diffusion,
-  title     = {Diffusion policy: Visuomotor policy learning via action diffusion},
-  author    = {Chi, Cheng and Xu, Zhenjia and Feng, Siyuan and Cousineau, Eric and Du, Yilun and Burchfiel, Benjamin and Tedrake, Russ and Song, Shuran},
-  journal   = {The International Journal of Robotics Research},
-  year      = {2023},
-  publisher = {SAGE},
+  title      = {Diffusion policy: Visuomotor policy learning via action diffusion},
+  author     = {Chi, Cheng and Xu, Zhenjia and Feng, Siyuan and Cousineau, Eric and Du, Yilun and Burchfiel, Benjamin and Tedrake, Russ and Song, Shuran},
+  journal    = {The International Journal of Robotics Research},
+  year       = {2023},
+  publisher  = {SAGE},
+  eprint     = {2303.04137},
+  eprinttype = {arXiv},
+}
+% v2.17: text verified against arXiv 2303.04137v5 (14 Mar 2024, journal version), downloaded for
+% checking only -- not yet in aux_repo/PAPERS. Sec. 3.2 "Visual Encoder": ResNet-18 without
+% pretraining, separate encoders per camera view, spatial softmax pooling [Mandlekar 2021],
+% BatchNorm -> GroupNorm [Wu and He 2018]. D3IL p. 6 / p. 15-16: "We follow Chi et al. (2023) and
+% use a ResNet-18 architecture as an image encoder for all methods."
+
+% NO LOCAL COPY -- ResNet. Reference as listed in Diffusion Policy (arXiv 2303.04137v5).
+@inproceedings{he2016deep,
+  title     = {Deep Residual Learning for Image Recognition},
+  author    = {He, Kaiming and Zhang, Xiangyu and Ren, Shaoqing and Sun, Jian},
+  booktitle = {Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+  pages     = {770--778},
+  year      = {2016},
+}
+
+% NO LOCAL COPY -- robomimic; source of the spatial-softmax pooling that Diffusion Policy cites, and of
+% the VisualCore code D3IL vendors (d3il/agents/models/robomimic). Reference as listed in Diffusion Policy.
+@inproceedings{mandlekar2021matters,
+  title     = {What Matters in Learning from Offline Human Demonstrations for Robot Manipulation},
+  author    = {Mandlekar, Ajay and Xu, Danfei and Wong, Josiah and Nasiriany, Soroush and Wang, Chen and Kulkarni, Rohun and Fei-Fei, Li and Savarese, Silvio and Zhu, Yuke and Mart{\'\i}n-Mart{\'\i}n, Roberto},
+  booktitle = {5th Annual Conference on Robot Learning (CoRL)},
+  year      = {2021},
+}
+
+% NO LOCAL COPY -- group normalisation. Reference as listed in Diffusion Policy.
+@inproceedings{wu2018group,
+  title     = {Group Normalization},
+  author    = {Wu, Yuxin and He, Kaiming},
+  booktitle = {Proceedings of the European Conference on Computer Vision (ECCV)},
+  pages     = {3--19},
+  year      = {2018},
 }
 
 % ----------------------------------------------------------- flow matching ---

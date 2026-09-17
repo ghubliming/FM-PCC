@@ -1,6 +1,6 @@
 {
-  "bibliography_sha256_16": "1d96217fe27a57ed",
-  "synced_at": "2026-09-14",
-  "thesis_v2_sha256_16": "f6a0a354d457e47e",
-  "v2_version": "v2.16 \u2014 2026-09-14 \u00b7 \u00a74.3 remarks deleted, one conditioning, our endpoint-projection configuration only, UAV demonstrations \u2192 [`changelogs/v2.16_20260914_conditioning_endpoint_config_uav_demos.md`](changelogs/v2.16_20260914_conditioning_endpoint_config_uav_demos.md)"
+  "bibliography_sha256_16": "454c8c454b68a3e6",
+  "synced_at": "2026-09-17",
+  "thesis_v2_sha256_16": "7c691b886e5f202d",
+  "v2_version": "v2.17 \u2014 2026-09-16 \u00b7 visual-encoder provenance; cross-draft inbox closed \u2192 [`changelogs/v2.17_20260916_encoder_provenance_and_inbox.md`](changelogs/v2.17_20260916_encoder_provenance_and_inbox.md)"
 }

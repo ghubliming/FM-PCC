@@ -17,6 +17,83 @@ is sourced from · what it left open.
 
 ---
 
+## v3.21 — 2026-09-17 · compact UAV floats and result-table model labels → [`changelogs/v3.21_20260917_compact_floats_and_table_labels.md`](changelogs/v3.21_20260917_compact_floats_and_table_labels.md)
+
+- Reduced the footprint of Table 5.3, Figure 5.6 and Table 5.4; the UAV scene figure now occupies
+  78% of the text width, and both tables use compact spacing and permissive float placement before the
+  existing section barrier.
+- Defined the table-only labels **Diffusion**, **FM**, **MeanFM** and **$\alpha$-MeanFM** alongside the
+  full mechanism names in Section 5.3 and recorded them in the canonical translation table.
+- Replaced long model cells throughout the v3 results tables, split the non-wrapping headers in Table
+  6.7, and tightened Tables 6.7, 6.8 and 6.10 to prevent overlap.
+- `check.py` passes; the new-only bundle `thesis_v3_20260917_104554_new.tex/.zip` contains 22/22
+  rendered figures and verifies byte-faithful. Not compiled: this container has no TeX toolchain.
+
+## v3.20 — 2026-09-17 · mechanism names, Chapter 5 layout, and obstacle-avoidance emphasis → [`changelogs/v3.20_20260917_naming_ch5_layout_ch6_highlights.md`](changelogs/v3.20_20260917_naming_ch5_layout_ch6_highlights.md)
+
+- Applied the author-approved names **instantaneous-velocity matching**, **analytic average-velocity
+  matching**, and **consistency-interpolated average-velocity matching** throughout v3-owned prose,
+  tables, captions, appendix mappings and the affected official figure; updated the canonical
+  translation table and sent the Chapter 4 rename to v2.
+- Clarified MuJoCo as the common simulator, D3IL as the Panda integration, and the X2 lineage through
+  MuJoCo Menagerie and the MuJoCo MPC task patch. D3IL-avoiding is now explicitly the exact DPCC
+  benchmark used for controlled validation.
+- Kept each §5.2 task's figures inside its subsection, reduced their footprint, and transposed the
+  oversized Table 5.5 into a compact protocol-by-metric layout.
+- Marked the main §6.1 configurations in red and revised its conclusion: the
+  consistency-interpolated objective does show the remembered single-seed edge over the analytic
+  objective, but it is not statistically resolved; the analytic objective carries the five-seed result.
+- Rebuilt and visually checked `fig_avoiding_raw_models`, re-exported v3, passed `check.py`, and built
+  and byte-verified both the full and v3-new-sections-only 22-figure bundles.
+
+## v3.19 — 2026-09-17 · D3IL-avoiding: DPCC's protocol first, every selection rule shown
+
+- 🔴 **Protocol corrected.** DPCC's released evaluation runs `n_trials: 2` for each of five training seeds (`aux_repo/dpcc/config/projection_eval.yaml`, `scripts/eval.py`) — the paper's "five training seeds and ten test seeds" is **10 episodes per geometry**, not 50 as §5.5.1 said. §5.5.1 rewritten: 10 episodes = the protocol of DPCC (primary), 100 = the extended evaluation (stronger evidence).
+- **§6.1 restructured** (author): opening states the two protocols; *Generative Models* now has (a) **At the Protocol of DPCC** — new `tab:avoiding-dpcc-protocol` with all three rules $r/c/t$; (b) **Extended Evaluation** — `tab:state-headline` rebuilt with all rules for diffusion K20, flow matching K1/K2, MeanFlow K1/K2, best rule in bold; then α-Flow via `tab:state-models`.
+- **Results.** At DPCC's protocol the baseline reproduces the paper: DPCC-C tightened **S&C 1.000 in 70.1 steps** (published 0.98 in 69.0); flow matching at the same K20 reaches 1.000 in 63.2 steps at 477 vs 553 ms. Extended, at each model's best rule: MeanFlow K1 $t$ 0.993 / **61.0** steps / 18.1 ms; flow matching K1 $c$ 0.997 / 67.5 / 18.9; diffusion $c$ 0.983 / 69.0 / 563.5 → **MeanFlow ahead of both; flow matching level with diffusion on the path at 1/30 of its time.** The rule matters most for MeanFlow ($c$ picks stalled 98-step plans at K2).
+- `tab:target` gains a *protocol of DPCC* column (1.000 / 70.1 / 0 violations / 0.553 s).
+- 🔴 **Data gap, written as placeholder:** flow matching K1/K2, MeanFlow **U-Net** and α-Flow **U-Net** were never evaluated at 5 × 2 (the 5-seed 2-episode MeanFlow/α-Flow runs are DiT/SiT; U-Net α-Flow exists for seed 6 only). *Pending* rows + `\hole`; cluster commands in `DA_in_Paper/plotting/REQUEST_20260917_avoiding_dpcc_protocol.md`; ledger R8 raised to 🔴.
+- Removed a truncated sentence ("the diffusion baseline at") and a duplicated flow-matching paragraph from the old §6.1.1.
+- New `DA_in_Paper/analysis/avoiding_rules_by_protocol.py` + `INDEX.md` row. v2 notified (protocol wording; a new 14.9 cm table in its Ch 4).
+
+---
+
+## v3.18 — 2026-09-17 · v2.17 sync; projection-cost fix; UAV rates in simulated time; α-Flow naming
+
+**Sync.** v2.16 → **v2.17** (7 inherited files, all fast-forward, merged by name). Acting on v2.17's notes:
+- 🔴 removed v3's duplicate `tabularx` / `\newcolumntype{L}` / `secnumdepth` — the inherited preamble now defines them, and a second `\newcolumntype{L}` is a LaTeX error;
+- 🔴 **projection-cost contradiction** (v2's `to_v3` note): the `\guard` below `tab:hf-ladder` quoted "1.86–3.57× the cost at equal candidates" — that is **UAV-corridor** data (DA_20260824 §5), misattributed. The D3IL-avoiding K3/K5 comparison gave both methods **4 candidates** (`…_A1_B4_…hfmink…`), so "about half the time" stands. Guard corrected; resolution + a consistent cost sentence sent to v2; inbox item ✅.
+
+**"33 Hz plan / 100 Hz controller" (author: "99 % fake").** Checked in code: *not invented, but misleading*. Physics dt 0.01 s; planner every `decim = 3` steps (0.03 s), the demonstrations' recording interval (`dataset_writer.py:73`); tracker every physics step (`eval_mix_uav.py:1609–1735`). But the evaluation is **lock-step** — the simulation waits for the planner, which takes 9–4878 ms wall clock (21 % of cells under 30 ms). `tab:platforms` now states intervals of simulated time and says so; `tab:uav-demos` "(33 Hz)" → "(0.03 s)". v2's Ch 4 rate table/equation flagged in `cross_draft`.
+
+**Naming.** Read from the papers: MeanFlow is the paper's own name (average velocity) — kept; "mean flow matching" is not a term. What we call "consistency training" is **α-Flow** (a family between trajectory flow matching α = 1 and MeanFlow α → 0; α = consistency step ratio), and "Consistency Training" is a *different* published method (Song et al.). Renamed across Ch 5, 6, 8, appendix: **α-Flow**, final value **α_end = 0.2 / 0.05** (was "floor"); headings via `\texorpdfstring`; one definition of all three flow models at §5.3; figure labels (`fig:avoiding-raw-models`) rebuilt. Translation table §2 and rule 1 revised; v2 notified (10 occurrences, §4 title); memory updated.
+
+**Tooling.** 🔴 The rename's first pass wrote BEL control characters (Python expanded `\a` in `\alpha`); caught by reviewing the diff, repaired (46). `check.py` now fails on control characters — verified with an injected one.
+
+check.py pass; bundle `thesis_v3_20260917_*_new.zip`, 22/22.
+
+---
+
+## v3.17a — 2026-09-16 · hotfix: remaining environment prefixes; D3IL credit on the camera figure
+
+- **Prefixes, second pass** (paragraph-level scan, catches names split across lines): Ch 5 intro now introduces D3IL-avoiding, D3IL-aligning, UAV-corridor/-pillars/-s-curve; the UAV scene description list; §5.3.3 "as on D3IL-aligning"; `tab:train` caption; Fig 5.4 caption; Ch 6 intro; D3IL-avoiding conclusion; D3IL-aligning budget text; RQ2. Object descriptions ("walls and pillars", "pillar pairs") left as they are.
+- **Fig 5.5 (`fig:aligning-cameras`)**: caption credits D3IL — "Adapted from D3IL (appendix, Fig. 8): the camera set-up and the two views are D3IL's; the frames are rendered in the alignment environment of this thesis". Panel labels and §5.1.2 text use D3IL's names, *front view* and *in-hand view*, replacing "fixed overhead / wrist-mounted camera".
+- check.py pass; bundle 22/22.
+
+---
+
+## v3.17 — 2026-09-16 · seed policy: five seeds shown once, single seed stated once
+
+Follows the author's multi-seed assessments (`Gen14/Campaign_20260916_va_5seed_assessment/`, `Gen15/Campaign_20260916_uav_5seed_training/`): no further seeds for D3IL-aligning (cost) or UAV (cluster disk).
+
+- **§5.5 intro:** one sentence — D3IL-avoiding over five seeds; D3IL-aligning and UAV with seed 6 "within the storage and compute available to this work". No further justification.
+- **§5.5.1:** new `tab:seed-spread` + paragraph, over seeds 6–10 on the two geometries every seed covers: MeanFlow K1 S&C 0.995 ± 0.011, 62.1 ± 1.8 steps, 18.0 ± 0.2 ms; flow matching K2 68.6 ± 2.2 steps; diffusion 73.8 ± 11.3 steps; diffusion/MeanFlow time 28–33× in every seed. Script `DA_in_Paper/analysis/avoiding_seed_spread.py`, `INDEX.md` row.
+- **Removed** single-seed caveats in Ch 6 (six `\guard`/`\provisional` sentences and one conclusion sentence) and Ch 8; non-seed content of those caveats kept. Neutral protocol statements ("seed 6" in captions and tables) kept.
+- Ledger: R1 and R4 closed ❌ with reasons; seed policy recorded. `cross_draft/to_v4` findings updated so the Discussion does not re-open it.
+- check.py pass; bundle 22/22.
+
+---
+
 ## v3.16b — 2026-09-16 · environment prefixes where environments appear together
 
 - Defined once at the start of §5.1: **D3IL-avoiding, D3IL-aligning, UAV-corridor, UAV-pillars, UAV-s-curve** (UAV spelled out).

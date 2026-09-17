@@ -38,6 +38,9 @@
 % text rather than a footnote, because a caveat in a footnote gets dropped when
 % the sentence is quoted.
 \newcommand{\guard}[1]{\textcolor{violet}{\emph{#1}}}
+% Red identifies a main experimental configuration selected in the surrounding
+% text. It is deliberately not used for the inherited baseline.
+\newcommand{\mainconfig}[1]{\textcolor{red}{\bfseries #1}}
 
 % -----------------------------------------------------------------------------
 %  BIBLIOGRAPHY -- the v3 half
@@ -140,8 +143,9 @@
 %  number columns as r/c, so LaTeX shrinks the text columns instead of the page.
 %  Notes that used to sit in a \multicolumn row are in the caption.
 %  tabularx is not in the TUM template's settings.tex -- fold it in at merge time.
-\usepackage{tabularx}
-\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+% (tabularx and the L column type are now defined in the inherited parts/00_preamble.tex, v2.17;
+%  defining L here too would be a redefinition error.)
+
 
 % -----------------------------------------------------------------------------
 %  NUMBERED SUBSUBSECTIONS
@@ -151,5 +155,9 @@
 %  \autoref calls point at those \subsubsection labels. Unnumbered, each would print
 %  the PARENT subsection's number and send the reader to the wrong heading. Starred
 %  \subsubsection* headings (used in Ch 4) are unaffected. Fold into settings.tex at merge.
-\setcounter{secnumdepth}{\subsubsectionnumdepth}
-\setcounter{tocdepth}{\subsectionnumdepth}
+% (now set in the inherited parts/00_preamble.tex, v2.17.)
+
+% Keep the task figures inside the subsection that introduces them. Without
+% explicit barriers, LaTeX may defer the two avoiding figures past the aligning
+% heading, and the same can happen again at the quadrotor subsection.
+\usepackage{placeins}

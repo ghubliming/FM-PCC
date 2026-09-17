@@ -111,7 +111,8 @@ towards; this thesis calls it \emph{endpoint projection}. Plans generated with n
 
 A policy that observes images compresses each camera view into a feature vector with a convolutional
 encoder and conditions the generative model on that vector. D3IL \parencite{jia2024towards} provides
-such a vision pipeline for its tasks, in which ResNet encoders process each camera view. Concatenated
+such a vision pipeline for its tasks, following Diffusion Policy \parencite{chi2023diffusion}: a
+ResNet-18 encoder \parencite{he2016deep} processes each camera view. Concatenated
 with the time embedding of the network, the features reach its layers as a feature-wise conditional
 bias \parencite[Sec.~3]{perez2017film}. Transformer backbones operate on image patches instead of a
 pooled feature vector \parencite{peebles2022dit}.

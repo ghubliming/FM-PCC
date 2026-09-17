@@ -58,7 +58,7 @@ optimisation on a real seven-degree-of-freedom manipulator \parencite{oelerich20
 HardFlow reformulates hard-constrained sampling of flow-matching models as trajectory optimisation and
 projects the plan the sampler is predicted to reach \parencite{li2025hardflow}. It applies this
 optimisation only in the later sampling steps. At a small step budget that convention leaves no step
-before the final one, and the method reduces to projecting a finished sample --- a regime that, to the
+before the final one, and the method reduces to projecting a finished sample --- a case that, to the
 author's knowledge, has not been characterised.
 
 \section{Vision-Conditioned Imitation Learning}\label{sec:rel:visual}
@@ -75,7 +75,7 @@ a flow model on images and language \parencite{black2024pi0}.
 
 Imitation learning for aerial vehicles covers language-guided short-range flight, for which UAV-Flow
 Colosseo provides a real-world benchmark \parencite{wang2025uavflow}, and trajectory planning: CGD
-guides diffusion policies for UAV trajectories with constraints never encountered in training
+guides diffusion policies for \ac{UAV} trajectories with constraints never encountered in training
 \parencite{kondo2024cgd}. Below the planner, geometric tracking control on the special Euclidean group
 tracks position and attitude without the singularities of local coordinates
 \parencite{lee2010geometric}, and predictive sampling offers derivative-free model predictive control in

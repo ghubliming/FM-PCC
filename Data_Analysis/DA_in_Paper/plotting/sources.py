@@ -414,17 +414,18 @@ def prepared_path(key):
 # \includegraphics{<name>}, remove the entry here, and export.
 # Entry: name -> (group, where the draft asks for it, what it must show / how).
 PLANNED = {
-    # The five missing cells of the 2x4 matrix fig:raw-plans (MeanFlow K1/K2 and diffusion K1 exist).
+    # The five missing cells of the 2x4 matrix fig:raw-plans (analytic average-velocity K1/K2 and
+    # diffusion K1 exist).
     # All need saved plans from a cluster evaluation: plotting/REQUEST_20260916_cluster_fm_plan_panels.md.
-    'fig_raw_plans_fm_K1': ('demo', 'v3 sec:res:avoiding:raw (fig:raw-plans), flow matching K=1',
+    'fig_raw_plans_fm_K1': ('demo', 'v3 sec:res:avoiding:raw (fig:raw-plans), instantaneous-velocity matching K=1',
         'Plan fan without projection, seed 6, both-hard. Cluster run: see the request file.'),
-    'fig_raw_plans_fm_K2': ('demo', 'v3 sec:res:avoiding:raw (fig:raw-plans), flow matching K=2',
+    'fig_raw_plans_fm_K2': ('demo', 'v3 sec:res:avoiding:raw (fig:raw-plans), instantaneous-velocity matching K=2',
         'As above at K=2.'),
     'fig_raw_plans_diffusion_K2': ('demo', 'v3 sec:res:avoiding:raw (fig:raw-plans), diffusion K=2',
         'As above for the diffusion model at K=2; the K=1 panel came from a model trained at K=1.'),
-    'fig_raw_plans_af_K1': ('demo', 'v3 sec:res:avoiding:raw (fig:raw-plans), consistency training K=1',
-        'As above for consistency training (U-Net, floor 0.2) at K=1; Report_20260903 section 8 panel 8a.'),
-    'fig_raw_plans_af_K2': ('demo', 'v3 sec:res:avoiding:raw (fig:raw-plans), consistency training K=2',
+    'fig_raw_plans_af_K1': ('demo', 'v3 sec:res:avoiding:raw (fig:raw-plans), consistency-interpolated average-velocity matching K=1',
+        'As above for consistency-interpolated average-velocity matching (U-Net, alpha_end 0.2) at K=1; Report_20260903 section 8 panel 8a.'),
+    'fig_raw_plans_af_K2': ('demo', 'v3 sec:res:avoiding:raw (fig:raw-plans), consistency-interpolated average-velocity matching K=2',
         'As above at K=2; report panel 8b.'),
 }
 
@@ -447,15 +448,15 @@ EXCLUDED = {
 # appear ONLY in the `folder` patterns, never in a label that reaches a figure.
 ENGINE_COLOUR = {
     'diffusion': '#c0392b',   # the inherited denoising engine -- the pinned baseline
-    'fm':        '#2471a3',   # flow matching        (alpha = 1)
-    'mf':        '#1e8449',   # MeanFlow             (alpha = 0)
-    'af':        '#6c3483',   # consistency training    (0 < alpha < 1)
+    'fm':        '#2471a3',   # instantaneous-velocity matching
+    'mf':        '#1e8449',   # analytic average-velocity matching
+    'af':        '#6c3483',   # consistency-interpolated average-velocity matching
 }
 ENGINE_LABEL = {
     'diffusion': 'diffusion (DPCC)',
-    'fm':        'flow matching',
-    'mf':        'MeanFlow',
-    'af':        'consistency training',
+    'fm':        'instantaneous-velocity matching',
+    'mf':        'analytic average-velocity matching',
+    'af':        'consistency-interpolated average-velocity matching',
 }
 
 # Folder-name pattern per engine, with %d for the step budget K. These ARE code
@@ -497,9 +498,11 @@ AVOIDING_AF_FOLDERS = {
     'diffusion': 'H8_K%d_T0.5_Dmodels.GaussianDiffusion_msg20trials',
 }
 AVOIDING_AF_LABEL = {
-    'af02': 'consistency training, floor 0.2',
-    'af05': 'consistency training, floor 0.05',
-    'mf': 'MeanFlow', 'fm': 'flow matching', 'diffusion': 'diffusion (DPCC)',
+    'af02': 'consistency-\ninterpolated\naverage-velocity\nmatching\nα_end = 0.2',
+    'af05': 'consistency-\ninterpolated\naverage-velocity\nmatching\nα_end = 0.05',
+    'mf': 'analytic average-\nvelocity matching',
+    'fm': 'instantaneous-\nvelocity matching',
+    'diffusion': 'diffusion (DPCC)',
 }
 AVOIDING_AF_COLOUR = {'af02': ENGINE_COLOUR['af'], 'af05': '#a569bd',
                       'mf': ENGINE_COLOUR['mf'], 'fm': ENGINE_COLOUR['fm'],

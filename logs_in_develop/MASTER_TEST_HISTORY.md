@@ -6036,3 +6036,29 @@ Comprehensive data analysis of the MPC candidate fan ($B=4$ vs $B=1$) on `avoidi
    - **Engine hierarchy**: Empirical ranking holds as `{af ≈ mf} > fm > diffusion`. `af` and `mf` dominate naive `fm` on collision-freeness (12/12 vs 0/12 at K=3, p = 7 × 10⁻⁷), while the `af` vs `mf` difference is within statistical noise (strict S&C 4/12 vs 3/12, p = 1.0).
    - **Metric nuance & geometry limit**: Strict S&C (goal within 0.30 m + safe) is capped by geometry: after the forced slide detour, only route L can physically reach its goal point, which `af` K=3 achieves 4/4 times.
    - **Efficiency and HardFlow trade-off**: Projected flow engines run in 29 ms (K=1), 86–102 ms (K=3), and 122–144 ms (K=5), delivering a 4.3–22× speedup over diffusion (625–651 ms/step). HardFlow runs faster (45–125 ms) with genuine NLP steps, but trades safety for speed (collision-free rate drops to 0.00–0.58).
+
+
+***
+
+## Gen14/Gen15 Multi-Seed Replication Assessment, Cluster Resource Bottleneck & Data Analysis Checkpoint Ledger (September 15–16, 2026)
+
+**Keywords**: Gen14, Gen15, multi-seed feasibility, cluster disk exhaustion, clean_weights, data checkpoint ledger, SHA-256 batch provenance, DA_in_Paper, MuJoCo 3D scene rendering, commits b7ac5111, a9b303ec, b6cb1870, 5b612119, ef9f783c.
+
+1. **Comprehensive Data Inventory and Integrity Ledger** (`LEDGER_20260915.md`, batch exports `batch_avoiding_combined_20260915_100757`, `batch_va2_20260915_100754`, `batch_uav_20260915_100816`):
+   - Audited and cataloged 3 multi-environment evaluation batches, pinning each with explicit SHA-256 checksums (`avoiding`: `c5df71f2...`, `va2`: `4192c48a...`, `uav`: `22d8ec22...`).
+   - Verified candidate inventories (198 avoiding, 29 VA, 115 UAV) and quality sentinel flags (`n_cb_tripped`, `timing_missing`, `hf_degenerate`, `legacy`), confirming zero circuit-breaker trips, zero missing timing, and zero degenerate HardFlow rollouts across all 52 quality rows of the U16 `corridor_v2` (`u17cv2`) paper run.
+   - Built standalone Python query utilities (`uav_results.py`, `va_results.py`, `avoiding_seed_spread.py` in `Data_Analysis/DA_in_Paper/analysis/`) to interface directly with raw/aggregated CSVs rather than unverified console logs.
+
+2. **Visual Aligning 5-Seed Replication Feasibility Assessment** (`ASSESS_20260916_va_5seed_training_cost.md`):
+   - Evaluated training and rollout evaluation costs for replicating the 4 paper arms across seeds 7–10: training requires 82 GPU-hours (~41 h wall clock across 2 parallel slots), while rollouts average ~400 control steps (11,298 rollouts in `batch_va2_20260915_100754`) at 190–300 ms/step, requiring multiple additional GPU-days per arm.
+   - Analyzed statistical necessity: the flagship MeanFlow vs. diffusion baseline claim on seed 6 is already paired over 10 contexts and statistically decisive ($-0.3744$ m, 0/10 vs 9/0 win rate, $p = 0.0020$), while null results ($fm$ vs diffusion, $p = 1.0$) would not change ranking with additional seeds.
+   - Decided to maintain Visual Aligning as single-seed (seed 6) with explicit thesis limitation documentation, avoiding ~6 days of compute queue contention.
+
+3. **UAV 5-Seed Training Campaign Blocked by Cluster Disk Limits** (`LOG_20260916_uav_5seed_training.md`, `Slurm_Codes/sbatch/uav_mix/TEMP_train_5seed_missing.sh`):
+   - Designed a 48-job submission grid (4 engines × 3 scenes × seeds 7–10; ~188 GPU-hours) structured into a 2-lane `afterany` dependency chain to limit concurrency to 2 simultaneous jobs.
+   - Performed cluster disk audit: post-pruning (`clean_weights.py --apply`) left only ~7.2 GB of free disk on the cluster node (100.3 GB used, 5.7 GB freed). Training 48 models requires ~15 GB for periodic/best checkpoints (even pruned to best+latest: ~4.4 GB), and evaluating rollouts generates tens of GB of plan files (`logs/UAV_MIX` already consumes 13.8 GiB). Chained execution would inevitably trigger silent failures (`No space left on device`).
+   - Formally cancelled the campaign before submission; quadrotor evaluation remains single-seed (seed 6) with explicit thesis limitation coverage, closing campaign as infeasible under current cluster storage constraints.
+
+4. **Paper Figure Tooling and Headless MuJoCo 3D Scene Rendering Pipeline** (`Data_Analysis/DA_in_Paper/`, commits `b7ac5111`, `5b612119`, `ef9f783c`):
+   - Developed headless MuJoCo environment rendering pipelines (`render_mujoco_scenes.py`, `scene3d.py`, `extract_env_frames.py`) producing vector SVG and PNG assets for `corridor`, `pillars`, `s_curve`, `avoiding`, and `aligning` scenes.
+   - Implemented automated figure builders (`avoiding.py`, `scenes.py`, `crop_vendored.py`) consolidating paper figures into `Data_Analysis/DA_in_Paper/figures/` and synced via `export_to_draft.py`.

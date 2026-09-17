@@ -124,6 +124,14 @@
   \usepackage{xcolor}
 \fi
 
+% Shared by both branches (from v3, cross_draft INBOX v3.9 / v3.16): tables that
+% wrap text columns, and numbered \subsubsection headings, which Ch 6 references.
+% Ch 4's \subsubsection* headings are unaffected.
+\usepackage{tabularx}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\setcounter{secnumdepth}{\subsubsectionnumdepth}
+\setcounter{tocdepth}{\subsectionnumdepth}
+
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}[chapter]
 \theoremstyle{plain}
@@ -203,30 +211,30 @@
 \fi
 
 % -----------------------------------------------------------------------------
-% ABSTRACT -- v2.12. Modelled on the abstracts of the reference papers (DPCC,
+% ABSTRACT -- v2.19. Modelled on the abstracts of the reference papers (DPCC,
 % HardFlow, SafeFlowMPC, Diffuser): one paragraph, NO numbers, context ->
 % limitation -> approach -> extensions -> qualitative results.
 % -----------------------------------------------------------------------------
 \ifstandalone
-Diffusion models have become a popular choice for robot trajectory planning because they capture the
-multimodal behaviour contained in human demonstrations. Diffusion Predictive Control with
-Constraints (DPCC) makes them suitable for constrained control by projecting each denoising step
-onto the set of feasible trajectories. However, a diffusion model produces a trajectory through a
-long sequence of denoising steps whose number is fixed during training, and a receding-horizon
-controller repeats this sequence at every control step. This thesis replaces the diffusion model in
-DPCC with flow matching and MeanFlow, which generate trajectories by integrating an ordinary
-differential equation and allow the number of integration steps to be chosen at deployment, down to
-a single step. The projection, network architecture, training data and benchmark of DPCC are
-retained. The approach is then carried to two settings built for this thesis: camera observations
-through a learned visual encoding, and an underactuated quadrotor through a cascaded geometric
-controller. The thesis further compares
-projecting the intermediate sample with projecting the final trajectory predicted from it, and
-derives the step budget at which the latter becomes effective. Simulations of robot manipulation
-tasks show that MeanFlow satisfies the constraints and reaches the goal as reliably as DPCC at a
-fraction of its computational cost, and aligns objects with their targets more precisely when
-planning from camera images.
+Diffusion planners capture multimodal demonstrations, and Diffusion Predictive Control with
+Constraints (DPCC) enforces constraints by projecting every denoising iterate onto the feasible set.
+However, their long denoising sequence is fixed during training and repeated at every control step.
+This thesis replaces diffusion with deterministic transport along an ordinary differential equation.
+The objectives span instantaneous velocity, analytic average velocity and an intermediate
+finite-difference target derived from the network's own prediction; the integration budget is selected
+at deployment. On the obstacle-avoidance benchmark of DPCC, the aim is to preserve success and
+constraint satisfaction while reducing network evaluations, wall-clock time and the control steps
+required to reach the goal. Constraint enforcement forms a second contribution. DPCC projects the
+current iterate at every sampling step; endpoint projection predicts and projects the final trajectory,
+then guides later sampling steps towards it. The analysis identifies the step budget at which this
+guidance becomes active. After evaluation on the DPCC benchmark, the controller is extended to two
+more complex settings built for this thesis: vision-conditioned object alignment and control of an
+underactuated, open-loop unstable quadrotor. Simulations show that the analytic average-velocity
+objective matches the reliability of DPCC with fewer control steps and at a fraction of its
+computational cost; endpoint projection can reduce constraint-enforcement time, and
+vision-conditioned planning can align objects more precisely.
 \fi
-\srcnote{Qualitative claims and their evidence: manipulation --- \texttt{HF\_Batch\_Parity/DA\_20260827\_mpc1\_full\_seeds\_state\_avoiding.md} \S10.1; camera images --- \texttt{Gen14/CLOSURE\_20260907\_Gen14\_V\_A\_engine\_comparison\_final.md} R.1.}
+\srcnote{Qualitative claims and their evidence: manipulation --- \texttt{HF\_Batch\_Parity/DA\_20260827\_mpc1\_full\_seeds\_state\_avoiding.md} \S10.1; endpoint projection --- \texttt{cross\_draft/to\_v2/FROM\_v3\_20260917\_projection\_cost\_resolved.md}; camera images --- \texttt{Gen14/CLOSURE\_20260907\_Gen14\_V\_A\_engine\_comparison\_final.md} R.1.}
 
 \microtypesetup{protrusion=false}
 \tableofcontents{}
@@ -308,8 +316,8 @@ This thesis makes six contributions.
     \parencite{romer2025diffusion} is replaced by flow matching
     \parencite{lipman2023flow,lipman2024guide}, which learns a velocity field and generates a
     trajectory by integrating an ordinary differential equation. Backbone, projection, data and
-    evaluation protocol are kept, so the generative model is the only component that changes and the
-    number of network evaluations becomes a choice made at deployment. The comparison is made first on
+    evaluation protocol are kept, and the number of network evaluations becomes a choice made at
+    deployment. The comparison is made first on
     the obstacle-avoidance benchmark of \ac{DPCC}, with its setup unchanged.
     \hole{Result sentence for this contribution --- from Ch.~6, supplied by v3 as a \texttt{For v2:} line.}
   \item \textbf{MeanFlow in place of flow matching.} MeanFlow \parencite{geng2025meanflow} learns the
@@ -329,8 +337,11 @@ This thesis makes six contributions.
     Endpoint projection \parencite{li2025hardflow} instead projects the trajectory the sampler is
     predicted to reach and steers the sampler towards it. Both are implemented on the same feasible set
     and solver and compared, together with the step budget below which endpoint projection reduces to
-    projection after sampling.
-    \hole{Result sentence for this contribution --- from Ch.~6, supplied by v3 as a \texttt{For v2:} line.}
+    projection after sampling. On obstacle avoidance the guiding step count is zero at one and two
+    network evaluations, where endpoint projection reduces to projecting the finished sample; above that
+    budget, neither projection method leads consistently (\autoref{sec:res:constraints:degenerate}).
+    \srcnote{Result sentence from v3 Ch.~6 (\texttt{cross\_draft/to\_v2/FROM\_v3\_20260915\_result\_sentences.md}),
+    worded after \texttt{sec:res:avoiding:projection} and \texttt{tab:hf-ladder} as of v3.16.}
   \item \textbf{A vision-conditioned alignment task.} Once established on the state-based benchmark
     of \ac{DPCC}, all generative models and both projection methods are tested on a more complex
     task built for this thesis from the alignment task of D3IL, in which the robot observes two camera
@@ -472,7 +483,8 @@ towards; this thesis calls it \emph{endpoint projection}. Plans generated with n
 
 A policy that observes images compresses each camera view into a feature vector with a convolutional
 encoder and conditions the generative model on that vector. D3IL \parencite{jia2024towards} provides
-such a vision pipeline for its tasks, in which ResNet encoders process each camera view. Concatenated
+such a vision pipeline for its tasks, following Diffusion Policy \parencite{chi2023diffusion}: a
+ResNet-18 encoder \parencite{he2016deep} processes each camera view. Concatenated
 with the time embedding of the network, the features reach its layers as a feature-wise conditional
 bias \parencite[Sec.~3]{perez2017film}. Transformer backbones operate on image patches instead of a
 pooled feature vector \parencite{peebles2022dit}.
@@ -554,7 +566,7 @@ optimisation on a real seven-degree-of-freedom manipulator \parencite{oelerich20
 HardFlow reformulates hard-constrained sampling of flow-matching models as trajectory optimisation and
 projects the plan the sampler is predicted to reach \parencite{li2025hardflow}. It applies this
 optimisation only in the later sampling steps. At a small step budget that convention leaves no step
-before the final one, and the method reduces to projecting a finished sample --- a regime that, to the
+before the final one, and the method reduces to projecting a finished sample --- a case that, to the
 author's knowledge, has not been characterised.
 
 \section{Vision-Conditioned Imitation Learning}\label{sec:rel:visual}
@@ -571,7 +583,7 @@ a flow model on images and language \parencite{black2024pi0}.
 
 Imitation learning for aerial vehicles covers language-guided short-range flight, for which UAV-Flow
 Colosseo provides a real-world benchmark \parencite{wang2025uavflow}, and trajectory planning: CGD
-guides diffusion policies for UAV trajectories with constraints never encountered in training
+guides diffusion policies for \ac{UAV} trajectories with constraints never encountered in training
 \parencite{kondo2024cgd}. Below the planner, geometric tracking control on the special Euclidean group
 tracks position and attitude without the singularities of local coordinates
 \parencite{lee2010geometric}, and predictive sampling offers derivative-free model predictive control in
@@ -696,7 +708,7 @@ $\matr{J}\sidx{b}$ is the drone's inertia tensor; the two never appear in the sa
     $B$ & number of candidate plans & $\mathbb{N}$ \\
     $\gamma$ & model-mismatch bound & $\R_{>0}$ \\
     \midrule
-    \multicolumn{3}{l}{\emph{deployment (\autoref{sec:method:deployment}) --- introduced there, listed here so the collisions are visible}}\\
+    \multicolumn{3}{l}{\emph{low-level control (\autoref{sec:method:deployment})}}\\
     $\vect{p}$, $\dot{\vect{p}}$ & measured position, linear velocity & $\R^{3}$ \\
     $\vect{p}\sidx{des}$ & commanded setpoint (the plan's integral) & $\R^{3}$ \\
     $\vect{q}$ & manipulator joint positions & $\R^{7}$ \\
@@ -713,10 +725,11 @@ $\matr{J}\sidx{b}$ is the drone's inertia tensor; the two never appear in the sa
 
 At every control step an observation conditions the generative model, the model proposes a plan, a
 projection makes the plan admissible, and the first action is executed. The generative model and the
-projection method are the two parts varied in this thesis. Comparing generative models requires the
-same backbone, parameter count, data, normalisation, horizon, seeds, projection and evaluation code;
-comparing projection methods requires the same feasible set, solver, activation threshold and number of
-candidate plans. Everything else is shared.
+projection method are the two parts varied in this thesis. The generative models share the backbone
+and its parameter count, the data, the normalisation, the horizon, the seeds, the projection and the
+evaluation code; their training settings are given with the training protocol in
+\autoref{sec:setup:protocol}. The projection methods share the feasible set, the solver, the activation
+threshold and the number of candidate plans.
 \hole{System-overview figure: observation $\rightarrow$ plan $\rightarrow$ projection
 $\rightarrow$ action, with the two varied parts marked.}
 \hole{Provenance table --- inherited, modified, new, at file granularity --- feeding
@@ -728,7 +741,7 @@ Appendix~\ref{app:repro}.} \srcnote{TARGET \S5.3}
 \section{Generative Models}\label{sec:method:engine}
 
 The diffusion model of \ac{DPCC} is the baseline. Flow matching, MeanFlow and consistency training replace it
-behind one interface; only the training target and the integration loop differ between them.
+behind one interface, each with its own training target and integration loop.
 
 \subsection{Diffusion and the DPCC Baseline}\label{sec:method:diffusion}
 
@@ -1131,7 +1144,7 @@ the conditioning, the normalisation and the closed loop are shared verbatim. Wri
     \end{cases}
 \end{equation}
 with $\ftime_{k} = k/\nfe$ and the reverse index of the first line replaced by the forward index
-of the other two. The three lines are the whole difference between the models.
+of the other two. At sampling time, the three lines are the difference between the models.
 \srcnote{\texttt{flow\_matcher\_v3/models/diffusion.py:125--158} and
 \texttt{flow\_matcher\_v3\_meanflow/models/mf\_diffusion.py:189--300}, against
 \texttt{aux\_repo/dpcc/diffuser/models/diffusion.py:119--203}.}
@@ -1170,9 +1183,13 @@ $\vect{z} = \phi_{\ftime}(\ftime)$, a sinusoidal positional encoding followed by
 conditioning on the current observation is done by inpainting
 (\autoref{sec:method:formalisation}).
 
-For the vision-conditioned environment, two RGB views are encoded per frame by independent
-ResNet-18 towers with group normalisation, taken from D3IL \parencite{jia2024towards}, each producing
-$64$ features that are concatenated to a per-frame descriptor. The descriptor is averaged over the
+For the vision-conditioned environment, the visual encoder is that of D3IL \parencite{jia2024towards},
+which adopts the encoder of Diffusion Policy \parencite[Sec.~3.2]{chi2023diffusion}. Each of the two
+RGB views, at $96\times96$ pixels, has its own ResNet-18 \parencite{he2016deep}, trained end-to-end
+with the generative model. Its global average pooling is replaced by spatial-softmax pooling
+\parencite{mandlekar2021matters} over $32$ keypoints, followed by a linear layer to $64$ features, and
+its batch normalisation by group normalisation \parencite{wu2018group}. The two feature vectors are
+concatenated to a per-frame descriptor, and the descriptor is averaged over the
 $T\sidx{win}$-frame observation window, giving one latent per plan,
 \begin{equation}\label{eq:method:backbone:latent}
   \vect{e}
@@ -1278,7 +1295,7 @@ The two designs sit at opposite ends of one trade. Exact kinematics inside the p
 feasibility on the real chain, and tie the program to one robot and the plan to that robot's joints.
 The surrogate gives an end-effector plan and a projector that transfer unchanged from a planar arm to
 a spatial one to a quadrotor, with feasibility that holds for the model and not for the plant. This
-thesis takes the second end: one projector, held fixed across two embodiments, is what RQ4 is about.
+thesis takes the second end: one projection method, held fixed across two embodiments, is what RQ4 is about.
 $\gamma$ is where the cost is booked.
 \srcnote{Verified against the released code:
 \texttt{aux\_repo/SafeFlowMPC/safe\_flow\_mpc/RobotModel/} carries the \texttt{iiwa.urdf} and
@@ -1591,54 +1608,49 @@ network twice, in \eqref{eq:method:hf:ref} and \eqref{eq:method:hf:pred}.
 \texttt{config/avoiding-d3il.py:318}; per-timestep replanning in
 \texttt{aux\_repo/dpcc/scripts/eval.py:203--241}.}
 
-\subsection{Genuine Steps}\label{sec:method:degenerate}
+\subsection{Steps at Which Projection Guides Sampling}\label{sec:method:degenerate}
 
-The activation convention
-\eqref{eq:method:proj:gate} that gates endpoint projection admits a regime in which the only active step is the
-terminal one. At the terminal time the lookahead vanishes, the pull-back becomes a full snap
-rather than a damped correction, and no subsequent step exists for the network to react to. What
-executes is projection applied to a finished sample: the post-processing baseline.
+The activation convention \eqref{eq:method:proj:gate} of endpoint projection can leave the terminal step
+as the only active one. At the terminal time the lookahead vanishes, the pull-back replaces the sample
+by the projection of its prediction, and no later step exists for the network to react to. What runs is
+then projection applied to a finished sample.
 
-\subsubsection*{The boundary}
+\subsubsection*{The guiding step count}
 
-Of the $n\sidx{act}$ steps counted by \eqref{eq:method:proj:nact}, one is the terminal step,
-which by the argument above performs no guidance. Define the \emph{genuine step count}
+Of the $n\sidx{act}$ steps counted by \eqref{eq:method:proj:nact}, one is the terminal step, which does
+not guide the sampler. The \emph{guiding step count} is
 \begin{equation}\label{eq:method:degen:ngen}
-  n\sidx{gen}(\nfe,\eta)
+  n\sidx{guide}(\nfe,\eta)
   \;=\; n\sidx{act}(\nfe,\eta) - 1
   \;=\; \max\!\left\{\nfe - \left\lfloor(1-\eta)\nfe\right\rfloor,\;1\right\} - 1 .
 \end{equation}
-The binding quantity is $n\sidx{gen}$, \emph{not} $\nfe$: two configurations with the same step
-budget and different thresholds can sit on opposite sides of the boundary. Three regimes follow,
-and the thesis tags every reported row with which one it is in:
+It depends on the step budget and the threshold together, so two configurations with the same step
+budget and different thresholds can differ in it. Its value decides what a result can show:
 
 \begin{center}
 \begin{tabular}{lll}
   \toprule
-  $n\sidx{gen}$ & regime & what the row may support \\
+  $n\sidx{guide}$ & what runs & what a result supports \\
   \midrule
-  $0$        & \textbf{degenerate} & nothing. No in-ODE projection runs at all. \\
-  $1$        & \textbf{thin}       & a single nudge; no attributable signal. \\
-  $\ge 2$    & \textbf{admissible} & a claim about the method. \\
+  $0$     & projection of the final sample only        & no statement about endpoint projection \\
+  $1$     & one guided step before the final one       & no attributable effect \\
+  $\ge 2$ & guided steps, each followed by a later step & a statement about the method \\
   \bottomrule
 \end{tabular}
 \end{center}
 
-A second quantity is reported alongside it: the \emph{first lookahead}, the distance
-$1-\ftime_{k_{0}+1}$ remaining at the first genuine step, where $k_{0} = \nfe - n\sidx{act}$. It
-measures how much transport the endpoint estimate is actually extrapolating over, and it is what
-distinguishes an admissible row that carries real signal from one that is technically admissible
-but nearly terminal.
+The \emph{first lookahead}, the distance $1-\ftime_{k_{0}+1}$ remaining at the first guiding step with
+$k_{0} = \nfe - n\sidx{act}$, is reported alongside it. It measures how far the prediction of the final
+sample extrapolates at that step.
 \srcnote{\texttt{flow\_matcher\_v3\_meanflow/sampling/hardflow\_projection.py:584--646}
-(\texttt{hardflow\_step\_budget}, \texttt{hardflow\_regime}); the tiering is enforced in the
-evaluation gates, not left to the reader.}
+(\texttt{hardflow\_step\_budget}, \texttt{hardflow\_regime}); artefact token \texttt{n\_genuine}.}
 
 \subsubsection*{Reporting rule}
 
-Rows with $n\sidx{gen} = 0$ are tagged and excluded from every claim; rows with
-$n\sidx{gen} = 1$ are marked as carrying no attributable signal; neither is averaged into a cell.
-The endpoint-projection rows at small step budgets and $\eta = 0.5$ that fall into these two regimes
-are listed in \autoref{sec:res:constraints:degenerate}.
+Results with $n\sidx{guide} = 0$ are excluded from every statement about endpoint projection; results
+with $n\sidx{guide} = 1$ are marked as carrying no attributable effect; neither is averaged with other
+results. The endpoint-projection results at small step budgets and $\eta = 0.5$ with
+$n\sidx{guide} \le 1$ are listed in \autoref{sec:res:constraints:degenerate}.
 
 \subsection{Candidate Selection}\label{sec:method:selection}
 
@@ -1714,7 +1726,7 @@ velocity block is present only for the aerial platform. Two properties follow.
   \centering
   \begin{tabular}{llll}
     \toprule
-     & \texttt{avoiding-d3il} & \texttt{aligning-d3il-visual} & \texttt{uav} \\
+     & D3IL-avoiding & D3IL-aligning & \begin{tabular}[t]{@{}l@{}}UAV-corridor, UAV-pillars,\\ UAV-s-curve\end{tabular} \\
     \midrule
     embodiment      & manipulator, planar   & manipulator, spatial      & quadrotor \\
     observation     & state, $4$-D          & 2 RGB views $+$ $6$-D state & state, $9$-D \\
@@ -1978,7 +1990,8 @@ The environments follow the two stages of \autoref{sec:intro:problem}. Obstacle 
 benchmark of \ac{DPCC}, taken over with its setup unchanged, and is where the new generative models
 and projection methods are first established against the baseline. Vision-conditioned alignment and the
 quadrotor scenes were built for this thesis and test them further, in a new observation modality and a
-new embodiment.
+new embodiment. Where several environments appear together, they are named D3IL-avoiding,
+D3IL-aligning, and, per scene, UAV-corridor, UAV-pillars and UAV-s-curve.
 
 The three environments share the plan layout of \autoref{tab:embodiments} and differ in their
 observations, their dynamics rows and their constraint sets. Each constraint below enters the program
@@ -2305,6 +2318,7 @@ record both a start and an end; re-derive it with \texttt{sacct} before stating 
   \acro{SLSQP}[SLSQP]{sequential least-squares quadratic programming}
   \acro{IK}[IK]{inverse kinematics}
   \acro{MJPC}[MJPC]{MuJoCo predictive control}
+  \acro{UAV}[UAV]{unmanned aerial vehicle}
   % TODO: extend as Chapters 5-8 are written. Declare an acronym only when the
   % text really abbreviates it -- a declaration with no \ac{} never prints.
 \end{acronym}

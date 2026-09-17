@@ -22,3 +22,5 @@ a gate or ranking axis. If a `× 30.3` column is useful for readability, label i
 score. Same caution for any absolute-latency claim on cluster hardware. See
 [[pareto-definition-of-good]] for the axes that *are* legitimate, and
 [[da-target-is-best-baseline-variant]] for what counts as a real target.
+
+**Thesis wording (2026-09-17):** the evaluation is lock-step — physics dt 0.01 s, planner every `decim=3` steps (0.03 s), tracker every step, simulation waits for the planner (9–4878 ms wall clock). Write intervals of *simulated time*, never "runs at 33 Hz / 100 Hz".
