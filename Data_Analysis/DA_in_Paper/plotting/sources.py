@@ -447,16 +447,18 @@ EXCLUDED = {
 # Thesis names, per Auxiliary/Naming/NAMING_20260910_master_table.md. Code tokens
 # appear ONLY in the `folder` patterns, never in a label that reaches a figure.
 ENGINE_COLOUR = {
-    'diffusion': '#c0392b',   # the inherited denoising engine -- the pinned baseline
-    'fm':        '#2471a3',   # instantaneous-velocity matching
-    'mf':        '#1e8449',   # analytic average-velocity matching
-    'af':        '#6c3483',   # consistency-interpolated average-velocity matching
+    # Dark slate family used by the constraint figures. Model identity is also
+    # carried by labels/markers, so the plots remain legible in grayscale.
+    'diffusion': '#17202a',
+    'fm':        '#34495e',
+    'mf':        '#5d6d7e',
+    'af':        '#283747',
 }
 ENGINE_LABEL = {
-    'diffusion': 'diffusion (DPCC)',
-    'fm':        'instantaneous-velocity matching',
-    'mf':        'analytic average-velocity matching',
-    'af':        'consistency-interpolated average-velocity matching',
+    'diffusion': 'Diffusion',
+    'fm':        'FM',
+    'mf':        'MeanFM',
+    'af':        'CI-MeanFM',
 }
 
 # Folder-name pattern per engine, with %d for the step budget K. These ARE code
@@ -498,13 +500,13 @@ AVOIDING_AF_FOLDERS = {
     'diffusion': 'H8_K%d_T0.5_Dmodels.GaussianDiffusion_msg20trials',
 }
 AVOIDING_AF_LABEL = {
-    'af02': 'consistency-\ninterpolated\naverage-velocity\nmatching\nα_end = 0.2',
-    'af05': 'consistency-\ninterpolated\naverage-velocity\nmatching\nα_end = 0.05',
-    'mf': 'analytic average-\nvelocity matching',
-    'fm': 'instantaneous-\nvelocity matching',
-    'diffusion': 'diffusion (DPCC)',
+    'af02': 'CI-MeanFM\nα_end = 0.2',
+    'af05': 'CI-MeanFM\nα_end = 0.05',
+    'mf': 'MeanFM',
+    'fm': 'FM',
+    'diffusion': 'Diffusion',
 }
-AVOIDING_AF_COLOUR = {'af02': ENGINE_COLOUR['af'], 'af05': '#a569bd',
+AVOIDING_AF_COLOUR = {'af02': ENGINE_COLOUR['af'], 'af05': '#566573',
                       'mf': ENGINE_COLOUR['mf'], 'fm': ENGINE_COLOUR['fm'],
                       'diffusion': ENGINE_COLOUR['diffusion']}
 

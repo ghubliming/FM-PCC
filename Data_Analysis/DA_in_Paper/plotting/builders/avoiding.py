@@ -111,7 +111,7 @@ def _tradeoff_panel(rows, title, sub, ylab=True):
 
 
 def _legend_strip(width, protocol):
-    h = Fig(width, 80, ml=0, mr=0, mt=0, mb=0, font=FONT)
+    h = Fig(width, 44, ml=0, mr=0, mt=0, mb=0, font=FONT)
     x = 20
     for eng in MODELS:
         h.marker(x, 22, 'o', S.ENGINE_COLOUR[eng], r=6.5)
@@ -122,10 +122,6 @@ def _legend_strip(width, protocol):
         h.marker(x, 22, RULE_MARK[rule], '#777', r=6.5)
         h.text(x + 14, 26, lab, 11, '#111')
         x += 34 + len(lab) * 10.5
-    h.marker(20, 60, 'o', '#777', filled=False, r=6.5)
-    h.text(34, 64, f'hollow: success more than {PARETO_BAND:g} below the best on the panel', 11, '#444')
-    h.ring(width * 0.60, 60, r=11)
-    h.text(width * 0.60 + 18, 64, 'ring: no filled point is faster with fewer steps', 11, '#444')
     return h
 
 
@@ -273,7 +269,7 @@ def fig_avoiding_k_ladder(outdir):
     if c is None:
         return None
     rows = data['AGG']
-    f = Fig(760, 470, ml=76, mr=190)
+    f = Fig(720, 470, ml=76, mr=110)
     f.axes((0.8, 26), (0.55, 1.04), xlog=True)
     f.frame([1, 2, 5, 10, 20], [0.6, 0.7, 0.8, 0.9, 1.0],
             'step budget K  [ network evaluations per plan ]   (log)',
@@ -317,16 +313,6 @@ def fig_avoiding_k_ladder(outdir):
     f.text(lx, f.T + 4, 'model', 10, '#111', bold=True)
     legend(f, lx, f.T + 20, [(S.ENGINE_COLOUR[k], S.ENGINE_LABEL[k], 's')
                              for k in ('mf', 'fm', 'diffusion')])
-    f.text(lx, f.T + 84, 'dashed + hollow circles:', 9, '#555')
-    f.text(lx, f.T + 96, 'the baseline in a', 9, '#555')
-    f.text(lx, f.T + 108, 'smaller 5 seeds x 2', 9, '#555')
-    f.text(lx, f.T + 120, 'episodes sample.', 9, '#555')
-    f.text(lx, f.T + 132, 'Mechanism, not a', 9, '#555')
-    f.text(lx, f.T + 144, 'powered comparison.', 9, '#555')
-    f.text(lx, f.T + 168, 'K is inference-time', 9.5, '#111', bold=True)
-    f.text(lx, f.T + 180, 'for transport and', 9.5, '#111', bold=True)
-    f.text(lx, f.T + 192, 'training-time for', 9.5, '#111', bold=True)
-    f.text(lx, f.T + 204, 'diffusion.', 9.5, '#111', bold=True)
     path = f.save(os.path.join(outdir, 'fig_avoiding_k_ladder.svg'))
     return path, f'{c.rel} | {c.protocol}'
 
@@ -354,13 +340,13 @@ def fig_avoiding_projector_cost(outdir):
     rows = S.geometry_mean(cells, lambda k: (k[0], k[3]), geom_index=2)  # -> (K, variant)
 
     # (variant, colour, label, marker, degeneracy applies to this series)
-    ARMS = [('dpcc-t-tightened', '#2471a3', 'per-step projection', 'o', False),
-            ('hardflow_sls-t-tightened', '#1e8449', 'endpoint projection', 's', True)]
+    ARMS = [('dpcc-t-tightened', '#34495e', 'per-step projection', 'o', False),
+            ('hardflow_sls-t-tightened', '#5d6d7e', 'endpoint projection', 's', True)]
     ks = sorted({k for k, _v in rows})
     if not ks:
         return None
 
-    f = Fig(800, 470, ml=80, mr=210)
+    f = Fig(760, 470, ml=80, mr=165)
     ymax = max(r['avg_time'] for r in rows.values()) * 1.35
     f.axes((1.6, 6.0), (0.02, ymax), ylog=True)
     f.vspan(f.X(1.6), f.X(2.5))
@@ -370,12 +356,8 @@ def fig_avoiding_projector_cost(outdir):
             'Wall-clock time of the two projection methods, obstacle avoidance',
             # Kept short: at 800 px this line is clipped past about 100 characters,
             # and the model details are in the thesis caption anyway.
-            f'{c.protocol}; MeanFlow, U-Net 4.0M, tightened.',
+            f'{c.protocol}; MeanFM, U-Net 4.0M, tightened.',
             xfmt=lambda v: f'{v:.0f}', yfmt=lambda v: f'{v:g}')
-    f.text(f.X(2.0), f.T + 14, 'K = 2:', 9.0, '#a04000', anchor='middle', bold=True)
-    f.text(f.X(2.0), f.T + 26, 'one guiding', 9.0, '#a04000', anchor='middle')
-    f.text(f.X(2.0), f.T + 38, 'step', 9.0, '#a04000', anchor='middle')
-
     for var, col, lab, mk, degen in ARMS:
         pts = [(K, rows[(K, var)]['avg_time']) for K in ks if (K, var) in rows]
         if not pts:
@@ -388,15 +370,6 @@ def fig_avoiding_projector_cost(outdir):
     lx = f.R + 14
     f.text(lx, f.T + 4, 'projection method', 10, '#111', bold=True)
     legend(f, lx, f.T + 20, [(c_, l, m) for _v, c_, l, m, _d in ARMS])
-    for j_, line in enumerate(['Same generative model,', 'same solver, same',
-                               'constraint set, one job.', '',
-                               'Endpoint projection solves', 'more programs per control',
-                               'step and takes less time:', 'the point it projects is',
-                               'already close to the', 'feasible set.']):
-        f.text(lx, f.T + 62 + 12 * j_, line, 9, '#555')
-    f.text(lx, f.T + 196, 'hollow: endpoint', 9, '#a04000')
-    f.text(lx, f.T + 208, 'projection has one', 9, '#a04000')
-    f.text(lx, f.T + 220, 'guiding step there', 9, '#a04000')
     path = f.save(os.path.join(outdir, 'fig_avoiding_projector_cost.svg'))
     return path, f'{c.rel} | {c.protocol}'
 
@@ -446,7 +419,7 @@ def fig_avoiding_raw_models(outdir):
     if len(rows) < 2:
         return None
 
-    f = Fig(720, 480, ml=76, mr=200, mb=95)
+    f = Fig(680, 480, ml=76, mr=20, mb=95)
     f.axes((-0.5, len(rows) - 0.5), (0.0, 1.16))
     f.frame([], [0.0, 0.2, 0.4, 0.6, 0.8, 1.0], '', 'episodes reaching the goal',
             'Without projection: the plan the model itself produces',
@@ -466,21 +439,6 @@ def fig_avoiding_raw_models(outdir):
             f.text((x0 + x1) / 2, f.B + 14 + 11 * j, part, 7.8, '#222', anchor='middle')
         f.text((x0 + x1) / 2, f.B + 16 + 11 * len(lab.split('\n')),
                f'K = {K}', 8.6, '#666', anchor='middle')
-
-    lx = f.R + 14
-    f.text(lx, f.T + 14, 'read as', 10.5, '#111', bold=True)
-    for j, line in enumerate([
-            'Every model is run at one',
-            'network evaluation except',
-            'the baseline, which is at its',
-            'training budget of 20.',
-            '',
-            'On the other two geometries',
-            'every model reaches the goal',
-            'in 20 of 20 without',
-            'projection, so only this one',
-            'separates them.']):
-        f.text(lx, f.T + 34 + 14 * j, line, 9.5, '#444')
 
     path = f.save(os.path.join(outdir, 'fig_avoiding_raw_models.svg'))
     return path, f'{c.rel} | {c.protocol}, {S.AVOIDING_RAW_GEOMETRY}, no projection'

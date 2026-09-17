@@ -7,6 +7,7 @@ mechanically, so the flat file is never edited by hand and cannot drift from the
 ```bash
 python3 bundle/make_bundle.py                 # NEW sections only -- v2 chapters collapsed
 python3 bundle/make_bundle.py --full          # the complete document
+python3 bundle/make_bundle.py --clean-notes   # hide [src: ...] notes in the review copy
 python3 bundle/make_bundle.py --svg-package   # same, but render the SVG figures directly
 python3 bundle/make_bundle.py --verify        # prove the newest bundle matches the tree
 python3 bundle/make_bundle.py --list
@@ -36,13 +37,16 @@ Two guards keep "the v2 chapters are untouched" a checked fact rather than an as
 **Use `--full` for the complete thesis** — the Overleaf upload of record, anything sent to a
 supervisor, and before submission. `--full` and `--svg-package` combine.
 
-Each run writes a timestamped pair, named `thesis_v3_<stamp>_new` or `_full`, and appends a row to [`BUNDLE_LOG.md`](BUNDLE_LOG.md):
+Each run writes a timestamped pair into `output/`, named `thesis_v3_<stamp>_new` or `_full`, and appends a row to [`BUNDLE_LOG.md`](BUNDLE_LOG.md):
 
 ```
-thesis_v3_<YYYYMMDD_HHMMSS>_new.tex    new sections only (default)
-thesis_v3_<YYYYMMDD_HHMMSS>_full.tex   the complete document (--full)
-thesis_v3_<...>.zip                    that .tex + both .bib files + figures/
+output/thesis_v3_<YYYYMMDD_HHMMSS>_new.tex        new sections only (default)
+output/thesis_v3_<YYYYMMDD_HHMMSS>_new_clean.tex  new sections, source notes hidden
+output/thesis_v3_<YYYYMMDD_HHMMSS>_full.tex       the complete document (--full)
+output/thesis_v3_<...>.zip                        that .tex + both .bib files + figures/
 ```
+
+> **Git status**: Generated outputs in `output/` (flat `.tex`, `.zip`, staging assets) are excluded by `.gitignore` so build outputs do not clutter the repository. The bundling script (`make_bundle.py`), documentation, and logs are tracked in git.
 
 ## For Overleaf
 
@@ -51,6 +55,11 @@ the flat `.tex`, `bibliography.bib`, `bibliography_v3.bib` and `figures/`. Overl
 carrying `\documentclass` as the main document. Set the compiler to **pdfLaTeX** and the bibliography
 tool to **Biber** — the draft uses `biblatex` with `backend=biber`, inherited verbatim from the TUM
 template's `settings.tex`.
+
+The normal bundle is annotated and shows `[src: ...]` notes. `--clean-notes` creates a second bundle
+with the supported `\submissiontrue` switch already active. In Overleaf, the equivalent manual switch
+is to place `\submissiontrue` after the preamble inputs and before `\begin{document}`. This hides only
+`\srcnote`; unresolved `\hole` text remains visible and warns so missing content cannot be concealed.
 
 ### Figures — two modes, and which to use
 

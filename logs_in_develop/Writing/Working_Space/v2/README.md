@@ -61,6 +61,7 @@ Scope, across the three passes so far (see `CHANGELOG.md`):
 - **v2.15** — *α-Flow* / *HardFlow* named only in Related Work (mechanism name + citation elsewhere); the evaluation told as two stages — DPCC's benchmark unchanged first, then the alignment task and quadrotor benchmark built for this thesis; see `changelogs/v2.15_20260914_names_and_two_stages.md`.
 - **v2.16** — the "not free choices" remarks deleted; one visual conditioning, named **feature-wise conditional biasing** (no FiLM); §4.5.3 states our configuration only; §4.7.3 gains the UAV expert-demonstration method; see `changelogs/v2.16_20260914_conditioning_endpoint_config_uav_demos.md`.
 - **v2.17** — visual encoder traced D3IL → Diffusion Policy (ResNet-18, spatial softmax, GroupNorm) in §2.6/§4.3.6; all six cross-draft inbox items closed; see `changelogs/v2.17_20260916_encoder_provenance_and_inbox.md`.
+- **v2.21** (2026-09-17) — v3 inbox from v3.18/v3.19/v3.20/v3.25: mechanism names for the three generative models in abstract + Ch 1–4; UAV intervals as simulated time; contribution 4 cost sentence; §1.2 forward roadmap; `n_guide` table → `tabularx`; see `changelogs/v2.21_20260917_v3_inbox_mechanism_names_uav_intervals.md`.
 - **v2.6** — the **compute environment**: the cluster, node, CPU/GPU and software stack every number
   was produced on, plus the two caveats that follow from the machine. First prose written into
   Chapter 5 — a deliberate, scoped exception to the bone rule (see below).
@@ -137,7 +138,7 @@ see Remark 4.1 (`\label{rem:prior}`).
 | `eq:method:dep:setpoint`, `:obs` | the setpoint recursion and the fed-back observation, shared by all three environments | `aux_repo/dpcc/scripts/eval.py:236–241`; `mix_uav_test/eval_mix_uav.py:1550` |
 | `eq:method:dep:taskerr`–`:dls` | **the IK mechanism**: weighted damped-least-squares differential IK with null-space posture regularisation and SVD clipping, 3 iterations/step → joint PD | `d3il/.../controllers/IKControllers.py:134–323`; gains from `.../Config/mujoco_controller_config.gin:6–37` |
 | `eq:method:dep:varows` | the six visual-aligning dynamics pairs; plan width 9, layout `(a, p_des, p)` | `mix_visual_aligning_test/eval_mix_visual_aligning.py:272–279` |
-| `eq:method:dep:multirate` | 33 Hz plan / 100 Hz physics, `n_dec = 3` | `mix_uav_test/eval_mix_uav.py:1454–1455`; `quadrotor_modified.xml:4` |
+| `eq:method:dep:multirate` | plan every 0.03 s / physics 0.01 s of simulated time, `n_dec = 3` (v2.21) | `mix_uav_test/eval_mix_uav.py:1610,1728`; `uav_expert_data_collect/dataset_writer.py:31,73`; `quadrotor_modified.xml:4` |
 | `eq:method:dep:plant` | the quadrotor rigid-body model | Lee et al. Eqs. (2)–(5) (`Drone/PID_Control_UAV.pdf` pp. 2–3) |
 | `eq:method:dep:outer`–`:alloc` | cascaded **geometric** control: position PD → thrust vector → attitude extraction → SO(3) attitude error → moment → rotor allocation with thrust-first saturation. Each step cites the equation it realises — errors (17)–(18), thrust (23), attitude (22)–(23), attitude error (21), moment (20), allocation (1) — and the **three deviations** (frame convention, diagonal gains, dropped attitude feed-forward) are stated | `uav_env_test/flight_controller.py:33–155` against Lee et al. pp. 2–5 |
 | `eq:method:dep:vdes` | the **three** shipped velocity-setpoint policies | `mix_uav_test/eval_mix_uav.py:1551–1563, 1822–1832` |

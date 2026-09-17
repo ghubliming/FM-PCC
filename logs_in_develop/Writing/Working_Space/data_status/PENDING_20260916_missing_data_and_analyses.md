@@ -35,10 +35,10 @@ The thesis states this once in §5.5 and does not repeat single-seed caveats in 
 | D1 | **Plan smoothness metric** — jerk, path length or curvature over the saved plan `.npz` files (on cluster disk) | §6.1.3 `\hole` | ⏳ |
 | D2 | Alignment **orientation error**: the angle columns differ between runs for identical contexts — establish the convention, then report | §6.2.1 `\hole` | ⏳ |
 | D3 | Verify the ≈119 ms/step MuJoCo MPC overhead against committed timing (the 15-09 `avg_time_ms` column does not show it) | §6.3.4 | ⏳ |
-| D4 | Alignment workspace box per geometry from `config/visual_aligning_eval.yaml` | §5.1.2 `\hole` | ⏳ |
-| D5 | Quadrotor: confirm pillars/s-curve use the corridor's workspace box; state tightening 0.025 m | §5.1.3 `\hole` | ⏳ |
-| D6 | Accepted demonstrations per quadrotor scene; controller gains per collection run; alignment demonstration count; train/validation split of all three environments | §5.2 `\hole` | ⏳ |
-| D7 | Confirm controller and velocity-setpoint policy for pillars and s-curve results | §5.5.3 `\hole` | ⏳ |
+| D4 | Alignment workspace box per geometry from `config/visual_aligning_eval.yaml` | §5.1.2 `\hole` | ✅ v3.25 (filled from `config/visual_aligning_eval.yaml`) |
+| D5 | Quadrotor: confirm pillars/s-curve use the corridor's workspace box; state tightening 0.025 m | §5.1.3 `\hole` | ✅ v3.26 — not the same box: shared x∈[-4,4] m and altitude [0.30,1.80] m, lateral y ±2.5 m (pillars) / ±1.8 m (s-curve) / walls (corridor); tightening 0.025 m on top of the 0.31 m inflation (`config/uav_projection.yaml`) |
+| D6 | Accepted demonstrations per quadrotor scene; controller gains per collection run; alignment demonstration count; train/validation split of all three environments | §5.2 `\hole` | ✅ v3.26 — 500/500 corridor, 475/500 pillars (18 floor, 7 contact), 500/500 s-curve, gains `pid_default` (collect jobs 21475/21482/21476; training buffers agree); alignment 900 demos, 168,274 windows; 90/10 window split everywhere |
+| D7 | Confirm controller and velocity-setpoint policy for pillars and s-curve results | §5.5.3 `\hole` | ✅ v3.26 — `pid_stopgo` (brake-to-rest) on all pillars_hg rows and 880/889 s_curve_hg rows; the 9 others are the MuJoCo MPC comparison |
 | D8 | Total compute (GPU-hours) from job logs | appendix `\hole` | ⏳ |
 | D9 | SLURM job IDs and git revision per batch for `tab:corpora` | appendix `\hole` | ⏳ |
 

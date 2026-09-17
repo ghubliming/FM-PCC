@@ -133,6 +133,24 @@ def main():
             rows = C.get(('pillars', 'u7hg', eng, 5, v))
             line.append(f'{eng}={agg(rows)["n_success_and_constraints"]:.2f}' if rows else f'{eng}=  - ')
         print(f'  {v:26s} ' + '  '.join(line))
+    # Thesis Table tab:uav-pillars-best and the step-budget paragraph (v3.26).
+    print('  -- best PROJECTED configuration per model, full constraint set (tab:uav-pillars-best)')
+    for eng, K in (('mf', 5), ('fm', 5), ('af', 5), ('diffusion', 20)):
+        vs = {k[4]: v for k, v in C.items() if k[0] == 'pillars' and k[2] == eng and k[3] == K
+              and 'geo_free' not in k[4] and k[4] != 'diffuser'}
+        v, rows = max(vs.items(), key=lambda kv: (agg(kv[1])['n_success_and_constraints'],
+                                                  agg(kv[1])['n_success_relaxed_and_constraints'],
+                                                  -agg(kv[1])['n_violations']))
+        c = agg(rows)
+        print(f'  {eng:9s} K{K:<2d} {v:20s} goal={c["n_success_and_constraints"]:.2f} '
+              f'crossed={c["n_success_relaxed_and_constraints"]:.2f} viol={c["n_violations"]:.1f} '
+              f'steps={c["n_steps"]:.0f} ms={c["avg_time_ms"]:.1f} goal_dist={c["goal_dist"]:.3f}')
+    SEVEN = ('diffuser', 'dpcc-r', 'dpcc-c', 'dpcc-t', 'dpcc-r-tightened', 'dpcc-c-tightened', 'dpcc-t-tightened')
+    print('  -- mean S&C strict over the seven configurations evaluated at every budget')
+    for eng, K in (('mf', 2), ('mf', 5), ('fm', 2), ('fm', 5), ('af', 1), ('af', 2), ('af', 5)):
+        cs = [agg(C[('pillars', 'u7hg', eng, K, v)]) for v in SEVEN if ('pillars', 'u7hg', eng, K, v) in C]
+        print(f'  {eng} K{K} configs={len(cs)} mean S&C={st.mean(c["n_success_and_constraints"] for c in cs):.3f} '
+              f'mean ms/step={st.mean(c["avg_time_ms"] for c in cs):.1f}')
     print('  -- K5, by projection method. phys_safe = no contact, airborne, not diverged (eval_mix_uav.py:1849);')
     print('     it is NOT constraint satisfaction, which is collision_free_completed.')
     for label, keep in (('all variants', lambda v: True), ('full constraint set', lambda v: 'geo_free' not in v)):

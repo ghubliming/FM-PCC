@@ -14,11 +14,13 @@
 
 \chapter{Experimental Setup}\label{ch:setup}
 
-The evaluation follows the two stages of \autoref{sec:intro:problem}. The generative models and
-projection methods are first established on the obstacle-avoidance benchmark of \ac{DPCC}, D3IL-avoiding, with its
-setup taken over unchanged, so that the diffusion baseline is met on its own benchmark. They are then
-tested further in two environments built for this thesis: a vision-conditioned alignment task,
-D3IL-aligning, and a quadrotor benchmark with three scenes, UAV-corridor, UAV-pillars and UAV-s-curve. \autoref{sec:method:envs} describes how each environment is constructed; this
+The evaluation has two phases. First, the generative models and projection methods are established on
+the obstacle-avoidance benchmark of \ac{DPCC}, with its setup taken over unchanged so that the diffusion
+baseline is met on its own benchmark. Second, they are tested further in two environments built for
+this thesis: a vision-conditioned alignment task and a quadrotor benchmark with three scenes.
+Throughout this chapter and the results, these environments are called \emph{D3IL-avoiding},
+\emph{D3IL-aligning}, \emph{UAV-corridor}, \emph{UAV-pillars}, and \emph{UAV-s-curve}; the descriptive
+subsection titles and these prefixed names refer to the same tasks. \autoref{sec:method:envs} describes how each environment is constructed; this
 chapter gives, for each of the three, the task and constraint values, the data, the baseline, the
 metrics and the evaluation protocol.
 
@@ -27,11 +29,11 @@ metrics and the evaluation protocol.
 % =============================================================================
 
 Every environment is simulated by the MuJoCo physics engine \parencite{todorov2012mujoco}. The two
-manipulation tasks use the seven-joint Panda manipulator and MuJoCo task definitions supplied with D3IL
-\parencite{jia2024towards}. The quadrotor benchmark uses the Skydio X2 model from MuJoCo Menagerie
+manipulation tasks run the seven-joint Panda manipulator in MuJoCo, with the model files, task
+definitions and demonstrations of D3IL \parencite{jia2024towards}. The quadrotor benchmark runs the Skydio X2 model from MuJoCo Menagerie
 \parencite{zakka2022menagerie} with the quadrotor task patch distributed by MuJoCo MPC
-\parencite{howell2022predictive}. D3IL and MuJoCo MPC therefore provide the two platform integrations;
-MuJoCo is the common simulation engine. \autoref{fig:platforms} shows both models on their own, and
+\parencite{howell2022predictive}. MuJoCo is the simulator in every case; D3IL and MuJoCo MPC supply the
+task files and data that run in it. \autoref{fig:platforms} shows both models on their own, and
 \autoref{tab:platforms} gives the properties that enter the experiments.
 
 \begin{figure}[htpb]
@@ -45,8 +47,8 @@ MuJoCo is the common simulation engine. \autoref{fig:platforms} shows both model
     {\footnotesize Skydio X2 quadrotor}
   \end{minipage}
   \caption[The two simulated platforms]{The two simulated platforms, rendered in MuJoCo from the model
-  files the experiments load, without their environments. Left: the Panda manipulator and task integration
-  supplied by D3IL, used for D3IL-avoiding and D3IL-aligning. Right: the Skydio X2 model from MuJoCo
+  files the experiments load, without their environments. Left: the Panda manipulator, from the model files
+  of D3IL, used for D3IL-avoiding and D3IL-aligning. Right: the Skydio X2 model from MuJoCo
   Menagerie with the MuJoCo MPC task patch, used in the three aerial scenes. Both are simulated by
   MuJoCo. Not to scale with each other; dimensions are in
   \autoref{tab:platforms}.}
@@ -63,7 +65,7 @@ MuJoCo is the common simulation engine. \autoref{fig:platforms} shows both model
     Platform & Model & Experimental interface \\
     \midrule
     Panda manipulator
-      & MuJoCo model and task integration from D3IL; seven revolute joints, a parallel two-finger
+      & MuJoCo model, with the model and task files of D3IL; seven revolute joints, a parallel two-finger
         gripper and a wrist-mounted RGB camera
       & The planner commands planar or spatial end-effector increments; differential inverse
         kinematics and a joint-space PD law execute the Cartesian setpoint. \\
@@ -89,15 +91,14 @@ steps in \texttt{mix\_uav\_test/eval\_mix\_uav.py:1610}, the same downsampling a
 \section{Tasks and Environments}\label{sec:setup:tasks}
 % =============================================================================
 
-Each environment is described on its own below. Wherever results from several environments are shown or
-compared together, they carry a prefix naming the platform: \emph{D3IL-avoiding} and \emph{D3IL-aligning}
-for the two manipulation tasks, and \emph{UAV-corridor}, \emph{UAV-pillars} and \emph{UAV-s-curve} for the
-three scenes of the unmanned aerial vehicle (UAV) benchmark.
+Each environment is described on its own below. The subsection titles use the descriptive task names;
+the prefixed names above are used in tables and cross-environment comparisons to keep their origin
+unambiguous.
 
 \subsection{Obstacle Avoidance}\label{sec:setup:tasks:avoiding}
 
-The obstacle-avoidance task is the exact D3IL benchmark used by \ac{DPCC}: the same MuJoCo environment,
-Panda manipulator, demonstrations, constraint geometries, projection configuration and evaluation
+The obstacle-avoidance task is the benchmark of \ac{DPCC}, simulated in MuJoCo from the task files and
+demonstrations of D3IL: the same environment, Panda manipulator, demonstrations, constraint geometries, projection configuration and evaluation
 protocol \parencite{jia2024towards,romer2025diffusion} (\autoref{sec:method:env:avoiding}). Holding
 that complete benchmark fixed provides the controlled validation of replacing DPCC's diffusion model
 with the three flow-based objectives. A manipulator moves its
@@ -137,14 +138,14 @@ geometry-to-constraint mapping \texttt{scripts/eval.py:93--102}; counts by
   \centering
   \begin{minipage}{0.44\linewidth}\centering
     \includegraphics[width=\linewidth]{fig_render_avoiding}\\[0.3em]
-    {\footnotesize D3IL simulator view}
+    {\footnotesize MuJoCo simulator view}
   \end{minipage}\hfill
   \begin{minipage}{0.44\linewidth}\centering
     \includegraphics[width=\linewidth]{fig_env_avoiding}\\[0.3em]
     {\footnotesize measured demonstrations}
   \end{minipage}
-  \caption[The obstacle-avoidance task]{The obstacle-avoidance task of D3IL. Left: an authentic
-  simulator frame, showing the manipulator and the field of six posts. Right: the measured
+  \caption[The obstacle-avoidance task]{The obstacle-avoidance task. Left: a frame rendered by MuJoCo,
+  showing the manipulator and the field of six posts. Right: the measured
   end-effector position in all 96 demonstrations, viewed from above. Every demonstration starts at
   the bottom and crosses the goal line (green) between the obstacles (red).}
   \label{fig:env-avoiding}
@@ -165,32 +166,36 @@ geometry-to-constraint mapping \texttt{scripts/eval.py:93--102}; counts by
 \subsection{Vision-Conditioned Alignment}\label{sec:setup:tasks:aligning}
 
 The alignment task of D3IL \parencite{jia2024towards} asks the manipulator to push a box into a target
-pose on a table. Its simulation, demonstrations and vision pipeline are D3IL's. Around them this thesis
+pose on a table. The task runs in MuJoCo; its task files, demonstrations and camera set-up are D3IL's. Around them this thesis
 built a constrained-control environment (\autoref{sec:method:env:aligning}): a three-dimensional plan
 with its dynamics rows, a constraint set on the planned end-effector position and on the action, and
 the coupling of the visual encoder to the generative network. The policy observes two RGB camera
-streams, a front view and an in-hand view as defined by D3IL, instead of the state (\autoref{fig:aligning-cameras}). Each
+streams, a front view and an in-hand view, instead of the state (\autoref{fig:aligning-cameras}). Each
 episode starts from an initial box pose, called a context. The tightened constraints are shrunk by
 $0.03$\,m.
 \srcnote{\texttt{config/visual\_aligning\_eval.yaml}: \texttt{workspace\_bounds},
 \texttt{action\_bounds: 'auto'}, \texttt{enlarge\_constraints: 0.03}.}
 
-\hole{Give the workspace box of the planned end-effector position (lower and upper bound per axis) for
-each geometry used, read off \texttt{config/visual\_aligning\_eval.yaml}.}
+The active geometry, \emph{combined-5}, bounds the planned end-effector position by
+$x\in[0.20,0.80]$\,m, $y\in[-0.45,0.45]$\,m and $z\in[0.02,0.50]$\,m. Its tightened counterpart moves
+each face inward by $0.03$\,m, giving $x\in[0.23,0.77]$\,m, $y\in[-0.42,0.42]$\,m and
+$z\in[0.05,0.47]$\,m.
+\srcnote{\texttt{config/visual\_aligning\_eval.yaml}: \texttt{active\_geo\_variants: [combined\_5]},
+\texttt{combined\_5.workspace\_bounds} and \texttt{enlarge\_constraints: 0.03}.}
 
 \begin{figure}[htpb]
   \centering
   \begin{minipage}{0.44\linewidth}\centering
     \includegraphics[width=\linewidth]{fig_render_aligning}\\[0.3em]
-    {\footnotesize D3IL simulator view}
+    {\footnotesize MuJoCo simulator view}
   \end{minipage}\hfill
   \begin{minipage}{0.44\linewidth}\centering
     \includegraphics[width=\linewidth]{fig_scene_aligning}\\[0.3em]
     {\footnotesize orthographic task-geometry view}
   \end{minipage}
-  \caption[The vision-conditioned alignment task]{The vision-conditioned alignment task built from
-  D3IL. Left: an authentic simulator frame with the manipulator, movable box and coloured target.
-  Right: a geometry view of the first held-out context, reconstructed from the D3IL scene description
+  \caption[The vision-conditioned alignment task]{The vision-conditioned alignment task. Left: a frame
+  rendered by MuJoCo with the manipulator, movable box and coloured target.
+  Right: a geometry view of the first held-out context, reconstructed from the scene description
   and its recorded box and target poses. The transparent footprint marks the target pose. These panels
   show the task; the policy itself observes the front and in-hand RGB streams.}
   \label{fig:env-aligning}
@@ -200,16 +205,16 @@ each geometry used, read off \texttt{config/visual\_aligning\_eval.yaml}.}
   \centering
   \begin{minipage}{0.33\linewidth}\centering
     \includegraphics[width=\linewidth]{fig_aligning_camera_overhead}\\[0.3em]
-    {\footnotesize front view (D3IL)}
+    {\footnotesize front view}
   \end{minipage}\hspace{0.08\linewidth}
   \begin{minipage}{0.33\linewidth}\centering
     \includegraphics[width=\linewidth]{fig_aligning_camera_wrist}\\[0.3em]
-    {\footnotesize in-hand view (D3IL)}
+    {\footnotesize in-hand view}
   \end{minipage}
   \caption[The two camera observations used for alignment]{The two $96\times96$ RGB observations
-  consumed by the visual policy, at the same instant of a recorded expert demonstration. Adapted from
-  D3IL \parencite[appendix, Fig.~8]{jia2024towards}: the camera set-up and the two views are D3IL's; the
-  frames shown are rendered in the alignment environment of this thesis. The front view shows the
+  consumed by the visual policy, at the same instant of a recorded expert demonstration, rendered by
+  MuJoCo in the alignment environment of this thesis. The two camera placements are those of the D3IL
+  task files \parencite{jia2024towards}. The front view shows the
   manipulator, box and target on the table; the in-hand view supplies a close view of the box and its
   coloured faces. These are the two image tensors paired with the proprioceptive
   state at every step.}
@@ -259,7 +264,7 @@ unstable (\autoref{sec:bg:quadrotor}), and its plan is tracked by the controller
     UAV-pillars  & six disks & radius $0.12$\,m at $x\in\{-2,0,2\}$, $y=\pm0.6$\,m \\
     UAV-s-curve  & switched wall halfspaces & $y\in[-1.25,-0.35]$ for $x\in[-3,-0.5]$; $y\in[0.35,1.25]$ for $x\in[0.5,3]$ \\
              & inner corners & disks of radius $0.05$\,m at $(\mp0.5,\,\mp0.3)$ \\
-    All      & workspace box & $x\in[-4,4]$\,m, altitude $[0.30,1.80]$\,m \\
+    All      & workspace box & $x\in[-4,4]$\,m, altitude $[0.30,1.80]$\,m; laterally $y\in[-2.5,2.5]$\,m (UAV-pillars), $y\in[-1.8,1.8]$\,m (UAV-s-curve), the walls (UAV-corridor) \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -267,8 +272,16 @@ unstable (\autoref{sec:bg:quadrotor}), and its plan is tracked by the controller
 \texttt{scene\_corridor\_v2.xml}), \texttt{pillars\_hg}, \texttt{s\_curve\_hg};
 \texttt{inflation.r\_drone: 0.31}; \texttt{enlarge\_constraints: 0.025}.}
 
-\hole{Confirm that the UAV-pillars and UAV-s-curve evaluations use the same workspace box as UAV-corridor, and
-state the tightening margin ($0.025$\,m in the configuration) for the quadrotor explicitly.}
+The three scenes share the extent of the workspace box along the flight direction, $x\in[-4,4]$\,m, and
+its altitude band, $[0.30,1.80]$\,m; they differ only in its lateral extent, which each scene closes at
+its own walls or at the edge of its pillar field (\autoref{tab:uav-scenes}). Every wall, pillar and
+corner disk is always inflated by the vehicle radius of $0.31$\,m. The tightened constraints move each
+of these boundaries and each face of the workspace box a further $0.025$\,m inward, the margin of
+\ac{DPCC}.
+\srcnote{\texttt{config/uav\_projection.yaml}: \texttt{workspace\_bounds} of \texttt{corridor\_v2\_slide},
+\texttt{pillars\_hg}, \texttt{s\_curve\_hg}; \texttt{planning\_inflation.r\_drone: 0.31};
+\texttt{enlarge\_constraints: 0.025}, applied to the geometric constraints of \texttt{-tightened} variants only
+(\texttt{eval\_mix\_uav.py:1019}).}
 
 \begin{figure}[!htbp]
   \centering
@@ -307,31 +320,38 @@ state the tightening margin ($0.025$\,m in the configuration) for the quadrotor 
 
 \subsection{Obstacle Avoidance}\label{sec:setup:data:avoiding}
 
-The demonstrations are those of the D3IL obstacle-avoidance task, as used by \ac{DPCC}. Each step
+The demonstrations are those of the D3IL obstacle-avoidance task \parencite{jia2024towards}, as used by \ac{DPCC}. Each step
 records the commanded and the measured planar end-effector position and the planar increment between
 consecutive commanded positions (\autoref{sec:method:env:avoiding}). The dataset holds 96 demonstrations (\autoref{fig:env-avoiding}). None of them satisfies the constraints of top-left-hard, one those of top-right-hard and two those of both-hard (\autoref{tab:avoiding-geometries}), so satisfying the constraints is left to the projection.
 
 \subsection{Vision-Conditioned Alignment}\label{sec:setup:data:aligning}
 
-The demonstrations are those of the D3IL alignment task, with the two camera streams rendered by
-D3IL's vision pipeline. For this thesis each step is laid out as the nine-dimensional plan of
+The demonstrations are those of the D3IL alignment task \parencite{jia2024towards}: its $900$ training
+demonstrations, with the two camera streams rendered by MuJoCo. For this thesis each step is laid out as the nine-dimensional plan of
 \autoref{sec:method:env:aligning} --- the three-dimensional increment and the commanded and measured
-end-effector positions --- and paired with the two images.
+end-effector positions --- and paired with the two images. Cut into plans of eight steps, they give
+$168\,274$ training windows.
+\srcnote{Training logs of jobs \texttt{24407}, \texttt{24345}, \texttt{24124}, \texttt{25372}:
+\texttt{[ ParityAligningDataset ] 900 episodes, 168274 windows (horizon=8, traj\_dim=9)}.}
+
+In all three environments, a random tenth of the training windows is held out and used only to select
+the checkpoint (\autoref{tab:train}).
+\srcnote{\texttt{train\_test\_split: 0.9} in every resolved \texttt{Trainer} configuration.}
 
 \subsection{Quadrotor Benchmark}\label{sec:setup:data:uav}
 
-The demonstrations were generated for this thesis as described in \autoref{sec:method:env:uav}. A
-reference path through per-scene waypoints, travelled with a cosine speed profile, is flown in MuJoCo by
-the cascaded geometric tracking controller, and accepted rollouts are recorded at the planning rate.
-\autoref{tab:uav-demos} gives the values per scene. The corridor with the slide reuses the demonstrations
+The demonstrations were generated for this thesis as described in \autoref{sec:method:env:uav}. That
+section gives the waypoint-and-arc construction, cosine speed profile, tracking equations, rejection
+rule and recorded observation--action pair; \autoref{tab:uav-demos} records only their numerical and
+scene-specific parameters. The corridor with the slide reuses the demonstrations
 and trained models of the corridor, because the slide is a test-time constraint.
 
 \begin{table}[!htbp]
   \caption[Quadrotor demonstrations]{Generation of the quadrotor demonstrations. Shared by all scenes:
   altitude drawn uniformly from $[0.90,1.30]$\,m per episode, physics step $0.01$\,s, recording every
-  third physics step ($0.03$\,s), rejection of an episode that falls below $0.50$\,m or touches an obstacle
-  on more than the stated fraction of its steps. Durations and offsets are drawn uniformly from the
-  stated ranges.}
+  third physics step ($0.03$\,s), the nominal gains of the tracking controller, rejection of an episode
+  that falls below $0.50$\,m or touches an obstacle on more than the stated fraction of its steps.
+  Durations and offsets are drawn uniformly from the stated ranges.}
   \label{tab:uav-demos}
   \centering
   \footnotesize
@@ -346,6 +366,8 @@ and trained models of the corridor, because the slide is a test-time constraint.
     Duration & $[6,10]$\,s & $[10,16]$\,s & $[16,22]$\,s \\
     Lateral offset & start, $[-0.03,0.03]$\,m, centre lane & --- & whole path, $[-0.04,0.04]$\,m \\
     Maximum contact fraction & $2\,\%$ & $0.1\,\%$ & $8\,\%$ \\
+    Episodes generated & 500 & 500 & 500 \\
+    Episodes accepted & 500 & 475 (18 too low, 7 in contact) & 500 \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -354,9 +376,11 @@ offsets; \texttt{SCENE\_MAX\_CONTACT\_FRACTION}; \texttt{Z\_FLOOR\_MARGIN}); \te
 (\texttt{BLEND\_RADIUS}, \texttt{CORRIDOR\_CHANNELS}, \texttt{corridor\_path}); \texttt{dataset\_writer.py}
 (\texttt{DATASET\_HZ}); \texttt{quadrotor\_modified.xml} (timestep).}
 
-\hole{Number of accepted demonstrations per scene, and the controller gains of each collection run (the
-collector takes the gain set as an argument). Also the number of alignment demonstrations and the
-train/validation split of all three environments.}
+\srcnote{Collection jobs \texttt{21475} (corridor), \texttt{21482} (pillars), \texttt{21476} (s-curve):
+\texttt{n\_trials=500 gain=pid\_default}; \texttt{DONE saved=475 rejected=25 \ldots floor=18 contact=7} for pillars,
+\texttt{saved=500 rejected=0} for the other two. The trained models load the same counts: buffer shapes
+$(500,360,6)$, $(475,560,6)$ and $(500,750,6)$ in the training logs. Gain set \texttt{pid\_default}:
+\texttt{generator.py:73}, both scales $1.0$.}
 
 % =============================================================================
 \section{Baselines}\label{sec:setup:baselines}
@@ -367,14 +391,15 @@ Three generative models are compared with the diffusion model of \ac{DPCC} (\emp
 instantaneous velocity of the probability path; \emph{analytic average-velocity matching}
 (\emph{MeanFM}) \parencite{geng2025meanflow}, which learns the average velocity over an interval through
 an analytic Jacobian--vector-product target; and \emph{consistency-interpolated average-velocity
-matching} (\emph{$\alpha$-MeanFM}) \parencite{zhang2025alphaflow}, whose consistency step ratio $\alpha$
+matching} (\emph{CI-MeanFM}) \parencite{zhang2025alphaflow}, whose consistency step ratio $\alpha$
 interpolates the target between the instantaneous velocity at $\alpha=1$ and a stop-gradient prediction
 towards the analytic average-velocity objective as $\alpha\to0$. In this thesis $\alpha$ is annealed from
 $1$ and held at a final value
 $\alpha_{\mathrm{end}}$, which each result states. Two projection methods are compared: the per-step projection of
 \ac{DPCC} and endpoint projection \parencite{li2025hardflow}. All generative models share the temporal
-U-Net backbone of the baseline, with $4.0$\,M parameters, unless a table states otherwise. These four
-short forms are used only where space is constrained, principally in tables.
+U-Net backbone of the baseline, with $4.0$\,M parameters, unless a table states otherwise. Throughout
+all figures and tables, the four models are labelled \emph{Diffusion}, \emph{FM}, \emph{MeanFM}, and
+\emph{CI-MeanFM}, respectively; running prose retains the full mechanism names.
 
 \subsection{Obstacle Avoidance}\label{sec:setup:baselines:avoiding}
 
@@ -454,25 +479,46 @@ camera-view figure ($96\times96$ front and in-hand views, image encoder of Diffu
 
 The quadrotor benchmark is new, and no learned planner has been evaluated on it before. Its closest
 precedent is the quadrotor task distributed with MuJoCo MPC \parencite{howell2022predictive}, which flies
-the same Skydio X2 model \parencite{zakka2022menagerie} through a course of gates. That task is not a
-learning problem. A sampling-based
-predictive controller plans with the simulator itself as the model: Predictive Sampling draws 32 control
-trajectories, parameterised by five spline points, over a horizon of $0.5$\,s at a planning time step of
-$0.01$\,s, and scores them by a weighted cost on the distance to the current goal, the linear and angular
-velocity, and the deviation of the rotor commands from hover thrust. The goal advances through a loop of
-thirteen positions whenever the vehicle comes within $0.5$\,m of it.
+the same Skydio X2 model \parencite{zakka2022menagerie}. That task is described here as it is
+distributed, because the benchmark of this thesis starts from its vehicle model and departs from it in
+everything else.
 
-The benchmark of this thesis differs in the three places that make it a test of generative planning. The
-plan comes from a network trained on demonstrations rather than from optimisation against the true
-dynamics; the constraints are walls, pillars and a test-time slide rather than gates to pass through; and
-the plan is tracked by the cascaded geometric controller (\autoref{sec:method:deployment}) rather than
-applied as rotor commands. As on D3IL-aligning, the baseline is therefore the diffusion model of \ac{DPCC}
+\paragraph{The original task.} The scene is a racing course of eight square gates, each a frame of four
+capsules with a $1.5$\,m opening, placed at different headings and heights around a closed loop. The
+vehicle starts on the floor. A goal marker leads it around the course: it sits at one of twelve fixed
+positions, between $0.75$ and $2.25$\,m above the floor, placed so that flying from one to the next passes
+through a gate, and it advances to the next position whenever the vehicle comes within $0.5$\,m of it,
+returning to the first after the last. The gates do not appear in the objective; passing through them is
+a consequence of where the goal positions are placed.
+
+The controller is Predictive Sampling, the sampling-based predictive controller of MuJoCo MPC, and the
+simulator itself is its model. At each planning instant it perturbs its current control sequence into 32
+candidate sequences of the four rotor thrusts, each parameterised by five spline points, rolls every
+candidate forward in MuJoCo over a horizon of $0.5$\,s at a time step of $0.01$\,s, and keeps the
+cheapest. The cost of a rollout sums four quadratic terms over the horizon: the distance of the vehicle
+from the current goal position, weighted $25$; its linear velocity and its angular velocity, each
+weighted $1.25$; and the deviation of each rotor thrust from the hover thrust, weighted $10^{-3}$. The
+first control of the kept sequence is applied to the rotors, and planning repeats. Nothing is learned,
+no demonstrations are used, and no success rate is defined: the task is an interactive demonstration of
+the controller.
+
+\paragraph{This benchmark.} The benchmark of this thesis keeps the vehicle model and the simulator and
+changes the three things that make the task a test of constrained generative planning. The plan comes
+from a network trained on demonstrations instead of from sampling against the true dynamics; the
+environment is a set of walls, pillars and a test-time slide that the plan must not violate, instead of
+gates that a goal sequence leads through; and the plan is a sequence of positions tracked by the
+cascaded geometric controller (\autoref{sec:method:deployment}), instead of rotor thrusts applied
+directly. Each flight is scored for success and for constraint satisfaction (\autoref{sec:setup:metrics:uav}).
+As on D3IL-aligning, the baseline is therefore the diffusion model of \ac{DPCC}
 trained on the same demonstrations, with an action loss weight of $1$ and $\nfe=20$.
 
 \srcnote{MuJoCo MPC, \texttt{mjpc/tasks/quadrotor/task.xml} (\texttt{agent\_planner 0} = Sampling,
 \texttt{agent\_horizon 0.5}, \texttt{agent\_timestep 0.01}, \texttt{sampling\_trajectories 32},
-\texttt{sampling\_spline\_points 5}, cost weights Position 25, Lin.~Vel.~1.25, Ang.~Vel.~1.25, Control
-$10^{-3}$) and \texttt{quadrotor.cc} (residuals; goal switch at $0.5$\,m over 13 keyframes).
+\texttt{sampling\_spline\_points 5}, \texttt{sampling\_exploration 0.3}, cost weights Position 25, Lin.~Vel.~1.25, Ang.~Vel.~1.25, Control
+$10^{-3}$; twelve goal keyframes at heights $0.75$--$2.25$\,m) and \texttt{quadrotor.cc} (four residual terms, none on the gates;
+goal advances within $0.5$\,m and wraps after \texttt{model->nkey}); \texttt{gates.xml}: eight gates of four capsules,
+$1.5$\,m opening; X2 start \texttt{pos="0 0 0.1"} in \texttt{quadrotor\_modified.xml}. \texttt{task\_transition} lists thirteen
+modes (a manual loop plus twelve stages); automatic switching cycles the twelve keyframes.
 Lineage: \texttt{d3il/.../quadrotor/gates.xml} is byte-identical to MuJoCo MPC's, though none of the
 three scenes includes it. The quadrotor task is part
 of the MuJoCo MPC software; the paper itself does not evaluate it.}
@@ -531,7 +577,7 @@ result rests on. D3IL-avoiding is evaluated over five training seeds, which meas
 varies with the seed (\autoref{tab:seed-spread}); D3IL-aligning and the UAV scenes are evaluated with one
 training seed, seed 6, within the storage and compute available to this work.
 
-\begin{table}[htpb]
+\begin{table}[p]
   \caption[Training parameters]{Training parameters. Values are those recorded by the training runs of the
   reported models. The effective batch is the batch size times the number of gradient accumulation
   steps. The diffusion model on D3IL-avoiding uses the training configuration of
@@ -539,11 +585,12 @@ training seed, seed 6, within the storage and compute available to this work.
   \label{tab:train}
   \centering
   \small
+  \renewcommand{\arraystretch}{1.28}
   \begin{tabularx}{\linewidth}{@{}p{2.7cm} L p{1.55cm} p{1.55cm} p{1.5cm} p{1.5cm}@{}}
     \toprule
     & & \multicolumn{2}{l}{D3IL-avoiding} & D3IL-aligning & UAV, all scenes \\
     \cmidrule(lr){3-4}
-    Parameter & Meaning & Diffusion, FM & MeanFM, $\alpha$-MeanFM & all models & all models \\
+    Parameter & Meaning & Diffusion, FM & MeanFM, CI-MeanFM & all models & all models \\
     \midrule
     Plan horizon $H$ & steps in one generated plan & 8 & 8 & 8 & 8 \\
     Plan width $d$ & action and state channels per step & 6 & 6 & 9 & 9 \\
@@ -686,14 +733,20 @@ initial noise at half the unit scale while instantaneous-velocity matching was t
 
 \subsection{Vision-Conditioned Alignment}\label{sec:setup:protocol:aligning}
 
-The evaluation resets the environment to a fixed, enumerated set of contexts, so every model and
-projection method is evaluated on the same initial box poses and comparisons are paired. The results
-use training seed 6 and ten contexts with one episode each, drawn from the training contexts of the
-D3IL task rather than its held-out set, and differences are tested with exact
-paired sign tests and paired sign-flip permutation tests. At ten pairs the smallest two-sided sign-test
-$p$-value is $0.002$.
+The evaluation resets the environment to a fixed, enumerated set of contexts, the initial box and
+target poses, so every model and projection method starts from the same ten situations. The results use
+training seed 6 and one episode per context, drawn from the training contexts of the D3IL task rather than
+its held-out set. As on D3IL-avoiding, every configuration is evaluated under the three selection rules
+of \ac{DPCC}, on untightened and on tightened constraints.
+
+Because the contexts are shared, two configurations are compared context by context: for each context,
+which of the two leaves the box closer to its target. A result is reported as the number of contexts in
+which one configuration is ahead, together with the median final distance over the ten contexts. The
+diffusion model was evaluated with three episodes per context; its value for a context is the median of
+the three.
 \srcnote{\texttt{config/visual\_aligning\_eval.yaml:44--45} (\texttt{n\_contexts},
-\texttt{n\_trajectories\_per\_context}); \texttt{eval\_mix\_visual\_aligning.py:1240}.}
+\texttt{n\_trajectories\_per\_context}); \texttt{eval\_mix\_visual\_aligning.py:1240}; context matching by
+initial box and target position, \texttt{DA\_in\_Paper/analysis/va\_results.py}.}
 \provisional{D3IL evaluates alignment on sixty contexts; the evaluation on fifty contexts is pending.}
 
 \subsection{Quadrotor Benchmark}\label{sec:setup:protocol:uav}
@@ -709,7 +762,15 @@ weight of $1$.
 \srcnote{\texttt{Gen15/U16/DA\_20260914\_corridor\_v2\_paper\_full.md} \S1 (\texttt{-bounds\_free-pdes-tightened},
 \texttt{pid\_stopgo}, $n=12$); \texttt{Campaign\_20260907\_five\_missions/DA\_20260912\_pillars\_diffusion\_baseline\_reference.md} \S8.}
 
-\hole{Confirm the controller and velocity-setpoint policy used for the UAV-pillars and UAV-s-curve results.}
+The same controller tracks every flight on UAV-pillars and UAV-s-curve: the cascaded geometric
+controller with brake-to-rest velocity setpoints, which commands zero velocity at each new position
+setpoint so that the vehicle comes to rest at the setpoint unless the next one moves it on. The one
+exception is the controller comparison on UAV-s-curve in \autoref{sec:res:uav:controller}, which replaces
+the tracking controller by MuJoCo MPC and says so.
+\srcnote{\texttt{batch\_uav\_20260915\_100816/per\_rollout\_detail.csv}, column \texttt{controller}: all
+960 rows on \texttt{pillars\_hg} and 880 of the 889 rows on \texttt{s\_curve\_hg} are \texttt{pid\_stopgo}; the
+other 9 are \texttt{mjpc};
+\texttt{pid\_stopgo} sets \texttt{v\_des} $=0$ at each setpoint, \texttt{eval\_mix\_uav.py:1598, 1716--1720}.}
 
 \subsection{Compute Environment}\label{sec:setup:protocol:compute}
 

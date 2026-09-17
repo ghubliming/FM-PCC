@@ -12,6 +12,8 @@ DA_in_Paper/
 └── figures/              all thesis figures, by group: da/ demo/ env/ schematic/  (+ MANIFEST.md)
 ```
 
+**Hand-made figures:** drop them into [`MANUAL_PROVIDED_FIGURES/`](MANUAL_PROVIDED_FIGURES/README.md) (one subfolder per figure, with a `SOURCE.md`); they enter the store only through `plotting/sources.py` `VENDORED`.
+
 ## The rule for figures
 
 **Every thesis figure is produced in `figures/`. A draft holds copies only.**

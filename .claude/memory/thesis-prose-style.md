@@ -25,12 +25,13 @@ corrected each of the following explicitly, some more than once (2026-09-11 → 
   projection), not "candidate fan", "harness", "ladder", "bootstrapped target" (invented — it is
   consistency training). Use the de-facto scientific name, verified in the source paper.
 - **"Backbone" is fine** — DPCC, DiT and MeanFlow all use it.
-- **Branded method names only in Related Work** (user angry, 2026-09-14) — **now applies to *HardFlow*
-  only**. Never write *HardFlow* in the abstract, Ch 1, Ch 2, Positioning, Ch 4, titles or captions; write
-  *endpoint projection* with an in-place `\parencite`. *Flow matching*, *MeanFlow*, **α-Flow** and *DPCC*
-  stay named. **α-Flow exception (author, 2026-09-17):** "consistency training" was wrong (a different
-  published method) and unreadable in tables; write *α-Flow* and *α_end = 0.2*, never "floor". Keep labels
-  and code tokens unchanged.
+- **Branded method names only in Related Work** (user angry, 2026-09-14; final author decision v3.20,
+  2026-09-17). *MeanFlow*, *α-Flow*, *HardFlow* never outside Related Work / provenance. Write
+  **instantaneous-velocity matching** (fm), **analytic average-velocity matching** (mf),
+  **consistency-interpolated average-velocity matching** (af), **endpoint projection**, with in-place
+  `\parencite`; tables use FM / MeanFM / CI-MeanFM. *Flow matching* stays as the family name; *DPCC* stays.
+  Never "consistency training" (a different published method); write *α_end = 0.2*, never "floor". Keep
+  labels and code tokens unchanged. (The earlier same-day "α-Flow stays named" exception is superseded.)
 - **Describe only what this thesis has and does** (user angry again, 2026-09-14). Never compare our
   configuration with a paper's published configuration ("what differs from the published…", "as
   published", "departures from the source"), and never explain why a choice was made. Never
@@ -38,6 +39,15 @@ corrected each of the following explicitly, some more than once (2026-09-11 → 
   one conditioning, *feature-wise conditional biasing*). No defensive remark blocks ("facts that
   are not free choices", "not cosmetic", "rather than by omission"), no "shipped". If such a
   remark hides a real defect, tell the user in chat instead of writing it into the thesis.
+- **No statistics in the thesis** (user angry, 2026-09-17: "that is confidential inside job… that NOT how
+  do the storytelling"). No p-values, no test names (sign/permutation/Fisher), no "significant" — in
+  protocol, results or recap. Report counts (*nine of ten contexts*, *12/12 vs 0/12*) and margins. DA
+  reports may keep tests; the thesis never does. Recap sections = plain "who is best" tables.
+- **MuJoCo is the simulator; D3IL only supplies task files, demonstrations, camera placements**
+  (2026-09-17). Never "D3IL simulator view" or "(D3IL)" on a MuJoCo render.
+- **Caveats are told as story sections** (2026-09-17): e.g. "Caveat: What the Metrics of DPCC Do Not
+  Measure", "Caveat: The Tracking Controller" — a weakness stated plainly, with evidence, not as a
+  defensive remark.
 - **Tell the evaluation as two stages: prove, then extend.** Obstacle avoidance is DPCC's benchmark,
   used 1:1 to meet the baseline on its own ground. The vision-conditioned alignment task and the
   quadrotor benchmark were **built** for this thesis (the quadrotor: everything but the Skydio X2

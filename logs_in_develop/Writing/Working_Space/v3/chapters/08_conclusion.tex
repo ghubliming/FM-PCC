@@ -26,8 +26,8 @@ instantaneous-velocity matching in every context, and on the quadrotor it comple
 UAV-pillars. Consistency-interpolated average-velocity matching is level with analytic average-velocity matching where the tasks cannot separate them and behind
 it where they can. Endpoint projection is not used at the one- and two-evaluation operating point of
 D3IL-avoiding. At larger budgets it reduces time on D3IL-aligning and UAV-corridor and projection time
-on UAV-pillars, while its constraint result is level on D3IL-aligning, lower on UAV-corridor and higher on
-UAV-pillars.
+on UAV-pillars, while its constraint result is higher on D3IL-aligning and UAV-pillars and lower on
+UAV-corridor.
 
 \hole{Refine in v4.}
 
@@ -44,15 +44,15 @@ UAV-pillars.
     evaluations and consistency-interpolated average-velocity matching does not.
   \item[RQ3 --- Constraints.] Endpoint projection is well-posed only with at least one guiding step
     (\autoref{sec:res:constraints:degenerate}). With several guiding steps it reduces time on D3IL-aligning
-    and UAV-corridor and projection time on UAV-pillars; its constraint satisfaction is level on D3IL-aligning,
-    higher on UAV-pillars and lower on UAV-corridor (\autoref{sec:res:constraints}). D3IL-avoiding is
+    and UAV-corridor and projection time on UAV-pillars; its constraint satisfaction is higher on D3IL-aligning,
+    where it alone keeps every context free of violations, higher on UAV-pillars and lower on UAV-corridor (\autoref{sec:res:constraints}). D3IL-avoiding is
     already solved at one or two network evaluations, where endpoint projection has zero or at most one
     guiding step and no supported advantage, so per-step projection is the method there
     (\autoref{sec:res:avoiding:conclusion}).
   \item[RQ4 --- Transfer.] The lead of analytic average-velocity matching carries over from state to camera observations and from the
     manipulator to the quadrotor; the step from instantaneous-velocity matching to diffusion does not carry over to camera
     observations, where the two are level. On UAV-s-curve the tracking controller, not
-    the plan, limits the result (\autoref{sec:res:uav:scurve}).
+    the plan, limits the result (\autoref{sec:res:uav:controller}).
 \end{description}
 
 \hole{Refine in v4.}

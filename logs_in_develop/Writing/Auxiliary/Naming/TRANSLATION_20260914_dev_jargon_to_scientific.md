@@ -42,9 +42,9 @@ in thesis text.
 | dev jargon | paper name | scientific name → thesis | |
 |---|---|---|---|
 | `ddpm`, `diffusion`, `diffuser`, `GaussianDiffusion` | DDPM [Ho 2020]; Diffuser [Janner 2022] | the denoising diffusion model of DPCC, cosine schedule, `K` fixed at training → **"the diffusion model"** / **"the DPCC baseline"**. Never bare *diffuser*: it means Janner's method, the ancestor codebase *and* the unprojected row | 🔁🚨 |
-| `fm`, `FMv3ODE`, `flow_matcher_v3` | Flow Matching [Lipman 2023; FM Guide, Lipman 2024 — FAIR at Meta]; Rectified Flow [Liu 2023] | matches the velocity at one transport time → **"instantaneous-velocity matching"**; **FM** in space-constrained tables | 🔁 |
-| `mf`, `MeanFlowODE`, `MeanFlowEngine` | MeanFlow [Geng 2025] | predicts velocity averaged over an interval; its regression target is constructed analytically through a Jacobian--vector product → **"analytic average-velocity matching"**; **MeanFM** in space-constrained tables | 🔁 |
-| `af`, `AlphaFlowODE`, `alphaflow`, "alpha flow", "consistency target", "consistency training" | α-Flow [Zhang 2025] | predicts average velocity using a target interpolated by the consistency step ratio between instantaneous velocity and a stop-gradient network prediction → **"consistency-interpolated average-velocity matching"**; **α-MeanFM** in space-constrained tables. Write the final ratio as **`α_end = 0.2`**, never *floor*. *Consistency Training* is a different published method | 🔁 |
+| `fm`, `FMv3ODE`, `flow_matcher_v3` | Flow Matching [Lipman 2023; FM Guide, Lipman 2024 — FAIR at Meta]; Rectified Flow [Liu 2023] | matches the velocity at one transport time → **"instantaneous-velocity matching"**; **FM** in all figures and tables | 🔁 |
+| `mf`, `MeanFlowODE`, `MeanFlowEngine` | MeanFlow [Geng 2025] | predicts velocity averaged over an interval; its regression target is constructed analytically through a Jacobian--vector product → **"analytic average-velocity matching"**; **MeanFM** in all figures and tables | 🔁 |
+| `af`, `AlphaFlowODE`, `alphaflow`, "alpha flow", "consistency target", "consistency training" | α-Flow [Zhang 2025] | predicts average velocity using a target interpolated by the consistency step ratio between instantaneous velocity and a stop-gradient network prediction → **"consistency-interpolated average-velocity matching"**; **CI-MeanFM** in all figures and tables. Write the final ratio as **`α_end = 0.2`**, never *floor*. *Consistency Training* is a different published method | 🔁 |
 | `imf`, `iMF` | Improved MeanFlow | refuted variant → only as a negative result | 🔁 |
 | `unet` · `dit` · `sit` · `mf_dit` | U-Net; DiT; SiT | backbone choice; only `unet` is architecture-matched to the baseline | ✅ |
 | 🆕 **DGM** | — | **deep generative model** — spell out; the abbreviation is not used in the thesis | 🔁 |
@@ -54,8 +54,8 @@ in thesis text.
 > `fm`, `mf` and `af` are one target-construction axis: **instantaneous-velocity matching**,
 > **analytic average-velocity matching**, and **consistency-interpolated average-velocity matching**.
 > These mechanism names, not the paper brands or artefact tokens, are used outside Related Work. After
-> their first definition, space-constrained tables use **Diffusion**, **FM**, **MeanFM** and
-> **α-MeanFM**.
+> their first definition, all figures and tables use **Diffusion**, **FM**, **MeanFM** and
+> **CI-MeanFM** consistently; their captions or surrounding descriptions retain the full-name mapping.
 
 ## 3. Projection and constraint enforcement
 
@@ -166,3 +166,14 @@ Defined once at the start of v3 §5.1. `UAV` is spelled out there; it is not yet
 4. Do not rename someone else's method; name *our instantiation*, credit *their idea*.
 5. Translate at the thesis boundary; artefacts keep their tokens.
 6. When a draft adds a term here, it says so in its own CHANGELOG (`DRAFT_OWNERSHIP.md`, shared material).
+7. **MuJoCo is the simulator; D3IL is a source of task files and data.** Every environment runs in MuJoCo.
+   D3IL supplies the Panda model and task files, the demonstrations and the camera placements of the two
+   manipulation tasks. Write *rendered by MuJoCo*, *a MuJoCo frame*, *the task files / demonstrations of
+   D3IL*; never *D3IL simulator view*, *D3IL's simulation* or a figure label *(D3IL)* on a MuJoCo render.
+   The environment prefixes *D3IL-avoiding* / *D3IL-aligning* stay (they name the task origin).
+   *(Author, 2026-09-17, v3.26.)*
+8. **No statistical-test reporting in the thesis.** No $p$-values, no test names (sign, permutation,
+   Fisher), no "significant". Those are internal assessments. Report the evidence the reader can see:
+   counts over contexts, episodes or flights (*closer in nine of ten contexts*, *12/12 against 0/12*),
+   margins, and the sample size. Recap sections restate who is best, without statistics.
+   *(Author, 2026-09-17, v3.26.)*

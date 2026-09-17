@@ -211,7 +211,7 @@
 \fi
 
 % -----------------------------------------------------------------------------
-% ABSTRACT -- v2.19. Modelled on the abstracts of the reference papers (DPCC,
+% ABSTRACT -- v2.21. Modelled on the abstracts of the reference papers (DPCC,
 % HardFlow, SafeFlowMPC, Diffuser): one paragraph, NO numbers, context ->
 % limitation -> approach -> extensions -> qualitative results.
 % -----------------------------------------------------------------------------
@@ -220,17 +220,18 @@ Diffusion planners capture multimodal demonstrations, and Diffusion Predictive C
 Constraints (DPCC) enforces constraints by projecting every denoising iterate onto the feasible set.
 However, their long denoising sequence is fixed during training and repeated at every control step.
 This thesis replaces diffusion with deterministic transport along an ordinary differential equation.
-The objectives span instantaneous velocity, analytic average velocity and an intermediate
-finite-difference target derived from the network's own prediction; the integration budget is selected
-at deployment. On the obstacle-avoidance benchmark of DPCC, the aim is to preserve success and
+Three objectives are studied: instantaneous-velocity matching, analytic average-velocity matching and
+consistency-interpolated average-velocity matching, whose target mixes the instantaneous velocity with
+the network's own prediction; the integration budget is selected at deployment. On the
+obstacle-avoidance benchmark of DPCC, the aim is to preserve success and
 constraint satisfaction while reducing network evaluations, wall-clock time and the control steps
 required to reach the goal. Constraint enforcement forms a second contribution. DPCC projects the
 current iterate at every sampling step; endpoint projection predicts and projects the final trajectory,
 then guides later sampling steps towards it. The analysis identifies the step budget at which this
 guidance becomes active. After evaluation on the DPCC benchmark, the controller is extended to two
 more complex settings built for this thesis: vision-conditioned object alignment and control of an
-underactuated, open-loop unstable quadrotor. Simulations show that the analytic average-velocity
-objective matches the reliability of DPCC with fewer control steps and at a fraction of its
+underactuated, open-loop unstable quadrotor. Simulations show that analytic average-velocity
+matching is as reliable as DPCC with fewer control steps and at a fraction of its
 computational cost; endpoint projection can reduce constraint-enforcement time, and
 vision-conditioned planning can align objects more precisely.
 \fi
@@ -274,17 +275,16 @@ that trajectory admissible, and the first action is executed. This thesis holds 
 architecture fixed and varies two parts of it: the generative model and the projection method.
 
 \emph{Flow matching} in the title names the family of generative models that transport noise to data
-along an ordinary differential equation; MeanFlow and its consistency-training variant belong to it. The
-study covers two observation modalities, state and camera images, and two embodiments, a manipulator
+along an ordinary differential equation. The three generative models studied here belong to it and
+differ in the velocity their network learns: \emph{instantaneous-velocity matching},
+\emph{analytic average-velocity matching} and \emph{consistency-interpolated average-velocity
+matching}. The study covers two observation modalities, state and camera images, and two embodiments, a manipulator
 and a quadrotor.
 
-The study proceeds in two stages. It first takes over the setting of \ac{DPCC}
-\parencite{romer2025diffusion} unchanged --- the obstacle-avoidance task of D3IL
-\parencite{jia2024towards}, its constraint geometries and its baseline configuration --- and
-establishes the new generative models and projection methods against the diffusion baseline on its own
-benchmark. It then tests them further in two environments built for this thesis: a vision-conditioned
-alignment task on top of D3IL, and a quadrotor benchmark whose scenes, constraint sets, expert
-demonstrations and control loop were all built here.
+The generative models and projection methods are first compared with the diffusion baseline on the
+obstacle-avoidance benchmark of \ac{DPCC} \parencite{romer2025diffusion,jia2024towards}, with its
+setup unchanged, and are then tested in a vision-conditioned alignment task and a quadrotor benchmark
+built for this thesis. \autoref{ch:setup} describes the evaluation.
 
 \section{Research Questions}\label{sec:intro:rqs}
 
@@ -313,22 +313,24 @@ This thesis makes six contributions.
 
 \begin{enumerate}
   \item \textbf{Flow matching in place of diffusion.} The diffusion model of \ac{DPCC}
-    \parencite{romer2025diffusion} is replaced by flow matching
-    \parencite{lipman2023flow,lipman2024guide}, which learns a velocity field and generates a
+    \parencite{romer2025diffusion} is replaced by instantaneous-velocity matching, the flow-matching
+    objective \parencite{lipman2023flow,lipman2024guide}, which learns a velocity field and generates a
     trajectory by integrating an ordinary differential equation. Backbone, projection, data and
     evaluation protocol are kept, and the number of network evaluations becomes a choice made at
     deployment. The comparison is made first on
     the obstacle-avoidance benchmark of \ac{DPCC}, with its setup unchanged.
     \hole{Result sentence for this contribution --- from Ch.~6, supplied by v3 as a \texttt{For v2:} line.}
-  \item \textbf{MeanFlow in place of flow matching.} MeanFlow \parencite{geng2025meanflow} learns the
-    average velocity over an interval instead of the instantaneous velocity, so that a single network
-    evaluation can cover the whole integration. It replaces flow matching within the same
-    architecture.
+  \item \textbf{Analytic average-velocity matching.} Analytic average-velocity matching
+    \parencite{geng2025meanflow} learns the average velocity over an interval instead of the
+    instantaneous velocity, with a regression target constructed analytically through a
+    Jacobian--vector product, so that a single network evaluation can cover the whole integration. It
+    replaces instantaneous-velocity matching within the same architecture.
     \hole{Result sentence for this contribution --- from Ch.~6, supplied by v3 as a \texttt{For v2:} line.}
-  \item \textbf{Consistency training between flow matching and MeanFlow.} A curriculum objective
-    \parencite{zhang2025alphaflow} anneals from flow matching to MeanFlow through a
-    trajectory-consistency term, a form of consistency training \parencite{song2023consistency}. This
-    objective and MeanFlow both achieve state-of-the-art one- and two-step image generation
+  \item \textbf{Consistency-interpolated average-velocity matching.} Consistency-interpolated
+    average-velocity matching \parencite{zhang2025alphaflow} also learns the average velocity, with a
+    target interpolated by a consistency step ratio between the instantaneous velocity and a
+    stop-gradient prediction of the network itself; the ratio is annealed during training. Both
+    average-velocity objectives achieve state-of-the-art one- and two-step image generation
     \parencite{geng2025meanflow,zhang2025alphaflow}; this thesis evaluates both as planners inside a
     constrained controller.
     \hole{Result sentence for this contribution --- from Ch.~6, supplied by v3 as a \texttt{For v2:} line.}
@@ -340,8 +342,12 @@ This thesis makes six contributions.
     projection after sampling. On obstacle avoidance the guiding step count is zero at one and two
     network evaluations, where endpoint projection reduces to projecting the finished sample; above that
     budget, neither projection method leads consistently (\autoref{sec:res:constraints:degenerate}).
-    \srcnote{Result sentence from v3 Ch.~6 (\texttt{cross\_draft/to\_v2/FROM\_v3\_20260915\_result\_sentences.md}),
-    worded after \texttt{sec:res:avoiding:projection} and \texttt{tab:hf-ladder} as of v3.16.}
+    Where it has guiding steps, endpoint projection takes less time per control step than per-step
+    projection in every environment; on UAV-corridor it is also less often collision-free
+    (\autoref{sec:res:constraints}).
+    \srcnote{Result sentences from v3 Ch.~6 (\texttt{cross\_draft/to\_v2/FROM\_v3\_20260915\_result\_sentences.md},
+    worded after \texttt{sec:res:avoiding:projection} and \texttt{tab:hf-ladder} as of v3.16; cost sentence
+    from \texttt{FROM\_v3\_20260917\_projection\_cost\_resolved.md}, v3.18).}
   \item \textbf{A vision-conditioned alignment task.} Once established on the state-based benchmark
     of \ac{DPCC}, all generative models and both projection methods are tested on a more complex
     task built for this thesis from the alignment task of D3IL, in which the robot observes two camera
@@ -430,24 +436,24 @@ into a curved field, and coarse integration steps along a curved field are inacc
 network is trained \parencite[Sec.~3]{geng2025meanflow}. Few-step models change what the network
 learns so that a large step stays accurate.
 
-MeanFlow \parencite{geng2025meanflow} learns the average velocity over a time interval instead of the
-instantaneous velocity. One evaluation of an accurate average velocity covers the whole interval, so a
+Analytic average-velocity matching \parencite{geng2025meanflow} learns the average velocity over a
+time interval instead of the instantaneous velocity. One evaluation of an accurate average velocity covers the whole interval, so a
 plan can be generated in a single step. The average velocity is defined by an integral that cannot be
-evaluated during training; MeanFlow differentiates that definition into an identity relating the
+evaluated during training; the method differentiates that definition into an identity relating the
 average velocity to the instantaneous velocity and to its own time derivative, and computes the
-derivative with a \ac{JVP}. When the interval shrinks to a point, the MeanFlow target becomes the
-flow-matching target.
+derivative with a \ac{JVP}. When the interval shrinks to a point, its target becomes the
+instantaneous-velocity target.
 
-A subsequent analysis \parencite{zhang2025alphaflow} decomposes the MeanFlow objective into a
+A subsequent analysis \parencite{zhang2025alphaflow} decomposes this objective into a
 trajectory flow-matching term and a trajectory-consistency term, and builds a family of objectives
-that anneals from the first to the second. The target of this family is formed at an intermediate time
-from a stop-gradient copy of the network itself, the construction of consistency models
-\parencite{song2023consistency}; this thesis refers to it as \emph{consistency training}. MeanFlow and
-this family of objectives both achieve state-of-the-art one- and two-step image generation
+that anneals from the first to the second. Its target interpolates, by a consistency step ratio,
+between the instantaneous velocity and a stop-gradient prediction of the network itself; this thesis
+refers to it as \emph{consistency-interpolated average-velocity matching}. Both average-velocity
+objectives achieve state-of-the-art one- and two-step image generation
 \parencite{geng2025meanflow,zhang2025alphaflow}.
 
-For diffusion the step budget is therefore fixed at training time, for flow matching it is chosen at
-deployment, and MeanFlow and consistency training make a small budget accurate.
+For diffusion the step budget is therefore fixed at training time, for instantaneous-velocity matching
+it is chosen at deployment, and the two average-velocity objectives make a small budget accurate.
 
 \section{Constraint Enforcement in Generative Sampling}\label{sec:bg:mpc}
 
@@ -595,7 +601,8 @@ Menagerie \parencite{zakka2022menagerie}.
 Fast generative sampling, hard constraint enforcement, visual conditioning and aerial embodiment have
 each been studied, but in a receding-horizon controller the cost of fast sampling and the cost of
 constraint enforcement interact, and that interaction has not been measured under matched conditions.
-This thesis places flow matching, MeanFlow and consistency training inside the constrained controller
+This thesis places instantaneous-velocity matching and the two average-velocity objectives inside the
+constrained controller
 of \ac{DPCC} and compares its per-step projection with endpoint projection \parencite{li2025hardflow}
 on the same feasible set, first on the benchmark of \ac{DPCC} with its setup unchanged. It then carries
 the resulting controller to a vision-conditioned alignment task and to a quadrotor benchmark, both built
@@ -740,7 +747,8 @@ Appendix~\ref{app:repro}.} \srcnote{TARGET \S5.3}
 % =============================================================================
 \section{Generative Models}\label{sec:method:engine}
 
-The diffusion model of \ac{DPCC} is the baseline. Flow matching, MeanFlow and consistency training replace it
+The diffusion model of \ac{DPCC} is the baseline. Instantaneous-velocity matching, analytic
+average-velocity matching and consistency-interpolated average-velocity matching replace it
 behind one interface, each with its own training target and integration loop.
 
 \subsection{Diffusion and the DPCC Baseline}\label{sec:method:diffusion}
@@ -905,7 +913,8 @@ throughout the thesis. Two consequences follow.
 deployment, in contrast to \eqref{eq:bg:ddpm:forward}--\eqref{eq:bg:ddpm:loss} where it
 indexes the schedule the model was fitted to. What limits small $\nfe$ is now discretisation
 error of \eqref{eq:bg:fm:ode}, which is a property of the field's curvature rather than of the
-training objective --- and that is the quantity MeanFlow addresses (\autoref{sec:method:meanflow}).
+training objective --- and that is the quantity analytic average-velocity matching addresses
+(\autoref{sec:method:meanflow}).
 
 \emph{The sampler became deterministic.} \eqref{eq:bg:fm:euler} injects no noise: the plan is
 a function of $\vect{x}_{0}$ and $\vect{c}$ alone. This removes a source of run-to-run variance
@@ -916,7 +925,7 @@ projection, so the comparison in \autoref{ch:results} is controlled. The candida
 
 \subsubsection*{Implementation}
 
-Training draws a data plan $\vect{x}_{1}$, a prior sample $\vect{x}_{0}$ and a transport time
+Instantaneous-velocity matching trains on exactly this objective. Training draws a data plan $\vect{x}_{1}$, a prior sample $\vect{x}_{0}$ and a transport time
 $\ftime$; forms the interpolant and regresses the velocity, exactly
 \eqref{eq:bg:fm:path}--\eqref{eq:bg:fm:loss}:
 \begin{equation}\label{eq:method:engine:fm}
@@ -933,7 +942,7 @@ conditioning mask, the loss reduction and the backbone are untouched.
 \srcnote{\texttt{flow\_matcher\_v3/models/diffusion.py:273--299}
 (\texttt{q\_sample}, \texttt{p\_losses}).}
 
-\subsection{MeanFlow}\label{sec:method:meanflow}
+\subsection{Analytic Average-Velocity Matching}\label{sec:method:meanflow}
 
 \subsubsection*{Average velocity}
 
@@ -958,7 +967,7 @@ approximates $\afield$ well, then
 traverses the entire path in a single evaluation. No integral is approximated at inference;
 the interval is a network input.
 
-\subsubsection*{The MeanFlow identity --- the target that makes it trainable}
+\subsubsection*{The average-velocity identity}
 
 \eqref{eq:bg:mf:def} cannot be used as a regression target directly, because forming it
 requires integrating during training. The construction of \parencite[Eqs.~(4)--(6)]{geng2025meanflow}
@@ -966,7 +975,7 @@ removes the
 integral. Write \eqref{eq:bg:mf:def} as
 $(\ftime-r)\,\afield(\vect{x}_{\ftime},r,\ftime) = \int_{r}^{\ftime}\vfield\,\dd\varsigma$ and
 differentiate both sides with respect to $\ftime$ at fixed $r$; the product rule on the left
-and the fundamental theorem of calculus on the right give the \emph{MeanFlow identity}
+and the fundamental theorem of calculus on the right give the \emph{average-velocity identity}
 \begin{equation}\label{eq:bg:mf:identity}
   \underbrace{\afield(\vect{x}_{\ftime},r,\ftime)}_{\text{average velocity}}
   \;=\;
@@ -989,7 +998,7 @@ Parameterising $\afield$ by a network $\afield_{\theta}$ and substituting the co
 velocity of \eqref{eq:bg:fm:path} for the marginal one, as in \autoref{sec:method:fm}, yields the
 objective
 \begin{equation}\label{eq:bg:mf:loss}
-  \mathcal{L}\sidx{MF}(\theta)
+  \mathcal{L}\sidx{avg}(\theta)
   = \E\left\|\afield_{\theta}(\vect{x}_{\ftime},r,\ftime)
       - \sg\!\left(\afield\sidx{tgt}\right)\right\|_{2}^{2},
   \qquad
@@ -1003,13 +1012,13 @@ required \parencite[Eqs.~(9)--(11)]{geng2025meanflow}.
 Three properties of \eqref{eq:bg:mf:loss} are used later in this thesis.
 
 \begin{itemize}
-  \item \textbf{It contains flow matching as the case $r = \ftime$.} The second term of
+  \item \textbf{It contains instantaneous-velocity matching as the case $r = \ftime$.} The second term of
     $\afield\sidx{tgt}$ carries the factor $(\ftime-r)$, so at $r=\ftime$ the target collapses to
-    $\vfield_{\ftime}$ and \eqref{eq:bg:mf:loss} becomes \eqref{eq:bg:fm:loss}. A MeanFlow model
-    is thus a strict generalisation of a flow-matching model, and the fraction of training
-    samples drawn with $r \neq \ftime$ is a genuine hyperparameter: at zero it is flow matching
+    $\vfield_{\ftime}$ and \eqref{eq:bg:mf:loss} becomes \eqref{eq:bg:fm:loss}. Analytic
+    average-velocity matching is thus a strict generalisation of instantaneous-velocity matching, and the fraction of training
+    samples drawn with $r \neq \ftime$ is a genuine hyperparameter: at zero it is instantaneous-velocity matching
     \parencite[Tab.~1a]{geng2025meanflow}. The same collapse applies, for a different reason, to the
-    consistency-training variant of \autoref{sec:method:alphaflow}, which is how a set of earlier runs
+    consistency-interpolated objective of \autoref{sec:method:alphaflow}, which is how a set of earlier runs
     was found to be mislabelled.
   \item \textbf{The interval is a network input, so the budget is chosen at inference.} As in
     \autoref{sec:method:fm}, $\nfe$ appears only in the sampler. Unlike \autoref{sec:method:fm}, small $\nfe$ is
@@ -1103,17 +1112,19 @@ query inside the $\{\ftime,h\ge 0,\ \ftime+h\le 1\}$ domain the model was traine
 \srcnote{\texttt{mf\_diffusion.py:189--300}; the guardrail and the sub-stage interval rule are
 this work's own, from the Gen3v6 U3/U8 audits.}
 
-\subsection{Consistency Training}\label{sec:method:alphaflow}
+\subsection{Consistency-Interpolated Average-Velocity Matching}\label{sec:method:alphaflow}
 
-The third objective \parencite{zhang2025alphaflow} applies consistency training to the MeanFlow
-objective. With the architecture matched
-and its interpolation scalar active during training, it matches MeanFlow at low step budgets and
+The third objective \parencite{zhang2025alphaflow} also learns the average velocity, but interpolates
+its target by a consistency step ratio $\alpha$ between the instantaneous velocity and a stop-gradient
+prediction of the network itself. With the architecture matched and the ratio annealed to a final value
+$\alpha_{\mathrm{end}}>0$, it matches analytic average-velocity matching at low step budgets and
 falls behind it at high budgets in both environments where it was measured, and it is reported as an
 ablation (\autoref{sec:res:fewstep}, \autoref{sec:disc:negative}). \hole{Its training target is not
 yet written out.}
 
-Two of its properties matter here. Its interpolation scalar appears only in training, and at one
-setting the two targets coincide term for term: a checkpoint trained at that setting is MeanFlow,
+Two of its properties matter here. The step ratio appears only in training, and at one
+setting the two targets coincide term for term: a checkpoint trained at that setting is analytic
+average-velocity matching,
 whatever its directory is called, and a set of this work's earlier runs was mislabelled that way. And
 its target is a finite difference closed with the network's own stop-gradient output, so it inherits
 a fraction of that network's error: the objective contracts error at a rate set by $\alpha$ and
@@ -1137,10 +1148,10 @@ the conditioning, the normalisation and the closed loop are shared verbatim. Wri
         & \text{diffusion (baseline),\; \eqref{eq:bg:ddpm:mean}}\\[10pt]
       \vect{x}_{\ftime_{k}} + \tfrac{1}{\nfe}\,
         \vfield_{\theta}\!\left(\vect{x}_{\ftime_{k}},\ftime_{k},\vect{c}\right)
-        & \text{flow matching}\\[6pt]
+        & \text{instantaneous velocity}\\[6pt]
       \vect{x}_{\ftime_{k}} + \tfrac{1}{\nfe}\,
         \afield_{\theta}\!\left(\vect{x}_{\ftime_{k}},\ftime_{k},h{=}\tfrac{1}{\nfe},\vect{c}\right)
-        & \text{MeanFlow,}
+        & \text{average velocity,}
     \end{cases}
 \end{equation}
 with $\ftime_{k} = k/\nfe$ and the reverse index of the first line replaced by the forward index
@@ -1215,7 +1226,7 @@ and run tags: Auxiliary/Naming/TRANSLATION\_20260914\_dev\_jargon\_to\_scientifi
 
 \subsubsection*{Two-time models}
 
-MeanFlow and consistency training need $\afield_{\theta}(\cdot,\ftime,h)$, so the backbone takes a
+The two average-velocity objectives need $\afield_{\theta}(\cdot,\ftime,h)$, so the backbone takes a
 second time input. It is embedded by its own MLP and added to the transport-time embedding, before
 the visual latent is concatenated:
 \begin{equation}\label{eq:method:backbone:twotime}
@@ -1223,7 +1234,7 @@ the visual latent is concatenated:
 \end{equation}
 This is the only structural change the two-time models make to the backbone.
 
-The MeanFlow target \eqref{eq:method:engine:mftgt} differentiates the network with a forward-mode
+The analytic target \eqref{eq:method:engine:mftgt} differentiates the network with a forward-mode
 \ac{JVP} in $(\vect{x}_{r},r,h)$. The latent $\vect{e}$ depends on none of these inputs, so the encoder
 is evaluated once, outside the differentiated function, and $\vect{e}$ enters it as a constant with
 zero tangent. The two ResNet towers are therefore not differentiated by the \ac{JVP}, and they are
@@ -1628,7 +1639,7 @@ It depends on the step budget and the threshold together, so two configurations 
 budget and different thresholds can differ in it. Its value decides what a result can show:
 
 \begin{center}
-\begin{tabular}{lll}
+\begin{tabularx}{\linewidth}{lLL}
   \toprule
   $n\sidx{guide}$ & what runs & what a result supports \\
   \midrule
@@ -1636,7 +1647,7 @@ budget and different thresholds can differ in it. Its value decides what a resul
   $1$     & one guided step before the final one       & no attributable effect \\
   $\ge 2$ & guided steps, each followed by a later step & a statement about the method \\
   \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{center}
 
 The \emph{first lookahead}, the distance $1-\ftime_{k_{0}+1}$ remaining at the first guiding step with
@@ -1736,8 +1747,8 @@ velocity block is present only for the aerial platform. Two properties follow.
     $t\sidx{s}$     & $1$                   & $1$                       & $1$ \\
     dynamics rows   & $4$                   & $6$                       & $6$ \\
     low level       & differential IK $\rightarrow$ joint PD & same          & geometric cascade, or MJPC \\
-    plan rate       & one plan per env.\ step & one plan per env.\ step & $33\,\textrm{Hz}$ \\
-    inner rate      & $n\sidx{sub}$ sim substeps & $n\sidx{sub}$ sim substeps & $100\,\textrm{Hz}$ \\
+    plan interval   & one plan per env.\ step & one plan per env.\ step & $0.03\,\textrm{s}$ simulated \\
+    inner interval  & $n\sidx{sub}$ sim substeps & $n\sidx{sub}$ sim substeps & $0.01\,\textrm{s}$ simulated \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -1799,16 +1810,20 @@ produce identical joint trajectories, even though they produce the same Cartesia
 
 \subsection{Quadrotor: Cascaded Geometric Tracking Control}\label{sec:method:geometric}
 
-The aerial chain is the same skeleton with two more layers underneath, and it is multi-rate: the
-plan is queried at the rate the expert data was recorded, and the physics and the low-level
-controller run faster, with the setpoint held constant in between,
+The aerial chain is the same skeleton with two more layers underneath, and it runs on two intervals of
+simulated time: a plan is queried every $n\sidx{dec}$-th physics step, the interval at which the expert
+demonstrations were recorded, and the low-level controller runs at every physics step, with the
+setpoint held constant in between,
 \begin{equation}\label{eq:method:dep:multirate}
-  n\sidx{dec} = \operatorname{round}\!\left(\frac{1}{\Delta t\sidx{phys}\,f\sidx{plan}}\right),
+  n\sidx{dec}\,\Delta t\sidx{phys} = 0.03\,\textrm{s},
   \qquad
-  f\sidx{plan} = 33\,\textrm{Hz},\quad \Delta t\sidx{phys} = 0.01\,\textrm{s}
+  \Delta t\sidx{phys} = 0.01\,\textrm{s}
   \;\Rightarrow\; n\sidx{dec} = 3 .
 \end{equation}
-\srcnote{\texttt{mix\_uav\_test/eval\_mix\_uav.py:1454--1455};
+The simulation waits for the planner, so these intervals hold in simulated time for any planning
+time.
+\srcnote{\texttt{mix\_uav\_test/eval\_mix\_uav.py:1610} (\texttt{decim}) and \texttt{:1728} (physics loop);
+\texttt{uav\_expert\_data\_collect/dataset\_writer.py:31,73} (\texttt{DATASET\_HZ});
 $\Delta t\sidx{phys}$ from \texttt{quadrotor\_modified.xml:4}.}
 
 The controller is the \emph{position-controlled flight mode} of
@@ -1918,10 +1933,10 @@ detail:
 \begin{equation}\label{eq:method:dep:vdes}
   \dot{\vect{p}}\sidx{des} =
   \begin{cases}
-    \Delta\vect{p}_{t}\,f\sidx{plan} & \text{default --- the increment read as a mean velocity,}\\
+    \dfrac{\Delta\vect{p}_{t}}{n\sidx{dec}\,\Delta t\sidx{phys}} & \text{default --- the increment read as a mean velocity,}\\
     \vect{0} & \text{stop-and-go --- brake to rest at every plan step,}\\
     \dfrac{\Delta\vect{p}_{t}}{\|\Delta\vect{p}_{t}\|}\,\bar{v} & \text{constant-speed, with }
-      \bar{v} = f\sidx{plan}\,\overline{\|\Delta\vect{p}\|}\text{ from the dataset.}
+      \bar{v} = \overline{\|\Delta\vect{p}\|}\,/\,(n\sidx{dec}\,\Delta t\sidx{phys})\text{ from the dataset.}
   \end{cases}
 \end{equation}
 The third is timing-free by construction and calibrates itself to whatever data it is given; its
@@ -1986,7 +2001,7 @@ reported number --- confirm this against the run ledger before the claim is made
 % =============================================================================
 \section{Environments}\label{sec:method:envs}
 
-The environments follow the two stages of \autoref{sec:intro:problem}. Obstacle avoidance is the
+Obstacle avoidance is the
 benchmark of \ac{DPCC}, taken over with its setup unchanged, and is where the new generative models
 and projection methods are first established against the baseline. Vision-conditioned alignment and the
 quadrotor scenes were built for this thesis and test them further, in a new observation modality and a
@@ -2130,7 +2145,7 @@ in the centre lane of the corridor, and a small lateral offset of the whole path
 The vehicle starts level and at rest, and the controller tracks
 \eqref{eq:method:env:uavref}--\eqref{eq:method:env:uavrefderiv} at the physics step $\Delta t\sidx{phys}$. An episode is discarded if the vehicle is in
 contact with an obstacle for more than a scene-specific fraction of its steps, or if it falls below a
-minimum altitude. The accepted rollouts are recorded at the planning rate, every $n\sidx{dec}$-th
+minimum altitude. The accepted rollouts are recorded at the planning interval, every $n\sidx{dec}$-th
 physics step of \eqref{eq:method:dep:multirate}, as
 \begin{equation}\label{eq:method:env:uavdata}
   \vect{o}_{j} = \left(\vect{p}\sidx{des}(t_{j}),\;\vect{p}(t_{j}),\;\dot{\vect{p}}(t_{j})\right),

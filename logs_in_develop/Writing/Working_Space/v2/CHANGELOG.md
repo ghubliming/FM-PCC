@@ -14,6 +14,30 @@ Format: what changed · why · what it is sourced from · what it left open.
 
 ---
 
+## v2.21 — 2026-09-17 · v3 inbox from v3.18 / v3.19 / v3.20 / v3.25 → [`changelogs/v2.21_20260917_v3_inbox_mechanism_names_uav_intervals.md`](changelogs/v2.21_20260917_v3_inbox_mechanism_names_uav_intervals.md)
+
+**Date: 2026-09-17.** Acts on all five open `cross_draft/INBOX.md` → v2 items:
+- **v3.20 (2026-09-17)** — mechanism names in the abstract and Ch 1–4 outside Related Work:
+  *instantaneous-velocity matching*, *analytic average-velocity matching*, *consistency-interpolated
+  average-velocity matching*. Supersedes the v2.19/v2.20 "intermediate finite-difference objective".
+  §4.3.3 and §4.3.4 retitled; §1.2, contributions 1–3, §2.4, Positioning, §4.3 updated.
+- **v3.18 (2026-09-17)** — UAV "33 Hz / 100 Hz" rewritten as 0.03 s / 0.01 s of simulated time
+  (`tab:embodiments`, `eq:method:dep:multirate`, §4.7.3); contribution 4 gains v3's cost sentence.
+- **v3.19 (2026-09-17)** — `n_guide` table → `tabularx`; no DPCC episode count in Ch 1–4 to fix.
+- **v3.25 (2026-09-17)** — §1.2 two-stage definition → forward roadmap to `ch:setup`; §4.7 back-reference
+  to §1.2 removed.
+
+- **For v3:** **no label removed or renamed** (`sec:method:meanflow`, `sec:method:alphaflow` kept). New
+  titles: §4.3.3 **Analytic Average-Velocity Matching**, §4.3.4 **Consistency-Interpolated
+  Average-Velocity Matching**. Symbol `\mathcal{L}\sidx{MF}` → `\mathcal{L}\sidx{avg}`.
+- **For v3:** `tab:embodiments` rows are now *plan interval* / *inner interval*; `eq:method:dep:multirate`
+  no longer defines `f_plan`; `eq:method:dep:vdes` now uses `1/(n_dec Δt_phys)`. If Ch 5 uses `f\sidx{plan}`, redefine it locally or use `n_dec Δt_phys`.
+- **For v3:** `sec:intro:problem` no longer defines the two stages; Ch 5 owns that definition (as v3.25
+  intends). `tab:compute` "Projection solver" row (appendix, v3-owned) still ≈ 14.9 cm wide.
+- **For v3:** the next front-matter sync takes the v2.21 abstract (supersedes v2.19).
+
+---
+
 ## v2.20 — 2026-09-17 · translation table adopts the abstract's mechanism names → [`changelogs/v2.20_20260917_translation_table_mechanism_names.md`](changelogs/v2.20_20260917_translation_table_mechanism_names.md)
 
 The shared canonical translation table now maps `fm`, `mf` and `af` to **instantaneous-velocity

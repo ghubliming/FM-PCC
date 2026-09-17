@@ -17,12 +17,64 @@ is sourced from · what it left open.
 
 ---
 
+## v3.26 — 2026-09-17 · MuJoCo wording, Ch 5 holes, no statistics, two caveats, UAV restructure → [`changelogs/v3.26_20260917_mujoco_holes_caveats_uav_restructure.md`](changelogs/v3.26_20260917_mujoco_holes_caveats_uav_restructure.md)
+
+- MuJoCo named as the simulator throughout Ch 5 (Fig 5.5 labels, captions); D3IL = task files, data, cameras.
+- Filled the holes on the UAV workspace box and tightening, on demonstration counts, gains and splits, and on the UAV controller; rewrote §5.4.3 (original MuJoCo MPC task).
+- Removed every p-value and test name (Ch 5, Ch 6, Ch 8 draft); new translation rules 7–8.
+- New caveat subsections: DPCC metrics and smoothness (§6.1), tracking controller (§6.3). §6.2.2 shows endpoint projection as the D3IL-aligning method (`tab:va-projection`).
+- §6.3 restructured around all four models per scene with UAV-pillars as the main test; §6.4 is a three-table recap.
+- `check.py` passes; bundles `thesis_v3_20260917_161355_new` and `_new_clean`, 22/22 figures. Not compiled.
+
+## v3.25 — 2026-09-17 · thesis-style visuals, Chapter 5 audit, and clean review bundle → [`changelogs/v3.25_20260917_thesis_visuals_ch5_and_clean_bundle.md`](changelogs/v3.25_20260917_thesis_visuals_ch5_and_clean_bundle.md)
+
+- Reworked the Chapter 5 opening and task terminology, filled the alignment workspace bounds, audited
+  the UAV demonstration method against v2, and gave Table 5.7 a relaxed dedicated float page.
+- Simplified Figures 6.1, 6.2, 6.4 and 6.5 to thesis-style plots, changed the model/constraint palette
+  to dark slate, and made selected table configurations unmistakable with a bold black triangle.
+- Added a dated v3.25 handoff for v2's Section 1.2 and added an optional clean bundle mode that hides
+  source notes while keeping holes visible.
+- `check.py` passes; both `thesis_v3_20260917_144454_new.tex/.zip` and
+  `thesis_v3_20260917_144454_new_clean.tex/.zip` contain 22/22 rendered figures and verify
+  byte-faithful. Not compiled because this container has no TeX toolchain.
+
+## v3.24 — 2026-09-17 · consistent model labels in every figure and table → [`changelogs/v3.24_20260917_figure_table_abbreviations.md`](changelogs/v3.24_20260917_figure_table_abbreviations.md)
+
+- Standardised every v3 figure and table body on **Diffusion**, **FM**, **MeanFM** and **CI-MeanFM**,
+  including the Figure 6.3 matrix, appendix mappings, and all four generated Chapter 6 charts.
+- Section 5.3 and the affected figure captions explicitly map each short label to its full scientific
+  name; running prose continues to use the full mechanism names.
+- Updated the canonical translation table and official plotting vocabulary, rebuilt and visually
+  checked the four affected charts, and re-exported the figure store to v3.
+- `check.py` passes; `thesis_v3_20260917_110958_new.tex/.zip` contains 22/22 rendered figures and
+  verifies byte-faithful. Not compiled because this container has no TeX toolchain.
+
+## v3.23 — 2026-09-17 · monochrome table emphasis → [`changelogs/v3.23_20260917_monochrome_table_emphasis.md`](changelogs/v3.23_20260917_monochrome_table_emphasis.md)
+
+- Replaced the red main-configuration styling in Chapter 6 with bold monochrome emphasis for grayscale
+  and accessibility robustness. Table 6.2 names its selected operating point directly because bold
+  already denotes the best rule per model there.
+- Audited the remaining colour commands: they are drafting diagnostics that must be removed before
+  submission, not final-text styling; figure colours remain data encodings.
+- `check.py` passes; `thesis_v3_20260917_110526_new.tex/.zip` contains 22/22 rendered figures and
+  verifies byte-faithful. Not compiled because this container has no TeX toolchain.
+
+## v3.22 — 2026-09-17 · CI-MeanFM table-label hotfix → [`changelogs/v3.22_20260917_ci_meanfm_hotfix.md`](changelogs/v3.22_20260917_ci_meanfm_hotfix.md)
+
+- Replaced the rejected `$\alpha$-MeanFM` table label with the author-approved **CI-MeanFM**:
+  consistency-interpolated MeanFM. Full prose remains **consistency-interpolated average-velocity
+  matching**.
+- Updated Section 5.3, all affected result tables, the canonical translation table and the prior layout
+  entry so the rejected label is not left as current guidance.
+- `check.py` passes; `thesis_v3_20260917_105825_new.tex/.zip` has 22/22 rendered figures and verifies
+  byte-faithful. Not compiled because this container has no TeX toolchain.
+
 ## v3.21 — 2026-09-17 · compact UAV floats and result-table model labels → [`changelogs/v3.21_20260917_compact_floats_and_table_labels.md`](changelogs/v3.21_20260917_compact_floats_and_table_labels.md)
 
 - Reduced the footprint of Table 5.3, Figure 5.6 and Table 5.4; the UAV scene figure now occupies
   78% of the text width, and both tables use compact spacing and permissive float placement before the
   existing section barrier.
-- Defined the table-only labels **Diffusion**, **FM**, **MeanFM** and **$\alpha$-MeanFM** alongside the
+- Defined the table-only labels **Diffusion**, **FM**, **MeanFM** and **CI-MeanFM** alongside the
   full mechanism names in Section 5.3 and recorded them in the canonical translation table.
 - Replaced long model cells throughout the v3 results tables, split the non-wrapping headers in Table
   6.7, and tightened Tables 6.7, 6.8 and 6.10 to prevent overlap.

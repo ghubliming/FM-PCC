@@ -38,9 +38,11 @@
 % text rather than a footnote, because a caveat in a footnote gets dropped when
 % the sentence is quoted.
 \newcommand{\guard}[1]{\textcolor{violet}{\emph{#1}}}
-% Red identifies a main experimental configuration selected in the surrounding
-% text. It is deliberately not used for the inherited baseline.
-\newcommand{\mainconfig}[1]{\textcolor{red}{\bfseries #1}}
+% Bold identifies a main experimental configuration selected in the surrounding
+% text. Monochrome emphasis survives grayscale printing and does not rely on
+% colour perception.
+\newcommand{\mainconfig}[1]{\textbf{#1}}
+\newcommand{\selectedmark}{\ensuremath{\blacktriangleright}}
 
 % -----------------------------------------------------------------------------
 %  BIBLIOGRAPHY -- the v3 half

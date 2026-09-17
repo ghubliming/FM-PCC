@@ -179,6 +179,28 @@ def main():
     for lab in ('MeanFlow K2', 'MeanFlow K20', 'consistency tr. K2', 'consistency tr. K20'):
         print('  ' + summary(lab + ' [tightened]', g(lab, T)))
 
+    # Thesis Table tab:va-projection (v3.26): analytic average-velocity matching on tightened constraints,
+    # per-step (dpcc-*) against endpoint projection (hardflow_sls-*), every selection rule.
+    print('\n== projection methods, MeanFlow, tightened (tab:va-projection) ==')
+    print('  violation-free = contexts with constraint_exec_zero_violation == 1; moved = not untouched')
+    for c in ('mf_K20', 'mf_K10'):
+        for var in ('diffuser', 'dpcc-r', 'dpcc-c', 'dpcc-t', 'hardflow_sls-r', 'hardflow_sls-c', 'hardflow_sls-t'):
+            rs = cell(c, T, variant=var)
+            if not rs:
+                continue
+            zv = sum(1 for r in rs if fnum(r.get('constraint_exec_zero_violation')) == 1)
+            mv = sum(1 for r in rs if not untouched(r))
+            print(f'  {c:7s} {var:16s} n={len(rs):2d} violation-free={zv}/{len(rs)} '
+                  f'viol={st.mean(fnum(r["n_violations"]) for r in rs):5.1f} moved={mv}/{len(rs)} '
+                  f'median={st.median(per_context(rs).values()):.3f} '
+                  f'ms/step={st.mean(fnum(r["avg_time_ms"]) for r in rs):.1f}')
+    rs = cell('diff_K20', U, variant='dpcc-r')
+    print(f'  diffusion K20 dpcc-r [untightened] n={len(rs)} violation-free='
+          f'{sum(1 for r in rs if fnum(r.get("constraint_exec_zero_violation")) == 1)}/{len(rs)} '
+          f'viol={st.mean(fnum(r["n_violations"]) for r in rs):.1f} '
+          f'unmoved={sum(1 for r in rs if untouched(r))}/{len(rs)} '
+          f'ms/step={st.mean(fnum(r["avg_time_ms"]) for r in rs):.1f}')
+
 
 if __name__ == '__main__':
     main()

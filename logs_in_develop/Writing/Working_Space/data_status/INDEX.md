@@ -23,6 +23,7 @@ A newer PENDING supersedes the older one — rename the old one with the prefix 
 | [`plotting/`](../../../../Data_Analysis/DA_in_Paper/plotting/) | all figure code; data paths only in `sources.py` |
 | [`plotting/NOTEBOOK_20260915_figure_data_sources.md`](../../../../Data_Analysis/DA_in_Paper/plotting/NOTEBOOK_20260915_figure_data_sources.md) | per-figure provenance audit |
 | [`plotting/REQUEST_20260916_cluster_fm_plan_panels.md`](../../../../Data_Analysis/DA_in_Paper/plotting/REQUEST_20260916_cluster_fm_plan_panels.md) | cluster run for the missing plan-matrix panels |
+| [`MANUAL_PROVIDED_FIGURES/`](../../../../Data_Analysis/DA_in_Paper/MANUAL_PROVIDED_FIGURES/README.md) | **inbox for hand-made figures** (e.g. Fig 6.3 smoothness panels) — one subfolder per figure + `SOURCE.md` |
 | [`figures/MANIFEST.md`](../../../../Data_Analysis/DA_in_Paper/figures/MANIFEST.md) | every figure in the store: generated, vendored, planned, excluded |
 | `data/` | prepared inputs (scene extract, cut dashboards, MuJoCo renders) |
 
