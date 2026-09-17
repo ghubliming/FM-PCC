@@ -1,6 +1,6 @@
 {
-  "bibliography_sha256_16": "454c8c454b68a3e6",
+  "bibliography_sha256_16": "5c046b2902675a09",
   "synced_at": "2026-09-17",
-  "thesis_v2_sha256_16": "7c691b886e5f202d",
-  "v2_version": "v2.17 \u2014 2026-09-16 \u00b7 visual-encoder provenance; cross-draft inbox closed \u2192 [`changelogs/v2.17_20260916_encoder_provenance_and_inbox.md`](changelogs/v2.17_20260916_encoder_provenance_and_inbox.md)"
+  "thesis_v2_sha256_16": "ec3824c478c3caf5",
+  "v2_version": "v2.23 \u2014 2026-09-17 \u00b7 MuJoCo is the simulator; the Panda and its rod end effector named \u2192 [`changelogs/v2.23_20260917_mujoco_simulator_and_robot_naming.md`](changelogs/v2.23_20260917_mujoco_simulator_and_robot_naming.md)"
 }

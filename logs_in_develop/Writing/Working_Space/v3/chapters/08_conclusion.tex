@@ -22,8 +22,10 @@ On the benchmark of \ac{DPCC}, analytic average-velocity matching at a single ne
 constraint satisfaction of the baseline in fewer control steps and at a small fraction of its
 wall-clock time, and its plans are coherent before projection where those of the diffusion model at the
 same budget are not. On D3IL-aligning it brings the box closer to its target than the baseline and
-instantaneous-velocity matching in every context, and on the quadrotor it completes UAV-corridor collision-free and leads on
-UAV-pillars. Consistency-interpolated average-velocity matching is level with analytic average-velocity matching where the tasks cannot separate them and behind
+instantaneous-velocity matching in every context, and on the quadrotor it passes the goal collision-free on
+every flight of UAV-corridor, which the projected baseline never reaches. On UAV-pillars
+instantaneous-velocity matching passes the goal collision-free more often, and analytic average-velocity
+matching does so in a shorter path. Consistency-interpolated average-velocity matching is level with analytic average-velocity matching where the tasks cannot separate them and behind
 it where they can. Endpoint projection is not used at the one- and two-evaluation operating point of
 D3IL-avoiding. At larger budgets it reduces time on D3IL-aligning and UAV-corridor and projection time
 on UAV-pillars, while its constraint result is higher on D3IL-aligning and UAV-pillars and lower on
@@ -35,21 +37,25 @@ UAV-corridor.
 
 \begin{description}
   \item[RQ1 --- Generative model.] With the backbone, projection, data and evaluation code held fixed,
-    analytic average-velocity matching is ahead of instantaneous-velocity matching and of the diffusion baseline in every environment. Instantaneous-velocity matching
-    is ahead of the baseline on D3IL-avoiding and UAV-pillars and level with it on D3IL-aligning. Consistency-interpolated average-velocity matching is not ahead of analytic average-velocity matching in
-    any environment (\autoref{sec:res:summary:models}).
-  \item[RQ2 --- Budget.] The flow-based models keep their success down to one network evaluation on the
-    D3IL-avoiding benchmark, while the diffusion model loses it below its training budget
-    (\autoref{sec:res:fewstep}). On D3IL-aligning analytic average-velocity matching improves with more
-    evaluations and consistency-interpolated average-velocity matching does not.
-  \item[RQ3 --- Constraints.] Endpoint projection is well-posed only with at least one guiding step
+    analytic average-velocity matching is ahead of the diffusion baseline in every environment, and ahead of
+    instantaneous-velocity matching on D3IL-avoiding, D3IL-aligning and UAV-corridor. On UAV-pillars the two
+    trade: instantaneous-velocity matching passes the goal collision-free more often, analytic
+    average-velocity matching in fewer control steps. Instantaneous-velocity matching is ahead of the
+    baseline on D3IL-avoiding and UAV-pillars and level with it on D3IL-aligning.
+    Consistency-interpolated average-velocity matching is not ahead of analytic average-velocity matching in
+    any environment (\autoref{sec:res:summary:models}). The budget is part of that frontier: the flow-based
+    models keep their success down to one network evaluation on the D3IL-avoiding benchmark, where the
+    diffusion model loses it below the budget it was trained with (\autoref{sec:res:fewstep}), and on
+    D3IL-aligning analytic average-velocity matching improves with more evaluations while
+    consistency-interpolated average-velocity matching does not.
+  \item[RQ2 --- Constraints.] Endpoint projection is well-posed only with at least one guiding step
     (\autoref{sec:res:constraints:degenerate}). With several guiding steps it reduces time on D3IL-aligning
     and UAV-corridor and projection time on UAV-pillars; its constraint satisfaction is higher on D3IL-aligning,
     where it alone keeps every context free of violations, higher on UAV-pillars and lower on UAV-corridor (\autoref{sec:res:constraints}). D3IL-avoiding is
     already solved at one or two network evaluations, where endpoint projection has zero or at most one
     guiding step and no supported advantage, so per-step projection is the method there
     (\autoref{sec:res:avoiding:conclusion}).
-  \item[RQ4 --- Transfer.] The lead of analytic average-velocity matching carries over from state to camera observations and from the
+  \item[RQ3 --- Transfer.] The lead of analytic average-velocity matching carries over from state to camera observations and from the
     manipulator to the quadrotor; the step from instantaneous-velocity matching to diffusion does not carry over to camera
     observations, where the two are level. On UAV-s-curve the tracking controller, not
     the plan, limits the result (\autoref{sec:res:uav:controller}).

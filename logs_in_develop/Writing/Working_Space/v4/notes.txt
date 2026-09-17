@@ -8,5 +8,8 @@ I rememeber there is a sim2real gap not incl the IK solving (so is maybe hte PID
 (is it too minor normally wont be considered or real Gap need to be care when implement sim2real? need to 
 serch the repo I have previosu note and maybe the conclusion)
 
+
+also should be the MPC -r-t-c select disscusion if not used to save time! (should be in v4)
+
 etc.
 will do after v2 and v3 totally finished.

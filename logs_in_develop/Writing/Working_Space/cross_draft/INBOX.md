@@ -5,7 +5,8 @@ Status: ⏳ open · ✅ done (target version) · ❌ declined (reason). Newest f
 ## → v2
 | status | from | item | note |
 | :-- | :-- | :-- | :-- |
-| ⏳ | v3.26 · 2026-09-17 | MuJoCo is the simulator; D3IL only supplies task files, demonstrations and camera placements — reword "Its simulation … are D3IL's" (§4.7.2) and "built on top of D3IL and MuJoCo" (§1). FYI: author rule, no $p$-values/test names in the thesis | [`FROM_v3_20260917_v3.26_mujoco_is_the_simulator.md`](to_v2/FROM_v3_20260917_v3.26_mujoco_is_the_simulator.md) |
+| ✅ v2.23 | v3.27 · 2026-09-17 | The robot is D3IL's **7DoF Franka Emika Panda** with a **cylindrical rod** end effector (not a gripper) in these tasks; please add **IK — inverse kinematics** to the acronym list | [`FROM_v3_20260917_v3.27_panda_naming_and_ik.md`](to_v2/FROM_v3_20260917_v3.27_panda_naming_and_ik.md) |
+| ✅ v2.23 | v3.26 · 2026-09-17 | MuJoCo is the simulator; D3IL only supplies task files, demonstrations and camera placements — reword "Its simulation … are D3IL's" (§4.7.2) and "built on top of D3IL and MuJoCo" (§1). FYI: author rule, no $p$-values/test names in the thesis | [`FROM_v3_20260917_v3.26_mujoco_is_the_simulator.md`](to_v2/FROM_v3_20260917_v3.26_mujoco_is_the_simulator.md) |
 | ✅ v2.21 | v3.25 · 2026-09-17 | Review §1.2 so it gives a forward roadmap to Chapter 5 rather than defining phases that Chapter 5 cites backwards. Confirmed: §4's UAV expert-demonstration construction and equations are already complete; no method addition is needed | [`FROM_v3_20260917_v3.25_ch5_backrefs_and_uav_method.md`](to_v2/FROM_v3_20260917_v3.25_ch5_backrefs_and_uav_method.md) |
 | ✅ v2.21 | v3.19 · 2026-09-17 | After the v2.17 sync `tools/check.py` warns: a `tabular` row in `04_method.tex` is ≈ 14.9 cm (text width 14.7 cm) — use `tabularx` with an `L` column. Also: DPCC's protocol is **5 seeds × 2 episodes = 10 per geometry** (released `n_trials: 2`), not 50 — check any protocol wording in Ch 1–4 | `v3/tools/check.py` output; `aux_repo/dpcc/config/projection_eval.yaml` |
 | ✅ v2.21 | v3.20 · 2026-09-17 | Apply the author-approved mechanism names in Ch 1–4 and the abstract: **instantaneous-velocity matching**, **analytic average-velocity matching**, **consistency-interpolated average-velocity matching**; rename the §4 title but keep `sec:method:alphaflow` | [`FROM_v3_20260917_alphaflow_naming.md`](to_v2/FROM_v3_20260917_alphaflow_naming.md) |
@@ -21,12 +22,15 @@ Status: ⏳ open · ✅ done (target version) · ❌ declined (reason). Newest f
 ## → v3
 | status | from | item | note |
 | :-- | :-- | :-- | :-- |
+| ✅ v3.29 | v2.22 · 2026-09-17 | v2 now has **three** RQs (budget RQ deleted, constraints/transfer renumbered) — Ch 1 sync and Ch 8's RQ answers need it; `rem:pidname` and the three "Deviation" blocks removed from the Ch 4 quadrotor section; new key `mellinger2011minimum`; new labels `eq:method:engine:aftgt`, `tab:related-loops` | [`FROM_v2_20260917_rq_renumbering_and_ch4_sync.md`](to_v3/FROM_v2_20260917_rq_renumbering_and_ch4_sync.md) |
 | ✅ v3.20 (superseded by author) | v2.20 · 2026-09-17 | Replace the published generative-model brands in Ch 5–6, Ch 8 and the appendix. The author approved a revised mechanism-name set in v3.20: instantaneous-velocity, analytic average-velocity and consistency-interpolated average-velocity matching | [`FROM_v2_20260917_generative_objective_names.md`](to_v3/FROM_v2_20260917_generative_objective_names.md) |
 | ✅ v3.18 | v2.17 · 2026-09-16 | The short result sentence offered for contribution 4 ("the faster method wherever it runs") contradicts Ch 6's own `\guard` (1.86–3.57× the cost at equal candidates); v2 used neither cost clause. Also: new bib keys for the visual encoder | [`FROM_v2_20260916_projection_cost_and_encoder.md`](to_v3/FROM_v2_20260916_projection_cost_and_encoder.md) |
 
 ## → v4
 | status | from | item | note |
 | :-- | :-- | :-- | :-- |
+| ⏳ (glossary part ✅ v2.23) | v3.28 · 2026-09-17 | Distinguish the two meanings of $K$ (diffusion denoising steps, fixed at training vs ODE solver steps, chosen at inference) in the glossary; v3 §6.1.1 now says it | [`FROM_v3_20260917_v3.28_step_budget_K_naming.md`](to_v4/FROM_v3_20260917_v3.28_step_budget_K_naming.md) |
+| ⏳ | v3.27 · 2026-09-17 | The timing caveat (planner time excludes IK/controller and the simulator step; not a real-time claim; shared CPU-bound node) is for Ch 7 — Ch 5 now only defines the metric | [`FROM_v3_20260917_v3.27_timing_caveat_for_discussion.md`](to_v4/FROM_v3_20260917_v3.27_timing_caveat_for_discussion.md) |
 | ⏳ | v3.26 · 2026-09-17 | No statistical-test reporting in the thesis (strip 3 $p$-values from the removed Ch 7 prose); Ch 6.3 restructure and the two new caveat subsections | [`FROM_v3_20260917_v3.26_no_statistical_tests.md`](to_v4/FROM_v3_20260917_v3.26_no_statistical_tests.md) |
 | ⏳ | v3.15 · 2026-09-16 | Discussion material found while writing Ch 6 | [`FROM_v3_20260916_discussion_findings.md`](to_v4/FROM_v3_20260916_discussion_findings.md) |
 | ⏳ | v3.7 · 2026-09-14 | Removed Ch 7 prose (predates the naming rules) | [`FROM_v3_20260914_discussion_prose.tex`](to_v4/FROM_v3_20260914_discussion_prose.tex) |

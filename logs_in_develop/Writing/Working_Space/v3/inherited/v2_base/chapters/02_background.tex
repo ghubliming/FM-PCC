@@ -53,29 +53,38 @@ deterministic function of its initial noise and the observation.
 
 \section{Few-Step Generative Models}\label{sec:bg:fewstep}
 
-A step budget chosen at deployment is not automatically a good one. Straight per-sample paths average
-into a curved field, and coarse integration steps along a curved field are inaccurate however well the
-network is trained \parencite[Sec.~3]{geng2025meanflow}. Few-step models change what the network
-learns so that a large step stays accurate.
+Few-step generation is a development inside the transport family of \autoref{sec:bg:fm}, not a
+property of generative models in general. The reason is the structure flow matching gives the
+problem: the model is trained against a chosen interpolation between the prior and the data, and the
+straighter that interpolation is, the fewer integration steps its \ac{ODE} needs. Optimal-transport
+paths \parencite{lipman2023flow} and rectified flow \parencite{liu2023flow} pursue exactly this, and
+the step budget stays a solver argument throughout. Diffusion admits no such handle: its path is the
+noise schedule it was trained with, and a short budget is recovered afterwards, by a different
+sampler \parencite{song2021denoising} or by distillation \parencite{wang2024onedp}.
 
-MeanFlow \parencite{geng2025meanflow} learns the average velocity over a time interval instead of the
-instantaneous velocity. One evaluation of an accurate average velocity covers the whole interval, so a
+A step budget chosen at deployment is still not automatically a good one. Straight per-sample paths
+average into a curved field, and coarse integration steps along a curved field are inaccurate however
+well the network is trained \parencite[Sec.~3]{geng2025meanflow}. The objectives below change what the
+network learns so that a large step stays accurate.
+
+Analytic average-velocity matching \parencite{geng2025meanflow} learns the average velocity over a
+time interval instead of the instantaneous velocity. One evaluation of an accurate average velocity covers the whole interval, so a
 plan can be generated in a single step. The average velocity is defined by an integral that cannot be
-evaluated during training; MeanFlow differentiates that definition into an identity relating the
+evaluated during training; the method differentiates that definition into an identity relating the
 average velocity to the instantaneous velocity and to its own time derivative, and computes the
-derivative with a \ac{JVP}. When the interval shrinks to a point, the MeanFlow target becomes the
-flow-matching target.
+derivative with a \ac{JVP}. When the interval shrinks to a point, its target becomes the
+instantaneous-velocity target.
 
-A subsequent analysis \parencite{zhang2025alphaflow} decomposes the MeanFlow objective into a
+A subsequent analysis \parencite{zhang2025alphaflow} decomposes this objective into a
 trajectory flow-matching term and a trajectory-consistency term, and builds a family of objectives
-that anneals from the first to the second. The target of this family is formed at an intermediate time
-from a stop-gradient copy of the network itself, the construction of consistency models
-\parencite{song2023consistency}; this thesis refers to it as \emph{consistency training}. MeanFlow and
-this family of objectives both achieve state-of-the-art one- and two-step image generation
+that anneals from the first to the second. Its target interpolates, by a consistency step ratio,
+between the instantaneous velocity and a stop-gradient prediction of the network itself; this thesis
+refers to it as \emph{consistency-interpolated average-velocity matching}. Both average-velocity
+objectives achieve state-of-the-art one- and two-step image generation
 \parencite{geng2025meanflow,zhang2025alphaflow}.
 
-For diffusion the step budget is therefore fixed at training time, for flow matching it is chosen at
-deployment, and MeanFlow and consistency training make a small budget accurate.
+For diffusion the step budget is therefore fixed at training time, for instantaneous-velocity matching
+it is chosen at deployment, and the two average-velocity objectives make a small budget accurate.
 
 \section{Constraint Enforcement in Generative Sampling}\label{sec:bg:mpc}
 
@@ -93,7 +102,7 @@ optimal control problem. A control input is added to the learned velocity field;
 the controlled sampler stays close to the learned one; and the constraints are imposed on the final
 sample only, not on the path that leads to it. Solving that problem exactly would require simulating
 the rest of the trajectory at every step. The method avoids this in three moves. It splits the problem,
-as model predictive control does, into one short problem per sampling step. It replaces the unknown
+as \ac{MPC} does, into one short problem per sampling step. It replaces the unknown
 final sample by its expected value given the current state, which for a flow-matching model follows in
 closed form from the state and the learned velocity. And it optimises directly over that predicted
 final sample instead of over the next state, so the constraints act on a plan and not on its image
@@ -112,9 +121,11 @@ towards; this thesis calls it \emph{endpoint projection}. Plans generated with n
 A policy that observes images compresses each camera view into a feature vector with a convolutional
 encoder and conditions the generative model on that vector. D3IL \parencite{jia2024towards} provides
 such a vision pipeline for its tasks, following Diffusion Policy \parencite{chi2023diffusion}: a
-ResNet-18 encoder \parencite{he2016deep} processes each camera view. Concatenated
-with the time embedding of the network, the features reach its layers as a feature-wise conditional
-bias \parencite[Sec.~3]{perez2017film}. Transformer backbones operate on image patches instead of a
+ResNet-18 encoder \parencite{he2016deep} processes each camera view. The features are then
+concatenated with the time embedding of the network and reach its layers as a feature-wise
+conditional bias --- the bias half of feature-wise linear modulation, \ac{FiLM}
+\parencite[Sec.~3]{perez2017film}, whose general form scales and shifts each channel of a layer from
+a conditioning vector. Transformer backbones operate on image patches instead of a
 pooled feature vector \parencite{peebles2022dit}.
 
 \section{Quadrotor Dynamics and Control}\label{sec:bg:quadrotor}

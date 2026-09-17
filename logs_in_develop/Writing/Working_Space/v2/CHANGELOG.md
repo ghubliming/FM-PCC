@@ -14,6 +14,50 @@ Format: what changed · why · what it is sourced from · what it left open.
 
 ---
 
+## v2.23 — 2026-09-17 · MuJoCo is the simulator; the Panda and its rod end effector named → [`changelogs/v2.23_20260917_mujoco_simulator_and_robot_naming.md`](changelogs/v2.23_20260917_mujoco_simulator_and_robot_naming.md)
+
+**Date: 2026-09-17.** Closes the two open inbox items for v2:
+- **v3.26 (2026-09-17)** — every environment is simulated by MuJoCo; D3IL supplies task files,
+  demonstrations and camera placements. Reworded in contribution 6, §4.7.1 and §4.7.2. Checked: v2
+  contains no $p$-values, test names or "significant".
+- **v3.27 (2026-09-17)** — the robot is a seven-joint Franka Emika Panda with a cylindrical rod end
+  effector (verified in `panda_rod_invisible.xml`), now named once in §4.7.1 and referred to in
+  §4.6.2. No Ch 1–4 sentence had claimed a gripper.
+
+- **v3.28 (2026-09-17)** — the two meanings of $K$ are now distinguished in `tab:notation` (denoising
+  steps fixed at training vs ODE solver steps chosen at deployment); the table became `tabularx`.
+
+- **For v3:** `\acro{IK}` already exists in v2's acronym list, so v3 can switch to `\ac{IK}`
+  immediately. No label, citation key or table changed in this pass.
+
+---
+
+## v2.22 — 2026-09-17 · upstream algorithms cited, RQs rewritten, Chapter 3 loop comparison, UAV controller compressed → [`changelogs/v2.22_20260917_sources_rqs_related_work_and_uav_compression.md`](changelogs/v2.22_20260917_sources_rqs_related_work_and_uav_compression.md)
+
+**Date: 2026-09-17.** Nine items from the author:
+- **Sources.** Endpoint projection now cites `\parencite[Alg.~1]{li2025hardflow}` and its D3IL
+  generation figure `[Fig.~11]`. The consistency-interpolated training target is written out as
+  `eq:method:engine:aftgt` (fills a `\hole`), citing Def. 1, Alg. 1 and Alg. 2 of α-Flow, whose arXiv
+  source is now stored in `aux_repo/PAPERS/auxiliary_papers/DGM/AlphaFlow_src/`.
+- **Research questions: four → three.** The budget RQ is deleted; RQ1 names the flow-matching
+  concepts; RQ2 is the projection comparison at a budget with guiding steps; RQ3 is transfer, stated
+  against the simplicity of obstacle avoidance.
+- **§2.4** opens by placing few-step generation inside the transport family (straighter interpolation
+  ⇒ fewer ODE steps); **§2.6** names FiLM once, as the published mechanism whose bias half is used.
+- **Chapter 3** states loop, plan and backbone per work: DPCC's MPC loop, HardFlow on the *same*
+  task with a different loop (horizon 16 / 8 executed / 10 Euler steps / IPOPT), SafeFlowMPC's
+  joint-position trajectories, and the new `tab:related-loops` in §3.7. §3.6 cites the exact control
+  equations `[Eqs.~(19)--(23), Prop.~3]{lee2010geometric}` plus the new key `mellinger2011minimum`.
+- **`tab:embodiments`** converted to `tabularx`; the **quadrotor controller** section compressed
+  (equations and parameters kept, the three "Deviation" blocks and `rem:pidname` removed).
+
+- **For v3:** RQ renumbering affects the synced Ch 1 and Ch 8's RQ answers; `rem:pidname` is removed
+  (v3's Ch 4 copy still defines it); new key `mellinger2011minimum`; new labels
+  `eq:method:engine:aftgt`, `tab:related-loops`. See
+  `cross_draft/to_v3/FROM_v2_20260917_rq_renumbering_and_ch4_sync.md`.
+
+---
+
 ## v2.21 — 2026-09-17 · v3 inbox from v3.18 / v3.19 / v3.20 / v3.25 → [`changelogs/v2.21_20260917_v3_inbox_mechanism_names_uav_intervals.md`](changelogs/v2.21_20260917_v3_inbox_mechanism_names_uav_intervals.md)
 
 **Date: 2026-09-17.** Acts on all five open `cross_draft/INBOX.md` → v2 items:

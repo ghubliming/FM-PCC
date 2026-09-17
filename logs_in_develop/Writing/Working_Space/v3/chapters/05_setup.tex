@@ -60,28 +60,34 @@ task files and data that run in it. \autoref{fig:platforms} shows both models on
   the experiments. The X2 footprint includes the rotor disks represented by the collision model.}
   \label{tab:platforms}
   \centering
-  \begin{tabularx}{\linewidth}{@{}p{2.2cm} L L@{}}
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabularx}{\linewidth}{@{}p{2.9cm} L L@{}}
     \toprule
     Platform & Model & Experimental interface \\
     \midrule
-    Panda manipulator
-      & MuJoCo model, with the model and task files of D3IL; seven revolute joints, a parallel two-finger
-        gripper and a wrist-mounted RGB camera
-      & The planner commands planar or spatial end-effector increments; differential inverse
-        kinematics and a joint-space PD law execute the Cartesian setpoint. \\
+    Franka Emika Panda
+      & Seven-joint manipulator, in the model and task files of D3IL; a cylindrical rod end effector of
+        radius $0.01$\,m and length $0.30$\,m; a wrist-mounted RGB camera
+      & The planner commands planar or spatial end-effector increments; inverse kinematics (IK) turns
+        each Cartesian setpoint into joint commands. \\
     Skydio X2
-      & Skydio X2 MuJoCo model from MuJoCo Menagerie with the MuJoCo MPC task patch; four rotors;
+      & Quadrotor from MuJoCo Menagerie with the MuJoCo MPC task patch; four rotors;
         mass $1.325$\,kg; rotor centres $0.228$\,m from the body centre;
         $0.54\times0.62$\,m collision footprint; thrust command $[0,13]$\,N per rotor
-      & The planner commands a spatial position increment every third physics step, $0.03$\,s of
-        simulated time, the interval at which the demonstrations were recorded; the geometric controller
-        acts at every $0.01$\,s physics step. The simulation waits while a plan is generated, so these are
-        intervals of simulated time, not real-time rates. \\
+      & The planner commands a spatial position increment every third physics step, $0.03$\,s, the
+        interval at which the demonstrations were recorded; the geometric controller acts at every
+        $0.01$\,s physics step. \\
     \bottomrule
   \end{tabularx}
 \end{table}
-\srcnote{Panda joints, gripper and wrist camera:
-\texttt{d3il/environments/d3il/models/mj/robot/panda.xml}; manipulator execution:
+\srcnote{The robot is D3IL's \enquote{7DoF Franka Emika Panda} with the cylindrical end effector it
+uses for this task family \parencite[Sec.~3.3]{jia2024towards}: both environments load
+\texttt{models/mj/robot/panda\_rod\_invisible.xml} (rod \texttt{cylinder size="0.01 0.15"}, camera
+\texttt{rgbd} on \texttt{panda\_hand}); the gripper of the full \texttt{panda.xml} is not used by these tasks.
+Execution: \texttt{cartesianPosQuatTrackingController} =
+\texttt{CartPosQuatImpedenceController} (damped-least-squares differential IK with a nullspace term,
+\texttt{IKControllers.py:134--270}), whose joint targets go to the joint-space tracking controller;
 \autoref{sec:method:deployment}. X2 mass, rotor positions, rotor-disk size, actuator range and
 $0.01$\,s physics step: \texttt{quadrotor/quadrotor\_modified.xml}; plan interval: \texttt{decim} $=3$ physics
 steps in \texttt{mix\_uav\_test/eval\_mix\_uav.py:1610}, the same downsampling as
@@ -104,7 +110,7 @@ that complete benchmark fixed provides the controlled validation of replacing DP
 with the three flow-based objectives. A manipulator moves its
 end effector across a field of six obstacles to a goal line (\autoref{fig:env-avoiding}). At test time
 the plan is constrained by halfspaces that the demonstrations never respect, in three geometries --- \emph{top-left-hard}, \emph{top-right-hard} and \emph{both-hard}, defined in \autoref{tab:avoiding-geometries} and drawn in \autoref{fig:constraints-avoiding} --- together with the circular keep-out regions and the action box
-of \autoref{sec:method:env:avoiding}. The geometries are those of the \ac{DPCC} configuration. Every
+of \autoref{sec:method:env:avoiding}. The geometries are those of the \ac{DPCC} configuration \parencite[Sec.~6.1]{romer2025diffusion}. Every
 constraint also has a tightened version, shrunk by $0.025$ (\autoref{sec:method:dpcc}).
 \srcnote{\texttt{config/projection\_eval.yaml}: \texttt{halfspace\_constraints['avoiding-d3il']},
 \texttt{enlarge\_constraints: \{'avoiding': 0.025\}}; parity with \texttt{aux\_repo/dpcc} checked in
@@ -176,6 +182,15 @@ $0.03$\,m.
 \srcnote{\texttt{config/visual\_aligning\_eval.yaml}: \texttt{workspace\_bounds},
 \texttt{action\_bounds: 'auto'}, \texttt{enlarge\_constraints: 0.03}.}
 
+Obstacle avoidance is a planar task that imitation policies already solve: the best policies reported
+by D3IL reach a success rate of $0.95$ on it \parencite[Table~3]{jia2024towards}, so it tests constraint
+satisfaction on a plan that is easy to produce. This environment raises three things at once. The plan is
+three-dimensional rather than planar; the policy sees the scene through two cameras and a visual encoder
+rather than through a state vector; and the task itself is not solved --- the best image-based policy
+reported by D3IL finishes roughly a third of its episodes (\autoref{sec:setup:baselines:aligning},
+\autoref{tab:va-vs-d3il}). It therefore asks whether the \ac{DPCC} construction still holds where the plan
+is harder to produce, and it puts the projection where only some episodes finish at all.
+
 The active geometry, \emph{combined-5}, bounds the planned end-effector position by
 $x\in[0.20,0.80]$\,m, $y\in[-0.45,0.45]$\,m and $z\in[0.02,0.50]$\,m. Its tightened counterpart moves
 each face inward by $0.03$\,m, giving $x\in[0.23,0.77]$\,m, $y\in[-0.42,0.42]$\,m and
@@ -215,14 +230,16 @@ $z\in[0.05,0.47]$\,m.
   consumed by the visual policy, at the same instant of a recorded expert demonstration, rendered by
   MuJoCo in the alignment environment of this thesis. The two camera placements are those of the D3IL
   task files \parencite{jia2024towards}. The front view shows the
-  manipulator, box and target on the table; the in-hand view supplies a close view of the box and its
-  coloured faces. These are the two image tensors paired with the proprioceptive
-  state at every step.}
+  manipulator and the box on the table; the in-hand view supplies a close view of the box and its
+  coloured sides. The instant is late in the demonstration, with the box at its target. These are the two
+  image tensors paired with the proprioceptive state at every step.}
   \label{fig:aligning-cameras}
 \end{figure}
-\srcnote{Expert demonstration \texttt{expert\_rollout\_0.gif}, frame 60: left and right $96\times96$
+\srcnote{Expert demonstration \texttt{expert\_rollout\_1.gif}, frame 163: left and right $96\times96$
 tiles recorded by \texttt{bp-cam} and \texttt{inhand-cam}; camera definitions in
-\texttt{gym\_aligning/envs/aligning.py} and \texttt{panda.xml}.}
+\texttt{gym\_aligning/envs/aligning.py} and \texttt{panda.xml}. Chosen over rollout 0, frame 60 because the
+box is complete and centred in the in-hand tile there; the three recorded rollouts were ranked by the
+box's distance from the tile centre and its clearance from the tile border.}
 
 \FloatBarrier
 
@@ -247,8 +264,9 @@ unstable (\autoref{sec:bg:quadrotor}), and its plan is tracked by the controller
 \end{description}
 
 \begin{table}[!htbp]
-  \caption[Quadrotor scenes]{Geometry of the quadrotor scenes. Walls and pillars enter the projection as
-  the constraint forms of \autoref{sec:method:env:uav}, inflated by the vehicle radius of $0.31$\,m.}
+  \caption[Quadrotor scenes]{Constraints of the quadrotor scenes, in the two forms D3IL-avoiding also
+  uses: halfspaces and circular keep-out regions (\autoref{sec:method:env:uav}). Every boundary is
+  inflated by the vehicle radius before it reaches the solver.}
   \label{tab:uav-scenes}
   \centering
   \footnotesize
@@ -260,11 +278,11 @@ unstable (\autoref{sec:bg:quadrotor}), and its plan is tracked by the controller
     \midrule
     UAV-corridor & wall halfspaces, $x\in[-2,2]$ & inner faces $y=\pm0.95$\,m (clear $1.90$\,m) \\
              & slide halfspace, $x\in[-2,2]$ & from $(-2.0,\,0.95)$ to $(2.0,\,-0.05)$, $14^\circ$ \\
-             & wall ends & disks of radius $0.05$\,m at $x=\pm2$ \\
+             & wall ends & disks of radius $0.05$\,m at $x=\pm2$, $y=\pm1$ \\
     UAV-pillars  & six disks & radius $0.12$\,m at $x\in\{-2,0,2\}$, $y=\pm0.6$\,m \\
     UAV-s-curve  & switched wall halfspaces & $y\in[-1.25,-0.35]$ for $x\in[-3,-0.5]$; $y\in[0.35,1.25]$ for $x\in[0.5,3]$ \\
              & inner corners & disks of radius $0.05$\,m at $(\mp0.5,\,\mp0.3)$ \\
-    All      & workspace box & $x\in[-4,4]$\,m, altitude $[0.30,1.80]$\,m; laterally $y\in[-2.5,2.5]$\,m (UAV-pillars), $y\in[-1.8,1.8]$\,m (UAV-s-curve), the walls (UAV-corridor) \\
+    All      & inflation and tightening & every boundary inflated by the vehicle radius $0.31$\,m; the tightened variants move it a further $0.025$\,m inward \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -272,12 +290,12 @@ unstable (\autoref{sec:bg:quadrotor}), and its plan is tracked by the controller
 \texttt{scene\_corridor\_v2.xml}), \texttt{pillars\_hg}, \texttt{s\_curve\_hg};
 \texttt{inflation.r\_drone: 0.31}; \texttt{enlarge\_constraints: 0.025}.}
 
-The three scenes share the extent of the workspace box along the flight direction, $x\in[-4,4]$\,m, and
-its altitude band, $[0.30,1.80]$\,m; they differ only in its lateral extent, which each scene closes at
-its own walls or at the edge of its pillar field (\autoref{tab:uav-scenes}). Every wall, pillar and
-corner disk is always inflated by the vehicle radius of $0.31$\,m. The tightened constraints move each
-of these boundaries and each face of the workspace box a further $0.025$\,m inward, the margin of
-\ac{DPCC}.
+The three scenes use the same two constraint forms as D3IL-avoiding --- halfspaces and circular
+keep-out regions --- so the projection solves the same kinds of rows in the air as on the table
+(\autoref{fig:constraints-uav}). What differs is that a wall acts only over the span of $x$ on which it
+exists, and that every wall, pillar and corner disk is inflated by the vehicle radius of $0.31$\,m before
+it reaches the solver, because the vehicle is a body and not a point. The tightened variants move each of
+these boundaries a further $0.025$\,m inward, the margin of \ac{DPCC}.
 \srcnote{\texttt{config/uav\_projection.yaml}: \texttt{workspace\_bounds} of \texttt{corridor\_v2\_slide},
 \texttt{pillars\_hg}, \texttt{s\_curve\_hg}; \texttt{planning\_inflation.r\_drone: 0.31};
 \texttt{enlarge\_constraints: 0.025}, applied to the geometric constraints of \texttt{-tightened} variants only
@@ -310,6 +328,18 @@ of these boundaries and each face of the workspace box a further $0.025$\,m inwa
   shows the whole arrangement at true proportions --- the corridor walls, the six pillars, and the two
   offset passages of UAV-s-curve.}
   \label{fig:env-uav}
+\end{figure}
+
+\begin{figure}[!htbp]
+  \centering
+  \includegraphics[width=\linewidth]{fig_constraints_uav}
+  \caption[The constraint sets of the quadrotor scenes]{The constraint set of each quadrotor scene, seen
+  from above, in the same terms as \autoref{fig:constraints-avoiding}: halfspaces and circular keep-out
+  regions. Dark: the wall or pillar itself. Light: the band added by the vehicle radius of $0.31$\,m,
+  which is what the planned position must keep clear. Dashed: the tightened boundary, a further
+  $0.025$\,m inward. A wall constrains only the span of $x$ over which it exists, which is why the
+  shaded regions of UAV-corridor and UAV-s-curve stop short of the panel edge.}
+  \label{fig:constraints-uav}
 \end{figure}
 
 \FloatBarrier
@@ -440,11 +470,16 @@ geometry (\autoref{sec:setup:protocol:avoiding}). The evaluation with twenty epi
 \subsection{Vision-Conditioned Alignment}\label{sec:setup:baselines:aligning}
 
 No published result exists for the configuration evaluated here, so there is no external baseline to
-reproduce. The task itself is D3IL's \parencite{jia2024towards}, which evaluates imitation-learning
-policies on it from images: two $96\times96$ RGB views, front and in-hand, encoded by the ResNet
-encoder of Diffusion Policy. The strongest image-based policy reported there reaches a success rate of
-$0.359\pm0.031$ \parencite[Table~3]{jia2024towards}, where an episode succeeds when the box matches the
+reproduce, as there is on D3IL-avoiding. The task itself is D3IL's \parencite{jia2024towards}, which
+evaluates imitation-learning policies on it from images: two $96\times96$ RGB views, front and in-hand,
+encoded by the ResNet encoder of Diffusion Policy. An episode succeeds there when the box matches the
 target pose within a tolerance and its coloured sides match those of the target.
+
+Those reported results say how hard the task is. From images the strongest policy reaches
+$0.359\pm0.031$, and the next two $0.316\pm0.026$ and $0.278\pm0.071$; from the state the strongest
+reaches $0.891\pm0.022$, and on obstacle avoidance from the state $0.950\pm0.015$
+\parencite[Table~3]{jia2024towards}. Seen from images, this task is one that the policies of D3IL finish
+in roughly a third of episodes, where obstacle avoidance from the state is close to solved.
 
 That number is the reference for how difficult the task is, not a baseline for this thesis, because
 the two set-ups differ in what the network produces and in what happens to it afterwards
@@ -468,9 +503,11 @@ backbone, horizon and projection, at $\nfe=20$.
     Closed loop    & the policy's action is applied & receding horizon: the plan is projected onto the constraint set, its first action is applied, and a new plan is generated at the next control step \\
     Constraints    & none & workspace box on the end effector, action box (\autoref{sec:method:env:aligning}) \\
     Scoring        & success rate and entropy of the behaviours & final distance and orientation of the box, violations, time per control step (\autoref{sec:setup:metrics:aligning}) \\
+    Reported result & from images, the three strongest policies reach $0.359\pm0.031$, $0.316\pm0.026$ and $0.278\pm0.071$; from the state, $0.891\pm0.022$. On obstacle avoidance from the state, $0.950\pm0.015$ & no success rate is defined; episodes are scored by how close the box ends to its target \\
     \bottomrule
   \end{tabularx}
 \end{table}
+\FloatBarrier
 \srcnote{D3IL: Table~3, image data, Aligning column (BESO $0.359\pm0.031$); appendix, Table~5 and the
 camera-view figure ($96\times96$ front and in-hand views, image encoder of Diffusion Policy). Thesis: \texttt{config/aligning-d3il-visual.py},
 \texttt{plan\_mix\_visual\_aligning\_*} (\texttt{horizon: 8}, \texttt{mpc\_batch\_size: 4}).}
@@ -509,8 +546,6 @@ environment is a set of walls, pillars and a test-time slide that the plan must 
 gates that a goal sequence leads through; and the plan is a sequence of positions tracked by the
 cascaded geometric controller (\autoref{sec:method:deployment}), instead of rotor thrusts applied
 directly. Each flight is scored for success and for constraint satisfaction (\autoref{sec:setup:metrics:uav}).
-As on D3IL-aligning, the baseline is therefore the diffusion model of \ac{DPCC}
-trained on the same demonstrations, with an action loss weight of $1$ and $\nfe=20$.
 
 \srcnote{MuJoCo MPC, \texttt{mjpc/tasks/quadrotor/task.xml} (\texttt{agent\_planner 0} = Sampling,
 \texttt{agent\_horizon 0.5}, \texttt{agent\_timestep 0.01}, \texttt{sampling\_trajectories 32},
@@ -532,7 +567,14 @@ of the MuJoCo MPC software; the paper itself does not evaluate it.}
 The metrics are those of \ac{DPCC} \parencite[Sec.~6.1]{romer2025diffusion}: the number of control
 steps to reach the goal, the success rate of reaching the goal, the success rate of reaching the goal
 while satisfying the constraints at every step, and the number of control steps on which a constraint
-is violated. This thesis adds the wall-clock time per control step.
+is violated.
+
+To these this thesis adds the time to compute one action, the quantity \ac{DPCC} states for its own
+method \parencite[Sec.~6]{romer2025diffusion}. It is measured around the planner at every control step
+and covers everything the planner does to produce the action that is executed: generating the $B$
+candidate plans, projecting them onto the constraint set, and selecting one. The same measurement is
+used in all three environments, and
+\autoref{sec:setup:protocol:compute} gives the machine every configuration was measured on.
 
 \subsection{Vision-Conditioned Alignment}\label{sec:setup:metrics:aligning}
 
@@ -556,13 +598,18 @@ projection.
 
 Each flight is scored by
 \begin{itemize}
+  \item whether the goal is passed: the vehicle crosses the finish line of its scene. This is the success
+    criterion of D3IL-avoiding transferred to the air --- there an episode succeeds when the end effector
+    crosses the goal line (\autoref{sec:setup:metrics:avoiding}), here when the vehicle crosses the line
+    that closes its route;
   \item whether it is collision-free: no control step on which the vehicle, with its body radius of
     $0.31$\,m, violates a constraint;
-  \item two success criteria --- crossing the finish line, and coming within $0.30$\,m of the goal point of
-    its route --- each also reported together with collision-free flight as success with constraint
-    satisfaction;
-  \item the number of control steps to the goal;
-  \item the wall-clock time per control step, split into generation and projection.
+  \item success with constraint satisfaction: the goal passed on a collision-free flight, as on
+    D3IL-avoiding;
+  \item the number of control steps, and the final distance to the goal point of the route, which
+    describes where a flight that does not pass the goal ends;
+  \item the time to compute one action (\autoref{sec:setup:metrics:avoiding}), split into generation and
+    projection.
 \end{itemize}
 
 % =============================================================================
@@ -722,8 +769,9 @@ varies more, by $11.3$ steps, and its time per control step is $28$ to $33$ time
 \end{table}
 \dataref{analysis\_results\_checkpoint/15-09/batch\_avoiding\_combined\_20260915\_100757, candidates\_multidimensional\_raw; DA\_in\_Paper/analysis/avoiding\_seed\_spread.py}
 
-\provisional{At the protocol of \ac{DPCC}, only instantaneous-velocity matching at twenty network evaluations has been evaluated
-so far among the flow-based models; the rows at one and two evaluations are pending
+\provisional{At the protocol of \ac{DPCC}, analytic average-velocity matching is evaluated at one and two
+network evaluations and instantaneous-velocity matching at twenty; the instantaneous-velocity rows at one and
+two evaluations, and the consistency-interpolated rows, are pending
 (\autoref{tab:avoiding-dpcc-protocol}).}
 
 The instantaneous-velocity-matching results were produced by the sampler inherited from the baseline, which draws the
@@ -782,11 +830,5 @@ from a distributed or multi-GPU run. The full hardware and software inventory, i
 versions, is given in \autoref{app:repro}, \autoref{tab:compute}.
 \srcnote{Slurm\_Codes/sbatch/templates/2026\_04\_30\_job\_template.sh; every log header in Slurm\_Codes/logs/}
 
-Two properties of this machine bear on how the wall-clock measurements are read. The node is shared:
-it serves several GPU queues at once, but the scheduler neither oversubscribes GPUs nor preempts
-running jobs, so a job holds its accelerator exclusively and contention is confined to the CPU, the
-memory system and I/O. And thirty-two physical cores serve eight accelerators, while both the MuJoCo
-rollout and the per-step projection, solved by SLSQP (\autoref{sec:method:proj}), run on the CPU, so
-evaluation throughput is plausibly limited by the CPU rather than the RTX~A5000. Wall-clock times are
-therefore compared between configurations measured on the same node, and not read as hardware
-benchmarks.
+The measurements of \autoref{sec:setup:metrics} were taken on this machine; how its properties bear
+on reading them is given in \autoref{app:repro}.

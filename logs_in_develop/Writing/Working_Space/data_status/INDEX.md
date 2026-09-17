@@ -7,11 +7,14 @@ together with the notes kept here. Paths are relative to this file.
 | file | what |
 | :-- | :-- |
 | [`NOTE_20260914_official_DA_in_Paper.md`](NOTE_20260914_official_DA_in_Paper.md) | `DA_in_Paper` is the official data and figure store — the rules |
-| [`PENDING_20260916_missing_data_and_analyses.md`](PENDING_20260916_missing_data_and_analyses.md) | what the thesis still lacks: runs and analyses, with where each gap shows in the draft |
+| [`PENDING_20260916_missing_data_and_analyses.md`](PENDING_20260916_missing_data_and_analyses.md) | what the thesis still lacks: runs and analyses, with where each gap shows in the draft — **the general ledger** |
+| [`PENDING_20260917_dpcc_protocol_rows_table61.md`](PENDING_20260917_dpcc_protocol_rows_table61.md) | one table: the two rows still missing from `tab:avoiding-dpcc-protocol`, and the backbone trap that hid two others |
+| [`SLURM_RUNBOOK_20260917_dpcc_protocol_rows.md`](SLURM_RUNBOOK_20260917_dpcc_protocol_rows.md) | submission order and job-ID ledger for the separated FM and CI-MeanFM jobs that close those two rows |
 | [`outdated_DATASTATUS_20260910_v3_entry_readiness.md`](outdated_DATASTATUS_20260910_v3_entry_readiness.md) | historical readiness ledger; superseded |
 
 Naming: `NOTE_<date>_<topic>.md` states how things are; `PENDING_<date>_<topic>.md` lists what is missing.
-A newer PENDING supersedes the older one — rename the old one with the prefix `outdated_`.
+A newer PENDING supersedes the older one — rename the old one with the prefix `outdated_` — **unless it
+states a narrower scope in its first lines**, as `PENDING_20260917_dpcc_protocol_rows_table61.md` does.
 
 ## `Data_Analysis/DA_in_Paper/` — official, live (numbers and figures in the thesis)
 | path | what |

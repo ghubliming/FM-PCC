@@ -289,23 +289,25 @@ built for this thesis. \autoref{ch:setup} describes the evaluation.
 \section{Research Questions}\label{sec:intro:rqs}
 
 \begin{description}
-  \item[RQ1 --- Generative model.] Under an identical backbone, projection, dataset and evaluation code, does
-    replacing the diffusion model with deterministic ODE transport improve the
-    quality--cost frontier of constrained predictive control, and does the improvement
-    order the family of generative models?
-  \item[RQ2 --- Budget.] How far can the \ac{NFE} be reduced before
-    plan quality degrades, and why can flow matching reduce it while diffusion cannot?
-  \item[RQ3 --- Constraints.] Given one fixed feasible set, which projection method ---
-    projection of the current \emph{iterate}, or projection of the predicted clean
-    \emph{endpoint} inside the sampler --- should be used, and under what condition is the
-    comparison even well-posed?
-  \item[RQ4 --- Transfer.] Do the answers to RQ1--RQ3 survive a change of observation
-    modality (state $\rightarrow$ vision) and a change of embodiment (manipulator
-    $\rightarrow$ aerial), or are they properties of one benchmark?
+  \item[RQ1 --- Generative model.] Under an identical backbone, projection, dataset and evaluation
+    code, does flow matching --- a learned velocity field, the transport \ac{ODE} it generates, the
+    step budget that becomes a solver argument, and the average-velocity objectives built on that
+    field --- improve the quality--cost frontier of constrained predictive control over the diffusion
+    model it replaces, and does the improvement order the three objectives?
+  \item[RQ2 --- Constraints.] Given one fixed feasible set and one solver, at a step budget large
+    enough for projection to guide the sampler, does endpoint projection reach the goal with fewer
+    constraint violations, fewer control steps or less computation than the per-step (iterate)
+    projection of \ac{DPCC}, and below which budget does the comparison cease to be well-posed?
+  \item[RQ3 --- Transfer.] Obstacle avoidance is planar, observed as a state, kinematic at the
+    planning level, and solvable by a classical planner with a collision constraint. Do the answers
+    to RQ1 and RQ2 hold when the observation becomes camera images, when the task requires aligning
+    an object through contact, and when the platform is an underactuated, open-loop unstable
+    quadrotor moving through three-dimensional obstacle fields --- settings whose dynamics and
+    perception are closer to those of a physical deployment?
 \end{description}
 
-\srcnote{TARGET \S7 maps each RQ to its evidence sections. RQ2 is the ``argue the mechanism
-before any table'' item.}
+\srcnote{TARGET \S7 maps each RQ to its evidence sections; the former RQ2 on the step budget is
+folded into RQ1 (v2.22).}
 
 \section{Contributions}\label{sec:intro:contributions}
 
@@ -365,8 +367,9 @@ This thesis makes six contributions.
       \item It is controlled by a cascaded geometric tracking controller \parencite{lee2010geometric},
         with sampling-based MuJoCo predictive control \parencite{howell2022predictive} as a baseline
         controller.
-      \item The three environments, their constraint sets and the expert demonstrations are built on
-        top of D3IL and MuJoCo.
+      \item The three environments, their constraint sets and the expert demonstrations are built
+        for this thesis in MuJoCo \parencite{todorov2012mujoco}, inside the environment code of
+        D3IL.
     \end{enumerate}
     \hole{Result sentence for this contribution --- from Ch.~6, supplied by v3 as a \texttt{For v2:} line.}
 \end{enumerate}
@@ -431,10 +434,19 @@ deterministic function of its initial noise and the observation.
 
 \section{Few-Step Generative Models}\label{sec:bg:fewstep}
 
-A step budget chosen at deployment is not automatically a good one. Straight per-sample paths average
-into a curved field, and coarse integration steps along a curved field are inaccurate however well the
-network is trained \parencite[Sec.~3]{geng2025meanflow}. Few-step models change what the network
-learns so that a large step stays accurate.
+Few-step generation is a development inside the transport family of \autoref{sec:bg:fm}, not a
+property of generative models in general. The reason is the structure flow matching gives the
+problem: the model is trained against a chosen interpolation between the prior and the data, and the
+straighter that interpolation is, the fewer integration steps its \ac{ODE} needs. Optimal-transport
+paths \parencite{lipman2023flow} and rectified flow \parencite{liu2023flow} pursue exactly this, and
+the step budget stays a solver argument throughout. Diffusion admits no such handle: its path is the
+noise schedule it was trained with, and a short budget is recovered afterwards, by a different
+sampler \parencite{song2021denoising} or by distillation \parencite{wang2024onedp}.
+
+A step budget chosen at deployment is still not automatically a good one. Straight per-sample paths
+average into a curved field, and coarse integration steps along a curved field are inaccurate however
+well the network is trained \parencite[Sec.~3]{geng2025meanflow}. The objectives below change what the
+network learns so that a large step stays accurate.
 
 Analytic average-velocity matching \parencite{geng2025meanflow} learns the average velocity over a
 time interval instead of the instantaneous velocity. One evaluation of an accurate average velocity covers the whole interval, so a
@@ -471,7 +483,7 @@ optimal control problem. A control input is added to the learned velocity field;
 the controlled sampler stays close to the learned one; and the constraints are imposed on the final
 sample only, not on the path that leads to it. Solving that problem exactly would require simulating
 the rest of the trajectory at every step. The method avoids this in three moves. It splits the problem,
-as model predictive control does, into one short problem per sampling step. It replaces the unknown
+as \ac{MPC} does, into one short problem per sampling step. It replaces the unknown
 final sample by its expected value given the current state, which for a flow-matching model follows in
 closed form from the state and the learned velocity. And it optimises directly over that predicted
 final sample instead of over the next state, so the constraints act on a plan and not on its image
@@ -490,9 +502,11 @@ towards; this thesis calls it \emph{endpoint projection}. Plans generated with n
 A policy that observes images compresses each camera view into a feature vector with a convolutional
 encoder and conditions the generative model on that vector. D3IL \parencite{jia2024towards} provides
 such a vision pipeline for its tasks, following Diffusion Policy \parencite{chi2023diffusion}: a
-ResNet-18 encoder \parencite{he2016deep} processes each camera view. Concatenated
-with the time embedding of the network, the features reach its layers as a feature-wise conditional
-bias \parencite[Sec.~3]{perez2017film}. Transformer backbones operate on image patches instead of a
+ResNet-18 encoder \parencite{he2016deep} processes each camera view. The features are then
+concatenated with the time embedding of the network and reach its layers as a feature-wise
+conditional bias --- the bias half of feature-wise linear modulation, \ac{FiLM}
+\parencite[Sec.~3]{perez2017film}, whose general form scales and shifts each channel of a layer from
+a conditioning vector. Transformer backbones operate on image patches instead of a
 pooled feature vector \parencite{peebles2022dit}.
 
 \section{Quadrotor Dynamics and Control}\label{sec:bg:quadrotor}
@@ -521,8 +535,11 @@ Diffusion was first used to plan whole trajectories \parencite{janner2022plannin
 visuomotor policies \parencite{chi2023diffusion}. Motion planning diffusion constructs cost functions
 for safe robot motion and biases the sampler towards them \parencite{carvalho2025motion}. \ac{DPCC}
 combines a trajectory diffusion model with a model-based projection at every denoising step and with
-constraint tightening \parencite{romer2025diffusion}. It is both the codebase this thesis starts from
-and the baseline it is measured against.
+constraint tightening \parencite{romer2025diffusion}. Its planner runs as \ac{MPC}: a one-dimensional
+temporal U-Net generates a state--action plan over a fixed horizon, a batch of candidate plans is
+drawn, the plan is made dynamically feasible against an Euler-integrated model of the plant, and one
+action is executed before the next plan is generated \parencite[Sec.~5]{romer2025diffusion}. It is
+both the codebase this thesis starts from and the baseline it is measured against.
 
 \section{Flow Matching and Few-Step Policies}\label{sec:rel:fm}
 
@@ -567,13 +584,25 @@ generates safe, admissible and dynamically consistent trajectories \parencite{hu
 UniConFlow incorporates equality and inequality constraints in one constrained flow-matching framework
 \parencite{yang2025uniconflow}; XFlowMP is a task-conditioned generative motion planner built on
 Schr\"odinger bridges \parencite{nguyen2025xflowmp}; and SafeFlowMPC couples flow matching with online
-optimisation on a real seven-degree-of-freedom manipulator \parencite{oelerich2026safeflowmpc}.
+optimisation on a real seven-degree-of-freedom manipulator, generating joint-position trajectories
+that a real-time solver projects onto the safe set inside the sampling loop
+\parencite[Sec.~III]{oelerich2026safeflowmpc}.
 
 HardFlow reformulates hard-constrained sampling of flow-matching models as trajectory optimisation and
-projects the plan the sampler is predicted to reach \parencite{li2025hardflow}. It applies this
-optimisation only in the later sampling steps. At a small step budget that convention leaves no step
-before the final one, and the method reduces to projecting a finished sample --- a case that, to the
-author's knowledge, has not been characterised.
+projects the plan the sampler is predicted to reach \parencite{li2025hardflow}. Its derivation
+decomposes the sampling problem the way \ac{MPC} decomposes a horizon, into one subproblem per
+sampling step, and the resulting procedure is stated as an algorithm
+\parencite[Alg.~1]{li2025hardflow}. It applies this optimisation only in the later sampling steps. At
+a small step budget that convention leaves no step before the final one, and the method reduces to
+projecting a finished sample --- a case that, to the author's knowledge, has not been characterised.
+
+HardFlow is evaluated on the same obstacle-avoidance task as \ac{DPCC}, with the constraint geometry
+of \parencite{romer2025diffusion}, so its differences from this thesis lie in the control loop rather
+than in the task: it plans a horizon of sixteen steps and executes eight of them before replanning,
+fixes the step budget at ten Euler steps, states its plant as a linear model fitted to the training
+data, and solves the resulting program with an interior-point solver
+\parencite[App.~C]{li2025hardflow}. Its planner is likewise a temporal U-Net
+\parencite{janner2022planning}.
 
 \section{Vision-Conditioned Imitation Learning}\label{sec:rel:visual}
 
@@ -591,12 +620,60 @@ Imitation learning for aerial vehicles covers language-guided short-range flight
 Colosseo provides a real-world benchmark \parencite{wang2025uavflow}, and trajectory planning: CGD
 guides diffusion policies for \ac{UAV} trajectories with constraints never encountered in training
 \parencite{kondo2024cgd}. Below the planner, geometric tracking control on the special Euclidean group
-tracks position and attitude without the singularities of local coordinates
-\parencite{lee2010geometric}, and predictive sampling offers derivative-free model predictive control in
-simulation \parencite{howell2022predictive}. The quadrotor model used here is the Skydio X2 from MuJoCo
+tracks position and attitude without the singularities of local coordinates. Its
+position-controlled flight mode states the thrust magnitude and moment vector that track a position
+reference, the attitude they imply, and the stability of the resulting closed loop
+\parencite[Eqs.~(19)--(23), Prop.~3]{lee2010geometric}; the cascade from a commanded force to
+individual rotor thrusts through a fixed allocation matrix is the structure of
+\parencite{mellinger2011minimum}. These are the equations the controller of
+\autoref{sec:method:geometric} implements. Predictive sampling offers derivative-free model
+predictive control in simulation \parencite{howell2022predictive}. The quadrotor model used here is the Skydio X2 from MuJoCo
 Menagerie \parencite{zakka2022menagerie}.
 
 \section{Positioning of This Thesis}\label{sec:rel:positioning}
+
+The methods above differ less in their generative model than in the loop around it: whether a plan is
+executed once or inside a receding horizon, what the plan commands, where the constraints act, and
+which backbone carries the comparison. \autoref{tab:related-loops} states these for the works this
+thesis builds on and is measured against.
+
+\begin{table}[htpb]
+  \caption[Planner, loop and constraint mechanism in the closest related work]{The closest related
+  work by the loop it runs in, not by its generative model. ``Executed'' is the number of planned
+  steps applied before the next plan is generated.}
+  \label{tab:related-loops}
+  \centering\small
+  \begin{tabularx}{\linewidth}{lLLL}
+    \toprule
+    Work & Constraints & Loop and plan & Backbone \\
+    \midrule
+    Diffuser \parencite{janner2022planning}
+      & cost guidance, no hard constraint
+      & plan of states and actions, replanned
+      & temporal U-Net \\
+    Diffusion Policy \parencite{chi2023diffusion}
+      & none
+      & receding horizon over a chunk of actions
+      & U-Net or transformer \\
+    \ac{DPCC} \parencite{romer2025diffusion}
+      & projection of every denoising iterate, tightened
+      & receding horizon, horizon $8$, $1$ executed, Euler plant model
+      & temporal U-Net \\
+    HardFlow \parencite{li2025hardflow}
+      & projection of the predicted final sample, later steps only
+      & receding horizon, horizon $16$, $8$ executed, fitted linear plant model
+      & temporal U-Net \\
+    SafeFlowMPC \parencite{oelerich2026safeflowmpc}
+      & projection onto the safe set inside the sampling loop
+      & receding horizon over joint-position trajectories
+      & flow-matching policy \\
+    This thesis
+      & one feasible set, applied to the iterate or to the predicted endpoint
+      & receding horizon, horizon $8$, $1$ executed, Euler plant model
+      & temporal U-Net, one parameter count for every model \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
 
 Fast generative sampling, hard constraint enforcement, visual conditioning and aerial embodiment have
 each been studied, but in a receding-horizon controller the cost of fast sampling and the cost of
@@ -690,7 +767,7 @@ $\matr{J}\sidx{b}$ is the drone's inertia tensor; the two never appear in the sa
   uppercase, per the institute's convention.}
   \centering
   \label{tab:notation}
-  \begin{tabular}{lll}
+  \begin{tabularx}{\linewidth}{lLl}
     \toprule
     Symbol & Meaning & Range / type \\
     \midrule
@@ -704,7 +781,9 @@ $\matr{J}\sidx{b}$ is the drone's inertia tensor; the two never appear in the sa
     $r$ & the second (start-side) transport time & $[0,\ftime]$ \\
     $h$ & interval length $\ftime-r$ & $[0,1]$ \\
     $k$ & sampler step index & $0,\dots,\nfe$ \\
-    $\nfe$ & step budget $=$ network evaluations per plan & $\mathbb{N}$ \\
+    $\nfe$ & step budget $=$ network evaluations per plan: denoising steps of the reverse process
+      for the diffusion baseline, fixed with its schedule at training; steps of the \ac{ODE} solver
+      for the flow-based models, chosen at deployment & $\mathbb{N}$ \\
     $\beta_{k},\bar{\alpha}_{k},\sigma_{k}$ & diffusion schedule quantities & \\
     $\vfield_{\theta}$ & instantaneous velocity network & $\R^{n}$ \\
     $\afield_{\theta}$ & average velocity network & $\R^{n}$ \\
@@ -725,7 +804,7 @@ $\matr{J}\sidx{b}$ is the drone's inertia tensor; the two never appear in the sa
     $\matr{J}\sidx{b}$ & body inertia (never the Jacobian) & $\R^{3\times3}$ \\
     $t\sidx{s}$ & sampling time of the dynamics model & $\R_{>0}$ \\
     \bottomrule
-  \end{tabular}
+  \end{tabularx}
 \end{table}
 
 \section{System Overview}\label{sec:method:overview}
@@ -1023,7 +1102,7 @@ Three properties of \eqref{eq:bg:mf:loss} are used later in this thesis.
   \item \textbf{The interval is a network input, so the budget is chosen at inference.} As in
     \autoref{sec:method:fm}, $\nfe$ appears only in the sampler. Unlike \autoref{sec:method:fm}, small $\nfe$ is
     no longer paid for in discretisation error, because the field being queried is already the
-    exact average over the step. The mechanism behind RQ2 is therefore a property of what is
+    exact average over the step. The budget mechanism of RQ1 is therefore a property of what is
     learned.
   \item \textbf{The objective differentiates through the network, which constrains the
     architecture.} Everything inside the closure that \eqref{eq:bg:mf:jvp} differentiates must
@@ -1117,10 +1196,31 @@ this work's own, from the Gen3v6 U3/U8 audits.}
 The third objective \parencite{zhang2025alphaflow} also learns the average velocity, but interpolates
 its target by a consistency step ratio $\alpha$ between the instantaneous velocity and a stop-gradient
 prediction of the network itself. With the architecture matched and the ratio annealed to a final value
-$\alpha_{\mathrm{end}}>0$, it matches analytic average-velocity matching at low step budgets and
+$\alpha\sidx{end}>0$, it matches analytic average-velocity matching at low step budgets and
 falls behind it at high budgets in both environments where it was measured, and it is reported as an
-ablation (\autoref{sec:res:fewstep}, \autoref{sec:disc:negative}). \hole{Its training target is not
-yet written out.}
+ablation (\autoref{sec:res:fewstep}, \autoref{sec:disc:negative}).
+
+The target replaces the differentiated term of \eqref{eq:method:engine:mftgt} by the network's own
+average velocity, evaluated after travelling a fraction $\alpha$ of the interval at the analytic
+velocity \parencite[Def.~1, Alg.~1]{zhang2025alphaflow}. In the start-anchored notation of
+\autoref{sec:method:meanflow}, with $\vect{v} = \vect{x}_{1}-\vect{x}_{0}$ and the step
+$\delta = \alpha h$,
+\begin{equation}\label{eq:method:engine:aftgt}
+  \afield\sidx{tgt}
+  = \alpha\,\vect{v}
+  + (1-\alpha)\,\sg\!\left(\afield_{\theta}\!\left(\vect{x}_{r}+\delta\,\vect{v},\;r+\delta,\;h-\delta\right)\right),
+\end{equation}
+which is composed into the same reweighted loss \eqref{eq:method:engine:mfloss}. The two endpoints are
+exact: at $\alpha = 1$ the target is $\vect{v}$ and the objective is \eqref{eq:method:engine:fm}, and as
+$\alpha \to 0$ a first-order expansion of the network term returns the analytic target
+\eqref{eq:method:engine:mftgt} \parencite[Thm.~1]{zhang2025alphaflow}. During training $\alpha$ follows
+a sigmoid curriculum from one to $\alpha\sidx{end}$
+\parencite[Alg.~2]{zhang2025alphaflow}, and a fraction of each batch is drawn with $h = 0$, where
+\eqref{eq:method:engine:aftgt} reduces to $\vect{v}$.
+\srcnote{\texttt{flow\_matcher\_v3\_alphaflow/models/af\_diffusion.py:637--720}
+(\texttt{\_p\_losses\_alphaflow}, $\delta = \alpha h$, the network term under \texttt{no\_grad}) and
+\texttt{:440--470} (the sigmoid schedule); upstream
+\texttt{PAPERS/auxiliary\_papers/DGM/AlphaFlow\_src/algos/training.tex}.}
 
 Two of its properties matter here. The step ratio appears only in training, and at one
 setting the two targets coincide term for term: a checkpoint trained at that setting is analytic
@@ -1306,7 +1406,7 @@ The two designs sit at opposite ends of one trade. Exact kinematics inside the p
 feasibility on the real chain, and tie the program to one robot and the plan to that robot's joints.
 The surrogate gives an end-effector plan and a projector that transfer unchanged from a planar arm to
 a spatial one to a quadrotor, with feasibility that holds for the model and not for the plant. This
-thesis takes the second end: one projection method, held fixed across two embodiments, is what RQ4 is about.
+thesis takes the second end: one projection method, held fixed across two embodiments, is what RQ3 is about.
 $\gamma$ is where the cost is booked.
 \srcnote{Verified against the released code:
 \texttt{aux\_repo/SafeFlowMPC/safe\_flow\_mpc/RobotModel/} carries the \texttt{iiwa.urdf} and
@@ -1583,6 +1683,10 @@ written out --- pulls the correction back into the sampler, damped by $\ftime_{k
 $\ftime_{\nfe} = 1$, so the output equals $\hat{\vect{x}}_{1}^{\star}\in\mathcal{Z}_{f}$ and satisfies the
 constraints \parencite[Prop.~1]{li2025hardflow}. The optimisation runs only in the later sampling
 steps, where the prediction \eqref{eq:method:hf:post} is accurate \parencite{li2025hardflow}.
+\eqref{eq:method:hf:ref}--\eqref{eq:method:hf:pull} are the steps of
+\parencite[Alg.~1]{li2025hardflow}, written in the notation of this thesis; the source shows the
+sequence of corrected predictions on the obstacle-avoidance task used here
+\parencite[Fig.~11]{li2025hardflow}.
 
 \subsubsection*{The configuration used here}
 
@@ -1734,10 +1838,10 @@ velocity block is present only for the aerial platform. Two properties follow.
   Euler sampling time of \eqref{eq:method:dpcc:euler}; ``rows'' counts the channel pairs of
   \eqref{eq:method:proj:deriv}.}
   \label{tab:embodiments}
-  \centering
-  \begin{tabular}{llll}
+  \centering\small
+  \begin{tabularx}{\linewidth}{lLLL}
     \toprule
-     & D3IL-avoiding & D3IL-aligning & \begin{tabular}[t]{@{}l@{}}UAV-corridor, UAV-pillars,\\ UAV-s-curve\end{tabular} \\
+     & D3IL-avoiding & D3IL-aligning & UAV-corridor, UAV-pillars, UAV-s-curve \\
     \midrule
     embodiment      & manipulator, planar   & manipulator, spatial      & quadrotor \\
     observation     & state, $4$-D          & 2 RGB views $+$ $6$-D state & state, $9$-D \\
@@ -1746,11 +1850,11 @@ velocity block is present only for the aerial platform. Two properties follow.
     $\vect{o}$ layout & $(\vect{p}\sidx{des},\vect{p})$ & $(\vect{p}\sidx{des},\vect{p})$ & $(\vect{p}\sidx{des},\vect{p},\dot{\vect{p}})$ \\
     $t\sidx{s}$     & $1$                   & $1$                       & $1$ \\
     dynamics rows   & $4$                   & $6$                       & $6$ \\
-    low level       & differential IK $\rightarrow$ joint PD & same          & geometric cascade, or MJPC \\
+    low level       & differential IK $\rightarrow$ joint PD & same & geometric cascade, or MJPC \\
     plan interval   & one plan per env.\ step & one plan per env.\ step & $0.03\,\textrm{s}$ simulated \\
     inner interval  & $n\sidx{sub}$ sim substeps & $n\sidx{sub}$ sim substeps & $0.01\,\textrm{s}$ simulated \\
     \bottomrule
-  \end{tabular}
+  \end{tabularx}
 \end{table}
 
 \subsection{Manipulator: Differential Inverse Kinematics}\label{sec:method:ik}
@@ -1762,7 +1866,7 @@ end-effector orientation and, on the planar benchmark, the height fixed.
 \srcnote{\texttt{aux\_repo/dpcc/scripts/eval.py:236--238}: \texttt{next\_pos\_des = action + obs[:2]}.}
 
 Below that setpoint sits the differential \ac{IK} loop. Let $\vect{q}\in\R^{7}$ be the joint
-positions, $\matr{J}(\vect{q})$ the end-effector Jacobian, and let the task-space error be a
+positions of the Panda, $\matr{J}(\vect{q})$ the end-effector Jacobian, and let the task-space error be a
 proportional term on position and orientation,
 \begin{equation}\label{eq:method:dep:taskerr}
   \vect{\xi}(\vect{q})
@@ -1827,33 +1931,26 @@ time.
 $\Delta t\sidx{phys}$ from \texttt{quadrotor\_modified.xml:4}.}
 
 The controller is the \emph{position-controlled flight mode} of
-\parencite{lee2010geometric}, instantiated on \eqref{eq:method:dep:plant}; each of the four steps below names the
-equation of \parencite{lee2010geometric} it realises, and the three deviations from it are
-marked.
+\parencite[Eqs.~(19)--(23)]{lee2010geometric}, instantiated on \eqref{eq:method:dep:plant} in a
+$z$-up frame with the thrust along $+\vect{b}_{3}$, and closed by the rotor allocation of
+\parencite{mellinger2011minimum}. It runs in four steps.
 
-\paragraph{Outer loop --- position to thrust vector.} With $\vect{e}\sidx{p} = \vect{p}-\vect{p}\sidx{des}$
-and $\vect{e}\sidx{v} = \dot{\vect{p}}-\dot{\vect{p}}\sidx{des}$ --- the tracking errors of
-\parencite[Eqs.~(17)--(18)]{lee2010geometric} --- a diagonal PD with acceleration feed-forward gives
+\paragraph{Outer loop --- position to thrust vector.} With the tracking errors
+$\vect{e}\sidx{p} = \vect{p}-\vect{p}\sidx{des}$ and
+$\vect{e}\sidx{v} = \dot{\vect{p}}-\dot{\vect{p}}\sidx{des}$
+\parencite[Eqs.~(17)--(18)]{lee2010geometric}, a diagonal PD with acceleration feed-forward gives
 the required world-frame force
 \begin{equation}\label{eq:method:dep:outer}
   \vect{a}\sidx{cmd} = -\matr{K}\sidx{p}\vect{e}\sidx{p} - \matr{K}\sidx{d}\vect{e}\sidx{v} + \ddot{\vect{p}}\sidx{des},
   \qquad
   \vect{F} = m\left(\vect{a}\sidx{cmd} + g\,\unitvec{3}\right),
 \end{equation}
-which is the bracketed term of \parencite[Eq.~(23)]{lee2010geometric}. \textbf{Deviation 1 --- frame
-convention.} The source states \eqref{eq:method:dep:plant} with $\unitvec{3}$ pointing \emph{down}
-and the thrust acting along $-\vect{b}_{3}$, so its position and velocity terms carry the opposite
-sign to those written here; this implementation is $z$-up with thrust along $+\vect{b}_{3}$. The law
-is the same law, and the scalar gains are not transferable between the two statements without that
-flip. \textbf{Deviation 2 --- diagonal gains.} $\matr{K}\sidx{p}$ and $\matr{K}\sidx{d}$ are diagonal
-matrices here, where \parencite{lee2010geometric} proves stability for the scalar gains $k_{x},k_{v}$;
-the per-axis split (a stiffer vertical channel) is an engineering choice and is \emph{not} covered by
-the paper's stability statement.
+which is the bracketed term of \parencite[Eq.~(23)]{lee2010geometric}. The gain matrices are
+diagonal, with a stiffer vertical channel.
 
-\paragraph{Attitude extraction.} The rotor disk must point along $\vect{F}$, and the remaining degree
-of freedom is fixed by the commanded yaw $\psi\sidx{des}$. This is
-\parencite[Eqs.~(22)--(23)]{lee2010geometric}, with the free axis $\vect{b}_{1c}$ --- there only
-required to be orthogonal to $\vect{b}_{3c}$ --- pinned here by projecting the yaw direction:
+\paragraph{Attitude extraction.} The rotor disk points along $\vect{F}$ and the remaining degree of
+freedom is fixed by the commanded yaw $\psi\sidx{des}$, which pins the free axis left open by
+\parencite[Eqs.~(22)--(23)]{lee2010geometric}:
 \begin{equation}\label{eq:method:dep:att}
   \vect{b}_{3} = \frac{\vect{F}}{\|\vect{F}\|},\quad
   \vect{b}_{2} = \frac{\vect{b}_{3}\times\vect{x}\sidx{c}}{\|\vect{b}_{3}\times\vect{x}\sidx{c}\|},\quad
@@ -1871,17 +1968,10 @@ error on $SO(3)$ of \parencite[Eq.~(21)]{lee2010geometric}, and the moment is it
   \vect{\tau}\sidx{b} = -\matr{K}\sidx{R}\vect{e}\sidx{R} - \matr{K}_{\omega}\vect{e}_{\omega}
       + \vect{\omega}\times\matr{J}\sidx{b}\vect{\omega},
 \end{equation}
-where $(\cdot)^{\vee}$ is the inverse hat map. \textbf{Deviation 3 --- the attitude feed-forward is
-dropped.} The source defines
-$\vect{e}_{\omega} = \vect{\omega} - \matr{R}\trans\matr{R}\sidx{des}\vect{\omega}\sidx{des}$ and adds
-$-\matr{J}\sidx{b}(\hat{\vect{\omega}}\matr{R}\trans\matr{R}\sidx{des}\vect{\omega}\sidx{des}
-- \matr{R}\trans\matr{R}\sidx{des}\dot{\vect{\omega}}\sidx{des})$ to
-\eqref{eq:method:dep:inner}. This implementation sets $\vect{\omega}\sidx{des} \equiv \vect{0}$, so
-$\vect{e}_{\omega} = \vect{\omega}$ and the whole feed-forward term vanishes. That is legitimate only
-while the commanded attitude turns slowly --- and $\matr{R}\sidx{des}$ is driven by
-\eqref{eq:method:dep:att} from a setpoint the \emph{generative model} produces, so its rate is not
-under the controller's control. The almost-global exponential stability of
-\parencite[Prop.~1]{lee2010geometric} therefore does not transfer verbatim to what is run here.
+where $(\cdot)^{\vee}$ is the inverse hat map. The commanded angular velocity is held at zero, so
+$\vect{e}_{\omega} = \vect{\omega}$ and the attitude feed-forward of
+\parencite[Eq.~(20)]{lee2010geometric} vanishes; with it goes the exponential-stability statement of
+\parencite[Prop.~3]{lee2010geometric}, which assumes the full law.
 
 \paragraph{Allocation.} The collective thrust is the world force projected on the current body-$z$
 axis, floored so the vehicle cannot free-fall during recovery, and the wrench is distributed over the
@@ -1894,37 +1984,22 @@ four rotors by a fixed geometry matrix:
   \matr{M}_{:,i} = \begin{bmatrix}1 & r_{i,y} & -r_{i,x} & \kappa_{i}\end{bmatrix}\trans,
 \end{equation}
 with $\vect{r}_{i}$ the $i$-th rotor site position and $\kappa_{i}$ its yaw-torque gear ratio, both
-read from the model file rather than hard-coded. \eqref{eq:method:dep:alloc} is
-\parencite[Eq.~(1)]{lee2010geometric} --- there written for four rotors at distance $d$ on a square,
-$[\,f\;\vect{\tau}\sidx{b}\,]\trans = \matr{M}\vect{f}\sidx{rotor}$ with
-$\matr{M}$ built from $\pm d$ and the thrust-to-torque constant --- generalised to arbitrary rotor
-placements by reading $\vect{r}_{i}$ and $\kappa_{i}$ off the vehicle model. It is invertible under
-the same non-degeneracy condition. When $\vect{u} = \matr{M}^{-1}[T;\vect{\tau}\sidx{b}]$
-leaves the actuator box, the command is rescaled \emph{thrust-first}: the mean is held and the
-torque component is shrunk by the largest factor that keeps every rotor in range, but never below
-one half, so attitude authority is never more than halved. Parameters of record:
+read from the model file, so \eqref{eq:method:dep:alloc} holds for an arbitrary rotor placement
+\parencite[Eq.~(1)]{lee2010geometric}\parencite{mellinger2011minimum}. When
+$\vect{u} = \matr{M}^{-1}[T;\vect{\tau}\sidx{b}]$ leaves the actuator box, the command is rescaled
+thrust-first: the mean is held and the torque component is shrunk by the largest factor that keeps
+every rotor in range, but never below one half. Parameters of record:
 $\matr{K}\sidx{p} = \operatorname{diag}(4,4,8)$, $\matr{K}\sidx{d} = \operatorname{diag}(3,3,4)$,
 $\matr{K}\sidx{R} = \operatorname{diag}(70,70,4)$, $\matr{K}_{\omega} = \operatorname{diag}(2.5,2.5,1)$,
 $u\sidx{hover} = mg/4$, $u\sidx{max} = \max(2u\sidx{hover},6)$, $u\sidx{min} = 0$,
 $T\sidx{floor} = 0.1\,mg$, $g = 9.81\,\textrm{m}/\textrm{s}^{2}$; $m$ and $\matr{J}\sidx{b}$ are
 read from the vehicle model.
-\srcnote{\texttt{uav\_env\_test/flight\_controller.py:33--155}. The class is named
-\texttt{CascadedPID}, which is a misnomer on three counts and is \emph{not} the name used here ---
-see Remark~\ref{rem:pidname}.}
-
-\begin{remark}[The controller is not a PID]\label{rem:pidname}
-The implementation calls this class \texttt{CascadedPID}, and the run tags say \texttt{pid}. Three
-things are wrong with that.
-\textbf{(i)} There is \emph{no integral term anywhere} --- the four gains are
-$\matr{K}\sidx{p},\matr{K}\sidx{d}$ on position and $\matr{K}\sidx{R},\matr{K}_{\omega}$ on attitude
-and rate, all proportional or derivative, so it is at most a PD cascade. \textbf{(ii)} The inner loop
-is not a scalar loop at all: \eqref{eq:method:dep:inner} is a coordinate-free error on $SO(3)$ with a
-gyroscopic feed-forward, which no arrangement of scalar PID channels reproduces. \textbf{(iii)}
-``cascaded PID'' suggests nested scalar loops, where this is a two-level geometric cascade closed by a
-\emph{static} allocation matrix \eqref{eq:method:dep:alloc}. The thesis therefore calls it a
-\textbf{cascaded geometric tracking controller}, after the lineage it implements
-\parencite{lee2010geometric}, and treats \texttt{pid} purely as an artefact tag.
-\end{remark}
+The loop has no integral term: the four gains act on position, velocity, attitude and angular rate,
+and the inner loop is the coordinate-free error on $SO(3)$ of \eqref{eq:method:dep:inner}, closed by
+the static allocation \eqref{eq:method:dep:alloc}. The thesis therefore calls it a cascaded geometric
+tracking controller; \texttt{pid} in the run tags is an artefact token.
+\srcnote{\texttt{uav\_env\_test/flight\_controller.py:33--155} (class \texttt{CascadedPID}); the name
+mapping is in Auxiliary/Naming/TRANSLATION\_20260914\_dev\_jargon\_to\_scientific.md \S7.}
 
 \paragraph{The velocity setpoint is synthesised, not planned.} \eqref{eq:method:dep:outer} needs
 $\dot{\vect{p}}\sidx{des}$, which the plan does not supply --- it supplies displacements. Three
@@ -2033,7 +2108,9 @@ quadratic rows: \texttt{aux\_repo/dpcc/diffuser/sampling/projection.py:410--462}
 \subsection{Obstacle Avoidance}\label{sec:method:env:avoiding}
 
 The obstacle-avoidance task of D3IL \parencite{jia2024towards} is the benchmark of \ac{DPCC}
-\parencite[Sec.~6.1]{romer2025diffusion}. The state stacks the commanded and the measured planar
+\parencite[Sec.~6.1]{romer2025diffusion}. It is simulated in MuJoCo
+\parencite{todorov2012mujoco}: a seven-joint Franka Emika Panda carries a cylindrical rod as its end
+effector and moves in a plane \parencite[Sec.~3.3]{jia2024towards}. The state stacks the commanded and the measured planar
 end-effector position, $\vect{s} = (\vect{p}\sidx{des},\vect{p})\in\R^{4}$, the action is a planar
 increment $\Delta\vect{p}\in\R^{2}$, and the four dynamics rows are \eqref{eq:method:dpcc:euler}. The
 test-time constraints are halfspaces \eqref{eq:method:env:halfspace} and circular regions
@@ -2051,7 +2128,8 @@ constraint geometries are identical. Candidate count varied as a factor elsewher
 \subsection{Vision-Conditioned Alignment}\label{sec:method:env:aligning}
 
 The alignment task of D3IL \parencite{jia2024towards} asks the robot to push a box into a target
-pose. Its simulation, demonstrations and vision pipeline are D3IL's; the constrained-control environment
+pose. It runs in MuJoCo; its task files, demonstrations, camera placement and vision pipeline are
+D3IL's; the constrained-control environment
 around them was built for this thesis --- the plan and its dynamics rows, the constraint set, and the
 coupling of the visual encoder to the generative network.
 \srcnote{Methodology\_Sources/AUX\_visual\_aligning\_env.md \S1 (``the task is D3IL's, the vision
@@ -2334,6 +2412,8 @@ record both a start and an end; re-derive it with \texttt{sacct} before stating 
   \acro{IK}[IK]{inverse kinematics}
   \acro{MJPC}[MJPC]{MuJoCo predictive control}
   \acro{UAV}[UAV]{unmanned aerial vehicle}
+  \acro{FiLM}[FiLM]{feature-wise linear modulation}
+  \acro{MPC}[MPC]{model predictive control}
   % TODO: extend as Chapters 5-8 are written. Declare an acronym only when the
   % text really abbreviates it -- a declaration with no \ac{} never prints.
 \end{acronym}

@@ -76,6 +76,48 @@ class Corpus:
 # nothing about them is duplicated here.
 UAV_SCENE_DIR = 'd3il/environments/d3il/models/mj/robot/quadrotor/scenes'
 
+# The constraint set each quadrotor scene is flown against, transcribed from the
+# evaluation configuration so the figure cannot drift from what was projected:
+#   config/uav_projection.yaml :: geo_constraint_variants, entries
+#   corridor_v2_slide (the corridor the results use), pillars_hg, s_curve_hg.
+# Halfspaces are (line through p0,p1; the side the plan must stay on; the x span on
+# which the constraint is active). Disks are sphere_outside constraints in (x, y).
+# Every boundary is inflated by the vehicle radius before it reaches the solver
+# (planning_inflation.r_drone), and a tightened variant shrinks it by
+# enlarge_constraints on top of that.
+UAV_CONSTRAINTS = {
+    'r_drone': 0.31,
+    'tightening': 0.025,
+    'scenes': [
+        {'name': 'UAV-corridor', 'title': 'UAV-corridor',
+         'sub': 'two walls and the test-time slide',
+         'xlim': (-2.8, 2.8), 'ylim': (-1.4, 1.4),
+         'halfspaces': [
+             {'p0': (-2.0, -0.95), 'p1': (2.0, -0.95), 'side': 'above', 'x_active': (-2.0, 2.0)},
+             {'p0': (-2.0, 0.95), 'p1': (2.0, 0.95), 'side': 'below', 'x_active': (-2.0, 2.0)},
+             {'p0': (-2.0, 0.95), 'p1': (2.0, -0.05), 'side': 'below', 'x_active': (-2.0, 2.0),
+              'label': 'slide'},
+         ],
+         'disks': [{'c': (-2.0, -1.0), 'r': 0.05}, {'c': (2.0, -1.0), 'r': 0.05},
+                   {'c': (-2.0, 1.0), 'r': 0.05}, {'c': (2.0, 1.0), 'r': 0.05}]},
+        {'name': 'UAV-pillars', 'title': 'UAV-pillars',
+         'sub': 'six pillars in two rows',
+         'xlim': (-3.0, 3.0), 'ylim': (-1.5, 1.5),
+         'halfspaces': [],
+         'disks': [{'c': (x, y), 'r': 0.12} for x in (-2.0, 0.0, 2.0) for y in (-0.6, 0.6)]},
+        {'name': 'UAV-s-curve', 'title': 'UAV-s-curve',
+         'sub': 'two offset passages',
+         'xlim': (-3.4, 3.4), 'ylim': (-1.7, 1.7),
+         'halfspaces': [
+             {'p0': (-3.0, -0.35), 'p1': (-0.5, -0.35), 'side': 'below', 'x_active': (-3.0, -0.5)},
+             {'p0': (-3.0, -1.25), 'p1': (-0.5, -1.25), 'side': 'above', 'x_active': (-3.0, -0.5)},
+             {'p0': (0.5, 0.35), 'p1': (3.0, 0.35), 'side': 'above', 'x_active': (0.5, 3.0)},
+             {'p0': (0.5, 1.25), 'p1': (3.0, 1.25), 'side': 'below', 'x_active': (0.5, 3.0)},
+         ],
+         'disks': [{'c': (-0.5, -0.3), 'r': 0.05}, {'c': (0.5, 0.3), 'r': 0.05}]},
+    ],
+}
+
 # The two D3IL manipulation scenes are built in Python, not XML, so their
 # primitives are transcribed here WITH the symbol they come from. MuJoCo cylinder
 # size is (radius, half-height); a cylinder standing on the table therefore has
@@ -185,16 +227,19 @@ ENV_RENDER_FRAMES = {
     },
     # One frame of an expert demonstration recorded by the evaluation pipeline.
     # The GIF is exactly the two 96x96 observations concatenated horizontally:
-    # bp-cam first, wrist-mounted inhand-cam second. Frame 60 shows the box in
-    # both views while the manipulator is approaching it.
+    # bp-cam first, wrist-mounted inhand-cam second. Rollout 1, frame 163: the
+    # only instant in the three recorded rollouts at which the box is complete
+    # and centred in the in-hand view (v3.27; frame 60 of rollout 0 cut it at
+    # the corner). Ranked by the in-hand box's distance from the tile centre
+    # and its clearance from the tile border.
     'fig_aligning_camera_overhead': {
         'source': 'temp/0408/mix_visual_aligning_mf/'
                   'H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_'
                   'a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Emf_tslogit_normal/'
                   'H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.'
                   'VisualMeanFlow_VTrue_mpc4_filmv1_Emf/6/results_train_set/'
-                  'expert_references/expert_rollout_0.gif',
-        'frame': 60,
+                  'expert_references/expert_rollout_1.gif',
+        'frame': 163,
         'crop': (0, 0, 96, 96),
         'what': 'D3IL alignment expert demonstration, fixed overhead camera observation',
     },
@@ -204,8 +249,8 @@ ENV_RENDER_FRAMES = {
                   'a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Emf_tslogit_normal/'
                   'H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.'
                   'VisualMeanFlow_VTrue_mpc4_filmv1_Emf/6/results_train_set/'
-                  'expert_references/expert_rollout_0.gif',
-        'frame': 60,
+                  'expert_references/expert_rollout_1.gif',
+        'frame': 163,
         'crop': (96, 0, 192, 96),
         'what': 'D3IL alignment expert demonstration, wrist-mounted camera observation',
     },

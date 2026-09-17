@@ -33,30 +33,31 @@
 \fi
 
 % -----------------------------------------------------------------------------
-% ABSTRACT -- v2.12. Modelled on the abstracts of the reference papers (DPCC,
+% ABSTRACT -- v2.21. Modelled on the abstracts of the reference papers (DPCC,
 % HardFlow, SafeFlowMPC, Diffuser): one paragraph, NO numbers, context ->
 % limitation -> approach -> extensions -> qualitative results.
 % -----------------------------------------------------------------------------
 \ifstandalone
-Diffusion models have become a popular choice for robot trajectory planning because they capture the
-multimodal behaviour contained in human demonstrations. Diffusion Predictive Control with
-Constraints (DPCC) makes them suitable for constrained control by projecting each denoising step
-onto the set of feasible trajectories. However, a diffusion model produces a trajectory through a
-long sequence of denoising steps whose number is fixed during training, and a receding-horizon
-controller repeats this sequence at every control step. This thesis replaces the diffusion model in
-DPCC with flow matching and MeanFlow, which generate trajectories by integrating an ordinary
-differential equation and allow the number of integration steps to be chosen at deployment, down to
-a single step. The projection, network architecture, training data and benchmark of DPCC are
-retained. The approach is then carried to two settings built for this thesis: camera observations
-through a learned visual encoding, and an underactuated quadrotor through a cascaded geometric
-controller. The thesis further compares
-projecting the intermediate sample with projecting the final trajectory predicted from it, and
-derives the step budget at which the latter becomes effective. Simulations of robot manipulation
-tasks show that MeanFlow satisfies the constraints and reaches the goal as reliably as DPCC at a
-fraction of its computational cost, and aligns objects with their targets more precisely when
-planning from camera images.
+Diffusion planners capture multimodal demonstrations, and Diffusion Predictive Control with
+Constraints (DPCC) enforces constraints by projecting every denoising iterate onto the feasible set.
+However, their long denoising sequence is fixed during training and repeated at every control step.
+This thesis replaces diffusion with deterministic transport along an ordinary differential equation.
+Three objectives are studied: instantaneous-velocity matching, analytic average-velocity matching and
+consistency-interpolated average-velocity matching, whose target mixes the instantaneous velocity with
+the network's own prediction; the integration budget is selected at deployment. On the
+obstacle-avoidance benchmark of DPCC, the aim is to preserve success and
+constraint satisfaction while reducing network evaluations, wall-clock time and the control steps
+required to reach the goal. Constraint enforcement forms a second contribution. DPCC projects the
+current iterate at every sampling step; endpoint projection predicts and projects the final trajectory,
+then guides later sampling steps towards it. The analysis identifies the step budget at which this
+guidance becomes active. After evaluation on the DPCC benchmark, the controller is extended to two
+more complex settings built for this thesis: vision-conditioned object alignment and control of an
+underactuated, open-loop unstable quadrotor. Simulations show that analytic average-velocity
+matching is as reliable as DPCC with fewer control steps and at a fraction of its
+computational cost; endpoint projection can reduce constraint-enforcement time, and
+vision-conditioned planning can align objects more precisely.
 \fi
-\srcnote{Qualitative claims and their evidence: manipulation --- \texttt{HF\_Batch\_Parity/DA\_20260827\_mpc1\_full\_seeds\_state\_avoiding.md} \S10.1; camera images --- \texttt{Gen14/CLOSURE\_20260907\_Gen14\_V\_A\_engine\_comparison\_final.md} R.1.}
+\srcnote{Qualitative claims and their evidence: manipulation --- \texttt{HF\_Batch\_Parity/DA\_20260827\_mpc1\_full\_seeds\_state\_avoiding.md} \S10.1; endpoint projection --- \texttt{cross\_draft/to\_v2/FROM\_v3\_20260917\_projection\_cost\_resolved.md}; camera images --- \texttt{Gen14/CLOSURE\_20260907\_Gen14\_V\_A\_engine\_comparison\_final.md} R.1.}
 
 \microtypesetup{protrusion=false}
 \tableofcontents{}

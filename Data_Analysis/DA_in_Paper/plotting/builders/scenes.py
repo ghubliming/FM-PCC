@@ -202,10 +202,92 @@ def fig_scene_aligning(outdir):
     return path, 'd3il robot_push_box.xml + aligning_objects.py | primitives, orthographic'
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+#  The constraint set of each quadrotor scene, drawn from above (v3.27).
+#  Companion of fig_constraints_avoiding: same vocabulary -- halfspaces, disks,
+#  a shaded excluded region and a dashed tightened boundary -- so the reader can
+#  compare the aerial constraint sets with the manipulation one directly.
+# ═══════════════════════════════════════════════════════════════════════════
+def _uav_constraint_panel(scn, w, first, r_drone, tight):
+    from svg.fmpcc_svg import clip_halfplane
+    (x0, x1), (y0, y1) = scn['xlim'], scn['ylim']
+    ml, mr, mt, mb = 48, 12, 46, 46
+    pw = w - ml - mr
+    ph = pw * (y1 - y0) / (x1 - x0)                  # equal aspect: 1 m is 1 m on both axes
+    f = Fig(w, int(round(ph + mt + mb)), ml=ml, mr=mr, mt=mt, mb=mb, font=FONT)
+    f.axes((x0, x1), (y0, y1))
+    tx = [v for v in range(int(math.ceil(x0)), int(math.floor(x1)) + 1)]
+    ty = [v for v in range(int(math.ceil(y0)), int(math.floor(y1)) + 1)]
+    f.frame(tx, ty, 'x [m]', 'y [m]' if first else '', scn['title'], scn['sub'],
+            xfmt=lambda v: f'{v:g}', yfmt=lambda v: f'{v:g}')
+    f.clip_to_box()
+    for hs in scn['halfspaces']:
+        (ax_, ay), (bx, by) = hs['p0'], hs['p1']
+        m = (by - ay) / (bx - ax_)
+        b = ay - m * ax_
+        below = hs['side'] == 'below'                # the plan must stay below the line
+        xa, xb = hs['x_active']
+        span = [(xa, y0), (xb, y0), (xb, y1), (xa, y1)]
+        # the boundary the solver sees: the wall moved into the free side by the vehicle radius
+        shift = -(1 + m * m) ** 0.5 * r_drone if below else (1 + m * m) ** 0.5 * r_drone
+        for off, fill in ((0.0, None), (shift, 'band')):
+            keep = ((lambda x, y, m=m, b=b, o=off: y - (m * x + b + o)) if below
+                    else (lambda x, y, m=m, b=b, o=off: (m * x + b + o) - y))
+            poly = clip_halfplane(span, keep)
+            if len(poly) > 2:
+                f.polygon(poly, '#5d6d7e', opacity=0.34 if fill is None else 0.18)
+        xs = (xa, xb)
+        f.dline([(x, m * x + b) for x in xs], '#34495e', w=2.2)
+        f.dline([(x, m * x + b + shift) for x in xs], '#34495e', w=1.2)
+        d = shift + (-tight if below else tight) * (1 + m * m) ** 0.5
+        f.dline([(x, m * x + b + d) for x in xs], '#34495e', w=1.4, dash='7,5')
+    for dk in scn['disks']:
+        cx, cy = dk['c']
+        f.circle(cx, cy, dk['r'] + r_drone, fill='#5d6d7e', opacity=0.18, stroke='#34495e', w=1.2)
+        f.circle(cx, cy, dk['r'] + r_drone + tight, stroke='#34495e', w=1.4, dash='7,5')
+        f.circle(cx, cy, dk['r'], fill='#c0392b', opacity=0.9, stroke='#7b241c', w=1.0)
+    f.end_clip()
+    return f
+
+
+def fig_constraints_uav(outdir):
+    """The three aerial constraint sets, from above, as the projection sees them."""
+    from svg.fmpcc_svg import save_grid
+    C = getattr(S, 'UAV_CONSTRAINTS', None)
+    if not C:
+        return None
+    r, t = C['r_drone'], C['tightening']
+    panels = [_uav_constraint_panel(scn, 470, i == 0, r, t) for i, scn in enumerate(C['scenes'])]
+    width = sum(p.w for p in panels) + 2 * 8
+    h = Fig(width, 56, ml=0, mr=0, mt=0, mb=0, font=FONT)
+    x = 16
+    items = [('wall', 'wall or pillar'),
+             ('area', 'excluded: the obstacle itself'),
+             ('band', f'excluded: vehicle radius {r:g} m'),
+             ('dash', f'tightened by a further {t:g} m')]
+    for kind, lab in items:
+        if kind == 'wall':
+            h.poly([(x - 10, 24), (x + 10, 24)], '#34495e', w=2.6)
+        elif kind == 'area':
+            h.s.append(f'<rect x="{x - 8}" y="16" width="16" height="16" fill="#5d6d7e" '
+                       f'fill-opacity="0.34" stroke="#34495e"/>')
+        elif kind == 'band':
+            h.s.append(f'<rect x="{x - 8}" y="16" width="16" height="16" fill="#5d6d7e" '
+                       f'fill-opacity="0.18" stroke="#34495e"/>')
+        else:
+            h.poly([(x - 10, 24), (x + 10, 24)], '#34495e', dash='7,5', w=2)
+        h.text(x + 20, 31, lab, 11, '#111')
+        x += 42 + len(lab) * 10.0
+    path = save_grid(panels, os.path.join(outdir, 'fig_constraints_uav.svg'), cols=3, gap=8, header=h)
+    return path, ('config/uav_projection.yaml :: corridor_v2_slide, pillars_hg, s_curve_hg '
+                  f'| transcribed in sources.UAV_CONSTRAINTS; inflation r_drone {r:g} m, tightening {t:g} m')
+
+
 ALL = [
     ('fig_scene_avoiding', 'env', fig_scene_avoiding),
     ('fig_scene_aligning', 'env', fig_scene_aligning),
     ('fig_scene_uav_corridor', 'env', fig_scene_uav_corridor),
     ('fig_scene_uav_pillars', 'env', fig_scene_uav_pillars),
     ('fig_scene_uav_scurve', 'env', fig_scene_uav_scurve),
+    ('fig_constraints_uav', 'env', fig_constraints_uav),
 ]

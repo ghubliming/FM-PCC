@@ -9,8 +9,13 @@ Protocols
   ext.   5 training seeds x 20 episodes per geometry = 100 episodes
 Aggregation: mean per geometry over the seeds present, then mean over the geometries (the diffusion baseline
 has both-hard at 20 episodes for seed 6 only). Tightened constraints, 4 candidate plans.
-Only the architecture-matched temporal U-Net checkpoints are listed; the 2-episode MeanFlow and alpha-Flow
-runs over five seeds used DiT/SiT backbones and are not comparable -- they are reported as missing.
+Backbone (2026-09-17 correction): Folder_Name does NOT carry the backbone, and the 2-episode MeanFlow cells
+exist under BOTH `bbmf_dit` and `bbunet` model folders with the same Folder_Name. Selecting on Folder_Name
+alone mixed the two and hid the architecture-matched U-Net rows, which were previously reported as missing.
+Cells are now selected by (Folder_Name, a substring of Full_Path naming the backbone).
+The 5-seed alpha-Flow cells at K=1/K=2 are `bbsit` with `ae0.0` -- the consistency ratio annealed to zero,
+which is MeanFlow's target -- so they are not the consistency-interpolated model of the thesis and stay
+excluded; that model exists on the U-Net for seed 6 only.
 """
 import csv
 import gzip
@@ -23,41 +28,51 @@ CSV = os.path.join(REPO, 'Data_Analysis/analysis_results_checkpoint/15-09/batch_
                          'candidates_multidimensional_raw.csv.gz')
 RULES = ('dpcc-r-tightened', 'dpcc-c-tightened', 'dpcc-t-tightened')
 GEOS = ('top-left-hard', 'top-right-hard', 'both-hard')
+MF = 'Dflow_matcher_v3_meanflow.models.MeanFlowODE'
 CELLS = {
   'DPCC protocol (5 seeds x 2 episodes)': [
-    ('Diffusion (DPCC)', 20, 'H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5'),
-    ('Flow matching', 20, 'H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE'),
+    ('Diffusion (DPCC)', 20, 'H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5', None),
+    ('Flow matching', 20, 'H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE', None),
+    ('MeanFlow', 1, f'H8_K1_Meuler_T0.5_A0.5_B1_{MF}', 'bbunet'),
+    ('MeanFlow', 2, f'H8_K2_Meuler_T0.5_A0.5_B1_{MF}', 'bbunet'),
+    ('MeanFlow [DiT]', 1, f'H8_K1_Meuler_T0.5_A0.5_B1_{MF}', 'bbmf_dit'),
+    ('MeanFlow [DiT]', 2, f'H8_K2_Meuler_T0.5_A0.5_B1_{MF}', 'bbmf_dit'),
   ],
   'extended (5 seeds x 20 episodes)': [
-    ('Diffusion (DPCC)', 20, 'H8_K20_T0.5_Dmodels.GaussianDiffusion_msg20trials'),
-    ('Flow matching', 1, 'H8_K1_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials'),
-    ('Flow matching', 2, 'H8_K2_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials'),
-    ('Flow matching', 20, 'H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials'),
-    ('MeanFlow', 1, 'H8_K1_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msg20trials'),
-    ('MeanFlow', 2, 'H8_K2_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msg20trials'),
+    ('Diffusion (DPCC)', 20, 'H8_K20_T0.5_Dmodels.GaussianDiffusion_msg20trials', None),
+    ('Flow matching', 1, 'H8_K1_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials', None),
+    ('Flow matching', 2, 'H8_K2_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials', None),
+    ('Flow matching', 20, 'H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials', None),
+    ('MeanFlow', 1, f'H8_K1_Meuler_T0.5_A0.5_B1_{MF}_msg20trials', 'bbunet'),
+    ('MeanFlow', 2, f'H8_K2_Meuler_T0.5_A0.5_B1_{MF}_msg20trials', 'bbunet'),
   ],
 }
 
 
 def main():
-    want = {f for cells in CELLS.values() for _, _, f in cells}
+    want = {f for cells in CELLS.values() for _, _, f, _ in cells}
     d = defaultdict(dict)
     with gzip.open(CSV, 'rt', newline='') as fh:
         for r in csv.DictReader(fh):
             if r['Folder_Name'] in want and r['variant'] in RULES:
+                bb = ('bbunet' if 'bbunet' in r['Full_Path'] else
+                      'bbmf_dit' if 'bbmf_dit' in r['Full_Path'] else '')
                 try:
-                    d[(r['Folder_Name'], r['variant'], r['halfspace_variant'], r['seed'])][r['metric']] = float(r['value'])
+                    d[(r['Folder_Name'], bb, r['variant'], r['halfspace_variant'], r['seed'])][r['metric']] = float(r['value'])
                 except ValueError:
                     pass
     for proto, cells in CELLS.items():
         print(f'== {proto} ==')
-        for name, K, fol in cells:
+        for name, K, fol, bb_want in cells:
             for rule in RULES:
                 per_geo = []
                 seeds_seen = set()
                 for g in GEOS:
-                    rows = [m for (f, v, gg, s), m in d.items() if f == fol and v == rule and gg == g]
-                    seeds_seen |= {s for (f, v, gg, s) in d if f == fol and v == rule and gg == g}
+                    def sel(f, b, v, gg, rule=rule, g=g):
+                        return (f == fol and v == rule and gg == g
+                                and (bb_want is None or b == bb_want))
+                    rows = [m for (f, b, v, gg, s), m in d.items() if sel(f, b, v, gg)]
+                    seeds_seen |= {s for (f, b, v, gg, s) in d if sel(f, b, v, gg)}
                     if rows:
                         per_geo.append({k: st.mean(m[k] for m in rows) for k in ('n_success_and_constraints', 'n_steps', 'avg_time')})
                 if not per_geo:

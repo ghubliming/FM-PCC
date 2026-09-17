@@ -17,6 +17,39 @@ is sourced from · what it left open.
 
 ---
 
+## v3.30 — 2026-09-17 · Results chapter traversed against the pending-data ledger → [`changelogs/v3.30_20260917_results_ledger_traversal.md`](changelogs/v3.30_20260917_results_ledger_traversal.md)
+
+- Matched every `\hole`, `\provisional`, `\todofigure` and `\guard` in Chapter 6 to a ledger row; added **R12–R17** for six gaps that had none, two of which carry no marker in the draft at all (the baseline's missing pillars configurations, and the pillars budget ladder stopping at K=2).
+- Closed **D3** (the MuJoCo MPC overhead claim was removed in v3.28, not verified); marked **D10** as needing the cluster; rewrote stale section numbers as labels.
+- Added a coverage table to the ledger mapping all 26 draft locations to their rows. No thesis prose changed.
+
+## v3.29 — 2026-09-17 · v2.23 absorbed, three RQs, captions cleaned, smoothness section, trajectory figures flagged → [`changelogs/v3.29_20260917_v2_sync_captions_smoothness_and_trajectory_holes.md`](changelogs/v3.29_20260917_v2_sync_captions_smoothness_and_trajectory_holes.md)
+
+- Absorbed **v2.23** (`sync_v2.py merge`) and closed the open v2 item: three RQs instead of four, with the budget question folded into RQ1; Ch 8 answers renumbered.
+- Table 6.1's caption no longer explains what was excluded; the remaining gap is recorded in the new `data_status/PENDING_20260917_dpcc_protocol_rows_table61.md`, including the `Folder_Name` backbone trap.
+- Table 6.4 reordered to MeanFM, CI-MeanFM, FM, Diffusion.
+- §6.1.1.4 is now "Smoothness of the Plans" — the same evidence, stated as what the section shows rather than what the metrics miss.
+- Trajectory figures flagged: `fig:uav-scurve-paths` placeholder after Table 6.12 plus holes for pillars, corridor and alignment, with `REQUEST_20260917_trajectory_figures.md` naming the cluster runs to download (ledger D10).
+- `check.py` passes; bundles rebuilt, 23/23 figures. Not compiled.
+
+## v3.28 — 2026-09-17 · Chapter 6: missing protocol rows recovered, caveat reasoning, goal-passed criterion → [`changelogs/v3.28_20260917_ch6_protocol_rows_metrics_and_goal_passed.md`](changelogs/v3.28_20260917_ch6_protocol_rows_metrics_and_goal_passed.md)
+
+- Table 6.1 filled with MeanFM at K=1/K=2 over five seeds and two episodes: the rows were in the batch all along, hidden because `Folder_Name` does not carry the backbone.
+- §6.1 intro trimmed to a roadmap and names the candidate-selection rules as v2 defines them; §6.1.1 separates the diffusion and ODE meanings of K (sent to v4).
+- The Table 6.3 guard is now a result; the caveat names the inverse kinematics and reads DPCC's Table 2 as the size of the downstream margin.
+- §6.2.1 leads with the finding; Table 6.6 marks its selected row; every model table is ordered MeanFM, CI-MeanFM, FM, Diffusion.
+- UAV success is now "the goal passed" (crossing the finish line, as on D3IL-avoiding). **On UAV-pillars this swaps the lead: FM 0.718 against MeanFM 0.627, with MeanFM shorter by 120 control steps.** Chapter 8 and the recap tables follow.
+- `check.py` passes; bundles rebuilt, 23/23 figures. Not compiled.
+
+## v3.27 — 2026-09-17 · Chapter 5: platform facts, constraint figure, incentive, metric definition → [`changelogs/v3.27_20260917_ch5_platforms_constraints_metrics.md`](changelogs/v3.27_20260917_ch5_platforms_constraints_metrics.md)
+
+- `tab:platforms`: IK wording checked against the controller code and abbreviated, robot named *Franka Emika Panda* with its cylindrical rod end effector (not a gripper), table widened, self-attacking real-time clause removed.
+- §5.2.2 gains the incentive for the alignment environment; §5.4.2 carries D3IL's own success rates (0.359 from images against 0.950 on avoiding from the state); §5.4.3 loses a stray baseline sentence.
+- `tab:uav-scenes` is now a constraint table without the workspace box, and new Fig 5.7 draws the three aerial constraint sets like the avoiding one.
+- §5.5.1 defines the time metric as DPCC's "time to compute one action" with no caveat; the machine caveat moved to the appendix and the timing caveat to v4.
+- Fig 5.5 re-framed from the rollout where the in-hand box is complete and centred.
+- `check.py` passes (23 figures); bundles rebuilt. Not compiled.
+
 ## v3.26 — 2026-09-17 · MuJoCo wording, Ch 5 holes, no statistics, two caveats, UAV restructure → [`changelogs/v3.26_20260917_mujoco_holes_caveats_uav_restructure.md`](changelogs/v3.26_20260917_mujoco_holes_caveats_uav_restructure.md)
 
 - MuJoCo named as the simulator throughout Ch 5 (Fig 5.5 labels, captions); D3IL = task files, data, cameras.

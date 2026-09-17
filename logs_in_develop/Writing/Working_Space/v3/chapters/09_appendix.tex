@@ -59,6 +59,14 @@ And the accelerator, though the GPU is held exclusively, sits in a node whose CP
 shared, which is why \autoref{sec:setup:protocol} declines to read the timing figures as a hardware
 benchmark.
 
+Two properties of this machine bear on how the times per action of \autoref{ch:results} are read. The
+node is shared: it serves several GPU queues at once, but the scheduler neither oversubscribes GPUs nor
+preempts running jobs, so a job holds its accelerator exclusively and contention is confined to the CPU,
+the memory system and I/O. And thirty-two physical cores serve eight accelerators, while both the MuJoCo
+rollout and the per-step projection, solved by SLSQP (\autoref{sec:method:proj}), run on the CPU, so
+evaluation throughput is plausibly limited by the CPU rather than the RTX~A5000. Times are therefore
+compared between configurations measured on this same node, and not read as hardware benchmarks.
+
 Reproducing a run requires the batch scripts as much as the code: the scheduling parameters, the
 GPU pinning and the headless-rendering configuration all live in the job scripts, and each job
 records the git revision it ran at in its own log header.

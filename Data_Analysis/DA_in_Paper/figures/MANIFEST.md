@@ -6,13 +6,6 @@ Last built **2026-09-17**. Every thesis figure lives in this store; drafts recei
 
 | figure | group | corpus | protocol |
 | :-- | :-- | :-- | :-- |
-| `fig_env_avoiding` | env | `Data_Analysis/DA_in_Paper/data/avoiding_scene.json` | 96 D3IL demonstrations (measured end-effector position) |
-| `fig_constraints_avoiding` | env | `Data_Analysis/DA_in_Paper/data/avoiding_scene.json` | config/projection_eval.yaml geometries; 96 D3IL demonstrations |
-| `fig_avoiding_tradeoff` | da | `temp/2508/batch_avoiding_combined_20260825_143212` | 5 seeds (6-10) x 20 trials = 100 episodes per cell |
-| `fig_avoiding_k_ladder` | da | `temp/2508/batch_avoiding_combined_20260825_143212` | 5 seeds (6-10) x 20 trials = 100 episodes per cell |
-| `fig_avoiding_raw_models` | da | `temp/0309/batch_avoiding_combined_20260903_133730` | seed 6, 20 trials, top-right-hard, no projection |
-| `fig_avoiding_projector_cost` | da | `temp/0609/I/batch_avoiding_combined_20260906_125724` | 4 seeds (7-10) x 3 geometries x 2 trials = 24 rollouts per row |
-| `fig_scene_avoiding` | env | `d3il gym_avoiding_env avoiding_objects.get_obj_list` | primitives, orthographic |
 
 ## Vendored — copied from where they were produced
 
@@ -20,7 +13,8 @@ Each was checked against `/workspaces/aux_repo/` before entering the store.
 
 | figure | group | source | provenance |
 | :-- | :-- | :-- | :-- |
-| `fig_render_avoiding` | env | `Data_Analysis/DA_in_Paper/data/prepared/fig_render_avoiding.png` | D3IL tracked simulator montage, frame 0, top-left 320x180 tile; extracted by prep/extract_env_frames.py. |
+| `fig_aligning_camera_overhead` | demo | `Data_Analysis/DA_in_Paper/data/prepared/fig_aligning_camera_overhead.png` | D3IL expert alignment demonstration, rollout 0 frame 60, left 96x96 tile: the fixed bp-cam observation consumed by the visual policy; extracted by prep/extract_env_frames.py. |
+| `fig_aligning_camera_wrist` | demo | `Data_Analysis/DA_in_Paper/data/prepared/fig_aligning_camera_wrist.png` | Same expert demonstration and instant, right 96x96 tile: the wrist-mounted inhand-cam observation consumed by the visual policy; extracted by prep/extract_env_frames.py. |
 
 ## Other files in the store
 
@@ -28,8 +22,13 @@ Present in the store but not produced by this run (e.g. a matplotlib figure from
 
 | figure | location |
 | :-- | :-- |
-| `fig_aligning_camera_overhead` | `demo/fig_aligning_camera_overhead.png` |
-| `fig_aligning_camera_wrist` | `demo/fig_aligning_camera_wrist.png` |
+| `fig_avoiding_k_ladder` | `da/fig_avoiding_k_ladder.png`, `da/fig_avoiding_k_ladder.svg` |
+| `fig_avoiding_projector_cost` | `da/fig_avoiding_projector_cost.png`, `da/fig_avoiding_projector_cost.svg` |
+| `fig_avoiding_raw_models` | `da/fig_avoiding_raw_models.png`, `da/fig_avoiding_raw_models.svg` |
+| `fig_avoiding_tradeoff` | `da/fig_avoiding_tradeoff.png`, `da/fig_avoiding_tradeoff.svg` |
+| `fig_constraints_avoiding` | `env/fig_constraints_avoiding.png`, `env/fig_constraints_avoiding.svg` |
+| `fig_constraints_uav` | `env/fig_constraints_uav.png`, `env/fig_constraints_uav.svg` |
+| `fig_env_avoiding` | `env/fig_env_avoiding.png`, `env/fig_env_avoiding.svg` |
 | `fig_platform_panda` | `env/fig_platform_panda.png` |
 | `fig_platform_x2` | `env/fig_platform_x2.png` |
 | `fig_raw_goal_reached_K1` | `da/fig_raw_goal_reached_K1.png`, `da/fig_raw_goal_reached_K1.svg` |
@@ -37,10 +36,12 @@ Present in the store but not produced by this run (e.g. a matplotlib figure from
 | `fig_raw_plans_meanflow_K1` | `demo/fig_raw_plans_meanflow_K1.png` |
 | `fig_raw_plans_meanflow_K2` | `demo/fig_raw_plans_meanflow_K2.png` |
 | `fig_render_aligning` | `env/fig_render_aligning.png` |
+| `fig_render_avoiding` | `env/fig_render_avoiding.png` |
 | `fig_render_uav_corridor` | `env/fig_render_uav_corridor.png` |
 | `fig_render_uav_pillars` | `env/fig_render_uav_pillars.png` |
 | `fig_render_uav_scurve` | `env/fig_render_uav_scurve.png` |
 | `fig_scene_aligning` | `env/fig_scene_aligning.png`, `env/fig_scene_aligning.svg` |
+| `fig_scene_avoiding` | `env/fig_scene_avoiding.png`, `env/fig_scene_avoiding.svg` |
 | `fig_scene_uav_corridor` | `env/fig_scene_uav_corridor.png`, `env/fig_scene_uav_corridor.svg` |
 | `fig_scene_uav_pillars` | `env/fig_scene_uav_pillars.png`, `env/fig_scene_uav_pillars.svg` |
 | `fig_scene_uav_scurve` | `env/fig_scene_uav_scurve.png`, `env/fig_scene_uav_scurve.svg` |

@@ -37,6 +37,14 @@ figure and its plotting code. For the retained 2026-09-15 CSV export, start at
 There is no single current “whole UAV ranking”: scenes answer different questions, and the main
 corrected scene studies are one seed. Report each scene, geometry, success definition, and protocol.
 
+## UAV success criterion changed on 2026-09-17
+
+The thesis now scores an aerial flight by **passing the goal** (crossing the finish line), as on
+D3IL-avoiding, not by ending within 0.30 m of the route's goal point. Every UAV document in this directory
+predates that decision and reports the strict criterion. The numbers stay valid for what they measure; the
+thesis-facing recomputation is `DA_in_Paper/analysis/uav_results.py`, and `DA_in_Paper/analysis/INDEX.md`
+records what the change does to the pillars ordering.
+
 ## Maintenance rules
 
 - Preserve outdated reports; add or update an `OUTDATED`/`PARTIALLY INVALID` banner and name the

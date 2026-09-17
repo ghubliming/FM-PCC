@@ -7,8 +7,11 @@ Diffusion was first used to plan whole trajectories \parencite{janner2022plannin
 visuomotor policies \parencite{chi2023diffusion}. Motion planning diffusion constructs cost functions
 for safe robot motion and biases the sampler towards them \parencite{carvalho2025motion}. \ac{DPCC}
 combines a trajectory diffusion model with a model-based projection at every denoising step and with
-constraint tightening \parencite{romer2025diffusion}. It is both the codebase this thesis starts from
-and the baseline it is measured against.
+constraint tightening \parencite{romer2025diffusion}. Its planner runs as \ac{MPC}: a one-dimensional
+temporal U-Net generates a state--action plan over a fixed horizon, a batch of candidate plans is
+drawn, the plan is made dynamically feasible against an Euler-integrated model of the plant, and one
+action is executed before the next plan is generated \parencite[Sec.~5]{romer2025diffusion}. It is
+both the codebase this thesis starts from and the baseline it is measured against.
 
 \section{Flow Matching and Few-Step Policies}\label{sec:rel:fm}
 
@@ -53,13 +56,25 @@ generates safe, admissible and dynamically consistent trajectories \parencite{hu
 UniConFlow incorporates equality and inequality constraints in one constrained flow-matching framework
 \parencite{yang2025uniconflow}; XFlowMP is a task-conditioned generative motion planner built on
 Schr\"odinger bridges \parencite{nguyen2025xflowmp}; and SafeFlowMPC couples flow matching with online
-optimisation on a real seven-degree-of-freedom manipulator \parencite{oelerich2026safeflowmpc}.
+optimisation on a real seven-degree-of-freedom manipulator, generating joint-position trajectories
+that a real-time solver projects onto the safe set inside the sampling loop
+\parencite[Sec.~III]{oelerich2026safeflowmpc}.
 
 HardFlow reformulates hard-constrained sampling of flow-matching models as trajectory optimisation and
-projects the plan the sampler is predicted to reach \parencite{li2025hardflow}. It applies this
-optimisation only in the later sampling steps. At a small step budget that convention leaves no step
-before the final one, and the method reduces to projecting a finished sample --- a case that, to the
-author's knowledge, has not been characterised.
+projects the plan the sampler is predicted to reach \parencite{li2025hardflow}. Its derivation
+decomposes the sampling problem the way \ac{MPC} decomposes a horizon, into one subproblem per
+sampling step, and the resulting procedure is stated as an algorithm
+\parencite[Alg.~1]{li2025hardflow}. It applies this optimisation only in the later sampling steps. At
+a small step budget that convention leaves no step before the final one, and the method reduces to
+projecting a finished sample --- a case that, to the author's knowledge, has not been characterised.
+
+HardFlow is evaluated on the same obstacle-avoidance task as \ac{DPCC}, with the constraint geometry
+of \parencite{romer2025diffusion}, so its differences from this thesis lie in the control loop rather
+than in the task: it plans a horizon of sixteen steps and executes eight of them before replanning,
+fixes the step budget at ten Euler steps, states its plant as a linear model fitted to the training
+data, and solves the resulting program with an interior-point solver
+\parencite[App.~C]{li2025hardflow}. Its planner is likewise a temporal U-Net
+\parencite{janner2022planning}.
 
 \section{Vision-Conditioned Imitation Learning}\label{sec:rel:visual}
 
@@ -77,17 +92,66 @@ Imitation learning for aerial vehicles covers language-guided short-range flight
 Colosseo provides a real-world benchmark \parencite{wang2025uavflow}, and trajectory planning: CGD
 guides diffusion policies for \ac{UAV} trajectories with constraints never encountered in training
 \parencite{kondo2024cgd}. Below the planner, geometric tracking control on the special Euclidean group
-tracks position and attitude without the singularities of local coordinates
-\parencite{lee2010geometric}, and predictive sampling offers derivative-free model predictive control in
-simulation \parencite{howell2022predictive}. The quadrotor model used here is the Skydio X2 from MuJoCo
+tracks position and attitude without the singularities of local coordinates. Its
+position-controlled flight mode states the thrust magnitude and moment vector that track a position
+reference, the attitude they imply, and the stability of the resulting closed loop
+\parencite[Eqs.~(19)--(23), Prop.~3]{lee2010geometric}; the cascade from a commanded force to
+individual rotor thrusts through a fixed allocation matrix is the structure of
+\parencite{mellinger2011minimum}. These are the equations the controller of
+\autoref{sec:method:geometric} implements. Predictive sampling offers derivative-free model
+predictive control in simulation \parencite{howell2022predictive}. The quadrotor model used here is the Skydio X2 from MuJoCo
 Menagerie \parencite{zakka2022menagerie}.
 
 \section{Positioning of This Thesis}\label{sec:rel:positioning}
 
+The methods above differ less in their generative model than in the loop around it: whether a plan is
+executed once or inside a receding horizon, what the plan commands, where the constraints act, and
+which backbone carries the comparison. \autoref{tab:related-loops} states these for the works this
+thesis builds on and is measured against.
+
+\begin{table}[htpb]
+  \caption[Planner, loop and constraint mechanism in the closest related work]{The closest related
+  work by the loop it runs in, not by its generative model. ``Executed'' is the number of planned
+  steps applied before the next plan is generated.}
+  \label{tab:related-loops}
+  \centering\small
+  \begin{tabularx}{\linewidth}{lLLL}
+    \toprule
+    Work & Constraints & Loop and plan & Backbone \\
+    \midrule
+    Diffuser \parencite{janner2022planning}
+      & cost guidance, no hard constraint
+      & plan of states and actions, replanned
+      & temporal U-Net \\
+    Diffusion Policy \parencite{chi2023diffusion}
+      & none
+      & receding horizon over a chunk of actions
+      & U-Net or transformer \\
+    \ac{DPCC} \parencite{romer2025diffusion}
+      & projection of every denoising iterate, tightened
+      & receding horizon, horizon $8$, $1$ executed, Euler plant model
+      & temporal U-Net \\
+    HardFlow \parencite{li2025hardflow}
+      & projection of the predicted final sample, later steps only
+      & receding horizon, horizon $16$, $8$ executed, fitted linear plant model
+      & temporal U-Net \\
+    SafeFlowMPC \parencite{oelerich2026safeflowmpc}
+      & projection onto the safe set inside the sampling loop
+      & receding horizon over joint-position trajectories
+      & flow-matching policy \\
+    This thesis
+      & one feasible set, applied to the iterate or to the predicted endpoint
+      & receding horizon, horizon $8$, $1$ executed, Euler plant model
+      & temporal U-Net, one parameter count for every model \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
 Fast generative sampling, hard constraint enforcement, visual conditioning and aerial embodiment have
 each been studied, but in a receding-horizon controller the cost of fast sampling and the cost of
 constraint enforcement interact, and that interaction has not been measured under matched conditions.
-This thesis places flow matching, MeanFlow and consistency training inside the constrained controller
+This thesis places instantaneous-velocity matching and the two average-velocity objectives inside the
+constrained controller
 of \ac{DPCC} and compares its per-step projection with endpoint projection \parencite{li2025hardflow}
 on the same feasible set, first on the benchmark of \ac{DPCC} with its setup unchanged. It then carries
 the resulting controller to a vision-conditioned alignment task and to a quadrotor benchmark, both built

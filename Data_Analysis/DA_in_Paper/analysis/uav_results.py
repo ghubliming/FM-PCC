@@ -11,11 +11,17 @@ them:
                                                          DA_20260912_pillars_diffusion_baseline_reference.md)
 * s-curve      listed from the analyses of record; see the s-curve block below.
 
+Success criterion (2026-09-17): the thesis scores a flight by whether it PASSES THE GOAL, i.e. crosses the
+finish line of its scene -- the criterion of D3IL-avoiding, transferred to the air. The strict
+within-0.30 m-of-the-goal-point columns (`n_success`, `n_success_and_constraints`) are NO LONGER REPORTED:
+they measure where a flight stops after passing the goal, not whether it got there, and on scenes whose
+constraints push a route off its nominal end point they penalise flights that solved the task. They stay in
+the CSV and are printed only in the diagnostic block at the end.
+
 Metric columns (per rollout, 0/1 unless stated):
-  n_success                          reached within 0.30 m of the route's goal point  ("strict")
-  success_relaxed                    crossed the finish line                           ("crossed")
-  n_success_and_constraints          strict and collision-free
-  n_success_relaxed_and_constraints  crossed and collision-free
+  success_relaxed                    passed the goal (crossed the finish line)
+  n_success_relaxed_and_constraints  passed the goal on a collision-free flight  = S&C, the reported metric
+  n_success, n_success_and_constraints   strict goal-point variants, retained for the diagnostic block
   collision_free_completed           no violating control step, drone body radius 0.31 m
   n_violations                       violating control steps (count)
   avg_time_ms                        wall clock per control step
@@ -75,8 +81,8 @@ def fisher_two_sided(a, n1, b, n2):
 
 
 def row(lab, c):
-    return (f'  {lab:40s} n={c["n"]:2d} strict={c["n_success"]:.2f} crossed={c["success_relaxed"]:.2f} '
-            f'S&C strict={c["n_success_and_constraints"]:.2f} S&C crossed={c["n_success_relaxed_and_constraints"]:.2f} '
+    return (f'  {lab:40s} n={c["n"]:2d} passed={c["success_relaxed"]:.2f} '
+            f'S&C={c["n_success_relaxed_and_constraints"]:.2f} '
             f'cfree={c["collision_free_completed"]:.2f} viol={c["n_violations"]:.1f} steps={c["n_steps"]:.0f} '
             f'ms={c["avg_time_ms"]:.1f}')
 
@@ -116,40 +122,40 @@ def main():
             for label, keep in (('all variants', lambda v: True),
                                 ('full constraint set', lambda v: 'geo_free' not in v)):
                 sel = {v: agg(rows) for v, rows in vs.items() if keep(v)}
-                sc = [c['n_success_and_constraints'] for c in sel.values()]
-                print(f'  {eng} K{K} {label:20s} variants={len(sel):2d} mean S&C strict={st.mean(sc):.3f} '
+                sc = [c['n_success_relaxed_and_constraints'] for c in sel.values()]
+                print(f'  {eng} K{K} {label:20s} variants={len(sel):2d} mean S&C={st.mean(sc):.3f} '
                       f'ceiling={max(sc):.2f} cells>=0.8={sum(s >= 0.8 - 1e-9 for s in sc)}/{len(sc)}')
-            best = max(((agg(r)['n_success_and_constraints'], v) for v, r in vs.items() if 'geo_free' not in v))
-            print(f'      best full-constraint cell: {best[1]} S&C strict {best[0]:.2f}')
+            best = max(((agg(r)['n_success_relaxed_and_constraints'], v) for v, r in vs.items() if 'geo_free' not in v))
+            print(f'      best full-constraint cell: {best[1]} S&C {best[0]:.2f}')
     print('  -- diffusion K20 (reference)')
     for k, rows in sorted(C.items()):
         if k[0] == 'pillars' and k[2] == 'diffusion':
             print(row(f'diffusion K20 {k[4]}', agg(rows)))
-    print('  -- per variant at K5, full constraint set (S&C strict)')
+    print('  -- per variant at K5, full constraint set (S&C = passed the goal, collision-free)')
     vars5 = sorted({k[4] for k in C if k[0] == 'pillars' and k[3] == 5 and 'geo_free' not in k[4]})
     for v in vars5:
         line = []
         for eng in ('mf', 'fm', 'af'):
             rows = C.get(('pillars', 'u7hg', eng, 5, v))
-            line.append(f'{eng}={agg(rows)["n_success_and_constraints"]:.2f}' if rows else f'{eng}=  - ')
+            line.append(f'{eng}={agg(rows)["n_success_relaxed_and_constraints"]:.2f}' if rows else f'{eng}=  - ')
         print(f'  {v:26s} ' + '  '.join(line))
     # Thesis Table tab:uav-pillars-best and the step-budget paragraph (v3.26).
     print('  -- best PROJECTED configuration per model, full constraint set (tab:uav-pillars-best)')
     for eng, K in (('mf', 5), ('fm', 5), ('af', 5), ('diffusion', 20)):
         vs = {k[4]: v for k, v in C.items() if k[0] == 'pillars' and k[2] == eng and k[3] == K
               and 'geo_free' not in k[4] and k[4] != 'diffuser'}
-        v, rows = max(vs.items(), key=lambda kv: (agg(kv[1])['n_success_and_constraints'],
-                                                  agg(kv[1])['n_success_relaxed_and_constraints'],
-                                                  -agg(kv[1])['n_violations']))
+        # at equal S&C prefer the cheaper configuration (Pareto: same success, less time)
+        v, rows = max(vs.items(), key=lambda kv: (agg(kv[1])['n_success_relaxed_and_constraints'],
+                                                  -agg(kv[1])['avg_time_ms']))
         c = agg(rows)
-        print(f'  {eng:9s} K{K:<2d} {v:20s} goal={c["n_success_and_constraints"]:.2f} '
-              f'crossed={c["n_success_relaxed_and_constraints"]:.2f} viol={c["n_violations"]:.1f} '
+        print(f'  {eng:9s} K{K:<2d} {v:20s} S&C={c["n_success_relaxed_and_constraints"]:.2f} '
+              f'passed={c["success_relaxed"]:.2f} viol={c["n_violations"]:.1f} '
               f'steps={c["n_steps"]:.0f} ms={c["avg_time_ms"]:.1f} goal_dist={c["goal_dist"]:.3f}')
     SEVEN = ('diffuser', 'dpcc-r', 'dpcc-c', 'dpcc-t', 'dpcc-r-tightened', 'dpcc-c-tightened', 'dpcc-t-tightened')
-    print('  -- mean S&C strict over the seven configurations evaluated at every budget')
+    print('  -- mean S&C over the seven configurations evaluated at every budget')
     for eng, K in (('mf', 2), ('mf', 5), ('fm', 2), ('fm', 5), ('af', 1), ('af', 2), ('af', 5)):
         cs = [agg(C[('pillars', 'u7hg', eng, K, v)]) for v in SEVEN if ('pillars', 'u7hg', eng, K, v) in C]
-        print(f'  {eng} K{K} configs={len(cs)} mean S&C={st.mean(c["n_success_and_constraints"] for c in cs):.3f} '
+        print(f'  {eng} K{K} configs={len(cs)} mean S&C={st.mean(c["n_success_relaxed_and_constraints"] for c in cs):.3f} '
               f'mean ms/step={st.mean(c["avg_time_ms"] for c in cs):.1f}')
     print('  -- K5, by projection method. phys_safe = no contact, airborne, not diverged (eval_mix_uav.py:1849);')
     print('     it is NOT constraint satisfaction, which is collision_free_completed.')
@@ -171,18 +177,17 @@ def main():
             if r['scene'] == 's_curve' and r['geo'].startswith('s_curve_hg_'):
                 SC[(r['engine'], int(float(r['K'])), r.get('controller', ''), r['variant'])].append(r)
     valid = {k: v for k, v in SC.items() if not k[3].startswith('hardflow')}
-    sc = [agg(v)['n_success_and_constraints'] for v in valid.values()]
-    print(f'  s_curve_hg cells without endpoint projection: {len(valid)}, S&C strict ceiling {max(sc):.2f}, '
+    sc = [agg(v)['n_success_relaxed_and_constraints'] for v in valid.values()]
+    print(f'  s_curve_hg cells without endpoint projection: {len(valid)}, S&C ceiling {max(sc):.2f}, '
           f'cells > 0: {sum(x > 0 for x in sc)}')
     print('  -- unprojected plan, by controller')
     for k in sorted(valid):
         if k[3] == 'diffuser':
             c = agg(valid[k])
-            gr = st.mean(f(r['goal_reached']) for r in valid[k] if f(r.get('goal_reached')) is not None)
             mz = min(f(r['phys_min_z']) for r in valid[k] if f(r.get('phys_min_z')) is not None)
             ps = st.mean(f(r['phys_safe']) for r in valid[k] if f(r.get('phys_safe')) is not None)
-            print(f'  {k[0]:9s} K{k[1]:<2d} {k[2]:12s} n={c["n"]:2d} goal reached={gr:.2f} goal dist={c["goal_dist"]:.3f} '
-                  f'phys safe={ps:.2f} min z={mz:.3f} S&C strict={c["n_success_and_constraints"]:.2f} '
+            print(f'  {k[0]:9s} K{k[1]:<2d} {k[2]:12s} n={c["n"]:2d} passed={c["success_relaxed"]:.2f} goal dist={c["goal_dist"]:.3f} '
+                  f'phys safe={ps:.2f} min z={mz:.3f} S&C={c["n_success_relaxed_and_constraints"]:.2f} '
                   f'viol={c["n_violations"]:.1f} ms={c["avg_time_ms"]:.1f}')
     print('  -- per-step projection (dpcc-*), by controller')
     for k in sorted(valid):
@@ -190,13 +195,13 @@ def main():
             c = agg(valid[k])
             gr = st.mean(f(r['goal_reached']) for r in valid[k])
             print(f'  {k[0]:9s} K{k[1]:<2d} {k[2]:12s} {k[3]:22s} n={c["n"]:2d} goal reached={gr:.2f} '
-                  f'goal dist={c["goal_dist"]:.3f} S&C={c["n_success_and_constraints"]:.2f} ms={c["avg_time_ms"]:.1f}')
+                  f'goal dist={c["goal_dist"]:.3f} S&C={c["n_success_relaxed_and_constraints"]:.2f} ms={c["avg_time_ms"]:.1f}')
     for k in sorted(valid):
         if k[3].startswith('dpcc') and k[2] != 'mjpc' and k[0] == 'mf' and k[1] == 10:
             c = agg(valid[k])
             gr = st.mean(f(r['goal_reached']) for r in valid[k])
             print(f'  {k[0]:9s} K{k[1]:<2d} {k[2]:12s} {k[3]:22s} n={c["n"]:2d} goal reached={gr:.2f} '
-                  f'goal dist={c["goal_dist"]:.3f} S&C={c["n_success_and_constraints"]:.2f} ms={c["avg_time_ms"]:.1f}')
+                  f'goal dist={c["goal_dist"]:.3f} S&C={c["n_success_relaxed_and_constraints"]:.2f} ms={c["avg_time_ms"]:.1f}')
 
 
 if __name__ == '__main__':

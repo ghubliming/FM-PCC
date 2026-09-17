@@ -6,8 +6,8 @@
       96,
       96
     ],
-    "frame": 60,
-    "source": "temp/0408/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Emf_tslogit_normal/H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf/6/results_train_set/expert_references/expert_rollout_0.gif"
+    "frame": 163,
+    "source": "temp/0408/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Emf_tslogit_normal/H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf/6/results_train_set/expert_references/expert_rollout_1.gif"
   },
   "fig_aligning_camera_wrist": {
     "crop": [
@@ -16,8 +16,8 @@
       192,
       96
     ],
-    "frame": 60,
-    "source": "temp/0408/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Emf_tslogit_normal/H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf/6/results_train_set/expert_references/expert_rollout_0.gif"
+    "frame": 163,
+    "source": "temp/0408/mix_visual_aligning_mf/H8_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_a1.5_b1.0_aw1_VTrue_steps1000_bs64_filmv1_Emf_tslogit_normal/H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_filmv1_Emf/6/results_train_set/expert_references/expert_rollout_1.gif"
   },
   "fig_render_aligning": {
     "crop": [
