@@ -5,6 +5,7 @@ Status: ⏳ open · ✅ done (target version) · ❌ declined (reason). Newest f
 ## → v2
 | status | from | item | note |
 | :-- | :-- | :-- | :-- |
+| ⏳ | v3.36 · 2026-09-18 | §4.6.2 (alignment): the box and target pose are **drawn per episode** and are **not in the observation** — the two cameras are the only source, which is what makes the visual conditioning load-bearing. Also: the section calls the constraint set a workspace box; the evaluated geometry `combined_5` is a halfspace plus a circular keep-out region (the error v3 fixed at v3.33) | [`FROM_v3_20260918_aligning_observation_and_constraints.md`](to_v2/FROM_v3_20260918_aligning_observation_and_constraints.md) |
 | ✅ v2.24 | v3.32 · 2026-09-18 | §4.8 defines the three velocity-setpoint policies but never says which one the experiments use (**brake-to-rest**, every quadrotor result) nor why the timing-sensitive default is not used; material exists in the repo | [`FROM_v3_20260918_velocity_setpoint_choice.md`](to_v2/FROM_v3_20260918_velocity_setpoint_choice.md) |
 | ✅ v2.24 | v3.31 · 2026-09-18 | **MuJoCo is never introduced**: cited from §1.3 on, but nowhere said to be a physics engine. One clause suggested for §2.5, which v3 §5.1 now points back to | [`FROM_v3_20260918_mujoco_never_introduced.md`](to_v2/FROM_v3_20260918_mujoco_never_introduced.md) |
 | ✅ v2.23 | v3.27 · 2026-09-17 | The robot is D3IL's **7DoF Franka Emika Panda** with a **cylindrical rod** end effector (not a gripper) in these tasks; please add **IK — inverse kinematics** to the acronym list | [`FROM_v3_20260917_v3.27_panda_naming_and_ik.md`](to_v2/FROM_v3_20260917_v3.27_panda_naming_and_ik.md) |
@@ -33,6 +34,7 @@ Status: ⏳ open · ✅ done (target version) · ❌ declined (reason). Newest f
 ## → v4
 | status | from | item | note |
 | :-- | :-- | :-- | :-- |
+| ⏳ | v3.36 · 2026-09-18 | **Chapter 8 is v4's in full** — v3 stopped building it (`\input` commented out, manifest marks it *own, not built*); the file is untouched in `v3/chapters/`. Carries the v3.35 RQ1 rewrite, and needs the narrower UAV-pillars result of v3.36 | [`FROM_v3_20260918_chapter8_handover.md`](to_v4/FROM_v3_20260918_chapter8_handover.md) |
 | ⏳ | v2.24 · 2026-09-18 | Author question: should the abbreviation expansions sit in an appendix list rather than only the front-matter acronym list? Whole-thesis decision; v2 needs no edit either way | [`FROM_v2_20260918_acronym_list_placement.md`](to_v4/FROM_v2_20260918_acronym_list_placement.md) |
 | ⏳ (glossary part ✅ v2.23) | v3.28 · 2026-09-17 | Distinguish the two meanings of $K$ (diffusion denoising steps, fixed at training vs ODE solver steps, chosen at inference) in the glossary; v3 §6.1.1 now says it | [`FROM_v3_20260917_v3.28_step_budget_K_naming.md`](to_v4/FROM_v3_20260917_v3.28_step_budget_K_naming.md) |
 | ⏳ | v3.27 · 2026-09-17 | The timing caveat (planner time excludes IK/controller and the simulator step; not a real-time claim; shared CPU-bound node) is for Ch 7 — Ch 5 now only defines the metric | [`FROM_v3_20260917_v3.27_timing_caveat_for_discussion.md`](to_v4/FROM_v3_20260917_v3.27_timing_caveat_for_discussion.md) |

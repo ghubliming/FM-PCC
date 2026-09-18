@@ -175,15 +175,6 @@ geometry-to-constraint mapping \texttt{scripts/eval.py:93--102}; counts by
   \label{fig:env-avoiding}
 \end{figure}
 
-\begin{figure}[htpb]
-  \centering
-  \includegraphics[width=0.90\linewidth]{fig_constraints_avoiding}
-  \caption[The three constraint geometries]{The three constraint geometries of
-  \autoref{tab:avoiding-geometries}. Shaded: the region excluded by the halfspaces and the keep-out disk;
-  dashed: the tightened boundary. The demonstrations (grey) cross the excluded regions; 0, 1 and 2 of the
-  96 satisfy the constraints of the three geometries.}
-  \label{fig:constraints-avoiding}
-\end{figure}
 
 \FloatBarrier
 
@@ -195,10 +186,30 @@ built a constrained-control environment (\autoref{sec:method:env:aligning}): a t
 with its dynamics rows, a constraint set on the planned end-effector position and on the action, and
 the coupling of the visual encoder to the generative network. The policy observes two RGB camera
 streams, a front view and an in-hand view, instead of the state (\autoref{fig:aligning-cameras}). Each
-episode starts from an initial box pose, called a context. The tightened constraints are shrunk by
-$0.03$\,m.
+episode starts from an initial box pose and a target pose, together called a context. The tightened
+constraints are shrunk by $0.03$\,m.
 \srcnote{\texttt{config/visual\_aligning\_eval.yaml}: \texttt{workspace\_bounds},
 \texttt{action\_bounds: 'auto'}, \texttt{enlarge\_constraints: 0.03}.}
+
+The context is drawn at random, and this is the difference from obstacle avoidance that matters most for
+what the policy has to do. In obstacle avoidance every episode begins at one fixed end-effector position
+and the six posts never move, so a policy can learn a route. Here the box is placed anywhere in
+$x\in[0.4,0.6]$, $y\in[-0.25,-0.10]$ at any yaw in $\pm 90^{\circ}$, and its target anywhere in
+$x\in[0.4,0.6]$, $y\in[0.20,0.35]$ at any yaw in $\pm 90^{\circ}$; the demonstrations were recorded from
+such draws and the evaluation replays an enumerated set of them (\autoref{sec:setup:protocol:aligning}).
+Two episodes therefore ask for two different pushes.
+
+Where the box is can only be seen. The vector half of the observation is
+$(\vect{p}\sidx{des},\vect{p})\in\R^{6}$, the commanded and the measured end-effector position
+(\autoref{sec:method:env:aligning}); it carries no box pose, no target pose and no object state of any
+kind. The two RGB streams are the sole source of both, so the policy must locate the box in the images
+before it can move toward it --- which is why a $0.10$\,m box in a $0.20\times0.15$\,m draw region is a
+harder problem than its planar geometry suggests.
+\srcnote{\texttt{fm\_visual\_aligning/datasets/sequence.py}: \texttt{ParityAligningDataset.OBS\_DIM = 6},
+the 9D visual trajectory used for training (\texttt{diffuser\_visual\_aligning\_test/
+train\_visual\_aligning\_dpcc.py:168--170}); the 23D \texttt{StateOnlyAligningDataset} that does carry
+the box and target pose is not used for any result in this thesis. Draw ranges:
+\texttt{gym\_aligning/envs/aligning.py:62--67} (\texttt{box\_space}, \texttt{target\_space}).}
 
 Obstacle avoidance is a planar task that imitation policies already solve: the best policies reported
 by D3IL reach a success rate of $0.95$ on it \parencite[Table~3]{jia2024towards}, so it tests constraint
@@ -247,8 +258,12 @@ is respected by the demonstrations, so satisfying them is left to the projection
   \caption[The constraint set of the alignment task]{The constraint set of the alignment task, drawn like
   \autoref{fig:constraints-avoiding} and \autoref{fig:constraints-uav}: shaded is the region excluded for
   the planned end-effector position --- the halfspace across the far corner and the circular keep-out
-  region --- and dashed the tightened boundary. The initial box pose, the target pose and the starting
-  end-effector position are those of the first held-out context.}
+  region --- and dashed the tightened boundary. The box and its target are drawn to scale and at their
+  recorded yaw: each footprint is the real $0.10$\,m square, with the outline around it the coloured rims
+  that make the sides distinguishable in the in-hand view, and the cross marks the centre, which is what
+  the context and the final-distance metric refer to. The box is therefore of the same order as the
+  $0.06$\,m keep-out radius, not a point beside it. The three poses are those of the first held-out
+  context, one draw of many (\autoref{sec:setup:tasks:aligning}).}
   \label{fig:constraints-aligning}
 \end{figure}
 
@@ -394,10 +409,12 @@ these boundaries a further $0.025$\,m inward, the margin of \ac{DPCC}.
   \includegraphics[width=\linewidth]{fig_constraints_uav}
   \caption[The constraint sets of the quadrotor scenes]{The constraint set of each quadrotor scene, seen
   from above, in the same terms as \autoref{fig:constraints-avoiding}: halfspaces and circular keep-out
-  regions. Dark: the wall or pillar itself. Light: the band added by the vehicle radius of $0.31$\,m,
-  which is what the planned position must keep clear. Dashed: the tightened boundary, a further
-  $0.025$\,m inward. A wall constrains only the span of $x$ over which it exists, which is why the
-  shaded regions of UAV-corridor and UAV-s-curve stop short of the panel edge.}
+  regions. All three panels are drawn alike. The obstacle itself is the solid line or the red
+  disk --- a wall, the slide of UAV-corridor, or a pillar. Grey band: what the vehicle radius of
+  $0.31$\,m adds around it, which is the boundary the planned position must keep clear. Dashed: the tightened boundary, a further $0.025$\,m inward. The faint
+  wash beyond a wall is the rest of the halfspace it excludes; a wall constrains only the span of $x$ over
+  which it exists, which is why that wash stops short of the panel edge. What is left white in each panel
+  is where the plan may go.}
   \label{fig:constraints-uav}
 \end{figure}
 
@@ -413,6 +430,19 @@ The demonstrations are those of the D3IL obstacle-avoidance task \parencite{jia2
 records the commanded and the measured planar end-effector position and the planar increment between
 consecutive commanded positions (\autoref{sec:method:env:avoiding}). The dataset holds 96 demonstrations (\autoref{fig:env-avoiding}). None of them satisfies the constraints of top-left-hard, one those of top-right-hard and two those of both-hard (\autoref{tab:avoiding-geometries}), so satisfying the constraints is left to the projection.
 
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=0.90\linewidth]{fig_constraints_avoiding}
+  \caption[The demonstrations against the three constraint geometries]{The 96 demonstrations against the
+  three constraint geometries of \autoref{tab:avoiding-geometries}, the companion of
+  \autoref{fig:expert-aligning} and \autoref{fig:expert-uav}. Shaded: the region excluded by the halfspaces
+  and the keep-out disk; dashed: the tightened boundary. The demonstrations (grey) cross the excluded
+  regions; 0, 1 and 2 of the 96 satisfy the constraints of the three geometries, which is why satisfying
+  them can only be the projection's doing.}
+  \label{fig:constraints-avoiding}
+\end{figure}
+
+
 \subsection{Vision-Conditioned Alignment}\label{sec:setup:data:aligning}
 
 The demonstrations are those of the D3IL alignment task \parencite{jia2024towards}: its $900$ training
@@ -422,6 +452,30 @@ end-effector positions --- and paired with the two images. Cut into plans of eig
 $168\,274$ training windows.
 \srcnote{Training logs of jobs \texttt{24407}, \texttt{24345}, \texttt{24124}, \texttt{25372}:
 \texttt{[ ParityAligningDataset ] 900 episodes, 168274 windows (horizon=8, traj\_dim=9)}.}
+
+The demonstrations stand in the same relation to the constraints as the obstacle-avoidance ones.
+\autoref{fig:expert-aligning} draws every recorded context --- the $60$ used for training and the $60$
+held out --- as the straight push from the box to its target, which is the shortest route a
+demonstration could take. That segment crosses the keep-out region in $106$ of the $120$ contexts, and in
+$119$ of them once the region is tightened. The demonstrations were recorded without the region
+existing, so the task they teach is precisely the one the constraint forbids; going around it is the
+projection's work, not something the policy could have imitated.
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=0.62\linewidth]{fig_expert_aligning}
+  \caption[The recorded contexts against the alignment constraints]{The $120$ recorded contexts of the
+  alignment task over the constraint set of \autoref{fig:constraints-aligning}. Each line joins the
+  initial box centre (square) to its target centre (circle); red where that straight push crosses the
+  circular keep-out region, green where it clears it. The draw ranges of
+  \autoref{sec:setup:tasks:aligning} are visible as the two bands the squares and circles fall in.}
+  \label{fig:expert-aligning}
+\end{figure}
+\dataref{DA\_in\_Paper/data/expert\_paths.json, extract/expert\_paths.py; contexts from
+d3il/environments/dataset/data/aligning/\{train,test\}\_contexts.pkl}
+\hole{The demonstrated end-effector paths themselves, drawn like \autoref{fig:env-avoiding}, would show
+the same thing one step finer --- where the push actually goes rather than where it could go. The state
+pickles are on the cluster and not in the repository; one run of the stager brings them back.}
 
 In all three environments, a random tenth of the training windows is held out and used only to select
 the checkpoint (\autoref{tab:train}).
@@ -464,6 +518,38 @@ and trained models of the corridor, because the slide is a test-time constraint.
 offsets; \texttt{SCENE\_MAX\_CONTACT\_FRACTION}; \texttt{Z\_FLOOR\_MARGIN}); \texttt{trajectories.py}
 (\texttt{BLEND\_RADIUS}, \texttt{CORRIDOR\_CHANNELS}, \texttt{corridor\_path}); \texttt{dataset\_writer.py}
 (\texttt{DATASET\_HZ}); \texttt{quadrotor\_modified.xml} (timestep).}
+
+Where these demonstrations differ from the two manipulation datasets is that they were generated against
+the obstacles they fly among, and \autoref{fig:expert-uav} shows what that buys. On UAV-pillars all four
+demonstrated routes and on UAV-s-curve the single route satisfy the constraint set the projection later
+enforces, tightening included: the generator threads the passages the scene already contains, so nothing
+in the data has to be corrected. UAV-corridor is the exception, and it is the same exception the
+obstacle-avoidance benchmark is built on. The three lanes clear both walls, but every one of them crosses
+the slide, by $0.24$, $0.36$ and $0.47$\,m for the left, centre and right lane --- because the slide is
+introduced at test time and did not exist when the demonstrations were flown. The scene in which the
+constraint is new to the data is exactly the scene in which the projection has something to do.
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=\linewidth]{fig_expert_uav}
+  \caption[The demonstrated routes against the quadrotor constraints]{The reference path of every
+  demonstrated route, over the constraint set of \autoref{fig:constraints-uav}: obstacles inflated by the
+  vehicle radius, the tightened boundary dashed. One path per passage class of \autoref{tab:uav-demos}
+  --- three lanes on UAV-corridor, the four pillar sequences, the single route of UAV-s-curve. Green:
+  the path satisfies the constraints; red: it crosses them. On each route the vehicle is drawn to scale at
+  its tightest moment --- the four rotor disks and the body of \autoref{fig:x2-dimensions} inside the
+  $0.31$\,m disk the projection inflates every obstacle by --- because the quadrotor collides with its body
+  and not with its centre line: on UAV-corridor that body sits inside the slide, and on the other two scenes
+  it passes clear. The corridor paths cross the slide, which is added at test time. These are the paths the
+  demonstrations track, drawn from the generator itself; altitude does not enter because every constraint
+  here is in the horizontal plane.}
+  \label{fig:expert-uav}
+\end{figure}
+\dataref{DA\_in\_Paper/data/expert\_paths.json, extract/expert\_paths.py; reference paths from
+uav\_expert\_data\_collect/trajectories.py, one per class of generator.py \texttt{HOMOTOPY\_CLASSES}}
+\hole{The flown demonstrations rather than the reference they track: the per-episode altitude draw and
+the tracking error would widen each line into a band, and the $25$ rejected pillar episodes would show
+where that band reaches a pillar. The buffers are on the cluster.}
 
 \srcnote{Collection jobs \texttt{21475} (corridor), \texttt{21482} (pillars), \texttt{21476} (s-curve):
 \texttt{n\_trials=500 gain=pid\_default}; \texttt{DONE saved=475 rejected=25 \ldots floor=18 contact=7} for pillars,

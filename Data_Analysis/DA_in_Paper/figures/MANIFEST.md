@@ -6,13 +6,7 @@ Last built **2026-09-18**. Every thesis figure lives in this store; drafts recei
 
 | figure | group | corpus | protocol |
 | :-- | :-- | :-- | :-- |
-| `fig_scene_uav_corridor` | env | `d3il/.../quadrotor/scenes/scene_corridor_v2.xml` | MJCF geometry, orthographic |
-| `fig_scene_uav_pillars` | env | `d3il/.../quadrotor/scenes/scene_pillars.xml` | MJCF geometry, orthographic |
-| `fig_scene_uav_scurve` | env | `d3il/.../quadrotor/scenes/scene_s_curve.xml` | MJCF geometry, orthographic |
-| `fig_constraints_uav` | env | `config/uav_projection.yaml :: corridor_v2_slide, pillars_hg, s_curve_hg` | transcribed in sources.UAV_CONSTRAINTS; inflation r_drone 0.31 m, tightening 0.025 m |
-| `fig_uav_scurve_paths` | da | `data/uav_paths.json (extract/uav_paths.py)` | 2 cells, 13 flights; runs Emf_K10_mpc4_mjpc_T0.5_u7hg, Emf_K10_mpc4_pid_stopgo_T0.5_u7hg; scene and constraints from sources.UAV_CONSTRAINTS, drawn by scenes._uav_constraint_panel |
-| `fig_uav_pillars_paths` | da | `data/uav_paths.json (extract/uav_paths.py)` | 4 cells, 40 flights; runs Eaf_K5_mpc4_pid_stopgo_T0.5_EPlatest_u7hg, Ediffusion_K20_mpc4_pid_stopgo_T0.5_u7hg, Efm_K5_mpc4_pid_stopgo_T0.5_u7hg, Emf_K5_mpc4_pid_stopgo_T0.5_u7hg; scene and constraints from sources.UAV_CONSTRAINTS, drawn by scenes._uav_constraint_panel |
-| `fig_uav_corridor_paths` | da | `data/uav_paths.json (extract/uav_paths.py)` | 10 cells, 120 flights; runs Eaf_K1_mpc4_pid_stopgo_T0.5_EPlatest_u17cv2, Eaf_K3_mpc4_pid_stopgo_T0.5_EPlatest_u17cv2, Eaf_K5_mpc4_pid_stopgo_T0.5_EPlatest_u17cv2, Ediffusion_K20_mpc4_pid_stopgo_T0.5_u17cv2, Efm_K1_mpc4_pid_stopgo_T0.5_u17cv2, Efm_K3_mpc4_pid_stopgo_T0.5_u17cv2, Efm_K5_mpc4_pid_stopgo_T0.5_u17cv2, Emf_K1_mpc4_pid_stopgo_T0.5_u17cv2, Emf_K3_mpc4_pid_stopgo_T0.5_u17cv2, Emf_K5_mpc4_pid_stopgo_T0.5_u17cv2; scene and constraints from sources.UAV_CONSTRAINTS, drawn by scenes._uav_constraint_panel |
+| `fig_expert_uav` | env | `data/expert_paths.json (extract/expert_paths.py)` | uav_expert_data_collect/trajectories.py reference paths, one per homotopy class of generator.py::HOMOTOPY_CLASSES; constraints from sources.UAV_CONSTRAINTS, drawn by scenes._uav_constraint_panel |
 
 ## Vendored — copied from where they were produced
 
@@ -20,9 +14,6 @@ Each was checked against `/workspaces/aux_repo/` before entering the store.
 
 | figure | group | source | provenance |
 | :-- | :-- | :-- | :-- |
-| `fig_render_uav_corridor` | env | `Data_Analysis/DA_in_Paper/data/prepared/fig_render_uav_corridor.png` | MuJoCo render of scene_corridor_v2.xml with the Skydio X2 mesh, vehicle placed at the start of the generator reference path (uav_expert_data_collect/trajectories.py), path drawn in. prep/render_mujoco_scenes.py, declared in MUJOCO_RENDERS. Ours. |
-| `fig_render_uav_pillars` | env | `Data_Analysis/DA_in_Paper/data/prepared/fig_render_uav_pillars.png` | MuJoCo render of scene_pillars.xml with the Skydio X2 mesh, vehicle placed at the start of the generator reference path (uav_expert_data_collect/trajectories.py), path drawn in. prep/render_mujoco_scenes.py, declared in MUJOCO_RENDERS. Ours. |
-| `fig_render_uav_scurve` | env | `Data_Analysis/DA_in_Paper/data/prepared/fig_render_uav_scurve.png` | MuJoCo render of scene_s_curve.xml with the Skydio X2 mesh, vehicle placed at the start of the generator reference path (uav_expert_data_collect/trajectories.py), path drawn in. prep/render_mujoco_scenes.py, declared in MUJOCO_RENDERS. Ours. |
 
 ## Other files in the store
 
@@ -38,7 +29,9 @@ Present in the store but not produced by this run (e.g. a matplotlib figure from
 | `fig_avoiding_tradeoff` | `da/fig_avoiding_tradeoff.png`, `da/fig_avoiding_tradeoff.svg` |
 | `fig_constraints_aligning` | `env/fig_constraints_aligning.png`, `env/fig_constraints_aligning.svg` |
 | `fig_constraints_avoiding` | `env/fig_constraints_avoiding.png`, `env/fig_constraints_avoiding.svg` |
+| `fig_constraints_uav` | `env/fig_constraints_uav.png`, `env/fig_constraints_uav.svg` |
 | `fig_env_avoiding` | `env/fig_env_avoiding.png`, `env/fig_env_avoiding.svg` |
+| `fig_expert_aligning` | `env/fig_expert_aligning.png`, `env/fig_expert_aligning.svg` |
 | `fig_platform_panda` | `env/fig_platform_panda.png` |
 | `fig_platform_x2` | `env/fig_platform_x2.png` |
 | `fig_platform_x2_dimensions` | `env/fig_platform_x2_dimensions.png`, `env/fig_platform_x2_dimensions.svg` |
@@ -48,8 +41,17 @@ Present in the store but not produced by this run (e.g. a matplotlib figure from
 | `fig_raw_plans_meanflow_K2` | `demo/fig_raw_plans_meanflow_K2.png` |
 | `fig_render_aligning` | `env/fig_render_aligning.png` |
 | `fig_render_avoiding` | `env/fig_render_avoiding.png` |
+| `fig_render_uav_corridor` | `env/fig_render_uav_corridor.png` |
+| `fig_render_uav_pillars` | `env/fig_render_uav_pillars.png` |
+| `fig_render_uav_scurve` | `env/fig_render_uav_scurve.png` |
 | `fig_scene_aligning` | `env/fig_scene_aligning.png`, `env/fig_scene_aligning.svg` |
 | `fig_scene_avoiding` | `env/fig_scene_avoiding.png`, `env/fig_scene_avoiding.svg` |
+| `fig_scene_uav_corridor` | `env/fig_scene_uav_corridor.png`, `env/fig_scene_uav_corridor.svg` |
+| `fig_scene_uav_pillars` | `env/fig_scene_uav_pillars.png`, `env/fig_scene_uav_pillars.svg` |
+| `fig_scene_uav_scurve` | `env/fig_scene_uav_scurve.png`, `env/fig_scene_uav_scurve.svg` |
+| `fig_uav_corridor_paths` | `da/fig_uav_corridor_paths.png`, `da/fig_uav_corridor_paths.svg` |
+| `fig_uav_pillars_paths` | `da/fig_uav_pillars_paths.png`, `da/fig_uav_pillars_paths.svg` |
+| `fig_uav_scurve_paths` | `da/fig_uav_scurve_paths.png`, `da/fig_uav_scurve_paths.svg` |
 
 ## Planned — specified in a draft, not yet made
 

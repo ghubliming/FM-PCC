@@ -17,6 +17,49 @@ is sourced from · what it left open.
 
 ---
 
+## v3.40 — 2026-09-18 · UAV-pillars withheld: the scene tests the constraint its own demonstrations were built to satisfy → [`changelogs/v3.40_20260918_pillars_withheld.md`](changelogs/v3.40_20260918_pillars_withheld.md)
+
+- The demonstrated channels are **derived from** the clearance the projection enforces (`trajectories.py:48`: `_Y_L = 0.6 - 0.12 - rotor reach - safety = -1.11`, against a required $|y|\ge1.03$). The plans are feasible before projection, which is why the scene could not order the models.
+- `sec:res:uav:pillars` is **withheld**; its three tables and its figure are kept verbatim at `withheld/20260918_uav_pillars_section.tex`. The roadmap, the projection comparison, the quadrotor conclusion and the three summary tables read *withheld*; the quadrotor claim now rests on UAV-corridor. 30 → 29 figures, no orphaned references.
+- New `data_status/PENDING_20260918_pillars_geometry_redesign.md` (evidence, the `pillars_xl` radius-0.35 ladder, the download-only figures, the jobs to cancel) and `SLURM_RUNBOOK_20260919_pillars_enlarged.md` (config change, one-cell verification, 10-driver matrix). Ledger row R23; the 18-Sep runbook marks groups C/D/E superseded.
+- No code written. `check.py` passes; bundles rebuilt. Not compiled.
+
+## v3.39 — 2026-09-18 · UAV-pillars loses its winner; the expert figures move together; a wrong claim about Fig 6.3 withdrawn → [`changelogs/v3.39_20260918_pillars_no_winner_expert_figs_download_correction.md`](changelogs/v3.39_20260918_pillars_no_winner_expert_figs_download_correction.md)
+
+- **`tab:uav-pillars-best` was the remaining flaw**: one best-of-eleven row per model with a triangle on FM, while the diffusion baseline has **no endpoint row on this scene** — three models on eleven configurations against a baseline with five. Rebuilt as the best configuration **within each block, at every evaluated budget** (`pillars_grid.py::best_per_block`). **No selected configuration is marked, and the text says the scene supports none.** The conclusion, `tab:summary-models`, `tab:summary-combinations` and the projection summary all follow.
+- The avoiding demonstrations-versus-constraints figure moved into the datasets section, so the three environments make the same statement in the same place: Figures 5.9, 5.10, 5.11.
+- `fig:expert-uav`: the s-curve vehicle was at the arena edge (the whole first passage ties on clearance) — ties now break **toward the obstacle**, putting it at the corner where the route leaves the passage. The three corridor vehicles no longer pile up: each goes to the tightest moment of its own route that is clear of the ones already drawn, and a violating route is never shown at a clean moment.
+- **Correction:** the claim that all five missing panels of `fig:raw-plans` need cluster evaluations was wrong — it confused *not on this container* with *never run*. **Four are a download** from named run folders (FM K1/K2 seeds 6–10, CI-MeanFM K1/K2 seed 6); the fifth, diffusion at K=2, **cannot exist**, since the baseline's step count is fixed at training. Fixed in the hole, the caption, the request doc and ledger R5.
+- `check.py` passes; bundles rebuilt. Not compiled.
+
+## v3.38 — 2026-09-18 · hotfix: the stale-PNG bug that hid two passes of figure work → [`changelogs/v3.38_20260918_hotfix_stale_pngs_vehicle_marks.md`](changelogs/v3.38_20260918_hotfix_stale_pngs_vehicle_marks.md)
+
+- **A figure ships as `.svg` and `.png`, and LaTeX renders the PNG.** The builders write only the SVG, so a rebuilt figure whose PNG was not regenerated kept printing the OLD drawing while the bundle reported it as rendered. That is why `fig:constraints-aligning` still showed the fixed-size box marker: the correct 0.10 m footprint has been in the SVG since v3.36 and never reached the page. **13 figures were stale**, some since v3.33; all regenerated and re-exported.
+- `export_to_draft.py` now **refuses to export** when a referenced figure's PNG is older than its SVG, printing the pairs and the command to refresh each. The failure mode cannot recur silently.
+- `fig:expert-uav`: the X2 is now drawn **to scale at each route's tightest moment** (rotor disks + body inside the 0.31 m inflation disk), chosen by minimum clearance, red where the body overlaps. The corridor routes now show the violation as the body sitting inside the slide, instead of a line crossing a line.
+- The baseline mark is **bold as well as dotted** — v3.37 left the row in normal weight. Applied in Tables 6.1 and 6.2 and, for consistency, to the diffusion rows of `tab:uav-corridor` and `tab:uav-pillars-best`.
+- `fig:raw-plans`: an explicit `\hole` in the draft names the five missing panels and says they need five cluster **evaluations** — a panel is the plan fan an evaluation writes as it runs and exists in no artefact on disk.
+- §6.3.1.2 was recomputed from the CSV in v3.36 and is in the current draft; `analysis/pillars_grid.py` reproduces every cell. The changelog lists where to check each part.
+- `check.py` passes; bundles rebuilt. Not compiled.
+
+## v3.37 — 2026-09-18 · hotfix: simpler quadrotor panels, a baseline mark, two figures made readable → [`changelogs/v3.37_20260918_hotfix_panels_marks_colours.md`](changelogs/v3.37_20260918_hotfix_panels_marks_colours.md)
+
+- `fig:constraints-uav`: the corridor and s-curve panels were shaded twice over, so the free channel was the hardest thing to see. All three panels now read like the pillar one — **the obstacle drawn once, one grey inflation band, tightened dashed, free space white** — with a faint wash for the rest of a halfspace. The shared panel is used by `fig:expert-uav` and the three flown-path figures, which improve with it. Caption rewritten.
+- New `\baselinemark` (filled circle) beside `\selectedmark` (triangle): the circle marks **the baseline of record** (Diffusion $\nfe=20$, cumulative projection cost) in `tab:avoiding-dpcc-protocol` and `tab:state-headline`; the triangle stays this thesis's operating point. The bold that used to sit on the baseline row of Table 6.2 is gone, so bold means one thing again.
+- New `sources.ENGINE_COLOUR_DISTINCT` — blue / orange / teal / near-black — used by `fig:avoiding-tradeoff` and `fig:avoiding-raw-models` **only**, because three models in one scatter cannot be three shades of one slate hue. Marker shape still carries the selection rule.
+- `fig:avoiding-raw-models` rebuilt at font scale 1.45 on a larger canvas: category labels 7.8 → 10.5 pt, value 11.5 → 12.5, row spacing 11 → 19 px, top margin opened and the subtitle shortened so nothing collides. It is legible at `\linewidth` now.
+- No number in the draft changed. `check.py` passes; bundles rebuilt. Not compiled.
+
+## v3.36 — 2026-09-18 · Chapter 8 handed to v4; the box to scale; expert data against the constraints; UAV-pillars recomputed → [`changelogs/v3.36_20260918_ch8_out_box_geometry_expert_data_pillars_redo.md`](changelogs/v3.36_20260918_ch8_out_box_geometry_expert_data_pillars_redo.md)
+
+- **Chapter 8 is no longer built by v3** (author instruction): the `\input` is commented out and the manifest marks the file *own, not built*. The file is untouched for v4; `check.py` passes without it.
+- `fig:constraints-aligning` drew the box as a fixed-size marker. It is a **0.10 m square**, larger than the 0.06 m keep-out radius beside it; box and target are now drawn to scale, at their recorded yaw, with the centre marked.
+- §5.2.2 now states that the **context is drawn per episode** and that the observation is 6D — commanded and measured end-effector position, **no box or target pose** — so the cameras are the only source of where the box is. Sent to v2, whose Ch 4 implies otherwise and still calls the constraint set a workspace box.
+- `fig:raw-plans` is **not waiting on a download**: a panel is the plan fan an evaluation saves as it runs, so the five missing ones need five cluster evaluations. Caption and ledger row R5 say so.
+- New `fig:expert-uav` and `fig:expert-aligning`: what the expert data does against the constraints, for the two environments that lacked it. The quadrotor reference paths are clean on pillars (4/4) and s-curve (1/1) but **cross the slide on all three corridor lanes** — a test-time constraint, like D3IL-avoiding's. The direct push crosses the alignment keep-out region in **106 of 120** contexts.
+- **UAV-pillars recomputed from the batch CSV** (`analysis/pillars_grid.py`). The numbers were right and the models are architecture-matched, but one mean over two kinds of configuration hid the result: over the seven per-step configurations at K=5, MeanFM and FM are **level at 0.586**; FM's lead is entirely the endpoint block (0.950 vs 0.700), which acts on a plan already collision-free before projection; at K=2 the order reverses. Now two tables covering **every evaluated budget**, with MeanFM/FM at K=1 marked as a hole.
+- `check.py` passes; bundles rebuilt. Not compiled.
+
 ## v3.35 — 2026-09-18 · the v2.24 sync, and the three quadrotor path figures land → [`changelogs/v3.35_20260918_v2.24_sync_and_uav_path_figures.md`](changelogs/v3.35_20260918_v2.24_sync_and_uav_path_figures.md)
 
 - Inherited half advanced to **v2.24** (`sync_v2.py merge`, four files fast-forwarded). Chapter 4's reorder costs v3 nothing — every reference to `sec:method:deployment` still resolves — but **RQ1 was reworded in v2**, so its answer in §8.1 is rewritten on the new axes: the level is reached at fewer solver steps and less planning time, and the budget orders the three objectives only where the environment separates them.

@@ -16,6 +16,8 @@ What it does:
   2. finds <name>.{svg,pdf,png,jpg,jpeg} in the store, in any group, and copies every
      format present into <draft>/figures/ (a PDF made by svg/svg2pdf.sh travels too);
   3. reports names that are planned (sources.PLANNED) or missing -- missing exits 1;
+     and REFUSES to export when a figure's .png is older than its .svg, because the
+     PDF renders the PNG and the draft would silently keep the old drawing;
   4. writes <draft>/figures/EXPORTED.md: each figure's group, formats, SHA-256 prefix
      and the file and line that use it.
 
@@ -97,6 +99,27 @@ def main():
     out = os.path.join(draft, 'figures')
     refs = referenced(draft)
     print(f'draft: {os.path.relpath(draft, S.REPO)} -- {len(refs)} figure(s) referenced')
+
+    # A figure that ships both .svg and .png is RENDERED FROM THE PNG: graphicx picks
+    # the raster, not the vector, so a PNG older than its SVG puts a figure in the thesis
+    # that no longer matches the builder. That shipped a stale figure for two passes
+    # (v3.36 redrew the alignment box to scale; the PDF kept showing the old marker
+    # because only the SVG had been rebuilt). It is a hard error now, not a warning.
+    stale = []
+    for stem in sorted(refs):
+        _g, paths = store_files(stem)
+        svg = next((q for q in paths if q.endswith('.svg')), None)
+        png = next((q for q in paths if q.endswith('.png')), None)
+        if svg and png and os.path.getmtime(png) < os.path.getmtime(svg):
+            stale.append((stem, os.path.relpath(svg, STORE), os.path.relpath(png, STORE)))
+    if stale:
+        lines = '\n'.join(f'    {stem}: {png} is older than {svg}' for stem, svg, png in stale)
+        cmds = '\n'.join(
+            f'    python3.14 plotting/svg/preview_png.py figures/{svg} figures/{png} --scale 3'
+            for _stem, svg, png in stale)
+        sys.exit(f'export: {len(stale)} figure(s) would ship a PNG older than their SVG, and the\n'
+                 f'PDF renders the PNG -- the draft would show the OLD drawing:\n{lines}\n\n'
+                 f'Refresh them, then export again:\n{cmds}')
 
     rows, planned, missing, copied, unchanged = [], [], [], 0, 0
     for stem in sorted(refs):

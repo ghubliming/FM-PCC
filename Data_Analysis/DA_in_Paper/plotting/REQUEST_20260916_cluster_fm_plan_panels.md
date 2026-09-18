@@ -12,7 +12,29 @@ eval jobs; keep seed 6, both-hard, variant `diffuser`, default `n_trials: 2`:
   (`H8_K1_T0.5_Dmodels.GaussianDiffusion`). Use the K=2-trained checkpoint if one exists; if not, that
   panel stays a placeholder rather than mixing training budgets across the row.
 
-## Why it has to be the cluster
+## CORRECTION 2026-09-18 (v3.39): four of the five are a DOWNLOAD, not a run
+
+The claim below -- "there is no flow-matching plan file anywhere on disk, so it has to be re-run" --
+confused *not on the AI container* with *never run*. `analysis_results_checkpoint/15-09/
+batch_avoiding_combined_20260915_100757/candidates_detailed.csv` lists the evaluations themselves:
+
+| panel | run folder on the cluster | seeds |
+| :-- | :-- | :-- |
+| FM $K{=}1$ | `logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/H8_K1_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials` | 6--10 |
+| FM $K{=}2$ | same model folder, `H8_K2_Meuler_T0.5_…_msg20trials` | 6--10 |
+| CI-MeanFM $K{=}1$ | `…flow_matcher_v3_alphaflow.models.AlphaFlowODE_msgafon02_s6`, K1 | 6 |
+| CI-MeanFM $K{=}2$ | same, K2 | 6 |
+
+So these four panels are a **fetch** of `…/6/both-hard/diffuser.png` from those folders (the dashboard the
+eval writes as it runs), at the same crop as the existing three. Only re-run them if the fetch shows the
+dashboard was not saved for that job.
+
+**The fifth panel cannot be fetched or run as specified.** The diffusion baseline has no $K{=}2$
+checkpoint --- every `GaussianDiffusion` folder in the batch is `K20` --- because its step count is fixed
+when the noise schedule is discretised at training time. Either train a $K{=}2$ diffusion model or leave
+that cell empty; the thesis leaves it empty.
+
+## Why the flow-matching panels were thought to need the cluster
 
 Checked exhaustively on the AI container: there is **no** flow-matching plan file (`*.npz`) or
 diagnostic dashboard at K1/K2 anywhere on disk, and no avoiding checkpoint. The panel draws the

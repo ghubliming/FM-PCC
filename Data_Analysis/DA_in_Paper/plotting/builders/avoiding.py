@@ -102,7 +102,7 @@ def _tradeoff_panel(rows, title, sub, ylab=True):
         f.ring(f.X(q['avg_time']), f.Y(q['n_steps']), r=13)
     for q in pts:
         x, y = f.X(q['avg_time']), f.Y(q['n_steps'])
-        f.marker(x, y, RULE_MARK[q['rule']], S.ENGINE_COLOUR[q['engine']], filled=q['eligible'], r=6.5, ew=1.6)
+        f.marker(x, y, RULE_MARK[q['rule']], S.ENGINE_COLOUR_DISTINCT[q['engine']], filled=q['eligible'], r=6.5, ew=1.6)
         # label above-right for one selection rule and below-right for the other, so the
         # two rules of one model at the same budget do not print on top of each other
         ly = y - 9 if q['rule'] == 'dpcc-c-tightened' else y + 19
@@ -114,7 +114,7 @@ def _legend_strip(width, protocol):
     h = Fig(width, 44, ml=0, mr=0, mt=0, mb=0, font=FONT)
     x = 20
     for eng in MODELS:
-        h.marker(x, 22, 'o', S.ENGINE_COLOUR[eng], r=6.5)
+        h.marker(x, 22, 'o', S.ENGINE_COLOUR_DISTINCT[eng], r=6.5)
         h.text(x + 14, 26, S.ENGINE_LABEL[eng], 11, '#111')
         x += 34 + len(S.ENGINE_LABEL[eng]) * 10.5
     x += 20
@@ -437,12 +437,12 @@ def fig_avoiding_raw_models(outdir):
     if len(rows) < 2:
         return None
 
-    f = Fig(680, 480, ml=76, mr=20, mb=95)
+    f = Fig(900, 560, ml=92, mr=24, mt=78, mb=124, font=1.45)   # v3.37: printed at \linewidth, so the
+    # 1.0 scale put 8 pt type on the page at about 5 pt. Everything below is sized against it.
     f.axes((-0.5, len(rows) - 0.5), (0.0, 1.16))
     f.frame([], [0.0, 0.2, 0.4, 0.6, 0.8, 1.0], '', 'episodes reaching the goal',
             'Without projection: the plan the model itself produces',
-            f'{c.protocol}; {S.AVOIDING_RAW_GEOMETRY}, no projection. '
-            f'U-Net 4.0M throughout; the baseline at its own budget.',
+            f'{c.protocol}; {S.AVOIDING_RAW_GEOMETRY}, no projection; U-Net 4.0M',
             yfmt=lambda v: f'{v:.1f}')
 
     bw = 0.56
@@ -450,13 +450,13 @@ def fig_avoiding_raw_models(outdir):
         v = m['n_success']
         x0, x1 = f.X(i - bw / 2), f.X(i + bw / 2)
         f.bar(x0, f.Y(v), x1 - x0, f.Y(0.0) - f.Y(v), S.AVOIDING_AF_COLOUR[eng])
-        f.text((x0 + x1) / 2, f.Y(v) - 8, f'{v:.2f}', 11.5, '#111', anchor='middle', bold=True)
-        f.text((x0 + x1) / 2, f.Y(v) - 22, f"{m['n_steps']:.1f} steps", 9.5, '#666', anchor='middle')
+        f.text((x0 + x1) / 2, f.Y(v) - 10, f'{v:.2f}', 12.5, '#111', anchor='middle', bold=True)
+        f.text((x0 + x1) / 2, f.Y(v) - 27, f"{m['n_steps']:.1f} steps", 10.5, '#666', anchor='middle')
         lab = S.AVOIDING_AF_LABEL[eng]
         for j, part in enumerate(lab.split('\n')):
-            f.text((x0 + x1) / 2, f.B + 14 + 11 * j, part, 7.8, '#222', anchor='middle')
-        f.text((x0 + x1) / 2, f.B + 16 + 11 * len(lab.split('\n')),
-               f'K = {K}', 8.6, '#666', anchor='middle')
+            f.text((x0 + x1) / 2, f.B + 22 + 19 * j, part, 10.5, '#222', anchor='middle')
+        f.text((x0 + x1) / 2, f.B + 24 + 19 * len(lab.split('\n')),
+               f'K = {K}', 10.5, '#666', anchor='middle')
 
     path = f.save(os.path.join(outdir, 'fig_avoiding_raw_models.svg'))
     return path, f'{c.rel} | {c.protocol}, {S.AVOIDING_RAW_GEOMETRY}, no projection'

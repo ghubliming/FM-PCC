@@ -841,3 +841,117 @@ geo_constraint_variants:
       - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0, -1.0], radius: 0.05}
       - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0,  1.0], radius: 0.05}
       - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0,  1.0], radius: 0.05}
+
+  # ══════════════════════════════════════════════════════════════════════════════
+  # [Gen15 U17 2026-09-18] pillars_xl / pillars_xxl — the pillars ENLARGED at test time
+  #
+  # WHY. `pillars_hg` tests the wrong thing. The constraint set it enforces is the one the
+  # demonstration generator was built to satisfy:
+  #     uav_expert_data_collect/trajectories.py:48
+  #         _Y_L = PILLAR_Y_A - PILLAR_RADIUS - PILLAR_ROTOR_REACH - PILLAR_SAFETY   # = -1.11
+  # and the projector enforces |y| >= 0.6 + 0.12 + 0.31 = 1.03. The flown routes sit at
+  # |y| = 1.11 — 0.08 m INSIDE the feasible set before any projection runs. 4 of 4 demonstrated
+  # routes satisfy the constraint set, tightening included, and the UNPROJECTED plan already
+  # scores S&C 1.00 (fm) / 0.90 (mf) at K=5. So every projected configuration on this scene
+  # measures how little of an ALREADY-FEASIBLE plan a method disturbs — not whether it can make
+  # an infeasible plan feasible. Per-step projection with random selection *destroying* a clean
+  # plan (1.00 -> 0.00), and endpoint projection "winning" by leaving the plan alone, are both
+  # artefacts of that. It is why the models could not be ordered on this scene, and it is not a
+  # property of the models.
+  # Diagnosis: logs_in_develop/Writing/Working_Space/data_status/
+  #            PENDING_20260918_pillars_geometry_redesign.md
+  #
+  # WHAT THIS IS. The same construction D3IL-avoiding uses: the constraint is introduced at TEST
+  # TIME and the demonstrations do NOT satisfy it (0, 1 and 2 of 96 there; 0 of 4 here). Only the
+  # radius the projector enforces changes.
+  #
+  # 🔴 NO RETRAINING, NO PHYSICS CHANGE. `scene_pillars.xml` keeps its r = 0.12 cylinders and is
+  # NOT touched — enlarging the MJCF would invalidate the demonstrations and force a retrain.
+  # The enlarged pillars are VIRTUAL, exactly like U11-U13's corridor balls: the drone flies
+  # through the extra 0.23 m in MuJoCo and it is scored as a constraint violation only.
+  # Physical contact and constraint satisfaction are therefore DIFFERENT things on this entry —
+  # a flight can be `phys_safe` (MuJoCo contact truth, eval_artifacts.py:211, radius-independent)
+  # and still violate. That is intended and is what D3IL-avoiding does.
+  #
+  # 🔴 THE TIGHTENING KNOB IS NOT USED TO DO THIS. `enlarge_constraints` stays at 0.025 and keeps
+  # meaning what it means in every other table of the thesis; the enlargement lives in the entry's
+  # own `radius`, so the two stay distinguishable. The `-tightened` variants of these entries add
+  # the usual 0.025 on top.
+  #
+  # 🔴 THE SCORER FOLLOWS AUTOMATICALLY — verified, not assumed. `_exec_constraint_violations`
+  # (eval_mix_uav.py:792) reads `config['obstacle_constraints']` and scores at `radius + r_drone`
+  # from `inflation` (0.31; it ignores `margin_base`). It is handed the resolved geo entry, so the
+  # enlarged radius is the yardstick as well as the tube. If it were not, every row would read
+  # collision-free and the wave would say nothing — §2 of the runbook checks this on one cell.
+  #
+  # THE GEOMETRY (planner margin r_drone 0.31 + margin_base 0.0; scorer margin r_drone 0.31 —
+  # identical, so plan and score agree). Pillars at x in {-2, 0, 2}, y = +/-0.6:
+  #
+  #                               R=0.12 (`_hg`)   R=0.35 (`_xl`)   R=0.55 (`_xxl`)
+  #   keep-out radius R+0.31        0.43             0.66             0.86
+  #   outer channel opens at |y| >= 1.03             1.26             1.46
+  #   demonstrated route |y|=1.11   feasible +0.08   VIOLATES 0.15    VIOLATES 0.35
+  #   straight centre lane (y=0)    open (|y|<=0.17) blocked          blocked
+  #     blocked |x - x_col| <       —                0.275            0.616
+  #   free band to the box edge     [1.03, 2.19]     [1.26, 2.19]     [1.46, 2.19]
+  #     width                       1.16 m           0.93 m           0.73 m
+  #
+  # Both rungs stay SOLVABLE: 0.93 m (xl) and 0.73 m (xxl) of free corridor against a measured
+  # track_err of ~0.30 m. `-tightened` takes another 0.025 off each side (xl: [1.285, 2.165],
+  # 0.88 m). The 0.15 m the demonstrated route is now inside the obstacle at R=0.35 is comparable
+  # to the corridor slide's 0.24-0.47 m, which is the scene this one is being made to resemble.
+  #
+  # ⚠️ EXPECT A FEASIBILITY WARNING AT JOB START, AND DO NOT "FIX" IT.
+  # `_warn_expert_route_infeasibility` (eval_mix_uav.py:904) probes the EXPERT routes against the
+  # planning set and will print
+  #     WARNING pillars homotopy=...: expert route violates the PLANNING constraint set ...
+  # That is now the POINT of the entry, not a misconfiguration. The check is print-only and never
+  # blocks the run (eval_mix_uav.py:913).
+  #
+  # 🔴 NOT in `active_geo_variants`, deliberately. Select per job with
+  # `UAV_MIX_GEO_VARIANTS=pillars_xl` (U11). A scene's two entries must never be active in the
+  # same job — both would run (Fix_6 multi-match) and pillars at K=5 already hits the wall clock.
+  # Use a distinct `FMPCC_UAV_EVAL_TAG` too (`u7xl`), so the new rows can never pool with `u7hg`.
+  #
+  # `pillars_hg` IS KEPT AND IS NOT DEPRECATED: it is the CONTROL condition — the same models and
+  # the same projectors against a constraint the data already satisfies. The contrast between the
+  # two is the result.
+  #
+  # ⚠️ `pillars_xxl` IS DEFINED BUT MUST NOT BE SUBMITTED IN THE 19-09 WAVE. Run `xl` first and
+  # read its unprojected (`diffuser`) row; `xxl` exists only in case `xl` turns out too easy.
+  # Runbook: .../data_status/SLURM_RUNBOOK_20260919_pillars_enlarged.md
+  # Changelog: logs_in_develop/Gen15/U17/
+  # ══════════════════════════════════════════════════════════════════════════════
+
+  - name: pillars_xl
+    scene: pillars
+    geo_tag_suffix: '_xl'         # distinct results folder — can never pool with '' or '_hg'
+    constraint_types: ['dynamics', 'geo_bounds', 'obstacles', 'bounds']
+    planning_inflation: {r_drone: 0.31, margin_base: 0.0}
+    workspace_bounds:             # byte-identical to pillars_hg
+      lb: [-4.0, -2.5, 0.30]
+      ub: [ 4.0,  2.5, 1.80]
+    obstacle_constraints:         # 🔴 VIRTUAL radius 0.35; the XML cylinders stay at 0.12
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0, -0.6], radius: 0.35}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 0.0, -0.6], radius: 0.35}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0, -0.6], radius: 0.35}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0,  0.6], radius: 0.35}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 0.0,  0.6], radius: 0.35}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0,  0.6], radius: 0.35}
+
+  # ⚠️ SECOND RUNG — DEFINED, NOT SCHEDULED. See the warning above.
+  - name: pillars_xxl
+    scene: pillars
+    geo_tag_suffix: '_xxl'
+    constraint_types: ['dynamics', 'geo_bounds', 'obstacles', 'bounds']
+    planning_inflation: {r_drone: 0.31, margin_base: 0.0}
+    workspace_bounds:             # byte-identical to pillars_hg
+      lb: [-4.0, -2.5, 0.30]
+      ub: [ 4.0,  2.5, 1.80]
+    obstacle_constraints:         # 🔴 VIRTUAL radius 0.55; the XML cylinders stay at 0.12
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0, -0.6], radius: 0.55}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 0.0, -0.6], radius: 0.55}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0, -0.6], radius: 0.55}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0,  0.6], radius: 0.55}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 0.0,  0.6], radius: 0.55}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0,  0.6], radius: 0.55}

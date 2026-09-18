@@ -234,17 +234,34 @@ def _uav_constraint_panel(scn, w, first, r_drone, tight):
         below = hs['side'] == 'below'                # the plan must stay below the line
         xa, xb = hs['x_active']
         span = [(xa, y0), (xb, y0), (xb, y1), (xa, y1)]
-        # the boundary the solver sees: the wall moved into the free side by the vehicle radius
+        # v3.37: drawn like the pillar panel, which reads at a glance -- the obstacle in red,
+        # ONE light band for the vehicle radius around it, the tightened boundary dashed. The
+        # earlier version filled the whole far side dark AND the band light, so a corridor panel
+        # was mostly shading and the free channel was the hardest thing in it to find. The far
+        # side keeps a faint wash, because a halfspace does exclude everything beyond it and the
+        # slide is not a wall one can see the end of.
         shift = -(1 + m * m) ** 0.5 * r_drone if below else (1 + m * m) ** 0.5 * r_drone
-        for off, fill in ((0.0, None), (shift, 'band')):
-            keep = ((lambda x, y, m=m, b=b, o=off: y - (m * x + b + o)) if below
-                    else (lambda x, y, m=m, b=b, o=off: (m * x + b + o) - y))
-            poly = clip_halfplane(span, keep)
-            if len(poly) > 2:
-                f.polygon(poly, '#5d6d7e', opacity=0.34 if fill is None else 0.18)
+        keep_far = ((lambda x, y, m=m, b=b: y - (m * x + b)) if below
+                    else (lambda x, y, m=m, b=b: (m * x + b) - y))
+        poly = clip_halfplane(span, keep_far)
+        if len(poly) > 2:
+            f.polygon(poly, '#5d6d7e', opacity=0.10)
+        # the band is the strip between the wall and its inflated boundary, on the free side
+        if below:                                    # free side is below; shift is negative
+            k1 = lambda x, y, m=m, b=b, o=shift: y - (m * x + b + o)
+            k2 = lambda x, y, m=m, b=b: (m * x + b) - y
+        else:                                        # free side is above; shift is positive
+            k1 = lambda x, y, m=m, b=b, o=shift: (m * x + b + o) - y
+            k2 = lambda x, y, m=m, b=b: y - (m * x + b)
+        band = clip_halfplane(clip_halfplane(span, k1), k2)
+        if len(band) > 2:
+            f.polygon(band, '#5d6d7e', opacity=0.24)
         xs = (xa, xb)
-        f.dline([(x, m * x + b) for x in xs], '#34495e', w=2.2)
-        f.dline([(x, m * x + b + shift) for x in xs], '#34495e', w=1.2)
+        # Slate, not red: these panels are also the backdrop of the flown-path figures, where red
+        # means a flight that entered an obstacle. A red wall LINE reads as a red path; the small
+        # red pillar cores never did, so those keep their colour.
+        f.dline([(x, m * x + b) for x in xs], '#34495e', w=2.6)          # the obstacle itself
+        f.dline([(x, m * x + b + shift) for x in xs], '#34495e', w=1.2)  # inflated by the radius
         d = shift + (-tight if below else tight) * (1 + m * m) ** 0.5
         f.dline([(x, m * x + b + d) for x in xs], '#34495e', w=1.4, dash='7,5')
     for dk in scn['disks']:
@@ -267,9 +284,9 @@ def fig_constraints_uav(outdir):
     width = sum(p.w for p in panels) + 2 * 8
     h = Fig(width, 104, ml=0, mr=0, mt=0, mb=0, font=FONT_CONSTRAINT)
     x = 16
-    items = [('wall', 'wall or pillar'),
-             ('area', 'excluded: the obstacle itself'),
-             ('band', f'excluded: vehicle radius {r:g} m'),
+    items = [('wall', 'the obstacle: wall or slide'),
+             ('band', f'excluded: inflated by the vehicle radius {r:g} m'),
+             ('area', 'excluded: beyond the obstacle'),
              ('dash', f'tightened by a further {t:g} m')]
     # two rows of two: at this text size a single row runs off the figure
     row_y, col_x, size = (30, 76), (16, width // 2 + 16), 18
@@ -279,10 +296,10 @@ def fig_constraints_uav(outdir):
             h.poly([(x - 14, y), (x + 14, y)], '#34495e', w=3.6)
         elif kind == 'area':
             h.s.append(f'<rect x="{x - 11}" y="{y - 11}" width="22" height="22" fill="#5d6d7e" '
-                       f'fill-opacity="0.34" stroke="#34495e"/>')
+                       f'fill-opacity="0.10" stroke="#34495e"/>')
         elif kind == 'band':
             h.s.append(f'<rect x="{x - 11}" y="{y - 11}" width="22" height="22" fill="#5d6d7e" '
-                       f'fill-opacity="0.18" stroke="#34495e"/>')
+                       f'fill-opacity="0.24" stroke="#34495e"/>')
         else:
             h.poly([(x - 14, y), (x + 14, y)], '#34495e', dash='9,6', w=3)
         h.text(x + 26, y + 7, lab, size, '#111')
@@ -339,21 +356,49 @@ def fig_constraints_aligning(outdir):
     f.circle(cx, cy, dk['r'], fill='#5d6d7e', opacity=0.32, stroke='#34495e', w=1.8)
     f.circle(cx, cy, dk['r'] + t, stroke='#34495e', w=1.6, dash='8,5')
 
-    # the task itself, for scale: where the box starts, where it must end, where the arm starts
-    for kind, (px, py), lab in (('box', d['box_pos'][:2], 'box at the start'),
-                                ('target', d['target_pos'][:2], 'target pose'),
-                                ('start', d['start'][:2], 'end effector')):
-        colour = {'box': '#cba872', 'target': '#d7cbb4'}.get(kind, '#1b4f72')
-        f.marker(f.X(px), f.Y(py), 'o' if kind == 'start' else 's', colour, r=8.0)
-        f.text(f.X(px) + 12, f.Y(py) + 5, lab, 11, '#111', bold=True)
+    # The box and its target drawn TO SCALE and at their recorded yaw, not as markers: the
+    # footprint is 0.10 m square, larger than the 0.06 m keep-out disk, and a marker would
+    # tell the reader the opposite.  Centre of each is marked, because the context, the
+    # success metric and the constraint all refer to the centre, not to the footprint.
+    hb, hr = d['box_half'], d['box_rim_half']
+
+    def footprint(px, py, yaw_deg, half):
+        a_ = math.radians(yaw_deg)
+        ca, sa = math.cos(a_), math.sin(a_)
+        return [(px + dx * ca - dy * sa, py + dx * sa + dy * ca)
+                for dx, dy in ((-half, -half), (half, -half), (half, half), (-half, half))]
+
+    def centre_mark(px, py, colour):
+        r = 0.011
+        f.dline([(px - r, py), (px + r, py)], colour, w=1.6)
+        f.dline([(px, py - r), (px, py + r)], colour, w=1.6)
+        f.marker(f.X(px), f.Y(py), 'o', colour, filled=True, r=2.6, ew=1.0)
+
+    for kind, pos, yaw, lab in (('target', d['target_pos'], d['target_yaw_deg'], 'target pose'),
+                                ('box', d['box_pos'], d['box_yaw_deg'], 'box at the start')):
+        px, py = pos[0], pos[1]
+        fill = '#d7cbb4' if kind == 'target' else '#cba872'
+        edge = '#8a7a55' if kind == 'target' else '#6b5a32'
+        f.polygon(footprint(px, py, yaw, hr), fill, opacity=0.35 if kind == 'target' else 0.75,
+                  stroke=edge, w=1.4)
+        f.polygon(footprint(px, py, yaw, hb), fill, opacity=0.55 if kind == 'target' else 0.95,
+                  stroke=edge, w=1.6)
+        centre_mark(px, py, edge)
+        # below the footprint, centred: beside it the label crosses the box's own corner
+        f.text(f.X(px), f.Y(py - hr * 1.41) + 16, lab, 11, '#111', bold=True, anchor='middle')
+        f.text(f.X(px), f.Y(py - hr * 1.41) + 30, '0.10 m square', 10, '#555', anchor='middle')
+
+    sx, sy = d['start'][0], d['start'][1]
+    f.marker(f.X(sx), f.Y(sy), 'o', '#1b4f72', r=8.0)
+    f.text(f.X(sx) + 12, f.Y(sy) + 5, 'end effector', 11, '#111', bold=True)
     f.end_clip()
 
     # legend inside the panel, in the corner the task leaves empty
-    lx, ly = f.X(0.215), f.Y(-0.30)
+    lx, ly = f.X(0.215), f.Y(0.41)
     f.s.append(f'<rect x="{lx - 8}" y="{ly - 9}" width="17" height="17" fill="#5d6d7e" '
                f'fill-opacity="0.32" stroke="#34495e"/>')
     f.text(lx + 17, ly + 4, 'excluded for the planned position', 12, '#111')
-    ly2 = f.Y(-0.365)
+    ly2 = f.Y(0.355)
     f.poly([(lx - 8, ly2), (lx + 9, ly2)], '#34495e', dash='8,5', w=2.2)
     f.text(lx + 17, ly2 + 4, f'tightened by {t:g} m', 12, '#111')
 

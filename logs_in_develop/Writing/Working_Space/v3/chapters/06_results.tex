@@ -5,7 +5,7 @@
 %  then a section that recaps the two comparisons across all environments:
 %    6.1 Obstacle avoidance       (DPCC's benchmark; + caveat on DPCC's metrics, v3.26)
 %    6.2 Vision-conditioned alignment (seed 6, 10 contexts)
-%    6.3 Quadrotor benchmark      (seed 6; models per scene, pillars the main test;
+%    6.3 Quadrotor benchmark      (seed 6; models per scene; pillars WITHHELD v3.40;
 %                                  projection; caveat on the tracking controller, v3.26)
 %    6.4 Comparison across environments (recap tables only, v3.26)
 %  v3.26: no p-values or test names anywhere (author rule, translation table s8 r8).
@@ -76,7 +76,9 @@ cumulative projection cost the same model falls to $0.933$ and $72.4$ or $97.2$ 
   constraints at every step, the control steps taken to reach it, and the time to compute one action. A
   bold triangle marks the configuration this thesis carries forward as its operating point on this
   benchmark --- the cheapest configuration that holds its success, not simply the highest number in the
-  column.}
+  column. A bold filled circle marks the baseline of record: the diffusion model of \ac{DPCC} at its own
+  budget of twenty and its own best rule, which is the row every claim in this chapter is measured
+  against. Both marked rows are set in bold; the shape says which is which.}
   \label{tab:avoiding-dpcc-protocol}
   \centering
   \footnotesize
@@ -110,7 +112,7 @@ cumulative projection cost the same model falls to $0.933$ and $72.4$ or $97.2$ 
                      &    & $c$ & 1.000 & 70.3 & 309.8 \\
                      &    & $t$ & 1.000 & 68.7 & 321.7 \\
     Diffusion & 20 & $r$ & 0.967 & 74.7 & 573.2 \\
-                     &    & $c$ & 1.000 & 70.1 & 553.4 \\
+                     &    & \mainconfig{\baselinemark\ $c$} & \mainconfig{1.000} & \mainconfig{70.1} & \mainconfig{553.4} \\
                      &    & $t$ & 1.000 & 76.1 & 563.0 \\
     \bottomrule
   \end{tabularx}
@@ -141,9 +143,11 @@ which is what \autoref{sec:res:avoiding:smoothness} takes up.
   \caption[The generative models under every selection rule]{D3IL-avoiding with twenty episodes per seed:
   five training seeds $\times$ twenty episodes per geometry, averaged per geometry and then over the three.
   Metrics, rules and set-up as in \autoref{tab:avoiding-dpcc-protocol} and
-  \autoref{sec:setup:metrics:avoiding}. Bold marks the best rule of each of the two models compared at their
-  operating budget; the bold triangle marks the operating point this thesis carries forward, MeanFM at
-  $\nfe=1$ with temporal-consistency selection. $^{\dagger}$ two geometries, as with the diffusion baseline
+  \autoref{sec:setup:metrics:avoiding}. The bold triangle marks the operating point this thesis carries forward,
+  MeanFM at $\nfe=1$ with temporal-consistency selection; the bold filled circle marks the baseline of record,
+  the diffusion model at $\nfe=20$ with cumulative projection cost, as in
+  \autoref{tab:avoiding-dpcc-protocol}. Bold marks the best rule of instantaneous-velocity matching at its
+  operating budget. $^{\dagger}$ two geometries, as with the diffusion baseline
   under temporal consistency.}
   \label{tab:state-headline}
   \centering
@@ -183,7 +187,7 @@ which is what \autoref{sec:res:avoiding:smoothness} takes up.
                      &    & $t$ & 0.987 & 67.3 & 465.8 \\
     \midrule
     Diffusion & 20 & $r$ & 0.967 & 73.9 & 580.7 \\
-                     &    & $c$ & \textbf{0.983} & \textbf{69.0} & \textbf{563.5} \\
+                     &    & \mainconfig{\baselinemark\ $c$} & \mainconfig{0.983} & \mainconfig{69.0} & \mainconfig{563.5} \\
                      &    & $t$ & 0.960 & 82.8 & 564.3 \\
     \bottomrule
   \end{tabularx}
@@ -490,13 +494,24 @@ does not remove this coherence, but it does not reduce the violation count in th
   along one episode and executed without projection, overlaid: the four generative models (columns) at
   one and two network evaluations (rows), \emph{both-hard}, training seed 6. The evaluation draws the
   plan of every fourth control step, up to four candidates each; green marks the state a plan starts
-  from. Same backbone for all four. Boxed panels have not been rendered yet; they need the saved plans
-  of an evaluation run. \autoref{fig:avoiding-raw-models} compares all four models numerically on
+  from. Same backbone for all four. Boxed panels are not yet drawn: the runs behind four of them exist
+  and their plan fans are on the cluster, and the diffusion model has no $\nfe=2$ run at all because it is
+  trained at twenty denoising steps. \autoref{fig:avoiding-raw-models} compares all four models numerically on
   the same comparison. Columns: analytic average-velocity matching (MeanFM), instantaneous-velocity
   matching (FM), the diffusion model of \ac{DPCC} (Diffusion), and consistency-interpolated
   average-velocity matching (CI-MeanFM).}
   \label{fig:raw-plans}
 \end{figure}
+\hole{\textbf{Four of the five missing panels are a download; the fifth cannot exist.} The evaluations
+that draw them have already been run on the cluster --- instantaneous-velocity matching at $\nfe=1$ and
+$2$ under \texttt{H8\_Dmodels.diffusion.FlowMatchingODE\_a1.5\_b1.0\_aw10} (tags
+\texttt{H8\_K1/K2\_Meuler\_T0.5\_\ldots\_msg20trials}, seeds 6--10) and consistency-interpolated
+average-velocity matching at $\nfe=1$ and $2$ under \texttt{\ldots AlphaFlowODE\_msgafon02\_s6} --- so the
+panels are in those remote run folders and need fetching, not re-running. The fifth, the diffusion model
+at $\nfe=2$, has no run because the baseline is trained at twenty denoising steps and no $\nfe=2$
+checkpoint of it exists; that cell stays empty rather than mixing training budgets across the row.
+Folders and the crop box: \texttt{DA\_in\_Paper/plotting/REQUEST\_20260916\_cluster\_fm\_plan\_panels.md};
+ledger row R5.}
 
 \dataref{Report\_20260819\_MF\_UNet \S7, figures 6a--6c}
 
@@ -861,9 +876,9 @@ conclusion is limited to training-set contexts.
 % =============================================================================
 
 The three scenes are reported in increasing difficulty, and each plays its own part. UAV-corridor shows
-that the planners fly under constraints at all; UAV-pillars is the main test and separates the four
-generative models; UAV-s-curve exposes a limit that belongs to none of them, the tracking controller,
-which \autoref{sec:res:uav:controller} treats on its own. All results use training seed 6
+that the planners fly under constraints at all, and it is the scene this draft rests on; UAV-pillars is
+withheld pending re-evaluation (\autoref{sec:res:uav:pillars}); UAV-s-curve exposes a limit that belongs
+to none of the models, the tracking controller, which \autoref{sec:res:uav:controller} treats on its own. All results use training seed 6
 (\autoref{sec:setup:protocol:uav}). Every generative model is a temporal U-Net with $3.96$--$3.97$\,M
 parameters, trained with the same optimiser settings (\autoref{tab:train}), and every flight is tracked by
 the cascaded geometric controller with brake-to-rest setpoints unless stated otherwise. The diffusion model
@@ -892,7 +907,8 @@ $12/12$ against $0/12$, at $0.16$ of its time per control step.
   slide: per-step projection with temporal consistency on tightened constraints, twelve flights per row
   (four per route). \emph{Passed}: crosses the finish line. \emph{Collision-free}: no violating control
   step. \emph{S\&C}: passed the goal on a collision-free flight. \emph{Violating steps}: per flight.
-  Training seed 6. A bold triangle marks the selected configuration.}
+  Training seed 6. A bold triangle marks the selected configuration; a bold filled circle marks the
+  baseline of record.}
   \label{tab:uav-corridor}
   \centering
   \footnotesize
@@ -913,7 +929,7 @@ $12/12$ against $0/12$, at $0.16$ of its time per control step.
     FM                             & 3  & 12/12 & 0/12  & 0/12  & 2.1 & 86.4 \\
     FM                             & 5  & 12/12 & 2/12  & 2/12  & 1.5 & 133.5 \\
     \midrule
-    Diffusion                      & 20 & 0/12  & 12/12 & 0/12  & 0.0 & 625.5 \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{0/12} & \mainconfig{12/12} & \mainconfig{0/12} & \mainconfig{0.0} & \mainconfig{625.5} \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -952,149 +968,25 @@ batch\_uav\_20260915\_100816, tag u17cv2}
 
 \subsubsection{UAV-pillars}\label{sec:res:uav:pillars}
 
-UAV-pillars is the scene that separates the four generative models. The flow-based models are evaluated
-at $\nfe=5$ under eleven configurations on the full constraint set --- the plan without projection;
-per-step projection with each of the three selection rules on plain and on tightened constraints; and
-endpoint projection with a single candidate and with each rule. The diffusion model is evaluated at its
-budget of twenty in five of them. Passing the goal is not what is scarce here: every model crosses the
-finish line on nearly every flight, and the diffusion baseline does so on all fifty of its flights. What
-separates the models is passing it without touching a pillar, which is what
-\autoref{tab:uav-pillars} reports.
+The results of this scene are withheld from this draft. UAV-pillars as evaluated so far does not test
+what this section needs it to test: its constraint set is the one the demonstration generator was built
+to satisfy. The demonstrated channels lie at $|y|=1.11$\,m because that is the pillar centre at $0.6$,
+plus its radius $0.12$, plus the vehicle's rotor reach and a safety margin --- and the projection then
+enforces the same clearance the routes were laid out to keep. The plan is therefore feasible before any
+projection runs, on all ten flights for instantaneous-velocity matching and on nine for analytic
+average-velocity matching, and what the projected configurations measure is how little of a feasible plan
+each method disturbs. That is not the question the chapter asks of this scene, and it is why the models
+could not be ordered here.
 
-\paragraph{Plans without projection.} Executed as the model produced them, instantaneous-velocity matching
-passes the goal collision-free on all ten flights and analytic average-velocity matching on nine.
-Consistency-interpolated average-velocity matching and the diffusion baseline manage none: the baseline
-crosses the line on every flight while violating the pillar clearance on $132$ control steps per flight.
-Nothing enforces the constraints in this row, so a clean flight here is a property of the plan alone.
-
-\paragraph{With the constraints enforced.} Under projection the ordering is the same at the top
-(\autoref{tab:uav-pillars}). Instantaneous-velocity matching reaches $0.80$ or more in eight of its eleven
-configurations and $1.00$ in four, with a mean of $0.718$. Analytic average-velocity matching reaches
-$0.80$ or more in five and $0.90$ at best, mean $0.627$; consistency-interpolated average-velocity matching
-in three, mean $0.364$; and the diffusion baseline reaches $0.30$ at best, mean $0.08$ over the five
-configurations it was run in. On this scene, then, instantaneous-velocity matching is the model whose plans
-survive projection most often, and the two average-velocity models trade success for a shorter path:
-at their best projected configuration they finish in $442$ and $453$ control steps against
-instantaneous-velocity matching's $562$ (\autoref{tab:uav-pillars-best}). Neither ordering dominates the
-other, and both hold against the baseline, which finishes no flight within the constraints in three of its
-five configurations and $0.30$ at best.
-
-\begin{table}[htpb]
-  \caption[UAV-pillars: the four models across projection configurations]{UAV-pillars: success with
-  constraint satisfaction --- the goal passed on a collision-free flight --- ten flights per cell, full
-  constraint set. The flow-based models at $\nfe=5$; the diffusion model at its training budget of $20$,
-  evaluated in five configurations (---: not evaluated). $r$, $c$, $t$: random selection, cumulative
-  projection cost, temporal consistency. Consistency-interpolated average-velocity matching with
-  $\alpha_{\mathrm{end}}=0.2$. Temporal U-Net, $3.96$--$3.97$\,M parameters; training seed 6.}
-  \label{tab:uav-pillars}
-  \centering
-  \footnotesize
-  \setlength{\tabcolsep}{4pt}
-  \begin{tabularx}{\linewidth}{@{}L rrrr@{}}
-    \toprule
-    Configuration & MeanFM & CI-MeanFM & FM & Diffusion \\
-    \midrule
-    no projection                       & 0.90 & 0.00 & 1.00 & 0.00 \\
-    per-step, $r$ / $c$ / $t$           & 0.20 / 0.80 / 0.40 & 0.10 / 0.90 / 0.80 & 0.00 / 1.00 / 0.80 & --- / 0.00 / 0.00 \\
-    per-step tightened, $r$ / $c$ / $t$ & 0.10 / 0.90 / 0.80 & 0.00 / 0.00 / 0.90 & 0.00 / 0.90 / 0.40 & --- / 0.10 / 0.30 \\
-    endpoint, single candidate          & 0.50 & 0.20 & \mainconfig{\selectedmark\ 1.00} & --- \\
-    endpoint, $r$ / $c$ / $t$           & 0.90 / 0.70 / 0.70 & 0.40 / 0.40 / 0.30 & 1.00 / 0.90 / 0.90 & --- \\
-    \midrule
-    mean over the evaluated configurations & 0.627 & 0.364 & \textbf{0.718} & 0.08 \\
-    configurations at $\ge0.8$          & 5 of 11 & 3 of 11 & 8 of 11 & 0 of 5 \\
-    \bottomrule
-  \end{tabularx}
-\end{table}
-
-\dataref{batch\_uav\_20260915\_100816, tag u7hg, geometry pillars\_hg; uav\_results.py; the corresponding
-means in Campaign CLOSURE\_20260910 \S2 are at the strict goal-point criterion this thesis no longer uses,
-and include eight configurations that switch the obstacle constraints off inside the projection; diffusion
-rows: DA\_20260912 pillars diffusion reference, rev.~2, \S0--\S3}
-
-\autoref{tab:uav-pillars-best} places each model at its best configuration with projection, and the two
-leading rows have to be read flight by flight. Instantaneous-velocity matching with endpoint projection on
-a single candidate passes the goal collision-free on all ten flights with no violating step. Analytic
-average-velocity matching with endpoint projection and random selection does so on nine: eight of its
-flights finish in $414$ to $435$ control steps and end $0.29$ to $0.30$\,m from the goal point, and one
-flight loses the field, violates the clearance on $214$ steps and runs to the episode limit. That single
-flight is the whole difference in the rate.
-
-What the rate does not show is that the two models fly differently. Six of the ten
-instantaneous-velocity flights also run to the $634$-step limit, crossing the line but never settling, and
-end $0.36$ to $0.39$\,m from the goal point; the analytic model's successful flights take about $420$ steps
-and stop within $0.30$\,m. On this scene, then, instantaneous-velocity matching is the model that never
-fails outright, and analytic average-velocity matching is the model that flies the shorter, tighter path
-when it succeeds. Consistency-interpolated average-velocity matching reaches $0.90$ only with per-step
-projection on tightened constraints, at $1.56$\,s per control step, and the diffusion baseline reaches
-$0.30$, uses every control step of the episode, and costs $4.4$\,s per step.
-
-\begin{table}[htpb]
-  \caption[UAV-pillars: each model at its best configuration with projection]{UAV-pillars: each generative
-  model at its projected configuration with the highest success with constraint satisfaction (\emph{S\&C});
-  at equal S\&C the cheaper configuration is listed. \emph{Passed}: crosses the finish line. Violating and
-  control steps per flight; the episode ends after $634$ control steps. Ten flights per row, training seed
-  6. A bold triangle marks the selected configuration.}
-  \label{tab:uav-pillars-best}
-  \centering
-  \footnotesize
-  \setlength{\tabcolsep}{3pt}
-  \begin{tabularx}{\linewidth}{@{}l r L rrrrr@{}}
-    \toprule
-    Model & $\nfe$ & Configuration & S\&C & Passed & \shortstack{Violating\\steps} & \shortstack{Control\\steps} & ms/step \\
-    \midrule
-    MeanFM    & 5  & endpoint, $r$        & 0.90 & 10/10 & 21.4  & 442 & 154.0 \\
-    CI-MeanFM & 5  & per-step tightened, $t$ & 0.90 & 10/10 & 22.4 & 453 & 1564.5 \\
-    \mainconfig{\selectedmark\ FM} & \mainconfig{5} & \mainconfig{endpoint, single candidate} & \mainconfig{1.00} & \mainconfig{10/10} & \mainconfig{0.0} & \mainconfig{562} & \mainconfig{78.0} \\
-    Diffusion & 20 & per-step tightened, $t$ & 0.30 & 10/10 & 101.0 & 634 & 4424.5 \\
-    \bottomrule
-  \end{tabularx}
-\end{table}
-\dataref{uav\_results.py, best projected configuration per model, full constraint set}
-
-\autoref{fig:uav-pillars-paths} draws those four configurations, and it shows what the table cannot: the
-models do not fail by stopping short, they fail by committing to a side. Instantaneous-velocity matching
-sends all ten flights above the pillar field and keeps all ten clean; analytic average-velocity matching
-and consistency-interpolated average-velocity matching send nine below and one above, and it is the one
-above that clips a pillar. The diffusion baseline flies the upper lane like instantaneous-velocity
-matching but is collision-free on three flights of ten, touching the pillars on the way.
-
-\begin{figure}[htpb]
-  \centering
-  \includegraphics[width=\textwidth]{fig_uav_pillars_paths}
-  \caption[UAV-pillars: flown paths at each model's configuration]{UAV-pillars seen from above, drawn like
-  \autoref{fig:constraints-uav}: the six pillars inflated by the vehicle radius and tightened, with the
-  executed path of each of the ten flights over them. Colour reports the constraints (green:
-  collision-free; red: entered an inflated pillar) and the stroke and end mark report the goal (solid and
-  filled: passed; dashed and hollow: not passed). The four panels are \emph{not} under the same
-  projection: each model is drawn at the configuration \autoref{tab:uav-pillars-best} reports as its best,
-  named in the panel subtitle. The panel titles name the generative objectives: average-velocity matching
-  is MeanFM, instantaneous-velocity matching is FM and consistency-interpolated is CI-MeanFM.}
-  \label{fig:uav-pillars-paths}
-\end{figure}
-\dataref{DA\_in\_Paper/data/uav\_paths.json, extract/uav\_paths.py; four cells of
-batch\_uav\_20260915\_100816, tag u7hg}
-
-\paragraph{Step budget.} Both average-velocity models and instantaneous-velocity matching improve with the
-budget on this scene. Over the seven configurations evaluated at both budgets --- the plan without
-projection and per-step projection with the three rules, plain and tightened --- analytic average-velocity
-matching rises from $0.429$ at $\nfe=2$ to $0.586$ at $\nfe=5$ and instantaneous-velocity matching from
-$0.343$ to $0.586$, so at the larger budget the two are level on exactly the configurations they share;
-instantaneous-velocity matching's lead in \autoref{tab:uav-pillars} comes from the endpoint-projection
-configurations. Consistency-interpolated average-velocity matching rises from $0.157$ at $\nfe=1$ to
-$0.300$ and $0.386$, below the other two at every budget. The larger budget has a price with per-step
-projection: over the same configurations the time per control step rises from $69$--$79$\,ms at $\nfe=2$ to
-$0.9$--$1.7$\,s at $\nfe=5$, which endpoint projection avoids (\autoref{sec:res:uav:projection}).
-\dataref{uav\_results.py, pillars K1/K2/K5, the seven configurations common to both budgets}
-
-\paragraph{Consistency-interpolated average-velocity matching.} It is level with analytic average-velocity
-matching on UAV-corridor and behind both other flow-based models on UAV-pillars: the lowest mean of the
-three at every budget, and no collision-free flight at all without projection, where the other two are at
-$0.90$ and $1.00$. Its ceiling with projection is $0.90$, reached with per-step projection on tightened
-constraints. With D3IL-aligning (\autoref{sec:res:aligning:consistency}) and D3IL-avoiding
-(\autoref{tab:state-models}), the consistency-interpolated objective is level with the analytic one where
-the task is saturated and behind it where the task separates the models; it is ahead of it in no
-environment.
-\dataref{uav\_results.py, pillars K1/K2/K5; Campaign CLOSURE\_20260910 \S2, \S4; DA\_20260910 T1}
+The scene is being re-evaluated with the obstacle radius enlarged at test time, which is the construction
+D3IL-avoiding uses and which UAV-corridor gets from its slide: the same physical field, the same
+demonstrations and the same checkpoints, with a constraint the demonstrations do not satisfy, so that
+reaching the goal collision-free requires the projection to move the plan off the demonstrated route.
+\hole{\textbf{Withheld pending re-evaluation.} Diagnosis, the geometry ladder and the job matrix:
+\texttt{data\_status/PENDING\_20260918\_pillars\_geometry\_redesign.md} and
+\texttt{data\_status/SLURM\_RUNBOOK\_20260919\_pillars\_enlarged.md}. The withdrawn text, with its three
+tables and its figure, is kept verbatim at \texttt{v3/withheld/20260918\_uav\_pillars\_section.tex} and is
+restored once the new evaluations land.}
 
 \subsubsection{UAV-s-curve}\label{sec:res:uav:scurve}
 
@@ -1138,18 +1030,11 @@ On UAV-corridor, per-step projection is the method. Endpoint projection, run at 
 with one and two guiding steps, is faster on the same model --- $47$ to $125$\,ms against $99$ to
 $144$\,ms per control step for analytic average-velocity matching --- but passes the goal collision-free on
 at most seven of twelve flights, where per-step projection does so on all twelve. The projection
-configuration of this scene differs from that of UAV-pillars and UAV-s-curve
+configuration of this scene differs from that of the other two quadrotor scenes
 (\autoref{sec:setup:protocol:uav}), so the scenes are not pooled.
 
-On UAV-pillars, endpoint projection is the method. It holds the best configuration of the scene ---
-instantaneous-velocity matching, a single candidate, $1.00$ at $78$\,ms per control step --- and the best
-configuration of analytic average-velocity matching as well, $0.90$ at $154$\,ms. Averaged over the
-configurations of \autoref{tab:uav-pillars}, it spends $104$\,ms per control step in projection against
-$1611$\,ms for per-step projection, and none of its $120$ flights loses physical safety --- no contact and
-no loss of altitude --- against $43$ of the $180$ flights with per-step projection. It is not free of
-constraint violations: $41$ of its flights violate the clearance at least once, against $89$ with per-step
-projection.
-\dataref{uav\_results.py, K5 by projection method}
+On UAV-pillars the comparison of the two projection methods is withheld pending re-evaluation (\autoref{sec:res:uav:pillars}). The scene's own numbers are not reported in this draft, and the projection comparison
+rests on them, so it is withdrawn with them.
 
 On UAV-s-curve, neither method yields a flight that passes the goal within the constraints, so the scene
 does not rank them.
@@ -1233,13 +1118,13 @@ was measured.
 UAV-corridor shows that the flow-based planners fly under constraints: analytic and
 consistency-interpolated average-velocity matching with per-step projection at $\nfe=3$ pass the goal
 collision-free on every flight, at a sixth of the time of the diffusion baseline, which stays collision-free
-but never reaches the finish line. UAV-pillars separates the four models, and it separates them on the
-constraint rather than on the goal, which every model passes: instantaneous-velocity matching with endpoint
-projection passes collision-free on all ten flights at $78$\,ms per control step, though six of those ten
-never settle and run to the episode limit; analytic average-velocity matching reaches $0.90$, failing one
-flight outright and flying the other nine in about $420$ control steps, consistency-interpolated average-velocity matching $0.90$ only at
-$1.56$\,s per step, and the diffusion baseline $0.30$ at $4.4$\,s. UAV-s-curve has no supported combination;
-its limit is the tracking controller.
+but never reaches the finish line. UAV-pillars is withheld pending re-evaluation (\autoref{sec:res:uav:pillars}): its constraint set is the one the
+demonstrations were built to satisfy, so the plans are feasible before projection and the scene cannot
+separate the methods on the question this chapter asks. UAV-s-curve has no supported combination either;
+its limit is the tracking controller. What the quadrotor benchmark supports in this draft is therefore
+UAV-corridor's result, and it is a strong one: a test-time constraint the demonstrations do not satisfy,
+passed collision-free on every flight by both average-velocity models at $\nfe=3$, and by the diffusion
+baseline on none.
 
 % =============================================================================
 \section{Comparison across Environments}\label{sec:res:summary}
@@ -1251,8 +1136,7 @@ This section recaps the preceding ones and adds no new result.
 
 \autoref{tab:summary-models} names, per environment, the generative model that comes out best and the
 measure that decides it. Analytic average-velocity matching is best, or shares first place, in three of the
-four environments that yield a result; on UAV-pillars instantaneous-velocity matching passes the goal
-collision-free more often, and analytic average-velocity matching flies the shorter path.
+three environments that yield a result in this draft. UAV-pillars is withheld pending re-evaluation (\autoref{sec:res:uav:pillars}).
 
 \begin{table}[htpb]
   \caption[Generative models across environments]{The best generative model per environment, as found in
@@ -1267,7 +1151,7 @@ collision-free more often, and analytic average-velocity matching flies the shor
     D3IL-avoiding & control steps and time at equal success & MeanFM, CI-MeanFM & FM, then Diffusion \\
     D3IL-aligning & final distance of the box & MeanFM & CI-MeanFM, FM and Diffusion level \\
     UAV-corridor  & the goal passed on a collision-free flight & MeanFM, CI-MeanFM ($12/12$) & FM passes but not collision-free; Diffusion collision-free but never passes \\
-    UAV-pillars   & the goal passed on a collision-free flight & FM ($1.00$, mean $0.718$); it never fails, but six of ten flights run to the episode limit & MeanFM $0.90$, and the shorter path on the nine it flies; then CI-MeanFM, then Diffusion \\
+    UAV-pillars   & --- & withheld & the constraint set is the one the demonstrations satisfy; being re-evaluated with the obstacles enlarged at test time \\
     UAV-s-curve   & --- & none & limited by the tracking controller \\
     \bottomrule
   \end{tabularx}
@@ -1277,7 +1161,7 @@ collision-free more often, and analytic average-velocity matching flies the shor
 
 \autoref{tab:summary-projection} names the projection method each environment selects. Per-step
 projection is selected where the budget is too small for endpoint projection to act and on UAV-corridor;
-endpoint projection is selected on D3IL-aligning and UAV-pillars, the tasks run at budgets that give it
+endpoint projection is selected on D3IL-aligning, the task run at a budget that gives it
 guiding steps.
 
 \begin{table}[htpb]
@@ -1293,7 +1177,7 @@ guiding steps.
     D3IL-avoiding & 1  & per-step & no guiding step for endpoint projection \\
     D3IL-aligning & 20 & endpoint & all ten contexts free of violations \\
     UAV-corridor  & 3  & per-step & endpoint projection passes collision-free on at most 7 of 12 \\
-    UAV-pillars   & 5  & endpoint & holds the best configuration of the scene, a fifteenth of the projection time \\
+    UAV-pillars   & ---& withheld & withdrawn with the scene's results \\
     UAV-s-curve   & ---& none     & no flight passes the goal within the constraints \\
     \bottomrule
   \end{tabularx}
@@ -1322,8 +1206,8 @@ guiding steps.
       & MeanFM, $\nfe=3$, per-step projection, temporal consistency
       & goal passed collision-free in $12/12$ flights \\
     UAV-pillars
-      & FM, $\nfe=5$, endpoint projection, single candidate
-      & S\&C $1.00$ at $78$\,ms per step; MeanFM $0.90$ in a shorter path \\
+      & withheld
+      & re-evaluated with the obstacles enlarged at test time \\
     UAV-s-curve
       & none
       & limited by the tracking controller \\

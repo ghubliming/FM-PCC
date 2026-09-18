@@ -1,5 +1,15 @@
 # SLRUM DATE 2026-09-18
 
+> **⚠ 2026-09-18, later the same day: groups C, D and E are superseded — cancel them if still queued.**
+> All three are `pillars_hg` work. UAV-pillars is being re-evaluated on an enlarged constraint set because
+> the one it uses is the constraint the demonstration generator was built to satisfy, and its results are
+> withheld from the draft meanwhile. See
+> [`PENDING_20260918_pillars_geometry_redesign.md`](PENDING_20260918_pillars_geometry_redesign.md) and
+> [`SLURM_RUNBOOK_20260919_pillars_enlarged.md`](SLURM_RUNBOOK_20260919_pillars_enlarged.md).
+> `scancel 25890 25891 25892 25893 25894 25895` — only those still pending or running; finished results
+> are kept as the control condition. Groups A, B, F, G, H are unaffected.
+
+
 This runbook covers everything [`PENDING_20260918_verified_data_audit.md`](PENDING_20260918_verified_data_audit.md)
 lists as **confirmed missing** and runnable today, minus the two rows the
 [2026-09-17 wave](SLURM_RUNBOOK_20260917_dpcc_protocol_rows.md) already owns (audit A1/A2 = ledger R8, R19, R6;

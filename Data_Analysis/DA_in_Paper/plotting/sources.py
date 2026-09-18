@@ -186,6 +186,13 @@ D3IL_SCENES = {
     },
     'aligning': {
         'start': [0.525, -0.35, 0.25],
+        # The box drawn to scale. MuJoCo half-sizes in
+        # d3il/environments/d3il/models/mj/common-objects/robot_push_box/robot_push_box.xml:
+        # base geom 0.05 x 0.05 x 0.01, four coloured rims of half-thickness 0.005 at +-0.05.
+        # So the base footprint is 0.10 m square and the outer footprint 0.11 m square.
+        # target_box.xml carries the same sizes as sites.
+        'box_half': 0.05,
+        'box_rim_half': 0.055,
         # First held-out context, not the XML's coincident placeholder poses.
         # d3il/environments/dataset/data/aligning/test_contexts.pkl, index 0.
         'box_pos': [0.58057404, -0.20366790, 0.0],
@@ -593,9 +600,20 @@ AVOIDING_AF_LABEL = {
     'fm': 'FM',
     'diffusion': 'Diffusion',
 }
-AVOIDING_AF_COLOUR = {'af02': ENGINE_COLOUR['af'], 'af05': '#566573',
-                      'mf': ENGINE_COLOUR['mf'], 'fm': ENGINE_COLOUR['fm'],
-                      'diffusion': ENGINE_COLOUR['diffusion']}
+# v3.37: the two D3IL-avoiding charts that put every model in ONE panel need hues, not
+# shades. ENGINE_COLOUR is a slate family -- correct for the constraint figures, where
+# colour separates obstacle from vehicle, but in `fig_avoiding_tradeoff` three models sit
+# in one scatter and three greys of the same hue cannot be told apart in print. These are
+# used by those two figures only; everywhere else ENGINE_COLOUR still rules.
+ENGINE_COLOUR_DISTINCT = {
+    'diffusion': '#17202a',   # the baseline stays near-black, as in every other figure
+    'mf':        '#1f6fb2',   # blue
+    'fm':        '#d95f02',   # orange
+    'af':        '#0f8b8d',   # teal
+}
+AVOIDING_AF_COLOUR = {'af02': ENGINE_COLOUR_DISTINCT['af'], 'af05': '#7fc3c4',
+                      'mf': ENGINE_COLOUR_DISTINCT['mf'], 'fm': ENGINE_COLOUR_DISTINCT['fm'],
+                      'diffusion': ENGINE_COLOUR_DISTINCT['diffusion']}
 
 # Without projection the plan does not depend on the constraint set, so the
 # unprojected rows of top-left-hard and both-hard are identical to the decimal and
