@@ -269,7 +269,7 @@ def fig_avoiding_k_ladder(outdir):
     if c is None:
         return None
     rows = data['AGG']
-    f = Fig(720, 470, ml=76, mr=110)
+    f = Fig(760, 470, ml=76, mr=152)
     f.axes((0.8, 26), (0.55, 1.04), xlog=True)
     f.frame([1, 2, 5, 10, 20], [0.6, 0.7, 0.8, 0.9, 1.0],
             'step budget K  [ network evaluations per plan ]   (log)',
@@ -309,10 +309,28 @@ def fig_avoiding_k_ladder(outdir):
             f.marker(f.X(K), f.Y(r['n_success_and_constraints']), 's',
                      S.ENGINE_COLOUR[eng], filled=(r['n_geometries'] == 3), r=5.0)
 
+    # The consistency-interpolated model exists on this backbone for seed 6 only, so it is
+    # drawn as its own series -- dotted, hollow, named as one seed in the legend -- for the same
+    # reason the 5 x 2 diffusion series is: a different sample must not be read as the same one.
+    afc = S.CORPORA.get('avoiding_af_unet')
+    if afc is not None and afc.available:
+        af_cells = S.load_exact(afc, {K: S.AVOIDING_AF_FOLDERS['af02'] % K for K in KS},
+                                'af02', seeds=S.AVOIDING_AF_SEEDS)
+        af_rows = S.geometry_mean(af_cells, lambda k: (k[0], k[1], k[4]), geom_index=3)
+        af_pts = [(K, af_rows[('af02', K, 'dpcc-t-tightened')]) for K in KS
+                  if ('af02', K, 'dpcc-t-tightened') in af_rows]
+        if len(af_pts) > 1:
+            f.poly([(f.X(K), f.Y(r['n_success_and_constraints'])) for K, r in af_pts],
+                   S.ENGINE_COLOUR['af'], dash='2,3', w=1.7)
+            for K, r in af_pts:
+                f.marker(f.X(K), f.Y(r['n_success_and_constraints']), '^',
+                         S.ENGINE_COLOUR['af'], filled=False, r=5.2)
+
     lx = f.R + 14
     f.text(lx, f.T + 4, 'model', 10, '#111', bold=True)
     legend(f, lx, f.T + 20, [(S.ENGINE_COLOUR[k], S.ENGINE_LABEL[k], 's')
-                             for k in ('mf', 'fm', 'diffusion')])
+                             for k in ('mf', 'fm', 'diffusion')]
+                            + [(S.ENGINE_COLOUR['af'], 'CI-MeanFM, seed 6', '^')])
     path = f.save(os.path.join(outdir, 'fig_avoiding_k_ladder.svg'))
     return path, f'{c.rel} | {c.protocol}'
 

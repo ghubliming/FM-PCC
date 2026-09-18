@@ -6062,3 +6062,26 @@ Comprehensive data analysis of the MPC candidate fan ($B=4$ vs $B=1$) on `avoidi
 4. **Paper Figure Tooling and Headless MuJoCo 3D Scene Rendering Pipeline** (`Data_Analysis/DA_in_Paper/`, commits `b7ac5111`, `5b612119`, `ef9f783c`):
    - Developed headless MuJoCo environment rendering pipelines (`render_mujoco_scenes.py`, `scene3d.py`, `extract_env_frames.py`) producing vector SVG and PNG assets for `corridor`, `pillars`, `s_curve`, `avoiding`, and `aligning` scenes.
    - Implemented automated figure builders (`avoiding.py`, `scenes.py`, `crop_vendored.py`) consolidating paper figures into `Data_Analysis/DA_in_Paper/figures/` and synced via `export_to_draft.py`.
+
+
+***
+
+## DPCC Protocol Evaluation Tooling, MeanFlow U-Net Recovery & UAV Trajectory Pipeline (September 17, 2026)
+
+**Keywords**: DPCC protocol evaluation, avoiding_rules_by_protocol, MeanFlow U-Net recovery, uav_results, va_results, fig_constraints_uav, trajectory download specification, Slurm cleanup, commits c243e4b3, 939affbf, 105f1968.
+
+1. **D3IL-Avoiding DPCC Protocol Evaluation Tools & MeanFlow U-Net Discovery** (`avoiding_rules_by_protocol.py`, `avoiding_seed_spread.py`, `REQUEST_20260917_avoiding_dpcc_protocol.md`):
+   - Implemented `avoiding_rules_by_protocol.py` and `avoiding_seed_spread.py` in `Data_Analysis/DA_in_Paper/analysis/` to evaluate model checkpoints strictly under DPCC's published protocol (5 seeds × 2 episodes across 3 geometries; 10 episodes total per geometry) alongside the 20-episode protocol.
+   - Identified that MeanFlow U-Net (`bbunet`) K=1 and K=2 evaluation rows were already present within the September 15 batch export under shared folder names, distinguishing them by `Full_Path` containing `_bbunet_`. This resolved a major empirical data gap without requiring redundant cluster compute.
+   - Specified remaining missing evaluation cells (Flow Matching U-Net K=1/2 and α-Flow U-Net with α_end 0.2 across seeds 7–10) and established guarded runbooks and cluster submission commands for future completion.
+
+2. **Automated UAV and Visual Aligning Result Aggregation** (`uav_results.py`, `va_results.py`):
+   - Enhanced `uav_results.py` and `va_results.py` to parse multi-axis metrics directly from `uav_aggregated_long.csv` and `va2_aggregated_long.csv`.
+   - Structured automated extraction for crossed-line vs. strict goal-point success, collision-free completion, step counts, and per-step execution latencies across controllers (`mjpc` vs `pid_stopgo`), environments, and model architectures.
+
+3. **UAV Constraints Visualization and Trajectory Overlay Request** (`fig_constraints_uav`, `REQUEST_20260917_trajectory_figures.md`):
+   - Implemented `fig_constraints_uav` in `Data_Analysis/DA_in_Paper/plotting/builders/scenes.py` to render vector 2D top-down representations of quadrotor scenes (`corridor`, `corridor_v2_slide`, `pillars`, `s_curve`) with exact physical obstacles, halfspaces, and safety boundaries.
+   - Formulated `REQUEST_20260917_trajectory_figures.md` defining specific rollout artifacts (`rollouts*.npz`, `results.json`) to export from the cluster for trajectory visualization across key comparisons (s-curve controller tracking, pillars engine flight paths, corridor-v2 slide detours, and Franka box-alignment trajectories).
+
+4. **Cluster Script Housekeeping** (`Slurm_Codes/temp_bash/`):
+   - Purged obsolete temporary evaluation scripts in `Slurm_Codes/temp_bash/` (including superseded corridor-ball probe and full-wave test scripts) to maintain repository hygiene and prevent unintended re-execution.

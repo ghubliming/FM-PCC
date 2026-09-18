@@ -14,6 +14,35 @@ Format: what changed · why · what it is sourced from · what it left open.
 
 ---
 
+## v2.24 — 2026-09-18 · Chapter 4 reorganised; RQ1 names its axes; network capacity in Table 3.1 → [`changelogs/v2.24_20260918_ch4_reorganised_rq1_axes_and_capacity.md`](changelogs/v2.24_20260918_ch4_reorganised_rq1_axes_and_capacity.md)
+
+**Date: 2026-09-18.** Six items from the author, plus the two open inbox items for v2:
+- **Chapter 4 order.** Overview → plant dynamics including control → generative models → constraint
+  projection → environments. *Plant Dynamics* and *Low-Level Control* are merged into
+  `\section{Plant Dynamics and Control}`, which carries both labels `sec:method:dynamics` and
+  `sec:method:deployment`; no label was added or removed.
+- **RQ1** now names what it compares: the task success and constraint satisfaction of the diffusion
+  model, at fewer solver steps and less planning time per control step.
+- **`tab:related-loops`** gains capacity: "size not reported" for all five sources (none states a
+  parameter count), $4.0$\,M parameters for every generative model of this thesis.
+- **§4.3.1** "The model is deliberately crude, and that is the point." → a plain statement of what
+  the surrogate omits and where it is absorbed; `rem:eulermodel` loses its two argumentative lines.
+- **`tab:embodiments`** expands `\ac{IK}`, `\ac{MJPC}` and its informal short forms, and its caption
+  defines the remaining symbols and points to `sec:setup:metrics`.
+- **v3.31 (2026-09-18)** — MuJoCo is introduced once, in §2.5, as a rigid-body physics engine for
+  contact-rich robotic simulation; this is the sentence v3 §5.1 back-references.
+- **v3.32 (2026-09-18)** — `sec:method:geometric` now states the velocity-setpoint policy of record:
+  every reported quadrotor result brakes to rest, and the standing tracking lag that follows is
+  named, with the measurement left to Chapter 6.
+
+**For v3:** take the new Chapter 4 order wholesale at the next sync — `Low-Level Control` is no longer
+a section, `sec:method:deployment` labels the merged header, and RQ1's new axes belong in v3's Ch 1
+and its Ch 8 answers (`to_v3/FROM_v2_20260918_ch4_reorder_and_rq1_axes.md`).
+**For v4:** whether the abbreviation expansions belong in an appendix list
+(`to_v4/FROM_v2_20260918_acronym_list_placement.md`).
+
+---
+
 ## v2.23 — 2026-09-17 · MuJoCo is the simulator; the Panda and its rod end effector named → [`changelogs/v2.23_20260917_mujoco_simulator_and_robot_naming.md`](changelogs/v2.23_20260917_mujoco_simulator_and_robot_naming.md)
 
 **Date: 2026-09-17.** Closes the two open inbox items for v2:

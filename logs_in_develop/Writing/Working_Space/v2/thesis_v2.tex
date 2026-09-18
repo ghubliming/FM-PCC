@@ -292,8 +292,9 @@ built for this thesis. \autoref{ch:setup} describes the evaluation.
   \item[RQ1 --- Generative model.] Under an identical backbone, projection, dataset and evaluation
     code, does flow matching --- a learned velocity field, the transport \ac{ODE} it generates, the
     step budget that becomes a solver argument, and the average-velocity objectives built on that
-    field --- improve the quality--cost frontier of constrained predictive control over the diffusion
-    model it replaces, and does the improvement order the three objectives?
+    field --- reach the task success and the constraint satisfaction of the diffusion model it
+    replaces at fewer solver steps and less planning time per control step, and does the number of
+    steps at which it does so order the three objectives?
   \item[RQ2 --- Constraints.] Given one fixed feasible set and one solver, at a step budget large
     enough for projection to guide the sampler, does endpoint projection reach the goal with fewer
     constraint violations, fewer control steps or less computation than the per-step (iterate)
@@ -522,8 +523,8 @@ error directly on the rotation group and thereby avoid the singularities of loca
 \parencite{lee2010geometric}. Model predictive control is an alternative that optimises the rotor
 commands over a short horizon against a simulation of the vehicle; predictive sampling in \ac{MJPC}
 does so without derivatives, by rolling out perturbed control sequences and keeping the best
-\parencite{howell2022predictive}. The vehicle and its scenes are simulated in MuJoCo
-\parencite{todorov2012mujoco}.
+\parencite{howell2022predictive}. The vehicle and its scenes are simulated in MuJoCo, a rigid-body
+physics engine for contact-rich robotic simulation \parencite{todorov2012mujoco}.
 
 % =============================================================================
 \chapter{Related Work}\label{ch:related}
@@ -640,37 +641,38 @@ thesis builds on and is measured against.
 \begin{table}[htpb]
   \caption[Planner, loop and constraint mechanism in the closest related work]{The closest related
   work by the loop it runs in, not by its generative model. ``Executed'' is the number of planned
-  steps applied before the next plan is generated.}
+  steps applied before the next plan is generated. None of the sources states the parameter count of
+  its network.}
   \label{tab:related-loops}
   \centering\small
   \begin{tabularx}{\linewidth}{lLLL}
     \toprule
-    Work & Constraints & Loop and plan & Backbone \\
+    Work & Constraints & Loop and plan & Backbone and capacity \\
     \midrule
     Diffuser \parencite{janner2022planning}
       & cost guidance, no hard constraint
       & plan of states and actions, replanned
-      & temporal U-Net \\
+      & temporal U-Net, size not reported \\
     Diffusion Policy \parencite{chi2023diffusion}
       & none
       & receding horizon over a chunk of actions
-      & U-Net or transformer \\
+      & U-Net or transformer, size not reported \\
     \ac{DPCC} \parencite{romer2025diffusion}
       & projection of every denoising iterate, tightened
       & receding horizon, horizon $8$, $1$ executed, Euler plant model
-      & temporal U-Net \\
+      & temporal U-Net, size not reported \\
     HardFlow \parencite{li2025hardflow}
       & projection of the predicted final sample, later steps only
       & receding horizon, horizon $16$, $8$ executed, fitted linear plant model
-      & temporal U-Net \\
+      & temporal U-Net, size not reported \\
     SafeFlowMPC \parencite{oelerich2026safeflowmpc}
       & projection onto the safe set inside the sampling loop
       & receding horizon over joint-position trajectories
-      & flow-matching policy \\
+      & flow-matching policy, size not reported \\
     This thesis
       & one feasible set, applied to the iterate or to the predicted endpoint
       & receding horizon, horizon $8$, $1$ executed, Euler plant model
-      & temporal U-Net, one parameter count for every model \\
+      & temporal U-Net, $4.0$\,M parameters for every generative model \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -691,9 +693,9 @@ projecting a finished sample.
 % =============================================================================
 
 The method starts from \ac{DPCC} and changes two of its parts: the generative model and the projection.
-The planning problem is formulated first. The components of the controller then follow in the order in
-which they build on each other: the generative models and their network, the plant dynamics, the
-constraint projection, the low-level controllers, and the environments with their constraint sets.
+The planning problem is formulated first, and the controller is then described from the plant upwards:
+the two plants and the controllers that drive them, the generative models and their network, the
+constraint projection, and the environments with their constraint sets.
 
 \section{Problem Formulation}\label{sec:method:formalisation}
 
@@ -820,6 +822,384 @@ threshold and the number of candidate plans.
 $\rightarrow$ action, with the two varied parts marked.}
 \hole{Provenance table --- inherited, modified, new, at file granularity --- feeding
 Appendix~\ref{app:repro}.} \srcnote{TARGET \S5.3}
+
+% =============================================================================
+%  PLANT DYNAMICS AND CONTROL
+% =============================================================================
+\section{Plant Dynamics and Control}\label{sec:method:dynamics}\label{sec:method:deployment}
+
+Two plants are controlled: a manipulator, whose end-effector position the generative model plans, and
+a quadrotor, whose position it plans. The projection uses a first-order model of the manipulator; the
+quadrotor is described by its rigid-body dynamics. Underneath both sits a low-level controller, because
+the generative model plans position increments and never an actuator command: the manipulator uses
+differential \ac{IK} and a joint-space PD law, the quadrotor a cascaded geometric tracking controller
+or, as a baseline, sampling-based predictive control.
+
+\subsection{The Manipulator and Its First-Order Model}\label{sec:method:manipulator}
+
+The projection of \autoref{sec:method:proj} needs a concrete dynamics model $f$ for its rows
+\eqref{eq:bg:mpc:dyn}. The inherited system does not use an identified
+model of the manipulator and its low-level controller; it uses a first-order (explicit Euler)
+integrator over the commanded quantity, and pushes everything it omits into the mismatch term
+$\vect{w}_{t}$ of \eqref{eq:method:plant}. For the two-dimensional manipulator benchmark, where the
+state stacks a commanded and a measured planar position and the action is a planar increment, that
+model is
+\begin{equation}\label{eq:method:dpcc:euler}
+  \vect{s}_{t+1}
+  = \vect{s}_{t} + \begin{bmatrix}\vect{a}_{t}\trans & \vect{a}_{t}\trans\end{bmatrix}\trans t\sidx{s}
+    + \vect{w}_{t},
+\end{equation}
+i.e.\ \emph{both} halves of the state are advanced by the \emph{same} action
+\parencite[Sec.~6.1]{romer2025diffusion}. Three things follow, and all three are inherited by every
+environment in this thesis.
+
+\begin{itemize}
+  \item \textbf{The model carries no knowledge of the robot.} $f$ knows nothing of the arm's
+    kinematics, its impedance controller or its integration error. What it omits appears as the
+    mismatch $\vect{w}_{t}$, whose bound $\gamma$ is estimated from unconstrained rollouts, and the
+    tightening of \eqref{eq:method:dpcc:tighten} absorbs it. Feasibility is therefore a statement
+    about the model and its mismatch bound, not about the plant.
+  \item \textbf{$t\sidx{s} = 1$, because the action is a displacement and not a velocity.} The
+    network's output is a per-step Cartesian increment, so the Euler update is already in the right
+    units and no physical timestep enters the constraint. Setting $t\sidx{s}$ to the simulator's
+    integration step --- a natural-looking mistake --- would rescale the entire feasible set.
+    \srcnote{\texttt{aux\_repo/dpcc/config/projection\_eval.yaml:14--16}, whose comment reads
+    \emph{``since $a = [\Delta x,\Delta y]$ and not $[v_{x},v_{y}]$''}; the same value and the same
+    reasoning are carried in \texttt{config/uav\_projection.yaml:125--127} and
+    \texttt{config/visual\_aligning\_eval.yaml}.}
+  \item \textbf{Anchoring both the commanded and the measured channel is what couples the plan to
+    the plant.} If only the measured position were constrained, the projector could return a plan
+    whose commanded channel is unreachable; if only the commanded one were, the plan would be
+    admissible in a space the robot never occupies. \autoref{sec:method:deployment} shows the same
+    two-channel structure in all three environments, and \autoref{sec:method:proj} gives the row form.
+\end{itemize}
+
+\begin{remark}[A stricter alternative to the surrogate]\label{rem:eulermodel}
+\eqref{eq:method:dpcc:euler} models the plant by an integrator: it carries no joint limits, no
+impedance controller and no simulator integration error, and everything it omits is pushed into
+$\gamma$ and absorbed by the tightening \eqref{eq:method:dpcc:tighten}. The alternative is to put the
+\emph{real} kinematics inside the optimisation, and at least one contemporary system does exactly that.
+\parencite{oelerich2026safeflowmpc} pairs a flow-matching planner with an online nonlinear program on
+a seven-degree-of-freedom manipulator, and plans in \emph{joint space}: the generated trajectory is a
+sequence of joint configurations, and the program carries the analytic forward kinematics, the
+Jacobian and per-link collision geometry, solved at every flow-matching step. There is no surrogate
+and no mismatch ball, because the constraint is imposed on the true kinematic chain.
+
+The two designs sit at opposite ends of one trade. Exact kinematics inside the program give
+feasibility on the real chain, and tie the program to one robot and the plan to that robot's joints.
+The surrogate gives an end-effector plan and a projector that transfer unchanged from a planar arm to
+a spatial one to a quadrotor, with feasibility that holds for the model and not for the plant. This
+thesis takes the second end: one projection method, held fixed across two embodiments, is what RQ3 is about.
+$\gamma$ is where the cost is booked.
+\srcnote{Verified against the released code:
+\texttt{aux\_repo/SafeFlowMPC/safe\_flow\_mpc/RobotModel/} carries the \texttt{iiwa.urdf} and
+compiled CasADi functions for the forward kinematics, the Jacobian and ten per-link collision
+positions; \texttt{train\_imitation\_learning.py} generates \texttt{n\_horizon} $\times$ 7 joint
+trajectories. It plans \emph{joint configurations}, not motor torques.}
+\end{remark}
+
+\subsection{The Quadrotor}\label{sec:method:quadrotor}
+
+The vehicle is the rigid body of \parencite[Eqs.~(2)--(5)]{lee2010geometric}: with mass $m$, body
+inertia $\matr{J}\sidx{b}$, attitude $\matr{R}\in SO(3)$ and body rates $\vect{\omega}$,
+\begin{equation}\label{eq:method:dep:plant}
+  m\ddot{\vect{p}} = m g\,\unitvec{3} - T\,\matr{R}\unitvec{3},
+  \qquad
+  \dot{\matr{R}} = \matr{R}\hat{\vect{\omega}},
+  \qquad
+  \matr{J}\sidx{b}\dot{\vect{\omega}} + \vect{\omega}\times\matr{J}\sidx{b}\vect{\omega} = \vect{\tau}\sidx{b},
+\end{equation}
+where $\hat{(\cdot)}$ is the hat map.
+
+The four rotor thrusts produce the collective thrust $T$ along the body axis $\matr{R}\unitvec{3}$ and
+the body moment $\vect{\tau}\sidx{b}$. With four inputs for six degrees of freedom the vehicle is
+underactuated: it translates only by tilting its thrust vector, and hover is an unstable equilibrium.
+The generative model never commands these inputs; it plans positions, and the controller of
+\autoref{sec:method:geometric} turns them into rotor thrusts.
+
+\subsection{From Plan to Setpoint}\label{sec:method:setpoint}
+
+In every case the generative model replans at each control step, emits a \emph{position increment},
+and never emits an actuator command; everything below the increment is classical control --- a
+differential \ac{IK} loop feeding a joint-space PD law on the two manipulator environments, and a
+cascaded \emph{geometric} tracking controller, or optionally a sampling-based \ac{MJPC} tracker, on
+the quadrotor.
+
+Write $\Delta\vect{p}_{t}$ for the first action of the selected plan at control step $t$. All three
+environments run the same two-line recursion,
+\begin{align}
+  \vect{p}_{\textrm{des},t+1} &= \vect{p}_{\textrm{des},t} + \Delta\vect{p}_{t},
+    &&\vect{p}_{\textrm{des},0} = \vect{p}_{0},
+    \label{eq:method:dep:setpoint}\\
+  \vect{o}_{t} &= \left(\vect{p}_{\textrm{des},t},\;\vect{p}_{t},\;[\,\dot{\vect{p}}_{t}\,]\right),
+    \label{eq:method:dep:obs}
+\end{align}
+where $\vect{o}_{t}$ is the observation the model conditions on at the next step and the bracketed
+velocity block is present only for the aerial platform. Two properties follow.
+
+\begin{itemize}
+  \item \textbf{\eqref{eq:method:dep:setpoint} is a free-running integrator driven by the model's own
+    past outputs.} $\vect{p}\sidx{des}$ is not read back from the plant. Plan error therefore
+    accumulates rather than being corrected, which is the structural reason the aerial task is the
+    fragile one and the reason a divergence guard is needed at all.
+  \item \textbf{\eqref{eq:method:dep:obs} feeds the commanded setpoint back alongside the measured
+    state}, so the model conditions on its own history. The gap
+    $\vect{p}_{\textrm{des},t} - \vect{p}_{t}$ is exactly the tracking error the low-level controller is
+    working on, and it is visible to the planner --- which is why the two channels are both
+    constrained in \eqref{eq:method:proj:deriv}.
+\end{itemize}
+
+\begin{table}[htpb]
+  \caption[Embodiment instantiation]{The same skeleton, instantiated three times. The plan width $d$
+  is the width of the plan variable \eqref{eq:method:plan} and $\vect{o}$ its observation block;
+  $t\sidx{s}$ is the Euler sampling time of \eqref{eq:method:dpcc:euler}; ``dynamics rows'' counts the
+  channel pairs of \eqref{eq:method:proj:deriv}; the two intervals are simulated time
+  \eqref{eq:method:dep:multirate}. The quantities measured on these loops are defined in
+  \autoref{sec:setup:metrics}.}
+  \label{tab:embodiments}
+  \centering\small
+  \begin{tabularx}{\linewidth}{lLLL}
+    \toprule
+     & D3IL-avoiding & D3IL-aligning & UAV-corridor, UAV-pillars, UAV-s-curve \\
+    \midrule
+    embodiment      & manipulator, planar   & manipulator, spatial      & quadrotor \\
+    observation     & state, $4$-D          & 2 RGB views $+$ $6$-D state & state, $9$-D \\
+    action          & $\Delta\vect{p}\in\R^{2}$ & $\Delta\vect{p}\in\R^{3}$ & $\Delta\vect{p}\in\R^{3}$ \\
+    plan width $d$  & $6$                   & $9$                       & $12$ \\
+    $\vect{o}$ layout & $(\vect{p}\sidx{des},\vect{p})$ & $(\vect{p}\sidx{des},\vect{p})$ & $(\vect{p}\sidx{des},\vect{p},\dot{\vect{p}})$ \\
+    $t\sidx{s}$     & $1$                   & $1$                       & $1$ \\
+    dynamics rows   & $4$                   & $6$                       & $6$ \\
+    low level       & differential \ac{IK} $\rightarrow$ joint PD & same & geometric cascade, or \ac{MJPC} \\
+    plan interval   & one plan per environment step & one plan per environment step & $0.03\,\textrm{s}$ simulated \\
+    inner interval  & $n\sidx{sub}$ simulator substeps & $n\sidx{sub}$ simulator substeps & $0.01\,\textrm{s}$ simulated \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{Manipulator: Differential Inverse Kinematics}\label{sec:method:ik}
+
+The environment is commanded with an absolute Cartesian pose. The evaluation loop forms it from the
+increment and the \emph{commanded} channel of the observation --- not from the measured one, which
+is what makes \eqref{eq:method:dep:setpoint} the free-running recursion it is --- and holds the
+end-effector orientation and, on the planar benchmark, the height fixed.
+\srcnote{\texttt{aux\_repo/dpcc/scripts/eval.py:236--238}: \texttt{next\_pos\_des = action + obs[:2]}.}
+
+Below that setpoint sits the differential \ac{IK} loop. Let $\vect{q}\in\R^{7}$ be the joint
+positions of the Panda, $\matr{J}(\vect{q})$ the end-effector Jacobian, and let the task-space error be a
+proportional term on position and orientation,
+\begin{equation}\label{eq:method:dep:taskerr}
+  \vect{\xi}(\vect{q})
+  = \begin{bmatrix}
+      k\sidx{p}\odot\operatorname{clip}\!\left(\vect{p}\sidx{des}-\vect{p}(\vect{q}),\,\pm\epsilon\sidx{p}\right)\\[2pt]
+      k\sidx{q}\odot\operatorname{clip}\!\left(\vect{e}\sidx{rot}(\vect{q}),\,\pm\epsilon\sidx{r}\right)
+    \end{bmatrix},
+\end{equation}
+with $\vect{p}(\vect{q})$ from forward kinematics and $\vect{e}\sidx{rot}$ the quaternion error to the
+commanded orientation. The joint increment is the weighted, damped least-squares solution with a
+null-space term that pulls the arm towards a rest posture,
+\begin{align}
+  \dot{\vect{q}}\sidx{null} &= k\sidx{null}\left(\vect{q}\sidx{rest}-\vect{q}\right),
+    \label{eq:method:dep:null}\\
+  \dot{\vect{q}}
+    &= \matr{W}\matr{J}\trans
+       \left(\matr{J}\matr{W}\matr{J}\trans + \lambda\Id{6}\right)^{-1}
+       \left(\vect{\xi} - \matr{J}\dot{\vect{q}}\sidx{null}\right)
+     + \dot{\vect{q}}\sidx{null},
+    \label{eq:method:dep:dls}
+\end{align}
+after which the singular values of $\matr{J}\matr{W}\matr{J}\trans + \lambda\Id{6}$ are clipped into
+$[\sigma\sidx{min},\sigma\sidx{max}]$ before the solve, $\|\dot{\vect{q}}\|$ is capped, and
+$\vect{q} \leftarrow \operatorname{clip}(\vect{q}+\eta\sidx{ik}\dot{\vect{q}},\,\vect{q}\sidx{min},\vect{q}\sidx{max})$
+is iterated $n\sidx{ik}$ times per control step. The resulting joint target, its finite-difference
+velocity and acceleration are handed to a joint-space PD law, and \emph{that} is what produces the
+torques the simulator integrates.
+
+The parameters are inherited from the benchmark and are listed once because the loop is otherwise
+not reproducible: $k\sidx{p} = (200,200,800)$, $k\sidx{q} = (30,30,30)$, $k\sidx{null} = 40$,
+$\lambda = 10^{-12}$, $\matr{W} = \Id{7}$, $[\sigma\sidx{min},\sigma\sidx{max}] = [10^{-2},10^{2}]$,
+$n\sidx{ik} = 3$, $\eta\sidx{ik} = 10^{-3}$, clips $\epsilon\sidx{p} = 0.01\,\textrm{m}$ and
+$\epsilon\sidx{r} = 0.1$, and joint PD gains
+$(120,120,120,120,50,30,10)$ / $(10,10,10,10,6,5,3)$.
+\srcnote{\texttt{d3il/environments/d3il/d3il\_sim/controllers/IKControllers.py:134--323}
+(\texttt{CartPosQuatImpedenceController}) and
+\texttt{.../controllers/Config/mujoco\_controller\_config.gin:6--37}.}
+
+Two consequences matter for the thesis. \eqref{eq:method:dep:dls} is a \emph{local} solve run three
+times per step, so the arm does not exactly reach $\vect{p}\sidx{des}$ within one step --- the residual
+is precisely the $\vect{w}_{t}$ that \eqref{eq:method:dpcc:euler} pushes into the mismatch bound and
+\eqref{eq:method:dpcc:tighten} then absorbs. And the null-space term makes the map from setpoint to
+joint configuration history-dependent, so two identical plans executed from different postures do not
+produce identical joint trajectories, even though they produce the same Cartesian trace.
+
+\subsection{Quadrotor: Cascaded Geometric Tracking Control}\label{sec:method:geometric}
+
+The aerial chain is the same skeleton with two more layers underneath, and it runs on two intervals of
+simulated time: a plan is queried every $n\sidx{dec}$-th physics step, the interval at which the expert
+demonstrations were recorded, and the low-level controller runs at every physics step, with the
+setpoint held constant in between,
+\begin{equation}\label{eq:method:dep:multirate}
+  n\sidx{dec}\,\Delta t\sidx{phys} = 0.03\,\textrm{s},
+  \qquad
+  \Delta t\sidx{phys} = 0.01\,\textrm{s}
+  \;\Rightarrow\; n\sidx{dec} = 3 .
+\end{equation}
+The simulation waits for the planner, so these intervals hold in simulated time for any planning
+time.
+\srcnote{\texttt{mix\_uav\_test/eval\_mix\_uav.py:1610} (\texttt{decim}) and \texttt{:1728} (physics loop);
+\texttt{uav\_expert\_data\_collect/dataset\_writer.py:31,73} (\texttt{DATASET\_HZ});
+$\Delta t\sidx{phys}$ from \texttt{quadrotor\_modified.xml:4}.}
+
+The controller is the \emph{position-controlled flight mode} of
+\parencite[Eqs.~(19)--(23)]{lee2010geometric}, instantiated on \eqref{eq:method:dep:plant} in a
+$z$-up frame with the thrust along $+\vect{b}_{3}$, and closed by the rotor allocation of
+\parencite{mellinger2011minimum}. It runs in four steps.
+
+\paragraph{Outer loop --- position to thrust vector.} With the tracking errors
+$\vect{e}\sidx{p} = \vect{p}-\vect{p}\sidx{des}$ and
+$\vect{e}\sidx{v} = \dot{\vect{p}}-\dot{\vect{p}}\sidx{des}$
+\parencite[Eqs.~(17)--(18)]{lee2010geometric}, a diagonal PD with acceleration feed-forward gives
+the required world-frame force
+\begin{equation}\label{eq:method:dep:outer}
+  \vect{a}\sidx{cmd} = -\matr{K}\sidx{p}\vect{e}\sidx{p} - \matr{K}\sidx{d}\vect{e}\sidx{v} + \ddot{\vect{p}}\sidx{des},
+  \qquad
+  \vect{F} = m\left(\vect{a}\sidx{cmd} + g\,\unitvec{3}\right),
+\end{equation}
+which is the bracketed term of \parencite[Eq.~(23)]{lee2010geometric}. The gain matrices are
+diagonal, with a stiffer vertical channel.
+
+\paragraph{Attitude extraction.} The rotor disk points along $\vect{F}$ and the remaining degree of
+freedom is fixed by the commanded yaw $\psi\sidx{des}$, which pins the free axis left open by
+\parencite[Eqs.~(22)--(23)]{lee2010geometric}:
+\begin{equation}\label{eq:method:dep:att}
+  \vect{b}_{3} = \frac{\vect{F}}{\|\vect{F}\|},\quad
+  \vect{b}_{2} = \frac{\vect{b}_{3}\times\vect{x}\sidx{c}}{\|\vect{b}_{3}\times\vect{x}\sidx{c}\|},\quad
+  \vect{b}_{1} = \vect{b}_{2}\times\vect{b}_{3},\quad
+  \matr{R}\sidx{des} = \begin{bmatrix}\vect{b}_{1} & \vect{b}_{2} & \vect{b}_{3}\end{bmatrix},
+\end{equation}
+with $\vect{x}\sidx{c} = (\cos\psi\sidx{des},\sin\psi\sidx{des},0)\trans$.
+
+\paragraph{Inner loop --- geometric attitude control.} The attitude error is the coordinate-free
+error on $SO(3)$ of \parencite[Eq.~(21)]{lee2010geometric}, and the moment is its
+\parencite[Eq.~(20)]{lee2010geometric}:
+\begin{equation}\label{eq:method:dep:inner}
+  \vect{e}\sidx{R} = \tfrac{1}{2}\left(\matr{R}\sidx{des}\trans\matr{R} - \matr{R}\trans\matr{R}\sidx{des}\right)^{\vee},
+  \qquad
+  \vect{\tau}\sidx{b} = -\matr{K}\sidx{R}\vect{e}\sidx{R} - \matr{K}_{\omega}\vect{e}_{\omega}
+      + \vect{\omega}\times\matr{J}\sidx{b}\vect{\omega},
+\end{equation}
+where $(\cdot)^{\vee}$ is the inverse hat map. The commanded angular velocity is held at zero, so
+$\vect{e}_{\omega} = \vect{\omega}$ and the attitude feed-forward of
+\parencite[Eq.~(20)]{lee2010geometric} vanishes; with it goes the exponential-stability statement of
+\parencite[Prop.~3]{lee2010geometric}, which assumes the full law.
+
+\paragraph{Allocation.} The collective thrust is the world force projected on the current body-$z$
+axis, floored so the vehicle cannot free-fall during recovery, and the wrench is distributed over the
+four rotors by a fixed geometry matrix:
+\begin{equation}\label{eq:method:dep:alloc}
+  T = \max\!\left(\vect{F}\trans\vect{b}_{3},\;T\sidx{floor}\right),
+  \qquad
+  \matr{M}\vect{u} = \begin{bmatrix}T\\ \vect{\tau}\sidx{b}\end{bmatrix},
+  \qquad
+  \matr{M}_{:,i} = \begin{bmatrix}1 & r_{i,y} & -r_{i,x} & \kappa_{i}\end{bmatrix}\trans,
+\end{equation}
+with $\vect{r}_{i}$ the $i$-th rotor site position and $\kappa_{i}$ its yaw-torque gear ratio, both
+read from the model file, so \eqref{eq:method:dep:alloc} holds for an arbitrary rotor placement
+\parencite[Eq.~(1)]{lee2010geometric}\parencite{mellinger2011minimum}. When
+$\vect{u} = \matr{M}^{-1}[T;\vect{\tau}\sidx{b}]$ leaves the actuator box, the command is rescaled
+thrust-first: the mean is held and the torque component is shrunk by the largest factor that keeps
+every rotor in range, but never below one half. Parameters of record:
+$\matr{K}\sidx{p} = \operatorname{diag}(4,4,8)$, $\matr{K}\sidx{d} = \operatorname{diag}(3,3,4)$,
+$\matr{K}\sidx{R} = \operatorname{diag}(70,70,4)$, $\matr{K}_{\omega} = \operatorname{diag}(2.5,2.5,1)$,
+$u\sidx{hover} = mg/4$, $u\sidx{max} = \max(2u\sidx{hover},6)$, $u\sidx{min} = 0$,
+$T\sidx{floor} = 0.1\,mg$, $g = 9.81\,\textrm{m}/\textrm{s}^{2}$; $m$ and $\matr{J}\sidx{b}$ are
+read from the vehicle model.
+The loop has no integral term: the four gains act on position, velocity, attitude and angular rate,
+and the inner loop is the coordinate-free error on $SO(3)$ of \eqref{eq:method:dep:inner}, closed by
+the static allocation \eqref{eq:method:dep:alloc}. The thesis therefore calls it a cascaded geometric
+tracking controller; \texttt{pid} in the run tags is an artefact token.
+\srcnote{\texttt{uav\_env\_test/flight\_controller.py:33--155} (class \texttt{CascadedPID}); the name
+mapping is in Auxiliary/Naming/TRANSLATION\_20260914\_dev\_jargon\_to\_scientific.md \S7.}
+
+\paragraph{The velocity setpoint is synthesised, not planned.} \eqref{eq:method:dep:outer} needs
+$\dot{\vect{p}}\sidx{des}$, which the plan does not supply --- it supplies displacements. Three
+policies are implemented and the choice is a recorded experimental factor, not an implementation
+detail:
+\begin{equation}\label{eq:method:dep:vdes}
+  \dot{\vect{p}}\sidx{des} =
+  \begin{cases}
+    \dfrac{\Delta\vect{p}_{t}}{n\sidx{dec}\,\Delta t\sidx{phys}} & \text{default --- the increment read as a mean velocity,}\\
+    \vect{0} & \text{stop-and-go --- brake to rest at every plan step,}\\
+    \dfrac{\Delta\vect{p}_{t}}{\|\Delta\vect{p}_{t}\|}\,\bar{v} & \text{constant-speed, with }
+      \bar{v} = \overline{\|\Delta\vect{p}\|}\,/\,(n\sidx{dec}\,\Delta t\sidx{phys})\text{ from the dataset.}
+  \end{cases}
+\end{equation}
+The third is timing-free by construction and calibrates itself to whatever data it is given; its
+magnitude is the mean of the first policy, so the three differ in \emph{profile}, not in average
+speed. The first reads the increment as a mean velocity over an assumed constant interval between
+plan queries, so the commanded speed moves with the arrival time of the plan.
+
+Every quadrotor result reported in this thesis is flown with the second policy, braking to rest at
+every plan step; the other two are implemented and were measured, and are not the configuration of
+record. With $\dot{\vect{p}}\sidx{des} = \vect{0}$ the outer loop of \eqref{eq:method:dep:outer} moves
+the vehicle on its position error alone, so the setpoint of \eqref{eq:method:dep:setpoint} leads the
+vehicle by a standing lag that grows with the commanded speed. \autoref{sec:res:uav} reports what
+that lag costs.
+\srcnote{\texttt{mix\_uav\_test/eval\_mix\_uav.py:1551--1563, 1822--1832}; policy of record and its
+measured lag from Gen11/Epoch8\_UAV\_Mjpc\_thrust\_control/U3\_v\_des\_Patch/PLAN\_pid\_const\_v.md and
+Gen15/Study/STUDY\_20260901\_mf\_unguided\_failure\_uav\_pillars.md \S5.}
+
+\subsection{Sampling-Based Predictive Control}\label{sec:method:mjpc}
+
+A sampling-based predictive controller is
+implemented behind the same interface, so it can be swapped for the geometric cascade without
+touching the plan layer. It is the \emph{Predictive Sampling} planner of \parencite{howell2022predictive}, used
+as published; only the task is ours. Three pieces define it.
+
+\emph{The objective.} The planner minimises the finite-horizon sum
+$J = \sum_{i} c(\vect{x}_{i},\vect{u}_{i})$ over a rollout of the true simulator dynamics
+\parencite[Eq.~(3)]{howell2022predictive}, with the running cost a weighted sum of twice-differentiable
+norms of \emph{residuals} --- quantities that are small when the task is solved
+\parencite[Eq.~(4)]{howell2022predictive}. The task defined here has two residual terms, both under a
+quadratic norm and at risk-neutral setting ($R = 0$ in
+\parencite[Eq.~(5)]{howell2022predictive}, so the risk transform is the identity):
+\begin{equation}\label{eq:method:dep:mjpc}
+  J = \sum_{i=1}^{H\sidx{mjpc}}
+      \Big(\underbrace{\left\|\vect{p}_{i}-\vect{p}\sidx{des}\right\|_{2}^{2}}_{r_{1},\;w_{1}=1}
+      + \underbrace{w_{v}\left\|\dot{\vect{p}}_{i}\right\|_{2}^{2}}_{r_{2},\;w_{2}=w_{v}}\Big),
+\end{equation}
+with $\vect{p}\sidx{des}$ passed in as the instruction. The velocity residual is not decoration: it
+plays the role of the geometric cascade's derivative gain, and without it the planner reaches the setpoint at
+full thrust and overshoots --- minimum cumulative position error being achieved by arriving as fast
+as possible.
+
+\emph{The plan and its parameterisation.} The plan is a time-indexed spline over control knots
+$\vect{\theta}$ rather than a raw action sequence \parencite[\S3.3]{howell2022predictive}; the
+zero-order-hold interpolant is used here, with one knot per horizon step, so the spline degenerates
+to the action sequence itself and the parameterisation buys nothing but interface uniformity.
+
+\emph{The search.} Each call performs a fixed number of iterations of Algorithm~4 of
+\parencite{howell2022predictive}: draw $N-1$ perturbations
+$\vect{\theta}_{i} \sim \Normal(\vect{\theta},\sigma^{2})$, roll out all $N$ candidates --- the
+incumbent included --- from the measured state, and keep
+$\vect{\theta} \leftarrow \arg\min_{i} J(\vect{\theta}^{(i)})$. It is derivative-free and zero-order;
+its authors present it as an elementary baseline. Between control steps the plan is shifted forward
+and re-sampled, which is the warm-start of
+\parencite[Alg.~1]{howell2022predictive} and the reason a few iterations per step suffice.
+
+\emph{One deliberate departure.} Contacts are disabled in the planner's copy of the model. The
+tracker therefore plans against the vehicle's free-flight dynamics only, and obstacle avoidance
+remains entirely the projector's job. This is not a shortcut: it keeps the constraint mechanism a
+single identifiable component, so that swapping the tracker cannot silently change how constraints
+are enforced, so the swap stays a controlled comparison.
+Defaults: $N = 16$, $H\sidx{mjpc} = 0.3\,\textrm{s}$ of physics steps, five improvement iterations
+per call, $\sigma = 0.3$, $w_{v} = 0.1$.
+\srcnote{\texttt{mix\_uav\_test/mjpc\_tracker.py:70--155}, which wraps
+\texttt{mujoco\_mpc.mjx.predictive\_sampling} unmodified.}
+
+\hole{State once, in \autoref{sec:setup:protocol}, which controller produced each reported UAV
+number. The apparatus notes record that every dataset and every reported result to date uses the
+geometric cascade, and that the predictive controller was built and studied but is not the source of a
+reported number --- confirm this against the run ledger before the claim is made in print.}
 
 % =============================================================================
 %  GENERATIVE MODELS
@@ -1343,99 +1723,6 @@ still trained end-to-end through the loss.
 \texttt{mix\_visual\_aligning/models/visual\_unet\_twotime.py:1--45}.}
 
 % =============================================================================
-%  PLANT DYNAMICS
-% =============================================================================
-\section{Plant Dynamics}\label{sec:method:dynamics}
-
-Two plants are controlled: a manipulator, whose end-effector position the generative model plans, and
-a quadrotor, whose position it plans. The projection uses a first-order model of the manipulator; the
-quadrotor is described by its rigid-body dynamics.
-
-\subsection{The Manipulator and Its First-Order Model}\label{sec:method:manipulator}
-
-The projection of \autoref{sec:method:proj} needs a concrete dynamics model $f$ for its rows
-\eqref{eq:bg:mpc:dyn}. The inherited system does not use an identified
-model of the manipulator and its low-level controller; it uses a first-order (explicit Euler)
-integrator over the commanded quantity, and pushes everything it omits into the mismatch term
-$\vect{w}_{t}$ of \eqref{eq:method:plant}. For the two-dimensional manipulator benchmark, where the
-state stacks a commanded and a measured planar position and the action is a planar increment, that
-model is
-\begin{equation}\label{eq:method:dpcc:euler}
-  \vect{s}_{t+1}
-  = \vect{s}_{t} + \begin{bmatrix}\vect{a}_{t}\trans & \vect{a}_{t}\trans\end{bmatrix}\trans t\sidx{s}
-    + \vect{w}_{t},
-\end{equation}
-i.e.\ \emph{both} halves of the state are advanced by the \emph{same} action
-\parencite[Sec.~6.1]{romer2025diffusion}. Three things follow, and all three are inherited by every
-environment in this thesis.
-
-\begin{itemize}
-  \item \textbf{The model is deliberately crude, and that is the point.} $f$ has no knowledge of the
-    arm's kinematics, its impedance controller, or its integration error; $\gamma$ is estimated
-    empirically from unconstrained rollouts and the tightening of \eqref{eq:method:dpcc:tighten}
-    absorbs the rest. A projector built on a crude model plus an honest mismatch bound is a
-    different design from one built on an accurate model, and it is the design this thesis inherits.
-  \item \textbf{$t\sidx{s} = 1$, because the action is a displacement and not a velocity.} The
-    network's output is a per-step Cartesian increment, so the Euler update is already in the right
-    units and no physical timestep enters the constraint. Setting $t\sidx{s}$ to the simulator's
-    integration step --- a natural-looking mistake --- would rescale the entire feasible set.
-    \srcnote{\texttt{aux\_repo/dpcc/config/projection\_eval.yaml:14--16}, whose comment reads
-    \emph{``since $a = [\Delta x,\Delta y]$ and not $[v_{x},v_{y}]$''}; the same value and the same
-    reasoning are carried in \texttt{config/uav\_projection.yaml:125--127} and
-    \texttt{config/visual\_aligning\_eval.yaml}.}
-  \item \textbf{Anchoring both the commanded and the measured channel is what couples the plan to
-    the plant.} If only the measured position were constrained, the projector could return a plan
-    whose commanded channel is unreachable; if only the commanded one were, the plan would be
-    admissible in a space the robot never occupies. \autoref{sec:method:deployment} shows the same
-    two-channel structure in all three environments, and \autoref{sec:method:proj} gives the row form.
-\end{itemize}
-
-\begin{remark}[A stricter alternative to the surrogate]\label{rem:eulermodel}
-\eqref{eq:method:dpcc:euler} is the weakest defensible model of the plant: it knows nothing about the
-arm's kinematics, its joint limits, its impedance controller, or the integration error of the
-simulator, and everything it omits is pushed into $\gamma$ and absorbed by the tightening
-\eqref{eq:method:dpcc:tighten}. The alternative is to put the \emph{real} kinematics inside the
-optimisation, and at least one contemporary system does exactly that.
-\parencite{oelerich2026safeflowmpc} pairs a flow-matching planner with an online nonlinear program on
-a seven-degree-of-freedom manipulator, and plans in \emph{joint space}: the generated trajectory is a
-sequence of joint configurations, and the program carries the analytic forward kinematics, the
-Jacobian and per-link collision geometry, solved at every flow-matching step. There is no surrogate
-and no mismatch ball, because the constraint is imposed on the true kinematic chain.
-
-The two designs sit at opposite ends of one trade. Exact kinematics inside the program give
-feasibility on the real chain, and tie the program to one robot and the plan to that robot's joints.
-The surrogate gives an end-effector plan and a projector that transfer unchanged from a planar arm to
-a spatial one to a quadrotor, with feasibility that holds for the model and not for the plant. This
-thesis takes the second end: one projection method, held fixed across two embodiments, is what RQ3 is about.
-$\gamma$ is where the cost is booked.
-\srcnote{Verified against the released code:
-\texttt{aux\_repo/SafeFlowMPC/safe\_flow\_mpc/RobotModel/} carries the \texttt{iiwa.urdf} and
-compiled CasADi functions for the forward kinematics, the Jacobian and ten per-link collision
-positions; \texttt{train\_imitation\_learning.py} generates \texttt{n\_horizon} $\times$ 7 joint
-trajectories. It plans \emph{joint configurations}, not motor torques --- the distinction matters and
-the thesis should not overstate it.}
-\end{remark}
-
-\subsection{The Quadrotor}\label{sec:method:quadrotor}
-
-The vehicle is the rigid body of \parencite[Eqs.~(2)--(5)]{lee2010geometric}: with mass $m$, body
-inertia $\matr{J}\sidx{b}$, attitude $\matr{R}\in SO(3)$ and body rates $\vect{\omega}$,
-\begin{equation}\label{eq:method:dep:plant}
-  m\ddot{\vect{p}} = m g\,\unitvec{3} - T\,\matr{R}\unitvec{3},
-  \qquad
-  \dot{\matr{R}} = \matr{R}\hat{\vect{\omega}},
-  \qquad
-  \matr{J}\sidx{b}\dot{\vect{\omega}} + \vect{\omega}\times\matr{J}\sidx{b}\vect{\omega} = \vect{\tau}\sidx{b},
-\end{equation}
-where $\hat{(\cdot)}$ is the hat map.
-
-The four rotor thrusts produce the collective thrust $T$ along the body axis $\matr{R}\unitvec{3}$ and
-the body moment $\vect{\tau}\sidx{b}$. With four inputs for six degrees of freedom the vehicle is
-underactuated: it translates only by tilting its thrust vector, and hover is an unstable equilibrium.
-The generative model never commands these inputs; it plans positions, and the controller of
-\autoref{sec:method:geometric} turns them into rotor thrusts.
-
-% =============================================================================
 %  CONSTRAINT PROJECTION
 % =============================================================================
 \section{Constraint Projection}\label{sec:method:projection}
@@ -1791,285 +2078,6 @@ Written out, the three rules are
 with $\tilde{\vect{x}}$ the pre-projection iterate. With a single candidate, $B=1$, all three rules
 return the same index and are the same computation, so \autoref{ch:results} compares them only for
 $B>1$.
-
-% =============================================================================
-%  LOW-LEVEL CONTROL
-% =============================================================================
-\section{Low-Level Control}\label{sec:method:deployment}
-
-The generative model plans position increments; a low-level controller turns them into actuator
-commands. The manipulator uses differential \ac{IK} and a joint-space PD law, the quadrotor a cascaded
-geometric tracking controller or, as a baseline, sampling-based predictive control.
-
-\subsection{From Plan to Setpoint}\label{sec:method:setpoint}
-
-In every case the generative model replans at each control step, emits a \emph{position increment},
-and never emits an actuator command; everything below the increment is classical control --- a
-differential \ac{IK} loop feeding a joint-space PD law on the two manipulator environments, and a
-cascaded \emph{geometric} tracking controller, or optionally a sampling-based \ac{MJPC} tracker, on
-the quadrotor.
-
-Write $\Delta\vect{p}_{t}$ for the first action of the selected plan at control step $t$. All three
-environments run the same two-line recursion,
-\begin{align}
-  \vect{p}_{\textrm{des},t+1} &= \vect{p}_{\textrm{des},t} + \Delta\vect{p}_{t},
-    &&\vect{p}_{\textrm{des},0} = \vect{p}_{0},
-    \label{eq:method:dep:setpoint}\\
-  \vect{o}_{t} &= \left(\vect{p}_{\textrm{des},t},\;\vect{p}_{t},\;[\,\dot{\vect{p}}_{t}\,]\right),
-    \label{eq:method:dep:obs}
-\end{align}
-where $\vect{o}_{t}$ is the observation the model conditions on at the next step and the bracketed
-velocity block is present only for the aerial platform. Two properties follow.
-
-\begin{itemize}
-  \item \textbf{\eqref{eq:method:dep:setpoint} is a free-running integrator driven by the model's own
-    past outputs.} $\vect{p}\sidx{des}$ is not read back from the plant. Plan error therefore
-    accumulates rather than being corrected, which is the structural reason the aerial task is the
-    fragile one and the reason a divergence guard is needed at all.
-  \item \textbf{\eqref{eq:method:dep:obs} feeds the commanded setpoint back alongside the measured
-    state}, so the model conditions on its own history. The gap
-    $\vect{p}_{\textrm{des},t} - \vect{p}_{t}$ is exactly the tracking error the low-level controller is
-    working on, and it is visible to the planner --- which is why the two channels are both
-    constrained in \eqref{eq:method:proj:deriv}.
-\end{itemize}
-
-\begin{table}[htpb]
-  \caption[Embodiment instantiation]{The same skeleton, instantiated three times. $t\sidx{s}$ is the
-  Euler sampling time of \eqref{eq:method:dpcc:euler}; ``rows'' counts the channel pairs of
-  \eqref{eq:method:proj:deriv}.}
-  \label{tab:embodiments}
-  \centering\small
-  \begin{tabularx}{\linewidth}{lLLL}
-    \toprule
-     & D3IL-avoiding & D3IL-aligning & UAV-corridor, UAV-pillars, UAV-s-curve \\
-    \midrule
-    embodiment      & manipulator, planar   & manipulator, spatial      & quadrotor \\
-    observation     & state, $4$-D          & 2 RGB views $+$ $6$-D state & state, $9$-D \\
-    action          & $\Delta\vect{p}\in\R^{2}$ & $\Delta\vect{p}\in\R^{3}$ & $\Delta\vect{p}\in\R^{3}$ \\
-    plan width $d$  & $6$                   & $9$                       & $12$ \\
-    $\vect{o}$ layout & $(\vect{p}\sidx{des},\vect{p})$ & $(\vect{p}\sidx{des},\vect{p})$ & $(\vect{p}\sidx{des},\vect{p},\dot{\vect{p}})$ \\
-    $t\sidx{s}$     & $1$                   & $1$                       & $1$ \\
-    dynamics rows   & $4$                   & $6$                       & $6$ \\
-    low level       & differential IK $\rightarrow$ joint PD & same & geometric cascade, or MJPC \\
-    plan interval   & one plan per env.\ step & one plan per env.\ step & $0.03\,\textrm{s}$ simulated \\
-    inner interval  & $n\sidx{sub}$ sim substeps & $n\sidx{sub}$ sim substeps & $0.01\,\textrm{s}$ simulated \\
-    \bottomrule
-  \end{tabularx}
-\end{table}
-
-\subsection{Manipulator: Differential Inverse Kinematics}\label{sec:method:ik}
-
-The environment is commanded with an absolute Cartesian pose. The evaluation loop forms it from the
-increment and the \emph{commanded} channel of the observation --- not from the measured one, which
-is what makes \eqref{eq:method:dep:setpoint} the free-running recursion it is --- and holds the
-end-effector orientation and, on the planar benchmark, the height fixed.
-\srcnote{\texttt{aux\_repo/dpcc/scripts/eval.py:236--238}: \texttt{next\_pos\_des = action + obs[:2]}.}
-
-Below that setpoint sits the differential \ac{IK} loop. Let $\vect{q}\in\R^{7}$ be the joint
-positions of the Panda, $\matr{J}(\vect{q})$ the end-effector Jacobian, and let the task-space error be a
-proportional term on position and orientation,
-\begin{equation}\label{eq:method:dep:taskerr}
-  \vect{\xi}(\vect{q})
-  = \begin{bmatrix}
-      k\sidx{p}\odot\operatorname{clip}\!\left(\vect{p}\sidx{des}-\vect{p}(\vect{q}),\,\pm\epsilon\sidx{p}\right)\\[2pt]
-      k\sidx{q}\odot\operatorname{clip}\!\left(\vect{e}\sidx{rot}(\vect{q}),\,\pm\epsilon\sidx{r}\right)
-    \end{bmatrix},
-\end{equation}
-with $\vect{p}(\vect{q})$ from forward kinematics and $\vect{e}\sidx{rot}$ the quaternion error to the
-commanded orientation. The joint increment is the weighted, damped least-squares solution with a
-null-space term that pulls the arm towards a rest posture,
-\begin{align}
-  \dot{\vect{q}}\sidx{null} &= k\sidx{null}\left(\vect{q}\sidx{rest}-\vect{q}\right),
-    \label{eq:method:dep:null}\\
-  \dot{\vect{q}}
-    &= \matr{W}\matr{J}\trans
-       \left(\matr{J}\matr{W}\matr{J}\trans + \lambda\Id{6}\right)^{-1}
-       \left(\vect{\xi} - \matr{J}\dot{\vect{q}}\sidx{null}\right)
-     + \dot{\vect{q}}\sidx{null},
-    \label{eq:method:dep:dls}
-\end{align}
-after which the singular values of $\matr{J}\matr{W}\matr{J}\trans + \lambda\Id{6}$ are clipped into
-$[\sigma\sidx{min},\sigma\sidx{max}]$ before the solve, $\|\dot{\vect{q}}\|$ is capped, and
-$\vect{q} \leftarrow \operatorname{clip}(\vect{q}+\eta\sidx{ik}\dot{\vect{q}},\,\vect{q}\sidx{min},\vect{q}\sidx{max})$
-is iterated $n\sidx{ik}$ times per control step. The resulting joint target, its finite-difference
-velocity and acceleration are handed to a joint-space PD law, and \emph{that} is what produces the
-torques the simulator integrates.
-
-The parameters are inherited from the benchmark and are listed once because the loop is otherwise
-not reproducible: $k\sidx{p} = (200,200,800)$, $k\sidx{q} = (30,30,30)$, $k\sidx{null} = 40$,
-$\lambda = 10^{-12}$, $\matr{W} = \Id{7}$, $[\sigma\sidx{min},\sigma\sidx{max}] = [10^{-2},10^{2}]$,
-$n\sidx{ik} = 3$, $\eta\sidx{ik} = 10^{-3}$, clips $\epsilon\sidx{p} = 0.01\,\textrm{m}$ and
-$\epsilon\sidx{r} = 0.1$, and joint PD gains
-$(120,120,120,120,50,30,10)$ / $(10,10,10,10,6,5,3)$.
-\srcnote{\texttt{d3il/environments/d3il/d3il\_sim/controllers/IKControllers.py:134--323}
-(\texttt{CartPosQuatImpedenceController}) and
-\texttt{.../controllers/Config/mujoco\_controller\_config.gin:6--37}.}
-
-Two consequences matter for the thesis. \eqref{eq:method:dep:dls} is a \emph{local} solve run three
-times per step, so the arm does not exactly reach $\vect{p}\sidx{des}$ within one step --- the residual
-is precisely the $\vect{w}_{t}$ that \eqref{eq:method:dpcc:euler} pushes into the mismatch bound and
-\eqref{eq:method:dpcc:tighten} then absorbs. And the null-space term makes the map from setpoint to
-joint configuration history-dependent, so two identical plans executed from different postures do not
-produce identical joint trajectories, even though they produce the same Cartesian trace.
-
-\subsection{Quadrotor: Cascaded Geometric Tracking Control}\label{sec:method:geometric}
-
-The aerial chain is the same skeleton with two more layers underneath, and it runs on two intervals of
-simulated time: a plan is queried every $n\sidx{dec}$-th physics step, the interval at which the expert
-demonstrations were recorded, and the low-level controller runs at every physics step, with the
-setpoint held constant in between,
-\begin{equation}\label{eq:method:dep:multirate}
-  n\sidx{dec}\,\Delta t\sidx{phys} = 0.03\,\textrm{s},
-  \qquad
-  \Delta t\sidx{phys} = 0.01\,\textrm{s}
-  \;\Rightarrow\; n\sidx{dec} = 3 .
-\end{equation}
-The simulation waits for the planner, so these intervals hold in simulated time for any planning
-time.
-\srcnote{\texttt{mix\_uav\_test/eval\_mix\_uav.py:1610} (\texttt{decim}) and \texttt{:1728} (physics loop);
-\texttt{uav\_expert\_data\_collect/dataset\_writer.py:31,73} (\texttt{DATASET\_HZ});
-$\Delta t\sidx{phys}$ from \texttt{quadrotor\_modified.xml:4}.}
-
-The controller is the \emph{position-controlled flight mode} of
-\parencite[Eqs.~(19)--(23)]{lee2010geometric}, instantiated on \eqref{eq:method:dep:plant} in a
-$z$-up frame with the thrust along $+\vect{b}_{3}$, and closed by the rotor allocation of
-\parencite{mellinger2011minimum}. It runs in four steps.
-
-\paragraph{Outer loop --- position to thrust vector.} With the tracking errors
-$\vect{e}\sidx{p} = \vect{p}-\vect{p}\sidx{des}$ and
-$\vect{e}\sidx{v} = \dot{\vect{p}}-\dot{\vect{p}}\sidx{des}$
-\parencite[Eqs.~(17)--(18)]{lee2010geometric}, a diagonal PD with acceleration feed-forward gives
-the required world-frame force
-\begin{equation}\label{eq:method:dep:outer}
-  \vect{a}\sidx{cmd} = -\matr{K}\sidx{p}\vect{e}\sidx{p} - \matr{K}\sidx{d}\vect{e}\sidx{v} + \ddot{\vect{p}}\sidx{des},
-  \qquad
-  \vect{F} = m\left(\vect{a}\sidx{cmd} + g\,\unitvec{3}\right),
-\end{equation}
-which is the bracketed term of \parencite[Eq.~(23)]{lee2010geometric}. The gain matrices are
-diagonal, with a stiffer vertical channel.
-
-\paragraph{Attitude extraction.} The rotor disk points along $\vect{F}$ and the remaining degree of
-freedom is fixed by the commanded yaw $\psi\sidx{des}$, which pins the free axis left open by
-\parencite[Eqs.~(22)--(23)]{lee2010geometric}:
-\begin{equation}\label{eq:method:dep:att}
-  \vect{b}_{3} = \frac{\vect{F}}{\|\vect{F}\|},\quad
-  \vect{b}_{2} = \frac{\vect{b}_{3}\times\vect{x}\sidx{c}}{\|\vect{b}_{3}\times\vect{x}\sidx{c}\|},\quad
-  \vect{b}_{1} = \vect{b}_{2}\times\vect{b}_{3},\quad
-  \matr{R}\sidx{des} = \begin{bmatrix}\vect{b}_{1} & \vect{b}_{2} & \vect{b}_{3}\end{bmatrix},
-\end{equation}
-with $\vect{x}\sidx{c} = (\cos\psi\sidx{des},\sin\psi\sidx{des},0)\trans$.
-
-\paragraph{Inner loop --- geometric attitude control.} The attitude error is the coordinate-free
-error on $SO(3)$ of \parencite[Eq.~(21)]{lee2010geometric}, and the moment is its
-\parencite[Eq.~(20)]{lee2010geometric}:
-\begin{equation}\label{eq:method:dep:inner}
-  \vect{e}\sidx{R} = \tfrac{1}{2}\left(\matr{R}\sidx{des}\trans\matr{R} - \matr{R}\trans\matr{R}\sidx{des}\right)^{\vee},
-  \qquad
-  \vect{\tau}\sidx{b} = -\matr{K}\sidx{R}\vect{e}\sidx{R} - \matr{K}_{\omega}\vect{e}_{\omega}
-      + \vect{\omega}\times\matr{J}\sidx{b}\vect{\omega},
-\end{equation}
-where $(\cdot)^{\vee}$ is the inverse hat map. The commanded angular velocity is held at zero, so
-$\vect{e}_{\omega} = \vect{\omega}$ and the attitude feed-forward of
-\parencite[Eq.~(20)]{lee2010geometric} vanishes; with it goes the exponential-stability statement of
-\parencite[Prop.~3]{lee2010geometric}, which assumes the full law.
-
-\paragraph{Allocation.} The collective thrust is the world force projected on the current body-$z$
-axis, floored so the vehicle cannot free-fall during recovery, and the wrench is distributed over the
-four rotors by a fixed geometry matrix:
-\begin{equation}\label{eq:method:dep:alloc}
-  T = \max\!\left(\vect{F}\trans\vect{b}_{3},\;T\sidx{floor}\right),
-  \qquad
-  \matr{M}\vect{u} = \begin{bmatrix}T\\ \vect{\tau}\sidx{b}\end{bmatrix},
-  \qquad
-  \matr{M}_{:,i} = \begin{bmatrix}1 & r_{i,y} & -r_{i,x} & \kappa_{i}\end{bmatrix}\trans,
-\end{equation}
-with $\vect{r}_{i}$ the $i$-th rotor site position and $\kappa_{i}$ its yaw-torque gear ratio, both
-read from the model file, so \eqref{eq:method:dep:alloc} holds for an arbitrary rotor placement
-\parencite[Eq.~(1)]{lee2010geometric}\parencite{mellinger2011minimum}. When
-$\vect{u} = \matr{M}^{-1}[T;\vect{\tau}\sidx{b}]$ leaves the actuator box, the command is rescaled
-thrust-first: the mean is held and the torque component is shrunk by the largest factor that keeps
-every rotor in range, but never below one half. Parameters of record:
-$\matr{K}\sidx{p} = \operatorname{diag}(4,4,8)$, $\matr{K}\sidx{d} = \operatorname{diag}(3,3,4)$,
-$\matr{K}\sidx{R} = \operatorname{diag}(70,70,4)$, $\matr{K}_{\omega} = \operatorname{diag}(2.5,2.5,1)$,
-$u\sidx{hover} = mg/4$, $u\sidx{max} = \max(2u\sidx{hover},6)$, $u\sidx{min} = 0$,
-$T\sidx{floor} = 0.1\,mg$, $g = 9.81\,\textrm{m}/\textrm{s}^{2}$; $m$ and $\matr{J}\sidx{b}$ are
-read from the vehicle model.
-The loop has no integral term: the four gains act on position, velocity, attitude and angular rate,
-and the inner loop is the coordinate-free error on $SO(3)$ of \eqref{eq:method:dep:inner}, closed by
-the static allocation \eqref{eq:method:dep:alloc}. The thesis therefore calls it a cascaded geometric
-tracking controller; \texttt{pid} in the run tags is an artefact token.
-\srcnote{\texttt{uav\_env\_test/flight\_controller.py:33--155} (class \texttt{CascadedPID}); the name
-mapping is in Auxiliary/Naming/TRANSLATION\_20260914\_dev\_jargon\_to\_scientific.md \S7.}
-
-\paragraph{The velocity setpoint is synthesised, not planned.} \eqref{eq:method:dep:outer} needs
-$\dot{\vect{p}}\sidx{des}$, which the plan does not supply --- it supplies displacements. Three
-policies are implemented and the choice is a recorded experimental factor, not an implementation
-detail:
-\begin{equation}\label{eq:method:dep:vdes}
-  \dot{\vect{p}}\sidx{des} =
-  \begin{cases}
-    \dfrac{\Delta\vect{p}_{t}}{n\sidx{dec}\,\Delta t\sidx{phys}} & \text{default --- the increment read as a mean velocity,}\\
-    \vect{0} & \text{stop-and-go --- brake to rest at every plan step,}\\
-    \dfrac{\Delta\vect{p}_{t}}{\|\Delta\vect{p}_{t}\|}\,\bar{v} & \text{constant-speed, with }
-      \bar{v} = \overline{\|\Delta\vect{p}\|}\,/\,(n\sidx{dec}\,\Delta t\sidx{phys})\text{ from the dataset.}
-  \end{cases}
-\end{equation}
-The third is timing-free by construction and calibrates itself to whatever data it is given; its
-magnitude is the mean of the first policy, so the three differ in \emph{profile}, not in average
-speed. \srcnote{\texttt{mix\_uav\_test/eval\_mix\_uav.py:1551--1563, 1822--1832}.}
-
-\subsection{Sampling-Based Predictive Control}\label{sec:method:mjpc}
-
-A sampling-based predictive controller is
-implemented behind the same interface, so it can be swapped for the geometric cascade without
-touching the plan layer. It is the \emph{Predictive Sampling} planner of \parencite{howell2022predictive}, used
-as published; only the task is ours. Three pieces define it.
-
-\emph{The objective.} The planner minimises the finite-horizon sum
-$J = \sum_{i} c(\vect{x}_{i},\vect{u}_{i})$ over a rollout of the true simulator dynamics
-\parencite[Eq.~(3)]{howell2022predictive}, with the running cost a weighted sum of twice-differentiable
-norms of \emph{residuals} --- quantities that are small when the task is solved
-\parencite[Eq.~(4)]{howell2022predictive}. The task defined here has two residual terms, both under a
-quadratic norm and at risk-neutral setting ($R = 0$ in
-\parencite[Eq.~(5)]{howell2022predictive}, so the risk transform is the identity):
-\begin{equation}\label{eq:method:dep:mjpc}
-  J = \sum_{i=1}^{H\sidx{mjpc}}
-      \Big(\underbrace{\left\|\vect{p}_{i}-\vect{p}\sidx{des}\right\|_{2}^{2}}_{r_{1},\;w_{1}=1}
-      + \underbrace{w_{v}\left\|\dot{\vect{p}}_{i}\right\|_{2}^{2}}_{r_{2},\;w_{2}=w_{v}}\Big),
-\end{equation}
-with $\vect{p}\sidx{des}$ passed in as the instruction. The velocity residual is not decoration: it
-plays the role of the geometric cascade's derivative gain, and without it the planner reaches the setpoint at
-full thrust and overshoots --- minimum cumulative position error being achieved by arriving as fast
-as possible.
-
-\emph{The plan and its parameterisation.} The plan is a time-indexed spline over control knots
-$\vect{\theta}$ rather than a raw action sequence \parencite[\S3.3]{howell2022predictive}; the
-zero-order-hold interpolant is used here, with one knot per horizon step, so the spline degenerates
-to the action sequence itself and the parameterisation buys nothing but interface uniformity.
-
-\emph{The search.} Each call performs a fixed number of iterations of Algorithm~4 of
-\parencite{howell2022predictive}: draw $N-1$ perturbations
-$\vect{\theta}_{i} \sim \Normal(\vect{\theta},\sigma^{2})$, roll out all $N$ candidates --- the
-incumbent included --- from the measured state, and keep
-$\vect{\theta} \leftarrow \arg\min_{i} J(\vect{\theta}^{(i)})$. It is derivative-free and zero-order;
-its authors present it as an elementary baseline. Between control steps the plan is shifted forward
-and re-sampled, which is the warm-start of
-\parencite[Alg.~1]{howell2022predictive} and the reason a few iterations per step suffice.
-
-\emph{One deliberate departure.} Contacts are disabled in the planner's copy of the model. The
-tracker therefore plans against the vehicle's free-flight dynamics only, and obstacle avoidance
-remains entirely the projector's job. This is not a shortcut: it keeps the constraint mechanism a
-single identifiable component, so that swapping the tracker cannot silently change how constraints
-are enforced, so the swap stays a controlled comparison.
-Defaults: $N = 16$, $H\sidx{mjpc} = 0.3\,\textrm{s}$ of physics steps, five improvement iterations
-per call, $\sigma = 0.3$, $w_{v} = 0.1$.
-\srcnote{\texttt{mix\_uav\_test/mjpc\_tracker.py:70--155}, which wraps
-\texttt{mujoco\_mpc.mjx.predictive\_sampling} unmodified.}
-
-\hole{State once, in \autoref{sec:setup:protocol}, which controller produced each reported UAV
-number. The apparatus notes record that every dataset and every reported result to date uses the
-geometric cascade, and that the predictive controller was built and studied but is not the source of a
-reported number --- confirm this against the run ledger before the claim is made in print.}
 
 % =============================================================================
 %  ENVIRONMENTS

@@ -208,13 +208,19 @@ def fig_scene_aligning(outdir):
 #  a shaded excluded region and a dashed tightened boundary -- so the reader can
 #  compare the aerial constraint sets with the manipulation one directly.
 # ═══════════════════════════════════════════════════════════════════════════
+# The constraint panels carry small numbers over a wide figure, so they are drawn at a larger
+# text scale than the scene renders: at \linewidth across three panels, FONT alone is unreadable.
+FONT_CONSTRAINT = 1.55
+
+
 def _uav_constraint_panel(scn, w, first, r_drone, tight):
     from svg.fmpcc_svg import clip_halfplane
+    fs = FONT_CONSTRAINT
     (x0, x1), (y0, y1) = scn['xlim'], scn['ylim']
-    ml, mr, mt, mb = 48, 12, 46, 46
+    ml, mr, mt, mb = int(42 * fs), int(10 * fs), int(46 * fs), int(46 * fs)
     pw = w - ml - mr
     ph = pw * (y1 - y0) / (x1 - x0)                  # equal aspect: 1 m is 1 m on both axes
-    f = Fig(w, int(round(ph + mt + mb)), ml=ml, mr=mr, mt=mt, mb=mb, font=FONT)
+    f = Fig(w, int(round(ph + mt + mb)), ml=ml, mr=mr, mt=mt, mb=mb, font=fs)
     f.axes((x0, x1), (y0, y1))
     tx = [v for v in range(int(math.ceil(x0)), int(math.floor(x1)) + 1)]
     ty = [v for v in range(int(math.ceil(y0)), int(math.floor(y1)) + 1)]
@@ -259,28 +265,170 @@ def fig_constraints_uav(outdir):
     r, t = C['r_drone'], C['tightening']
     panels = [_uav_constraint_panel(scn, 470, i == 0, r, t) for i, scn in enumerate(C['scenes'])]
     width = sum(p.w for p in panels) + 2 * 8
-    h = Fig(width, 56, ml=0, mr=0, mt=0, mb=0, font=FONT)
+    h = Fig(width, 104, ml=0, mr=0, mt=0, mb=0, font=FONT_CONSTRAINT)
     x = 16
     items = [('wall', 'wall or pillar'),
              ('area', 'excluded: the obstacle itself'),
              ('band', f'excluded: vehicle radius {r:g} m'),
              ('dash', f'tightened by a further {t:g} m')]
-    for kind, lab in items:
+    # two rows of two: at this text size a single row runs off the figure
+    row_y, col_x, size = (30, 76), (16, width // 2 + 16), 18
+    for i, (kind, lab) in enumerate(items):
+        x, y = col_x[i % 2], row_y[i // 2]
         if kind == 'wall':
-            h.poly([(x - 10, 24), (x + 10, 24)], '#34495e', w=2.6)
+            h.poly([(x - 14, y), (x + 14, y)], '#34495e', w=3.6)
         elif kind == 'area':
-            h.s.append(f'<rect x="{x - 8}" y="16" width="16" height="16" fill="#5d6d7e" '
+            h.s.append(f'<rect x="{x - 11}" y="{y - 11}" width="22" height="22" fill="#5d6d7e" '
                        f'fill-opacity="0.34" stroke="#34495e"/>')
         elif kind == 'band':
-            h.s.append(f'<rect x="{x - 8}" y="16" width="16" height="16" fill="#5d6d7e" '
+            h.s.append(f'<rect x="{x - 11}" y="{y - 11}" width="22" height="22" fill="#5d6d7e" '
                        f'fill-opacity="0.18" stroke="#34495e"/>')
         else:
-            h.poly([(x - 10, 24), (x + 10, 24)], '#34495e', dash='7,5', w=2)
-        h.text(x + 20, 31, lab, 11, '#111')
-        x += 42 + len(lab) * 10.0
+            h.poly([(x - 14, y), (x + 14, y)], '#34495e', dash='9,6', w=3)
+        h.text(x + 26, y + 7, lab, size, '#111')
     path = save_grid(panels, os.path.join(outdir, 'fig_constraints_uav.svg'), cols=3, gap=8, header=h)
     return path, ('config/uav_projection.yaml :: corridor_v2_slide, pillars_hg, s_curve_hg '
                   f'| transcribed in sources.UAV_CONSTRAINTS; inflation r_drone {r:g} m, tightening {t:g} m')
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  The alignment constraint set (v3.31), the companion of fig_constraints_avoiding
+#  and fig_constraints_uav: the workspace box the planned end-effector position
+#  must stay inside, seen from above and from the side.
+# ═══════════════════════════════════════════════════════════════════════════
+def fig_constraints_aligning(outdir):
+    """The alignment constraint set: the halfspace and the keep-out disk the plan must respect."""
+    from svg.fmpcc_svg import clip_halfplane
+    C = getattr(S, 'ALIGNING_CONSTRAINTS', None)
+    d = S.D3IL_SCENES.get('aligning')
+    if not C or not d:
+        return None
+    fs = 1.35
+    t = C['tightening']
+    (x0, x1), (y0, y1) = C['extent']['x'], C['extent']['y']
+    ml, mr, mt, mb = int(46 * fs), int(14 * fs), int(50 * fs), int(46 * fs)
+    w = 620
+    pw = w - ml - mr
+    ph = pw * (y1 - y0) / (x1 - x0)
+    f = Fig(w, int(round(ph + mt + mb)), ml=ml, mr=mr, mt=mt, mb=mb, font=fs)
+    f.axes((x0, x1), (y0, y1))
+    f.frame([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8], [-0.4, -0.2, 0.0, 0.2, 0.4],
+            'x [m]', 'y [m]', 'Vision-conditioned alignment',
+            'the constraint set the planned end-effector position must satisfy',
+            xfmt=lambda v: f'{v:g}', yfmt=lambda v: f'{v:g}')
+    f.clip_to_box()
+
+    # halfspace: the plan must stay below the line; shade the excluded side and the tightened shift
+    hs = C['halfspace']
+    (ax_, ay), (bx, by) = hs['p0'], hs['p1']
+    m = (by - ay) / (bx - ax_)
+    b = ay - m * ax_
+    box = [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
+    keep = lambda X, Y: Y - (m * X + b)                     # excluded: above the line
+    poly = clip_halfplane(box, keep)
+    if len(poly) > 2:
+        f.polygon(poly, '#5d6d7e', opacity=0.32)
+    shift = -t * (1 + m * m) ** 0.5
+    xs = (x0 - 0.05, x1 + 0.05)
+    f.dline([(x, m * x + b) for x in xs], '#34495e', w=2.4)
+    f.dline([(x, m * x + b + shift) for x in xs], '#34495e', w=1.6, dash='8,5')
+
+    # circular keep-out region
+    dk = C['disk']
+    cx, cy = dk['c']
+    f.circle(cx, cy, dk['r'], fill='#5d6d7e', opacity=0.32, stroke='#34495e', w=1.8)
+    f.circle(cx, cy, dk['r'] + t, stroke='#34495e', w=1.6, dash='8,5')
+
+    # the task itself, for scale: where the box starts, where it must end, where the arm starts
+    for kind, (px, py), lab in (('box', d['box_pos'][:2], 'box at the start'),
+                                ('target', d['target_pos'][:2], 'target pose'),
+                                ('start', d['start'][:2], 'end effector')):
+        colour = {'box': '#cba872', 'target': '#d7cbb4'}.get(kind, '#1b4f72')
+        f.marker(f.X(px), f.Y(py), 'o' if kind == 'start' else 's', colour, r=8.0)
+        f.text(f.X(px) + 12, f.Y(py) + 5, lab, 11, '#111', bold=True)
+    f.end_clip()
+
+    # legend inside the panel, in the corner the task leaves empty
+    lx, ly = f.X(0.215), f.Y(-0.30)
+    f.s.append(f'<rect x="{lx - 8}" y="{ly - 9}" width="17" height="17" fill="#5d6d7e" '
+               f'fill-opacity="0.32" stroke="#34495e"/>')
+    f.text(lx + 17, ly + 4, 'excluded for the planned position', 12, '#111')
+    ly2 = f.Y(-0.365)
+    f.poly([(lx - 8, ly2), (lx + 9, ly2)], '#34495e', dash='8,5', w=2.2)
+    f.text(lx + 17, ly2 + 4, f'tightened by {t:g} m', 12, '#111')
+
+    path = f.save(os.path.join(outdir, 'fig_constraints_aligning.svg'))
+    return path, ('config/visual_aligning_eval.yaml :: combined_5 halfspace_constraints and '
+                  f'obstacle_constraints, enlarge_constraints {t:g} m | transcribed in '
+                  'sources.ALIGNING_CONSTRAINTS; box, target and start from sources.D3IL_SCENES[aligning]')
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  The quadrotor's size (v3.33): the numbers of tab:platforms drawn to scale,
+#  with the inflation radius the projection adds around every obstacle.
+# ═══════════════════════════════════════════════════════════════════════════
+def fig_platform_x2_dimensions(outdir):
+    G = getattr(S, 'X2_GEOMETRY', None)
+    C = getattr(S, 'UAV_CONSTRAINTS', None)
+    if not G or not C:
+        return None
+    fs = 1.35
+    r_rot = G['rotor_radius']
+    xs = [x for x, _ in G['rotor_xy']]
+    ys = [y for _, y in G['rotor_xy']]
+    half_x, half_y = max(xs) + r_rot, max(ys) + r_rot        # 0.27 and 0.31 m
+    r_inf = C['r_drone']
+    lim = r_inf + 0.115
+    ml, mr, mt, mb = int(40 * fs), int(16 * fs), int(48 * fs), int(40 * fs)
+    w = 620
+    pw = w - ml - mr
+    f = Fig(w, int(round(pw + mt + mb)), ml=ml, mr=mr, mt=mt, mb=mb, font=fs)
+    f.axes((-lim, lim), (-lim, lim))
+    f.frame([-0.3, -0.15, 0.0, 0.15, 0.3], [-0.3, -0.15, 0.0, 0.15, 0.3],
+            'x [m]', 'y [m]', 'Skydio X2, seen from above',
+            f"rotor disks, body, and the {r_inf:g} m radius the projection inflates obstacles by",
+            xfmt=lambda v: f'{v:g}', yfmt=lambda v: f'{v:g}')
+    f.clip_to_box()
+    # the radius every obstacle is grown by before the solver sees it
+    f.circle(0, 0, r_inf, fill='#5d6d7e', opacity=0.12, stroke='#34495e', w=1.6, dash='8,5')
+    # collision footprint
+    f.polygon([(-half_x, -half_y), (half_x, -half_y), (half_x, half_y), (-half_x, half_y)],
+              'none', stroke='#95a5a6', w=1.4, dash='3,4')
+    for cx, cy in G['rotor_xy']:
+        f.circle(cx, cy, r_rot, fill='#9aa0a6', opacity=0.5, stroke='#5d6d7e', w=1.4)
+    ax, by = G['body_semi_axes']
+    f.polygon([(-ax, -by), (ax, -by), (ax, by), (-ax, by)], '#5d6d7e', opacity=0.85,
+              stroke='#34495e', w=1.2)
+    # one rotor arm, as the distance the table quotes
+    f.dline([(0, 0), G['rotor_xy'][2]], '#c0392b', w=2.0)
+    f.marker(f.X(0), f.Y(0), 'o', '#c0392b', r=4.0)
+
+    def dim(p0, p1, label, off, vertical=False):
+        """A dimension line with end ticks, offset from the shape it measures."""
+        (x0_, y0_), (x1_, y1_) = p0, p1
+        if vertical:
+            x = x0_ + off
+            f.dline([(x, y0_), (x, y1_)], '#111', w=1.2)
+            for y in (y0_, y1_):
+                f.dline([(x - 0.012, y), (x + 0.012, y)], '#111', w=1.2)
+            f.text(f.X(x) - 10, f.Y(0.5 * (y0_ + y1_)), label, 12, '#111', anchor='end', bold=True)
+        else:
+            y = y0_ + off
+            f.dline([(x0_, y), (x1_, y)], '#111', w=1.2)
+            for x in (x0_, x1_):
+                f.dline([(x, y - 0.012), (x, y + 0.012)], '#111', w=1.2)
+            f.text(f.X(0.5 * (x0_ + x1_)), f.Y(y) - 8, label, 12, '#111',
+                   anchor='middle', bold=True)
+
+    dim((-half_x, half_y), (half_x, half_y), f'{2 * half_x:.2f} m', 0.055)
+    dim((half_x, -half_y), (half_x, half_y), f'{2 * half_y:.2f} m', 0.065, vertical=True)
+    d = (G['rotor_xy'][2][0] ** 2 + G['rotor_xy'][2][1] ** 2) ** 0.5
+    f.text(f.X(0.055), f.Y(0.10), f'{d:.3f} m', 12, '#c0392b', bold=True)
+    f.text(f.X(-lim + 0.02), f.Y(-lim + 0.035), f"mass {G['mass_kg']:g} kg", 12, '#111')
+    f.end_clip()
+    path = f.save(os.path.join(outdir, 'fig_platform_x2_dimensions.svg'))
+    return path, ('d3il/.../quadrotor/quadrotor_modified.xml rotor and body geoms | transcribed in '
+                  'sources.X2_GEOMETRY; inflation radius from sources.UAV_CONSTRAINTS')
 
 
 ALL = [
@@ -290,4 +438,6 @@ ALL = [
     ('fig_scene_uav_pillars', 'env', fig_scene_uav_pillars),
     ('fig_scene_uav_scurve', 'env', fig_scene_uav_scurve),
     ('fig_constraints_uav', 'env', fig_constraints_uav),
+    ('fig_constraints_aligning', 'env', fig_constraints_aligning),
+    ('fig_platform_x2_dimensions', 'env', fig_platform_x2_dimensions),
 ]

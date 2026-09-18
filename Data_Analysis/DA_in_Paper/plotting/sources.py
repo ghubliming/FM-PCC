@@ -44,6 +44,20 @@ REPO = '/workspaces/FM-PCC'
 # builders do not). Rebuild with: python3.14 plotting/extract/avoiding_scene.py
 AVOIDING_SCENE = os.path.join(REPO, 'Data_Analysis', 'DA_in_Paper', 'data', 'avoiding_scene.json')
 
+# The FLOWN quadrotor paths of fig_uav_{scurve,pillars,corridor}_paths. Rebuild with:
+#   python3.14 plotting/extract/uav_paths.py [--root <folder holding logs/>]
+# Unlike every other corpus here this one does NOT point at a batch directory: the
+# executed positions are not in the 15-09 batches at all (those carry per-rollout
+# scalars), so they were staged off the cluster on 2026-09-18 by
+# Slurm_Codes/temp_bash/fetch_20260918_v3_figure_artefacts.sh into the gitignored
+# temp/18-09-2026/. That drop is NOT committed and will not survive a clean checkout --
+# this extract is the committed record, and the ledger below is how to recreate it.
+#   ledger: Data_Analysis/analysis_results_checkpoint/LEDGER_20260918_v3_figure_artefact_fetch.md
+#   request: plotting/REQUEST_20260917_trajectory_figures.md
+# The run folder and variant of every panel are declared in extract/uav_paths.py::PANELS.
+UAV_PATHS = os.path.join(REPO, 'Data_Analysis', 'DA_in_Paper', 'data', 'uav_paths.json')
+UAV_PATHS_DROP = os.path.join(REPO, 'temp', '18-09-2026')
+
 
 class Corpus:
     """One batch directory, with the protocol that produced it.
@@ -128,6 +142,34 @@ UAV_CONSTRAINTS = {
 #   aligning  .../gym_aligning_env/gym_aligning/envs/objects/aligning_objects.py
 #             :: box_pos, init_end_eff_pos, and the box geoms in
 #             models/mj/common-objects/robot_push_box/robot_push_box.xml
+# The Skydio X2 as the experiments load it, transcribed from
+# d3il/environments/d3il/models/mj/robot/quadrotor/quadrotor_modified.xml:
+#   rotor geoms at (+/-0.14, +/-0.18, z), rotor disk radius 0.13 (class `rotor`,
+#   ellipsoid size .13 .13 .01); body ellipsoid size .16 .04 .02; masses 4 x 0.25
+#   (rotors) + 0.325 (body) = 1.325 kg. The inflation radius is the one the
+#   projection uses for every obstacle (UAV_CONSTRAINTS['r_drone']).
+X2_GEOMETRY = {
+    'rotor_xy': [(-0.14, -0.18), (-0.14, 0.18), (0.14, 0.18), (0.14, -0.18)],
+    'rotor_radius': 0.13,
+    'body_semi_axes': (0.16, 0.04),
+    'mass_kg': 1.325,
+}
+
+# The constraint set of the alignment task, from the evaluation configuration:
+#   config/visual_aligning_eval.yaml :: active_geo_variants [combined_5],
+#   combined_5.workspace_bounds, enlarge_constraints, action_bounds: 'auto'.
+# The projection enforces a halfspace and a circular keep-out region on the planned
+# end-effector position, exactly the two forms D3IL-avoiding uses. The workspace box of
+# the same entry is the reachable table area, not a task constraint, and is used here only
+# to set the plotted extent -- it is never drawn as a constraint.
+ALIGNING_CONSTRAINTS = {
+    'name': 'combined-5',
+    'extent': {'x': (0.20, 0.80), 'y': (-0.45, 0.45)},
+    'halfspace': {'p0': (0.65, 0.45), 'p1': (0.80, -0.45), 'side': 'below'},
+    'disk': {'c': (0.50, 0.00), 'r': 0.06},
+    'tightening': 0.03,
+}
+
 D3IL_SCENES = {
     'avoiding': {
         'start': [0.525, -0.28, 0.12],

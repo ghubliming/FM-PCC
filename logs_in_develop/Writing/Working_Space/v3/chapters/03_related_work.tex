@@ -112,37 +112,38 @@ thesis builds on and is measured against.
 \begin{table}[htpb]
   \caption[Planner, loop and constraint mechanism in the closest related work]{The closest related
   work by the loop it runs in, not by its generative model. ``Executed'' is the number of planned
-  steps applied before the next plan is generated.}
+  steps applied before the next plan is generated. None of the sources states the parameter count of
+  its network.}
   \label{tab:related-loops}
   \centering\small
   \begin{tabularx}{\linewidth}{lLLL}
     \toprule
-    Work & Constraints & Loop and plan & Backbone \\
+    Work & Constraints & Loop and plan & Backbone and capacity \\
     \midrule
     Diffuser \parencite{janner2022planning}
       & cost guidance, no hard constraint
       & plan of states and actions, replanned
-      & temporal U-Net \\
+      & temporal U-Net, size not reported \\
     Diffusion Policy \parencite{chi2023diffusion}
       & none
       & receding horizon over a chunk of actions
-      & U-Net or transformer \\
+      & U-Net or transformer, size not reported \\
     \ac{DPCC} \parencite{romer2025diffusion}
       & projection of every denoising iterate, tightened
       & receding horizon, horizon $8$, $1$ executed, Euler plant model
-      & temporal U-Net \\
+      & temporal U-Net, size not reported \\
     HardFlow \parencite{li2025hardflow}
       & projection of the predicted final sample, later steps only
       & receding horizon, horizon $16$, $8$ executed, fitted linear plant model
-      & temporal U-Net \\
+      & temporal U-Net, size not reported \\
     SafeFlowMPC \parencite{oelerich2026safeflowmpc}
       & projection onto the safe set inside the sampling loop
       & receding horizon over joint-position trajectories
-      & flow-matching policy \\
+      & flow-matching policy, size not reported \\
     This thesis
       & one feasible set, applied to the iterate or to the predicted endpoint
       & receding horizon, horizon $8$, $1$ executed, Euler plant model
-      & temporal U-Net, one parameter count for every model \\
+      & temporal U-Net, $4.0$\,M parameters for every generative model \\
     \bottomrule
   \end{tabularx}
 \end{table}

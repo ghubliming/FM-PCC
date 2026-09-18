@@ -43,11 +43,16 @@ UAV-corridor.
     average-velocity matching in fewer control steps. Instantaneous-velocity matching is ahead of the
     baseline on D3IL-avoiding and UAV-pillars and level with it on D3IL-aligning.
     Consistency-interpolated average-velocity matching is not ahead of analytic average-velocity matching in
-    any environment (\autoref{sec:res:summary:models}). The budget is part of that frontier: the flow-based
-    models keep their success down to one network evaluation on the D3IL-avoiding benchmark, where the
-    diffusion model loses it below the budget it was trained with (\autoref{sec:res:fewstep}), and on
-    D3IL-aligning analytic average-velocity matching improves with more evaluations while
-    consistency-interpolated average-velocity matching does not.
+    any environment (\autoref{sec:res:summary:models}). It reaches that level at fewer solver steps and at
+    less planning time per control step: the flow-based models keep their success down to one network
+    evaluation on the D3IL-avoiding benchmark, where the diffusion model loses it below the budget it was
+    trained with (\autoref{sec:res:fewstep}), and one such evaluation costs a fraction of the twenty the
+    baseline spends. The budget orders the three objectives only where the environment is hard enough to
+    separate them: on D3IL-avoiding all three hold their success down to one evaluation, whereas on
+    UAV-corridor the two average-velocity objectives fly every flight collision-free from three evaluations
+    on and instantaneous-velocity matching does not reach that at any budget evaluated, and on D3IL-aligning
+    analytic average-velocity matching improves with more evaluations while consistency-interpolated
+    average-velocity matching does not.
   \item[RQ2 --- Constraints.] Endpoint projection is well-posed only with at least one guiding step
     (\autoref{sec:res:constraints:degenerate}). With several guiding steps it reduces time on D3IL-aligning
     and UAV-corridor and projection time on UAV-pillars; its constraint satisfaction is higher on D3IL-aligning,

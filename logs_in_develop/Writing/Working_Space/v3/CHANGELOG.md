@@ -17,6 +17,50 @@ is sourced from · what it left open.
 
 ---
 
+## v3.35 — 2026-09-18 · the v2.24 sync, and the three quadrotor path figures land → [`changelogs/v3.35_20260918_v2.24_sync_and_uav_path_figures.md`](changelogs/v3.35_20260918_v2.24_sync_and_uav_path_figures.md)
+
+- Inherited half advanced to **v2.24** (`sync_v2.py merge`, four files fast-forwarded). Chapter 4's reorder costs v3 nothing — every reference to `sec:method:deployment` still resolves — but **RQ1 was reworded in v2**, so its answer in §8.1 is rewritten on the new axes: the level is reached at fewer solver steps and less planning time, and the budget orders the three objectives only where the environment separates them.
+- Three flown-path figures placed: `fig:uav-corridor-paths` (new), `fig:uav-pillars-paths` (new) and `fig:uav-scurve-paths` (was a `\todofigure`). Three `\hole`s and one `\todofigure` closed; 25 → 28 figures.
+- **The figures' goal criterion was wrong and is fixed.** The extract marked "reached" from `success_strict`, the criterion dropped in v3.28, so the panels contradicted their own tables (corridor read 8/12 where the table reads 12/12). `extract/uav_paths.py` now reads `success_relaxed`; after the re-extract every panel count matches its table cell.
+- Captions written against the drawings: the s-curve panels are the unprojected plan (the comparison is of the controller), the four pillars panels are **not** under the same projection, and the corridor panels all share the configuration `tab:uav-corridor` reports.
+- Still open: the D3IL-aligning box paths (staged before a naming bug was fixed) and `fig:raw-plans`. Ledger D10 is 🟠.
+- `check.py` passes; bundles rebuilt. Not compiled.
+
+## v3.34 — 2026-09-18 · hotfix: seed table moved to the results, a cell-by-cell data audit, mean percentages → [`changelogs/v3.34_20260918_hotfix_seedspread_audit_percentages.md`](changelogs/v3.34_20260918_hotfix_seedspread_audit_percentages.md)
+
+- `tab:seed-spread` moved out of the evaluation parameters into §6.1.1.2 where it is used; §5.6.3 keeps one plain sentence.
+- New `data_status/PENDING_20260918_verified_data_audit.md`: what was checked, what exists after all, what is confirmed missing, and that nothing has landed since the 15-09 checkpoint — so every open ledger row is still open. Ledger rows R20–R22 added for the quadrotor.
+- `tab:va-models` gives the percentage for the mean as well as the median.
+- Largest confirmed gap: the quadrotor endpoint-projection matrix, and the diffusion baseline has no endpoint row on any scene.
+- `check.py` passes; bundles rebuilt. Not compiled.
+
+## v3.33 — 2026-09-18 · hotfix: the real alignment constraints, the quadrotor's size, a rebuilt evaluation section → [`changelogs/v3.33_20260918_hotfix_constraints_dimensions_eval.md`](changelogs/v3.33_20260918_hotfix_constraints_dimensions_eval.md)
+
+- The alignment constraint figure drew the workspace box; `combined_5` actually enforces a halfspace and a circular keep-out region. Figure, table and text rebuilt from the configuration; the box is now only the plotted extent.
+- New `fig:x2-dimensions`: the Skydio X2 to scale, with the 0.54 × 0.62 m footprint, the 0.228 m rotor-centre distance and the 0.31 m inflation circle.
+- §5.6.3 rebuilt around one aggregated `tab:protocol`; the per-environment subsections keep their labels and lose the scattered numbers.
+- Table 6.1 marks its four missing rows in the table itself; the long hole is one line now.
+- The alignment percentage is inverted: it is the share of the initial distance closed, so 100 % is best (MeanFM 0.0741 = 84 %, baseline 0.4140 = 9 %).
+- `check.py` passes; bundles rebuilt. Not compiled.
+
+## v3.32 — 2026-09-18 · Chapter 6: tables filled, the cost frontier explained, the pillars result read flight by flight → [`changelogs/v3.32_20260918_ch6_tables_pareto_and_controller_naming.md`](changelogs/v3.32_20260918_ch6_tables_pareto_and_controller_naming.md)
+
+- Table 6.1 gains the baseline at K=1/5/10 (it collapses to 0.60–0.67 at one evaluation); Table 6.2 gains FM at K=5/20 and MeanFM at K=5/10/20, which existed in the batch but were not shown. Remaining gaps are marked must-have (`\hole`) or acceptable (`\guard`), with ledger rows R18/R19.
+- §6.1.1.2 and §6.2.1.2 rewritten finding-first; the cost frontier gets its own subsection explaining the non-dominance study.
+- Figure 6.2 gains CI-MeanFM (seed 6, own series); Table 6.4 names the rule tokens; the alignment tables carry the distance as a percentage of the initial 0.4530 m, defined in §5.4.2.
+- The pillars result checked flight by flight: FM's 1.00 holds, but six of ten flights run to the episode limit, while MeanFM flies nine in ~420 steps and fails one outright — both now stated.
+- "Brake-to-rest" named as the cascaded geometric controller's zero velocity setpoint, not a separate controller; the missing rationale sent to v2.
+- `check.py` passes; bundles rebuilt, 24/24 figures. Not compiled.
+
+## v3.31 — 2026-09-18 · Chapter 5: metrics before baselines, the alignment constraint set, a training/evaluation split → [`changelogs/v3.31_20260918_ch5_structure_constraints_and_metrics.md`](changelogs/v3.31_20260918_ch5_structure_constraints_and_metrics.md)
+
+- Metrics now come before baselines, each metric with its unit; §5.6 is split into Compute Environment, Training and Evaluation, the per-environment protocols becoming subsubsections of Evaluation.
+- New `tab:aligning-constraints` and `fig:constraints-aligning` give the alignment task the constraint set the other two environments already had.
+- Table 5.3 widened, Figure 5.7 made legible (own text scale, two-row legend), Table 5.5 given the ± spread the published row has, `tab:train` marks the DPCC baseline column.
+- §5.2's opening rewritten, the 0.025 margin attributed to DPCC, D3IL's policies named in §5.4.2, and the quadrotor rate numbers verified line by line against the code.
+- MuJoCo is cited everywhere but never introduced: §5.1 now back-references §2.5 and v2 was asked to add the clause.
+- `check.py` passes; bundles rebuilt, 24/24 figures. Not compiled.
+
 ## v3.30 — 2026-09-17 · Results chapter traversed against the pending-data ledger → [`changelogs/v3.30_20260917_results_ledger_traversal.md`](changelogs/v3.30_20260917_results_ledger_traversal.md)
 
 - Matched every `\hole`, `\provisional`, `\todofigure` and `\guard` in Chapter 6 to a ledger row; added **R12–R17** for six gaps that had none, two of which carry no marker in the draft at all (the baseline's missing pillars configurations, and the pillars budget ladder stopping at K=2).

@@ -249,3 +249,48 @@ still build from `../data/avoiding_scene.json`, which lives in the repository an
 camera set-up and the two views are D3IL's (front view and in-hand view, D3IL appendix Fig. 8, 96×96). The
 v3 caption now reads "Adapted from D3IL \parencite[appendix, Fig.~8]{jia2024towards}", the panel labels
 follow D3IL's names, and the text says "front view" instead of "overhead". The file names are unchanged.
+
+## 2026-09-18 · the flown-path figures (`fig_uav_{scurve,pillars,corridor}_paths`)
+
+Three new `da/` figures, and the first corpus here that is **not** a batch directory.
+
+The executed positions are in none of the committed batches: the 15-09 batches carry per-rollout
+scalars (`per_rollout_detail.csv`), and a scalar cannot be drawn as a path. The positions live in the
+rollout `npz` under each run folder on the cluster, which were staged and downloaded on 2026-09-18 by
+`Slurm_Codes/temp_bash/fetch_20260918_v3_figure_artefacts.sh` (groups F1–F3) into `temp/18-09-2026/`.
+
+`temp/` is not version-controlled, so **the drop is not the corpus — `data/uav_paths.json` is.**
+`extract/uav_paths.py` reads the drop once with numpy and writes that JSON; the builders (standard
+library, like all of them) read only the JSON. On a fresh machine the drop is absent and the figures
+still build. To recreate the drop, the ledger
+`Data_Analysis/analysis_results_checkpoint/LEDGER_20260918_v3_figure_artefact_fetch.md` has the stager
+and every run folder.
+
+What is drawn, and what was decided in the extract rather than the builder:
+
+| field | source | drawn as |
+| :-- | :-- | :-- |
+| path | `obs_all[:, 3:5]` — the **executed** position; `0:3` is the reference the controller tracked | polyline |
+| `passed` | `success_relaxed` — crossing the finish line | solid vs dashed, filled vs hollow end mark |
+| `clean` | `constraint_collision_free` / `rollouts[i].constraint.collision_free` | green vs red |
+| `homotopy` | `rollouts[i].homotopy`, corridor only (L/C/R) | carried, not yet drawn |
+
+**Corrected 2026-09-18 (v3.35).** The first extract took `passed` from `success_strict`, the
+0.30 m goal-point criterion the author replaced with crossing the finish line in v3.28. The panel
+subtitles therefore disagreed with every table in §6.3 --- the corridor figure read 8/12 reached where
+`tab:uav-corridor` reads 12/12 passed. The extract now reads `success_relaxed`, which is the field
+`analysis/uav_results.py` reports, and every panel count matches its table cell. The wording in the
+legend and the subtitles is "passed", not "reached", for the same reason.
+
+The two outcomes are kept independent because a flight can reach the goal *through* a pillar, and the
+pillars figure has exactly that case. Paths are decimated to every 2nd control step with both endpoints
+kept (`STRIDE`), which is what keeps the ten-panel corridor figure at ~330 KiB.
+
+The scene under every path is drawn by `scenes._uav_constraint_panel`, the same function as
+`fig_constraints_uav`, from the same `sources.UAV_CONSTRAINTS` — so a path can never be shown against a
+constraint set the projection did not see. Panel width is 560 rather than 470 there: these panels carry
+an outcome count in the subtitle, which clips at 470.
+
+**Still open.** The D3IL-aligning box paths (`sec:res:aligning:projection`) were requested in the same
+batch but the cell was staged before a variant-naming bug in the stager was fixed (`_train_set` suffix),
+so they are not in this drop and that figure does not exist yet.

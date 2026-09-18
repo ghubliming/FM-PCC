@@ -3,7 +3,10 @@
 **2026-09-16 · companion to** [`NOTE_20260914_official_DA_in_Paper.md`](NOTE_20260914_official_DA_in_Paper.md) · index: [`INDEX.md`](INDEX.md)
 
 Built from every open `\hole`, `\provisional` and `\todofigure` in `v3/chapters/05–09` plus open items found
-while writing Ch 6. **Re-traversed against the Results chapter on 2026-09-17 (v3.30):** every marker and every
+while writing Ch 6. **Audited cell by cell on 2026-09-18 (v3.34):** see
+[`PENDING_20260918_verified_data_audit.md`](PENDING_20260918_verified_data_audit.md) for what was checked and
+what turned out to exist. Nothing has landed since the 15-09 checkpoint, so **every ⏳ row below is still
+open, none is merely unread**. **Re-traversed against the Results chapter on 2026-09-17 (v3.30):** every marker and every
 guard in `06_results.tex` was matched to a row here, and the rows that had none were added (R12–R17).
 Locations are given as labels, not section numbers, because the numbers move. **Run** = needs the cluster. **DA** = analysis of data that exists. **Author** = a decision.
 When an item closes: mark ✅ with the date and the v3 version that absorbed it, or ❌ with the reason.
@@ -34,6 +37,11 @@ The thesis states this once in §5.5 and does not repeat single-seed caveats in 
 | R14 | 🟡 | **Candidate-matched endpoint-projection ladder on D3IL-avoiding**: endpoint projection was run with one candidate plan against per-step projection with four | `tab:hf-ladder` `\guard` — every row is confounded by the candidate count and the wall-clock columns of that evaluation are unusable | ⏳ |
 | R15 | 🟡 | **MuJoCo MPC on UAV-s-curve beyond three flights** (ten, to match the brake-to-rest rows) | `tab:uav-controller` `\guard` (\enquote{Three flights with MuJoCo MPC}); the controller caveat rests on $n=3$ | ⏳ |
 | R16 | ⚪ optional | **Budget ladder for FM and CI-MeanFM on D3IL-aligning** ($\nfe=2,10$ for FM; $\nfe=10$ for CI-MeanFM). The task has MeanFM at 2/10/20/100, CI-MeanFM at 2/20, FM at 20/100 only | `sec:res:aligning:budget` states the budget behaviour of MeanFM and CI-MeanFM; an FM ladder would make the budget claim model-independent | ⏳ |
+| R20 | 🟠 | **Endpoint projection with random selection and with cumulative projection cost on UAV-corridor**, at every budget, and **all endpoint rows at $\nfe=1$**. The scene has endpoint projection only as a single candidate and under temporal consistency, at $\nfe=3,5$ | `sec:res:uav:projection` compares the methods on two of six endpoint configurations | ⏳ |
+| R21 | 🟠 | **Endpoint projection at $\nfe=1,2$ on UAV-pillars** (all four configurations). The scene has them at $\nfe=5$ only | the budget paragraph of `sec:res:uav:pillars` compares per-step rows only below $\nfe=5$ | ⏳ |
+| R22 | 🟠 | **The diffusion baseline under endpoint projection on any quadrotor scene** — it has none — and its per-step random-selection row on UAV-pillars | `tab:uav-pillars` shows the baseline in 5 of 11 configurations; the projection comparison of `sec:res:uav:projection` excludes the baseline entirely | ⏳ |
+| R18 | 🟠 | **The diffusion baseline at the extended protocol below its training budget**: $\nfe=1,2,10$ at 5 seeds × 20 episodes. They exist at DPCC's protocol (5 × 2) and are now in `tab:avoiding-dpcc-protocol`, but the extended table shows the baseline at $\nfe=20$ only | `tab:state-headline` `\hole` (must have); the budget collapse of the baseline is currently evidenced at ten episodes per geometry | ⏳ |
+| R19 | 🟡 | **Instantaneous-velocity matching at $\nfe=1,2$ at DPCC's protocol**, and CI-MeanFM at $\nfe=1,2$ there (the latter after R6's trainings) | `tab:avoiding-dpcc-protocol` *pending* rows and its `\hole`; same request as R8 | ⏳ |
 | R17 | ⚪ optional | **Repeat evaluations of the projected alignment configurations** to quantify the ≈0.4 m run-to-run variation rather than cite it | `sec:res:aligning:projection` `\provisional` — it is why the projected median distances are not ranked | ⏳ |
 
 ## 2. Analyses of existing data (no runs)
@@ -49,7 +57,7 @@ The thesis states this once in §5.5 and does not repeat single-seed caveats in 
 | D7 | Confirm controller and velocity-setpoint policy for pillars and s-curve results | §5.5.3 `\hole` | ✅ v3.26 — `pid_stopgo` (brake-to-rest) on all pillars_hg rows and 880/889 s_curve_hg rows; the 9 others are the MuJoCo MPC comparison |
 | D8 | Total compute (GPU-hours) from job logs | appendix `\hole` | ⏳ |
 | D9 | SLURM job IDs and git revision per batch for `tab:corpora` | appendix `\hole` | ⏳ |
-| D10 | **(needs the cluster)** **Executed trajectories for four result figures** (s-curve under two controllers, pillars per model, corridor through the slide, alignment box paths). The committed batches hold per-rollout scalars only; the positions are on the cluster. Runs and contents listed in [`REQUEST_20260917_trajectory_figures.md`](../../../../Data_Analysis/DA_in_Paper/plotting/REQUEST_20260917_trajectory_figures.md) | §6.2, §6.3 `\hole`s + `fig:uav-scurve-paths` `\todofigure` | ⏳ |
+| D10 | **(needs the cluster)** **Executed trajectories for four result figures** (s-curve under two controllers, pillars per model, corridor through the slide, alignment box paths). The committed batches hold per-rollout scalars only; the positions are on the cluster. Runs and contents listed in [`REQUEST_20260917_trajectory_figures.md`](../../../../Data_Analysis/DA_in_Paper/plotting/REQUEST_20260917_trajectory_figures.md) | §6.2, §6.3 `\hole`s + `fig:uav-scurve-paths` `\todofigure` | 🟠 **three of four landed** (2026-09-18) — the quadrotor drop is staged and `fig_uav_scurve_paths`, `fig_uav_pillars_paths` and `fig_uav_corridor_paths` are in the draft (v3.35). **The alignment box paths are still open**: that cell was staged before a naming bug in the fetch script was fixed and is absent from the download; it needs one more run of the stager |
 
 ## 3. Decisions for the author
 
@@ -67,7 +75,10 @@ and `09_appendix.tex`, mapped to the row that owns it. If a marker is added to t
 
 | where in the draft | marker | owned by |
 | :-- | :-- | :-- |
-| `tab:avoiding-dpcc-protocol` (2 *pending* rows) | `\hole` | R8, and [`PENDING_20260917_dpcc_protocol_rows_table61.md`](PENDING_20260917_dpcc_protocol_rows_table61.md) |
+| `tab:avoiding-dpcc-protocol` (4 rows marked *not yet evaluated* in the table) | `\hole` (must have) | R8, R19, and [`PENDING_20260917_dpcc_protocol_rows_table61.md`](PENDING_20260917_dpcc_protocol_rows_table61.md) |
+| `tab:avoiding-dpcc-protocol` — no $\nfe=2$ diffusion row, no $\nfe=10$ FM row | `\guard` (acceptable) | covered by `fig:k-ladder` |
+| `tab:state-headline` — baseline at $\nfe=20$ only; no CI-MeanFM | `\hole` (must have) | R18, R6 |
+| `tab:state-headline` — no FM $\nfe=10$; MeanFM $\nfe=20$ on two geometries | `\guard` (acceptable) | covered by `fig:k-ladder` |
 | `fig:raw-plans` (5 empty panels) | 5 × `\todofigure` | R5 |
 | `sec:res:avoiding:raw` — quantify plan smoothness | `\hole` | D1 |
 | `sec:res:avoiding:smoothness` — DPCC Table 2 cited, not measured here | (no marker) | R11 (optional) |
@@ -79,13 +90,13 @@ and `09_appendix.tex`, mapped to the row that owns it. If a marker is added to t
 | `sec:res:aligning:budget` — ladder exists for MeanFM (and CI-MeanFM) only | (no marker) | R16 (optional) |
 | `sec:res:aligning:projection` — ≈0.4 m run-to-run variation | `\provisional` | R17 (optional) |
 | `sec:res:aligning:projection` — no tightened diffusion cell | `\provisional` | R2 |
-| `sec:res:aligning:projection` — figure of the ten contexts | `\hole` | D10 |
-| `sec:res:uav:corridor` — figure of the flown paths | `\hole` | D10 |
+| `sec:res:aligning:projection` — figure of the ten contexts | `\hole` (still open) | D10 |
+| `sec:res:uav:corridor` — figure of the flown paths | ✅ v3.35 `fig:uav-corridor-paths` | D10 |
 | `tab:uav-pillars` — baseline in 5 of 11 configurations | \emph{---: not evaluated} | R12 |
 | `sec:res:uav:pillars` — budget ladder short at $\nfe=1$ | (no marker) | R13 |
-| `sec:res:uav:pillars` — figure of the flown paths | `\hole` | D10 |
+| `sec:res:uav:pillars` — figure of the flown paths | ✅ v3.35 `fig:uav-pillars-paths` | D10 |
 | `sec:res:uav:projection` — s-curve endpoint rows withheld | `\guard` | R10 |
-| `fig:uav-scurve-paths` | `\todofigure` + `\hole` | D10 |
+| `fig:uav-scurve-paths` | ✅ v3.35 drawn | D10 |
 | `tab:uav-controller` — three MPC flights | `\guard` | R15 |
 | every quadrotor and alignment result — one seed | (stated once in §5.6) | R1 ❌, R4 ❌ (closed, not feasible) |
 | `sec:setup:protocol:avoiding` — which models exist at DPCC's protocol | `\provisional` | R8 |

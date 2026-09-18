@@ -8,8 +8,9 @@ together with the notes kept here. Paths are relative to this file.
 | :-- | :-- |
 | [`NOTE_20260914_official_DA_in_Paper.md`](NOTE_20260914_official_DA_in_Paper.md) | `DA_in_Paper` is the official data and figure store — the rules |
 | [`PENDING_20260916_missing_data_and_analyses.md`](PENDING_20260916_missing_data_and_analyses.md) | what the thesis still lacks: runs and analyses, with where each gap shows in the draft — **the general ledger** |
-| [`PENDING_20260917_dpcc_protocol_rows_table61.md`](PENDING_20260917_dpcc_protocol_rows_table61.md) | one table: the two rows still missing from `tab:avoiding-dpcc-protocol`, and the backbone trap that hid two others |
-| [`SLURM_RUNBOOK_20260917_dpcc_protocol_rows.md`](SLURM_RUNBOOK_20260917_dpcc_protocol_rows.md) | submission order and job-ID ledger for the separated FM and CI-MeanFM jobs that close those two rows |
+| [`PENDING_20260917_dpcc_protocol_rows_table61.md`](PENDING_20260917_dpcc_protocol_rows_table61.md) | one table: the rows still missing from `tab:avoiding-dpcc-protocol`, and the backbone trap that hid two others |
+| [`PENDING_20260918_verified_data_audit.md`](PENDING_20260918_verified_data_audit.md) | **cell-by-cell audit of the 15-09 checkpoint**: what exists after all, what is confirmed missing (notably the quadrotor's endpoint-projection matrix), and that nothing has landed since 15-09 |
+| [`SLURM_RUNBOOK_20260917_dpcc_protocol_rows.md`](SLURM_RUNBOOK_20260917_dpcc_protocol_rows.md) | one-command dated dependency pipeline and child job-ID ledger for the FM and CI-MeanFM jobs that close those two rows |
 | [`outdated_DATASTATUS_20260910_v3_entry_readiness.md`](outdated_DATASTATUS_20260910_v3_entry_readiness.md) | historical readiness ledger; superseded |
 
 Naming: `NOTE_<date>_<topic>.md` states how things are; `PENDING_<date>_<topic>.md` lists what is missing.

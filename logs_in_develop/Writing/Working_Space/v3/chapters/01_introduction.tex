@@ -45,8 +45,9 @@ built for this thesis. \autoref{ch:setup} describes the evaluation.
   \item[RQ1 --- Generative model.] Under an identical backbone, projection, dataset and evaluation
     code, does flow matching --- a learned velocity field, the transport \ac{ODE} it generates, the
     step budget that becomes a solver argument, and the average-velocity objectives built on that
-    field --- improve the quality--cost frontier of constrained predictive control over the diffusion
-    model it replaces, and does the improvement order the three objectives?
+    field --- reach the task success and the constraint satisfaction of the diffusion model it
+    replaces at fewer solver steps and less planning time per control step, and does the number of
+    steps at which it does so order the three objectives?
   \item[RQ2 --- Constraints.] Given one fixed feasible set and one solver, at a step budget large
     enough for projection to guide the sampler, does endpoint projection reach the goal with fewer
     constraint violations, fewer control steps or less computation than the per-step (iterate)
