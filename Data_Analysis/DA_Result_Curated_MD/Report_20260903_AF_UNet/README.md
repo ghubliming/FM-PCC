@@ -397,18 +397,31 @@ correct one when success rates differ. Full derivation in the source DA, §6.1.
 ## 8. Trajectory quality — the K = 1 / K = 2 plans
 
 Visual inspection of the raw plans at the two budgets that matter, `seed 6`, `both-hard`.
-**All eight panels are placeholders pending the author's figures.**
+
+**Four panels landed 2026-09-19.** They were not re-run: the 20-trials evaluations of August had
+already written these dashboards, and they were staged off the cluster by
+`Slurm_Codes/temp_bash/fetch_20260919_v3_figure_artefacts_wave2.sh`. Each file here is the **full
+diagnostic dashboard** (3000×5000, ten episodes × six columns); the thesis uses only the last column
+of episode 1, cut by `DA_in_Paper/plotting/prep/crop_vendored.py`.
 
 | # | engine | K | file | status |
 |---|---|---:|---|---|
-| 8a | α-Flow `α→0.2` | 1 | `fig8a_plans_af_K1_seed6.png` | ⬜ *placeholder* |
-| 8b | α-Flow `α→0.2` | 2 | `fig8b_plans_af_K2_seed6.png` | ⬜ *placeholder* |
-| 8c | MeanFlow-UNet | 1 | `fig8c_plans_mf_K1_seed6.png` | ⬜ *placeholder* |
-| 8d | MeanFlow-UNet | 2 | `fig8d_plans_mf_K2_seed6.png` | ⬜ *placeholder* |
-| 8e | naive FM | 1 | `fig8e_plans_fm_K1_seed6.png` | ⬜ *placeholder* |
-| 8f | naive FM | 2 | `fig8f_plans_fm_K2_seed6.png` | ⬜ *placeholder* |
-| 8g | DPCC diffusion | 1 | `fig8g_plans_dpcc_K1_seed6.png` | ⬜ *placeholder* |
-| 8h | DPCC diffusion | 2 | `fig8h_plans_dpcc_K2_seed6.png` | ⬜ *placeholder* |
+| 8a | α-Flow `α→0.2` | 1 | `fig8a_plans_af_K1_seed6.png` | ✅ landed 2026-09-19 |
+| 8b | α-Flow `α→0.2` | 2 | `fig8b_plans_af_K2_seed6.png` | ✅ landed 2026-09-19 |
+| 8c | MeanFlow-UNet | 1 | `fig8c_plans_mf_K1_seed6.png` | ⬜ *placeholder* — the thesis panel comes from `Report_20260819_MF_UNet` fig 6a instead |
+| 8d | MeanFlow-UNet | 2 | `fig8d_plans_mf_K2_seed6.png` | ⬜ *placeholder* — likewise fig 6c |
+| 8e | naive FM | 1 | `fig8e_plans_fm_K1_seed6.png` | ✅ landed 2026-09-19 |
+| 8f | naive FM | 2 | `fig8f_plans_fm_K2_seed6.png` | ✅ landed 2026-09-19 |
+| 8g | DPCC diffusion | 1 | `fig8g_plans_dpcc_K1_seed6.png` | ⬜ *placeholder* — the thesis panel comes from `Report_20260819_MF_UNet` fig 6b instead |
+| 8h | DPCC diffusion | 2 | `fig8h_plans_dpcc_K2_seed6.png` | ✅ **landed 2026-09-19** — the K=2-trained checkpoint did not exist, so it was **trained**: jobs 25965 (2 h 41 m) + 25966. The old "impossible" note was right that no such checkpoint existed and wrong to call it impossible; K really is fixed at training for diffusion, which is why this needed a training run. See `data_status/PENDING_20260919_fig63_diffusion_K2_panel.md` |
+
+What the four new panels show, at a glance: naive FM throws a wide, jagged plan fan that leans into the
+left forbidden wedge at both budgets; α-Flow is noisy at K=1 and markedly tighter at K=2. Both are
+looser than MeanFlow-UNet's fan at the same budgets (`Report_20260819` fig 6a/6c).
+
+⚠️ The `.npz` beside each dashboard holds **scalars only** (`n_success`, `n_steps`, `n_violations`, …) —
+no plans and no positions. These fans exist only as the rendered image, which is why the thesis crops
+the dashboard instead of redrawing it.
 
 <!-- Drop the eight PNGs into this folder and uncomment the block below.
 ![8a — α-Flow K1](fig8a_plans_af_K1_seed6.png)

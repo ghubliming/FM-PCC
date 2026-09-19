@@ -132,7 +132,11 @@ Two tokens name something other than what the thesis means by the word. \texttt{
 \section*{Corpora of record}
 
 \autoref{tab:corpora} lists the evaluation batches every number in \autoref{ch:results} was computed
-from, with the protocol that produced each. The figure scripts read these directories directly.
+from, with the protocol that produced each. The figure scripts read these directories directly. The two
+batches of 2026-09-19 are the corpora of record: they supersede their predecessors and reproduce every
+number those had already produced, so what they add are rows and not revisions. They carry the evaluations
+of UAV-pillars as well, which are excluded from the analysis and reported nowhere
+(\autoref{sec:res:uav}).
 
 \begin{table}[htpb]
   \caption[Corpora of record]{The evaluation batches behind the results, and their protocols.}
@@ -143,13 +147,13 @@ from, with the protocol that produced each. The figure scripts read these direct
     \toprule
     Environment and results & Batch & Protocol \\
     \midrule
+    D3IL-avoiding, all protocol tables & \texttt{batch\_avoiding\_combined\_20260919} & 5 seeds; 2 and 20 episodes per geometry \\
     D3IL-avoiding, generative models & \texttt{batch\_avoiding\_combined\_20260825} & 5 seeds $\times$ 20 episodes \\
     D3IL-avoiding, CI-MeanFM & \texttt{batch\_avoiding\_combined\_20260903} & seed 6, 20 episodes \\
     D3IL-avoiding, projection methods & \texttt{batch\_avoiding\_combined\_20260906} & 4 seeds $\times$ 3 geometries $\times$ 2 episodes \\
-    D3IL-aligning & \texttt{batch\_va2\_20260907} & seed 6, 10 paired contexts \\
-    UAV-corridor & \texttt{batch\_uav\_20260914} & seed 6, 12 flights (4 per route) \\
-    UAV-pillars and UAV-s-curve & \texttt{batch\_uav\_20260910} & seed 6, 10 flights \\
-    UAV-pillars, diffusion baseline & \texttt{batch\_uav\_20260912} & seed 6, 10 flights \\
+    D3IL-aligning & \texttt{batch\_va2\_20260915} & seed 6, 10 paired contexts \\
+    UAV-corridor and UAV-s-curve & \texttt{batch\_uav\_20260919} & seed 6, 12 flights (4 per route) and 10 flights \\
+    UAV-corridor, earlier reference & \texttt{batch\_uav\_20260914} & seed 6, 12 flights (4 per route) \\
     \bottomrule
   \end{tabularx}
 \end{table}

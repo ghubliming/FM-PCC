@@ -166,8 +166,12 @@ def main():
                 skipped.append((name, 'source is newer than the cut in data/prepared/; '
                                       're-run python3.14 plotting/prep/crop_vendored.py'))
                 continue
-            box, keeps = S.VENDORED_CROP[name]
+            entry = S.VENDORED_CROP[name]
+            box, keeps, resize = entry[0], entry[1], (entry[2] if len(entry) > 2 else None)
             prov = f'{prov} Cut to {box}: {keeps}.'
+            if resize:
+                prov = (f'{prov} Stretched to {resize[0]}x{resize[1]} so the plot frame '
+                        f'matches the 08-19 panels of the same matrix.')
             src = cut
         dst = os.path.join(STORE, group, name + os.path.splitext(src)[1])
         shutil.copyfile(src, dst)

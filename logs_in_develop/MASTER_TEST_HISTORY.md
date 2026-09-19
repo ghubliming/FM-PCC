@@ -6085,3 +6085,26 @@ Comprehensive data analysis of the MPC candidate fan ($B=4$ vs $B=1$) on `avoidi
 
 4. **Cluster Script Housekeeping** (`Slurm_Codes/temp_bash/`):
    - Purged obsolete temporary evaluation scripts in `Slurm_Codes/temp_bash/` (including superseded corridor-ball probe and full-wave test scripts) to maintain repository hygiene and prevent unintended re-execution.
+
+
+***
+
+## Gen15 U17: UAV Pillars Enlargement Diagnosis, Test-Time Active Avoidance & Trajectory Visualizations (September 18, 2026)
+
+**Keywords**: Gen15, U17, pillars_xl, pillars_xxl, uav_projection.yaml, active avoidance redesign, pillars_grid, expert_paths, uav_paths, commits a98985fa, b8f1beb2.
+
+1. **Diagnosis of Passive Feasibility in `pillars_hg` and Redesign Rationale** (`CHANGELOG_20260918_pillars_enlarged.md`, `PENDING_20260918_pillars_geometry_redesign.md`):
+   - Audited the baseline demonstration trajectory generator (`trajectories.py`): expert demonstrations fly at $|y| = 1.11$, already $0.08$ m outside the physical keep-out zone ($|y| \ge 1.03$ m), achieving S&C 0.90–1.00 unprojected at K=5.
+   - Identified that `pillars_hg` evaluated perturbation resistance rather than true obstacle avoidance capability; random selection and per-step projection degraded already-feasible plans (1.00 $\to$ 0.00), masking model hierarchy.
+   - Diagnosed that test-time active avoidance requires constraints that intersect demonstrated trajectories (analogous to D3IL-avoiding halfspaces and the corridor slide).
+
+2. **U17 Enlarged Obstacle Geometry (`pillars_xl`, `pillars_xxl`)** (`config/uav_projection.yaml`, commit `b8f1beb2`):
+   - Added virtual obstacle entries `pillars_xl` (obstacle radius enlarged from $0.12 \to 0.35$ m, keep-out radius $0.43 \to 0.66$ m) and `pillars_xxl` ($0.55$ m) to `uav_projection.yaml`.
+   - In `pillars_xl`, the demonstrated path at $|y| = 1.11$ penetrates the obstacle envelope by $0.15$ m, forcing active projection. The straight center lane is blocked, leaving an open escape corridor of $0.93$ m (well above typical quadrotor tracking error of ~0.30 m).
+   - Confirmed that the execution scorer (`eval_mix_uav.py`) dynamically reads the resolved config radius while `phys_safe` remains ground-truth MuJoCo contact independent of virtual enlargement.
+   - Structured the evaluation wave driver (`eval_20260919_u17_pillars_xl.sh`, 10 driver jobs, 13 children) with distinct `u7xl` tags, splitting high-latency K=5 jobs into disjoint sets to prevent 24-hour timeouts. Withheld the original pillars section in the results draft pending incoming `pillars_xl` data.
+
+3. **Trajectory Path Extraction and Expert Data Visualization** (`expert_paths.py`, `uav_paths.py`, `builders/expert.py`, `builders/paths.py`):
+   - Implemented trajectory extractors and SVG/PNG plot builders visualizing executed drone trajectories across `corridor` (slide detours), `pillars` (obstacle bypasses), and `s_curve` (`mjpc` vs `pid_stopgo` tracking stability).
+   - Implemented expert demonstration path visualizations (`fig_expert_aligning`, `fig_expert_uav`) documenting the reference training distributions across tasks.
+   - Added `pillars_grid.py` in `Data_Analysis/DA_in_Paper/analysis/` to automate the 11-variant evaluation grid analysis once the `pillars_xl` wave executes.

@@ -9,7 +9,14 @@ Runbook: [`SLURM_RUNBOOK_20260919_pillars_enlarged.md`](SLURM_RUNBOOK_20260919_p
 > `config/uav_projection.yaml`; `pillars_hg` is kept untouched as the control condition. Driver:
 > `Slurm_Codes/temp_bash/eval_20260919_u17_pillars_xl.sh` (gitignored — copy to the cluster by hand).
 > Changelog: [`logs_in_develop/Gen15/U17/CHANGELOG_20260918_pillars_enlarged.md`](../../../Gen15/U17/CHANGELOG_20260918_pillars_enlarged.md).
-> **Nothing is run yet** — the §2 verify cell comes first. The diagnosis below stands unchanged.
+> ✅ **2026-09-19 — the §2 verify cell has RUN and the redesign works.** Tag `u7xlchk`, geometry
+> `pillars_xl`, analytic average-velocity matching at $\nfe=5$, ten flights, variant `diffuser`
+> (unprojected): **S&C 0.00 with 51–53 violating control steps per flight**, against **0.90** for the
+> same unprojected cell on `pillars_hg`. The enlarged radius reaches both the projector and the
+> violation scorer, so warnings 2 and 3 below are cleared on this cell. The demonstrated reference
+> paths now violate the set by $0.15$ m on all four routes, recomputed by
+> `DA_in_Paper/plotting/extract/expert_paths.py`. **The full wave of §6 is still to be submitted.**
+> The diagnosis below stands unchanged.
 
 ---
 
@@ -101,7 +108,7 @@ already correct.
 
 ## 5. Meanwhile, in the draft
 
-`sec:res:uav:pillars` is **withheld** as of v3.40. The section is replaced by a short statement of the
+`sec:res:uav:pillars` was **deleted** at v3.41 (withheld at v3.40). The section is replaced by a short statement of the
 finding above and a `\hole` pointing here. The withdrawn text — three tables and the flown-path figure —
 is kept verbatim at `v3/withheld/20260918_uav_pillars_section.tex` and is restored, with every number
 recomputed, once the new evaluations land. Downstream: the UAV conclusion, both cross-environment summary

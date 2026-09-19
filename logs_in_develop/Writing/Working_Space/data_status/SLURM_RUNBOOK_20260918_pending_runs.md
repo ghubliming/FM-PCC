@@ -135,14 +135,41 @@ and the activation threshold rather than re-submitting with the guard disabled.
 
 | check | owner | result |
 | :-- | :-- | :-- |
-| A · corridor endpoint `-r`/`-c` at $\nfe=3,5$ completed, six children verified | Slurm job + human verification | `XXX` |
-| C · pillars FM/MeanFM $\nfe=1$ completed | Slurm job + human verification | `XXX` |
-| D · pillars endpoint $\nfe=2$ at A = 1.0 completed, no degeneracy sentinel | Slurm job + human verification | `XXX` |
-| E · pillars diffusion `dpcc-r` / `dpcc-r-tightened` completed | Slurm job + human verification | `XXX` |
-| F · s-curve endpoint rows re-run post-fix, old rows still excluded | Slurm job + human verification | `XXX` |
-| G · aligning diffusion tightened geometry generated | Slurm job + human verification | `XXX` |
-| H · aligning budget ladder (FM 2/10, CI-MeanFM 10) completed | Slurm job + human verification | `XXX` |
-| I · avoiding diffusion at 5 × 20, $\nfe=1,10$; yaml restored to `n_trials: 2` | Slurm job + human verification | `XXX` |
+| A · corridor endpoint `-r`/`-c` at $\nfe=3,5$ completed, six children verified | Slurm job + human verification | ✅ 2026-09-18 — 25900/25901/25904/25905/25906/25907 all `Job completed successfully`, 3/3 variants each, **zero** `[hardflow][BLOCKED]` and zero divergence aborts |
+| C · pillars FM/MeanFM $\nfe=1$ completed | Slurm job + human verification | ⚰️ **DEAD** — the runs finished (25902, 25912) but `pillars_hg` is superseded by [`PENDING_20260918_pillars_geometry_redesign.md`](PENDING_20260918_pillars_geometry_redesign.md) (Gen15 U17). Filter out of the DA |
+| D · pillars endpoint $\nfe=2$ at A = 1.0 completed, no degeneracy sentinel | Slurm job + human verification | ⚰️ **DEAD** — 25899/25903/25911 finished cleanly at A = 1.0 (no degeneracy sentinel), but same `pillars_hg` supersession. Filter out |
+| E · pillars diffusion `dpcc-r` / `dpcc-r-tightened` completed | Slurm job + human verification | ⚰️ **DEAD** — 25895 `scancel`-ed 2026-09-18 22:14 at trial 3/10 of `dpcc-r-tightened`, deliberately, for the same supersession. Partial output must not enter the DA |
+| F · s-curve endpoint rows re-run post-fix, old rows still excluded | Slurm job + human verification | ✅ ran to completion (25908 fm K20, 25909 mf K10, 25910 af K5; 6/6 variants each) — **but see the divergence note below before using them** |
+| G · aligning diffusion tightened geometry generated | Slurm job + human verification | ⏳ never submitted (gated on the `n_contexts` question) |
+| H · aligning budget ladder (FM 2/10, CI-MeanFM 10) completed | Slurm job + human verification | ⏳ never submitted (same gate) |
+| I · avoiding diffusion at 5 × 20, $\nfe=1,10$; yaml restored to `n_trials: 2` | Slurm job + human verification | ⏳ never submitted — phase B is now unblocked: 25878/25879/25880 all finished 2026-09-18 |
 | Required result folders downloaded from the cluster | **human only** | `XXX` |
-| `uav_results.py` / `va_results.py` re-run locally; new tags (`u7hga1`, `u18sc`) registered | human/local follow-up | `XXX` |
+| `uav_results.py` / `va_results.py` re-run locally; new tag `u18sc` registered (`u7hga1` is dead — do NOT register) | human/local follow-up | `XXX` |
 | Ledger updated: R10, R12, R13, R16, R18, R20, R21 closed; R2 closed; R22 split (per-step ✅ / endpoint ❌ model limit) | human/local follow-up | `XXX` |
+
+## Outcome, 2026-09-19 — what landed and what is dead
+
+Logs inspected from `temp/19-09/`.
+
+**UAV-pillars (groups C, D, E) is dead on arrival.** The runs themselves were clean, but
+[`PENDING_20260918_pillars_geometry_redesign.md`](PENDING_20260918_pillars_geometry_redesign.md) (Gen15 U17)
+established that `pillars_hg` tests a constraint the demonstrations already satisfy, so every `pillars_hg` row
+this wave produced — `u7hg` $\nfe=1$ and `u7hga1` $\nfe=2$ alike — measures the wrong thing. 25895 was
+cancelled mid-variant on purpose. **Exclude tags `u7hg` and `u7hga1` from the new DA**, together with R12,
+R13 and R21, which the redesign supersedes rather than closes.
+
+**Corridor (group A) is clean and usable.** Six children, three variants each, no HardFlow block, no divergence
+abort. One thing the DA must handle: strict success is **0.333 in every arm at every budget** — the slide
+admits one of the three routes for all methods — so the corridor comparison has to be made on constraint
+satisfaction, steps and wall-clock, not on success. Endpoint `-r` and `-c` now exist at $\nfe=3,5$ for all
+three flow models; the $\nfe=1$ endpoint cells remain structurally impossible.
+
+**S-curve (group F) completed but carries a physical-divergence caveat.** All three jobs finished 6/6
+variants, and the rows are post-fix, so R10's exclusion can be lifted — but the drone **flips** on a large
+share of flights: 34 aborts in fm $\nfe=20$, 55 in mf $\nfe=10$, 52 in af $\nfe=5$ (`inverted: body z-axis`),
+and they hit the **unprojected** `diffuser` arm too (4/10, 10/10 and 8/10 respectively). The abort guard is
+not new — it predates this wave — so this is a property of the scene and the controller, not a regression and
+not a projection artefact. MeanFM at $\nfe=10$ scores 0.000 on every variant. Report the scene with the abort
+counts beside the scores, or the numbers read as a method ranking when they are a stability failure.
+
+**The 2026-09-17 wave closed completely** — see that runbook's own record.

@@ -3,7 +3,18 @@
 
     python3 Data_Analysis/DA_in_Paper/analysis/uav_results.py
 
-Source: Data_Analysis/analysis_results_checkpoint/15-09/batch_uav_20260915_100816/per_rollout_detail.csv.
+Source: Data_Analysis/analysis_results_checkpoint/19-09-UAV-Pillars-Exclude/batch_uav_20260919_111701/
+per_rollout_detail.csv. It supersedes the 15-09 batch and adds the 2026-09-18 wave: endpoint projection
+under random and minimum-cost selection on corridor v2 (tag u17cv2, K=3 and 5, all three flow models), and
+the s-curve endpoint rows re-run after the switched-wall fix (tag u18sc).
+
+🔴 UAV-PILLARS IS EXCLUDED (2026-09-18). `pillars_hg` enforces the constraint the demonstration generator
+was built to satisfy -- the demonstrated routes are already 8 cm inside the feasible set -- so its projected
+configurations measure how little of an ALREADY-FEASIBLE plan each method disturbs, not whether a method can
+make an infeasible plan feasible. Every pillars_hg cell (tags u7hg and u7hga1) is therefore withheld, and
+the pillars block below is gated off rather than deleted, so the scene can be restored once the enlarged
+geometry (pillars_xl / pillars_xxl, Gen15 U17) has been evaluated. See
+logs_in_develop/Writing/Working_Space/data_status/PENDING_20260918_pillars_geometry_redesign.md.
 Stdlib only. Cells are selected by the run tag in FolderName, which is how the analyses of record name
 them:
 * corridor v2  tag @u17cv2, geometry corridor_cv2s_*   (Gen15/U16/DA_20260914_corridor_v2_paper_full.md)
@@ -37,8 +48,10 @@ import statistics as st
 from collections import defaultdict
 
 REPO = '/workspaces/FM-PCC'
-CSV = os.path.join(REPO, 'Data_Analysis/analysis_results_checkpoint/15-09/'
-                         'batch_uav_20260915_100816/per_rollout_detail.csv')
+CSV = os.path.join(REPO, 'Data_Analysis/analysis_results_checkpoint/19-09-UAV-Pillars-Exclude/'
+                         'batch_uav_20260919_111701/per_rollout_detail.csv')
+# Flip to False only when pillars is re-evaluated on the enlarged geometry (see the module docstring).
+PILLARS_EXCLUDED = True
 M = ('n_success', 'success_relaxed', 'n_success_and_constraints', 'n_success_relaxed_and_constraints',
      'collision_free_completed', 'n_violations', 'n_steps', 'avg_time_ms', 'goal_dist')
 
@@ -60,6 +73,8 @@ def load():
                 cells[('corridor_v2', 'u17cv2', r['engine'], int(float(r['K'])), r['variant'])].append(r)
             elif r['geo'].startswith('pillars_hg_') and tag.endswith('u7hg'):
                 cells[('pillars', 'u7hg', r['engine'], int(float(r['K'])), r['variant'])].append(r)
+            elif r['geo'].startswith('s_curve_hg_') and tag.endswith('u18sc'):
+                cells[('s_curve', 'u18sc', r['engine'], int(float(r['K'])), r['variant'])].append(r)
     return cells
 
 
@@ -94,8 +109,8 @@ def main():
     T = '-bounds_free-pdes-tightened'
     for eng, K in (('diffusion', 20), ('mf', 1), ('mf', 3), ('mf', 5), ('af', 1), ('af', 3), ('af', 5),
                    ('fm', 1), ('fm', 3), ('fm', 5)):
-        for var in ('diffuser', f'dpcc-r{T}', f'dpcc-c{T}', f'dpcc-t{T}',
-                    f'hardflow_sls{T}', f'hardflow_sls-t{T}'):
+        for var in ('diffuser', 'dpcc-c-bounds_free-pdes', f'dpcc-r{T}', f'dpcc-c{T}', f'dpcc-t{T}',
+                    f'hardflow_sls{T}', f'hardflow_sls-r{T}', f'hardflow_sls-c{T}', f'hardflow_sls-t{T}'):
             rows = C.get(('corridor_v2', 'u17cv2', eng, K, var))
             if rows:
                 print(row(f'{eng} K{K} {var.replace(T, "*")}', agg(rows)))
@@ -113,8 +128,15 @@ def main():
         print(f'  {m:34s} {a[0]} K{a[1]} {a[2].replace(T,"*"):18s} {x}/{n1} vs {b[0]} K{b[1]} '
               f'{b[2].replace(T,"*"):18s} {y}/{n2}  Fisher p={fisher_two_sided(x, n1, y, n2):.2g}')
 
-    print('\n== pillars, geometry pillars_hg (seed 6, 10 flights per cell) ==')
-    for K in (5, 2, 1):
+    print('\n== pillars, geometry pillars_hg ==')
+    if PILLARS_EXCLUDED:
+        n_cells = len({k for k in C if k[0] == 'pillars'})
+        print(f'  EXCLUDED — {n_cells} pillars_hg cells are in the batch and none is reported.')
+        print('  The scene enforces the constraint its own demonstrations were generated to satisfy, so its')
+        print('  projected configurations do not measure constraint repair. Awaiting pillars_xl / pillars_xxl.')
+        print('  PENDING_20260918_pillars_geometry_redesign.md · restore by setting PILLARS_EXCLUDED = False.')
+    else:
+      for K in (5, 2, 1):
         for eng in ('mf', 'fm', 'af'):
             vs = {k[4]: v for k, v in C.items() if k[0] == 'pillars' and k[2] == eng and k[3] == K}
             if not vs:
@@ -202,6 +224,32 @@ def main():
             gr = st.mean(f(r['goal_reached']) for r in valid[k])
             print(f'  {k[0]:9s} K{k[1]:<2d} {k[2]:12s} {k[3]:22s} n={c["n"]:2d} goal reached={gr:.2f} '
                   f'goal dist={c["goal_dist"]:.3f} S&C={c["n_success_relaxed_and_constraints"]:.2f} ms={c["avg_time_ms"]:.1f}')
+
+    # ── s-curve, the 2026-09-18 re-run after the switched-wall fix (tag u18sc) ────────────
+    # These rows REPLACE the pre-fix endpoint rows withheld by the guard in sec:res:uav:projection
+    # (ledger R10). They are reportable, but only beside their divergence counts: the drone
+    # inverts mid-flight on a large share of flights, INCLUDING on the unprojected plan, so the
+    # scores describe the stability of the scene rather than a ranking of the methods.
+    print('\n== s-curve, endpoint projection re-run post switched-wall fix (tag u18sc, seed 6) ==')
+    print('  aborted = flights ended early by the divergence guard (drone inverted); they count as failures')
+    for eng, K in (('fm', 20), ('mf', 10), ('af', 5)):
+        cells = {k[4]: v for k, v in C.items() if k[0] == 's_curve' and k[2] == eng and k[3] == K}
+        if not cells:
+            continue
+        tot_ab = tot_n = 0
+        for v in ('diffuser', 'dpcc-t', 'hardflow_sls', 'hardflow_sls-r', 'hardflow_sls-c', 'hardflow_sls-t'):
+            rows = cells.get(v)
+            if not rows:
+                continue
+            c = agg(rows)
+            ab = sum(1 for r in rows if f(r.get('divergence_aborted')) == 1)
+            tot_ab += ab
+            tot_n += len(rows)
+            print(f'  {eng:3s} K{K:<2d} {v:16s} n={c["n"]:2d} passed={c["success_relaxed"]:.2f} '
+                  f'S&C={c["n_success_relaxed_and_constraints"]:.2f} cfree={c["collision_free_completed"]:.2f} '
+                  f'aborted={ab}/{len(rows)} ms={c["avg_time_ms"]:.1f}')
+        print(f'  {eng:3s} K{K:<2d} {"ALL VARIANTS":16s} aborted={tot_ab}/{tot_n} '
+              f'({100.0 * tot_ab / tot_n:.0f}% of flights)')
 
 
 if __name__ == '__main__':

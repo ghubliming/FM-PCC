@@ -36,10 +36,22 @@ def stamps():
         return {}
 
 
+def spec(name):
+    """(box, what it keeps, resize-to or None) for one entry.
+
+    The third field is optional: entries cut from the 20-trials dashboards carry it
+    because their source axes are 24 px shorter than the 08-19 ones over the same
+    data range, so the cut is stretched onto the same canvas. See VENDORED_CROP.
+    """
+    e = S.VENDORED_CROP[name]
+    return e[0], e[1], (e[2] if len(e) > 2 else None)
+
+
 def stale(name):
     """Why `name` needs rebuilding, or None."""
     src, dst = S.vendored_path(name), S.prepared_path(name)
-    box = list(S.VENDORED_CROP[name][0])
+    box, _keeps, resize = spec(name)
+    box = list(box) + ([list(resize)] if resize else [])
     if not os.path.isfile(src):
         return f'source absent: {S.VENDORED[name][1]}'
     if not os.path.isfile(dst):
@@ -68,7 +80,8 @@ def main():
     os.makedirs(S.PREPARED, exist_ok=True)
     written = stamps()
     rc = 0
-    for name, (box, keeps) in S.VENDORED_CROP.items():
+    for name in S.VENDORED_CROP:
+        box, keeps, resize = spec(name)
         src, dst = S.vendored_path(name), S.prepared_path(name)
         if not os.path.isfile(src):
             print(f'skip   {name}  (source absent)')
@@ -80,10 +93,17 @@ def main():
             rc = 1
             continue
         cut = im.convert('RGB').crop(box)
+        note = ''
+        if resize and (cut.width, cut.height) != tuple(resize):
+            # Deliberately non-uniform: it is the y axis that differs between the two
+            # dashboard layouts, and the point is to land the plot frame where the
+            # 08-19 panels already have it so the matrix reads as one figure.
+            cut = cut.resize(tuple(resize), Image.LANCZOS)
+            note = f' [stretched to {resize[0]}x{resize[1]}]'
         cut.save(dst)
-        written[name] = list(box)
+        written[name] = list(box) + ([list(resize)] if resize else [])
         print(f'wrote  data/prepared/{os.path.basename(dst)}  '
-              f'{im.width}x{im.height} -> {cut.width}x{cut.height}   ({keeps})')
+              f'{im.width}x{im.height} -> {cut.width}x{cut.height}{note}   ({keeps})')
     with open(STAMP, 'w') as fh:
         json.dump(written, fh, indent=2, sort_keys=True)
         fh.write('\n')

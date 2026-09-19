@@ -197,7 +197,9 @@ and the six posts never move, so a policy can learn a route. Here the box is pla
 $x\in[0.4,0.6]$, $y\in[-0.25,-0.10]$ at any yaw in $\pm 90^{\circ}$, and its target anywhere in
 $x\in[0.4,0.6]$, $y\in[0.20,0.35]$ at any yaw in $\pm 90^{\circ}$; the demonstrations were recorded from
 such draws and the evaluation replays an enumerated set of them (\autoref{sec:setup:protocol:aligning}).
-Two episodes therefore ask for two different pushes.
+Two episodes therefore ask for two different pushes. \autoref{fig:aligning-contexts} draws the ten
+contexts the evaluation replays, which are the ten every result in \autoref{sec:res:visual} is averaged
+over.
 
 Where the box is can only be seen. The vector half of the observation is
 $(\vect{p}\sidx{des},\vect{p})\in\R^{6}$, the commanded and the measured end-effector position
@@ -269,6 +271,23 @@ is respected by the demonstrations, so satisfying them is left to the projection
 
 \begin{figure}[htpb]
   \centering
+  \includegraphics[width=0.62\linewidth]{fig_aligning_contexts}
+  \caption[The ten evaluated alignment contexts]{The ten contexts the evaluation replays, on the plane
+  of \autoref{fig:constraints-aligning}. Filled marks are the box at the start of an episode, hollow
+  marks its target, and a dotted line joins the two poses of one context; the dashed rectangles are the
+  regions the environment draws each pose from. Both marks are box \emph{centres}, which is what the
+  context and the final-distance metric refer to. One context is additionally drawn with the real
+  $0.10$\,m footprints at their recorded yaw, so the marks elsewhere are anchored to the size of the
+  object they stand for --- the box is of the same order as the $0.06$\,m keep-out region it has to be
+  pushed around, which a figure of marks alone would understate. The yaw of each pose is drawn only for
+  that one context but is part of every draw. The ten pushes are ten different pushes: their lengths
+  range from $0.41$ to $0.52$\,m and average $0.4530$\,m, the distance \autoref{sec:res:visual} reports
+  as the starting one, and a policy that learned one route would satisfy none of them.}
+  \label{fig:aligning-contexts}
+\end{figure}
+
+\begin{figure}[htpb]
+  \centering
   \begin{minipage}{0.44\linewidth}\centering
     \includegraphics[width=\linewidth]{fig_render_aligning}\\[0.3em]
     {\footnotesize MuJoCo simulator view}
@@ -326,8 +345,12 @@ unstable (\autoref{sec:bg:quadrotor}), and its plan is tracked by the controller
     the centre line at the exit, and forces every route to descend by $0.25$--$0.49$\,m before the exit.
     The models are trained on the demonstrations of a narrower corridor and never see the slide, so it is
     a test-time constraint in the same sense as the halfspaces of D3IL-avoiding.
-  \item[UAV-pillars] --- the main test. Six cylindrical pillars stand in two rows across three columns, and
-    the vehicle must choose a way through them.
+  \item[UAV-pillars] --- six cylindrical pillars stand in two rows across three columns, and the vehicle
+    must choose a way through them. At test time the projection enforces a keep-out radius larger than
+    the pillar the simulator contains, so that the demonstrated routes no longer satisfy the constraint
+    set and reaching the goal cleanly requires leaving them (\autoref{sec:setup:data:uav}). The scene is
+    described here because it supplies the demonstrations and the trained models, but it is being
+    re-evaluated under that enlarged set and yields no result in this thesis (\autoref{sec:res:uav}).
   \item[UAV-s-curve] --- the most difficult test. Two offset corridor segments, joined by a diagonal passage,
     force two sharp changes of direction.
 \end{description}
@@ -352,7 +375,8 @@ unstable (\autoref{sec:bg:quadrotor}), and its plan is tracked by the controller
       & wall ends & four disks of radius $0.05$\,m at $x=\pm2$, $y=\pm1$ \\
     \addlinespace[2pt]
     UAV-pillars
-      & six disks & radius $0.12$\,m at $x\in\{-2,0,2\}$ and $y=\pm0.6$\,m \\
+      & six disks & physical pillar radius $0.12$\,m at $x\in\{-2,0,2\}$ and $y=\pm0.6$\,m; the
+        projection enforces an enlarged keep-out radius of $0.35$\,m at test time \\
     \addlinespace[2pt]
     UAV-s-curve
       & four switched wall halfspaces & feasible $y\in[-1.25,-0.35]$ over $x\in[-3,-0.5]$, and $y\in[0.35,1.25]$ over $x\in[0.5,3]$ \\
@@ -361,8 +385,12 @@ unstable (\autoref{sec:bg:quadrotor}), and its plan is tracked by the controller
   \end{tabularx}
 \end{table}
 \srcnote{\texttt{config/uav\_projection.yaml}: \texttt{corridor\_v2\_slide} (scene
-\texttt{scene\_corridor\_v2.xml}), \texttt{pillars\_hg}, \texttt{s\_curve\_hg};
-\texttt{inflation.r\_drone: 0.31}; \texttt{enlarge\_constraints: 0.025}.}
+\texttt{scene\_corridor\_v2.xml}), \texttt{pillars\_xl}, \texttt{s\_curve\_hg};
+\texttt{inflation.r\_drone: 0.31}; \texttt{enlarge\_constraints: 0.025}. The six
+\texttt{sphere\_outside} rows of \texttt{pillars\_xl} carry \texttt{radius: 0.35}; the pillars of
+\texttt{quadrotor\_modified.xml} stay at $0.12$\,m, so the enlargement is a constraint and not a change
+of the simulated scene. \texttt{pillars\_hg}, the entry that enforced $0.12$, is kept for rollback and is
+not active.}
 
 The three scenes use the same two constraint forms as D3IL-avoiding --- halfspaces and circular
 keep-out regions --- so the projection solves the same kinds of rows in the air as on the table
@@ -410,7 +438,10 @@ these boundaries a further $0.025$\,m inward, the margin of \ac{DPCC}.
   \caption[The constraint sets of the quadrotor scenes]{The constraint set of each quadrotor scene, seen
   from above, in the same terms as \autoref{fig:constraints-avoiding}: halfspaces and circular keep-out
   regions. All three panels are drawn alike. The obstacle itself is the solid line or the red
-  disk --- a wall, the slide of UAV-corridor, or a pillar. Grey band: what the vehicle radius of
+  disk --- a wall, the slide of UAV-corridor, or a pillar. On UAV-pillars the two are not the same size:
+  the small dark core is the pillar the simulator contains, $0.12$\,m, and the pale red disk around it is
+  the $0.35$\,m keep-out region the projection enforces at test time, which is what closes the centre
+  channel. Grey band: what the vehicle radius of
   $0.31$\,m adds around it, which is the boundary the planned position must keep clear. Dashed: the tightened boundary, a further $0.025$\,m inward. The faint
   wash beyond a wall is the rest of the halfspace it excludes; a wall constrains only the span of $x$ over
   which it exists, which is why that wash stops short of the panel edge. What is left white in each panel
@@ -520,14 +551,29 @@ offsets; \texttt{SCENE\_MAX\_CONTACT\_FRACTION}; \texttt{Z\_FLOOR\_MARGIN}); \te
 (\texttt{DATASET\_HZ}); \texttt{quadrotor\_modified.xml} (timestep).}
 
 Where these demonstrations differ from the two manipulation datasets is that they were generated against
-the obstacles they fly among, and \autoref{fig:expert-uav} shows what that buys. On UAV-pillars all four
-demonstrated routes and on UAV-s-curve the single route satisfy the constraint set the projection later
-enforces, tightening included: the generator threads the passages the scene already contains, so nothing
-in the data has to be corrected. UAV-corridor is the exception, and it is the same exception the
-obstacle-avoidance benchmark is built on. The three lanes clear both walls, but every one of them crosses
-the slide, by $0.24$, $0.36$ and $0.47$\,m for the left, centre and right lane --- because the slide is
-introduced at test time and did not exist when the demonstrations were flown. The scene in which the
-constraint is new to the data is exactly the scene in which the projection has something to do.
+the obstacles they fly among, and \autoref{fig:expert-uav} shows what follows from it. On UAV-s-curve the
+single route satisfies the constraint set the projection later enforces, tightening included: the
+generator threads a passage the scene already contains, so nothing in the data has to be corrected. The
+projection is then asked to repair a plan that was never broken, which is why that scene can expose a
+limit of the tracking controller but cannot order the projection methods.
+
+UAV-corridor is built the other way, and it is the way the obstacle-avoidance benchmark is built. The
+three lanes clear both walls, but every one of them crosses the slide, by $0.24$, $0.36$ and $0.47$\,m
+for the left, centre and right lane --- because the slide is introduced at test time and did not exist
+when the demonstrations were flown. The scene in which the constraint is new to the data is exactly the
+scene in which the projection has something to do.
+
+UAV-pillars was originally the first kind and is being rebuilt into the second. Its demonstrated channels
+lie at $|y|=1.11$\,m because the generator derived them from the pillar radius, the rotor reach and a
+safety margin, and the constraint set it was first evaluated against enforced the same clearance --- so
+all four routes satisfied it and the projection had nothing to repair. The obstacles are therefore
+enlarged at test time, from the $0.12$\,m pillar the simulator contains to a keep-out radius of
+$0.35$\,m, exactly as the slide and the halfspaces are introduced after the fact in the other two
+benchmarks. \autoref{fig:expert-uav} is drawn against that enlarged set: all four demonstrated routes now
+cross it, each by $0.15$\,m and on more than a hundred samples of its length, and the centre channel
+closes, so a plan that reaches the goal without violating has to leave the demonstrated route. The scene
+is re-evaluated under that constraint and reports no result in this draft
+(\autoref{sec:res:uav}).
 
 \begin{figure}[htpb]
   \centering
@@ -536,11 +582,15 @@ constraint is new to the data is exactly the scene in which the projection has s
   demonstrated route, over the constraint set of \autoref{fig:constraints-uav}: obstacles inflated by the
   vehicle radius, the tightened boundary dashed. One path per passage class of \autoref{tab:uav-demos}
   --- three lanes on UAV-corridor, the four pillar sequences, the single route of UAV-s-curve. Green:
-  the path satisfies the constraints; red: it crosses them. On each route the vehicle is drawn to scale at
+  the path satisfies the constraints; red: it crosses them. The pillars panel is drawn against the
+  enlarged test-time keep-out radius of $0.35$\,m and not against the $0.12$\,m pillar the simulator
+  contains, which is the constraint set the scene is being re-evaluated under: every demonstrated route
+  crosses it, by $0.15$\,m. On each route the vehicle is drawn to scale at
   its tightest moment --- the four rotor disks and the body of \autoref{fig:x2-dimensions} inside the
   $0.31$\,m disk the projection inflates every obstacle by --- because the quadrotor collides with its body
-  and not with its centre line: on UAV-corridor that body sits inside the slide, and on the other two scenes
-  it passes clear. The corridor paths cross the slide, which is added at test time. These are the paths the
+  and not with its centre line: on UAV-corridor that body sits inside the slide, on UAV-pillars it sits
+  inside the enlarged keep-out region, and on UAV-s-curve it passes clear. The corridor paths cross the slide and the pillar routes cross the enlarged keep-out regions; both
+  constraints are added at test time. These are the paths the
   demonstrations track, drawn from the generator itself; altitude does not enter because every constraint
   here is in the horizontal plane.}
   \label{fig:expert-uav}
@@ -899,7 +949,6 @@ demonstration). Endpoint-projection results on obstacle avoidance at the budget 
       & 10 contexts $\times$ 1 episode; the diffusion model 3 episodes per context
       & the ten contexts, compared context by context \\
     UAV-corridor & 6 & 12 flights, four on each of the routes L, C and R & the twelve flights \\
-    UAV-pillars & 6 & 10 flights & the ten flights \\
     UAV-s-curve & 6 & 10 flights & the ten flights \\
     \bottomrule
   \end{tabularx}
@@ -938,11 +987,6 @@ moves with the seed is reported with the results themselves (\autoref{sec:res:av
 
 \dataref{DA\_20260819 --- baseline at 10 against 100 episodes per geometry}
 
-\provisional{At the protocol of \ac{DPCC}, analytic average-velocity matching is evaluated at one and two
-network evaluations and instantaneous-velocity matching at twenty; the instantaneous-velocity rows at one and
-two evaluations, and the consistency-interpolated rows, are pending
-(\autoref{tab:avoiding-dpcc-protocol}).}
-
 The instantaneous-velocity-matching results were produced by the sampler inherited from the baseline, which
 draws the initial noise at half the unit scale while instantaneous-velocity matching was trained at unit
 scale (\autoref{sec:method:engine}).
@@ -964,7 +1008,7 @@ initial box and target position, \texttt{DA\_in\_Paper/analysis/va\_results.py}.
 
 The three scenes are evaluated and reported separately, never pooled: UAV-corridor constrains the commanded
 position in addition to the measured one and releases the action box, so its projection configuration is not
-the one used on UAV-pillars and UAV-s-curve. Every flight is tracked by the cascaded geometric controller
+the one used on the other two scenes. Every flight is tracked by the cascaded geometric controller
 with the brake-to-rest velocity setpoint of \eqref{eq:method:dep:vdes}; the one exception is the controller
 comparison of \autoref{sec:res:uav:controller}, which replaces the controller by MuJoCo MPC and says so.
 \srcnote{\texttt{Gen15/U16/DA\_20260914\_corridor\_v2\_paper\_full.md} \S1
@@ -974,3 +1018,31 @@ comparison of \autoref{sec:res:uav:controller}, which replaces the controller by
 \texttt{pillars\_hg} and 880 of the 889 rows on \texttt{s\_curve\_hg} are \texttt{pid\_stopgo}, the other 9
 \texttt{mjpc}; \texttt{pid\_stopgo} sets \texttt{v\_des} $=0$ at each setpoint,
 \texttt{eval\_mix\_uav.py:1598, 1716--1720}.}
+
+\subsection{Guiding Steps of Endpoint Projection}\label{sec:setup:protocol:guiding}
+
+One evaluation parameter decides whether a configuration can carry a statement about endpoint projection at
+all, so it is settled here rather than beside the results. Endpoint projection acts on the sampling steps
+its activation threshold $\eta$ selects, and of those the terminal step is not a guiding one: there the
+predicted endpoint is the finished sample and no later step remains for the network to react to, so what
+runs is projection applied to a finished plan. The number that remains is the guiding step count
+$n\sidx{guide}(\nfe,\eta)$ of \eqref{eq:method:degen:ngen}, derived in \autoref{sec:method:degenerate}. It
+depends on the step budget and the threshold together, so two configurations at the same budget can differ
+in it.
+
+Three rules follow, and they hold for every result in \autoref{ch:results}.
+
+\begin{itemize}
+  \item A configuration with $n\sidx{guide}=0$ is reported separately and never averaged with
+    configurations that have guiding steps: endpoint and per-step projection compute the same plan there,
+    so a difference between them at that setting would be noise and not a property of the method.
+  \item The count is not assumed. The evaluation records how many programs the projection solved per plan,
+    and that number is compared against the prediction before a result is reported.
+  \item The threshold is stated with every projected result that departs from the default of
+    \autoref{tab:eval}. The endpoint-projection results on D3IL-avoiding at the budget floor use
+    $\eta=1.0$, and those on D3IL-aligning $\eta=0.2$ at $\nfe=20$ and $\eta=0.4$ at $\nfe=10$, which give
+    three guiding steps at both budgets.
+\end{itemize}
+
+Which configurations this excludes, and how closely the recorded program counts follow the prediction, is
+reported with the results (\autoref{sec:res:constraints:degenerate}).

@@ -114,11 +114,21 @@ UAV_CONSTRAINTS = {
          ],
          'disks': [{'c': (-2.0, -1.0), 'r': 0.05}, {'c': (2.0, -1.0), 'r': 0.05},
                    {'c': (-2.0, 1.0), 'r': 0.05}, {'c': (2.0, 1.0), 'r': 0.05}]},
+        # [2026-09-19] UAV-pillars is drawn at the ENLARGED test-time radius of `pillars_xl`
+        # (config/uav_projection.yaml, Gen15 U17: radius 0.35 on all six sphere_outside rows),
+        # not at the 0.12 of `pillars_hg`. `pillars_hg` enforced exactly the clearance its own
+        # demonstration generator was built to keep, so the demonstrated routes satisfied it and
+        # the scene measured nothing; it is withdrawn from the thesis and being re-evaluated at
+        # 0.35. `r_phys` is the pillar the simulator actually contains, which does NOT change --
+        # the MJCF geometry stays at 0.12 so the demonstrations and checkpoints remain valid, and
+        # a panel therefore shows a small physical pillar inside a larger enforced keep-out disk.
+        # That difference is the point of the redesign and the drawing carries it.
         {'name': 'UAV-pillars', 'title': 'UAV-pillars',
-         'sub': 'six pillars in two rows',
-         'xlim': (-3.0, 3.0), 'ylim': (-1.5, 1.5),
+         'sub': 'six pillars, enlarged at test time',
+         'xlim': (-3.0, 3.0), 'ylim': (-1.9, 1.9),
          'halfspaces': [],
-         'disks': [{'c': (x, y), 'r': 0.12} for x in (-2.0, 0.0, 2.0) for y in (-0.6, 0.6)]},
+         'disks': [{'c': (x, y), 'r': 0.35, 'r_phys': 0.12}
+                   for x in (-2.0, 0.0, 2.0) for y in (-0.6, 0.6)]},
         {'name': 'UAV-s-curve', 'title': 'UAV-s-curve',
          'sub': 'two offset passages',
          'xlim': (-3.4, 3.4), 'ylim': (-1.7, 1.7),
@@ -169,6 +179,35 @@ ALIGNING_CONSTRAINTS = {
     'disk': {'c': (0.50, 0.00), 'r': 0.06},
     'tightening': 0.03,
 }
+
+# The ten evaluation contexts of the alignment task (v3.42, Fig 5.5).
+# A context is one (initial box pose, target pose) draw; the evaluation replays this
+# enumerated set, so these are the exact ten every §6.2 number is averaged over.
+# Recovered from the corpus of record rather than re-read from the pickle, so that the
+# figure and the results cannot disagree: distinct
+# (context_box_init_xy_*, context_target_xy_*) tuples of the mf_K20 cell of
+# analysis_results_checkpoint/15-09/batch_va2_20260915_100754/per_rollout_detail.csv.
+# Their mean box-to-target distance is 0.4530 m, which is the figure §6.2 quotes.
+# Draw ranges are the environment's own: gym_aligning/envs/aligning.py:62-67.
+ALIGNING_CONTEXT_DRAW = {
+    'box':    {'x': (0.40, 0.60), 'y': (-0.25, -0.10), 'yaw': (-90.0, 90.0)},
+    'target': {'x': (0.40, 0.60), 'y': (0.20, 0.35),   'yaw': (-90.0, 90.0)},
+}
+ALIGNING_CONTEXTS = [
+    {'box': (0.4012, -0.2271), 'box_yaw': 77.92, 'target': (0.4599, 0.2034), 'target_yaw': -84.81},
+    {'box': (0.4540, -0.1901), 'box_yaw': -41.80, 'target': (0.5260, 0.2785), 'target_yaw': -53.45},
+    {'box': (0.4827, -0.2017), 'box_yaw': -6.43, 'target': (0.4327, 0.2056), 'target_yaw': 86.50},
+    {'box': (0.4987, -0.1443), 'box_yaw': 82.14, 'target': (0.5570, 0.2582), 'target_yaw': -11.05},
+    {'box': (0.5036, -0.2487), 'box_yaw': -60.36, 'target': (0.4275, 0.2680), 'target_yaw': -67.62},
+    {'box': (0.5151, -0.2321), 'box_yaw': 79.35, 'target': (0.5773, 0.2227), 'target_yaw': 58.54},
+    {'box': (0.5339, -0.1328), 'box_yaw': 73.50, 'target': (0.5925, 0.3158), 'target_yaw': -31.86},
+    {'box': (0.5676, -0.1968), 'box_yaw': -5.53, 'target': (0.4852, 0.2803), 'target_yaw': 5.76},
+    {'box': (0.5848, -0.1834), 'box_yaw': -37.37, 'target': (0.4773, 0.2173), 'target_yaw': -21.13},
+    {'box': (0.5859, -0.1598), 'box_yaw': -89.34, 'target': (0.5632, 0.3109), 'target_yaw': -25.28},
+]
+# The one context drawn with real footprints rather than as a dot, so the reader sees the
+# scale of the object the dots stand for. Index 8 has the box and target well apart in x.
+ALIGNING_CONTEXT_SHOWN = 8
 
 D3IL_SCENES = {
     'avoiding': {
@@ -418,6 +457,52 @@ VENDORED = {
         'fig6c_plans_mfunet_K2_seed6_both-hard.png',
         'Report_20260819_MF_UNet fig 6c; same protocol, K=2. '
         'Ours; verified absent from aux_repo.'),
+
+    # The four panels that completed fig:raw-plans on 2026-09-19. They were NOT
+    # re-run: REQUEST_20260916's own "CORRECTION 2026-09-18 (v3.39)" found that the
+    # August 20-trials evaluations had already written them, under the run tags
+    # '*_msg20trials' (FM) and '*_msgafon02_s6' (CI-MeanFM). Staged off the cluster
+    # by Slurm_Codes/temp_bash/fetch_20260919_v3_figure_artefacts_wave2.sh and
+    # copied here under the names Report_20260903_AF_UNet section 8 already reserved,
+    # so the source is committed like the other three and the gitignored drop is not
+    # in the build path. Ledger: analysis_results_checkpoint/
+    # LEDGER_20260918_v3_figure_artefact_fetch.md, 2026-09-19 section.
+    'fig_raw_plans_fm_K1': ('demo',
+        'Data_Analysis/DA_Result_Curated_MD/Report_20260903_AF_UNet/'
+        'fig8e_plans_fm_K1_seed6.png',
+        'Report_20260903_AF_UNet fig 8e; per-episode MPC diagnostics, no projection, '
+        'seed 6, both-hard, K=1, instantaneous-velocity matching (aw10). '
+        'Ours; verified absent from aux_repo.'),
+    'fig_raw_plans_fm_K2': ('demo',
+        'Data_Analysis/DA_Result_Curated_MD/Report_20260903_AF_UNet/'
+        'fig8f_plans_fm_K2_seed6.png',
+        'Report_20260903_AF_UNet fig 8f; same protocol, K=2. '
+        'Ours; verified absent from aux_repo.'),
+    'fig_raw_plans_af_K1': ('demo',
+        'Data_Analysis/DA_Result_Curated_MD/Report_20260903_AF_UNet/'
+        'fig8a_plans_af_K1_seed6.png',
+        'Report_20260903_AF_UNet fig 8a; same protocol, K=1, consistency-interpolated '
+        'average-velocity matching (U-Net, alpha_end 0.2). '
+        'Ours; verified absent from aux_repo.'),
+    'fig_raw_plans_af_K2': ('demo',
+        'Data_Analysis/DA_Result_Curated_MD/Report_20260903_AF_UNet/'
+        'fig8b_plans_af_K2_seed6.png',
+        'Report_20260903_AF_UNet fig 8b; same protocol, K=2. '
+        'Ours; verified absent from aux_repo.'),
+    # The eighth and last panel of fig:raw-plans, landed 2026-09-19. It is the only
+    # one of the eight that was a RUN rather than a fetch: no K=2 diffusion checkpoint
+    # existed anywhere, because for the diffusion engine K is fixed when the noise
+    # schedule is discretised at training (config/avoiding-d3il.py:1074 puts K in
+    # diffusion_loadpath). So one was trained -- job 25965, 2 h 41 m on an A5000 -- and
+    # evaluated by 25966, both on 2026-09-19. Staged by
+    # Slurm_Codes/temp_bash/fetch_20260919_fig63_diffusion_K2.sh.
+    # Ledger R24; data_status/PENDING_20260919_fig63_diffusion_K2_panel.md.
+    'fig_raw_plans_diffusion_K2': ('demo',
+        'Data_Analysis/DA_Result_Curated_MD/Report_20260903_AF_UNet/'
+        'fig8h_plans_dpcc_K2_seed6.png',
+        'Report_20260903_AF_UNet fig 8h; per-episode MPC diagnostics, no projection, '
+        'seed 6, both-hard, diffusion baseline TRAINED AND RUN at K=2 (aw10). '
+        'Ours; verified absent from aux_repo.'),
     'fig_raw_goal_reached_K1': ('da',
         'Data_Analysis/DA_Result_Curated_MD/Report_20260903_AF_UNet/fig7_raw_diffuser_K1.svg',
         'Report_20260903_AF_UNet fig 7; goal reached without projection at K=1, '
@@ -471,10 +556,25 @@ def vendored_path(key):
 #
 # The cut is declared here, not done by hand, so that it is reproducible and so
 # that re-copying the source cannot quietly restore the dashboard.
-#   name -> ((left, top, right, bottom) in source pixels, what the box keeps)
+#   name -> ((left, top, right, bottom) in source pixels, what the box keeps
+#            [, (width, height) to resize the cut to])
 # Boxes were read off the white gutters between panels, not guessed: the plans
 # panel spans x 2349-2702 with its y tick labels at 2326-2348, and the top row
 # spans y 98-476 including its x tick labels.
+#
+# THE TWO DASHBOARD LAYOUTS. The 08-19 sources are 3000x1000 -- two episodes, the
+# `n_trials: 2` default. The four added on 09-19 come from the 20-trials campaign
+# and are 3000x5000: ten episodes, same six columns at the same x, same 500 px row
+# pitch, but a title band on top that shifts row 1 down and squeezes its axes.
+# Measured rather than assumed -- the plot frame sits at
+#   08-19 sources : x 2368-2700, y 620-970   (332 x 350 px)
+#   09-19 sources : x 2368-2700, y 600-926   (332 x 326 px)
+# Same width, 24 px shorter, over the identical data range (x 0.2-0.8, y -0.3-0.4).
+# Dropped into the 2x4 matrix untreated, the four new panels would sit 7% flatter
+# than the three old ones and their obstacles would read as ellipses beside circles.
+# So the new entries carry a resize: the box is chosen so that scaling the cut to
+# 403x400 lands the frame on exactly (56, 28)-(388, 378), where the 08-19 panels
+# already have it. All seven panels then share one canvas and one data aspect.
 #
 # Applied by prep/crop_vendored.py (needs PIL -> python3.14); make_figs.py copies
 # the prepared file and REFUSES to fall back to the uncut source.
@@ -485,6 +585,24 @@ VENDORED_CROP = {
         'top row, last column: every plan of the episode overlaid on the scene'),
     'fig_raw_plans_meanflow_K2': ((2312, 92, 2715, 492),
         'top row, last column: every plan of the episode overlaid on the scene'),
+    # 2026-09-19 run, n_trials 2 -> the same 3000x1000 layout as the three 08-19
+    # panels above, so it takes their box and needs NO resize. Checked against
+    # fig6b (diffusion K1) before vendoring: identical axes and frame position.
+    'fig_raw_plans_diffusion_K2': ((2312, 92, 2715, 492),
+        'top row, last column: every plan of the episode overlaid on the scene'),
+    # 20-trials layout: episode 1 of ten, then stretched onto the 08-19 canvas.
+    'fig_raw_plans_fm_K1': ((2312, 574, 2715, 947),
+        'episode 1, last column: every plan of the episode overlaid on the scene',
+        (403, 400)),
+    'fig_raw_plans_fm_K2': ((2312, 574, 2715, 947),
+        'episode 1, last column: every plan of the episode overlaid on the scene',
+        (403, 400)),
+    'fig_raw_plans_af_K1': ((2312, 574, 2715, 947),
+        'episode 1, last column: every plan of the episode overlaid on the scene',
+        (403, 400)),
+    'fig_raw_plans_af_K2': ((2312, 574, 2715, 947),
+        'episode 1, last column: every plan of the episode overlaid on the scene',
+        (403, 400)),
 }
 
 # Where prep/crop_vendored.py writes. Committed, like data/avoiding_scene.json, so
@@ -508,19 +626,20 @@ def prepared_path(key):
 # \includegraphics{<name>}, remove the entry here, and export.
 # Entry: name -> (group, where the draft asks for it, what it must show / how).
 PLANNED = {
-    # The five missing cells of the 2x4 matrix fig:raw-plans (analytic average-velocity K1/K2 and
-    # diffusion K1 exist).
-    # All need saved plans from a cluster evaluation: plotting/REQUEST_20260916_cluster_fm_plan_panels.md.
-    'fig_raw_plans_fm_K1': ('demo', 'v3 sec:res:avoiding:raw (fig:raw-plans), instantaneous-velocity matching K=1',
-        'Plan fan without projection, seed 6, both-hard. Cluster run: see the request file.'),
-    'fig_raw_plans_fm_K2': ('demo', 'v3 sec:res:avoiding:raw (fig:raw-plans), instantaneous-velocity matching K=2',
-        'As above at K=2.'),
-    'fig_raw_plans_diffusion_K2': ('demo', 'v3 sec:res:avoiding:raw (fig:raw-plans), diffusion K=2',
-        'As above for the diffusion model at K=2; the K=1 panel came from a model trained at K=1.'),
-    'fig_raw_plans_af_K1': ('demo', 'v3 sec:res:avoiding:raw (fig:raw-plans), consistency-interpolated average-velocity matching K=1',
-        'As above for consistency-interpolated average-velocity matching (U-Net, alpha_end 0.2) at K=1; Report_20260903 section 8 panel 8a.'),
-    'fig_raw_plans_af_K2': ('demo', 'v3 sec:res:avoiding:raw (fig:raw-plans), consistency-interpolated average-velocity matching K=2',
-        'As above at K=2; report panel 8b.'),
+    # EMPTY as of 2026-09-19 -- every figure the drafts ask for now exists in the store.
+    # The last entry to leave was fig_raw_plans_diffusion_K2, the eighth panel of
+    # fig:raw-plans; it is in VENDORED above. It was the only one of the eight that
+    # needed a RUN: for the diffusion engine K is fixed at training
+    # (config/avoiding-d3il.py:1074 puts K in diffusion_loadpath), so a K=2 checkpoint
+    # had to be trained -- jobs 25965 + 25966, 2026-09-19.
+    #
+    # NOTE for whoever reads the batch CSVs next: a folder named
+    # '...Dmodels.diffusion.GaussianDiffusion...' under a flow_matching_v3_* prefix is a
+    # FLOW model under its pre-2026-05-26 class name (commit cac7cc6a renamed
+    # GaussianDiffusion -> FlowMatchingODE). The diffusion baseline is
+    # '...Dmodels.GaussianDiffusion...' under plans/diffusion/. Reading the first as the
+    # second is what made the 09-19 audit believe this panel was an evaluation away;
+    # job 25964 died proving otherwise.
 }
 
 

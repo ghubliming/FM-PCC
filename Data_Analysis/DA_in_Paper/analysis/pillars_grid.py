@@ -3,6 +3,15 @@
 
     python3.14 analysis/pillars_grid.py
 
+🔴 WITHHELD SINCE 2026-09-18 — this scene is out of the results. `pillars_hg` enforces the
+constraint its own demonstration generator was built to satisfy (the demonstrated routes are
+already 8 cm inside the feasible set), so its projected configurations measure how little of an
+ALREADY-FEASIBLE plan each method disturbs, not whether a method can repair an infeasible one.
+The script still runs -- it is the tooling the enlarged geometry will be read with -- but nothing
+it prints may enter the draft until `pillars_xl` / `pillars_xxl` (Gen15 U17) have been evaluated.
+    logs_in_develop/Writing/Working_Space/data_status/PENDING_20260918_pillars_geometry_redesign.md
+    Data_Analysis/DA_in_Paper/analysis/DA_20260919_wave_1718_corridor_endpoint_and_scurve.md section 4
+
 Why this exists (v3.36): `tab:uav-pillars` used to report one budget, $\\nfe=5$, and one mean
 over eleven configurations of two different kinds. That mean put instantaneous-velocity
 matching ahead of analytic average-velocity matching, which is not what the per-step
@@ -131,6 +140,7 @@ def head_to_head(cells):
 
 
 def main():
+    print("\n*** WITHHELD: pillars_hg is out of the results (see the module docstring). ***\n")
     _axes, cells = load()
     block(cells, PER_STEP, 'per-step projection (every evaluated budget)')
     block(cells, ENDPOINT, 'endpoint projection (nfe=5 only)')

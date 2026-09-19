@@ -268,7 +268,16 @@ def _uav_constraint_panel(scn, w, first, r_drone, tight):
         cx, cy = dk['c']
         f.circle(cx, cy, dk['r'] + r_drone, fill='#5d6d7e', opacity=0.18, stroke='#34495e', w=1.2)
         f.circle(cx, cy, dk['r'] + r_drone + tight, stroke='#34495e', w=1.4, dash='7,5')
-        f.circle(cx, cy, dk['r'], fill='#c0392b', opacity=0.9, stroke='#7b241c', w=1.0)
+        # A disk whose ENFORCED radius differs from the physical obstacle (UAV-pillars at
+        # `pillars_xl`) is drawn as both: the enforced keep-out in red, and the pillar the
+        # simulator contains as a solid core inside it. Anything else would tell the reader the
+        # obstacle grew, when what grew is the constraint.
+        r_phys = dk.get('r_phys')
+        if r_phys is None:
+            f.circle(cx, cy, dk['r'], fill='#c0392b', opacity=0.9, stroke='#7b241c', w=1.0)
+        else:
+            f.circle(cx, cy, dk['r'], fill='#c0392b', opacity=0.28, stroke='#7b241c', w=1.4)
+            f.circle(cx, cy, r_phys, fill='#7b241c', opacity=0.95, stroke='#7b241c', w=1.0)
     f.end_clip()
     return f
 
@@ -409,6 +418,121 @@ def fig_constraints_aligning(outdir):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+#  The ten alignment contexts (v3.42): what "the context is drawn at random"
+#  actually looks like. The prose gives the draw ranges as intervals; a reader
+#  cannot tell from intervals whether ten draws cover them or cluster. This
+#  draws the ten that every section 6.2 number is averaged over.
+# ═══════════════════════════════════════════════════════════════════════════
+def fig_aligning_contexts(outdir):
+    """The ten evaluated contexts: box start and target, as dots, over their draw regions.
+
+    One context is drawn with the real 0.10 m footprints at their recorded yaw, so the
+    dots are anchored to the object they stand for -- the box is of the same order as the
+    keep-out disk, and a figure of dots alone would say the opposite.
+    """
+    from svg.fmpcc_svg import clip_halfplane
+    C = getattr(S, 'ALIGNING_CONSTRAINTS', None)
+    ctxs = getattr(S, 'ALIGNING_CONTEXTS', None)
+    draw = getattr(S, 'ALIGNING_CONTEXT_DRAW', None)
+    d = S.D3IL_SCENES.get('aligning')
+    if not C or not ctxs or not draw or not d:
+        return None
+    fs = 1.35
+    t = C['tightening']
+    (x0, x1), (y0, y1) = C['extent']['x'], C['extent']['y']
+    ml, mr, mt, mb = int(46 * fs), int(14 * fs), int(50 * fs), int(46 * fs)
+    w = 620
+    pw = w - ml - mr
+    ph = pw * (y1 - y0) / (x1 - x0)
+    f = Fig(w, int(round(ph + mt + mb)), ml=ml, mr=mr, mt=mt, mb=mb, font=fs)
+    f.axes((x0, x1), (y0, y1))
+    f.frame([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8], [-0.4, -0.2, 0.0, 0.2, 0.4],
+            'x [m]', 'y [m]', 'Alignment: the ten evaluated contexts',
+            'each episode is one draw of (box start, target) from the two shaded regions',
+            xfmt=lambda v: f'{v:g}', yfmt=lambda v: f'{v:g}')
+    f.clip_to_box()
+
+    # The constraint set, drawn faintly: it is the same plane, and the keep-out disk sits
+    # between every start and every target, which is the point of the task.
+    hs = C['halfspace']
+    (ax_, ay), (bx, by) = hs['p0'], hs['p1']
+    m = (by - ay) / (bx - ax_)
+    b = ay - m * ax_
+    box = [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
+    poly = clip_halfplane(box, lambda X, Y: Y - (m * X + b))
+    if len(poly) > 2:
+        f.polygon(poly, '#5d6d7e', opacity=0.16)
+    f.dline([(x, m * x + b) for x in (x0 - 0.05, x1 + 0.05)], '#34495e', w=1.4)
+    dk = C['disk']
+    dcx, dcy = dk['c']
+    f.circle(dcx, dcy, dk['r'], fill='#5d6d7e', opacity=0.16, stroke='#34495e', w=1.2)
+
+    # The two draw regions, as the environment defines them.
+    for kind, colour in (('box', '#6b5a32'), ('target', '#8a7a55')):
+        rx, ry = draw[kind]['x'], draw[kind]['y']
+        f.polygon([(rx[0], ry[0]), (rx[1], ry[0]), (rx[1], ry[1]), (rx[0], ry[1])],
+                  '#cba872' if kind == 'box' else '#d7cbb4', opacity=0.30,
+                  stroke=colour, w=1.3, dash='6,4')
+
+    hb, hr = d['box_half'], d['box_rim_half']
+
+    def footprint(px, py, yaw_deg, half):
+        a_ = math.radians(yaw_deg)
+        ca, sa = math.cos(a_), math.sin(a_)
+        return [(px + dx * ca - dy * sa, py + dx * sa + dy * ca)
+                for dx, dy in ((-half, -half), (half, -half), (half, half), (-half, half))]
+
+    shown = getattr(S, 'ALIGNING_CONTEXT_SHOWN', 0) % len(ctxs)
+
+    # Every context as a faint start-to-target link, so the reader sees that the ten
+    # pushes are ten different pushes and not one route repeated.
+    for c in ctxs:
+        f.dline([c['box'], c['target']], '#8a7a55', w=1.0, dash='3,4')
+
+    for i, c in enumerate(ctxs):
+        for kind, pos, yaw in (('target', c['target'], c['target_yaw']),
+                               ('box', c['box'], c['box_yaw'])):
+            px, py = pos
+            fill = '#d7cbb4' if kind == 'target' else '#cba872'
+            edge = '#8a7a55' if kind == 'target' else '#6b5a32'
+            if i == shown:
+                # the one context drawn as the object itself, at its recorded yaw
+                f.polygon(footprint(px, py, yaw, hr), fill,
+                          opacity=0.35 if kind == 'target' else 0.75, stroke=edge, w=1.4)
+                f.polygon(footprint(px, py, yaw, hb), fill,
+                          opacity=0.55 if kind == 'target' else 0.95, stroke=edge, w=1.6)
+            f.marker(f.X(px), f.Y(py), 'o', edge, filled=(kind == 'box'), r=3.4, ew=1.4)
+
+    sx, sy = d['start'][0], d['start'][1]
+    f.marker(f.X(sx), f.Y(sy), 'o', '#1b4f72', r=7.0)
+    f.text(f.X(sx) + 11, f.Y(sy) + 5, 'end effector', 11, '#111', bold=True)
+
+    c = ctxs[shown]
+    f.text(f.X(c['box'][0]), f.Y(c['box'][1] - hr * 1.5) + 15,
+           'drawn to scale', 10, '#111', bold=True, anchor='middle')
+    f.text(f.X(c['box'][0]), f.Y(c['box'][1] - hr * 1.5) + 28,
+           '0.10 m square', 10, '#555', anchor='middle')
+    f.end_clip()
+
+    lx, ly = f.X(0.215), f.Y(0.41)
+    f.marker(lx, ly, 'o', '#6b5a32', filled=True, r=3.4, ew=1.4)
+    f.text(lx + 14, ly + 4, 'box at the start, one per context', 12, '#111')
+    ly2 = f.Y(0.355)
+    f.marker(lx, ly2, 'o', '#8a7a55', filled=False, r=3.4, ew=1.4)
+    f.text(lx + 14, ly2 + 4, 'its target', 12, '#111')
+    ly3 = f.Y(0.30)
+    f.poly([(lx - 8, ly3), (lx + 9, ly3)], '#6b5a32', dash='6,4', w=2.0)
+    f.text(lx + 17, ly3 + 4, 'region the pose is drawn from', 12, '#111')
+
+    path = f.save(os.path.join(outdir, 'fig_aligning_contexts.svg'))
+    return path, (f'{len(ctxs)} contexts from sources.ALIGNING_CONTEXTS (recovered from '
+                  'analysis_results_checkpoint/15-09/batch_va2_20260915_100754, mf_K20 cell; '
+                  'mean box-to-target distance 0.4530 m) | draw ranges '
+                  'gym_aligning/envs/aligning.py:62-67 | constraint set '
+                  'sources.ALIGNING_CONSTRAINTS | footprint sizes sources.D3IL_SCENES[aligning]')
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 #  The quadrotor's size (v3.33): the numbers of tab:platforms drawn to scale,
 #  with the inflation radius the projection adds around every obstacle.
 # ═══════════════════════════════════════════════════════════════════════════
@@ -484,5 +608,6 @@ ALL = [
     ('fig_scene_uav_scurve', 'env', fig_scene_uav_scurve),
     ('fig_constraints_uav', 'env', fig_constraints_uav),
     ('fig_constraints_aligning', 'env', fig_constraints_aligning),
+    ('fig_aligning_contexts', 'env', fig_aligning_contexts),
     ('fig_platform_x2_dimensions', 'env', fig_platform_x2_dimensions),
 ]

@@ -17,6 +17,108 @@ is sourced from · what it left open.
 
 ---
 
+## v3.42 — 2026-09-19 · **KEY UPDATE** — the D3IL-avoiding tables are locked; §6.1 restructured; Fig 6.3 complete; the alignment contexts figure and the full projector studies → [`changelogs/v3.42_20260919_KEY_UPDATE_avoiding_tables_locked.md`](changelogs/v3.42_20260919_KEY_UPDATE_avoiding_tables_locked.md)
+
+- 🔴 **Erratum.** The "Diffusion, $\nfe=5$" row of `tab:avoiding-dpcc-protocol` was **not the diffusion
+  baseline**: it reproduces from `plans/flow_matching_v3_ode_selectable/…H8_K5_Mmidpoint_Dmodels.diffusion.GaussianDiffusion`,
+  the **flow** model under its pre-26-May class name (`cac7cc6a` renamed it `FlowMatchingODE`), midpoint
+  solver, action weight 1. Row deleted. Enumerating `/plans/diffusion/` gives the baseline at $\nfe=1$,
+  $10$ and $20$ only; those three cells reproduce the published numbers exactly. `fig:k-ladder` and the
+  §6.1.1.4 prose were already right and are unaffected.
+- **Both avoiding tables locked** to one model $\times$ budget set: MeanFM 1, 2 · CI-MeanFM 1, 2 · FM 1,
+  2, 20 · Diffusion 1, 10, 20. FM $\nfe=5$ is seed 6 only and $\nfe=10$ does not exist, so both are
+  dropped; diffusion $\nfe=2$ exists at seed 6 only (jobs 25965/25966) and is **not tabled**. Missing
+  cells carry `\hole` blocks under each table, per the author's "mark as pending".
+  `tab:state-headline` cut to the same set: MeanFM 5/10/20 and FM 5 removed.
+- **`fig:raw-plans` is complete** — `\todofigure` → `\includegraphics{fig_raw_plans_diffusion_K2}`;
+  **`todofigure` is now 0**. Caption rewritten (eight panels from three campaigns; the two diffusion
+  panels are two trained checkpoints, which is the chapter's asymmetry in one picture). New paragraph
+  records that the $\nfe=2$ unprojected arm still scores 0.00 S&C with 20.5 violating steps — coherence,
+  not feasibility. Also fixed a pre-v3.41 mechanism sentence that survived the k-ladder correction here.
+- **§6.1 restructured.** §6.1.1 → "Generative Models under Per-Step Projection", stating that every
+  number in it is a full-pipeline result; new §6.1.2 "Plans before Projection" now holds
+  `Smoothness of the Plans` and the former `Plans before Projection` (renamed `The Plans Themselves`).
+  All labels unchanged.
+- §6.1.1 now names the field: **three flow-based models, two of them average-velocity** (MeanFM,
+  CI-MeanFM), plus the baseline, all on the same 4.0 M U-Net.
+- **`tab:seed-spread` gains CI-MeanFM** at $\nfe=1$: $1.000 \pm 0.000$, $60.4 \pm 0.9$ steps,
+  $18.2 \pm 0.3$ ms, seeds 6–10 — marked `$^{\ddagger}$` because its five seeds are at the **DPCC**
+  protocol, not the extended one.
+- **`tab:state-lowk`** rule column switched to `$r$`/`$c$`/`$t$`; the caption no longer re-defines them.
+- **Endpoint projection**: §6.1.3's closing paragraph now says directly that it is not needed here
+  because $\nfe=1$/$2$ already leave no shortfall to close, cites the guiding-step sections and the
+  2.45$\times$ identical-rollout run, and ends by naming where it *is* tested.
+- **Figs 6.1/6.2 needed no builder change** — `avoiding.py` already draws `KS = [1,2,5,10,20]` and the
+  baseline's `{1,10,20}`. Captions updated to name the budget set and to explain why the scatter carries
+  points the locked table does not. **No DA code touched this pass.**
+- New ledger entry: [`../data_status/PENDING_20260919_avoiding_tables_locked.md`](../data_status/PENDING_20260919_avoiding_tables_locked.md).
+- **Second pass, same changelog** — four further requests:
+  - **New figure `fig:aligning-contexts`** after Fig 5.4 in §5.2.2: the ten contexts the evaluation
+    replays, box start as a filled mark and target as a hollow one over the two draw regions, with **one
+    context drawn as the real 0.10 m footprints at their recorded yaw**. New builder in
+    `plotting/builders/scenes.py`; contexts recovered from the corpus of record and stored as
+    `sources.ALIGNING_CONTEXTS` — their mean distance is 0.4530 m, the figure §6.2 already quotes.
+  - **`tab:va-projection` gains its $\nfe=2$ block** (MeanFM, both projectors, all three rules).
+    **$\nfe=1$ does not exist on this task for any model.** Three caveats stated in the caption: 30
+    episodes not 10, no guiding step at threshold 0.5, and the interior-point rather than the
+    sequential-quadratic backend.
+  - **New §6.2.3.1 and `tab:va-projection-models`** — the full endpoint-vs-per-step study across the
+    models (CI-MeanFM at $\nfe=2$ and $\nfe=20$, FM at $\nfe=20$). Counted over all **18** matched
+    comparisons: endpoint projection ahead in **15**, per-step in **3**, every exception under temporal
+    consistency. Stated as "the better projector wherever it has a guiding step, consistently rather than
+    largely, at a comparable price" — not as a clean sweep, which the data does not support. Cost
+    reported both ways: 0.6–0.9× at $\nfe=10$/$20$, about 3× at $\nfe=2$.
+  - **§6.3.1.1** now says where the corridor's projector comparison lives and why per-step is held fixed
+    in that subsection.
+  - **New `tab:uav-scurve-projection`** — the six s-curve projection variants printed individually
+    instead of collapsed into zeros. Per-step projection is the worst arm on all three surviving
+    measures and costs **3610 ms per control step** at $\nfe=20$, twenty-one times the plan it repairs;
+    that is the justification, now written into the text, for the re-run giving it one selection rule
+    rather than three.
+- `tools/check.py` after both passes: 13 files, 5345 lines, 248 labels, 53 citations, 35 figures; hole
+  19, provisional 5, guard 14, **todofigure 0**. All mechanical checks pass. Not compiled.
+
+---
+
+## v3.41 — 2026-09-19 · new corpora of record; UAV-pillars deleted; `tab:avoiding-dpcc-protocol` complete; the guiding-step convention moves to Chapter 5 → [`changelogs/v3.41_20260919_new_corpora_pillars_removed_guiding_steps.md`](changelogs/v3.41_20260919_new_corpora_pillars_removed_guiding_steps.md)
+
+- **Corpora of record** move to `19-09-UAV-Pillars-Exclude/batch_avoiding_combined_20260919_132703` and
+  `batch_uav_20260919_111701`; every previously published number is reproduced exactly, so the batches add
+  rows and revise none. Alignment is unchanged.
+- **`tab:avoiding-dpcc-protocol` is complete**, the `\hole` removed: FM at $\nfe=1$ (`dpcc-c`) and
+  CI-MeanFM at $\nfe=1$ (`dpcc-t`) both hold S&C 1.000 in fewer control steps than the pinned baseline at
+  32.0× and 30.6× less compute per step — architecture-matched, and the only place in the thesis a
+  flow-based model is ahead of the baseline on every axis at once. CI-MeanFM now has five seeds at this
+  protocol, seed 6 only at the extended one.
+- **UAV-pillars is deleted from the draft**, not withheld: section, label, summary rows, projection
+  paragraph and figure all removed, Chapter 5 adjusted so the scene is introduced as one that yields no
+  result. The reason moves into the §6.3 opening. Text preserved at `v3/withheld/`.
+- **New `tab:uav-corridor-projection`** (endpoint projection under every rule; per-step still wins, endpoint
+  degrades with the budget, no $\nfe=1$ row is possible) and **new `tab:uav-scurve-aborts`** (the re-run is
+  all-zero because the vehicle inverts, on the unprojected plan too). `fig:uav-scurve-paths`'s caption
+  corrected: the drone flips, it does not stall.
+- **`fig:raw-plans` is seven of eight** — four downloaded panels drafted; the eighth is impossible, and the
+  caption says so.
+- **§6.1.2.1 keeps its label but loses its mathematics**: the equation was a duplicate of §4.10 and the
+  reporting convention now lives in new **§5.5.4**; the results section reports only the measured counts.
+- **Hotfix, same pass.** (a) **s-curve**: checked the prior analyses — the inversion is attitude-domain,
+  and the only gain presets that exist scale the *position* loop by $\pm20\,\%$ and cannot reach the
+  attitude loop, so it is a **velocity-setpoint** limit, not a gain-tuning one; **status quo claims kept**,
+  two sentences added to say which knob is implicated. The untried cheap test (`pid_const_v` on s-curve,
+  one env var) has never been run on that scene. (b) **`fig:expert-uav` and `fig:constraints-uav` redrawn
+  against `pillars_xl`** — enforced keep-out 0.35 m with the 0.12 m physical pillar inside it; the pillars
+  panel inverts from **4/4 clean to 0/4**, each route crossing by 0.15 m, and the centre channel closes.
+  Found while doing it: the `pillars_xl` **verification cell has already run** (`u7xlchk`) — unprojected
+  MeanFM at $\nfe=5$ scores 0.00 with ~51 violating steps against 0.90 on the old set, now reported in
+  §6.3. (c) **Fig 6.3's last panel needs a run, and "impossible" was too strong** — two plan routes differ
+  on whether $K$ is a training or a sampling choice; new `PENDING_20260919_fig63_diffusion_K2_panel.md`
+  (ledger R24) gives both options. (d) That uncovered a real error: `fig:k-ladder`'s diffusion budgets are
+  **three separately trained checkpoints**, not one model read at three step counts, and the draft
+  described the wrong experiment. Corrected in three places; the claim sharpens rather than weakens.
+- Checks: 13 files, 243 labels, 33 figures, all mechanical checks pass; 17 stale PNG companions
+  regenerated before export, and the two rebuilt scene figures checked by eye. Not compiled. Nothing
+  committed.
+
 ## v3.40 — 2026-09-18 · UAV-pillars withheld: the scene tests the constraint its own demonstrations were built to satisfy → [`changelogs/v3.40_20260918_pillars_withheld.md`](changelogs/v3.40_20260918_pillars_withheld.md)
 
 - The demonstrated channels are **derived from** the clearance the projection enforces (`trajectories.py:48`: `_Y_L = 0.6 - 0.12 - rotor reach - safety = -1.11`, against a required $|y|\ge1.03$). The plans are feasible before projection, which is why the scene could not order the models.

@@ -181,19 +181,173 @@ pillars are still `size="0.12 …"`, `pillars_xl` is **not** in `active_geo_vari
 
 Filled in from the submission output. `eval_k_sweep.sh` prints one child ID per K.
 
+Driver file on the cluster: `Slurm_Codes/temp_bash/Gen15_U17.sh` (renamed from
+`eval_20260919_u17_pillars_xl.sh` on copy). Each driver's child ID is printed in its own log,
+`Slurm_Codes/logs/<date>/<time>_eval_k_sweep_<driver>.log`.
+
 | grp | job | driver ID | child IDs | submitted | status |
 | :-- | :-- | :-- | :-- | :-- | :-- |
-| V | mf · K5 · diffuser | | | | ⬜ not yet submitted |
-| A | fm · K1,2 | | | | ⬜ |
-| A | mf · K1,2 | | | | ⬜ |
-| A | af · K1,2 | | | | ⬜ |
-| B | fm · K5 half 1 | | | | ⬜ |
-| B | mf · K5 half 1 | | | | ⬜ |
-| B | af · K5 half 1 | | | | ⬜ |
-| C | fm · K5 half 2 | | | | ⬜ |
-| C | mf · K5 half 2 | | | | ⬜ |
-| C | af · K5 half 2 | | | | ⬜ |
-| D | diffusion · K20 | | *(direct eval job, no children)* | | ⬜ |
+| V | mf · K5 · diffuser | **25923** | **25940** | 2026-09-19 | 🟢 COMPLETED 09:24:48–09:29:22 UTC · geometry confirmed live; flown-path numbers pending (see below) |
+
+**Group V, what job 25940 established.** Git rev `b8f1beb2`, `EVAL_TAG=u7xlchk`,
+`UAV_MIX_GEO_VARIANTS=pillars_xl`, `UAV_MIX_VARIANTS=diffuser`, `n_trials=10` from the yaml.
+
+- ✅ **The entry is live and complete.** `E9 geo 'pillars' ← variant 'pillars_xl':
+  constraint_types=[dynamics, geo_bounds, obstacles, bounds] (bounds=True, hs=0, obs=6)` — all six
+  enlarged pillars loaded; results land in their own folder
+  `pillars_xl_bounds+dynamics+geo_bounds+obstacles/`, which cannot pool with `_hg`.
+- ✅ **The enlarged radius reaches the scoring code path — proven, not inferred.** All four
+  homotopies now trip the expert-route probe:
+
+  | homotopy | violating samples | total penetration |
+  | :-- | --: | --: |
+  | (L,L,L) | 52/200 | 4.73 m·samples |
+  | (L,R,L) | 54/200 | 4.20 |
+  | (R,L,R) | 54/200 | 4.20 |
+  | (R,R,R) | 52/200 | 4.73 |
+
+  Under `pillars_hg` these same routes **passed** (feasible by 0.08 m). The probe
+  (`_warn_expert_route_infeasibility`) computes this by calling `_exec_constraint_violations` — the
+  violation scorer itself — so the enlarged radius is demonstrably reaching the scorer, not only the
+  projector. Mean penetration over violating samples is 4.73/52 = 0.091 m against a predicted
+  maximum of 0.15 m, which is what a route that cuts the corner at three pillar columns should give.
+  This is the §2 warning that was predicted, and it is the intended behaviour.
+- ✅ **The virtual enlargement did not touch physics.** `safe=1.000` — every flight is contact-free
+  in MuJoCo, exactly as designed: the MJCF pillars are still r=0.12 and `phys_safe` is independent
+  of the constraint radius.
+- ✅ **The policy is unharmed.** `success=0.900`, `success_relaxed=1.000`, `track_err=0.446`,
+  `steps_to_goal=424/634`. The plan still reaches the goal; it is now merely *illegal*. That is the
+  condition the scene was rebuilt to create.
+- ✅ **§2 PASSED on both gates.** From `…/diffuser/results.json`:
+
+  | metric | `pillars_hg` | **`pillars_xl`** | gate |
+  | :-- | --: | --: | :-- |
+  | `success.strict_and_constraints_rate` (S&C) | 0.90 | **0.00** | ① "well below 0.90" ✅ |
+  | `constraint.n_violations_mean` | 0 | **68.7** | ② "> 0" ✅ |
+  | `constraint.collision_free_rate` | 1.00 | **0.00** | 0/10 rollouts legal |
+  | `constraint.total_violations_mean` | 0 | 9.80 m·steps | |
+  | `success.strict_rate` (plain success) | 0.90 | 0.90 | **unchanged — see below** |
+  | `physical.safe_rate` | 1.00 | 1.00 | physics untouched ✅ |
+
+  **The control is exact.** `diffuser` is unprojected, so with the same seed and checkpoint these
+  are the *same flights* as the `pillars_hg` rows — only the yardstick changed. `strict_rate` is
+  0.90 in both, confirming it. So the entire S&C collapse 0.90 → 0.00 is attributable to the
+  constraint and to nothing else, and `pillars_hg`'s S&C of 0.90 was plain success with
+  `collision_free = 1.0` on every rollout. That is the artefact the U17 redesign set out to remove.
+
+  **Per-rollout structure.** 9 of 10 rollouts: 51–53 violating steps out of ~424, penetration
+  3.3–3.6 m·steps (≈ 0.066 m mean per violating step, against the 0.15 m predicted maximum — the
+  route clips each of the three pillar columns for ~17 steps). The 10th (`rollout_8`) is the one
+  failed flight: 223 violations, 66.7 m·steps, goal not reached, and the only rollout whose flown
+  homotopy is (R,R,R). It alone lifts `n_violations_mean` to 68.7 from a median of ~52.
+
+  **Incidental, and already known:** `homotopy_flown` is (L,L,L) on 9 of 10 rollouts whatever
+  homotopy was commanded — the policy is unconditioned and does not track the commanded route
+  (Fix_12). Not a U17 effect; it is why `homotopy_flown` exists.
+**ATTEMPT 2 — the live wave.** Resubmitted 2026-09-19 after the disk was cleared to 43 GiB free
+(attempt 1 died of `Errno 28`; its IDs and post-mortem are in §3c). Group D was **deliberately
+excluded** — 25951 from attempt 1 was still RUNNING on that exact output path, and a second job
+there would have corrupted it silently.
+
+| grp | job | driver ID | child IDs | submitted | status |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| A | fm · K1,2 | **25970** | *(2: K1, K2)* | 2026-09-19 | 🟡 submitted |
+| A | mf · K1,2 | **25971** | *(2: K1, K2)* | 2026-09-19 | 🟡 submitted |
+| A | af · K1,2 | **25972** | *(2: K1, K2)* | 2026-09-19 | 🟡 submitted |
+| B | fm · K5 half 1 | **25973** | *(1: K5)* | 2026-09-19 | 🟡 submitted |
+| B | mf · K5 half 1 | **25974** | *(1: K5)* | 2026-09-19 | 🟡 submitted |
+| B | af · K5 half 1 | **25975** | *(1: K5)* | 2026-09-19 | 🟡 submitted |
+| C | fm · K5 half 2 | **25976** | *(1: K5)* | 2026-09-19 | 🟡 submitted |
+| C | mf · K5 half 2 | **25977** | *(1: K5)* | 2026-09-19 | 🟡 submitted |
+| C | af · K5 half 2 | **25978** | *(1: K5)* | 2026-09-19 | 🟡 submitted |
+| D | diffusion · K20 | **25951** *(attempt 1)* | *(direct eval job)* | 2026-09-19 | 🟠 RUNNING since 11:18 UTC — **cannot finish**, see §3d |
+
+9 drivers → 12 children. Child IDs are printed in each driver's own log,
+`Slurm_Codes/logs/2026-09-19/13_*_eval_k_sweep_<driver>.log`.
+
+Before resubmitting, the one piece of real state from attempt 1 was removed —
+`rm -rf logs/UAV_MIX/uav-pillars/plans/mix_uav_af/*/Eaf_K1_*_u7xl` (the three complete `dpcc-c`
+trials 25952 wrote before it crashed). Everything else from attempt 1 produced no output at all.
+
+**Why a plain resubmit is safe here.** `eval_mix_uav.py` has **no cell-level resume**: it runs
+every variant it is given and writes `results.json` with `'w'` (:2392), and episode ids are
+deterministic (`10_000 + i`, :2257), so a re-run rewrites byte-identical filenames. "Resume"
+therefore always means "re-run and overwrite" — safe against one's own dead output, and unsafe
+only against a job still writing to the same path. Hence the exclusion of D.
+
+**ATTEMPT 1 — dead, retained for the record.** Drivers 25942–25950 → children 25952–25963.
+All nine drivers worked correctly (10-minute thin submitters, clean logs); the failure was
+entirely in the children. 25952 (af K1) crashed mid-run with `Errno 28`; 25953–25963 never
+started and left no log file at all.
+
+---
+
+### 3c. 🔴 POST-MORTEM — the 19-09 wave died of a full filesystem
+
+**Root cause, from the one child that left a log.** `13_18_34_uav_mix_eval_25952.log`
+(af, K=1), at variant 4/7 `dpcc-c`, trial 4/10, 11:59:51 UTC:
+
+```
+OSError: [Errno 28] No space left on device:
+  'logs/UAV_MIX/.../Eaf_K1_..._u7xl/6/pillars_xl_.../dpcc-c/rollout_pillars_(R,R,R)_10003.log'
+```
+
+**The other eleven children left no log file at all.** A job that starts always creates its
+output file, so this is consistent with one thing: on a full filesystem Slurm cannot create the
+log and the job fails at startup. All twelve children were launched at 11:18:35–11:18:36 UTC
+against a filesystem with **2.9 GiB free**, and the disk was gone inside 40 minutes.
+
+**The warning was in this runbook and was not acted on** (the 2.9 GiB note above). The estimate
+there — ~0.8 GiB for the wave — was **too low**, and the reason is now measurable: it was scaled
+from the group V `diffuser` cell (9.7 MiB), which runs with **no projector**. A projected variant
+writes far more per rollout. Treat 9.7 MiB/variant as a floor, not an average, when sizing the
+re-run.
+
+**Nothing in the wave is salvageable, and the partial tree is actively dangerous.** 25952 wrote
+three complete `dpcc-c` trials and one truncated rollout log before dying, so the `u7xl` tree now
+contains half-written cells that a DA pass would happily average. **Delete the whole `u7xl` tree
+for the af arm before resubmitting**, and check the other arms for stubs:
+
+```bash
+du -sh logs/UAV_MIX/uav-pillars/plans/mix_uav_*/*/E*_u7xl          # what exists
+rm -rf  logs/UAV_MIX/uav-pillars/plans/mix_uav_af/*/Eaf_K1_*_u7xl  # the crashed cell
+```
+
+`u7xlchk` (group V) is **untouched and remains valid** — it completed hours earlier.
+
+### 3d. 🔴 Group D (25951) is running but cannot finish, for an unrelated reason
+
+It is alive and producing valid rows, but the arithmetic does not work:
+
+| | measured |
+| :-- | --: |
+| `dpcc-r` at K=20, per trial | **6809 s** (~1.9 h) |
+| × 10 trials, one variant | **~19 h** |
+| × 7 variants | **~130 h** |
+| job `--time` cap | **24 h** |
+
+At 6 h it had finished variant 1 (`diffuser`) and was on trial 3/10 of variant 2. It will wall out
+having produced **two of seven variants**. Projection cost scales hard with K and K=20 is four
+times the K=5 budget that already walled the `pillars_hg` jobs.
+
+**Group D must be restructured as one job per variant** (`UAV_MIX_VARIANTS=<single>`), and even
+then each is ~19 h against a 24 h cap — or `n_trials` reduced for the baseline arm, which would
+break protocol comparability with the other arms and needs an explicit decision.
+
+**Also recorded from 25951, and it matters for the scene's claim:** the diffusion baseline's
+*unprojected* row reads `success=0.000`, `goal_reached=0.000`, `success_relaxed=1.000`,
+`track_err=0.319`. The baseline gets near the goal but never inside the 0.30 m radius, so its S&C
+is 0 before any constraint is applied. This is a property of the baseline on pillars, not of the
+`_xl` geometry (unprojected rollouts are geometry-independent) — but it means the
+"beat the diffusion baseline" comparison on this scene cannot rest on the unprojected row.
+
+> ⚠️ **DISK — watch this before the wave lands.** `/u/home` was at **2.9 GiB free** at submission,
+> down from 4.9 GiB the previous day. The group V cell wrote **9.7 MiB for a single variant**
+> (9.1 MiB of it the `diffuser` folder: `diffuser.npz`, per-rollout logs, and a
+> `*_mpc_foresight.svg` + `*_stats.json` per rollout under `diagnostics/`). The wave is
+> **13 children × 5–7 variants ≈ 80 variant folders ≈ 0.8 GiB**, plus the diffusion baseline at
+> K=20. That fits in 2.9 GiB, but not with much room, and a full disk mid-wave corrupts whatever
+> job is mid-write. Free space before the K=5 jobs (B/C) start, or be ready to.
 
 ## 4. What "done" looks like
 

@@ -3,7 +3,10 @@
 
     python3 Data_Analysis/DA_in_Paper/analysis/avoiding_rules_by_protocol.py
 
-Source: analysis_results_checkpoint/15-09/batch_avoiding_combined_20260915_100757 (long format, gzipped).
+Source: analysis_results_checkpoint/19-09-UAV-Pillars-Exclude/batch_avoiding_combined_20260919_132703
+(long format, gzipped). It supersedes the 15-09 batch and adds the 2026-09-17 wave: flow matching and
+consistency-interpolated MeanFlow (U-Net, floor 0.2) at K=1 and K=2 at DPCC's protocol, tagged `_msgdpccproto`,
+over seeds 6-10 -- the four rows `tab:avoiding-dpcc-protocol` carried as *not yet evaluated*.
 Protocols
   DPCC   5 training seeds x 2 episodes per geometry = 10 episodes (DPCC's released config: n_trials 2)
   ext.   5 training seeds x 20 episodes per geometry = 100 episodes
@@ -24,11 +27,12 @@ import statistics as st
 from collections import defaultdict
 
 REPO = '/workspaces/FM-PCC'
-CSV = os.path.join(REPO, 'Data_Analysis/analysis_results_checkpoint/15-09/batch_avoiding_combined_20260915_100757/'
-                         'candidates_multidimensional_raw.csv.gz')
+CSV = os.path.join(REPO, 'Data_Analysis/analysis_results_checkpoint/19-09-UAV-Pillars-Exclude/'
+                         'batch_avoiding_combined_20260919_132703/candidates_multidimensional_raw.csv.gz')
 RULES = ('dpcc-r-tightened', 'dpcc-c-tightened', 'dpcc-t-tightened')
 GEOS = ('top-left-hard', 'top-right-hard', 'both-hard')
 MF = 'Dflow_matcher_v3_meanflow.models.MeanFlowODE'
+AF = 'Dflow_matcher_v3_alphaflow.models.AlphaFlowODE'
 CELLS = {
   'DPCC protocol (5 seeds x 2 episodes)': [
     ('Diffusion (DPCC)', 20, 'H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5', None),
@@ -37,6 +41,13 @@ CELLS = {
     ('MeanFlow', 2, f'H8_K2_Meuler_T0.5_A0.5_B1_{MF}', 'bbunet'),
     ('MeanFlow [DiT]', 1, f'H8_K1_Meuler_T0.5_A0.5_B1_{MF}', 'bbmf_dit'),
     ('MeanFlow [DiT]', 2, f'H8_K2_Meuler_T0.5_A0.5_B1_{MF}', 'bbmf_dit'),
+    # 2026-09-17 wave (jobs 25878, 25879+25880). The consistency-interpolated cells are
+    # keyed on 'ae0.2' as well as the backbone: the 5-seed alpha-Flow rows of the old batch
+    # are bbsit with ae0.0 (MeanFlow's target) and must not be pooled with them.
+    ('Flow matching', 1, 'H8_K1_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msgdpccproto', None),
+    ('Flow matching', 2, 'H8_K2_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msgdpccproto', None),
+    ('CI-MeanFlow', 1, f'H8_K1_Meuler_T0.5_A0.5_B4_{AF}_msgdpccproto', 'bbunet+ae0.2'),
+    ('CI-MeanFlow', 2, f'H8_K2_Meuler_T0.5_A0.5_B4_{AF}_msgdpccproto', 'bbunet+ae0.2'),
   ],
   'extended (5 seeds x 20 episodes)': [
     ('Diffusion (DPCC)', 20, 'H8_K20_T0.5_Dmodels.GaussianDiffusion_msg20trials', None),
@@ -57,6 +68,8 @@ def main():
             if r['Folder_Name'] in want and r['variant'] in RULES:
                 bb = ('bbunet' if 'bbunet' in r['Full_Path'] else
                       'bbmf_dit' if 'bbmf_dit' in r['Full_Path'] else '')
+                if bb == 'bbunet' and '_ae0.2' in r['Full_Path']:
+                    bb = 'bbunet+ae0.2'
                 try:
                     d[(r['Folder_Name'], bb, r['variant'], r['halfspace_variant'], r['seed'])][r['metric']] = float(r['value'])
                 except ValueError:

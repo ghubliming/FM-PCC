@@ -5,6 +5,11 @@ dry-run first and a full audit log of what was removed. Sibling of
 [`../clean_weights`](../clean_weights/README.md) — same safety model, same log layout,
 different target: renders instead of checkpoints.
 
+> **Cleaning the WHOLE `logs/` tree, not one run?** See [`sweep/`](sweep/README.md) — a bash
+> companion added 2026-09-19 with a **percentage** keep policy (10% per directory rather than a
+> fixed N), a separate pass for `(Bf_*)` backup dirs, and a re-run guard. This tool stays the
+> right one for a single run dir and for MP4s.
+
 - **Runs on the cluster** (where `logs/` lives). Pure Python **stdlib** — no torch/conda/imageio.
 - **Never run the pipeline locally** in the AI-coding container; this is just a file tool,
   but it operates on the cluster's `logs/`.

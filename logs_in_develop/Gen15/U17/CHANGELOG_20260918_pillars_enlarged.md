@@ -158,7 +158,35 @@ do not touch pillars and are unaffected.
       `active_geo_variants` and `enlarge_constraints: 0.025` confirmed byte-unchanged
 - [x] scorer path verified to follow the entry's radius; `phys_safe` confirmed independent
 - [x] driver written, `bash -n` clean, PLAN mode prints 10 driver jobs with the pre-flight passing
-- [ ] **group V submitted and READ** — S&C well below 0.90 *and* `n_violations > 0`
-- [ ] groups A–D submitted; job IDs into the runbook's run map
+- [x] **group V submitted and READ — PASSED both gates.** Driver 25923 -> child 25940,
+      completed 2026-09-19 09:24:48-09:29:22 UTC, git rev `b8f1beb2`. mf / K5 / `diffuser`,
+      10 flights, tag `u7xlchk`:
+
+      | metric | `pillars_hg` | `pillars_xl` |
+      | :-- | --: | --: |
+      | S&C (`strict_and_constraints_rate`) | 0.90 | **0.00** |
+      | `n_violations_mean` | 0 | **68.7** |
+      | `collision_free_rate` | 1.00 | **0.00** |
+      | plain `strict_rate` | 0.90 | 0.90 (unchanged) |
+      | `physical.safe_rate` | 1.00 | 1.00 |
+
+      `diffuser` is unprojected, so these are the SAME flights as the `_hg` rows re-scored —
+      plain success is identical, which pins the whole S&C collapse on the constraint. The four
+      expert-route probes flipped from passing to 52-54/200 violating samples. 9 of 10 rollouts
+      show 51-53 violating steps at ~0.066 m mean penetration (predicted max 0.15 m); the 10th is
+      the single failed flight (223 violations, goal missed) and alone lifts the mean to 68.7.
+- [~] **groups A–C submitted (attempt 2): drivers 25970–25978**, 9 drivers -> 12 children,
+      2026-09-19, on 43 GiB free. Running; results pending.
+      - Attempt 1 (drivers 25942–25950 -> children 25952–25963) **died of a full filesystem**:
+        25952 crashed `OSError: [Errno 28]` and the other eleven children never started, because
+        Slurm could not create their log files on a disk with 2.9 GiB free. Post-mortem and the
+        disk arithmetic: runbook §3c.
+      - **Group D excluded from attempt 2 on purpose.** 25951 (diffusion, K20) from attempt 1 was
+        still RUNNING on that exact output path; a second job there would have corrupted it with
+        no error from either side. It also cannot finish as designed — `dpcc-r` measures 6809 s
+        per trial, so one variant is ~19 h and seven are ~130 h against a 24 h cap. It needs one
+        job per variant (runbook §3d).
+- [ ] group D re-run, restructured as one job per variant
+- [ ] all 12 children landed; child IDs into the runbook's run map
 - [ ] `DA_in_Paper/analysis/pillars_grid.py` with `GEO_PREFIX = 'pillars_xl'`
 - [ ] `v3/withheld/20260918_uav_pillars_section.tex` restored, every number recomputed
