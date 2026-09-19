@@ -1,0 +1,221 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+[ U9 ] variant subset = diffuser,dpcc-t,hardflow_new,hardflow_new-r,hardflow_new-c,hardflow_new-t
+[ U11 ] geo variants = s_curve_hg
+[ U6 ] checkpoint   = best (default; no _EP fragment)
+================================================================================
+JOB START: Fri Sep 18 17:15:09 UTC 2026  |  uav_mix_eval  |  ID 25908  |  NODE i6-gpu-1
+ENGINE: fm   SCENE: s_curve   SEEDS: 6   N_TRIALS:    K: 20
+FIX_16:  SAFE_EPS_MODE=scaled  SAFE_EPS_FRAC=1e-3  EVAL_TAG=u18sc
+GIT REV:   a98985fa
+================================================================================
+[ env-select ] config/uav.py controller='pid_stopgo' -> conda env 'FMPCC'
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=5  MUJOCO_EGL_DEVICE_ID=5
+--------------------------------------------------------------------------------
+[ uav_mix_eval ] seed 1/1: engine=fm scene=s_curve seed=6  Fri Sep 18 17:15:09 UTC 2026
+[ uav_mix_eval ] python mix_uav_test/eval_mix_uav.py --engine fm --scene s_curve --seed 6  --projection fm_only --record none --flow-steps 20
+[ eval ] Gen15 UAV Mix-ML — engine: fm  (Flow Matching (Gen11 FMv3ODE))
+[ eval ] checkpoint selector = 'best'  (config default; no _EP fragment)
+[ eval ] K override from --flow-steps: 20
+[ eval ] seed=6  (source: --seed CLI)
+[ eval ] n_trials=10  (source: /data/home/llim/FMPCC/FM-PCC/config/uav_projection.yaml)
+[ eval ] HardFlow arm: +7 variants ['hardflow_new', 'hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t', 'hardflow_new-r-geo_free', 'hardflow_new-c-geo_free', 'hardflow_new-t-geo_free'] (from config/uav_mix.py, NOT the shared yaml)
+[ eval ] UAV_MIX_VARIANTS -> running 6/18 variants: ['diffuser', 'dpcc-t', 'hardflow_new', 'hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t']
+[ eval ]   dropped 12: ['dpcc-r', 'dpcc-r-tightened', 'dpcc-c', 'dpcc-c-tightened', 'dpcc-t-tightened', 'dpcc-r-geo_free', 'dpcc-c-geo_free', 'dpcc-t-geo_free', 'dpcc-t-bounds_free', 'hardflow_new-r-geo_free', 'hardflow_new-c-geo_free', 'hardflow_new-t-geo_free']
+
+[ utils/serialization ] Loading model from logs/UAV_MIX/uav-s_curve/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/6
+
+[ utils/normalization ] Constant data in actions[2] | max = min = -4.147295842252957e-13 → Fix_16 widened by eps=1.129e-05 (mode=scaled). unnormalize scale for this channel = 1.129e-05 data-units per unit output.
+[ utils/normalization ] ⚠ Fix_16: ALL dimensions constant — no reference scale; falling back to eps=1.0.
+[ utils/normalization ] Constant data in rewards[0] | max = min = 0.0 → Fix_16 widened by eps=1.000e+00 (mode=scaled). unnormalize scale for this channel = 1.000e+00 data-units per unit output.
+[ datasets/buffer ] Fields:
+    observations: (500, 750, 6)
+    actions: (500, 750, 3)
+    rewards: (500, 750, 1)
+    terminals: (500, 750, 1)
+    normed_observations: (500, 750, 6)
+    normed_actions: (500, 750, 3)
+[ utils/training ] Restored loss history from checkpoint at step 91000
+[ eval ] checkpoint = state_best.pt  (trained to step 91000)
+[ eval ] engine=fm  NFE budget K=20 pinned on the loaded model (flow_steps_v3 / ode_inference_steps_v3)
+[ U11 ] geo variants for 's_curve': ['s_curve_hg']  (env UAV_MIX_GEO_VARIANTS)
+[ eval ] E9 geo 's_curve' ← variant 's_curve_hg': constraint_types=['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds'] (bounds=True, hs=4, obs=2)
+[ eval ] cond_mode=pos_only  (source: train checkpoint args)
+[ eval ] s_curve [geo_tag=s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles]: variants=['diffuser', 'dpcc-t', 'hardflow_new', 'hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t']  constraints=['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds']  batch_size=4
+[ eval ] s_curve feasibility check: homotopy=default expert route NEAR-ZERO SLACK under planning margin 0.31 m — slack 0.121 m (need >= 0.30 m to absorb the policy tracking error)
+[ eval ] WARNING s_curve homotopy=default: the expert route clears the PLANNING set by only 0.121 m. Any rollout whose tracking error exceeds that violates the constraints even when it flies the trained route perfectly in expectation — success+constraints is bounded near 0 for reasons that have nothing to do with the engine. Widen the geometry or lower `planning_inflation` (see Gen15/U7).
+[ eval ] s_curve [geo_tag=s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 1/6: 'diffuser'  (n_trials=10)
+[ provenance ] wrote logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5_u18sc/6/run_provenance.json
+[ geo ] Constraint overview → logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5_u18sc/6/s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles/constraint_overview.png (+ .svg)
+[ eval ] s_curve variant=diffuser: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[ utils/normalization ] ⚠ Fix_16: sample out of range on observations — clipping to [-1,1] | (-1.0093, 0.0616). Further occurrences silent; see `_clip_events` / `_clip_max`.
+[ utils/normalization ] ⚠ Fix_16: sample out of range on actions — clipping to [-1,1] | (-1.0012, 0.0042). Further occurrences silent; see `_clip_events` / `_clip_max`.
+[ eval ] s_curve variant=diffuser: trial 1/10 done  (106.6s elapsed this variant, ~959.5s to go)
+[ eval ] s_curve variant=diffuser: trial 2/10 done  (213.6s elapsed this variant, ~854.2s to go)
+[ eval ] s_curve variant=diffuser trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 405/871 (t=12.27s) — reason=inverted: body z-axis · world z = -0.04 < 0 — the drone is upside down
+[ eval ] s_curve variant=diffuser: trial 3/10 done  (285.1s elapsed this variant, ~665.3s to go)
+[ eval ] s_curve variant=diffuser: trial 4/10 done  (392.8s elapsed this variant, ~589.2s to go)
+[ eval ] s_curve variant=diffuser trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 448/871 (t=13.58s) — reason=inverted: body z-axis · world z = -0.01 < 0 — the drone is upside down
+[ eval ] s_curve variant=diffuser: trial 5/10 done  (471.8s elapsed this variant, ~471.8s to go)
+[ eval ] s_curve variant=diffuser: trial 6/10 done  (578.7s elapsed this variant, ~385.8s to go)
+[ eval ] s_curve variant=diffuser: trial 7/10 done  (687.2s elapsed this variant, ~294.5s to go)
+[ eval ] s_curve variant=diffuser trial_seed=10007: ⚠ DIVERGENCE ABORT at FM step 402/871 (t=12.18s) — reason=inverted: body z-axis · world z = -0.04 < 0 — the drone is upside down
+[ eval ] s_curve variant=diffuser: trial 8/10 done  (758.8s elapsed this variant, ~189.7s to go)
+[ eval ] s_curve variant=diffuser trial_seed=10008: ⚠ DIVERGENCE ABORT at FM step 530/871 (t=16.06s) — reason=inverted: body z-axis · world z = -0.14 < 0 — the drone is upside down
+[ eval ] s_curve variant=diffuser: trial 9/10 done  (852.6s elapsed this variant, ~94.7s to go)
+[ eval ] s_curve variant=diffuser: trial 10/10 done  (959.1s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=diffuser: ⚠ DIVERGENCE ABORT on 4/10 trials [2, 4, 7, 8] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=diffuser (B=4, proj=off, sel=random): success=0.600  success_relaxed=0.600  safe=0.600  goal_reached=0.600  steps_to_goal=608/871  track_err=0.317  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5_u18sc/6/s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles/diffuser/
+[ eval ] s_curve variant=diffuser TIMING: fm_ms=170.4 proj_ms=0.0 total_ms=170.4 (p95=179.3) budget=30.3ms → real_time_OVER×5437
+[ eval ] s_curve [geo_tag=s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 2/6: 'dpcc-t'  (n_trials=10)
+[ eval ] Fix_16 DEGENERATE actions[2]: constant in the expert data — no training signal for this channel. Widened by eps=1.129e-05; a saturated model output on it commands +/-1.129e-05 data-units/step.
+[ eval ] Fix_16 projector action_bounds=auto → lb=[ 0.0e+00  0.0e+00 -1.1e-05] ub=[2.2238e-02 2.2927e-02 1.1000e-05]  (degenerate dims now bounded, not +/-1)
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5_u18sc/6/run_provenance.json
+[ eval ] s_curve variant=dpcc-t: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+[ eval ] s_curve variant=dpcc-t trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 367/871 (t=11.12s) — reason=inverted: body z-axis · world z = -0.09 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-t: trial 1/10 done  (1188.0s elapsed this variant, ~10692.2s to go)
+[ eval ] s_curve variant=dpcc-t trial_seed=10001: ⚠ DIVERGENCE ABORT at FM step 571/871 (t=17.30s) — reason=inverted: body z-axis · world z = -0.01 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-t: trial 2/10 done  (2986.0s elapsed this variant, ~11943.8s to go)
+[ eval ] s_curve variant=dpcc-t trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 371/871 (t=11.24s) — reason=inverted: body z-axis · world z = -0.08 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-t: trial 3/10 done  (4131.8s elapsed this variant, ~9640.9s to go)
+[ eval ] s_curve variant=dpcc-t trial_seed=10003: ⚠ DIVERGENCE ABORT at FM step 365/871 (t=11.06s) — reason=inverted: body z-axis · world z = -0.12 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-t: trial 4/10 done  (5409.3s elapsed this variant, ~8114.0s to go)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ eval ] s_curve variant=dpcc-t trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 367/871 (t=11.12s) — reason=inverted: body z-axis · world z = -0.10 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-t: trial 5/10 done  (6635.8s elapsed this variant, ~6635.8s to go)
+[ eval ] s_curve variant=dpcc-t trial_seed=10005: ⚠ DIVERGENCE ABORT at FM step 587/871 (t=17.79s) — reason=inverted: body z-axis · world z = -0.01 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-t: trial 6/10 done  (9076.7s elapsed this variant, ~6051.1s to go)
+[ eval ] s_curve variant=dpcc-t trial_seed=10006: ⚠ DIVERGENCE ABORT at FM step 409/871 (t=12.39s) — reason=inverted: body z-axis · world z = -0.00 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-t: trial 7/10 done  (11054.3s elapsed this variant, ~4737.5s to go)
+[ eval ] s_curve variant=dpcc-t trial_seed=10007: ⚠ DIVERGENCE ABORT at FM step 358/871 (t=10.85s) — reason=inverted: body z-axis · world z = -0.08 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-t: trial 8/10 done  (12260.2s elapsed this variant, ~3065.0s to go)
+[ eval ] s_curve variant=dpcc-t trial_seed=10008: ⚠ DIVERGENCE ABORT at FM step 371/871 (t=11.24s) — reason=inverted: body z-axis · world z = -0.05 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-t: trial 9/10 done  (13476.3s elapsed this variant, ~1497.4s to go)
+[ eval ] s_curve variant=dpcc-t trial_seed=10009: ⚠ DIVERGENCE ABORT at FM step 396/871 (t=12.00s) — reason=inverted: body z-axis · world z = -0.18 < 0 — the drone is upside down
+[ eval ] s_curve variant=dpcc-t: trial 10/10 done  (15222.0s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=dpcc-t: ⚠ DIVERGENCE ABORT on 10/10 trials [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=dpcc-t (B=4, proj=on, sel=temporal_consistency): success=0.000  success_relaxed=0.000  safe=0.000  goal_reached=0.000  steps_to_goal=nan/871  track_err=0.364  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5_u18sc/6/s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles/dpcc-t/
+[ eval ] s_curve variant=dpcc-t TIMING: fm_ms=171.8 proj_ms=3438.1 total_ms=3609.9 (p95=17787.3) budget=30.3ms → real_time_OVER×4172
+[ eval ] s_curve [geo_tag=s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 3/6: 'hardflow_new'  (n_trials=10)
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=66  reg_scale=1.0
+[hardflow] engine=fm K=20 noise_sigma=0.5 two_time=False dyn=deriv A=0.5 sel=random
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5_u18sc/6/run_provenance.json
+[ eval ] s_curve variant=hardflow_new: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[hardflow][NLP-FAILURE] first non-converged SLSQP solve at tau=0.550. Keeping scipy's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Same exposure as the IPOPT path. Further failures are silent; read `nlp_failures` in the run summary for the total.
+[ eval ] s_curve variant=hardflow_new trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 426/871 (t=12.91s) — reason=inverted: body z-axis · world z = -0.01 < 0 — the drone is upside down
+[ eval ] s_curve variant=hardflow_new: trial 1/10 done  (337.0s elapsed this variant, ~3033.3s to go)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+[ eval ] s_curve variant=hardflow_new: trial 2/10 done  (643.2s elapsed this variant, ~2572.7s to go)
+[ eval ] s_curve variant=hardflow_new trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 410/871 (t=12.42s) — reason=inverted: body z-axis · world z = -0.12 < 0 — the drone is upside down
+[ eval ] s_curve variant=hardflow_new: trial 3/10 done  (902.6s elapsed this variant, ~2106.1s to go)
+[ eval ] s_curve variant=hardflow_new: trial 4/10 done  (1234.0s elapsed this variant, ~1850.9s to go)
+[ eval ] s_curve variant=hardflow_new trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 404/871 (t=12.24s) — reason=inverted: body z-axis · world z = -0.09 < 0 — the drone is upside down
+[ eval ] s_curve variant=hardflow_new: trial 5/10 done  (1392.9s elapsed this variant, ~1392.9s to go)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ eval ] s_curve variant=hardflow_new trial_seed=10005: ⚠ DIVERGENCE ABORT at FM step 665/871 (t=20.15s) — reason=inverted: body z-axis · world z = -0.02 < 0 — the drone is upside down
+[ eval ] s_curve variant=hardflow_new: trial 6/10 done  (1847.0s elapsed this variant, ~1231.3s to go)
+[ eval ] s_curve variant=hardflow_new: trial 7/10 done  (2273.1s elapsed this variant, ~974.2s to go)
+[ eval ] s_curve variant=hardflow_new trial_seed=10007: ⚠ DIVERGENCE ABORT at FM step 402/871 (t=12.18s) — reason=inverted: body z-axis · world z = -0.07 < 0 — the drone is upside down
+[ eval ] s_curve variant=hardflow_new: trial 8/10 done  (2432.4s elapsed this variant, ~608.1s to go)
+[ eval ] s_curve variant=hardflow_new: trial 9/10 done  (2741.5s elapsed this variant, ~304.6s to go)
+[ eval ] s_curve variant=hardflow_new: trial 10/10 done  (3091.1s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=hardflow_new: ⚠ DIVERGENCE ABORT on 5/10 trials [0, 2, 4, 5, 7] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=hardflow_new (B=1, proj=off, sel=random): success=0.500  success_relaxed=0.500  safe=0.500  goal_reached=0.500  steps_to_goal=627/871  track_err=0.360  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5_u18sc/6/s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_sls/
+[ eval ] s_curve variant=hardflow_new TIMING: fm_ms=251.2 proj_ms=303.6 total_ms=554.8 (p95=2831.8) budget=30.3ms → real_time_OVER×5449
+[ eval ] s_curve [geo_tag=s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 4/6: 'hardflow_new-r'  (n_trials=10)
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=66  reg_scale=1.0
+[hardflow] engine=fm K=20 noise_sigma=0.5 two_time=False dyn=deriv A=0.5 sel=random
+[ provenance ] wrote logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5_u18sc/6/run_provenance_2.json
+[ eval ] s_curve variant=hardflow_new-r: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[hardflow][NLP-FAILURE] first non-converged SLSQP solve at tau=0.550. Keeping scipy's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Same exposure as the IPOPT path. Further failures are silent; read `nlp_failures` in the run summary for the total.
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+[ eval ] s_curve variant=hardflow_new-r trial_seed=10000: ⚠ DIVERGENCE ABORT at FM step 589/871 (t=17.85s) — reason=inverted: body z-axis · world z = -0.09 < 0 — the drone is upside down
+[ eval ] s_curve variant=hardflow_new-r: trial 1/10 done  (1138.6s elapsed this variant, ~10247.1s to go)
+[ eval ] s_curve variant=hardflow_new-r: trial 2/10 done  (1998.6s elapsed this variant, ~7994.5s to go)
+[ eval ] s_curve variant=hardflow_new-r trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 409/871 (t=12.39s) — reason=inverted: body z-axis · world z = -0.00 < 0 — the drone is upside down
+[ eval ] s_curve variant=hardflow_new-r: trial 3/10 done  (2377.4s elapsed this variant, ~5547.3s to go)
+[ eval ] s_curve variant=hardflow_new-r: trial 4/10 done  (3488.8s elapsed this variant, ~5233.2s to go)
+[ eval ] s_curve variant=hardflow_new-r trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 498/871 (t=15.09s) — reason=inverted: body z-axis · world z = -0.09 < 0 — the drone is upside down
+[ eval ] s_curve variant=hardflow_new-r: trial 5/10 done  (5712.7s elapsed this variant, ~5712.7s to go)
+[ eval ] s_curve variant=hardflow_new-r trial_seed=10005: ⚠ DIVERGENCE ABORT at FM step 586/871 (t=17.76s) — reason=inverted: body z-axis · world z = -0.02 < 0 — the drone is upside down
+[ eval ] s_curve variant=hardflow_new-r: trial 6/10 done  (7007.2s elapsed this variant, ~4671.4s to go)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ eval ] s_curve variant=hardflow_new-r: trial 7/10 done  (7963.6s elapsed this variant, ~3413.0s to go)
+[ eval ] s_curve variant=hardflow_new-r trial_seed=10007: ⚠ DIVERGENCE ABORT at FM step 410/871 (t=12.42s) — reason=inverted: body z-axis · world z = -0.13 < 0 — the drone is upside down
+[ eval ] s_curve variant=hardflow_new-r: trial 8/10 done  (8332.4s elapsed this variant, ~2083.1s to go)
+[ eval ] s_curve variant=hardflow_new-r trial_seed=10008: ⚠ DIVERGENCE ABORT at FM step 413/871 (t=12.52s) — reason=inverted: body z-axis · world z = -0.14 < 0 — the drone is upside down
+[ eval ] s_curve variant=hardflow_new-r: trial 9/10 done  (9010.3s elapsed this variant, ~1001.1s to go)
+[ eval ] s_curve variant=hardflow_new-r: trial 10/10 done  (9942.0s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=hardflow_new-r: ⚠ DIVERGENCE ABORT on 6/10 trials [0, 2, 4, 5, 7, 8] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=hardflow_new-r (B=4, proj=off, sel=random): success=0.400  success_relaxed=0.400  safe=0.400  goal_reached=0.400  steps_to_goal=625/871  track_err=0.378  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5_u18sc/6/s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_sls-r/
+[ eval ] s_curve variant=hardflow_new-r TIMING: fm_ms=269.2 proj_ms=1542.0 total_ms=1811.2 (p95=24124.6) budget=30.3ms → real_time_OVER×5412
+[ eval ] s_curve [geo_tag=s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 5/6: 'hardflow_new-c'  (n_trials=10)
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=66  reg_scale=1.0
+[hardflow] engine=fm K=20 noise_sigma=0.5 two_time=False dyn=deriv A=0.5 sel=minimum_projection_cost
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5_u18sc/6/run_provenance_2.json
+[ eval ] s_curve variant=hardflow_new-c: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[hardflow][NLP-FAILURE] first non-converged SLSQP solve at tau=0.550. Keeping scipy's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Same exposure as the IPOPT path. Further failures are silent; read `nlp_failures` in the run summary for the total.
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+[ eval ] s_curve variant=hardflow_new-c: trial 1/10 done  (863.5s elapsed this variant, ~7771.6s to go)
+[ projector ] COST EXPLODED (sustained): 36/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #1).
+[ projector ] COST EXPLODED (sustained): 38/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #1).
+[ projector ] COST EXPLODED (sustained): 40/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #1).
+[ projector ] COST EXPLODED (sustained): 40/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #1).
+[ projector ] COST EXPLODED (sustained): 38/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #1).
+[ projector ] COST EXPLODED (sustained): 37/40 recent steps > 1000 ms — OPENING circuit breaker, skipping projection until it recovers (trip #1).
+[ eval ] s_curve variant=hardflow_new-c: trial 2/10 done  (4658.4s elapsed this variant, ~18633.4s to go)
+[ eval ] s_curve variant=hardflow_new-c trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 409/871 (t=12.39s) — reason=inverted: body z-axis · world z = -0.07 < 0 — the drone is upside down
+[ eval ] s_curve variant=hardflow_new-c: trial 3/10 done  (5235.8s elapsed this variant, ~12216.8s to go)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ eval ] s_curve variant=hardflow_new-c: trial 4/10 done  (6270.9s elapsed this variant, ~9406.3s to go)
+[ eval ] s_curve variant=hardflow_new-c trial_seed=10004: ⚠ DIVERGENCE ABORT at FM step 409/871 (t=12.39s) — reason=inverted: body z-axis · world z = -0.07 < 0 — the drone is upside down
+[ eval ] s_curve variant=hardflow_new-c: trial 5/10 done  (6754.2s elapsed this variant, ~6754.2s to go)
+[ eval ] s_curve variant=hardflow_new-c trial_seed=10005: ⚠ DIVERGENCE ABORT at FM step 721/871 (t=21.85s) — reason=inverted: body z-axis · world z = -0.01 < 0 — the drone is upside down
+[ eval ] s_curve variant=hardflow_new-c: trial 6/10 done  (8268.5s elapsed this variant, ~5512.4s to go)
+[ eval ] s_curve variant=hardflow_new-c: trial 7/10 done  (9219.6s elapsed this variant, ~3951.2s to go)
+[ eval ] s_curve variant=hardflow_new-c trial_seed=10007: ⚠ DIVERGENCE ABORT at FM step 405/871 (t=12.27s) — reason=inverted: body z-axis · world z = -0.01 < 0 — the drone is upside down
+[ eval ] s_curve variant=hardflow_new-c: trial 8/10 done  (9656.6s elapsed this variant, ~2414.2s to go)
+[ eval ] s_curve variant=hardflow_new-c trial_seed=10008: ⚠ DIVERGENCE ABORT at FM step 501/871 (t=15.18s) — reason=inverted: body z-axis · world z = -0.07 < 0 — the drone is upside down
+[ eval ] s_curve variant=hardflow_new-c: trial 9/10 done  (12447.3s elapsed this variant, ~1383.0s to go)
+[ eval ] s_curve variant=hardflow_new-c: trial 10/10 done  (13316.3s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=hardflow_new-c: ⚠ DIVERGENCE ABORT on 5/10 trials [2, 4, 5, 7, 8] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=hardflow_new-c (B=4, proj=off, sel=minimum_projection_cost): success=0.400  success_relaxed=0.400  safe=0.400  goal_reached=0.400  steps_to_goal=628/871  track_err=0.397  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5_u18sc/6/s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_sls-c/
+[ eval ] s_curve variant=hardflow_new-c TIMING: fm_ms=297.9 proj_ms=1851.2 total_ms=2149.1 (p95=45184.9) budget=30.3ms → real_time_OVER×5831
+[ eval ] s_curve [geo_tag=s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles] >>> variant 6/6: 'hardflow_new-t'  (n_trials=10)
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=66  reg_scale=1.0
+[hardflow] engine=fm K=20 noise_sigma=0.5 two_time=False dyn=deriv A=0.5 sel=temporal_consistency
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5_u18sc/6/run_provenance_2.json
+[ eval ] s_curve variant=hardflow_new-t: max_episode_length=871 (U_13 fixed budget; source: SCENE default)
+[hardflow][NLP-FAILURE] first non-converged SLSQP solve at tau=0.550. Keeping scipy's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Same exposure as the IPOPT path. Further failures are silent; read `nlp_failures` in the run summary for the total.
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:437: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  fx = wrapped_fun(x)
+[ eval ] s_curve variant=hardflow_new-t: trial 1/10 done  (864.6s elapsed this variant, ~7781.2s to go)
+/u/home/llim/miniconda3/envs/FMPCC/lib/python3.10/site-packages/scipy/optimize/_slsqp_py.py:441: RuntimeWarning: Values in x were outside bounds during a minimize step, clipping to bounds
+  g = append(wrapped_grad(x), 0.0)
+[ eval ] s_curve variant=hardflow_new-t: trial 2/10 done  (1816.7s elapsed this variant, ~7266.8s to go)
+[ eval ] s_curve variant=hardflow_new-t trial_seed=10002: ⚠ DIVERGENCE ABORT at FM step 445/871 (t=13.48s) — reason=inverted: body z-axis · world z = -0.00 < 0 — the drone is upside down
+[ eval ] s_curve variant=hardflow_new-t: trial 3/10 done  (3632.0s elapsed this variant, ~8474.7s to go)
+[ eval ] s_curve variant=hardflow_new-t: trial 4/10 done  (4775.7s elapsed this variant, ~7163.6s to go)
+[ eval ] s_curve variant=hardflow_new-t: trial 5/10 done  (5558.3s elapsed this variant, ~5558.3s to go)
+[ eval ] s_curve variant=hardflow_new-t: trial 6/10 done  (7041.0s elapsed this variant, ~4694.0s to go)
+[ eval ] s_curve variant=hardflow_new-t: trial 7/10 done  (8075.8s elapsed this variant, ~3461.1s to go)
+[ eval ] s_curve variant=hardflow_new-t trial_seed=10007: ⚠ DIVERGENCE ABORT at FM step 391/871 (t=11.85s) — reason=inverted: body z-axis · world z = -0.08 < 0 — the drone is upside down
+[ eval ] s_curve variant=hardflow_new-t: trial 8/10 done  (8450.6s elapsed this variant, ~2112.6s to go)
+[ eval ] s_curve variant=hardflow_new-t trial_seed=10008: ⚠ DIVERGENCE ABORT at FM step 408/871 (t=12.36s) — reason=inverted: body z-axis · world z = -0.07 < 0 — the drone is upside down
+[ eval ] s_curve variant=hardflow_new-t: trial 9/10 done  (9345.9s elapsed this variant, ~1038.4s to go)
+[ eval ] s_curve variant=hardflow_new-t trial_seed=10009: ⚠ DIVERGENCE ABORT at FM step 578/871 (t=17.52s) — reason=inverted: body z-axis · world z = -0.04 < 0 — the drone is upside down
+[ eval ] s_curve variant=hardflow_new-t: trial 10/10 done  (10560.1s elapsed this variant, ~0.0s to go)
+[ eval ] s_curve variant=hardflow_new-t: ⚠ DIVERGENCE ABORT on 4/10 trials [2, 7, 8, 9] — see DIVERGENCE_ABORT.txt
+[ eval ] s_curve variant=hardflow_new-t (B=4, proj=off, sel=temporal_consistency): success=0.600  success_relaxed=0.600  safe=0.600  goal_reached=0.600  steps_to_goal=614/871  track_err=0.392  → logs/UAV_MIX/uav-s_curve/plans/mix_uav_fm/H8_Dmodels.diffusion.FlowMatchingODE_9D/Efm_K20_mpc4_pid_stopgo_T0.5_u18sc/6/s_curve_hg_bounds+dynamics+geo_bounds+halfspace+obstacles/hardflow_sls-t/
+[ eval ] s_curve variant=hardflow_new-t TIMING: fm_ms=297.3 proj_ms=1641.6 total_ms=1938.9 (p95=27831.3) budget=30.3ms → real_time_OVER×5512
+UAV Mix-ML eval complete (engine=fm).
+Job completed successfully. Evaluated engine=fm scene=s_curve for seeds=[6]
+JOB END: Sat Sep 19 08:00:10 UTC 2026

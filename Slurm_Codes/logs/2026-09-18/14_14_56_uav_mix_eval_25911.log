@@ -1,0 +1,162 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+[ U9 ] variant subset = dpcc-t,hardflow_new,hardflow_new-r,hardflow_new-c,hardflow_new-t
+[ U11 ] geo variants = pillars_hg
+[ U6 ] af bone      = unet
+[ U6 ] af_alpha_end = 0.2  
+[ U6 ] checkpoint   = latest
+================================================================================
+JOB START: Sat Sep 19 08:00:11 UTC 2026  |  uav_mix_eval  |  ID 25911  |  NODE i6-gpu-1
+ENGINE: af   SCENE: pillars   SEEDS: 6   N_TRIALS:    K: 2
+FIX_16:  SAFE_EPS_MODE=scaled  SAFE_EPS_FRAC=1e-3  EVAL_TAG=u7hga1
+GIT REV:   b8f1beb2
+================================================================================
+[ env-select ] config/uav.py controller='pid_stopgo' -> conda env 'FMPCC'
+[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=1  MUJOCO_EGL_DEVICE_ID=1
+--------------------------------------------------------------------------------
+[ uav_mix_eval ] seed 1/1: engine=af scene=pillars seed=6  Sat Sep 19 08:00:11 UTC 2026
+[ uav_mix_eval ] python mix_uav_test/eval_mix_uav.py --engine af --scene pillars --seed 6  --projection fm_only --record none --flow-steps 2
+[ eval ] Gen15 UAV Mix-ML — engine: af  (alpha-Flow (Gen3v7, arXiv 2510.20771))
+[ eval ] checkpoint selector = 'latest'  (source: env UAV_MIX_EPOCH)
+[ eval ] K override from --flow-steps: 2
+[ eval ] seed=6  (source: --seed CLI)
+[ eval ] n_trials=10  (source: /data/home/llim/FMPCC/FM-PCC/config/uav_projection.yaml)
+[ eval ][hardflow] HFFM_ACT_THRESHOLD=1.0 → overriding activation_threshold for this job
+[ eval ] HardFlow arm: +7 variants ['hardflow_new', 'hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t', 'hardflow_new-r-geo_free', 'hardflow_new-c-geo_free', 'hardflow_new-t-geo_free'] (from config/uav_mix.py, NOT the shared yaml)
+[ eval ] UAV_MIX_VARIANTS -> running 5/18 variants: ['dpcc-t', 'hardflow_new', 'hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t']
+[ eval ]   dropped 13: ['diffuser', 'dpcc-r', 'dpcc-r-tightened', 'dpcc-c', 'dpcc-c-tightened', 'dpcc-t-tightened', 'dpcc-r-geo_free', 'dpcc-c-geo_free', 'dpcc-t-geo_free', 'dpcc-t-bounds_free', 'hardflow_new-r-geo_free', 'hardflow_new-c-geo_free', 'hardflow_new-t-geo_free']
+
+[ utils/serialization ] Loading model from logs/UAV_MIX/uav-pillars/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/6
+
+[ utils/normalization ] Constant data in actions[2] | max = min = 9.89530235095265e-13 → Fix_16 widened by eps=3.086e-05 (mode=scaled). unnormalize scale for this channel = 3.086e-05 data-units per unit output.
+[ utils/normalization ] ⚠ Fix_16: ALL dimensions constant — no reference scale; falling back to eps=1.0.
+[ utils/normalization ] Constant data in rewards[0] | max = min = 0.0 → Fix_16 widened by eps=1.000e+00 (mode=scaled). unnormalize scale for this channel = 1.000e+00 data-units per unit output.
+[ datasets/buffer ] Fields:
+    observations: (475, 560, 6)
+    actions: (475, 560, 3)
+    rewards: (475, 560, 1)
+    terminals: (475, 560, 1)
+    normed_observations: (475, 560, 6)
+    normed_actions: (475, 560, 3)
+[ AFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=0.000e+00)
+[ utils/training ] Restored loss history from checkpoint at step 100000
+[ eval ] checkpoint = state_100000.pt  (trained to step 100000)
+[ eval ] alpha(step 100000) = 0.2000  [sigmoid 1.0 -> 0.2 over 100000 steps, clamp 0.005]
+[ eval ]   alpha-Flow objective ACTIVE at this checkpoint.
+[ eval ] ml bone = unet  (U6 default is 'unet', the 4.0 M arm matched to fm/mf; 'sit' is ~9.4 M and NOT parameter-matched)
+[ eval ] engine=af  NFE budget K=2 pinned on the loaded model (flow_steps_v3 / ode_inference_steps_v3)
+[ U11 ] geo variants for 'pillars': ['pillars_hg']  (env UAV_MIX_GEO_VARIANTS)
+[ eval ] E9 geo 'pillars' ← variant 'pillars_hg': constraint_types=['dynamics', 'geo_bounds', 'obstacles', 'bounds'] (bounds=True, hs=0, obs=6)
+[ eval ] cond_mode=pos_only  (source: train checkpoint args)
+[ eval ] pillars [geo_tag=pillars_hg_bounds+dynamics+geo_bounds+obstacles]: variants=['dpcc-t', 'hardflow_new', 'hardflow_new-r', 'hardflow_new-c', 'hardflow_new-t']  constraints=['dynamics', 'geo_bounds', 'obstacles', 'bounds']  batch_size=4
+[ eval ] pillars feasibility check: homotopy=(L,L,L) expert route NEAR-ZERO SLACK under planning margin 0.31 m — slack 0.078 m (need >= 0.30 m to absorb the policy tracking error)
+[ eval ] WARNING pillars homotopy=(L,L,L): the expert route clears the PLANNING set by only 0.078 m. Any rollout whose tracking error exceeds that violates the constraints even when it flies the trained route perfectly in expectation — success+constraints is bounded near 0 for reasons that have nothing to do with the engine. Widen the geometry or lower `planning_inflation` (see Gen15/U7).
+[ eval ] pillars feasibility check: homotopy=(L,R,L) expert route NEAR-ZERO SLACK under planning margin 0.31 m — slack 0.078 m (need >= 0.30 m to absorb the policy tracking error)
+[ eval ] WARNING pillars homotopy=(L,R,L): the expert route clears the PLANNING set by only 0.078 m. Any rollout whose tracking error exceeds that violates the constraints even when it flies the trained route perfectly in expectation — success+constraints is bounded near 0 for reasons that have nothing to do with the engine. Widen the geometry or lower `planning_inflation` (see Gen15/U7).
+[ eval ] pillars feasibility check: homotopy=(R,L,R) expert route NEAR-ZERO SLACK under planning margin 0.31 m — slack 0.078 m (need >= 0.30 m to absorb the policy tracking error)
+[ eval ] WARNING pillars homotopy=(R,L,R): the expert route clears the PLANNING set by only 0.078 m. Any rollout whose tracking error exceeds that violates the constraints even when it flies the trained route perfectly in expectation — success+constraints is bounded near 0 for reasons that have nothing to do with the engine. Widen the geometry or lower `planning_inflation` (see Gen15/U7).
+[ eval ] pillars feasibility check: homotopy=(R,R,R) expert route NEAR-ZERO SLACK under planning margin 0.31 m — slack 0.078 m (need >= 0.30 m to absorb the policy tracking error)
+[ eval ] WARNING pillars homotopy=(R,R,R): the expert route clears the PLANNING set by only 0.078 m. Any rollout whose tracking error exceeds that violates the constraints even when it flies the trained route perfectly in expectation — success+constraints is bounded near 0 for reasons that have nothing to do with the engine. Widen the geometry or lower `planning_inflation` (see Gen15/U7).
+[ eval ] pillars [geo_tag=pillars_hg_bounds+dynamics+geo_bounds+obstacles] >>> variant 1/5: 'dpcc-t'  (n_trials=10)
+[ eval ] Fix_16 DEGENERATE actions[2]: constant in the expert data — no training signal for this channel. Widened by eps=3.086e-05; a saturated model output on it commands +/-3.086e-05 data-units/step.
+[ eval ] Fix_16 projector action_bounds=auto → lb=[ 3.5000e-05 -3.9716e-02 -3.1000e-05] ub=[4.4061e-02 3.9704e-02 3.1000e-05]  (degenerate dims now bounded, not +/-1)
+[ provenance ] wrote logs/UAV_MIX/uav-pillars/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K2_mpc4_pid_stopgo_T0.5_EPlatest_u7hga1/6/run_provenance.json
+[ geo ] Constraint overview → logs/UAV_MIX/uav-pillars/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K2_mpc4_pid_stopgo_T0.5_EPlatest_u7hga1/6/pillars_hg_bounds+dynamics+geo_bounds+obstacles/constraint_overview.png (+ .svg)
+[ eval ] pillars variant=dpcc-t: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[ utils/normalization ] ⚠ Fix_16: sample out of range on observations — clipping to [-1,1] | (-0.8855, 1.0051). Further occurrences silent; see `_clip_events` / `_clip_max`.
+[ utils/normalization ] ⚠ Fix_16: sample out of range on actions — clipping to [-1,1] | (-1.0157, 0.0342). Further occurrences silent; see `_clip_events` / `_clip_max`.
+[ eval ] pillars variant=dpcc-t: trial 1/10 done  (75.4s elapsed this variant, ~679.0s to go)
+[ eval ] pillars variant=dpcc-t: trial 2/10 done  (154.0s elapsed this variant, ~616.1s to go)
+[ eval ] pillars variant=dpcc-t: trial 3/10 done  (235.9s elapsed this variant, ~550.4s to go)
+[ eval ] pillars variant=dpcc-t: trial 4/10 done  (315.5s elapsed this variant, ~473.2s to go)
+[ eval ] pillars variant=dpcc-t: trial 5/10 done  (337.7s elapsed this variant, ~337.7s to go)
+[ eval ] pillars variant=dpcc-t: trial 6/10 done  (417.8s elapsed this variant, ~278.5s to go)
+[ eval ] pillars variant=dpcc-t: trial 7/10 done  (450.9s elapsed this variant, ~193.3s to go)
+[ eval ] pillars variant=dpcc-t: trial 8/10 done  (532.0s elapsed this variant, ~133.0s to go)
+[ eval ] pillars variant=dpcc-t: trial 9/10 done  (613.8s elapsed this variant, ~68.2s to go)
+[ eval ] pillars variant=dpcc-t: trial 10/10 done  (691.2s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=dpcc-t (B=4, proj=on, sel=temporal_consistency): success=0.100  success_relaxed=1.000  safe=1.000  goal_reached=0.100  steps_to_goal=413/634  track_err=0.340  → logs/UAV_MIX/uav-pillars/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K2_mpc4_pid_stopgo_T0.5_EPlatest_u7hga1/6/pillars_hg_bounds+dynamics+geo_bounds+obstacles/dpcc-t/
+[ eval ] pillars variant=dpcc-t TIMING: fm_ms=22.0 proj_ms=81.9 total_ms=103.9 (p95=400.7) budget=30.3ms → real_time_OVER×6119
+[ eval ] pillars [geo_tag=pillars_hg_bounds+dynamics+geo_bounds+obstacles] >>> variant 2/5: 'hardflow_new'  (n_trials=10)
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=66  reg_scale=1.0
+[hardflow] engine=af K=2 noise_sigma=1.0 two_time=True dyn=deriv A=1.0 sel=random
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K2_mpc4_pid_stopgo_T0.5_EPlatest_u7hga1/6/run_provenance.json
+[ eval ] pillars variant=hardflow_new: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged SLSQP solve at tau=0.500. Keeping scipy's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Same exposure as the IPOPT path. Further failures are silent; read `nlp_failures` in the run summary for the total.
+[ eval ] pillars variant=hardflow_new: trial 1/10 done  (56.1s elapsed this variant, ~505.3s to go)
+[ eval ] pillars variant=hardflow_new: trial 2/10 done  (81.3s elapsed this variant, ~325.0s to go)
+[ eval ] pillars variant=hardflow_new: trial 3/10 done  (104.5s elapsed this variant, ~243.9s to go)
+[ eval ] pillars variant=hardflow_new: trial 4/10 done  (163.1s elapsed this variant, ~244.7s to go)
+[ eval ] pillars variant=hardflow_new: trial 5/10 done  (218.1s elapsed this variant, ~218.1s to go)
+[ eval ] pillars variant=hardflow_new: trial 6/10 done  (241.4s elapsed this variant, ~161.0s to go)
+[ eval ] pillars variant=hardflow_new: trial 7/10 done  (294.7s elapsed this variant, ~126.3s to go)
+[ eval ] pillars variant=hardflow_new: trial 8/10 done  (347.8s elapsed this variant, ~86.9s to go)
+[ eval ] pillars variant=hardflow_new: trial 9/10 done  (371.6s elapsed this variant, ~41.3s to go)
+[ eval ] pillars variant=hardflow_new: trial 10/10 done  (426.3s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=hardflow_new (B=1, proj=off, sel=random): success=0.400  success_relaxed=1.000  safe=1.000  goal_reached=0.400  steps_to_goal=452/634  track_err=0.368  → logs/UAV_MIX/uav-pillars/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K2_mpc4_pid_stopgo_T0.5_EPlatest_u7hga1/6/pillars_hg_bounds+dynamics+geo_bounds+obstacles/hardflow_sls/
+[ eval ] pillars variant=hardflow_new TIMING: fm_ms=34.6 proj_ms=33.9 total_ms=68.4 (p95=253.3) budget=30.3ms → real_time_OVER×5614
+[ eval ] pillars [geo_tag=pillars_hg_bounds+dynamics+geo_bounds+obstacles] >>> variant 3/5: 'hardflow_new-r'  (n_trials=10)
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=66  reg_scale=1.0
+[hardflow] engine=af K=2 noise_sigma=1.0 two_time=True dyn=deriv A=1.0 sel=random
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K2_mpc4_pid_stopgo_T0.5_EPlatest_u7hga1/6/run_provenance.json
+[ eval ] pillars variant=hardflow_new-r: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged SLSQP solve at tau=0.500. Keeping scipy's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Same exposure as the IPOPT path. Further failures are silent; read `nlp_failures` in the run summary for the total.
+[ eval ] pillars variant=hardflow_new-r: trial 1/10 done  (143.0s elapsed this variant, ~1286.9s to go)
+[ eval ] pillars variant=hardflow_new-r: trial 2/10 done  (182.9s elapsed this variant, ~731.6s to go)
+[ eval ] pillars variant=hardflow_new-r: trial 3/10 done  (341.2s elapsed this variant, ~796.0s to go)
+[ eval ] pillars variant=hardflow_new-r: trial 4/10 done  (381.2s elapsed this variant, ~571.8s to go)
+[ eval ] pillars variant=hardflow_new-r: trial 5/10 done  (423.1s elapsed this variant, ~423.1s to go)
+[ eval ] pillars variant=hardflow_new-r: trial 6/10 done  (481.8s elapsed this variant, ~321.2s to go)
+[ eval ] pillars variant=hardflow_new-r: trial 7/10 done  (561.0s elapsed this variant, ~240.4s to go)
+[ eval ] pillars variant=hardflow_new-r: trial 8/10 done  (712.9s elapsed this variant, ~178.2s to go)
+[ eval ] pillars variant=hardflow_new-r: trial 9/10 done  (869.9s elapsed this variant, ~96.7s to go)
+[ eval ] pillars variant=hardflow_new-r: trial 10/10 done  (1024.3s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=hardflow_new-r (B=4, proj=off, sel=random): success=0.300  success_relaxed=1.000  safe=1.000  goal_reached=0.300  steps_to_goal=428/634  track_err=0.363  → logs/UAV_MIX/uav-pillars/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K2_mpc4_pid_stopgo_T0.5_EPlatest_u7hga1/6/pillars_hg_bounds+dynamics+geo_bounds+obstacles/hardflow_sls-r/
+[ eval ] pillars variant=hardflow_new-r TIMING: fm_ms=36.7 proj_ms=126.9 total_ms=163.6 (p95=767.3) budget=30.3ms → real_time_OVER×5723
+[ eval ] pillars [geo_tag=pillars_hg_bounds+dynamics+geo_bounds+obstacles] >>> variant 4/5: 'hardflow_new-c'  (n_trials=10)
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=66  reg_scale=1.0
+[hardflow] engine=af K=2 noise_sigma=1.0 two_time=True dyn=deriv A=1.0 sel=minimum_projection_cost
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K2_mpc4_pid_stopgo_T0.5_EPlatest_u7hga1/6/run_provenance.json
+[ eval ] pillars variant=hardflow_new-c: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[hardflow][NLP-FAILURE] first non-converged SLSQP solve at tau=0.500. Keeping scipy's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Same exposure as the IPOPT path. Further failures are silent; read `nlp_failures` in the run summary for the total.
+[ eval ] pillars variant=hardflow_new-c: trial 1/10 done  (146.7s elapsed this variant, ~1320.7s to go)
+[ eval ] pillars variant=hardflow_new-c: trial 2/10 done  (292.7s elapsed this variant, ~1170.7s to go)
+[ eval ] pillars variant=hardflow_new-c: trial 3/10 done  (441.8s elapsed this variant, ~1030.9s to go)
+[ eval ] pillars variant=hardflow_new-c: trial 4/10 done  (483.8s elapsed this variant, ~725.7s to go)
+[ eval ] pillars variant=hardflow_new-c: trial 5/10 done  (637.3s elapsed this variant, ~637.3s to go)
+[ eval ] pillars variant=hardflow_new-c: trial 6/10 done  (795.1s elapsed this variant, ~530.1s to go)
+[ eval ] pillars variant=hardflow_new-c: trial 7/10 done  (949.8s elapsed this variant, ~407.0s to go)
+[ eval ] pillars variant=hardflow_new-c: trial 8/10 done  (1099.2s elapsed this variant, ~274.8s to go)
+[ eval ] pillars variant=hardflow_new-c: trial 9/10 done  (1244.8s elapsed this variant, ~138.3s to go)
+[ eval ] pillars variant=hardflow_new-c: trial 10/10 done  (1395.9s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=hardflow_new-c (B=4, proj=off, sel=minimum_projection_cost): success=0.100  success_relaxed=1.000  safe=1.000  goal_reached=0.100  steps_to_goal=433/634  track_err=0.340  → logs/UAV_MIX/uav-pillars/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K2_mpc4_pid_stopgo_T0.5_EPlatest_u7hga1/6/pillars_hg_bounds+dynamics+geo_bounds+obstacles/hardflow_sls-c/
+[ eval ] pillars variant=hardflow_new-c TIMING: fm_ms=37.1 proj_ms=178.8 total_ms=215.9 (p95=772.9) budget=30.3ms → real_time_OVER×6139
+[ eval ] pillars [geo_tag=pillars_hg_bounds+dynamics+geo_bounds+obstacles] >>> variant 5/5: 'hardflow_new-t'  (n_trials=10)
+[hardflow][NLP-BACKEND] slsqp  (scipy SLSQP via DPCC Projector — IPOPT built but idle)  dof=66  reg_scale=1.0
+[hardflow] engine=af K=2 noise_sigma=1.0 two_time=True dyn=deriv A=1.0 sel=temporal_consistency
+[ provenance ] unchanged, kept logs/UAV_MIX/uav-pillars/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K2_mpc4_pid_stopgo_T0.5_EPlatest_u7hga1/6/run_provenance.json
+[ eval ] pillars variant=hardflow_new-t: max_episode_length=634 (U_13 fixed budget; source: SCENE default)
+[hardflow][THIN] K=2 A=1.0: n_active=2, n_genuine=1 — HardFlow runs, but as a SINGLE nudge, and that lone guided step carries this K's largest lookahead (0.50), the regime the paper's Thm. 4 bound degrades in. One step cannot be separated from seed noise: do NOT rest a HardFlow claim on this row.
+[hardflow][THIN] first non-degenerate: K>=3 at A=0.5 or K>=2 at A=1.0; for an attributable effect use n_genuine>=2 — K>=5 at A=0.5, which is the paper's own N=10 / A=0.5 regime. See logs_in_develop/aggregated_hardflow_lowK/
+[ eval ] pillars variant=hardflow_new-t: trial 1/10 done  (39.6s elapsed this variant, ~356.7s to go)
+[hardflow][NLP-FAILURE] first non-converged SLSQP solve at tau=0.500. Keeping scipy's last iterate, which may be INFEASIBLE — the terminal-solve safety guarantee does not hold for this plan. Same exposure as the IPOPT path. Further failures are silent; read `nlp_failures` in the run summary for the total.
+[ eval ] pillars variant=hardflow_new-t: trial 2/10 done  (185.2s elapsed this variant, ~740.8s to go)
+[ eval ] pillars variant=hardflow_new-t: trial 3/10 done  (344.2s elapsed this variant, ~803.2s to go)
+[ eval ] pillars variant=hardflow_new-t: trial 4/10 done  (495.6s elapsed this variant, ~743.5s to go)
+[ eval ] pillars variant=hardflow_new-t: trial 5/10 done  (640.4s elapsed this variant, ~640.4s to go)
+[ eval ] pillars variant=hardflow_new-t: trial 6/10 done  (699.0s elapsed this variant, ~466.0s to go)
+[ eval ] pillars variant=hardflow_new-t: trial 7/10 done  (758.4s elapsed this variant, ~325.0s to go)
+[ eval ] pillars variant=hardflow_new-t: trial 8/10 done  (901.6s elapsed this variant, ~225.4s to go)
+[ eval ] pillars variant=hardflow_new-t: trial 9/10 done  (1050.6s elapsed this variant, ~116.7s to go)
+[ eval ] pillars variant=hardflow_new-t: trial 10/10 done  (1201.8s elapsed this variant, ~0.0s to go)
+[ eval ] pillars variant=hardflow_new-t (B=4, proj=off, sel=temporal_consistency): success=0.100  success_relaxed=1.000  safe=1.000  goal_reached=0.100  steps_to_goal=422/634  track_err=0.338  → logs/UAV_MIX/uav-pillars/plans/mix_uav_af/H8_Dmodels.af_diffusion.AlphaFlowODE_9D_as1_ae0.2_bbunet/Eaf_K2_mpc4_pid_stopgo_T0.5_EPlatest_u7hga1/6/pillars_hg_bounds+dynamics+geo_bounds+obstacles/hardflow_sls-t/
+[ eval ] pillars variant=hardflow_new-t TIMING: fm_ms=37.0 proj_ms=148.7 total_ms=185.7 (p95=768.2) budget=30.3ms → real_time_OVER×6128
+UAV Mix-ML eval complete (engine=af).
+Job completed successfully. Evaluated engine=af scene=pillars for seeds=[6]
+JOB END: Sat Sep 19 09:19:23 UTC 2026
