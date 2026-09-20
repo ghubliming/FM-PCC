@@ -62,8 +62,11 @@ class Fig:
     def frame(self, xt, yt, xlab, ylab, title, sub='', xfmt=str, yfmt=str):
         """Gridlines, tick labels, box, axis labels, title and one subtitle line.
 
-        The subtitle is where the protocol goes -- seeds, trials, corpus. Every
-        v3 figure carries it, because TARGET section 6 rule 7 forbids a bare *n*.
+        Pass '' for both to draw the axes alone. TARGET section 6 rule 7 forbids a
+        bare *n*, so the protocol -- seeds, contexts, corpus -- must be stated
+        somewhere; since v3.49 (author) the place for it is the CAPTION, and a
+        subtitle naming seeds, trial counts or batch vocabulary is not drawn on
+        the page. Panel headings that only identify a panel still belong here.
         """
         for v in xt:
             x = self.X(v)

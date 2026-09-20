@@ -23,6 +23,16 @@ When a draft finds something another draft must change, it writes a note in `cro
 and a line in `cross_draft/INBOX.md` — **never an edit in the other draft**. Every session starts by
 reading its section of `INBOX.md`. Rules: `cross_draft/README.md`.
 
+## Binding on every chat: the prompt is not thesis text
+
+What the author asks for enters the thesis as a **fact about the figure, table or result** — never as a
+restatement of the request, a *"which is why ..."* justification for having done it, or a claim that it
+was done (🔴). Nor does a measurement get a *because* the evaluation did not produce, or a paragraph
+answering an objection the reader has not made (🟡). The full rule, with worked examples and the caption checklist, is
+[`../Writing_Hints/HINT_20260920_prompt_is_not_thesis_text.md`](../Writing_Hints/HINT_20260920_prompt_is_not_thesis_text.md)
+(author, 2026-09-20). It holds for v2, v3 and v4 alike, and it is the one rule an AI agent breaks most
+easily, because the request is the freshest thing in its context.
+
 ## Rules for each chat
 
 ### v2

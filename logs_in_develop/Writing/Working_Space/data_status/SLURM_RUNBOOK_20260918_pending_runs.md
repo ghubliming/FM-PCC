@@ -112,7 +112,7 @@ still in `squeue`, and a trained diffusion checkpoint exists for each requested 
 | item | ledger | why it is blocked |
 | :-- | :-- | :-- |
 | **Alignment context count** | R2, R16 (groups G/H) | `config/visual_aligning_eval.yaml` has said `n_contexts: 3` since 2026-08-04, while the draft reports **ten** contexts for every alignment row. A run submitted today is therefore not comparable with the published rows unless 3 is what they used. Resolve, then re-run with `ALIGN_OK=1`. The driver prints the value and skips G/H without it. |
-| **Held-out and 50–60 contexts** | R3 / audit B3 | `n_contexts` has no environment override (`eval_mix_visual_aligning.py:2920`), so this needs a tracked edit to the shared yaml, not a driver knob. Not in this wave. |
+| ~~**Held-out and 50–60 contexts**~~ ❌ retired 2026-09-20 | R3 / audit B3 | `n_contexts` has no environment override (`eval_mix_visual_aligning.py:2920`), so this needs a tracked edit to the shared yaml, not a driver knob. Not in this wave. |
 | **Diffusion at $\nfe=2$ on D3IL-avoiding** | R18 / audit A4 | $\nfe$ is a **training** property for DPCC diffusion — the checkpoint is literally `H8_K2_…`, and none exists. It needs a training job, and `/u/home` had 7.9 GB free on 2026-09-17. |
 
 ## Identity checks

@@ -1,6 +1,6 @@
 # TRANSLATION — dev jargon of this repo → its scientific name
 
-**Created:** 2026-09-14 · **Last extended:** 2026-09-17 by v3.20 (generative-objective names, §2 and §8) · **Status:** 🟢 **canonical translation list for all drafts** (v2, v3, v4).
+**Created:** 2026-09-14 · **Last extended:** 2026-09-20 by v3.53 (§8 rule 9 gains the self-reasoning alert and the tone); 2026-09-20 by v3.51 (§8 rule 9, *the prompt is not thesis text*); 2026-09-20 by v3.49 (wall-clock and figure vocabulary, §6); before that 2026-09-17 by v3.20 (generative-objective names, §2 and §8) · **Status:** 🟢 **canonical translation list for all drafts** (v2, v3, v4).
 **Supersedes as the working list:** [`NAMING_20260910_master_table.md`](NAMING_20260910_master_table.md)
 — every row of that table is carried over below (§2–§7), and the new rows are marked 🆕. The old file
 is kept for its argument, not as a second list.
@@ -104,6 +104,9 @@ in thesis text.
 |---|---|---|---|
 | `K`, `n_diffusion_steps`, `flow_steps_v3` | NFE | **step budget `K`** = NFE. Training-time key for diffusion, inference-time key for flow matching | ✅ |
 | 🆕 `n_trials`, seeds, "5×20" | DPCC's *trials* | **episodes per seed**; state seeds × episodes | 🔁 |
+| 🆕 **wall clock**, "wall-clock time", `avg_time_ms`, `avg_time` | DPCC: *computation time*; HardFlow: *Computation Time (s)* | **the time to compute one action** (ms, or s where a configuration is slow enough), defined once in Ch 5 (`sec:setup:metrics:avoiding`) and written **time per control step** on figure axes. *Wall clock* is how the measurement is taken, not what is reported; it never appears in thesis prose, captions or figures. Where the phrase meant an episode's duration instead, say **how long a run may go on**. (v3.48) | 🔁 |
+| 🆕 `rollout`, `trial`, "row", "cell" inside a figure | — | **episode** (manipulator), **flight** (quadrotor), **context** (alignment) — and a figure never labels its own rows with the batch vocabulary; the protocol belongs in the caption. (v3.48) | 🔁 |
+| 🆕 **a figure's own title and subtitle** — `seed 6`, `unprojected, untightened`, `5 seeds (6-10) x 20 episodes`, `U-Net 4.0M`, `tightened` | — | **nothing inside the drawing.** A published figure carries axis labels, a legend and, where it has panels, a heading that names the panel. Which seed, which projection state, how many episodes and which backbone are protocol, and protocol goes in the **caption** — TARGET §6 rule 7 is satisfied there. The drawing must still say *which model* it draws when more than one appears in the section. (v3.49) | 🚫 |
 | `budget_ms`, `33 Hz`, `real_time_OVER` | — | data-rate artefact + cluster latency — 🚨 never a real-time criterion | 🚫 |
 | `u7hg`, "honest geometry" | — (ours) | **corrected scene geometry** | 🔁 |
 | 🆕 **Pareto / "better"** | — | never defined globally in the thesis; state the metrics compared where a claim is made | 🚫 |
@@ -177,3 +180,17 @@ Defined once at the start of v3 §5.1. `UAV` is spelled out there; it is not yet
    counts over contexts, episodes or flights (*closer in nine of ten contexts*, *12/12 against 0/12*),
    margins, and the sample size. Recap sections restate who is best, without statistics.
    *(Author, 2026-09-17, v3.26.)*
+
+9. **The prompt is not thesis text.** What the author asked for enters the thesis as a fact about the
+   figure, table or result --- never as a restatement of the request, a justification for having done it
+   (*"... so that the excluded region stays readable underneath"*, *"which is why satisfying the
+   constraints can only be the projection's doing"*), and never as a claim that it was done (*"in the two
+   forms D3IL-avoiding also uses"*). A caption states what is drawn, what each colour, line style and
+   panel means, and the numbers a reader cannot recover from the drawing; the claim is made once in the
+   running text. **A second alert, same rule seen from the other side:** no *because* the evaluation did
+   not produce — *"... does not recover the gap, **because what the budget buys back sits in the
+   projector rather than in the denoiser**"* explains a measurement with a guess — and no paragraph
+   that argues with an objection the reader has not made. The tone is the author's: state the
+   measurement, tell the story, do not defend it. Full rule with the worked examples:
+   [`Writing_Hints/HINT_20260920_prompt_is_not_thesis_text.md`](../../Writing_Hints/HINT_20260920_prompt_is_not_thesis_text.md).
+   *(Author, 2026-09-20, v3.51.)*

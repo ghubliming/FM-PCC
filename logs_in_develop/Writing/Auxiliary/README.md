@@ -21,6 +21,15 @@ while writing.
 Add `NOTES_notation_decisions.md` once the symbol convention is fixed (the working convention is
 already fixed in `Working_Space/v2` Table 4.1 — write the note from it).
 
+> 🚨 **Before writing a caption or a table description**, read
+> [`../Writing_Hints/HINT_20260920_prompt_is_not_thesis_text.md`](../Writing_Hints/HINT_20260920_prompt_is_not_thesis_text.md)
+> (author, 2026-09-20, binding on v2/v3/v4 and on every AI agent writing into them). Two alerts:
+> 🔴 **RED — the prompt is in the thesis** (the request restated, justified, or claimed as done);
+> 🟡 **YELLOW — self-reasoning** (a *because* the writer invented to explain a measurement, or an
+> argument answering an objection nobody made). It also fixes **the tone**: state the measurement from
+> the position of the person who ran it; no hedging, no self-defence. One-paragraph form:
+> `Naming/TRANSLATION_20260914_dev_jargon_to_scientific.md` §8 rule 9.
+
 > **A name is a claim.** If a config flag, a folder tag or a class name asserts something the code
 > does not do, the thesis must not repeat it. `NOTES_naming_and_rebuild.md` is the standing rule and
 > carries the worked example; `NOTES_method_naming.md` applies the same test to the *methods* — and

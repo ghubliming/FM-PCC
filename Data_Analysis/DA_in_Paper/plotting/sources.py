@@ -408,6 +408,26 @@ CORPORA = {
         'partial',
         'Corridor with walls 1.90 m apart and a 14 deg test-time slide (U16). Projection '
         'configuration differs from pillars/s_curve (-bounds_free-pdes-tightened): never pooled.'),
+    # ---- the corpora of record of v3 Chapter 6 (2026-09-20) ------------------
+    # These two are what the draft's alignment and quadrotor TABLES are computed from
+    # (analysis/va_results.py, analysis/uav_results.py). The entries above are the older
+    # batches the earlier figures were built on and are kept so those figures still build.
+    'visual_aligning_15_09': Corpus(
+        'visual_aligning_15_09',
+        'Data_Analysis/analysis_results_checkpoint/15-09/batch_va2_20260915_100754',
+        'seed 6, ten shared enumerated contexts (paired; raw cells with 30 contexts are restricted)',
+        'partial',
+        'The alignment corpus of record. Cells are selected by FolderName prefix, see '
+        'ALIGNING_CELLS: the budget and the activation threshold are both in the prefix, so a '
+        'prefix without its T token would pool two different thresholds.'),
+    'uav_19_09': Corpus(
+        'uav_19_09',
+        'Data_Analysis/analysis_results_checkpoint/19-09-UAV-Pillars-Exclude/batch_uav_20260919_111701',
+        'seed 6, 12 flights per corridor configuration (4 per route L/C/R)',
+        'partial',
+        'The quadrotor corpus of record. UAV-pillars is EXCLUDED from it (the scene enforces the '
+        'constraint its own demonstrations satisfy); s-curve is in it but scores 0.00 with '
+        'constraint satisfaction in every configuration, so it carries no cost frontier.'),
     'uav_pillars_diffusion': Corpus(
         'uav_pillars_diffusion',
         'temp/1209/batch_uav_20260912_201035',
@@ -503,6 +523,25 @@ VENDORED = {
         'Report_20260903_AF_UNet fig 8h; per-episode MPC diagnostics, no projection, '
         'seed 6, both-hard, diffusion baseline TRAINED AND RUN at K=2 (aw10). '
         'Ours; verified absent from aux_repo.'),
+    # The NINTH panel, landed 2026-09-20: the diffusion baseline at its OWN native
+    # budget K=20, which the author asked for because that is the configuration every
+    # number of Chapter 6 is measured against. A fetch, not a run -- but NOT from the
+    # run REQUEST_20260916's 2026-09-20 addition names. That run
+    # ('..._msg20trials') died mid-variant on 2026-08-18 after writing five of
+    # thirteen variants, so its seed-6 both-hard 'diffuser' dashboard was never
+    # written. This panel comes from the sibling '..._aw10_thres0.5' campaign, which
+    # is complete. Same checkpoint, same K=20, same seed 6, same both-hard geometry;
+    # 'thres0.5' is a PROJECTION threshold and this is the unprojected arm, so it
+    # cannot have touched the plans drawn here. Layout is the 3000x1000 two-episode
+    # one, so it takes the 08-19 box and needs NO resize -- verified, not assumed:
+    # the cut lands on (56,28)-(388,378) at 403x400 like the other eight.
+    # Ledger: LEDGER_20260918_v3_figure_artefact_fetch.md, 2026-09-20 section.
+    'fig_raw_plans_diffusion_K20': ('demo',
+        'Data_Analysis/DA_Result_Curated_MD/Report_20260903_AF_UNet/'
+        'fig8i_plans_dpcc_K20_seed6.png',
+        'Report_20260903_AF_UNet fig 8i; per-episode MPC diagnostics, no projection, '
+        'seed 6, both-hard, diffusion baseline at its native K=20 (aw10), from the '
+        'thres0.5 campaign. Ours; verified absent from aux_repo.'),
     'fig_raw_goal_reached_K1': ('da',
         'Data_Analysis/DA_Result_Curated_MD/Report_20260903_AF_UNet/fig7_raw_diffuser_K1.svg',
         'Report_20260903_AF_UNet fig 7; goal reached without projection at K=1, '
@@ -589,6 +628,11 @@ VENDORED_CROP = {
     # panels above, so it takes their box and needs NO resize. Checked against
     # fig6b (diffusion K1) before vendoring: identical axes and frame position.
     'fig_raw_plans_diffusion_K2': ((2312, 92, 2715, 492),
+        'top row, last column: every plan of the episode overlaid on the scene'),
+    # 2026-09-20, thres0.5 campaign: 3000x1000 again (two episodes), measured grid
+    # bands cols [(370,709)...(2349,2702)] rows [(98,476),(518,896)] -- the same
+    # layout as the four entries above, so the same box and no resize.
+    'fig_raw_plans_diffusion_K20': ((2312, 92, 2715, 492),
         'top row, last column: every plan of the episode overlaid on the scene'),
     # 20-trials layout: episode 1 of ten, then stretched onto the 08-19 canvas.
     'fig_raw_plans_fm_K1': ((2312, 574, 2715, 947),
@@ -758,6 +802,57 @@ AVOIDING_T1_PROTOCOL = '5 seeds x 2 trials = 10 episodes per cell'
 # (Roemer et al. 2025, Sec. 6.1) = 50 rollouts per geometry. 5 x 2 = 10 is SMALLER
 # than theirs, and 5 x 20 = 100 is twice it. Figures must not call either one
 # "the published protocol".
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  D3IL-ALIGNING and the QUADROTOR: cell selection for the corpora of record
+# ═══════════════════════════════════════════════════════════════════════════
+# One thesis cell is one FolderName PREFIX. The prefix carries the step budget and
+# the activation threshold (`_T0.2`), and both matter: the same model at the same
+# budget was also run at T0.5, and pooling the two would average two different
+# projections. These are the prefixes analysis/va_results.py selects on, copied
+# here so the figures and the tables cannot disagree.
+# (engine, K) -> (FolderName prefix, required run-tag suffix or None). The SUFFIX is
+# not optional: the K=2 MeanFlow prefix also matches a FiLM v2 run, and the consistency
+# prefixes also match the alpha floor 0.05 arm. Dropping it pools two models into one
+# cell and moves the median (MeanFM K=2: 0.2354 with the suffix, 0.3678 without).
+ALIGNING_CELLS = {
+    ('mf', 2):    ('H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_fil', 'mv1_Emf'),
+    ('mf', 10):   ('H8_K10_Meuler_T0.4_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow', None),
+    ('mf', 20):   ('H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow', None),
+    ('af', 2):    ('H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow', '_msgafon02_s6'),
+    ('af', 20):   ('H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow', '_msgafon02_s6'),
+    ('fm', 20):   ('H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching', None),
+    ('diffusion', 20):  ('H8_K20_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion', None),
+    ('diffusion', 100): ('H8_K100_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion', None),
+}
+# Budgets the thesis REPORTS on this task. The K=100 diffusion checkpoint exists and is
+# `visual_aligning_dpcc`'s own configured chain length (config/aligning-d3il-visual.py:454);
+# it is kept in the registry above, and out of the figures, because v3.45 fixed the reported
+# budget set to the ones the flow models are operated at. Anything that draws this task filters
+# through here, so the figure and the tables cannot disagree about which budgets are shown.
+ALIGNING_REPORTED = {('mf', 2), ('mf', 10), ('mf', 20),
+                     ('af', 2), ('af', 20),
+                     ('fm', 20),
+                     ('diffusion', 20)}
+# The untightened set is the only geometry on which all four models were evaluated,
+# and `diffuser` is the unprojected arm -- the model on its own, which is what the
+# generative-model comparison of section 6.2.1 is made on.
+ALIGNING_UNPROJECTED = ('combined_5', 'diffuser')
+ALIGNING_INITIAL_DISTANCE = 0.4530     # metres, mean over the ten contexts
+
+# UAV-corridor v2: the run tag, the geometry prefix, and the projection suffix that
+# every corridor cell of the thesis carries. The corridor's projection configuration
+# releases the action box and constrains the commanded position, which is why its
+# variant names differ from the other two scenes and why the scenes are never pooled.
+UAV_CORRIDOR = {
+    'tag': 'u17cv2',
+    'geo_prefix': 'corridor_cv2s',
+    'suffix': '-bounds_free-pdes-tightened',
+    'budgets': {'mf': (1, 3, 5), 'af': (1, 3, 5), 'fm': (1, 3, 5), 'diffusion': (20,)},
+}
+# S&C on the quadrotor is "passed the goal on a collision-free flight". The strict
+# within-0.30 m columns are not what the thesis reports; see analysis/uav_results.py.
+UAV_SC = 'n_success_relaxed_and_constraints'
 
 GEOMETRIES = ['top-left-hard', 'top-right-hard', 'both-hard']
 RULE_LABEL = {'dpcc-r': 'random', 'dpcc-c': 'cumulative projection cost',

@@ -2,6 +2,36 @@
 
 \chapter{Derivations}\label{app:derivations}
 \chapter{Extended Results}\label{app:results}
+
+\section*{Intermediate diffusion budget on D3IL-avoiding}
+
+\autoref{tab:avoiding-dpcc-protocol} locks the main comparison to one and two network evaluations,
+with the diffusion model at its native twenty-step budget as the baseline of record. The available
+intermediate diffusion checkpoint is reported here rather than inserted as an unmatched budget in that
+comparison.
+
+\begin{table}[htpb]
+  \caption[Diffusion at ten denoising steps]{The diffusion model at $\nfe=10$ on D3IL-avoiding, at the
+  protocol of \ac{DPCC}: five training seeds $\times$ two episodes per geometry, tightened constraints,
+  four candidate plans and the temporal U-Net of $4.0$\,M parameters. Values are mean $\pm$ the standard
+  deviation over the training seeds.}
+  \label{tab:app:diffusion-k10}
+  \centering
+  \small
+  \begin{tabularx}{0.82\linewidth}{@{}c rrr@{}}
+    \toprule
+    Rule & S\&C & Steps & ms/step \\
+    \midrule
+    $r$ & $0.900 \pm 0.091$ & $75.1 \pm 7.3$  & $327.2 \pm 35.4$ \\
+    $c$ & $1.000 \pm 0.000$ & $70.3 \pm 11.5$ & $309.8 \pm 11.2$ \\
+    $t$ & $1.000 \pm 0.000$ & $68.7 \pm 7.0$  & $321.7 \pm 14.4$ \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{analysis\_results\_checkpoint/19-09-UAV-Pillars-Exclude/
+batch\_avoiding\_combined\_20260919\_132703; DA\_in\_Paper/analysis/
+avoiding\_rules\_by\_protocol.py}
+
 \chapter{Reproducibility}\label{app:repro}
 
 \section*{Compute environment}

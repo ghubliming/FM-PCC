@@ -25,7 +25,7 @@ theirs  (v2 re-split on demand)    v2 right now
 | `chapters/05_setup.tex` | **own** | bone in v2, written in v3. |
 | `chapters/06_results.tex` | **own** | bone in v2, written in v3. |
 | `chapters/07_discussion.tex` | **own** | bone in v2, written in v3. |
-| `chapters/08_conclusion.tex` | **own, not built** | Drafted in v3 up to v3.35 and then handed to v4 (author instruction, 2026-09-18): the whole conclusion is v4's chapter. The file stays here untouched and its `\input` in `thesis_v3.tex` is commented out. |
+| `chapters/08_conclusion.tex` | **own** | v3 drafts it concisely and v4 refines it (`DRAFT_OWNERSHIP.md`). It was dropped from the build on 2026-09-18 and **built again from v3.49 (author instruction, 2026-09-20)**: the thesis must not be missing a chapter while v4 has not started. Ownership did not change with it. |
 | `chapters/09_appendix.tex` | **own** | v2 opened `app:repro`; v3 extends all three appendices. |
 
 **`own` still keeps a baseline.** Not to merge into — to make drift *visible*. If v2 ever writes

@@ -46,7 +46,7 @@ therefore still open — none is "ready but unread". Treat them as *submitted-or
 | :-- | :-- | :-- |
 | B1 | **The diffusion baseline has no tightened geometry at all** — only `combined_5`, 6 projection variants, no endpoint projection. Confirmed in the batch and in `NOTEBOOK_20260829` H10 | R2 |
 | B2 | FM at $\nfe=2,10$ and CI-MeanFM at $\nfe=10$ (no budget ladder for either) | R16 |
-| B3 | Held-out contexts, and 50–60 contexts | R3 |
+| B3 | ~~Held-out contexts, and 50–60 contexts~~ ❌ retired 2026-09-20 (author's call) | R3 |
 
 ### C · The quadrotor, and this is the largest gap
 The endpoint-projection (`hardflow_sls`) matrix is far from complete, and the baseline is missing

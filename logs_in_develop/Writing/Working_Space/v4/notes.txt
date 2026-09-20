@@ -11,5 +11,11 @@ serch the repo I have previosu note and maybe the conclusion)
 
 also should be the MPC -r-t-c select disscusion if not used to save time! (should be in v4)
 
+also maybe not need all the thigns in that appenix, like the Derivations... etc.
+
+the UAV data need to manual generate in Software like Nvidea Omniverse(or another sim2real SW?) to ensure the correctness, now 
+we have no device to do! so it is only a remedy so teh our s_curve in chap6 failure may failing due to the no real huamn control UAV in sim2real or in
+the real word data input. ie lacking expert data.
+
 etc.
 will do after v2 and v3 totally finished.

@@ -48,6 +48,23 @@ corrected each of the following explicitly, some more than once (2026-09-11 → 
 - **Caveats are told as story sections** (2026-09-17): e.g. "Caveat: What the Metrics of DPCC Do Not
   Measure", "Caveat: The Tracking Controller" — a weakness stated plainly, with evidence, not as a
   defensive remark.
+- **The prompt is never thesis text** (user angry, 2026-09-20: *"this is my prompt, why it is inside the
+  thesis? this is self talking and prompt rephasing!"*). What the user asks for enters the draft as a
+  *fact about the figure/table*, never as (a) a restatement of the instruction ("both translucent **so
+  that** the excluded region stays readable underneath"), (b) a "which is why …" justification tail, or
+  (c) a claim that it was delivered ("in the two forms D3IL-avoiding **also uses**"). A caption says what
+  is drawn, what each colour/style/panel means, the numbers not recoverable from the drawing, and a
+  pointer to the table carrying the claim — nothing else. Binding rule with worked examples:
+  `Writing/Writing_Hints/HINT_20260920_prompt_is_not_thesis_text.md` (also naming-table §8 rule 9).
+  The user names two alerts: 🔴 **RED** = the prompt is in the thesis; 🟡 **YELLOW** = *self-reasoning*,
+  a `because` the evaluation did not produce (*"does not recover the gap, **because what the budget
+  buys back sits in the projector rather than in the denoiser**"*), or a paragraph answering an
+  objection the reader never made.
+- **Write as the person who ran the experiments** (2026-09-20): *"you just fact truth telling, and story
+  telling, you are the boss ... not the self explosion suicide way."* State the measurement flatly; no
+  hedging, no apologising for the sample, no anticipating objections, no telling the reader what to
+  conclude. A real limit goes once into a `\guard`, plainly — a limit argued around reads as weakness.
+  This is not licence to overclaim: say exactly what the data supports, then stop.
 - **Tell the evaluation as two stages: prove, then extend.** Obstacle avoidance is DPCC's benchmark,
   used 1:1 to meet the baseline on its own ground. The vision-conditioned alignment task and the
   quadrotor benchmark were **built** for this thesis (the quadrotor: everything but the Skydio X2

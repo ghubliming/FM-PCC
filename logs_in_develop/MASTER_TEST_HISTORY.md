@@ -6108,3 +6108,33 @@ Comprehensive data analysis of the MPC candidate fan ($B=4$ vs $B=1$) on `avoidi
    - Implemented trajectory extractors and SVG/PNG plot builders visualizing executed drone trajectories across `corridor` (slide detours), `pillars` (obstacle bypasses), and `s_curve` (`mjpc` vs `pid_stopgo` tracking stability).
    - Implemented expert demonstration path visualizations (`fig_expert_aligning`, `fig_expert_uav`) documenting the reference training distributions across tasks.
    - Added `pillars_grid.py` in `Data_Analysis/DA_in_Paper/analysis/` to automate the 11-variant evaluation grid analysis once the `pillars_xl` wave executes.
+
+
+***
+
+## D3IL-Avoiding DPCC Protocol Full Table, UAV-Corridor Endpoint Grid & S-Curve Divergence Forensics (September 19, 2026)
+
+**Keywords**: DPCC protocol completion, architecture-matched Pareto dominance, corridor endpoint projection, tightening necessity, s-curve divergence aborts, batch_avoiding_combined_20260919_132703, batch_uav_20260919_111701, clean_gifs_sweep, commits c34765b2, ff980b29.
+
+1. **D3IL-Avoiding Complete Architecture-Matched Table at DPCC Protocol** (`DA_20260919_wave_1718_corridor_endpoint_and_scurve.md`, `batch_avoiding_combined_20260919_132703`, jobs 25878, 25880):
+   - Completed all 12 remaining Flow Matching and CI-MeanFM evaluation cells under DPCC's exact published evaluation protocol (5 training seeds × 2 episodes across 3 geometries; 10 episodes total per geometry, 4.0 M parameter U-Net across all arms).
+   - **Full Pareto Dominance over Diffusion Baseline**: Against the top diffusion baseline cell (K=20 `dpcc-c`: S&C 1.000, 70.1 control steps, 553.4 ms/step), both flow models at K=1 achieve S&C 1.000 with fewer control steps and ~31× faster per-step execution:
+     - Flow Matching (K=1, `dpcc-c`): 1.000 S&C, 67.0 steps, 17.3 ms/step (**32.0× speedup**). FM holds 1.000 S&C across all three selection rules at both K=1 and K=2.
+     - CI-MeanFM (K=1, `dpcc-t`): 1.000 S&C, 59.2 steps, 18.1 ms/step (**30.6× speedup**, lowest step count in the entire benchmark).
+   - Established that DPCC's baseline is imperfect under random selection (`dpcc-r` drops to 0.967), while flow matching is robust across all rules.
+
+2. **UAV-Corridor Endpoint Projection Exhaustive Evaluation** (`DA_20260919_wave_1718_corridor_endpoint_and_scurve.md`, `batch_uav_20260919_111701`, tag `u17cv2`):
+   - Evaluated all 4 endpoint selection rules (`single`, `-r`, `-c`, `-t`) across K=3 and K=5 on corridor_v2 slide (seed 6, 12 flights/cell).
+   - **Resolution of Endpoint Projection Capability**: Confirmed that endpoint projection does not outperform per-step projection on this geometry under any selection rule. Peak endpoint S&C is 0.58 (MeanFM K=3 `-c`), versus 1.000 for all per-step rules at matched budgets. Endpoint projection trades roughly 50% cost savings (74 ms vs 99 ms/step) for roughly 50% lower constraint satisfaction.
+   - **ODE Horizon Scaling Degradation**: As step budget increases from K=3 to K=5, endpoint projection performance degrades (0.58 $\to$ 0.33) due to accumulated trajectory deviation over longer ODE integration steps.
+   - **Critical Role of Tightening Margin**: Guard cell `dpcc-c-bounds_free-pdes` (without the 0.025 m tightening margin) scored 0.00 S&C (48.1 violating steps), proving that tightening accounts for the entirety of constraint satisfaction on this vehicle trajectory. Naive Flow Matching failed the scene across all budgets (0.00 to 0.17 S&C).
+
+3. **UAV S-Curve Divergence and Inversion Forensics** (`u18sc`, seed 6, jobs 25887–25912):
+   - Re-evaluated s-curve post switched-wall bugfix across all models and variants; all cells scored 0.00 S&C and 0.00 collision-free.
+   - Forensics revealed that 57% to 92% of flights were terminated by the divergence guard due to vehicle inversion (`body z · world z < 0`).
+   - The divergence guard triggered on unprojected baseline flights as well (FM 4/10, MeanFM 10/10, CI-MeanFM 8/10), demonstrating that failures stem from tracking controller attitude instability on aggressive curvature rather than projection mechanics. The scene was formally classified as a controller execution failure case rather than an algorithmic deficiency.
+
+4. **Corpus Management, Figures & GIF Inspection Infrastructure**:
+   - Released updated batch archives `batch_avoiding_combined_20260919_132703` and `batch_uav_20260919_111701`. Gated `pillars_hg` behind `PILLARS_EXCLUDED = True` in analysis scripts pending `pillars_xl` execution.
+   - Added `clean_gifs_sweep.sh` under `tools/clean_gifs/sweep/` for batch sweep and inspection of visual rollout artifacts.
+   - Completed raw plan visual matrices across all models (`fig_raw_plans_af_K1/K2`, `fig_raw_plans_fm_K1/K2`, `fig_raw_plans_diffusion_K2`).

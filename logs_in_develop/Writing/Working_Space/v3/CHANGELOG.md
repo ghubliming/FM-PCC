@@ -17,6 +17,454 @@ is sourced from · what it left open.
 
 ---
 
+## v3.53 — 2026-09-20 · Chapter 6 figures, and the tone rule gets its second half → [`changelogs/v3.53_20260920_ch6_figures_and_tone.md`](changelogs/v3.53_20260920_ch6_figures_and_tone.md)
+
+- **`fig:avoiding-paths` re-scoped to the flagship models** (author): out go four different models at
+  three different budgets, in come **MeanFM and CI-MeanFM at $\nfe=1$ and $\nfe=2$**. All four cells
+  were already in the staged drop — an `AVOIDING_PANELS` edit and a re-run, no fetch. The pairing is now
+  exact: these four cells **are** the four panels of the two average-velocity columns of
+  `fig:raw-plans`, with the projector switched on, so the two figures are a matched before-and-after.
+  $19/19/17/20$ of $20$ reach the goal; **all eighty episodes violation-free**.
+- 🔴 **Two red-alert sentences out of that caption**: *"drawn like … and like the quadrotor scenes' …"*
+  (a cross-reference dressed as reassurance) and *"top-right-hard is drawn **because** it is the
+  geometry that separates the models"* (a justification for a design choice). The `\guard` lost the
+  same clause and keeps only the limit.
+- 🔴 **`fig:avoiding-tradeoff`'s budget list was wrong.** It claimed every model at
+  $\nfe\in\{1,2,5,10,20\}$; **no model has all five** — MeanFM has $1,2,5,10,20$, FM has $1,2,5,20$,
+  the baseline has $20$ alone. Listed per model now. The **numbers check out**: MeanFM $\nfe=1$ $t$,
+  FM $\nfe=20$ $c$ and the baseline all match `tab:state-headline` to the printed digit, so figure and
+  tables are the same evaluations; $\nfe=5,10$ are real measurements the tables do not list because the
+  tables are locked to the operated budgets.
+- 🟡 **Self-reasoning removed near `fig:k-ladder`**: *"does not recover the gap, because what the budget
+  buys back sits in the projector rather than in the denoiser"* — nothing measured that split. Now
+  *"leaves the baseline at thirteen times the cost."*
+- **The style hint gains its second half**: 🔴 RED (the prompt in the thesis) and 🟡 YELLOW
+  (self-reasoning — a *because* the evaluation did not produce, an argument against an absent objector),
+  plus **the tone**: write as the person who ran the experiments, state it, do not defend it; *a limit
+  stated plainly is strength, a limit argued around is not*. Re-registered in the naming table §8 rule 9,
+  `DRAFT_OWNERSHIP.md`, both READMEs and memory.
+- **The orientation `\hole` in §6.2 is gone** — v3.51 took the metric out of Chapter 5 and this was its
+  last mention in the draft. hole 17 → 16.
+- **`PENDING_20260920_all_lacking_runs.md` swept, nothing deleted**: D2, the diffusion `both-hard`
+  artefact, R25/R26/R18 and the K20 re-run are struck through and marked *NO LONGER NEEDED* with the
+  reason and the v3 version (new §11); the coverage audit matches. Open and unchanged: R2, D10c,
+  R7/R14, R9, R15, D8/D9.
+- `check.py` 258 labels, 39 figures, all mechanical checks pass. Bundles `221030_new` /
+  `221030_new_clean` (6740 KB) verify byte-faithful. **Not compiled.**
+
+## v3.52 — 2026-09-20 · Chapter 6 §6.1: the unprojected table becomes a mirror, the pending grid is closed by decision → [`changelogs/v3.52_20260920_ch6_results_pass.md`](changelogs/v3.52_20260920_ch6_results_pass.md)
+
+- **`tab:avoiding-raw-models` is now a row-for-row mirror of `tab:avoiding-dpcc-protocol`.** It was one
+  seed, one geometry, mixed budgets and a stray $\alpha_{\mathrm{end}}=0.05$ row. The corpus of record
+  already carried the **unprojected arm** (`variant = diffuser`) of exactly the projected cells at **five
+  seeds × three geometries**; it had never been extracted. The two tables now differ in the projector and
+  in nothing else. New: every model reaches the goal (S $=1.000$) and **none satisfies the constraints**
+  (S\&C $0.000$–$0.100$, $15.5$–$19.0$ violating steps) — the section's premise, measured; and the
+  unprojected time column prices generation alone, so the projector's share follows by subtraction
+  (≈ $8$ of MeanFM's $18.3$\,ms, ≈ $374$ of the baseline's $553.4$\,ms).
+- 🔴 **A misattributed number fixed.** "$28.0$ violating control steps … at its own twenty steps" is the
+  baseline at **$\nfe=1$**; at twenty the same cell reads $18.5$. Both are now given with their budget.
+- **Fig. 6.1 is guaranteed to precede Table 6.1**: the float moved to the top of §6.1.1.1 (it was
+  declared five paragraphs after its first reference), placement relaxed to `[!htbp]`, and a
+  `\FloatBarrier` set between the prose and the table.
+- **§6.1.1's introduction stops repeating Chapter 5** — three paragraphs of model names and budget
+  semantics cut to one, 217 words → 96, with pointers to `sec:setup:baselines` and `tab:eval`.
+- 🔴 **The $\nfe=20$ extended campaigns are truncated, and now say so.** Counted cell by cell: the
+  baseline has *both-hard* for **seed 6 alone** under $r$ and $c$, **not at all** under $t$, and none in
+  its unprojected arm; MeanFM has **no *both-hard*** at that budget; FM has 2–3 of 5 seeds. Every
+  $\nfe\in\{1,2\}$ cell is complete. The $^{\dagger}$ footnote is rewritten and a `\guard` carries the
+  census. The author's suspicion was right.
+- **The pending rows are gone** (four in `tab:state-headline`, one in `tab:avoiding-dpcc-protocol`,
+  both `\hole`s; hole 19 → 17) and 🆕 **§6.1.2.7 `sec:res:avoiding:budget20`** answers their question
+  from existing data: each flow model at $\nfe=2$ against $\nfe=20$, **matched to the cells both budgets
+  cover**. **No model improves at twenty** (S\&C $1.000\to0.970$, $0.990\to0.955$, $1.000\to0.950$) and
+  the cost rises $17$–$37\times$, two of the three then costing more per action than the baseline. R25,
+  R26 and R18 marked *ruled out on cost (author)*.
+- **Chapter 5 §5.6.3.1** gains the sentence that makes the marking readable: an unmarked results cell
+  carries all five seeds and all three geometries.
+- New analysis of record `DA_in_Paper/analysis/avoiding_unprojected_and_budget20.py` (three blocks:
+  the unprojected mirror, the matched budget comparison, the coverage census), registered in
+  `analysis/INDEX.md`; `PENDING_20260920_all_lacking_runs.md` §10 records the decision and the census.
+  `check.py` 258 labels, 39 figures, all mechanical checks pass. Bundles `220209_new` /
+  `220210_new_clean` (6733 KB) verify byte-faithful. **Not compiled.**
+
+## v3.51 — 2026-09-20 · Chapter 5 author pass: the prompt leaves the thesis → [`changelogs/v3.51_20260920_ch5_author_pass.md`](changelogs/v3.51_20260920_ch5_author_pass.md)
+
+- 🆕 **A standing writing rule, on the author's instruction: _the prompt is not thesis text._** He found
+  his own request rephrased inside the Fig. 5.9 caption (*"both translucent **so that** the excluded
+  region stays readable underneath ... **which is why** satisfying the constraints can only be the
+  projection's doing"*). New file `Writing/Writing_Hints/HINT_20260920_prompt_is_not_thesis_text.md`:
+  the rule, the three shapes it goes wrong in (prompt rephrasing · the justification tail · the
+  done-claim), worked before/after pairs from this draft, and a caption checklist. Registered in the
+  naming table (**§8 rule 9**), `DRAFT_OWNERSHIP.md` (binding on v2/v3/v4), `Auxiliary/README.md`, this
+  draft's `README.md`, a new `Writing_Hints/README.md`, and the Chapter 5 header comment. The caption
+  itself now states the colour rule and points at `tab:avoiding-geometries` for the count.
+- **Fig. 5.3 is two panels and no longer argues.** The claim about what Fig. 5.9 shows is gone; the new
+  right-hand panel is the *task finished* — the measured end-effector path of all 96 demonstrations,
+  every one starting at $(0.525,-0.280)$ and ending beyond the goal line at $y=0.35$ (smallest
+  per-episode maximum $y$ is $0.403$, so 96 of 96 cross), in 60–106 recorded steps. `fig_env_avoiding`
+  existed in the store, unused; its in-plot title was removed (naming table §6) and `_scene_panel` now
+  reserves top margin only when a heading is passed.
+- **The action box is out of the alignment constraint set** (author): an `action_bounds: 'auto'` bound
+  fitted to the demonstrations carries no value a reader can check. Gone from `tab:aligning-constraints`,
+  `tab:va-vs-d3il`, the `combined-5` and D3IL-avoiding sentences, the UAV-corridor protocol line and
+  three `\srcnote`s. Ch 4 still defines it → filed to v2.
+- **The orientation metric is gone from §5.4.2** — no result reports it; the `\srcnote` now says why
+  (the recorded box angle uses a convention that differs between runs). One `\hole` in Ch 6 is the last
+  mention left in the draft.
+- **The quadrotor `\hole` the author could not parse is dropped.** It was not a defect: it asked for the
+  flown episodes instead of the reference paths, and the prose above `fig:expert-uav` already states
+  that the references are the conservative drawing. hole 20 → 19.
+- **§5.5.2 states how large the D3IL policies are** — heads of four layers at width 72 (BESO, DDPM-GPT)
+  and encoder–decoder transformers at width 64 (DDPM-ACT, VAE-ACT), well under a million parameters
+  each, behind **two ResNet-18 trunks of ≈11 M** that this thesis adopts unchanged, with its 4.0 M
+  temporal U-Net in place of the head. Sourced from D3IL Table 9 **and** the repo configs; the `\srcnote`
+  records that D3IL publishes no parameter counts.
+- **§5.5.3 cites the original quadrotor task** in the paragraph that describes it, and opens *This
+  benchmark* with the principle it shares with D3IL-avoiding and DPCC — train on demonstrations,
+  introduce constraints they do not satisfy at test time, score both finishing and satisfying.
+- **§5.6.4 flagged undecided** with an `% OPEN` comment recording what must move if it is dropped.
+- **Chapters 7 and 8 were not opened** (author instruction). `sync_v2.py status` clean at v2.24;
+  `check.py` 39 figures, hole 19, all mechanical checks pass. Bundles `214426_new` / `214426_new_clean`
+  (6731 KB, 41 figures) verify byte-faithful. **Not compiled.**
+
+## v3.50 — 2026-09-20 · the two missing path figures, and three Chapter 5 hotfixes → [`changelogs/v3.50_20260920_paths_figures_and_ch5_hotfix.md`](changelogs/v3.50_20260920_paths_figures_and_ch5_hotfix.md)
+
+- 🆕 **The executed-path figures of the two manipulator benchmarks are built** --- asked for four times
+  and blocked on a builder that was never written. New pipeline, the same split the quadrotor figures
+  use: `extract/exec_paths.py` (numpy, reads the gitignored drops) → `data/exec_paths.json` →
+  `builders/exec_paths.py` (standard library). Two panels were factored out
+  (`avoiding.geometry_panel`, `scenes.aligning_constraint_panel`) so a path is never drawn over a
+  *redrawn* constraint set --- what lies under it is the geometry the projector was given.
+  - **`fig:avoiding-paths`** (§6.1.2.2): four panels of 20 episodes --- MeanFM, CI-MeanFM and FM at one
+    network evaluation, the diffusion baseline at twenty --- under per-step projection with temporal
+    consistency on `top-right-hard`, seed 6. **All 80 episodes are violation-free**; 19/17/17/20 reach
+    the goal. The plans entering it are the near-scribbles of Fig. 6.1's $\nfe=1$ row; between the two
+    figures sits the projector. `\guard`: one seed, one geometry.
+  - **`fig:aligning-paths`** (§6.2): the ten contexts under no projection, per-step and endpoint.
+    Violation-free **2/10, 9/10, 10/10 --- the $\nfe=20$ rows of `tab:va-projection`, reproduced**, an
+    independent check that the artefacts and the published table describe the same evaluation. Measured
+    while building and now in the prose: unprojected, **seven** contexts enter the keep-out region and an
+    eighth leaves the halfspace; under either projector neither is entered at all, and the one context
+    per-step projection does not keep clean breaches the **action box** instead. 🔴 `\guard`: **it draws
+    the end effector, not the box** --- the constrained quantity here is the planned end-effector
+    position, but the quadrotor figures draw the body, and the box pose is not logged (**D10c**).
+  - Both `\hole`s asking for a counterpart of `fig:uav-corridor-paths` are gone. **hole 22 → 20**;
+    36 → 38 figures.
+- **Fig. 5.9 colours the demonstrations by whether they satisfy the geometry** --- red where a
+  demonstration crosses the panel's constraint set, green where it satisfies it at every step, both
+  translucent so the excluded region stays readable. The green lines number 0, 1 and 2, which is what
+  `tab:avoiding-geometries` prints; the builder **asserts** its colouring against that published count,
+  so the two cannot drift. Legend to two rows, caption rewritten.
+- **Fig. 5.4 moved after the scene and camera figures** (author): the subsection now reads task →
+  cameras → the ten contexts it is evaluated on. `fig:aligning-contexts` renumbers 5.4 → 5.6. Order
+  only; no wording changed.
+- **Table 5.4's caption says what the table is.** "in the two forms D3IL-avoiding also uses" was a
+  cross-reference dressed as emphasis; the caption now names the constraint set and stops.
+- **Verification.** `tools/check.py`: 14 files, 256 labels, 53 citations, 38 figures; hole 20,
+  provisional 3, guard 16, srcnote 57, dataref 36, todofigure 0; all mechanical checks pass.
+  `sync_v2.py status` clean at v2.24. Three figures rebuilt, rendered and inspected. Bundles rebuilt:
+  `thesis_v3_20260920_195809_new` and `…_195810_new_clean`, both verified byte-faithful. **NOT COMPILED** --- no TeX toolchain here.
+
+---
+
+## v3.49 — 2026-09-20 · Chapter 8 returns, the plan matrix is complete, MuJoCo MPC gets a price → [`changelogs/v3.49_20260920_chapter8_figures_and_controller_cost.md`](changelogs/v3.49_20260920_chapter8_figures_and_controller_cost.md)
+
+- 🆕 **§6.3.3 now prices the two tracking controllers** (`tab:uav-controller-cost`). On the unprojected
+  arm a control step costs $94.9$\,ms under the cascaded geometric brake-to-rest controller and
+  $215.6$\,ms under MuJoCo MPC; the planner's share is the same in both ($88$--$90$\,ms), so the
+  **$119$\,ms between them, about twenty times, is the controller**, which solves an optimisation every
+  control step where the other evaluates a formula. By itself that is more per control step than
+  generating the plan and about seven times what the D3IL-avoiding operating point spends on a whole
+  action. It buys a traverse and not a result: neither controller produces a flight that passes the goal
+  within the constraints on this scene. Source `Report_20260909_MJPC_vs_PID_s_curve` §5.4--5.5; elapsed
+  flight time from the job records ÷ executed control steps. `\guard`: a decomposition, not a timer
+  around the controller call; the remainder row carries the simulator step, so only the *difference*
+  isolates the controller; one seed, ten flights against three. Stated in the caption as a **different
+  quantity** from the planner time Chapter 5 defines.
+- 🆕 **Chapter 8 is built again** (author, 2026-09-20): a thesis must not be missing a chapter while v4
+  has not started. Ownership is unchanged --- v3 drafts it concisely, v4 refines. 🔴 Building it exposed
+  that it was stale: **every UAV-pillars claim is gone** (the scene has been withheld from Results since
+  v3.41, and a built Chapter 8 would have contradicted Chapter 6), the summary and the three RQ answers
+  were rewritten against §6.4 as it now stands, and **"wall-clock time"** went with them. `sec:conc:future`
+  is untouched. Handover: `to_v4/FROM_v3_20260920_chapter8_is_built_again.md`.
+- **§6.1.2.1 rewritten**: 9 paragraphs / 5966 characters → 7 / **4636**, with the two self-narrating
+  paragraphs gone and a fixed order (what is held fixed → the marks → the baseline reproduces → the two
+  models that clear it → the operating point and the rule → the resolution → what it does not mean).
+  No fact, `\autoref`, table, caption, `\dataref` or `\hole` was dropped. One number was: "$0.867$ at
+  $\nfe=20$" is in no table of this draft, so no reader could check it.
+- **Figures stop printing protocol on the page.** Fig. 6.5 carried "*unprojected, untightened · seed 6 ·
+  median over the ten contexts*" inside the drawing; the same defect was in Figs. 6.2, 6.3 and 6.7 and was
+  fixed as a class. Titles and protocol subtitles removed, margins retightened, the *both-hard* panel's
+  single-seed baseline now said explicitly in the caption, `fig:k-ladder`'s legend "CI-MeanFM, seed 6" →
+  "CI-MeanFM (one seed)", and Fig. 6.5's "box not moved" label moved off the diffusion point it was
+  overprinting. `frame()`'s docstring and the canonical translation table now carry the rule.
+- **Fig. 6.6 names its model**: `MeanFM, K = 20` beside the projection legend --- §6.2 discusses three
+  generative models and the figure named none.
+- 🆕 **`fig:raw-plans` is complete and the draft has no `\todofigure` left.** D10d landed: the panel comes
+  from the complete sibling campaign `…aw10_thres0.5` (same checkpoint, $\nfe=20$, scene, seed 6,
+  `both-hard`), because the run the request named died mid-variant; `thres0.5` is a *projection* threshold
+  and this is the *unprojected* arm, so no projector ran in either campaign --- stated in the figure's
+  `\guard`. Prose updated ("three diffusion panels"), and the new panel is read in the text.
+- 🔴 **Disclosure that came with it**: the same truncation leaves `tab:state-headline`'s diffusion
+  $\nfe=20$ row under temporal consistency averaged over **two** geometries --- the only such cell in
+  either avoiding table. Said in the `$^{\dagger}$` footnote. Not a flattered baseline, and one evaluation
+  re-run repairs it and fills D10a's diffusion cell.
+- **Verification.** `tools/check.py`: 14 files, 5645 lines, 254 labels, 53 citations, 36 figures; hole 22,
+  provisional 3, guard 14, srcnote 57, dataref 34, **todofigure 0**; all mechanical checks pass.
+  `sync_v2.py status` clean at v2.24. Five figures rebuilt, rendered and inspected --- **no data value
+  changed**. Bundles rebuilt: `thesis_v3_20260920_161735_new` and `…_new_clean` (6247 KB each), both verified byte-faithful (9 inlined + 4 collapsed sources). **NOT COMPILED** --- no TeX toolchain here.
+
+---
+
+## v3.48 — 2026-09-20 · figure captions stop explaining themselves; the baseline joins the plan matrix → [`changelogs/v3.48_20260920_figure_captions_and_direction_key.md`](changelogs/v3.48_20260920_figure_captions_and_direction_key.md)
+
+- **The v3.46 table rule now applies to figures.** All twenty figure captions of Chapters 5 and 6 were
+  measured and the long ones rewritten: the worst fell from **1833 to 800** characters and the median
+  from **858 to 531**. Thirteen were rewritten, seven were already concise. Nothing was dropped --- every
+  sentence that left a caption is in the paragraph beside the figure, and three of them read better there,
+  most of all `fig:expert-uav`, whose caption had been carrying the argument for drawing the reference
+  rather than the flight.
+- 🆕 **Fig. 6.1 gains the diffusion baseline at its own budget.** The matrix had $\nfe=1$ and $\nfe=2$
+  only, so the baseline of record appeared nowhere in it. A third row carries $\nfe=20$, the budget it was
+  trained for. **The panel is a download that has not been fetched**, so the cell carries the one
+  `\todofigure` in the draft, with the run folder, seed, geometry, variant and crop written into it.
+  Tracked as **D10d**; specified in `REQUEST_20260916_cluster_fm_plan_panels.md`.
+- **The preferred direction is now a legend element.** `_dirarrow` draws the arrow inside a bordered box
+  with its label, scaled to each figure's font factor. Two placements had to move with it: UAV-corridor's
+  key went to the top right, where the baseline point is not, and each D3IL-avoiding panel gained 26 %
+  y-headroom, because at the old limits the box landed on the diffusion points in two panels of four.
+- **Chapter 5 credits both works for the step metric.** Control steps are cited to \ac{DPCC}
+  \parencite[Sec.~6.1]{romer2025diffusion} *and* to the endpoint-projection work, which reports
+  *Total Steps (Safe Trials)* on this same D3IL task \parencite[Sec.~VII-A]{li2025hardflow} --- read in
+  the paper, not from a summary.
+- 🔴 **"Wall clock" leaves the thesis.** It describes how the measurement is taken, not what is reported:
+  the defined name is **the time to compute one action** (§5.4.1), written **time per control step** on
+  axes. Five occurrences replaced; the one that meant an episode's duration became **how long a single run
+  may go on**. Two rows added to the translation table, the second banning batch vocabulary
+  (`rollout`, `trial`, "row") from inside a figure. v2's abstract and v4's Chapter 8 still carry one
+  occurrence each and are raised in `cross_draft/INBOX.md`.
+- **Fig. 6.4 rebuilt.** Title and batch-vocabulary subtitle deleted, font scaled to print size, axes
+  reading *step budget K* and *time to compute one action*; its protocol moved into the caption.
+- Four figures rebuilt, re-rendered, visually inspected and exported; no number in any figure changed.
+  `tools/check.py` passes (13 files, 5,514 lines, 249 labels, 53 citations, 35 figures) with
+  `todofigure 1` by design, and v2 inheritance is clean at v2.24. The bundles stamped `20260920_152315`
+  and `20260920_152316` verify byte-faithful. **Not compiled locally.**
+
+---
+
+## v3.47 — 2026-09-20 · raw versus projected results, locked budgets, and a complete pending ledger → [`changelogs/v3.47_20260920_ch6_raw_projected_restructure.md`](changelogs/v3.47_20260920_ch6_raw_projected_restructure.md)
+
+- **§6.1.1 is raw output only; §6.1.2 contains every projected result.** *The Plans Themselves* becomes
+  *Raw Model Outputs*, the meta-explanatory smoothness subsection is removed, and endpoint/per-step
+  projection is folded into the same projection-method hierarchy.
+- **Removed two redundant result tables:** the mixed-protocol seed-spread table and the single-seed
+  selected-budget table, plus the per-geometry cheapest-cell table and their nearby search prose.
+- **Table 6.2 locks the model comparison to $\nfe=1,2$** plus the native diffusion baseline at
+  $\nfe=20$. Diffusion $\nfe=2$ is now visibly pending in the table; $\nfe=10$ moves to the Appendix.
+  The extended table likewise prints the missing CI-MeanFM $\nfe=1,2$ rows directly.
+- **§6.1.3 gains the final model--projection combination table** for the extended MeanFM operating
+  point, the CI-MeanFM result at DPCC's protocol and the baseline of record.
+- Removed redundant Fig. 5.4; Fig. 5.5 already draws the ten contexts on the same alignment constraint
+  plane. Removed the rejected plan-smoothness `\hole`.
+- **Fig. 6.6 is larger and contains less text**; the captions carry its marker semantics and protocol.
+  All Pareto/frontier direction arrows now use dark slate instead of red. Four canonical figures were
+  rebuilt, raster previews refreshed, visually checked and exported.
+- Table 5.8 audit found one Method gap: FM's Beta transport-time law lacks a mathematical definition.
+  A dated v3.47 note assigns the formula and placement to v2 Chapter 4; v4 needs no action.
+- **`PENDING_20260920_all_lacking_runs.md` is now the full current ledger.** R25 records the
+  five-seed CI-MeanFM extended evaluation; R26 the four missing diffusion-$\nfe=2$ trainings; R27 the
+  optional diffusion endpoint-projection evaluation. Smoothness is retired and the completed raw-plan
+  panel marked closed.
+- `tools/check.py` passes (13 files, 5,503 lines, 249 labels, 53 citations, 35 figures), and v2
+  inheritance is clean at v2.24. The v3-only annotated and clean bundles stamped
+  `20260920_132552` verify byte-faithful; their two expected unresolved references point into the
+  deliberately collapsed Chapter 4. **Not compiled locally.**
+
+---
+
+## v3.46 — 2026-09-20 · **KEY UPDATE** — every averaged number in Chapter 6 carries its spread; the removed unit-scale note turns out to be a real flaw → [`changelogs/v3.46_20260920_KEY_UPDATE_spread_and_flaws.md`](changelogs/v3.46_20260920_KEY_UPDATE_spread_and_flaws.md)
+
+- 🔴 **Mean $\pm$ spread, in seven tables of Chapter 6.** The convention is defined once in a new §5.4.4
+  (`sec:setup:metrics:spread`): **multi-seed** results carry the sample sd **across the five training
+  seeds** (a claim about a model, not about one training run, and the larger of the two spreads);
+  **single-seed** results carry the sd across episodes, contexts or flights; **counts and medians carry
+  none**. A $\pm$ here is a spread, never a confidence interval and never a test. New DA:
+  `analysis/avoiding_table_spread.py`, whose point estimates reproduce the published table exactly at
+  DPCC's protocol; the four extended-protocol $\nfe=20$ rows keep the published geometry-mean and carry a
+  $\dagger$, because *both-hard* is short of seeds there. Three sentences were sharpened by it — most of
+  all the unprojected step column, where every mean carries a spread **wider than the distance between
+  them**.
+- 🔴 **The `\provisional` the author deleted was a real flaw.** The ODE sampler inherited from \ac{DPCC}
+  draws the initial noise at **half** unit scale while **instantaneous-velocity matching trains at unit
+  scale**; MeanFM and CI-MeanFM sample correctly and the baseline is self-consistent, so the mismatch is
+  FM's alone, in all three environments. Impact assessed per environment in
+  `FLAW_20260920_known_flaws.md` §B: **nearly none on D3IL-avoiding** (FM is at the ceiling), **possibly
+  large on D3IL-aligning and the quadrotor**, where FM is the weakest model and this is a live
+  explanation. **No retraining needed** to fix. The action-weight flaw gained the author's *tiny effect*
+  assessment with the evidence for it. File renamed `FLAW_20260920_known_flaws.md`.
+- **The sixty-context item is retired**, in the draft and in three ledgers, with the reason recorded:
+  D3IL's sixty contexts score an image policy with no projection in the loop, so they cost it almost
+  nothing; every alignment episode here carries a projection solve at every control step.
+- 🆕 **`fig:aligning-outcomes`** — the ten contexts individually, start distance against end distance, one
+  panel per projection method, built from the committed CSV with **no fetch**. It shows what the median
+  hides: the constraint column turns over almost completely while the distances are redistributed ---
+  three contexts become much worse, two clearly improve, and one is never moved under any method.
+- **The path figures, answered precisely.** D3IL-avoiding is a **download and nothing more** —
+  `scripts/eval.py` already writes the executed end-effector path on every evaluation, it was simply
+  never fetched (8 cells, <10 MB). D3IL-aligning's **box** path is **not** a download: the box pose is
+  logged at no step and even its end point is missing from every thesis cell, so that one needs one line
+  added to the evaluation and three re-runs. Both specified cell by cell in
+  `PENDING_20260920_all_lacking_runs.md` §5a.
+- **The quadrotor demonstrations are generated and flown, and §5.4.3 now says so**: a reference path per
+  passage class, every episode flown in MuJoCo by the same cascaded geometric controller the evaluation
+  uses, kept only if it stayed airborne and inside its contact budget. Raised for v2.
+- **§6.1.1 leads with the numbers**: *Smoothness of the Plans* moved from first to last and was retitled
+  *Why the Projected Numbers Separate the Models So Little*.
+- Table 5.8's transport-time row fits its column (three defined tokens instead of a sentence per cell);
+  Table 5.9's step-budget row loses its italics.
+- **Hotfix, same pass: tables stop explaining themselves.** A table now says what it is and what its
+  marks mean; the reasoning sits in the paragraph beside it. Across all 33 tables of v3 the worst caption
+  fell from **1699 to 656** characters and the worst data cell from **273 to 168**. Nothing was dropped:
+  what left a caption was already in the prose or was moved there, and in five places it reads better for
+  it — most of all `tab:eval`, whose five difficult rows now get a paragraph, and
+  `tab:avoiding-dpcc-protocol`, whose caption had been carrying the chapter-wide definitions of the
+  operating point and the baseline of record.
+- 🔴 **Error caught during that re-read:** the $\pm$ columns above had never landed on
+  `tab:avoiding-raw-models` — the edit was in a script that aborted before writing and the retry dropped
+  it. Applied, and the other six tables re-checked cell by cell.
+- **Continuation hotfix: the alignment protocol is now genuinely ten contexts throughout.** Table 6.10
+  now reports `ms/step` as mean $\pm$ sample sd and every row is the same ten contexts, as Chapter 5
+  specifies. The audit caught the same hidden 10/30 mixture in Table 6.9 and Fig. 6.5; the analysis and
+  frontier builder now restrict every raw superset to the ten shared contexts before reducing it, and
+  the affected values and prose were recomputed.
+- **Fig. 6.6 rebuilt as one readable panel:** ten context groups, three adjacent stems each, with a
+  compact legend and no miniature repeated axes. The counts and context-level statements were checked
+  directly against the committed rollout CSV.
+- **Every Pareto/frontier plot now carries an in-panel red `better` arrow.** D3IL-avoiding points toward
+  fewer steps and less time; D3IL-aligning toward less distance and less time; UAV-corridor toward more
+  S\&C and less time. The arrows were visually checked after raster export and moved clear of labels and
+  frame edges.
+- Final verification: `analysis/va_results.py` reports ten contexts for every thesis cell;
+  `tools/check.py` passes all mechanical checks (13 files, 5688 lines, 251 labels, 53 citations,
+  36 referenced figures); the v2 inheritance status is clean. The new-sections review bundle
+  `thesis_v3_20260920_120252_new` was built and verified byte-faithful. **Not compiled locally.**
+
+---
+
+## v3.45 — 2026-09-20 · hotfix: §6.1 reshaped to match §6.2 and §6.3; the projection tables get their missing models; no $\nfe=100$ on alignment → [`changelogs/v3.45_20260920_ch6_structure_hotfix.md`](changelogs/v3.45_20260920_ch6_structure_hotfix.md)
+
+- 🔧 **§6.1 is now Generative Models → Projection Methods → Conclusion**, the shape §6.2 and §6.3 already
+  had. The results that sat in a fourth subsection *after* the projection discussion are folded back into
+  the generative-model subsection, which now reads the same four models twice — unprojected, then under
+  the per-step projector. `sec:res:avoiding:models` moved with the results, `sec:res:avoiding:plans` was
+  retired and its references re-pointed; no reference broke.
+- **Table 6.8 locked to the section's budget set.** It had been searching every budget that exists, which
+  is how a $\nfe=5$ MeanFM cell entered a section locked to $\{1,2\}$. Recomputed: every other cell is
+  unchanged, and MeanFM on *top-right-hard* does not reach $1.00$ within its budgets — best **0.95 at
+  $\nfe=1$**, one episode of twenty short. The cell is now a dash carrying that value and the paragraph
+  under the table was rewritten around it.
+- **No $\nfe=100$ in the alignment results** — removed from `tab:va-models`, the prose and
+  `fig:aligning-tradeoff` (rebuilt; the frontier is unchanged, that point was dominated anyway).
+  ⚠️ It is the diffusion baseline's *own* configured chain length and the only diffusion configuration
+  that moves the box, so a `\guard` records that it exists, what it costs and why it is not reported.
+- **The `2$^{\ast}$` marker is gone** from `tab:va-projection`; its three caveats are plain sentences in
+  the caption.
+- **`tab:va-projection-models` gets MeanFM**, which it was missing entirely — all three flow-based models
+  now, at $\nfe=2$, $10$ and $20$. The fifteen-of-eighteen count is unchanged; the "moves the box"
+  sentence was recomputed over the same eighteen (more in four, level in seven, fewer in seven).
+- **Chapter-wide model-coverage audit.** Three gaps found and stated where they occur:
+  D3IL-avoiding's projector study is MeanFM alone (endpoint projection was never run on FM or the
+  baseline there); UAV-corridor now prints the baseline's per-step row with dashes for endpoint; the
+  s-curve re-run covers the flow models only. 🔴 **Endpoint projection has never been run on the diffusion
+  baseline on any scene** — recorded in `PENDING_20260920_all_lacking_runs.md` §3b as the one gap worth a
+  run.
+
+---
+
+## v3.44 — 2026-09-20 · cost frontiers for D3IL-aligning and UAV-corridor; Chapter 5's tables explained rather than enumerated; §6.1's figures → [`changelogs/v3.44_20260920_frontiers_and_ch5_tables.md`](changelogs/v3.44_20260920_frontiers_and_ch5_tables.md)
+
+- 🆕 **Two new cost frontiers**, built from the corpora of record. `fig:aligning-tradeoff`: median final
+  box-to-target distance against ms/step — three non-dominated configurations, **all three MeanFM**, and
+  the baseline at $\nfe=100$ ($1526.6$\,ms) is beaten on both axes by MeanFM at $\nfe=10$ ($0.1194$\,m
+  at $99.2$\,ms). `fig:uav-corridor-tradeoff`: S&C against ms/step — four non-dominated points, all the
+  two average-velocity models at $\nfe=3,5$, cheapest $97.7$\,ms; the baseline is rightmost at $625$\,ms
+  and $0.00$. Both are **outcome against cost**, not cost against cost like `fig:avoiding-tradeoff`,
+  because on neither task does the control-step count measure arrival — the captions say so.
+  **Pillars** gets none (withheld from the draft); **s-curve** gets none and the draft says why: every
+  configuration there scores $0.00$, so a frontier would rank failures by price.
+  New: `plotting/builders/frontier.py`, two corpora and their cell registries in `sources.py`. All 8
+  alignment and all 30 corridor cells reproduce their published tables exactly.
+- **Fig 5.3** loses its demonstration panel: `fig:constraints-avoiding` already draws the same 96
+  demonstrations, over the constraint geometries.
+- **Table 5.8**: Diffusion and FM in separate columns (their settings *are* identical on D3IL-avoiding —
+  checked — but the table no longer says so by merging them).
+- **The optimiser `\guard` is now main text**: the settings differ because the training targets differ,
+  and each model was tuned for the convergence of its own loss curve; a second paragraph says what is
+  held fixed and therefore what the comparison rests on.
+- **Table 5.9** stops enumerating $\eta$ per budget and explains instead: what an **episode** is and that
+  the episode limit is a hard stop on run time; why the activation threshold is **lowered** as the budget
+  rises (ten solves per candidate per control step is not affordable, and what is wanted is a fixed
+  number of guiding steps, not a fixed share); why the quadrotor's tightening adds the vehicle radius.
+- **Table 5.11 deleted**; §5.6.4 gives the closed form once and reads it on two settings — the one that
+  has three guiding steps and the one that has none.
+- **Fig 6.1** marks the MeanFM and CI-MeanFM columns with bold and an arrow, and gives every column a
+  one-line summary of what its panels show.
+- **Fig 6.2 → `tab:avoiding-raw-models`**: five counts and five step figures were a bar chart; they are
+  now five rows.
+- 🔍 **The $\nfe=1,2$ rows were challenged and re-checked.** They stand, in the corpus of record *and*
+  in an earlier independent batch. §6.1.3.1 gains the explanation: a cell at DPCC's protocol is 30
+  episodes, the extended protocol at 300 still puts $\nfe=1$ at least level with $\nfe=20$, and the
+  reason is that this benchmark is **saturated** — not that fewer solver steps make a better plan, which
+  the plans themselves and `fig:aligning-tradeoff` both contradict.
+- **The two missing flown-path figures** (the counterparts of Fig 6.6/6.7 for avoiding and aligning) are
+  named as missing in both `\hole`s, recorded in `PENDING_20260920_all_lacking_runs.md` §5a, and added
+  to the cluster fetch request. Neither is a run; both are downloads.
+
+---
+
+## v3.43 — 2026-09-20 · Chapter 5's parameter tables; §6.1 reassembled as generative model → projection → results; the action loss weight deleted from the thesis → [`changelogs/v3.43_20260920_ch5_tables_and_ch6_reassembly.md`](changelogs/v3.43_20260920_ch5_tables_and_ch6_reassembly.md)
+
+- 🔴 **The action loss weight is not 10 everywhere, and it is now gone from the draft.** D3IL-aligning:
+  diffusion 10, every flow model 1. **UAV, all three scenes: every arm 1, the diffusion baseline
+  included** — so that arm is not DPCC's configuration, as `config/uav_mix.py:497-503` itself declares.
+  MeanFM / CI-MeanFM: the key is kept for folder naming and **never reaches the loss** (FIX-3,
+  `flow_matcher_v3_meanflow/models/mf_diffusion.py:49-52`), so `_aw10` in those paths is a naming
+  artefact. Author's call: no time to retrain — **recorded, not fixed**, in
+  [`../data_status/FLAW_20260920_known_flaws.md`](../data_status/FLAW_20260920_known_flaws.md),
+  and the parameter deleted from §5.5.1, `tab:train` (row, guard clause and srcnote token),
+  `tab:state-models`, `fig:avoiding-raw-models` and the §6.3 lead-in. Nothing in the draft now claims the
+  models are matched on it. `04_method.tex:1437` still does — raised for v2 in `cross_draft/INBOX.md`.
+- 🔧 **§6.1 reassembled into pipeline order: generative model → projection → results.** The old
+  "6.1.1 Generative Models" held only full-pipeline results. Blocks unchanged in content, reordered:
+  6.1.1 **The Generative Models** (the plans, unprojected) · 6.1.2 **Projection Methods** ·
+  6.1.3 **The Models under Per-Step Projection** (DPCC protocol, extended, cost frontier, step budget) ·
+  6.1.4 Conclusion. **Every label travelled with its block**, so the four references from Chapters 4, 5
+  and 8 still land correctly; the lead-in, the two subsection openings and four direction-sensitive
+  references were rewritten.
+- **Fig 6.3** (`fig:raw-plans`) columns reordered to the house order **MeanFM · CI-MeanFM · FM ·
+  Diffusion**, with caption and prose updated.
+- **Table 5.8**: `Diffusion steps` row deleted; transport-time sampling written out per column
+  (Beta$(1.5,1)$ for FM, logit-normal $P\sidx{mean}=-0.4$, $P\sidx{std}=1.0$ for the average-velocity
+  models, uniform over the twenty denoising steps for diffusion).
+- **Table 5.9**: the step budget now says *ODE solver steps* for the flow-based models and denoising
+  steps for diffusion; the activation threshold carries the values actually run (**the author was right
+  that alignment is not all 0.5**: $0.5$ at $\nfe=2$, $0.4$ at $\nfe=10$, $0.2$ at $\nfe=20$, plus
+  $\eta=1.0$ for endpoint projection at the avoiding budget floor); low-level control named as inverse
+  kinematics + a joint-space PD controller (D3IL) and inverse kinematics + a cascaded geometric PID
+  tracker (quadrotor), with MuJoCo MPC flagged as the §6.3.4 exception.
+- **Table 5.10**: the `Seeds` column gave seed *indices* (`6--10`, `6`); it now gives counts — 5 training
+  seeds on D3IL-avoiding, 1 elsewhere.
+- **Table 5.11 moved to Chapter 6.** `tab:tiers` is a result, so it now opens §6.1.3.2 *Extended
+  Evaluation*; Chapter 5 keeps one sentence and a pointer. Label unchanged.
+- **§5.6.4 rewritten** around a new table, `tab:guiding`: the closed form
+  $n\sidx{guide} = \lceil \eta\nfe \rceil - 1$ and then every $(\nfe,\eta)$ pair Chapter 6 uses,
+  with its projected and guiding steps. Chapter 5's table count is unchanged — one moved out, one added.
+- `tools/check.py`: 13 files, 5387 lines, 249 labels, 53 citations, 35 figures — all mechanical checks
+  pass. Drafting macros: hole 19, provisional 5, guard 14, todofigure 0. **Not compiled.**
+
+---
+
 ## v3.42 — 2026-09-19 · **KEY UPDATE** — the D3IL-avoiding tables are locked; §6.1 restructured; Fig 6.3 complete; the alignment contexts figure and the full projector studies → [`changelogs/v3.42_20260919_KEY_UPDATE_avoiding_tables_locked.md`](changelogs/v3.42_20260919_KEY_UPDATE_avoiding_tables_locked.md)
 
 - 🔴 **Erratum.** The "Diffusion, $\nfe=5$" row of `tab:avoiding-dpcc-protocol` was **not the diffusion

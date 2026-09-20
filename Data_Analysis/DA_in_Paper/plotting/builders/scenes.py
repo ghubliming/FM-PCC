@@ -322,6 +322,46 @@ def fig_constraints_uav(outdir):
 #  and fig_constraints_uav: the workspace box the planned end-effector position
 #  must stay inside, seen from above and from the side.
 # ═══════════════════════════════════════════════════════════════════════════
+def aligning_constraint_panel(w, title, sub, ylab, font):
+    """An empty panel of the alignment constraint set: the excluded halfspace, its tightened
+    boundary and the keep-out disk, on the plane of ALIGNING_CONSTRAINTS.
+
+    Factored out of fig_constraints_aligning (v3.50) so that the executed-path figure of
+    Chapter 6 draws the same constraint set from the same declaration, the way the quadrotor
+    path figures reuse _uav_constraint_panel. Returns the figure with the clip still OPEN,
+    for the caller to draw into.
+    """
+    from svg.fmpcc_svg import clip_halfplane
+    C = S.ALIGNING_CONSTRAINTS
+    t = C['tightening']
+    (x0, x1), (y0, y1) = C['extent']['x'], C['extent']['y']
+    ml, mr, mt, mb = int(46 * font), int(14 * font), int(46 * font), int(46 * font)
+    pw = w - ml - mr
+    ph = pw * (y1 - y0) / (x1 - x0)
+    f = Fig(w, int(round(ph + mt + mb)), ml=ml, mr=mr, mt=mt, mb=mb, font=font)
+    f.axes((x0, x1), (y0, y1))
+    f.frame([0.2, 0.4, 0.6, 0.8], [-0.4, -0.2, 0.0, 0.2, 0.4],
+            'x [m]', 'y [m]' if ylab else '', title, sub,
+            xfmt=lambda v: f'{v:g}', yfmt=lambda v: f'{v:g}')
+    f.clip_to_box()
+    hs = C['halfspace']
+    (ax_, ay), (bx, by) = hs['p0'], hs['p1']
+    m = (by - ay) / (bx - ax_)
+    b = ay - m * ax_
+    box = [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
+    poly = clip_halfplane(box, lambda X, Y: Y - (m * X + b))       # excluded: above the line
+    if len(poly) > 2:
+        f.polygon(poly, '#5d6d7e', opacity=0.32)
+    shift = -t * (1 + m * m) ** 0.5
+    xs = (x0 - 0.05, x1 + 0.05)
+    f.dline([(x, m * x + b) for x in xs], '#34495e', w=2.0)
+    f.dline([(x, m * x + b + shift) for x in xs], '#34495e', w=1.5, dash='8,5')
+    dk = C['disk']
+    f.circle(dk['c'][0], dk['c'][1], dk['r'], fill='#5d6d7e', opacity=0.32, stroke='#34495e', w=1.6)
+    f.circle(dk['c'][0], dk['c'][1], dk['r'] + t, stroke='#34495e', w=1.5, dash='8,5')
+    return f
+
+
 def fig_constraints_aligning(outdir):
     """The alignment constraint set: the halfspace and the keep-out disk the plan must respect."""
     from svg.fmpcc_svg import clip_halfplane

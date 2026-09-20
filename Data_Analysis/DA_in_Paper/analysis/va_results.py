@@ -10,6 +10,8 @@ Stdlib only. Prints every quantity the text uses, so a changed batch shows up as
 Conventions, all taken from the closure and checked here rather than assumed:
 * distance  = context_final_xy_dist, metres, box to target in the table plane;
 * a context's value is the median over its rollouts (1 rollout per context in these cells);
+* every reported generative/projection cell is restricted to the same ten enumerated contexts; cells evaluated on
+  a thirty-context superset are reduced to those ten before they are compared;
 * paired tests run over the contexts both cells share: exact two-sided sign test, and exact
   sign-flip permutation test on the mean difference (2^n enumerations, n <= 10);
 * 'untouched' = frozen (the box never moved);
@@ -114,11 +116,21 @@ def perm_test(diffs):
 def summary(label, rs):
     ctx = per_context(rs)
     v = list(ctx.values())
-    frozen = sum(1 for r in rs if untouched(r))
-    ms = [fnum(r['avg_time_ms']) for r in rs if fnum(r.get('avg_time_ms')) is not None]
+    by = defaultdict(list)
+    for r in rs:
+        fp = fingerprint(r)
+        if fp is not None:
+            by[fp].append(r)
+    frozen = sum(
+        abs(st.median(fnum(r['context_final_xy_dist']) for r in g)
+            - st.median(fnum(r['context_init_xy_dist']) for r in g)) < 1e-6
+        for g in by.values())
+    ms = [st.mean(fnum(r['avg_time_ms']) for r in g if fnum(r.get('avg_time_ms')) is not None)
+          for g in by.values()]
     return (f'{label:34s} n_ctx={len(v):3d} rollouts={len(rs):4d} median={st.median(v):.4f} '
-            f'mean={st.mean(v):.4f} min={min(v):.4f} untouched={frozen}/{len(rs)} '
-            f'ms/step={st.mean(ms):.1f}') if v else f'{label:34s} (no contexts)'
+            f'mean={st.mean(v):.4f} +/- {st.stdev(v):.4f} min={min(v):.4f} '
+            f'unmoved={frozen}/{len(v)} ms/step={st.mean(ms):.1f} +/- {st.stdev(ms):.1f}') \
+        if v else f'{label:34s} (no contexts)'
 
 
 def pair(label, a, b):
@@ -135,11 +147,19 @@ def pair(label, a, b):
 def main():
     rows = load()
 
-    def cell(c, geo, variant='diffuser', tag=None):
+    def raw_cell(c, geo, variant='diffuser', tag=None):
         return [r for k, v in rows.items() if k[0] == c and k[1] == geo and k[2] == variant
                 and (tag is None or k[3].endswith(tag)) for r in v]
 
     U, T = 'combined_5', 'combined_5-tightened'
+    thesis_contexts = set(per_context(raw_cell('mf_K20', U)))
+    if len(thesis_contexts) != 10:
+        raise RuntimeError(f'expected the ten-context protocol cell, found {len(thesis_contexts)}')
+
+    def cell(c, geo, variant='diffuser', tag=None):
+        """One thesis cell, always reduced to Chapter 5's same ten contexts."""
+        return [r for r in raw_cell(c, geo, variant, tag) if fingerprint(r) in thesis_contexts]
+
     # The thesis cells. Consistency training = floor 0.2 at the final checkpoint (closure: AFAFend0p2,
     # state_100000). MeanFlow at K=2 = FiLM v1, the conditioning of every other cell.
     TH = {

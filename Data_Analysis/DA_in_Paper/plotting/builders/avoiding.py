@@ -65,6 +65,8 @@ def _avoiding_cells(engines=('diffusion', 'fm', 'mf')):
 MODELS = ('mf', 'fm', 'diffusion')
 FONT = 1.5          # trade-off grid, printed at \textwidth
 FONT_ENV = 1.75     # three-panel constraint figure, printed at \textwidth
+DEMO_CLEAN = '#1e8449'      # a demonstration that satisfies the geometry it is drawn on
+DEMO_VIOLATING = '#c0392b'  # one that crosses it -- same two colours as the path figures
 
 
 def _tradeoff_panel(rows, title, sub, ylab=True):
@@ -85,8 +87,11 @@ def _tradeoff_panel(rows, title, sub, ylab=True):
     pts, front = S.pareto_front(pts, band=PARETO_BAND)
     xlo, xhi = min(p['avg_time'] for p in pts) * 0.6, max(p['avg_time'] for p in pts) * 1.7
     ylo, yhi = min(p['n_steps'] for p in pts) - 4, max(p['n_steps'] for p in pts) + 6
+    # Headroom for the boxed direction key: without it the box lands on the diffusion
+    # points in the top right of two panels. The band is empty of data by construction.
+    yhi += 0.26 * (yhi - ylo)
     step = 5 if yhi - ylo <= 45 else 10
-    f = Fig(540, 440, ml=86, mr=18, mt=64, mb=72, font=FONT)
+    f = Fig(540, 424, ml=86, mr=18, mt=48, mb=72, font=FONT)   # mt: geometry heading only, no subtitle
     f.axes((xlo, xhi), (ylo, yhi), xlog=True)
     f.frame(dec_ticks(xlo, xhi), [t for t in range(0, 300, step) if ylo <= t <= yhi],
             'time per control step [s] (log)', 'control steps' if ylab else '', title, sub,
@@ -98,6 +103,8 @@ def _tradeoff_panel(rows, title, sub, ylab=True):
             if i + 1 < len(front):
                 st.append((f.X(front[i + 1]['avg_time']), f.Y(q['n_steps'])))
         f.poly(st, '#222', dash='6,4', w=1.6)
+    from .frontier import _dirarrow
+    _dirarrow(f, -1, +1)            # fewer control steps, less time per step
     for q in front:
         f.ring(f.X(q['avg_time']), f.Y(q['n_steps']), r=13)
     for q in pts:
@@ -130,10 +137,13 @@ def fig_avoiding_tradeoff(outdir):
     if c is None:
         return None
     panels = [
-        _tradeoff_panel(data['AGG'], 'All three geometries', 'mean per geometry, then across', ylab=True),
+        # Panel headings name the geometry and nothing else. How the panels are averaged and
+        # which of them carries a single-seed baseline are protocol, and protocol belongs in the
+        # caption, not on the page (author, v3.49).
+        _tradeoff_panel(data['AGG'], 'All three geometries', '', ylab=True),
         _tradeoff_panel(data['top-left-hard'], 'top-left-hard', '', ylab=False),
         _tradeoff_panel(data['top-right-hard'], 'top-right-hard', '', ylab=True),
-        _tradeoff_panel(data['both-hard'], 'both-hard', 'baseline: training seed 6 only', ylab=False),
+        _tradeoff_panel(data['both-hard'], 'both-hard', '', ylab=False),
     ]
     if any(p is None for p in panels):
         return None
@@ -157,7 +167,10 @@ def _scene():
 
 def _scene_panel(sc, w, title, sub, ylab, font):
     (x0, x1), (y0, y1) = sc['ax_limits']
-    ml, mr, mt, mb = int(52 * font), int(12 * font), int(45 * font), int(48 * font)
+    # No heading -> no room reserved for one. A panel that stands alone in a figure is named by
+    # its caption, not by text inside the drawing (Writing_Hints/HINT_20260920_figure_and_caption_style.md).
+    mt = int((45 if (title or sub) else 14) * font)
+    ml, mr, mb = int(52 * font), int(12 * font), int(48 * font)
     pw = w - ml - mr
     ph = pw * (y1 - y0) / (x1 - x0)                 # equal aspect: 1 m is the same length on both axes
     f = Fig(w, int(round(ph + mt + mb)), ml=ml, mr=mr, mt=mt, mb=mb, font=font)
@@ -169,10 +182,41 @@ def _scene_panel(sc, w, title, sub, ylab, font):
     return f
 
 
-def _draw_common(f, sc, demo_colour, demo_opacity):
+def _demo_satisfies(xy, g, obstacle_radius):
+    """Does this demonstration satisfy geometry `g` at every recorded step?
+
+    The same test extract/avoiding_scene.py applies when it writes
+    `demonstrations_satisfying` -- repeated here, from the numbers already in the JSON,
+    so that the figure can colour a single demonstration rather than only count them.
+    fig_constraints_avoiding asserts the two agree, so this cannot drift from the count
+    tab:avoiding-geometries prints.
+    """
+    for hs in g['halfspaces']:
+        (ax_, ay), (bx, by) = hs['p0'], hs['p1']
+        m = (by - ay) / (bx - ax_)
+        b = ay - m * ax_
+        below = hs['feasible_side'] == 'below'
+        for x, y in xy:
+            line = m * x + b
+            if (y > line) if below else (y < line):
+                return False
+    cx, cy = g['disk']['center']
+    r = g['disk']['radius'] + obstacle_radius
+    for x, y in xy:
+        if ((x - cx) ** 2 + (y - cy) ** 2) ** 0.5 < r:
+            return False
+    return True
+
+
+def _draw_common(f, sc, demo_colour, demo_opacity, per_demo=None):
+    """`per_demo`, when given, is one (colour, opacity, width) per demonstration."""
     f.clip_to_box()
-    for xy in sc['demonstrations']:
-        f.dline(xy, demo_colour, w=1.0, opacity=demo_opacity)
+    for i, xy in enumerate(sc['demonstrations']):
+        if per_demo is None:
+            f.dline(xy, demo_colour, w=1.0, opacity=demo_opacity)
+        else:
+            col, op, w = per_demo[i]
+            f.dline(xy, col, w=w, opacity=op)
     (x0, x1), _ = sc['ax_limits']
     f.dline([(x0, sc['goal_y']), (x1, sc['goal_y'])], '#27ae60', w=4.5)
     for cx, cy in sc['obstacles']['centers']:
@@ -185,7 +229,7 @@ def fig_env_avoiding(outdir):
     if sc is None:
         return None
     n = sc['n_demonstrations']
-    f = _scene_panel(sc, 560, 'Obstacle-avoidance task', f'{n} demonstrations of D3IL', True, FONT)
+    f = _scene_panel(sc, 560, '', '', True, FONT)
     _draw_common(f, sc, '#2471a3', 0.35)
     for xy in sc['demonstrations']:
         f.circle(xy[0][0], xy[0][1], 0.004, fill='#1b4f72')
@@ -196,6 +240,45 @@ def fig_env_avoiding(outdir):
     f.text(f.X(sx) + 12, f.Y(sy) + 4, 'start', 11, '#1b4f72', bold=True)
     path = f.save(os.path.join(outdir, 'fig_env_avoiding.svg'))
     return path, f'Data_Analysis/DA_in_Paper/data/avoiding_scene.json | {n} D3IL demonstrations (measured end-effector position)'
+
+
+def geometry_panel(sc, name, w, title, sub, ylab, font):
+    """An empty panel of one D3IL-avoiding geometry: excluded region, tightened boundary,
+    keep-out disk, obstacles and goal line -- everything except the demonstrations.
+
+    Factored out of fig_constraints_avoiding (v3.50) so that the executed-path figure of
+    Chapter 6 draws its constraint set with the SAME code from the SAME scene file. That is
+    the guarantee the quadrotor path figures already have through
+    scenes._uav_constraint_panel: what lies under a path is the geometry the projection saw.
+    Obstacles and the goal line are drawn here; the caller adds its own lines and then calls
+    `close_geometry_panel`.
+    """
+    from svg.fmpcc_svg import clip_halfplane
+    (x0, x1), (y0, y1) = sc['ax_limits']
+    box = [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
+    d = sc['tightening']
+    g = sc['geometries'][name]
+    f = _scene_panel(sc, w, title, sub, ylab, font)
+    f.clip_to_box()
+    for hs in g['halfspaces']:
+        (ax_, ay), (bx, by) = hs['p0'], hs['p1']
+        m = (by - ay) / (bx - ax_)
+        b = ay - m * ax_
+        below = hs['feasible_side'] == 'below'
+        keep = (lambda x, y, m=m, b=b: y - (m * x + b)) if below else (lambda x, y, m=m, b=b: (m * x + b) - y)
+        f.polygon(clip_halfplane(box, keep), '#5d6d7e', opacity=0.32)
+        shift = d * (1 + m * m) ** 0.5 * (-1 if below else 1)
+        xs = (x0 - 0.1, x1 + 0.1)
+        f.dline([(x, m * x + b) for x in xs], '#34495e', w=1.8)
+        f.dline([(x, m * x + b + shift) for x in xs], '#34495e', w=1.6, dash='7,5')
+    disk = g['disk']
+    f.circle(disk['center'][0], disk['center'][1], disk['radius'], fill='#5d6d7e', opacity=0.32,
+             stroke='#34495e', w=1.6)
+    f.circle(disk['center'][0], disk['center'][1], disk['radius'] + d, stroke='#34495e', w=1.6, dash='7,5')
+    f.dline([(x0, sc['goal_y']), (x1, sc['goal_y'])], '#27ae60', w=4.5)
+    for cx, cy in sc['obstacles']['centers']:
+        f.circle(cx, cy, sc['obstacles']['radius'], fill='#c0392b', stroke='#7b241c', w=1.0)
+    return f
 
 
 def fig_constraints_avoiding(outdir):
@@ -230,26 +313,45 @@ def fig_constraints_avoiding(outdir):
                  stroke='#34495e', w=1.6)
         f.circle(disk['center'][0], disk['center'][1], disk['radius'] + d, stroke='#34495e', w=1.6, dash='7,5')
         f.end_clip()
-        _draw_common(f, sc, '#7f8c8d', 0.28)
+        # Colour carries the one statement this figure exists to make: which recorded
+        # demonstrations satisfy this geometry and which cross it (author, v3.50). Both are
+        # drawn translucent so the shaded constraint region stays readable underneath; the
+        # satisfying ones are given a little more weight because in two panels there is one
+        # of them against ninety-five.
+        ok = [_demo_satisfies(xy, g, sc['obstacles']['radius']) for xy in sc['demonstrations']]
+        assert sum(ok) == g['demonstrations_satisfying'], (
+            f"{name}: coloured {sum(ok)} satisfying demonstrations but the scene file counts "
+            f"{g['demonstrations_satisfying']}")
+        _draw_common(f, sc, None, None,
+                     per_demo=[(DEMO_CLEAN, 0.80, 1.9) if v else (DEMO_VIOLATING, 0.24, 1.0)
+                               for v in ok])
         panels.append(f)
     width = sum(p.w for p in panels) + 2 * 8
-    h = Fig(width, 56, ml=0, mr=0, mt=0, mb=0, font=FONT_ENV)
-    x = 16
-    items = [('area', 'excluded by the constraints'), ('dash', f'tightened by {d:g} m'),
-             ('obst', 'obstacle'), ('goal', 'goal line'), ('demo', 'demonstration')]
-    for kind, lab in items:
-        if kind == 'area':
-            h.s.append(f'<rect x="{x - 8}" y="16" width="16" height="16" fill="#5d6d7e" fill-opacity="0.32" stroke="#34495e"/>')
-        elif kind == 'dash':
-            h.poly([(x - 10, 24), (x + 10, 24)], '#34495e', dash='7,5', w=2)
-        elif kind == 'obst':
-            h.marker(x, 24, 'o', '#c0392b', r=6.5)
-        elif kind == 'goal':
-            h.poly([(x - 10, 24), (x + 10, 24)], '#27ae60', w=5)
-        else:
-            h.poly([(x - 10, 24), (x + 10, 24)], '#7f8c8d', w=2)
-        h.text(x + 20, 31, lab, 11, '#111')
-        x += 50 + len(lab) * 10.6
+    # Two rows: at FONT_ENV six entries on one line run past the right edge of the figure.
+    h = Fig(width, 92, ml=0, mr=0, mt=0, mb=0, font=FONT_ENV)
+    rows = [[('area', 'excluded by the constraints'), ('dash', f'tightened by {d:g} m'),
+             ('obst', 'obstacle'), ('goal', 'goal line')],
+            [('demo_bad', 'demonstration that crosses this geometry'),
+             ('demo_ok', 'demonstration that satisfies it')]]
+    for r, items in enumerate(rows):
+        x, y = 16, 24 + r * 40
+        for kind, lab in items:
+            if kind == 'area':
+                h.s.append(f'<rect x="{x - 8}" y="{y - 8}" width="16" height="16" fill="#5d6d7e" fill-opacity="0.32" stroke="#34495e"/>')
+            elif kind == 'dash':
+                h.poly([(x - 10, y), (x + 10, y)], '#34495e', dash='7,5', w=2)
+            elif kind == 'obst':
+                h.marker(x, y, 'o', '#c0392b', r=6.5)
+            elif kind == 'goal':
+                h.poly([(x - 10, y), (x + 10, y)], '#27ae60', w=5)
+            elif kind == 'demo_bad':
+                h.s.append(f'<line x1="{x - 10}" y1="{y}" x2="{x + 10}" y2="{y}" stroke="{DEMO_VIOLATING}" '
+                           f'stroke-width="2.6" stroke-opacity="0.55"/>')
+            else:
+                h.s.append(f'<line x1="{x - 10}" y1="{y}" x2="{x + 10}" y2="{y}" stroke="{DEMO_CLEAN}" '
+                           f'stroke-width="2.6" stroke-opacity="0.9"/>')
+            h.text(x + 20, y + 7, lab, 11, '#111')
+            x += 60 + len(lab) * 12.0
     path = save_grid(panels, os.path.join(outdir, 'fig_constraints_avoiding.svg'), cols=3, gap=8, header=h)
     return path, f'Data_Analysis/DA_in_Paper/data/avoiding_scene.json | config/projection_eval.yaml geometries; {n} D3IL demonstrations'
 
@@ -269,13 +371,14 @@ def fig_avoiding_k_ladder(outdir):
     if c is None:
         return None
     rows = data['AGG']
-    f = Fig(760, 470, ml=76, mr=152)
+    f = Fig(760, 452, ml=76, mr=152, mt=26)   # mt: no title line any more
     f.axes((0.8, 26), (0.55, 1.04), xlog=True)
+    # No title, and no "5 seeds (6-10) x 20 episodes" line: that is batch vocabulary and a
+    # seed list, and both belong in the caption (author, v3.48/v3.49).
     f.frame([1, 2, 5, 10, 20], [0.6, 0.7, 0.8, 0.9, 1.0],
             'step budget K  [ network evaluations per plan ]   (log)',
             'success and constraint satisfaction',
-            'Success against step budget, obstacle avoidance',
-            '5 seeds (6-10) x 20 episodes; geometry mean; tightened; U-Net 4.0M.',
+            '', '',
             xfmt=lambda v: f'{v:.0f}', yfmt=lambda v: f'{v:.2f}')
 
     # The baseline in a smaller 5 x 2 sample: the only measurement of
@@ -330,7 +433,7 @@ def fig_avoiding_k_ladder(outdir):
     f.text(lx, f.T + 4, 'model', 10, '#111', bold=True)
     legend(f, lx, f.T + 20, [(S.ENGINE_COLOUR[k], S.ENGINE_LABEL[k], 's')
                              for k in ('mf', 'fm', 'diffusion')]
-                            + [(S.ENGINE_COLOUR['af'], 'CI-MeanFM, seed 6', '^')])
+                            + [(S.ENGINE_COLOUR['af'], 'CI-MeanFM (one seed)', '^')])
     path = f.save(os.path.join(outdir, 'fig_avoiding_k_ladder.svg'))
     return path, f'{c.rel} | {c.protocol}'
 
@@ -364,30 +467,31 @@ def fig_avoiding_projector_cost(outdir):
     if not ks:
         return None
 
-    f = Fig(760, 470, ml=80, mr=165)
+    # v3.48: printed at \textwidth, so the font is scaled up and everything the caption
+    # already says is taken out of the panel -- the title, the seed-and-episode subtitle
+    # and the axis annotations that were repo vocabulary ("wall clock", "trials",
+    # "rollouts"). What is left is the measurement: the metric of Ch 5 against the budget.
+    f = Fig(880, 470, ml=104, mr=210, mt=26, mb=70, font=1.45)
     ymax = max(r['avg_time'] for r in rows.values()) * 1.35
     f.axes((1.6, 6.0), (0.02, ymax), ylog=True)
     f.vspan(f.X(1.6), f.X(2.5))
     f.frame([2, 3, 5], dec_ticks(0.02, ymax),
-            'step budget K  [ network evaluations per plan ]',
-            'wall clock per control step  [ s ]   (log)',
-            'Wall-clock time of the two projection methods, obstacle avoidance',
-            # Kept short: at 800 px this line is clipped past about 100 characters,
-            # and the model details are in the thesis caption anyway.
-            f'{c.protocol}; MeanFM, U-Net 4.0M, tightened.',
+            'step budget K',
+            'time to compute one action [s] (log)',
+            '', '',
             xfmt=lambda v: f'{v:.0f}', yfmt=lambda v: f'{v:g}')
     for var, col, lab, mk, degen in ARMS:
         pts = [(K, rows[(K, var)]['avg_time']) for K in ks if (K, var) in rows]
         if not pts:
             continue
-        f.poly([(f.X(K), f.Y(t)) for K, t in pts], col, w=1.9)
+        f.poly([(f.X(K), f.Y(t)) for K, t in pts], col, w=2.4)
         for K, t in pts:
-            f.marker(f.X(K), f.Y(t), mk, col, filled=not (degen and K < 3), r=5.5)
-            f.text(f.X(K) + 9, f.Y(t) - 6, f'{t * 1000:.0f} ms', 8.0, '#111')
+            f.marker(f.X(K), f.Y(t), mk, col, filled=not (degen and K < 3), r=7.0)
+            f.text(f.X(K) + 13, f.Y(t) - 10, f'{t * 1000:.0f} ms', 10.5, '#111')
 
-    lx = f.R + 14
-    f.text(lx, f.T + 4, 'projection method', 10, '#111', bold=True)
-    legend(f, lx, f.T + 20, [(c_, l, m) for _v, c_, l, m, _d in ARMS])
+    lx = f.R + 18
+    f.text(lx, f.T + 14, 'projection method', 11, '#111', bold=True)
+    legend(f, lx, f.T + 40, [(c_, l, m) for _v, c_, l, m, _d in ARMS], dy=26)
     path = f.save(os.path.join(outdir, 'fig_avoiding_projector_cost.svg'))
     return path, f'{c.rel} | {c.protocol}'
 

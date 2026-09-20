@@ -34,6 +34,31 @@ checkpoint --- every `GaussianDiffusion` folder in the batch is `K20` --- becaus
 when the noise schedule is discretised at training time. Either train a $K{=}2$ diffusion model or leave
 that cell empty; the thesis leaves it empty.
 
+## ADDITION 2026-09-20 (v3.48): the ninth panel — the baseline at its OWN budget
+
+The author asks for the diffusion baseline at $K{=}20$ in `fig:raw-plans`, beside the small-budget
+rows, because that is the configuration every number of Chapter 6 is measured against. It is a
+**fetch**, not a run: the twenty-episode diffusion campaign that produced the unprojected row of
+`tab:avoiding-raw-models` wrote the same dashboard the other panels come from.
+
+| panel | run folder on the cluster (under `logs/avoiding-d3il/plans/`) | cell |
+| :-- | :-- | :-- |
+| Diffusion $K{=}20$ | `diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10/H8_K20_T0.5_Dmodels.GaussianDiffusion_msg20trials` | seed `6`, geometry `both-hard`, variant `diffuser` |
+
+Resolved against `analysis_results_checkpoint/16_09_logs_tree.txt` (capture of 2026-09-16); that leaf
+holds 562 files and 284.4 MiB in total, of which this request needs one `.png`.
+
+**The `/plans/diffusion/` path segment is what identifies the baseline** — not the class name. A
+`Dmodels.diffusion.GaussianDiffusion` folder under any `flow_matching_v3_*` parent is the *flow* model
+under its pre-26-May class name, which has already caught two readers of this repo.
+
+Crop: this is a twenty-episode dashboard, so it takes the `fig_raw_plans_fm_K1` box
+`(2312, 574, 2715, 947)` with the `(403, 400)` resize, not the two-episode box. Register it in
+`sources.VENDORED` and `sources.VENDORED_CROP` as `fig_raw_plans_diffusion_K20`, vendored into
+`DA_Result_Curated_MD/Report_20260903_AF_UNet/` like its siblings.
+
+Until it lands, the draft carries a `\todofigure` in that cell of the matrix.
+
 ## Why the flow-matching panels were thought to need the cluster
 
 Checked exhaustively on the AI container: there is **no** flow-matching plan file (`*.npz`) or

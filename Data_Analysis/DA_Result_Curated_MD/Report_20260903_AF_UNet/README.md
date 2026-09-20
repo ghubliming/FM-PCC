@@ -414,6 +414,7 @@ of episode 1, cut by `DA_in_Paper/plotting/prep/crop_vendored.py`.
 | 8f | naive FM | 2 | `fig8f_plans_fm_K2_seed6.png` | ✅ landed 2026-09-19 |
 | 8g | DPCC diffusion | 1 | `fig8g_plans_dpcc_K1_seed6.png` | ⬜ *placeholder* — the thesis panel comes from `Report_20260819_MF_UNet` fig 6b instead |
 | 8h | DPCC diffusion | 2 | `fig8h_plans_dpcc_K2_seed6.png` | ✅ **landed 2026-09-19** — the K=2-trained checkpoint did not exist, so it was **trained**: jobs 25965 (2 h 41 m) + 25966. The old "impossible" note was right that no such checkpoint existed and wrong to call it impossible; K really is fixed at training for diffusion, which is why this needed a training run. See `data_status/PENDING_20260919_fig63_diffusion_K2_panel.md` |
+| 8i | DPCC diffusion | **20** | `fig8i_plans_dpcc_K20_seed6.png` | ✅ **landed 2026-09-20** — the baseline at its *own* native budget, asked for at v3.48 because it is the configuration every Chapter 6 number is measured against. A **fetch**, but not from the run the request named: `…_msg20trials` died mid-variant on 2026-08-18 (5 of 13 variants written, `diffuser` never reached). This comes from the complete sibling campaign `H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5`. Same checkpoint, same K=20, seed 6, `both-hard`; `thres0.5` is a *projection* threshold and this is the unprojected arm, so it cannot have touched these plans |
 
 What the four new panels show, at a glance: naive FM throws a wide, jagged plan fan that leans into the
 left forbidden wedge at both budgets; α-Flow is noisy at K=1 and markedly tighter at K=2. Both are
@@ -432,6 +433,7 @@ the dashboard instead of redrawing it.
 ![8f — naive FM K2](fig8f_plans_fm_K2_seed6.png)
 ![8g — DPCC K1](fig8g_plans_dpcc_K1_seed6.png)
 ![8h — DPCC K2](fig8h_plans_dpcc_K2_seed6.png)
+![8i — DPCC K20](fig8i_plans_dpcc_K20_seed6.png)
 -->
 
 **What the numbers predict these should show.** At K = 1 α-Flow reaches the goal in 20/20 episodes

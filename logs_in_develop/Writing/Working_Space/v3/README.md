@@ -8,6 +8,7 @@
 [`../fallback_target/FALLBACK_20260910_engine_claim_without_alphaflow.md`](../fallback_target/FALLBACK_20260910_engine_claim_without_alphaflow.md) (**fired** — the active engine plan)
 **What may be written:** [`../data_status/DATASTATUS_20260910_v3_entry_readiness.md`](../data_status/DATASTATUS_20260910_v3_entry_readiness.md)
 **Vocabulary:** [`../../Auxiliary/Naming/NAMING_20260910_master_table.md`](../../Auxiliary/Naming/NAMING_20260910_master_table.md) — canonical
+**Caption and prose style:** [`../../Writing_Hints/HINT_20260920_prompt_is_not_thesis_text.md`](../../Writing_Hints/HINT_20260920_prompt_is_not_thesis_text.md) — **the prompt is not thesis text** (author, 2026-09-20)
 
 ---
 
