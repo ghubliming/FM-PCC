@@ -166,6 +166,7 @@ def main():
         'MeanFlow K2':             ('mf_K2', 'mv1_Emf'),
         'MeanFlow K10':            ('mf_K10', None),
         'MeanFlow K20':            ('mf_K20', None),
+        'MeanFlow K100':           ('mf_K100', None),
         'consistency tr. K2':      ('af_K2', '_msgafon02_s6'),
         'consistency tr. K20':     ('af_K20', '_msgafon02_s6'),
         'flow matching K20':       ('fm_K20', None),

@@ -69,9 +69,9 @@ regenerated on the cluster, that copy is the one to use.
 | `env/fig_env_avoiding` | `builders/avoiding.py:186` | the scene from above: all 96 demonstrations, six obstacles, goal line, start points |
 | `env/fig_constraints_avoiding` | `builders/avoiding.py:204` | the three geometries: excluded region, tightened boundary, keep-out disk with its tightened ring, demonstrations in grey |
 
-Chapter 5 also uses an authentic simulator still, `env/fig_render_avoiding.png`. It is frame 0,
+Chapter 5 also uses an authentic simulator still, `env/fig_render_avoiding.png`. It is frame 200,
 crop `(0, 0, 320, 180)`, of the top-left tile in the tracked D3IL montage
-`d3il/figures/github_readme.gif`. The selection is declared in `sources.ENV_RENDER_FRAMES` and
+`d3il/figures/github_readme.gif`, with the arm beyond the green goal line. The selection is declared in `sources.ENV_RENDER_FRAMES` and
 reproduced by `prep/extract_env_frames.py`.
 
 ## 1a. Alignment and quadrotor environment figures
@@ -201,7 +201,7 @@ From `Working_Space/v3/figures/EXPORTED.md`, written by `export_to_draft.py`:
 
 | figure | used in v3 |
 | :-- | :-- |
-| `fig_render_avoiding`, `fig_env_avoiding` | `chapters/05_setup.tex` — `fig:env-avoiding`, §5.1.1 |
+| `fig_render_avoiding` | `chapters/05_setup.tex` — `fig:env-avoiding`, §5.2.1; the 96-demonstration `fig_env_avoiding` remains in the DA store but was removed from the thesis figure in v3.59 at the author's request |
 | `fig_constraints_avoiding` | `chapters/05_setup.tex` — `fig:constraints-avoiding`, §5.1.1 |
 | `fig_render_aligning`, `fig_scene_aligning` | `chapters/05_setup.tex` — `fig:env-aligning`, §5.1.2 |
 | `fig_aligning_camera_overhead`, `fig_aligning_camera_wrist` | `chapters/05_setup.tex` — `fig:aligning-cameras`, alignment camera observations |

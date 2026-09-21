@@ -1,6 +1,6 @@
 # TRANSLATION — dev jargon of this repo → its scientific name
 
-**Created:** 2026-09-14 · **Last extended:** 2026-09-20 by v3.53 (§8 rule 9 gains the self-reasoning alert and the tone); 2026-09-20 by v3.51 (§8 rule 9, *the prompt is not thesis text*); 2026-09-20 by v3.49 (wall-clock and figure vocabulary, §6); before that 2026-09-17 by v3.20 (generative-objective names, §2 and §8) · **Status:** 🟢 **canonical translation list for all drafts** (v2, v3, v4).
+**Created:** 2026-09-14 · **Last extended:** 2026-09-21 by v3.56 (§6–7, UAV halfspace and baseline wording); 2026-09-21 by v3.55 (§6, *flagship* banned); 2026-09-20 by v3.53 (§8 rule 9 gains the self-reasoning alert and the tone); 2026-09-20 by v3.51 (§8 rule 9, *the prompt is not thesis text*); 2026-09-20 by v3.49 (wall-clock and figure vocabulary, §6); before that 2026-09-17 by v3.20 (generative-objective names, §2 and §8) · **Status:** 🟢 **canonical translation list for all drafts** (v2, v3, v4).
 **Supersedes as the working list:** [`NAMING_20260910_master_table.md`](NAMING_20260910_master_table.md)
 — every row of that table is carried over below (§2–§7), and the new rows are marked 🆕. The old file
 is kept for its argument, not as a second list.
@@ -115,13 +115,14 @@ in thesis text.
 | 🆕 **funnel**, "three-stage funnel", "Stage 1 / 2 / 3" (v3, V_A and UAV analyses) | — | a comparison order, not a method. Write what is compared: *"the generative models are compared on the final box-to-target distance of plans executed without projection; constraint violations and wall-clock time are compared separately"*. (v3.7) | 🚫 |
 | 🆕 **regime**, "all-pass", "discriminating", "all-fail" (scene / task taxonomy) | — | coined labels. State the fact instead: *"every configuration satisfies the constraints"*, *"no configuration satisfies the full constraint set in every context"*. (v3.7) | 🚫 |
 | 🆕 **Entry 1 / 2 / 3**, "the three entries" | — | the environment names: **obstacle avoidance**, **vision-conditioned alignment**, **quadrotor benchmark**. (v3.7) | 🔁 |
+| 🆕 **flagship** (a run, a configuration, "the flagship ones") | — | 🚨 **marketing, not a measurement.** The thesis has an **operating point** (\selectedmark, the cheapest configuration that holds its success) and a **baseline of record** (\baselinemark). Neither is a flagship. Say *the operating point*, *the configuration this benchmark is run at*, or name the model and budget. Author, 2026-09-21, v3.55: *"THE FLAGSHIP IS JARGON. NEVER MENTION IN THESIS"* | 🚫 |
 | 🆕 **Tier 1 / Tier 2** (protocol tiers) | DPCC §6.1: *five training seeds and ten test seeds* | **the evaluation protocol of DPCC** (5 training seeds, 10 test episodes per geometry) / **the protocol of this thesis** (5 training seeds × 20 episodes). (v3.7) | 🔁 |
 | 🆕 **strict S&C**, **crossed-line S&C**, `cfree`, "crossed" (UAV) | — | **success with constraint satisfaction**, with success = *reaching within 0.30 m of the goal point* or *crossing the finish line*; `cfree` = **collision-free flight**. (v3.7) | 🔁 |
 | 🆕 `untouched`, `frozen` (V_A) | — | **the box is not moved**. (v3.7) | 🔁 |
 | 🆕 `min_xy_dist`, `context_final_xy_dist`, MIN / median (V_A) | — | **final distance between box and target in the table plane**, summarised by its **minimum** and **median** over the contexts. Box angle: **final orientation of the box relative to the target**. (v3.7) | 🔁 |
 | 🆕 "reproducibility floor" (~0.4 m, V_A) | — | **run-to-run variation** of repeated evaluations. (v3.7) | 🔁 |
 | 🆕 "controller-limit case" (s_curve) | — | say what is observed: *"the tracking controller does not follow the plans through the turns"*. (v3.7) | 🚫 |
-| 🆕 "the slide", `corridor_v2_slide`, `cv2s` | — | **the slide**: a sloping test-time halfspace in the corridor, defined once in Ch 5 (`tab:uav-scenes`); `corridor_v2` is the corridor with walls 1.90 m apart. (v3.7) | ✅ |
+| 🆕 "the slide", `corridor_v2_slide`, `cv2s` | — | **the sloping test-time halfspace** in UAV-corridor, defined by its boundary in Ch 5 (`tab:uav-scenes`); `corridor_v2` is the corridor with walls 1.90 m apart. The token *slide* remains only in artefact and configuration identifiers, not as the thesis name for a constraint. (v3.56) | 🔁 |
 | 🆕 "the consistency target", "consistency training", "floor 0.2" | — | **consistency-interpolated average-velocity matching**; where the final consistency step ratio is reported, write **`α_end = 0.2`** (§2, v3.20). | 🔁 |
 | 🆕 "headline", "the foundation", "the paper's foundation", "held table" | — | planning vocabulary. (v3.7) | 🚫 |
 
@@ -140,6 +141,7 @@ in thesis text.
 | `pid`, `CascadedPID` | geometric tracking control on SE(3) [Lee 2010] | 🚨 **not a PID**: no integral term, the inner loop is geometric on `SO(3)`, closed by a static allocation matrix → **"cascaded geometric tracking controller"** | 🔁🚨 |
 | `pid_stopgo`, `pid_const_v` | — (ours) | velocity-setpoint policies → **brake-to-rest** / **constant-speed** | 🔁 |
 | `mjpc`, MJX, 🆕 "mujoco baseline" | MuJoCo MPC, *Predictive Sampling* [Howell 2022] | **sampling-based MuJoCo predictive control (MJPC)**; planner = Predictive Sampling | 🔁 |
+| 🆕 "baseline of record" in a UAV table | DPCC's diffusion model is the comparison model | Write **"the diffusion model of DPCC"** in the UAV captions and results. *Baseline of record* names the pinned D3IL-avoiding comparison, not a separately established UAV baseline. (v3.56) | 🔁 |
 | 🆕 `decim`, `n_dec` | — | **control-rate ratio** (physics steps per planning step) | 🔁 |
 | 🆕 `p_des`, `v_des` | — | **position setpoint**, **velocity setpoint** | 🔁 |
 

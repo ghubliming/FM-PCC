@@ -34,6 +34,7 @@ contradict the text. ``load_avoiding`` therefore returns per-cell values and
 """
 import collections
 import csv
+import gzip
 import os
 import re
 import statistics as st
@@ -77,7 +78,14 @@ class Corpus:
         return os.path.isdir(self.path)
 
     def csv(self, name='candidates_multidimensional_raw.csv'):
-        return os.path.join(self.path, name)
+        """The raw long-format CSV, gzipped or not.
+
+        The committed batches under analysis_results_checkpoint/ keep it gzipped -- a
+        50 MB CSV is not something to put in git uncompressed. open_csv() below opens
+        either spelling, so a caller never has to know which one a corpus has.
+        """
+        plain = os.path.join(self.path, name)
+        return plain if os.path.isfile(plain) else plain + '.gz'
 
     def __repr__(self):
         return f'<Corpus {self.key} {"ok" if self.available else "MISSING"}>'
@@ -303,9 +311,9 @@ PLATFORM_RENDERS = {
 ENV_RENDER_FRAMES = {
     'fig_render_avoiding': {
         'source': 'd3il/figures/github_readme.gif',
-        'frame': 0,
+        'frame': 200,
         'crop': (0, 0, 320, 180),
-        'what': 'D3IL obstacle-avoidance simulator view',
+        'what': 'MuJoCo obstacle-avoidance arm beyond the goal line',
     },
     'fig_render_aligning': {
         'source': 'd3il/figures/github_readme.gif',
@@ -359,6 +367,17 @@ CORPORA = {
         'ready',
         'Tier 2, "ours". The only multi-seed corpus in the project. '
         'DPCC both-hard is seed-6 only; FM K20 both-hard is seeds 6-7 + a partial 8.'),
+    'avoiding_dpcc': Corpus(
+        'avoiding_dpcc',
+        'Data_Analysis/analysis_results_checkpoint/19-09-UAV-Pillars-Exclude/'
+        'batch_avoiding_combined_20260919_132703',
+        '5 seeds (6-10) x 2 episodes = 10 episodes per cell',
+        'ready',
+        "DPCC's own released n_trials, and the corpus every result TABLE of Chapter 6 is "
+        'computed from (analysis/avoiding_rules_by_protocol.py). Figures read it too, so a '
+        'figure and the table beside it are the same evaluation. Committed, unlike the temp '
+        'drops. Its untagged folders are the 2-episode cells; _msg20trials is the 20-episode '
+        'campaign and belongs to avoiding_t2.'),
     'avoiding_af_unet': Corpus(
         'avoiding_af_unet',
         'temp/0309/batch_avoiding_combined_20260903_133730',
@@ -548,7 +567,7 @@ VENDORED = {
         'top-right-hard, seed 6, 20 trials. Ours; verified absent from aux_repo.'),
     'fig_render_avoiding': ('env',
         'Data_Analysis/DA_in_Paper/data/prepared/fig_render_avoiding.png',
-        'D3IL tracked simulator montage, frame 0, top-left 320x180 tile; extracted by '
+        'D3IL tracked MuJoCo montage, frame 200, top-left 320x180 tile; extracted by '
         'prep/extract_env_frames.py.'),
     'fig_render_aligning': ('env',
         'Data_Analysis/DA_in_Paper/data/prepared/fig_render_aligning.png',
@@ -670,7 +689,12 @@ def prepared_path(key):
 # \includegraphics{<name>}, remove the entry here, and export.
 # Entry: name -> (group, where the draft asks for it, what it must show / how).
 PLANNED = {
-    # EMPTY as of 2026-09-19 -- every figure the drafts ask for now exists in the store.
+    'fig_uav_pillars_xl_paths': (
+        'da', 'v3/chapters/06_results.tex, fig:uav-pillars-xl-paths',
+        'Executed paths from the complete pillars_xl campaign only; draw the enlarged '
+        'test-time constraint set, choose and identify model--projection cells from the '
+        'completed comparison table. Never reuse the older pillars_hg path figure.'),
+    # Before the pillars result slot reopened in v3.56, PLANNED was empty as of 2026-09-19.
     # The last entry to leave was fig_raw_plans_diffusion_K2, the eighth panel of
     # fig:raw-plans; it is in VENDORED above. It was the only one of the eight that
     # needed a RUN: for the diffusion engine K is fixed at training
@@ -791,6 +815,39 @@ AVOIDING_RAW_GEOMETRY = 'top-right-hard'
 # here, or it compares a one-seed number with a five-seed one.
 AVOIDING_AF_SEEDS = ['6']
 
+# ═══════════════════════════════════════════════════════════════════════════
+#  THE DPCC PROTOCOL -- 5 training seeds x 2 episodes per geometry
+# ═══════════════════════════════════════════════════════════════════════════
+# The episode count DPCC's released configuration runs (n_trials: 2), and since v3.55 the
+# protocol every FIGURE of section 6.1 is drawn at, so that a figure and the table beside
+# it rest on the same evaluation. The 20-episode campaign is reported on its own, at the
+# end of the section, because its K=20 cells are short of seeds and geometries.
+#
+# One entry per (model, budget). Folder spellings are literal, because they come from
+# different jobs: the 2026-09-17 wave carries _msgdpccproto, the older cells carry no tag
+# at all, and the baseline's three budgets were three separate jobs. `backbone` is what
+# load_exact must additionally find in Full_Path -- the folder name does not carry it.
+AVOIDING_DPCC_FOLDERS = {
+    'mf': {K: f'H8_K{K}_Meuler_T0.5_A0.5_B1_%s' % 'Dflow_matcher_v3_meanflow.models.MeanFlowODE' for K in (1, 2, 5, 10)},
+    'af': {K: f'H8_K{K}_Meuler_T0.5_A0.5_B4_%s_msgdpccproto' % 'Dflow_matcher_v3_alphaflow.models.AlphaFlowODE' for K in (1, 2)},
+    'fm': {1:  'H8_K1_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msgdpccproto',
+           2:  'H8_K2_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msgdpccproto',
+           20: 'H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE'},
+    'diffusion': {1:  'H8_K1_T0.5_Dmodels.GaussianDiffusion',
+                  10: 'H8_K10_Dmodels.GaussianDiffusion_aw10_thres0.5',
+                  20: 'H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5'},
+}
+# The backbone / family substrings each model's cells must carry in Full_Path.
+AVOIDING_DPCC_BACKBONE = {
+    'mf': ['bbunet'],               # the same folder name also exists under bbmf_dit
+    'af': ['bbunet', '_ae0.2'],     # and under bbsit with ae0.0, which is MeanFlow's target
+    'fm': None,
+    'diffusion': ['/plans/diffusion/'],   # the naming trap: Dmodels.diffusion.* is the FLOW model
+}
+# Which selection rule each model is read at in the budget figures: its own operating rule.
+AVOIDING_DPCC_RULE = {'mf': 'dpcc-t-tightened', 'af': 'dpcc-t-tightened',
+                      'fm': 'dpcc-c-tightened', 'diffusion': 'dpcc-c-tightened'}
+
 AVOIDING_T1_DIFFUSION_FOLDERS = {
     1:  'H8_K1_T0.5_Dmodels.GaussianDiffusion',
     10: 'H8_K10_Dmodels.GaussianDiffusion_aw10_thres0.5',
@@ -819,21 +876,20 @@ ALIGNING_CELLS = {
     ('mf', 2):    ('H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow_VTrue_mpc4_fil', 'mv1_Emf'),
     ('mf', 10):   ('H8_K10_Meuler_T0.4_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow', None),
     ('mf', 20):   ('H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow', None),
+    ('mf', 100):  ('H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow', None),
     ('af', 2):    ('H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow', '_msgafon02_s6'),
     ('af', 20):   ('H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow', '_msgafon02_s6'),
     ('fm', 20):   ('H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching', None),
     ('diffusion', 20):  ('H8_K20_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion', None),
     ('diffusion', 100): ('H8_K100_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion', None),
 }
-# Budgets the thesis REPORTS on this task. The K=100 diffusion checkpoint exists and is
-# `visual_aligning_dpcc`'s own configured chain length (config/aligning-d3il-visual.py:454);
-# it is kept in the registry above, and out of the figures, because v3.45 fixed the reported
-# budget set to the ones the flow models are operated at. Anything that draws this task filters
-# through here, so the figure and the tables cannot disagree about which budgets are shown.
-ALIGNING_REPORTED = {('mf', 2), ('mf', 10), ('mf', 20),
+# Budgets the thesis reports on this task. K=100 shows the measured tail of both the
+# MeanFM solver budget and diffusion's native chain length; the other models have no
+# K=100 cells. Figures and tables must use the same recorded subset.
+ALIGNING_REPORTED = {('mf', 2), ('mf', 10), ('mf', 20), ('mf', 100),
                      ('af', 2), ('af', 20),
                      ('fm', 20),
-                     ('diffusion', 20)}
+                     ('diffusion', 20), ('diffusion', 100)}
 # The untightened set is the only geometry on which all four models were evaluated,
 # and `diffuser` is the unprojected arm -- the model on its own, which is what the
 # generative-model comparison of section 6.2.1 is made on.
@@ -865,6 +921,11 @@ RE_K = re.compile(r'H8_K(\d+)[_.]')
 # ═══════════════════════════════════════════════════════════════════════════
 #  LOADERS
 # ═══════════════════════════════════════════════════════════════════════════
+def open_csv(path):
+    """Open a corpus CSV, transparently gunzipping a .gz one."""
+    return gzip.open(path, 'rt', newline='') if path.endswith('.gz') else open(path)
+
+
 def load_avoiding(corpus, folders=None, seeds=None):
     """-> {(engine, K, seed, geometry, variant): {metric: value}}
 
@@ -878,7 +939,7 @@ def load_avoiding(corpus, folders=None, seeds=None):
         for K in (1, 2, 3, 5, 10, 20):
             index[pat % K] = (eng, K)
     out = collections.defaultdict(dict)
-    with open(corpus.csv()) as f:
+    with open_csv(corpus.csv()) as f:
         for r in csv.DictReader(f):
             hit = index.get(r['Folder_Name'])
             if hit is None:
@@ -894,7 +955,7 @@ def load_avoiding(corpus, folders=None, seeds=None):
     return dict(out)
 
 
-def load_exact(corpus, folders, engine, seeds=None):
+def load_exact(corpus, folders, engine, seeds=None, backbone=None):
     """Load rows for a {K: exact_folder_name} map, under one engine label.
 
     ``load_avoiding`` takes a ``%d`` pattern, which assumes an engine's folder
@@ -906,10 +967,16 @@ def load_exact(corpus, folders, engine, seeds=None):
     """
     index = {folder: K for K, folder in folders.items()}
     out = collections.defaultdict(dict)
-    with open(corpus.csv()) as f:
+    with open_csv(corpus.csv()) as f:
         for r in csv.DictReader(f):
             K = index.get(r['Folder_Name'])
             if K is None or (seeds and r['seed'] not in seeds):
+                continue
+            # The folder name does NOT carry the backbone: the same spelling exists under
+            # bbunet and bbmf_dit, and the alpha floor likewise lives only in Full_Path.
+            # Selecting on Folder_Name alone silently pools two architectures -- the bug of
+            # 2026-09-17. `backbone` is every substring of Full_Path the cell must carry.
+            if backbone and not all(b in r['Full_Path'] for b in backbone):
                 continue
             try:
                 out[(engine, K, r['seed'], r['halfspace_variant'], r['variant'])][r['metric']] \
@@ -927,7 +994,7 @@ def load_by_candidate(corpus, folder_contains, seeds=None):
     -> {(K, seed, geometry, variant): {metric: value}}
     """
     out = collections.defaultdict(dict)
-    with open(corpus.csv()) as f:
+    with open_csv(corpus.csv()) as f:
         for r in csv.DictReader(f):
             fn = r['Folder_Name']
             if not all(p in fn for p in folder_contains):

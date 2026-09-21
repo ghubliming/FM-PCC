@@ -64,6 +64,13 @@ NDP = 4                     # metres; 0.1 mm, well below what the figure resolve
 # the chapter carries forward, not one panel per model at a different budget each).
 AVOIDING_GEOMETRY = 'top-right-hard'
 AVOIDING_VARIANT = 'dpcc-t-tightened'
+# The DPCC protocol runs n_trials = 2 episodes per seed, and Chapter 6 reports D3IL-avoiding
+# at that protocol (v3.55). The staged artefacts are 20-episode runs, but episode i of a run
+# is fully determined by i -- `torch.manual_seed(i)` and `env_seed = i`, scripts/eval.py:297-299
+# -- so episodes 0 and 1 of a 20-trial run ARE the two a 2-trial run produces. Taking the first
+# AVOIDING_EPISODES of each artefact is therefore the 2-episode evaluation, not a subsample of
+# a different one.
+AVOIDING_EPISODES = 2
 # The panel heading names the model and its budget; the subtitle is the panel's own count
 # and nothing else. Everything about the protocol is in the caption (v3.49 figure rule).
 AVOIDING_PANELS = [
@@ -104,6 +111,8 @@ def _avoiding_cell(root, family, K):
         if len(a) and not np.array_equal(xy[-1], a[-1, 2:4]):
             xy = np.vstack([xy, a[-1:, 2:4]])
         episodes.append({'xy': _round(xy), 'reached': bool(ns[i] == 1), 'clean': bool(nv[i] == 0)})
+        if AVOIDING_EPISODES and len(episodes) >= AVOIDING_EPISODES:
+            break
     m = re.search(r'/(\d+)/results/', path)
     return episodes, {'run': os.path.relpath(path, root), 'seed': int(m.group(1)) if m else None}
 

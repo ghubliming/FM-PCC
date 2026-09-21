@@ -1,18 +1,21 @@
 # PENDING — 2026-09-20 · complete current list of missing runs and artefacts
 
-**Updated for thesis v3.53.** This compact checklist supersedes the earlier version of this file,
+**Updated for thesis v3.59 (2026-09-21).** This compact checklist supersedes the earlier version of this file,
 which listed only newly discovered gaps and therefore could not answer “what is still missing?” alone.
 The historical ledger remains
 [`PENDING_20260916_missing_data_and_analyses.md`](PENDING_20260916_missing_data_and_analyses.md);
 the executable groups remain in the two `SLURM_RUNBOOK` files. This file lists every item open now.
+The reopened R26 row below supersedes older historical notes in this file that call it retired.
 
 ## 1 · Runs that close a visible gap in the current thesis
 
 | ID | Priority | Missing work | Training? | Draft effect / blocker |
 | :-- | :-- | :-- | :-- | :-- |
 | **R2** | 🔴 | D3IL-aligning: tightened diffusion baseline at $\nfe=20$ on the ten thesis contexts | no | closes the baseline row in `sec:res:aligning:projection`; first resolve why the evaluation config says `n_contexts: 3` |
+| **R23** | 🔴 | UAV-pillars: complete `pillars_xl` evaluation of MeanFM, CI-MeanFM and FM at $\nfe=1,2,5$ and diffusion at $\nfe=20$; eleven planned variants per cell, ten flights each; then DA and executed paths | no | fills the visible `sec:res:uav:pillars` table and figure templates; the `u7xlchk` unprojected verification is not the full grid |
 | ~~**R25**~~ | ⬜ **NO LONGER NEEDED — ruled out on cost by the author, v3.52.** The rows it filled are removed from `tab:state-headline`; §6.1.2.7 answers the question from existing data | D3IL-avoiding: CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$, $\nfe=1,2$, all three rules, **20 episodes per seed and geometry**, seeds 6--10 | no | ~~fills the two pending rows of `tab:state-headline`~~ — those rows are removed (§10); CI-MeanFM is reported at seed 6 in `tab:avoiding-budget20`. Would refine, not open, a claim |
-| ~~**R26**~~ | ⬜ **NO LONGER NEEDED — ruled out on cost by the author, v3.52** (four training runs). The row is removed from `tab:avoiding-dpcc-protocol`; its caption now states why the baseline has no $\nfe=2$ row | D3IL-avoiding: diffusion $\nfe=2$, training seeds 7--10, then DPCC-protocol and extended evaluations | **four trainings** | ~~fills the explicit $\nfe=2$ row of `tab:avoiding-dpcc-protocol`~~ — row removed (§10); the caption now states why the baseline has no $\nfe=2$ row |
+| **R26** | 🟡 **REOPENED by the author at v3.57:** five-seed diffusion $\nfe=2$ is visibly pending in Tables 6.1 and 6.2 | D3IL-avoiding: train diffusion $\nfe=2$ seeds 7--10, then evaluate five seeds at two episodes per geometry under unprojected and three projected rules | **four trainings** | fills the pending cells in `tab:avoiding-raw-models` and `tab:avoiding-dpcc-protocol`; seed 6 alone cannot be pooled into a five-seed row |
+| **R16** | 🟡 | D3IL-aligning: CI-MeanFM and FM at $\nfe=10$; diffusion $\nfe=10$ requires a checkpoint trained at that noise-schedule length | diffusion: **one training**; flow models: evaluation | fills the three visibly unmeasured $\nfe=10$ rows of `tab:va-models`; MeanFM $\nfe=10$ already exists |
 | ~~**R18**~~ | ⬜ **NO LONGER NEEDED — ruled out on cost by the author, v3.52.** `tab:state-headline` no longer advertises the below-native-budget rows | D3IL-avoiding: extended evaluation of diffusion at $\nfe=1,10$; add $\nfe=2$ after R26 | no for 1/10 | ~~fills the below-native-budget rows absent from `tab:state-headline`~~ — no longer advertised there (§10) |
 | **R7** | 🟡 | D3IL-avoiding: candidate-matched endpoint versus per-step projection, five seeds $\times$ twenty episodes | no | replaces the provisional four-seed, two-episode result |
 | **R14** | 🟡 | D3IL-avoiding: repeat the endpoint budget ladder with the same candidate count for both projectors | no | removes the confound from `tab:hf-ladder` |
@@ -31,18 +34,21 @@ if the extended comparison is to be complete.
 
 | ID | Missing work | Value |
 | :-- | :-- | :-- |
-| **R16** | D3IL-aligning budget ladder: FM at $\nfe=2,10$ and CI-MeanFM at $\nfe=10$ | tests whether the MeanFM budget trend extends across objectives |
+| **R16 extension** | D3IL-aligning: FM at $\nfe=2$ | optional additional low-budget point after the three visible $\nfe=10$ gaps |
 | **R17** | repeat the projected alignment configurations | measures run-to-run variation |
 | **R27** | diffusion baseline under endpoint projection on UAV-corridor at $\nfe=20$, single/$r$/$c$/$t$, twelve flights each | endpoint projection has never been evaluated on diffusion in any environment |
 
 R11 is retired: v3.47 removes the subsection it was meant to support. R24 is closed: all eight
 raw-plan panels are present.
 
-## 3 · Prepared but outside the current draft
+## 3 · Prepared work now represented in the draft
 
 **R23 — UAV-pillars at `pillars_xl`.** The enlarged geometry, driver and identity check exist, but
-the scene is absent from Results. Run it only if UAV-pillars returns. R12, R13, R21 and R22 remain
-superseded with it.
+the full campaign is not complete. Since v3.56 the scene has a visible section, table templates and
+figure specification in Results. Its old `pillars_hg` numbers remain withheld and must not fill those
+slots. The `u7xlchk` verification is one unprojected cell, not the campaign. R12, R13, R21 and R22
+remain superseded by R23. The rollout artefacts for the selected completed cells must be transferred
+and drawn as `fig_uav_pillars_xl_paths` only after their outcomes are checked.
 
 ## 4 · Transfers or logging changes, not model runs
 
@@ -52,6 +58,8 @@ superseded with it.
 | ~~**D10d**~~ | ~~`fig:raw-plans`, the diffusion baseline at its own budget $\nfe=20$~~ | ✅ **CLOSED at v3.49.** The panel was fetched from the complete sibling campaign `H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5` (seed 6, `both-hard`) — the run this row originally named died mid-variant and never wrote the dashboard. `fig_raw_plans_diffusion_K20` is in the store, exported to `v3/figures/`, and wired into `fig:raw-plans` as the $\nfe=20$ row. **The draft now carries no `\todofigure` at all.** Details in §8 below |
 | ~~**D10b**~~ | ~~D3IL-aligning end-effector paths~~ | ✅ **CLOSED at v3.50.** The 09-19 drop already carried them: `obs_all` is `(10, 400, 6)` at `combined_5-tightened`, seed 6, for all three variants. Built as `fig_aligning_paths`, now `fig:aligning-paths` in §6.2; its three panel counts reproduce the $\nfe=20$ rows of `tab:va-projection` (2/10, 9/10, 10/10) |
 | **D10c** | D3IL-aligning box paths | add per-step box-pose logging, then re-evaluate MeanFM $\nfe=20$ for unprojected, per-step and endpoint variants |
+| **D11** | Matched full executed-step timing for the final cost comparisons | Record elapsed time per executed control step around **planner + low-level controller + MuJoCo step** for every cell used in the D3IL-avoiding frontier (and, if extended, the projected alignment/corridor comparisons). Existing `avg_time`/`avg_time_ms` prices only generation, projection and selection. The UAV-s-curve controller subset already has full elapsed-step timing in `tab:uav-controller`, but does not supply a matched cross-model frontier. Build a total-time Pareto plot only after the matched measurements exist. Added by v3.59, 2026-09-21. |
+| **D12** | Print-resolution MuJoCo still of the D3IL-avoiding finish pose | Figure `fig:env-avoiding` now uses **only** the authentic MuJoCo frame with the end effector beyond the green goal line (D3IL montage frame 200, first tile); it no longer shows trajectories. The frame is only 320×180 pixels. For a print-resolution replacement, write/run a dedicated MuJoCo render on the cluster at the same completed pose, record the demonstration/rollout state and camera, then replace `fig_render_avoiding` in the DA figure store and export to v3. Local Python environments lack `mujoco`; no synthetic pose or trajectory plot should stand in for the simulator view. Added in the v3.59 continuation, 2026-09-21. |
 | ~~**D2**~~ | ~~alignment final-orientation error~~ | ⬜ **NO LONGER NEEDED — the metric is out of the thesis.** v3.51 removed the orientation bullet from §5.4.2 and the scoring row of `tab:va-vs-d3il`; v3.53 removed the last `\hole` in §6.2. Author: *"we didnt use it ... we dont care the angle"*. The recorded `context_final_box_angle_deg` column uses a convention that differs between runs, which is stated once in the §5.4.2 `\srcnote` and nowhere else |
 | **D8** | total compute | derive GPU-hours from `sacct` / complete logs |
 | **D9** | corpus provenance | add job IDs, git revisions and checkpoint tags to `tab:corpora` |
@@ -88,6 +96,8 @@ the old D1 item are removed.
 | FM prior-scale flaw | R9 |
 | UAV controller at $n=3$ | R15 |
 | appendix compute / provenance | D8, D9 |
+| full executed-step time Pareto comparison for avoiding (optional matched extension to alignment/corridor) | D11 — existing frontiers price planner time only; the UAV-s-curve controller subset has full-step timing but is not a matched model grid |
+| print-resolution simulator still for `fig:env-avoiding` | D12 — the existing authentic end-position frame is 320×180; a high-resolution render requires MuJoCo on the cluster |
 | UAV-pillars absent from Results | R23, only if it returns |
 
 Checked against active `\hole`, `\provisional`, `\guard` and the missing table rows in
@@ -283,3 +293,24 @@ Nothing here was run. Each item stopped being needed because the draft changed.
 logging then re-evaluation), R7/R14 (candidate-matched endpoint projection on D3IL-avoiding), R9 (FM
 prior scale), R15 (MuJoCo MPC at $n=10$), D8/D9 (compute and provenance for the appendix), and R16/R17/R27
 as optional.
+
+## 12 · v3.55 — the twenty-episode evaluation is quarantined, not repaired
+
+**Author instruction, 2026-09-21:** the twenty-episode campaign is suspicious, so §6.1 is reported at
+**DPCC's own protocol** (5 seeds × 2 episodes) throughout, and everything that rests on twenty episodes
+is separated into one subsection at the end of §6.1, ahead of the conclusion.
+
+This changes what the open runs are worth, without adding any.
+
+| item | status after v3.55 |
+| :-- | :-- |
+| the K20 `both-hard` re-run | still ⬜ **not owed**. §6.1 no longer leans on any $\nfe=20$ twenty-episode cell; `tab:coverage-k20` prints the census in the quarantined subsection |
+| **R25, R26, R18** | unchanged: ⬜ ruled out on cost (§10) |
+| ~~a 2-episode rollout fetch for `fig:avoiding-paths`~~ | ⬜ **not needed.** Episode *i* of an evaluation is fixed by *i* (`torch.manual_seed(i)`, `env_seed = i`, `scripts/eval.py:297--299`), so the first two episodes of the staged 20-episode artefact **are** the two the DPCC protocol runs. The figure is rebuilt from them |
+
+🟠 **One real gap this exposed, and it is small.** `fig:avoiding-paths` draws seed 6 only, because only
+seed 6's rollout artefacts were staged (D10a). At the DPCC protocol a cell is 5 seeds × 2 episodes, so
+the figure shows 2 of the 30 episodes the row beside it averages. Fetching the other four seeds'
+`dpcc-t-tightened.npz` for MeanFM and CI-MeanFM at $\nfe=1,2$ on `top-right-hard` — **8 files, a
+download, no run** — would make the figure the whole protocol. Stated in the figure's `\guard` either
+way.

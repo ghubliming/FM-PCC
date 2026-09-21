@@ -123,6 +123,8 @@ The split layout is for editing. **To build or upload, flatten it first:**
 python3 bundle/make_bundle.py                 # NEW sections only: v2 chapters collapsed to headings
 python3 bundle/make_bundle.py --full          # the complete document -> upload THIS for the thesis
 python3 bundle/make_bundle.py --svg-package   # same, with the SVG figures rendered
+python3 bundle/make_bundle.py --clean-notes   # hide \srcnote  (code provenance)
+python3 bundle/make_bundle.py --no-notes      # hide \srcnote, \dataref AND \guard -- reading copy only
 python3 bundle/make_bundle.py --verify        # prove a bundle matches the tree, byte for byte
 ```
 

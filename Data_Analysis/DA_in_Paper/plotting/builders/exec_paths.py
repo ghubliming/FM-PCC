@@ -41,6 +41,8 @@ START = '#2471a3'
 DATA = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                     '..', 'data', 'exec_paths.json')
 FONT_PATHS = 1.55
+ALIGNING_SHOWN = (3, 6)  # one raw violation and one raw violation-free path, both fully in view
+AVOIDING_SHOWN = 1  # episode 2, the same initial condition in all four model-budget cells
 
 
 def _load(key):
@@ -78,7 +80,7 @@ def _legend(width, font, items):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-#  D3IL-avoiding: one panel per model, all under the operating point's projector
+#  D3IL-avoiding: matched episode 2, one panel per model-budget cell
 # ═══════════════════════════════════════════════════════════════════════════
 def fig_avoiding_paths(outdir):
     D = _load('avoiding')
@@ -87,25 +89,25 @@ def fig_avoiding_paths(outdir):
         return None
     panels = []
     for i, p in enumerate(D['panels']):
-        sub = f"{p['reached']} of {p['n']} reached the goal"
-        f = geometry_panel(sc, D['geometry'], 470, p['title'], sub, i == 0, FONT_ENV)
-        _draw(f, p['episodes'])
-        sx, sy = p['episodes'][0]['xy'][0]
-        f.marker(f.X(sx), f.Y(sy), 's', START, filled=True, r=4.2, ew=1.2)
+        ep = p['episodes'][AVOIDING_SHOWN]
+        f = geometry_panel(sc, D['geometry'], 470, p['title'], '', i == 0, FONT_ENV)
+        _draw(f, [ep], w=2.3)
+        sx, sy = ep['xy'][0]
+        ex, ey = ep['xy'][-1]
+        start_x, start_y = f.X(sx), f.Y(sy)
+        end_x, end_y = f.X(ex), f.Y(ey)
+        f.marker(start_x, start_y, 's', START, filled=True, r=5.2, ew=1.2)
+        f.marker(end_x, end_y, 'o', CLEAN, filled=True, r=5.2, ew=1.2)
+        f.text(start_x + 10, start_y - 8, 'START', 8.5, '#1b3345', bold=True)
+        f.text(end_x + 10, end_y + 19, 'END', 8.5, '#154e2b', bold=True)
         f.end_clip()
         panels.append(f)
-    width = sum(q.w for q in panels[:len(panels)]) + 8 * (len(panels) - 1)
-    hdr = _legend(width, FONT_ENV, [
-        ('line', CLEAN, '', 'no violating control step'),
-        ('line', VIOLATING, '', 'at least one'),
-        ('line', '#5d6d7e', '6,4', 'did not reach the goal'),
-        ('mark', START, '', 'start pose · where the episode ended'),
-    ])
     path = save_grid(panels, os.path.join(outdir, 'fig_avoiding_paths.svg'),
-                     cols=len(panels), gap=8, header=hdr)
+                     cols=len(panels), gap=8)
     eps = sum(p['n'] for p in D['panels'])
     return path, (f"data/exec_paths.json (extract/exec_paths.py) | {len(D['panels'])} cells, "
-                  f"{eps} episodes; geometry {D['geometry']}, variant {D['variant']}; "
+                  f"episode {AVOIDING_SHOWN + 1} of {D['panels'][0]['n']} drawn in each cell "
+                  f"({eps} evaluated in total); geometry {D['geometry']}, variant {D['variant']}; "
                   f"constraint set from data/avoiding_scene.json, drawn by avoiding.geometry_panel")
 
 
@@ -118,15 +120,16 @@ def fig_aligning_paths(outdir):
         return None
     panels = []
     for i, p in enumerate(D['panels']):
-        sub = f"{p['clean']} of {p['n']} contexts violation-free"
+        episodes = [p['episodes'][j] for j in ALIGNING_SHOWN]
+        sub = f"{sum(ep['clean'] for ep in episodes)} of {len(episodes)} shown violation-free"
         f = aligning_constraint_panel(560, p['title'], sub, i == 0, FONT_PATHS)
-        # the ten box start poses and their targets, so a path can be read against the push
-        # it was meant to make; centres only, at the scale fig:aligning-contexts draws them
-        for c in S.ALIGNING_CONTEXTS:
+        # Show only the box poses corresponding to the displayed paths.
+        for ep in episodes:
+            c = S.ALIGNING_CONTEXTS[ep['context']]
             f.marker(f.X(c['box'][0]), f.Y(c['box'][1]), 'o', '#8a7a55', filled=True, r=2.6, ew=0.9)
             f.marker(f.X(c['target'][0]), f.Y(c['target'][1]), 'o', '#8a7a55', filled=False, r=3.0, ew=1.1)
-        _draw(f, p['episodes'], w=1.6)
-        sx, sy = p['episodes'][0]['xy'][0]
+        _draw(f, episodes, w=2.1)
+        sx, sy = episodes[0]['xy'][0]
         f.marker(f.X(sx), f.Y(sy), 's', START, filled=True, r=4.2, ew=1.2)
         f.end_clip()
         panels.append(f)
@@ -138,9 +141,11 @@ def fig_aligning_paths(outdir):
     ])
     path = save_grid(panels, os.path.join(outdir, 'fig_aligning_paths.svg'),
                      cols=len(panels), gap=8, header=hdr)
-    eps = sum(p['n'] for p in D['panels'])
+    eps = len(ALIGNING_SHOWN) * len(D['panels'])
     return path, (f"data/exec_paths.json (extract/exec_paths.py) | {len(D['panels'])} cells, "
-                  f"{eps} contexts; geometry {D['geometry']}; EXECUTED END-EFFECTOR position "
+                  f"{eps} drawn paths, episode positions {ALIGNING_SHOWN}, context IDs "
+                  f"{tuple(D['panels'][0]['episodes'][j]['context'] for j in ALIGNING_SHOWN)} "
+                  f"from ten per cell; geometry {D['geometry']}; EXECUTED END-EFFECTOR xy position "
                   f"(the box pose is not logged); constraint set from sources.ALIGNING_CONSTRAINTS")
 
 

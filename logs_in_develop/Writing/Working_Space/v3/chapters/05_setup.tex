@@ -14,8 +14,8 @@
 %  instruction never appears in the text as an instruction, a justification or a done-claim.
 %
 %  v3.51 (2026-09-20), author pass over this chapter:
-%   - fig:env-avoiding gained the second panel (all 96 demonstrations, start to goal line) and lost
-%     the claim about what fig:constraints-avoiding shows.
+%   - fig:env-avoiding briefly gained a 96-demonstration panel; v3.59 removed it at the author's
+%     request. The figure now contains only the MuJoCo end-position frame.
 %   - The action box is gone from the alignment constraint set (tab:aligning-constraints,
 %     tab:va-vs-d3il, the srcnote) and from the avoiding and UAV prose: it is an 'auto' bound derived
 %     from the demonstrations, carries no value a reader can check, and no table of DPCC's benchmark
@@ -50,32 +50,32 @@ manipulation tasks run the seven-joint Panda manipulator in MuJoCo, with the mod
 definitions and demonstrations of D3IL \parencite{jia2024towards}. The quadrotor benchmark runs the Skydio X2 model from MuJoCo Menagerie
 \parencite{zakka2022menagerie} with the quadrotor task patch distributed by MuJoCo MPC
 \parencite{howell2022predictive}. MuJoCo is the simulator in every case; D3IL and MuJoCo MPC supply the
-task files and data that run in it. \autoref{fig:platforms} shows both models on their own, and
+task files and data that run in it. \autoref{fig:platforms} shows both models; the X2 dimensions used
+in projection are drawn in \autoref{fig:platform-x2-dimensions} in \autoref{app:repro}.
 \autoref{tab:platforms} gives the properties that enter the experiments.
 
-How a plan reaches each of them differs. On the
-manipulator the planner commands an end-effector increment and inverse kinematics turns each Cartesian
-setpoint into joint commands, so a stack with its own dynamics sits between plan and motion. On the
-quadrotor the planner commands a position increment every third physics step --- $0.03$\,s, the interval
-the demonstrations were recorded at --- and the cascaded geometric controller of
-\autoref{sec:method:deployment} tracks it at every $0.01$\,s step.
+How a plan reaches each of them differs. On the manipulator the planner commands an end-effector
+increment; inverse kinematics turns each Cartesian setpoint into joint commands. On the quadrotor the
+planner updates a commanded position increment once every three $0.01$\,s MuJoCo physics steps.
+Between planner updates, the cascaded geometric controller of \autoref{sec:method:geometric}
+computes rotor thrusts at every physics step.
 
 \begin{figure}[htpb]
   \centering
-  \begin{minipage}[b]{0.30\linewidth}\centering
-    \includegraphics[height=3.6cm]{fig_platform_panda}\\[0.3em]
+  \begin{minipage}[b]{0.47\linewidth}\centering
+    \includegraphics[height=2.8cm]{fig_platform_panda}\\[0.3em]
     {\footnotesize Panda manipulator}
-  \end{minipage}\hspace{1.5em}
-  \begin{minipage}[b]{0.45\linewidth}\centering
-    \includegraphics[height=3.6cm]{fig_platform_x2}\\[0.3em]
+  \end{minipage}\hfill
+  \begin{minipage}[b]{0.47\linewidth}\centering
+    \includegraphics[height=2.8cm]{fig_platform_x2}\\[0.3em]
     {\footnotesize Skydio X2 quadrotor}
   \end{minipage}
   \caption[The two simulated platforms]{The two simulated platforms, rendered in MuJoCo from the model
   files the experiments load, without their environments. Left: the Panda manipulator, from the model files
   of D3IL, used for D3IL-avoiding and D3IL-aligning. Right: the Skydio X2 model from MuJoCo
   Menagerie with the MuJoCo MPC task patch, used in the three aerial scenes. Both are simulated by
-  MuJoCo. Not to scale with each other; dimensions are in
-  \autoref{tab:platforms}.}
+  MuJoCo. The two renders are not to scale with each other; dimensions are in
+  \autoref{tab:platforms} and \autoref{fig:platform-x2-dimensions} in the appendix.}
   \label{fig:platforms}
 \end{figure}
 
@@ -83,7 +83,7 @@ the demonstrations were recorded at --- and the cascaded geometric controller of
   \caption[Properties of the simulated platforms]{Properties of the two platforms that enter the
   experiments. The Panda is taken from the model and task files of D3IL, the X2 from MuJoCo Menagerie
   with the MuJoCo MPC task patch; the X2 footprint includes the rotor disks of the collision model
-  (\autoref{fig:x2-dimensions}).}
+  (\autoref{fig:platform-x2-dimensions} in the appendix).}
   \label{tab:platforms}
   \centering
   \footnotesize
@@ -100,20 +100,10 @@ the demonstrations were recorded at --- and the cascaded geometric controller of
       & four rotors; mass $1.325$\,kg; rotor centres $0.228$\,m out; $0.54\times0.62$\,m footprint;
         thrust $[0,13]$\,N per rotor
       & spatial position increments
-      & $0.03$\,s, every third physics step \\
+      & $0.03$\,s of simulated time; controller at $0.01$\,s \\
     \bottomrule
   \end{tabularx}
 \end{table}
-\begin{figure}[htpb]
-  \centering
-  \includegraphics[width=0.62\linewidth]{fig_platform_x2_dimensions}
-  \caption[The quadrotor's dimensions]{The Skydio X2 of \autoref{tab:platforms}, drawn to scale from the
-  model file the experiments load: four rotor disks of radius $0.13$\,m at $(\pm0.14,\pm0.18)$\,m, the body,
-  the $0.54\times0.62$\,m collision footprint (dotted), and the rotor-centre distance of $0.228$\,m. The
-  dashed circle is the $0.31$\,m radius by which the projection inflates every obstacle before the solver
-  sees it (\autoref{tab:uav-scenes}), so the vehicle is treated as the disk that contains it.}
-  \label{fig:x2-dimensions}
-\end{figure}
 
 \srcnote{The robot is D3IL's \enquote{7DoF Franka Emika Panda} with the cylindrical end effector it
 uses for this task family \parencite[Sec.~3.3]{jia2024towards}: both environments load
@@ -180,25 +170,14 @@ geometry-to-constraint mapping \texttt{scripts/eval.py:93--102}; counts by
 
 \begin{figure}[htpb]
   \centering
-  \begin{minipage}[b]{0.46\linewidth}\centering
-    \includegraphics[width=\linewidth]{fig_render_avoiding}\\[0.3em]
-    {\footnotesize MuJoCo simulator view}
-  \end{minipage}\hfill
-  \begin{minipage}[b]{0.36\linewidth}\centering
-    \includegraphics[width=\linewidth]{fig_env_avoiding}\\[0.3em]
-    {\footnotesize the 96 demonstrations}
-  \end{minipage}
-  \caption[The obstacle-avoidance task]{The obstacle-avoidance task. Left: a frame rendered by MuJoCo,
-  with the manipulator, the field of six posts and the goal line beyond them. Right: the measured
-  end-effector path of every demonstration of the dataset, seen from above. All $96$ start at the same
-  position, $(0.525,\,-0.280)$, pass the posts on one of several routes, and end beyond the goal line at
-  $y=0.35$, which is what reaching the goal means here; they take between $60$ and $106$ recorded steps.
-  The same demonstrations are drawn against the three constraint geometries in
-  \autoref{fig:constraints-avoiding}.}
+  \includegraphics[width=0.82\linewidth]{fig_render_avoiding}
+  \caption[The obstacle-avoidance task in MuJoCo]{The Panda manipulator in the MuJoCo obstacle-avoidance
+  scene, with its end effector beyond the green goal line. The six red posts lie between the starting
+  side of the workspace and that line.}
   \label{fig:env-avoiding}
 \end{figure}
-\dataref{DA\_in\_Paper/data/avoiding\_scene.json, extract/avoiding\_scene.py; measured end-effector
-position of the 96 D3IL demonstrations}
+\dataref{\texttt{d3il/figures/github\_readme.gif}, frame 200, first MuJoCo tile; extracted by
+\texttt{DA\_in\_Paper/plotting/prep/extract\_env\_frames.py}.}
 
 
 \FloatBarrier
@@ -339,23 +318,24 @@ $0.10$\,m box has to be pushed around a $0.06$\,m keep-out region.
 The quadrotor benchmark was built for this thesis around the Skydio X2 model of MuJoCo Menagerie
 \parencite{zakka2022menagerie} (\autoref{sec:method:env:uav}). The vehicle is underactuated and open-loop
 unstable (\autoref{sec:bg:quadrotor}), and its plan is tracked by the controller of
-\autoref{sec:method:deployment}. Three scenes are evaluated, in increasing difficulty
+\autoref{sec:method:deployment}. Three scenes are defined
 (\autoref{fig:env-uav}, \autoref{tab:uav-scenes}):
 
 \begin{description}
-  \item[UAV-corridor] --- the entry test. Two parallel walls leave a clear width of $1.90$\,m. A sloping
-    halfspace, the slide, descends at $14^\circ$ from the upper wall at the entrance to $0.05$\,m below
-    the centre line at the exit, and forces every route to descend by $0.25$--$0.49$\,m before the exit.
-    The models are trained on the demonstrations of a narrower corridor and never see the slide, so it is
+  \item[UAV-corridor] --- the entry test. Two parallel walls leave a clear width of $1.90$\,m. In the
+    horizontal $x$--$y$ plane, a halfspace boundary slopes by $14^\circ$ from the upper wall at the
+    entrance to $0.05$\,m below the centre line at the exit. It requires a lateral route change of
+    $0.25$--$0.49$\,m before the exit.
+    The models are trained on the demonstrations of a narrower corridor and never see this halfspace, so it is
     a test-time constraint in the same sense as the halfspaces of D3IL-avoiding.
   \item[UAV-pillars] --- six cylindrical pillars stand in two rows across three columns, and the vehicle
     must choose a way through them. At test time the projection enforces a keep-out radius larger than
     the pillar the simulator contains, so that the demonstrated routes no longer satisfy the constraint
     set and reaching the goal cleanly requires leaving them (\autoref{sec:setup:data:uav}). The scene is
-    described here because it supplies the demonstrations and the trained models, but it is being
-    re-evaluated under that enlarged set and yields no result in this thesis (\autoref{sec:res:uav}).
-  \item[UAV-s-curve] --- the most difficult test. Two offset corridor segments, joined by a diagonal passage,
-    force two sharp changes of direction.
+    described here because it supplies the demonstrations and the trained models; its enlarged-set
+    comparison is pending in \autoref{sec:res:uav:pillars}.
+  \item[UAV-s-curve] --- a tracking-controller stress test. Two offset corridor segments, joined by a
+    diagonal passage, require two sharp changes of direction from the generated trajectory.
 \end{description}
 
 \begin{table}[!htbp]
@@ -374,7 +354,7 @@ unstable (\autoref{sec:bg:quadrotor}), and its plan is tracked by the controller
     \midrule
     UAV-corridor
       & two wall halfspaces & inner faces $y=\pm0.95$\,m, active over $x\in[-2,2]$; clear width $1.90$\,m \\
-      & slide halfspace & from $(-2.0,\,0.95)$ to $(2.0,\,-0.05)$, a descent of $14^\circ$ \\
+      & sloping halfspace & from $(-2.0,\,0.95)$ to $(2.0,\,-0.05)$, a descent of $14^\circ$ \\
       & wall ends & four disks of radius $0.05$\,m at $x=\pm2$, $y=\pm1$ \\
     \addlinespace[2pt]
     UAV-pillars
@@ -426,17 +406,18 @@ these boundaries a further $0.025$\,m inward, the margin of \ac{DPCC}.
     {\footnotesize UAV-s-curve}
   \end{minipage}
   \end{minipage}
-  \caption[The quadrotor scenes]{The three quadrotor scenes, in increasing difficulty. Upper row: each
+  \caption[The quadrotor scenes]{The three quadrotor scenes. Upper row: each
   scene rendered in MuJoCo from its scene file, with the Skydio X2 at the start of the reference path of
   the demonstrations (green), seen from behind the start. The path shown for the pillars passes the three
   pillar pairs on the left, right and left. Lower row: an orthographic view of the same scene file, which
   shows the whole arrangement at true proportions --- the corridor walls, the six pillars, and the two
-  offset passages of UAV-s-curve.}
+  offset passages of UAV-s-curve. The lower row plots only the $x$--$y$ coordinates; altitude $z$ is
+  omitted from these plan views.}
   \label{fig:env-uav}
 \end{figure}
 
-\autoref{fig:constraints-uav} redraws the same three scenes as the constraint sets the planner is held
-to. A wall constrains only the span of $x$ over which it exists, which is why the halfspace it excludes
+\autoref{fig:constraints-uav} shows the constraint sets applied to plans in the three scenes.
+A wall constrains only the span of $x$ over which it exists, which is why the halfspace it excludes
 stops short of the panel edge; and on UAV-pillars the enlarged keep-out radius is what closes the centre
 channel between the pillar pairs.
 
@@ -446,7 +427,7 @@ channel between the pillar pairs.
   \caption[The constraint sets of the quadrotor scenes]{The constraint set of each quadrotor scene, seen
   from above, in the terms of \autoref{fig:constraints-avoiding}: halfspaces and circular keep-out
   regions, all three panels drawn alike. The obstacle is the solid line or the red disk --- a wall, the
-  slide of UAV-corridor, or a pillar; the grey band is what the vehicle radius of $0.31$\,m adds around
+  sloping halfspace of UAV-corridor, or a pillar; the grey band is what the vehicle radius of $0.31$\,m adds around
   it, and the dashed boundary a further $0.025$\,m of tightening. The faint wash beyond a wall is the
   rest of the halfspace it excludes. White is where the plan may go. On UAV-pillars the dark core is the
   $0.12$\,m pillar the simulator contains and the pale disk the $0.35$\,m keep-out region enforced at
@@ -522,8 +503,8 @@ the checkpoint (\autoref{tab:train}).
 The demonstrations were generated for this thesis as described in \autoref{sec:method:env:uav}. That
 section gives the waypoint-and-arc construction, cosine speed profile, tracking equations, rejection
 rule and recorded observation--action pair; \autoref{tab:uav-demos} records only their numerical and
-scene-specific parameters. The corridor with the slide reuses the demonstrations
-and trained models of the corridor, because the slide is a test-time constraint.
+scene-specific parameters. The corridor with the sloping halfspace reuses the demonstrations
+and trained models of the corridor, because the halfspace is a test-time constraint.
 
 \begin{table}[!htbp]
   \caption[Quadrotor demonstrations]{Generation of the quadrotor demonstrations. Shared by all scenes:
@@ -573,8 +554,8 @@ projection is then asked to repair a plan that was never broken, which is why th
 limit of the tracking controller but cannot order the projection methods.
 
 UAV-corridor is built the other way, and it is the way the obstacle-avoidance benchmark is built. The
-three lanes clear both walls, but every one of them crosses the slide, by $0.24$, $0.36$ and $0.47$\,m
-for the left, centre and right lane --- because the slide is introduced at test time and did not exist
+three lanes clear both walls, but every one of them crosses the sloping halfspace, by $0.24$, $0.36$ and $0.47$\,m
+for the left, centre and right lane --- because the halfspace is introduced at test time and did not exist
 when the demonstrations were flown. The scene in which the constraint is new to the data is exactly the
 scene in which the projection has something to do.
 
@@ -583,12 +564,11 @@ lie at $|y|=1.11$\,m because the generator derived them from the pillar radius, 
 safety margin, and the constraint set it was first evaluated against enforced the same clearance --- so
 all four routes satisfied it and the projection had nothing to repair. The obstacles are therefore
 enlarged at test time, from the $0.12$\,m pillar the simulator contains to a keep-out radius of
-$0.35$\,m, exactly as the slide and the halfspaces are introduced after the fact in the other two
+$0.35$\,m, exactly as the sloping halfspace and the obstacle-avoidance halfspaces are introduced after the fact in the other two
 benchmarks. \autoref{fig:expert-uav} is drawn against that enlarged set: all four demonstrated routes now
 cross it, each by $0.15$\,m and on more than a hundred samples of its length, and the centre channel
 closes, so a plan that reaches the goal without violating has to leave the demonstrated route. The scene
-is re-evaluated under that constraint and reports no result in this draft
-(\autoref{sec:res:uav}).
+has a prepared result slot in \autoref{sec:res:uav:pillars}; its enlarged-geometry evaluation is pending.
 
 That figure draws the references the generator laid out rather than the flights that tracked them, which
 is the conservative choice: a constraint crossed by the reference is crossed by construction rather than
@@ -601,7 +581,7 @@ by tracking error.
   demonstrated route, over the constraint set of \autoref{fig:constraints-uav}: obstacles inflated by the
   vehicle radius, the tightened boundary dashed. One path per passage class of \autoref{tab:uav-demos}.
   Green: the path satisfies the constraints; red: it crosses them. On each route the vehicle is drawn to
-  scale at its tightest moment, the rotor disks and body of \autoref{fig:x2-dimensions}, because a
+  scale at its tightest moment, the rotor disks and body of \autoref{fig:platforms}, because a
   quadrotor collides with its body and not with its centre line. The pillars panel uses the enlarged
   test-time keep-out radius of $0.35$\,m. Drawn are the references the demonstrations track and not the
   flights themselves; altitude does not enter, because every constraint here is horizontal.}
@@ -683,7 +663,7 @@ Each flight is scored by
     generation and projection.
 \end{itemize}
 
-\subsection{How a Number Is Reported}\label{sec:setup:metrics:spread}
+\subsection{Aggregation and Variability}\label{sec:setup:metrics:spread}
 
 Every metric above is measured once per episode and reported as an average over many of them, so a bare
 average would hide how much it moves. \autoref{ch:results} therefore prints \emph{mean $\pm$ spread}
@@ -706,9 +686,6 @@ wherever a spread exists, and what the spread is over depends on what the result
     reported with the number of contexts it is taken over.
 \end{itemize}
 
-A $\pm$ in this thesis is therefore a description of the spread of the measurements, never a confidence
-interval and never a test: no significance statement is made anywhere in \autoref{ch:results}, and where
-two configurations are close the text says how many episodes separate them.
 
 % =============================================================================
 \section{Baselines}\label{sec:setup:baselines}
@@ -866,7 +843,7 @@ each run is scored both for finishing the task and for satisfying those constrai
 keeps the vehicle model and the simulator of the original task and
 changes the three things that make it a test of constrained generative planning. The plan comes
 from a network trained on demonstrations instead of from sampling against the true dynamics; the
-environment is a set of walls, pillars and a test-time slide that the plan must not violate, instead of
+environment is a set of walls, pillars and a test-time sloping halfspace that the plan must not violate, instead of
 gates that a goal sequence leads through; and the plan is a sequence of positions tracked by the
 cascaded geometric controller (\autoref{sec:method:deployment}), instead of rotor thrusts applied
 directly. Each flight is scored for success and for constraint satisfaction (\autoref{sec:setup:metrics:uav}).
@@ -913,7 +890,9 @@ environments; where a value differs between models it is given per model.
   reported models. The effective batch is the batch size times the number of gradient accumulation
   steps. \enquote{Diffusion (\ac{DPCC})} is the baseline of \autoref{tab:target}: on D3IL-avoiding it is the
   training configuration of \ac{DPCC}, taken over unchanged; on the other two environments the same model
-  and backbone are trained on that environment's data, with the settings this table lists.}
+  and backbone are trained on that environment's data, with the settings this table lists. The visual
+  input is two RGB tensors, each $(N,1,3,96,96)$, encoded to a combined $(N,128)$ feature; $N$ is the
+  training batch size.}
   \label{tab:train}
   \centering
   \footnotesize
@@ -926,16 +905,35 @@ environments; where a value differs between models it is given per model.
     Parameter & Meaning & Diffusion (\ac{DPCC}) & FM & MeanFM, CI-MeanFM & all models & all models \\
     \midrule
     Plan horizon $H$ & steps in one generated plan & 8 & 8 & 8 & 8 & 8 \\
-    Plan width $d$ & action and state channels per step & 6 & 6 & 6 & 9 & 9 \\
+    Plan width $d$ & action and state channels per step & 6 & 6 & 6 & 9 & 12 \\
+    Plan input/output & model tensor $(N,H,d)$ & $(N,8,6)$ & $(N,8,6)$ & $(N,8,6)$ & $(N,8,9)$ & $(N,8,12)$ \\
+    State input & current-state tensor & $(N,4)$ & $(N,4)$ & $(N,4)$ & $(N,6)$ & $(N,9)$ \\
+    Visual input & image streams; exact shape in caption & --- & --- & --- & two RGB views & --- \\
     Training steps & optimiser updates & $10^{5}$ & $10^{5}$ & $10^{5}$ & $10^{5}$ & $10^{5}$ \\
     Batch size $\times$ accumulation & plans per update & $8\times2$ & $8\times2$ & $32\times2$ & $64\times2$ & $8\times2$ \\
     Learning rate & Adam step size & $10^{-4}$ & $10^{-4}$ & $5\cdot10^{-4}$ & $2\cdot10^{-4}$ & $10^{-4}$ \\
     Weights evaluated & raw weights, or their exponential moving average (decay $0.995$) & raw & raw & moving average & raw & raw \\
-    Transport-time sampling & how $t$ is drawn in training. \textsc{u}: uniform over the denoising steps. \textsc{b}: Beta$(1.5,1)$. \textsc{ln}: logit-normal, $P\sidx{mean}=-0.4$, $P\sidx{std}=1.0$ & \textsc{u} & \textsc{b} & \textsc{ln} & by family: \textsc{u}, \textsc{b}, \textsc{ln} & by family: \textsc{u}, \textsc{b}, \textsc{ln} \\
+    Training-time sampling & \textsc{u}: discrete uniform; \textsc{b}: reflected Beta; \textsc{ln}: logit-normal pair. See \autoref{app:training-time-laws} & \textsc{u} & \textsc{b} & \textsc{ln} & by family: \textsc{u}, \textsc{b}, \textsc{ln} & by family: \textsc{u}, \textsc{b}, \textsc{ln} \\
     Checkpoint & which saved weights are evaluated & \multicolumn{5}{p{7.3cm}}{lowest loss on the held-out $10\,\%$ of windows} \\
     \bottomrule
   \end{tabularx}
 \end{table}
+The generated plan has tensor shape $(N,H,d)$, with training batch size $N$ and $H=8$; its model output has
+the same shape. In D3IL-avoiding, the state anchor is $(N,4)$ and the plan is $(N,8,6)$: a planar
+position increment and the commanded and measured planar positions. In D3IL-aligning, the state anchor
+is $(N,6)$ and the plan is $(N,8,9)$: a spatial position increment and the commanded and measured
+spatial positions. Each of its two RGB cameras supplies one $(N,1,3,96,96)$ image tensor; the
+concatenated visual feature has shape $(N,128)$. In the UAV scenes, the state anchor is $(N,9)$ and
+the plan is $(N,8,12)$: a spatial position increment, commanded position, measured position and
+measured velocity. The embodiment layouts are introduced in \autoref{sec:method:deployment}.
+For the \textsc{b} entry the actual transport time is $1-\operatorname{Beta}(1.5,1)$; for
+\textsc{ln} the recorded parameters are $P\sidx{mean}=-0.4$ and $P\sidx{std}=1.0$. Their exact
+distributions are given in \autoref{app:training-time-laws}.
+\srcnote{Avoiding: \texttt{config/avoiding-d3il.py} (observation/action dimensions and horizon).
+Alignment: \texttt{mix\_visual\_aligning/datasets/sequence.py:122--138} and
+\texttt{mix\_visual\_aligning/models/visual\_unet.py:23--46,106--118}; the visual loss adds the
+single-frame axis in \texttt{mix\_visual\_aligning/models/visual\_fm\_diffusion.py:58--64}.
+UAV: \texttt{uav\_expert\_data\_collect/curate\_dataset.py:60} (the saved dataset schema).}
 \srcnote{Resolved \texttt{Trainer} configurations in the training logs: obstacle avoidance
 \texttt{19765} (diffusion), \texttt{19917} (instantaneous-velocity matching), \texttt{24396}
 (analytic average-velocity matching, \texttt{bbunet}), \texttt{25290} (consistency-interpolated average-velocity matching, \texttt{ae0.2}); alignment
@@ -986,6 +984,7 @@ compute available to this work.
     Candidate plans $B$ & plans generated in parallel per control step & 4 & 4 & 4 \\
     Selection rule & which of the $B$ plans is executed & per result & per result & per result \\
     Projection method & none, per-step or endpoint & per result & per result & per result \\
+    Projected position & coordinates constrained in the plan & $x,y$ (2D) & $x,y,z$ (3D) & $x,y,z$ (3D) \\
     Activation threshold $\eta$ & share of the sampling steps the projection runs on & $0.5$; $1.0$ at the budget floor & lowered with the budget & $0.5$ \\
     Tightening & margin the constraints are shrunk by & $0.025$ & $0.025$ & $0.025 + 0.31$ \\
     Replanning & how often a new plan is generated & every step & every step & every step \\
@@ -1001,8 +1000,9 @@ compute available to this work.
 (\texttt{SCENE\_MAX\_EPISODE\_LENGTH}: corridor, pillars, s-curve, each $1.2$ times the longest
 demonstration).}
 
-Five of those rows need a sentence the table has no room for, and each of them enters how a result
-should be read.
+Several of those parameters enter how a result should be read. The projector acts on planar position in D3IL-avoiding and spatial position in
+D3IL-aligning and the UAV scenes; individual geometric predicates may use only some of those spatial
+coordinates.
 
 The \emph{step budget} counts network evaluations per plan, but it is not the same quantity in the two
 families: for the flow-based models it is the number of ODE solver steps, chosen at inference, and for
@@ -1042,9 +1042,8 @@ and the constraint is written for a point.
 
 \begin{table}[htpb]
   \caption[Evaluation protocol per environment]{What one reported result rests on, per environment.
-  D3IL-avoiding is evaluated at two episode counts: the protocol of \ac{DPCC} and an extended one with ten
-  times the episodes. Its results are averaged per geometry first and then across the geometries, so a
-  geometry covered by fewer seeds does not carry more than its share.}
+  D3IL-avoiding follows the protocol of \ac{DPCC}. Results are averaged per geometry first and then
+  across geometries, so a geometry covered by fewer seeds does not carry more than its share.}
   \label{tab:protocol}
   \centering
   \small
@@ -1055,7 +1054,7 @@ and the constraint is written for a point.
     Environment & Training seeds & Episodes per configuration & Averaged over \\
     \midrule
     D3IL-avoiding & 5
-      & $5\times2 = 10$ per geometry (\ac{DPCC}); $5\times20 = 100$ per geometry (extended)
+      & $5\times2 = 10$ per geometry
       & the three constraint geometries \\
     D3IL-aligning & 1
       & 10 contexts $\times$ 1 episode; the diffusion model 3 episodes per context
@@ -1070,21 +1069,10 @@ and the constraint is written for a point.
 
 \ac{DPCC} averages over \enquote{five training seeds and ten test seeds for each constraint set
 formulation} \parencite[Sec.~6.1]{romer2025diffusion}; its released evaluation runs two episodes for each of
-five training seeds. This thesis keeps those five seeds and reports two episode counts, the second ten times
-the first (\autoref{tab:protocol}): every comparison in \autoref{sec:res:state} is made at DPCC's ten
-episodes per geometry and then repeated at one hundred.
-
-The reason for reporting both is resolution: at ten episodes a success rate resolves to $0.1$, so a rate
-of $1.00$ there is not evidence of a rate of $1.00$. What that costs the baseline is measured with the
-results it belongs to (\autoref{sec:res:avoiding:extended}, \autoref{tab:tiers}). The five seeds also
-carry the variation a single number hides; how much a result moves with the seed is likewise reported
-with the results themselves (\autoref{sec:res:avoiding:models}).
-
-Not every cell of that grid was evaluated to its full depth. The evaluations at the baseline's budget of
-twenty are the slowest in the campaign, and they are the ones that are short of a seed or of a geometry.
-\autoref{ch:results} marks every such cell and counts what it rests on where it is reported
-(\autoref{tab:state-headline}, \autoref{tab:avoiding-budget20}); a cell that is not marked carries all
-five seeds and all three geometries.
+five training seeds. This thesis uses those five seeds and two episodes per seed for its main comparison
+(\autoref{tab:protocol}). Every unmarked result in \autoref{sec:res:state} carries all five seeds and all
+three geometries. The separate twenty-episode evaluation is reported in
+\autoref{app:avoiding-twenty-episode}.
 
 The instantaneous-velocity-matching results were produced by the sampler inherited from the baseline, so
 that the initial noise, the candidate fan and the projection call are the baseline's own
@@ -1103,10 +1091,11 @@ initial box and target position, \texttt{DA\_in\_Paper/analysis/va\_results.py}.
 
 \subsubsection{Quadrotor Benchmark}\label{sec:setup:protocol:uav}
 
-The three scenes are evaluated and reported separately, never pooled: UAV-corridor constrains the commanded
+The three scenes are evaluated and reported separately, never pooled. UAV-corridor has twelve flights,
+four on each of its left, centre and right routes, so each route contributes equally. UAV-corridor constrains the commanded
 position in addition to the measured one and leaves the action unconstrained, so its projection configuration is not
 the one used on the other two scenes. Every flight is tracked by the cascaded geometric controller
-with the brake-to-rest velocity setpoint of \eqref{eq:method:dep:vdes}; the one exception is the controller
+with the brake-to-rest velocity setpoint defined in \autoref{sec:method:geometric}; the one exception is the controller
 comparison of \autoref{sec:res:uav:controller}, which replaces the controller by MuJoCo MPC and says so.
 \srcnote{\texttt{Gen15/U16/DA\_20260914\_corridor\_v2\_paper\_full.md} \S1
 (\texttt{-bounds\_free-pdes-tightened}, \texttt{pid\_stopgo}, $n=12$);
@@ -1136,7 +1125,7 @@ step too. The steps that remain are the guiding ones:
   n\sidx{guide}(\nfe,\eta) \;=\; \lceil \eta\nfe \rceil - 1 ,
 \end{equation*}
 %
-which is \eqref{eq:method:degen:ngen} of \autoref{sec:method:degenerate}.
+as described in \autoref{sec:method:degenerate}.
 
 Read it on the two settings that matter most in \autoref{ch:results}. On D3IL-aligning at
 $\nfe=20$ with $\eta=0.2$, the projection runs on $\lceil 4 \rceil = 4$ sampling steps and three of them

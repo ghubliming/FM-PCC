@@ -14,8 +14,97 @@ is sourced from · what it left open.
   recorded. **There is no TeX toolchain in this container, so "checked" never means "compiled".**
 - A pass that absorbs a v2 change records which v2 revision it absorbed, from
   `inherited/SYNC_STATE.json`.
+- **Every individual changelog under `changelogs/` is signed at the end** --- who wrote it, on what
+  date, and that it was not compiled. A pass written by an AI agent says so by name and model, so that
+  a later reader knows which entries to re-check against the data rather than trust. (Author's
+  instruction, 2026-09-21.)
 
 ---
+
+## v3.59 — 2026-09-21 · Platform figures, timing scope and result markers → [`changelogs/v3.59_20260921_platforms_timing_and_markers.md`](changelogs/v3.59_20260921_platforms_timing_and_markers.md)
+
+- Figure 5.1 again contains only the Panda and X2 renders; the X2 dimensions/footprint now live in the Reproducibility appendix, with a v4 keep-it-there note. The obstacle-avoidance figure now contains only the authentic MuJoCo end-position still: the 96-demonstration trajectory panel is gone. The low-resolution source is tracked as D12 for a future print-resolution cluster render. Gen15's $0.03$ s UAV planner interval and per-physics-step controller are verified and distinguished from the manipulator's IK route. The corridor's $14^\circ$ halfspace is verified in the $x$--$y$ plane; s-curve and scene-figure wording now describe controller stress rather than rank difficulty.
+- Removed the Chapter 5 significance-test metacommentary. Table 5.8 now prints plan and state tensor shapes, with exact RGB and visual-latent shapes in its caption. §6.1.2.8 gives the measured result without a defensive coverage sentence; its incomplete K20 census remains in the appendix and source comment.
+- Figure 6.3 is explicitly a **planner-time** frontier, not full executed-step time. Matched full-step timing for a total-time frontier is missing and tracked as D11; the existing UAV controller timing remains in Table 6.15. Table 6.7 has the selected-row triangle and an explicitly unevaluated diffusion-baseline dot. Checks and bundles are in the individual entry. Not compiled.
+- §5.4.4 is now *Aggregation and Variability*. Figure 6.8 shows the same selected protocol episode across its four cells, with direct START/END labels and the overlaid second paths removed. The 2/2 outcomes per cell remain stated separately. The final v3-only bundles and checks are recorded in the individual entry.
+
+## v3.58 — 2026-09-21 · Chapter 5 protocol, tensor layouts and sampling laws → [`changelogs/v3.58_20260921_ch5_protocol_shapes_sampling.md`](changelogs/v3.58_20260921_ch5_protocol_shapes_sampling.md)
+
+- Kept the real, route-balanced twelve-flight UAV-corridor protocol; moved the twenty-episode avoiding protocol out of Table 5.10 and linked its appendix section from the prose. Figure 5.6 now marks its lower panels as $x$--$y$ views with $z$ omitted.
+- Table 5.8 now gives each environment's input/output tensor shapes and corrects UAV plan width to 12. Table 5.9 identifies 2D versus 3D projected positions. The appendix defines all three training-time sampling laws, including FM's reflected Beta draw; the earlier v2 handover with the opposite sign is superseded.
+- Replaced three Chapter 4 equation references that appear as `??` in v3-only PDFs with surviving section references. v2 and v4 handover notes record the notation correction and preservation of the appendix mathematics. Structural checks pass; not compiled.
+
+## v3.57 — 2026-09-21 · Figure consolidation, missing-budget cells, and controller timing → [`changelogs/v3.57_20260921_figures_budgets_controller_time.md`](changelogs/v3.57_20260921_figures_budgets_controller_time.md)
+
+- Figure 5.2's X2 dimension drawing is now the right panel of Figure 5.1, beside the Panda and X2 renders; the separate float and its references are removed.
+- Tables 6.1–6.2 add measured FM $\nfe=20$ at five seeds and three geometries; diffusion $\nfe=2$ is explicitly pending at that protocol. Table 6.5 now shows measured MeanFM $\nfe=10$, identifies the three absent $\nfe=10$ cells, and includes the measured MeanFM/diffusion $\nfe=100$ tail. R26 and R16 are reopened in the pending-run ledger.
+- Figure 6.6 includes both $\nfe=100$ points; the old direction key was removed because it covered them. Figure 6.8 shows two representative $x$--$y$ paths per panel, with $z$ omission and full-count scope explicit in the caption. Figure 6.12 uses green for passed and red for not passed.
+- Table 6.15 now prints the recorded full executed-step time beside controller outcomes: 94.9 and 215.6 ms/step unprojected; 2660.1 ms/step on the projected random-selection MJPC arm. The unmatched projected cascaded-controller time remains blank. The existing controller-cost table retains its planner/controller decomposition.
+- Figures rebuilt in the DA store and exported to v3; structural check and v3-only bundles recorded in the individual changelog. Not compiled.
+
+## v3.56 — 2026-09-21 · Alignment Pareto alternative, pillars scaffold, and Chapter 5–6 hotfix → [`changelogs/v3.56_20260921_alignment_pareto_pillars_scaffold.md`](changelogs/v3.56_20260921_alignment_pareto_pillars_scaffold.md)
+
+- §6.1.1 now states the actual unprojected goal-arrival counts: the three flow-based models reach 30/30 at both budgets; diffusion reaches 28/30 and 29/30, so “all four at 100%” is not supported.
+- Figure 6.7 now shows a projected alignment outcome–cost Pareto alternative. The former per-context Figure 6.7 asset is retained in the DA store; all points use the same ten contexts and tightened constraint set, with violation-free coverage shown explicitly.
+- UAV-corridor calls its test-time constraint a **sloping halfspace** and its marked comparison the **diffusion model of DPCC**. The shared naming table follows.
+- UAV-pillars has a live section between corridor and s-curve, two pending table templates, and a planned executed-path figure. R23 is a visible gap again; no old-geometry result was transferred.
+- Figure 5.3 now uses a MuJoCo frame with the Panda beyond the goal line and a factual caption. §6.1.1 puts raw Table 6.1 and its discussion before the plan montage. The defensive step-budget paragraph is removed. §6.1.2.8 keeps a short twenty-episode result; its four detailed tables are in the appendix, with a v4 handover note. Figure 6.7's MeanFM/CI-MeanFM points are dark blue/plum rather than adjacent blues.
+- Structural check passes; v2.24 inheritance unchanged. The final v3-only bundles are `104909_new`, `104912_new_clean`, `104916_new_nonotes`; the last verifies byte-faithful. The intentional pillars placeholder remains visible. Not compiled.
+
+## v3.55 — 2026-09-21 · §6.1 is reported at DPCC's protocol; the twenty-episode evaluation is quarantined → [`changelogs/v3.55_20260921_ch6_dpcc_protocol.md`](changelogs/v3.55_20260921_ch6_dpcc_protocol.md)
+
+- 🔴 **Correction of a misread.** *"20 vs 2"* meant the **episode count**, not the step budget. §6.1 is
+  now reported end to end at **DPCC's own protocol** (5 seeds × 2 episodes per geometry) and everything
+  resting on twenty episodes is one subsection at the end, before the conclusion — which is what v3.52's
+  own census argued for: every $\nfe=20$ twenty-episode cell is short of seeds or geometries, every
+  $\nfe\in\{1,2\}$ cell is complete.
+- **New order in §6.1.2:** the executed-path figure becomes its own subsubsection after *At the Protocol
+  of DPCC*; *The Cost Frontier* and *Step Budget* are rebuilt at two episodes; the old *Extended
+  Evaluation* moves to the end as 🆕 **The Twenty-Episode Evaluation**, absorbing the budget comparison
+  as its closing paragraph.
+- **The frontier and the ladder now read the corpus the TABLES are computed from** (the committed
+  `19-09-…/batch_avoiding_combined_20260919_132703`, not the older `temp/2508` drop), so a figure and the
+  table beside it are the same evaluation. **Every point carries all five seeds and all three
+  geometries**, so the ladder's dashed-hollow baseline and dotted single-seed series are gone — and
+  🆕 **CI-MeanFM enters both figures as a full five-seed series**, four models instead of three, its
+  $\nfe=1$ point ($59.2$ steps, $18.1$\,ms) on the frontier.
+- **`fig:avoiding-paths` rebuilt at two episodes with no new fetch**: `scripts/eval.py:297--299` fixes
+  episode $i$ by $i$, so the first two episodes of a twenty-episode artefact **are** the two a
+  two-episode run produces. $2/2$ reach the goal in every panel, all violation-free.
+- 🔴 **"Flagship" is out** — *"THE FLAGSHIP IS JARGON. NEVER MENTION IN THESIS."* Banned in the naming
+  table §6, with the replacements: **operating point** and **baseline of record**.
+- **Fig. 6.1's row labels** lose the `\raisebox` that lifted them above their panels.
+- 🟡 **Two rewrites.** *"because the tracking controller filters the plan"* → the two things that
+  actually stand between plan and motion, both from §5.1: only the first action of a plan is executed,
+  and it reaches the joints through IK and a joint-space PD controller. And *"Three things have to be
+  read into that matrix …"* → four sentences of fact.
+- **`tab:coverage-k20` is new**: v3.52's $\nfe=20$ census promoted from a `\guard` to a table in the
+  quarantined subsection. §6.1's conclusion, `tab:avoiding-conclusion`, §6.4's summary and Chapter 5
+  §5.6.3.1 all follow the protocol change.
+- Plumbing: `Corpus.csv()` falls back to `.gz`, loaders open through `open_csv()`, and `load_exact()`
+  gained a `backbone` filter (the folder name does not carry the backbone — the 2026-09-17 pooling bug).
+- 🔴 **Left alone:** `08_conclusion.tex` still leads with the twenty-episode $0.993$/$0.983$. Still true,
+  still reported, but it is the quarantined evidence; Chapter 8 is frozen by author instruction.
+- `check.py` 260 labels, 39 figures, all mechanical checks pass. All three bundles `101003_*` verify
+  byte-faithful. **Not compiled.**
+
+## v3.54 — 2026-09-21 · a third note level for the bundle: `--no-notes` → [`changelogs/v3.54_20260921_no_notes_bundle.md`](changelogs/v3.54_20260921_no_notes_bundle.md)
+
+- **Tooling only; no thesis file changed.** `--clean-notes` sets `\submissiontrue`, which the inherited
+  preamble wires to `\srcnote` and nothing else — so the violet `\guard` and grey `\dataref` survived it.
+  `bundle/make_bundle.py` now has three note levels: default (all visible), `--clean-notes`
+  (`\srcnote` hidden), and 🆕 **`--no-notes`** (`\srcnote`, `\dataref` and `\guard` hidden). Suffix
+  `_nonotes`, so the three variants never collide.
+- **`\hole` and `\provisional` are never hidden** — they mark missing work, and a build that hides them
+  lies about how finished the draft is.
+- **A hidden `\guard` is still a limit of the result**, so `--no-notes` prints what it hid
+  (*18 guards, 38 datarefs*) and says the build reads tidier than the evidence is. The counts strip
+  comments first and now agree with `check.py` exactly.
+- **Left open:** splitting `\guard` into the caveat that ships and the internal note that does not, so
+  no switch has to choose between them — a pass over all eighteen uses, for when the drafting macros go
+  to zero.
+- `README.md` carries both note flags. `thesis_v3_20260921_090310_new_nonotes.zip` verifies
+  byte-faithful; the v3.53 pair is unchanged. **Not compiled.**
 
 ## v3.53 — 2026-09-20 · Chapter 6 figures, and the tone rule gets its second half → [`changelogs/v3.53_20260920_ch6_figures_and_tone.md`](changelogs/v3.53_20260920_ch6_figures_and_tone.md)
 

@@ -11,15 +11,15 @@ is drawn by the same code from the same `sources.UAV_CONSTRAINTS`.
 The paths come from `../../data/uav_paths.json`, written by `extract/uav_paths.py` (numpy);
 this module, like every builder, is standard library only.
 
-How a flight is drawn -- two independent outcomes, never collapsed into one:
+For corridor and pillars, two independent outcomes are drawn:
 
     colour   collision-free (green) or entered an inflated obstacle (red)
     stroke   solid = passed the goal, dashed = did not
     end mark filled = passed the goal, hollow = did not
 
-They are independent on purpose: a flight can pass the goal THROUGH a pillar, and telling
-that apart from a clean arrival is the entire point of the projection comparison. Colour is
-never the only carrier -- dash and marker fill repeat it, so the figures survive grayscale.
+For the s-curve controller comparison alone, the author requested the simpler pass/fail key:
+green means passed the finish line, red means not passed. Panel subtitles still print the
+separate clean counts. Corridor and pillars retain the independent two-channel key.
 """
 import json
 import os
@@ -51,7 +51,7 @@ def _scene(name):
     return None
 
 
-def _panel(scn, panel, first, r_drone, tight):
+def _panel(scn, panel, first, r_drone, tight, colour_by_pass=False):
     """One constraint panel with its flights drawn over it."""
     eps = panel['episodes']
     n, passed, clean = panel['n'], panel['passed'], panel['clean']
@@ -68,10 +68,10 @@ def _panel(scn, panel, first, r_drone, tight):
         xy = ep['xy']
         if len(xy) < 2:
             continue
-        colour = CLEAN if ep['clean'] else VIOLATING
+        colour = CLEAN if (ep['passed'] if colour_by_pass else ep['clean']) else VIOLATING
         pts = [(f.X(x), f.Y(y)) for x, y in xy]
-        f.poly(pts, colour, w=1.9, dash='' if ep['passed'] else '6,4')
-        f.marker(pts[-1][0], pts[-1][1], 'o', colour, filled=ep['passed'], r=4.2, ew=1.3)
+        f.poly(pts, colour, w=1.9, dash='' if colour_by_pass or ep['passed'] else '6,4')
+        f.marker(pts[-1][0], pts[-1][1], 'o', colour, filled=True if colour_by_pass else ep['passed'], r=4.2, ew=1.3)
     # one start mark for the whole panel: every flight of a cell launches from the same pose
     sx, sy = eps[0]['xy'][0] if eps else (None, None)
     if sx is not None:
@@ -80,12 +80,13 @@ def _panel(scn, panel, first, r_drone, tight):
     return f
 
 
-def _legend(width):
+def _legend(width, colour_by_pass=False):
     h = Fig(width, 104, ml=0, mr=0, mt=0, mb=0, font=FONT_CONSTRAINT)
-    items = [('line', CLEAN, '', 'collision-free flight'),
-             ('line', VIOLATING, '', 'entered an obstacle'),
-             ('line', '#5d6d7e', '6,4', 'did not pass the goal'),
-             ('mark', START, '', 'launch pose · flight end')]
+    items = [('line', CLEAN, '', 'passed the finish line' if colour_by_pass else 'collision-free flight'),
+             ('line', VIOLATING, '', 'did not pass' if colour_by_pass else 'entered an obstacle')]
+    if not colour_by_pass:
+        items.append(('line', '#5d6d7e', '6,4', 'did not pass the goal'))
+    items.append(('mark', START, '', 'launch pose · flight end'))
     row_y, col_x, size = (30, 76), (16, width // 2 + 16), 18
     for i, (kind, colour, dash, lab) in enumerate(items):
         x, y = col_x[i % 2], row_y[i // 2]
@@ -98,7 +99,7 @@ def _legend(width):
     return h
 
 
-def _build(key, filename, cols, outdir):
+def _build(key, filename, cols, outdir, colour_by_pass=False):
     D = _load()
     if not D or key not in D['figures']:
         return None
@@ -112,11 +113,11 @@ def _build(key, filename, cols, outdir):
     C = S.UAV_CONSTRAINTS
     r, t = C['r_drone'], C['tightening']
 
-    drawn = [_panel(scn, p, i % cols == 0, r, t) for i, p in enumerate(panels)]
+    drawn = [_panel(scn, p, i % cols == 0, r, t, colour_by_pass) for i, p in enumerate(panels)]
     width = max(sum(d.w for d in drawn[i:i + cols]) + 8 * (min(cols, len(drawn) - i) - 1)
                 for i in range(0, len(drawn), cols))
     path = save_grid(drawn, os.path.join(outdir, filename), cols=cols, gap=8,
-                     header=_legend(width))
+                     header=_legend(width, colour_by_pass))
     flights = sum(p['n'] for p in panels)
     srcs = ', '.join(sorted({p['tag'] for p in panels}))
     return path, (f"data/uav_paths.json (extract/uav_paths.py) | {len(panels)} cells, "
@@ -126,7 +127,7 @@ def _build(key, filename, cols, outdir):
 
 def fig_uav_scurve_paths(outdir):
     """The s-curve flown under both controllers, unprojected (companion of tab:uav-controller)."""
-    return _build('scurve', 'fig_uav_scurve_paths.svg', 2, outdir)
+    return _build('scurve', 'fig_uav_scurve_paths.svg', 2, outdir, colour_by_pass=True)
 
 
 def fig_uav_pillars_paths(outdir):

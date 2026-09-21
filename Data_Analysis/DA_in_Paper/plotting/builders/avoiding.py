@@ -40,6 +40,35 @@ KS = [1, 2, 5, 10, 20]
 PARETO_BAND = 0.05
 
 
+def _avoiding_cells_dpcc(engines=('mf', 'af', 'fm', 'diffusion')):
+    """The DPCC protocol -- 5 training seeds x 2 episodes -- reduced to geometry-means.
+
+    Since v3.55 this is what the budget figures of section 6.1 are drawn at. Three reasons,
+    all of them properties of the data rather than of the argument:
+
+      * it is the corpus the result TABLES are computed from, so a figure and the table
+        beside it are the same evaluation;
+      * every cell of it carries five seeds and three geometries, which the 20-episode
+        campaign does not at K = 20;
+      * the consistency-interpolated model has five seeds here and one there, so it can
+        appear as a peer of the other three instead of being drawn apart.
+
+    -> (corpus, {'AGG': rows, geometry: rows}) with rows keyed (engine, K, rule).
+    """
+    c = S.CORPORA['avoiding_dpcc']
+    if not c.available:
+        return None, None
+    cells = {}
+    for eng in engines:
+        cells.update(S.load_exact(c, S.AVOIDING_DPCC_FOLDERS[eng], eng,
+                                  backbone=S.AVOIDING_DPCC_BACKBONE[eng]))
+    agg = S.geometry_mean(cells, lambda k: (k[0], k[1], k[4]), geom_index=3)
+    per_geom = {g: S.geometry_mean(cells, lambda k, g=g: (k[0], k[1], k[4]) if k[3] == g else None,
+                                   geom_index=3, geometries=[g])
+                for g in S.GEOMETRIES}
+    return c, {'AGG': agg, **per_geom}
+
+
 def _avoiding_cells(engines=('diffusion', 'fm', 'mf')):
     """Load the Tier-2 corpus and reduce it to geometry-means per (engine, K, rule).
 
@@ -62,7 +91,10 @@ def _avoiding_cells(engines=('diffusion', 'fm', 'mf')):
 # ═══════════════════════════════════════════════════════════════════════════
 #  Trade-off between control steps and time per step, per geometry (2 x 2 grid)
 # ═══════════════════════════════════════════════════════════════════════════
-MODELS = ('mf', 'fm', 'diffusion')
+# v3.55: four models, not three. At the DPCC protocol the consistency-interpolated model
+# has all five training seeds, so it is a peer of the other three and no longer has to be
+# left out of the frontier or drawn apart in the ladder.
+MODELS = ('mf', 'af', 'fm', 'diffusion')
 FONT = 1.5          # trade-off grid, printed at \textwidth
 FONT_ENV = 1.75     # three-panel constraint figure, printed at \textwidth
 DEMO_CLEAN = '#1e8449'      # a demonstration that satisfies the geometry it is drawn on
@@ -133,7 +165,7 @@ def _legend_strip(width, protocol):
 
 
 def fig_avoiding_tradeoff(outdir):
-    c, data = _avoiding_cells()
+    c, data = _avoiding_cells_dpcc()
     if c is None:
         return None
     panels = [
@@ -361,79 +393,57 @@ def fig_constraints_avoiding(outdir):
 def fig_avoiding_k_ladder(outdir):
     """Quality against step budget: who can walk K down and who cannot.
 
-    Two vertical axes would be a lie here, so quality is on its own panel: the
-    point is not that the transport engines are cheaper (Fig 1-4 show that), it
-    is that their quality is FLAT in K while the diffusion engine's collapses
-    below its training budget. K is inference-time for one family and
-    training-time for the other -- that asymmetry is the mechanism.
+    Two vertical axes would be a lie here, so quality is on its own panel: the point is
+    not that the flow-based engines are cheaper (the frontier shows that), it is that
+    their quality is FLAT in K while the diffusion engine's collapses below its training
+    budget. K is inference-time for one family and training-time for the other.
+
+    v3.55: drawn at the DPCC protocol, from the corpus the tables are computed from. Every
+    series is then the same sample -- five training seeds, two episodes, three geometries --
+    so the dashed-hollow baseline series and the dotted single-seed CI-MeanFM series that
+    earlier versions needed are gone. A marker is hollow only where a cell is short of a
+    geometry, which at this protocol never happens.
     """
-    c, data = _avoiding_cells()
+    c, data = _avoiding_cells_dpcc()
     if c is None:
         return None
     rows = data['AGG']
-    f = Fig(760, 452, ml=76, mr=152, mt=26)   # mt: no title line any more
+    f = Fig(760, 452, ml=76, mr=152, mt=26)   # mt: no title line
     f.axes((0.8, 26), (0.55, 1.04), xlog=True)
-    # No title, and no "5 seeds (6-10) x 20 episodes" line: that is batch vocabulary and a
-    # seed list, and both belong in the caption (author, v3.48/v3.49).
     f.frame([1, 2, 5, 10, 20], [0.6, 0.7, 0.8, 0.9, 1.0],
             'step budget K  [ network evaluations per plan ]   (log)',
             'success and constraint satisfaction',
             '', '',
             xfmt=lambda v: f'{v:.0f}', yfmt=lambda v: f'{v:.2f}')
 
-    # The baseline in a smaller 5 x 2 sample: the only measurement of
-    # what diffusion does below its training budget. Drawn dashed and hollow, and
-    # named as a different protocol in the legend, because it is one -- mixing it
-    # into the solid series would be the single most misleading thing this figure
-    # could do.
-    t1_cells = S.load_exact(c, S.AVOIDING_T1_DIFFUSION_FOLDERS, 'diffusion')
-    t1_rows = S.geometry_mean(t1_cells, lambda k: (k[0], k[1], k[4]), geom_index=3)
-    t1_pts = [(K, t1_rows[('diffusion', K, 'dpcc-c-tightened')])
-              for K in sorted(S.AVOIDING_T1_DIFFUSION_FOLDERS)
-              if ('diffusion', K, 'dpcc-c-tightened') in t1_rows]
-    if len(t1_pts) > 1:
-        f.poly([(f.X(K), f.Y(r['n_success_and_constraints'])) for K, r in t1_pts],
-               S.ENGINE_COLOUR['diffusion'], dash='5,4', w=1.6)
-        for K, r in t1_pts:
-            f.marker(f.X(K), f.Y(r['n_success_and_constraints']), 'o',
-                     S.ENGINE_COLOUR['diffusion'], filled=False, r=5.0)
-
-    for eng in ('mf', 'fm', 'diffusion'):
-        # The baseline has no temporal-consistency row on both-hard, so it is
-        # plotted on the cumulative-cost rule -- which is also the rule its
-        # pinned configuration uses. Stated in the caption, not hidden.
-        rule = 'dpcc-c-tightened' if eng == 'diffusion' else 'dpcc-t-tightened'
+    # CI-MeanFM and FM are both at 1.000 at both of their budgets, so one line lies exactly
+    # on the other. Nothing is moved to fix that -- the coincidence is the result. Instead
+    # CI-MeanFM is drawn LAST, dashed, with a small marker that sits inside FM's, so both
+    # series are legible at a point they genuinely share.
+    MARK = {'mf': 's', 'af': '^', 'fm': 'o', 'diffusion': 's'}
+    DASH = {'af': '7,4'}
+    RAD = {'af': 3.2}
+    DRAW_ORDER = ('mf', 'fm', 'diffusion', 'af')
+    drawn = []
+    for eng in DRAW_ORDER:
+        rule = S.AVOIDING_DPCC_RULE[eng]
         pts = [(K, rows[(eng, K, rule)]) for K in KS if (eng, K, rule) in rows]
         if not pts:
             continue
-        f.poly([(f.X(K), f.Y(r['n_success_and_constraints'])) for K, r in pts],
-               S.ENGINE_COLOUR[eng], w=1.9)
+        if len(pts) > 1:
+            f.poly([(f.X(K), f.Y(r['n_success_and_constraints'])) for K, r in pts],
+                   S.ENGINE_COLOUR_DISTINCT[eng], w=2.0, dash=DASH.get(eng, ''))
         for K, r in pts:
-            f.marker(f.X(K), f.Y(r['n_success_and_constraints']), 's',
-                     S.ENGINE_COLOUR[eng], filled=(r['n_geometries'] == 3), r=5.0)
-
-    # The consistency-interpolated model exists on this backbone for seed 6 only, so it is
-    # drawn as its own series -- dotted, hollow, named as one seed in the legend -- for the same
-    # reason the 5 x 2 diffusion series is: a different sample must not be read as the same one.
-    afc = S.CORPORA.get('avoiding_af_unet')
-    if afc is not None and afc.available:
-        af_cells = S.load_exact(afc, {K: S.AVOIDING_AF_FOLDERS['af02'] % K for K in KS},
-                                'af02', seeds=S.AVOIDING_AF_SEEDS)
-        af_rows = S.geometry_mean(af_cells, lambda k: (k[0], k[1], k[4]), geom_index=3)
-        af_pts = [(K, af_rows[('af02', K, 'dpcc-t-tightened')]) for K in KS
-                  if ('af02', K, 'dpcc-t-tightened') in af_rows]
-        if len(af_pts) > 1:
-            f.poly([(f.X(K), f.Y(r['n_success_and_constraints'])) for K, r in af_pts],
-                   S.ENGINE_COLOUR['af'], dash='2,3', w=1.7)
-            for K, r in af_pts:
-                f.marker(f.X(K), f.Y(r['n_success_and_constraints']), '^',
-                         S.ENGINE_COLOUR['af'], filled=False, r=5.2)
+            f.marker(f.X(K), f.Y(r['n_success_and_constraints']), MARK[eng],
+                     S.ENGINE_COLOUR_DISTINCT[eng], filled=(r['n_geometries'] == 3),
+                     r=RAD.get(eng, 5.0))
+        drawn.append(eng)
 
     lx = f.R + 14
     f.text(lx, f.T + 4, 'model', 10, '#111', bold=True)
-    legend(f, lx, f.T + 20, [(S.ENGINE_COLOUR[k], S.ENGINE_LABEL[k], 's')
-                             for k in ('mf', 'fm', 'diffusion')]
-                            + [(S.ENGINE_COLOUR['af'], 'CI-MeanFM (one seed)', '^')])
+    legend(f, lx, f.T + 20,
+           [(S.ENGINE_COLOUR_DISTINCT[k], S.ENGINE_LABEL[k], MARK[k])
+            for k in MODELS if k in drawn])
     path = f.save(os.path.join(outdir, 'fig_avoiding_k_ladder.svg'))
     return path, f'{c.rel} | {c.protocol}'
 

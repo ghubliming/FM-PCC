@@ -192,12 +192,120 @@ def fig_aligning_tradeoff(outdir):
             if i + 1 < len(front):
                 st.append((f.X(front[i + 1]['ms']), f.Y(q['y'])))
         f.poly(st, '#222', dash='6,4', w=1.6)
-    _dirarrow(f, -1, +1, y0=f.B - 92)   # less time, closer to the target; clear of the start line
+    # With K=100 included, the old direction key covers both right-hand data points.
+    # Axis labels state the two quantities; keep the data area clear.
     _scatter(f, pts, front)
     hdr = _legend_strip(760, [e for e in MODEL_ORDER if any(k[0] == e for k in cells)])
     from svg.fmpcc_svg import save_grid
     path = save_grid([f], os.path.join(outdir, 'fig_aligning_tradeoff.svg'), cols=1, gap=8, header=hdr)
     return path, f'{c.rel} | {c.protocol} | unprojected, {"/".join(S.ALIGNING_UNPROJECTED)}'
+
+
+def fig_aligning_projected_tradeoff(outdir):
+    """Projected alignment: distance against cost, with constraint coverage explicit.
+
+    Random selection and the ten shared contexts are held fixed. A point enters
+    the two-axis frontier only when at least nine contexts are violation-free;
+    hollow points remain visible but are not described as successful trade-offs.
+    The K=2 endpoint run is projection after sampling (no guiding step).
+    """
+    colours = {'mf': '#1F4E79', 'af': '#8B3F71', 'fm': '#C45B24'}
+    c = S.CORPORA['visual_aligning_15_09']
+    if not c.available:
+        return None
+    reference = _aligning_outcomes(c, ('mf', 20)).get('diffuser', [])
+    contexts = {_context_key({'context_box_init_xy_x': e['start'][0],
+                              'context_box_init_xy_y': e['start'][1],
+                              'context_target_xy_x': e['target'][0],
+                              'context_target_xy_y': e['target'][1]}) for e in reference}
+    if len(contexts) != 10:
+        return None
+    variants = ('dpcc-r', 'hardflow_sls-r', 'hardflow_new-r')
+    grouped = {}
+    with open(os.path.join(c.path, 'per_rollout_detail.csv')) as fh:
+        for r in csv.DictReader(fh):
+            if r['geo'] != ALIGN_GEO or r['variant'] not in variants:
+                continue
+            context = _context_key(r)
+            if context not in contexts:
+                continue
+            for cell, (prefix, suffix) in S.ALIGNING_CELLS.items():
+                if cell not in S.ALIGNING_REPORTED or cell[0] == 'diffusion':
+                    continue
+                if not r['FolderName'].startswith(prefix) or (suffix and not r['FolderName'].endswith(suffix)):
+                    continue
+                if r['variant'] == 'hardflow_new-r' and cell != ('mf', 2):
+                    continue
+                if r['variant'] == 'hardflow_sls-r' and cell == ('mf', 2):
+                    continue
+                d, ms, clean = (_f(r.get(k)) for k in
+                                ('context_final_xy_dist', 'avg_time_ms', 'constraint_exec_zero_violation'))
+                if None not in (d, ms, clean):
+                    grouped.setdefault((*cell, r['variant']), {}).setdefault(context, []).append((d, ms, clean))
+    pts = []
+    for (eng, K, variant), by_context in grouped.items():
+        if set(by_context) != contexts:
+            continue
+        distance = stats.median([stats.median(v[0] for v in rows) for rows in by_context.values()])
+        ms = stats.mean([stats.mean(v[1] for v in rows) for rows in by_context.values()])
+        clean = sum(stats.median(v[2] for v in rows) == 1 for rows in by_context.values())
+        pts.append(dict(engine=eng, K=K, variant=variant, ms=ms, y=distance, clean=clean))
+    if len(pts) < 6:
+        return None
+    eligible = [p for p in pts if p['clean'] >= 9]
+    front = sorted((p for p in eligible if not any(
+        q is not p and q['ms'] <= p['ms'] and q['y'] <= p['y']
+        and (q['ms'] < p['ms'] or q['y'] < p['y']) for q in eligible)),
+        key=lambda p: p['ms'])
+    xlo, xhi = min(p['ms'] for p in pts) * 0.65, max(p['ms'] for p in pts) * 1.55
+    f = Fig(760, 430, ml=92, mr=22, mt=26, mb=74, font=FONT)
+    f.axes((xlo, xhi), (0.0, 0.52), xlog=True)
+    f.frame(dec_ticks(xlo, xhi), [0.0, 0.1, 0.2, 0.3, 0.4, 0.5],
+            'time per control step [ms] (log)', 'final box-to-target distance [m]', '', '',
+            xfmt=fmt_num, yfmt=lambda v: f'{v:.1f}')
+    y0 = f.Y(S.ALIGNING_INITIAL_DISTANCE)
+    f.s.append(f'<line x1="{f.L}" y1="{y0:.1f}" x2="{f.R}" y2="{y0:.1f}" '
+               'stroke="#777" stroke-width="1.4" stroke-dasharray="6,4"/>')
+    if len(front) > 1:
+        staircase = []
+        for i, p in enumerate(front):
+            staircase.append((f.X(p['ms']), f.Y(p['y'])))
+            if i + 1 < len(front):
+                staircase.append((f.X(front[i + 1]['ms']), f.Y(p['y'])))
+        f.poly(staircase, '#34495e', dash='6,4', w=1.6)
+    _dirarrow(f, -1, +1, y0=f.B - 92)
+    pos = _dodge(f, pts, gap=19)
+    front_ids = {id(p) for p in front}
+    for p in pts:
+        x, y = pos[id(p)]
+        kind = 'o' if p['variant'] == 'dpcc-r' else 's'
+        f.marker(x, y, kind, colours[p['engine']],
+                 filled=p['clean'] >= 9, r=6.5, ew=1.6)
+        if id(p) in front_ids:
+            f.ring(x, y, r=13)
+            if p['K'] == 2:
+                lx, ly, anchor = x - 16, y - 16, 'end'
+            elif p['K'] == 10:
+                lx, ly, anchor = x + 17, y - 16, 'start'
+            else:
+                lx, ly, anchor = x + 17, y + 25, 'start'
+            f.text(lx, ly, p['K'], 11, '#333', anchor=anchor)
+    h = Fig(760, 42, ml=0, mr=0, mt=0, mb=0, font=FONT)
+    x = 20
+    for eng in ('mf', 'af', 'fm'):
+        h.marker(x, 21, 'o', colours[eng], r=6.5)
+        h.text(x + 14, 25, S.ENGINE_LABEL[eng], 11, '#111')
+        x += 125
+    for kind, name in (('o', 'per-step'), ('s', 'endpoint')):
+        h.marker(x, 21, kind, '#777', r=6.5)
+        h.text(x + 14, 25, name, 11, '#111')
+        x += 145
+    from svg.fmpcc_svg import save_grid
+    path = save_grid([f], os.path.join(outdir, 'fig_aligning_projected_tradeoff.svg'),
+                     cols=1, gap=8, header=h)
+    return path, (f'{c.rel} | {c.protocol} | {ALIGN_GEO}, random selection, '
+                  f'10 shared contexts; {len(pts)} complete cells; '
+                  'frontier requires at least 9/10 violation-free contexts')
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -446,6 +554,7 @@ def fig_aligning_outcomes(outdir):
 
 ALL = [
     ('fig_aligning_tradeoff', 'da', fig_aligning_tradeoff),
+    ('fig_aligning_projected_tradeoff', 'da', fig_aligning_projected_tradeoff),
     ('fig_aligning_outcomes', 'da', fig_aligning_outcomes),
     ('fig_uav_corridor_tradeoff', 'da', fig_uav_corridor_tradeoff),
 ]
