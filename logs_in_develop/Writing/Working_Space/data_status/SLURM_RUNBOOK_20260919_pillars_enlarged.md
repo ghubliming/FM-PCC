@@ -251,16 +251,16 @@ there would have corrupted it silently.
 
 | grp | job | driver ID | child IDs | submitted | status |
 | :-- | :-- | :-- | :-- | :-- | :-- |
-| A | fm · K1,2 | **25970** | *(2: K1, K2)* | 2026-09-19 | 🟡 submitted |
-| A | mf · K1,2 | **25971** | *(2: K1, K2)* | 2026-09-19 | 🟡 submitted |
-| A | af · K1,2 | **25972** | *(2: K1, K2)* | 2026-09-19 | 🟡 submitted |
-| B | fm · K5 half 1 | **25973** | *(1: K5)* | 2026-09-19 | 🟡 submitted |
-| B | mf · K5 half 1 | **25974** | *(1: K5)* | 2026-09-19 | 🟡 submitted |
-| B | af · K5 half 1 | **25975** | *(1: K5)* | 2026-09-19 | 🟡 submitted |
-| C | fm · K5 half 2 | **25976** | *(1: K5)* | 2026-09-19 | 🟡 submitted |
-| C | mf · K5 half 2 | **25977** | *(1: K5)* | 2026-09-19 | 🟡 submitted |
-| C | af · K5 half 2 | **25978** | *(1: K5)* | 2026-09-19 | 🟡 submitted |
-| D | diffusion · K20 | **25951** *(attempt 1)* | *(direct eval job)* | 2026-09-19 | 🟠 RUNNING since 11:18 UTC — **cannot finish**, see §3d |
+| A | fm · K1,2 | 25970 | **25988** (K1), **25990** (K2) | 2026-09-19 | 🟢 both COMPLETE, 7/7 variants — K1 ended 20-09 04:08, K2 20-09 13:01 UTC |
+| A | mf · K1,2 | 25971 | **25984** (K1), **25985** (K2) | 2026-09-19 | 🟢 both COMPLETE, 7/7 — 19-09 20:55 / 22:20 UTC |
+| A | af · K1,2 | 25972 | **25986** (K1), **25987** (K2) | 2026-09-19 | 🟢 both COMPLETE, 7/7 — 19-09 23:54 / 20-09 01:15 UTC |
+| B | fm · K5 half 1 | 25973 | **25989** | 2026-09-19 | 🟢 COMPLETE, 5/5 — 20-09 22:31 UTC |
+| B | mf · K5 half 1 | 25974 | **25991** | 2026-09-19 | 🟢 COMPLETE, 5/5 — 21-09 07:44 UTC |
+| B | af · K5 half 1 | 25975 | **25992** | 2026-09-19 | 🟢 COMPLETE, 5/5 — 21-09 17:26 UTC |
+| C | fm · K5 half 2 | 25976 | **25994** | 2026-09-19 | 🟠 **RUNNING** (as of 21-09 ~21:50): variant 1/6 `dpcc-t`, trial 7/10 at 15,471 s. ~2,210 s/trial → ~6 h per DPCC variant; the four HardFlow variants are minutes each. **Expected to finish inside 24 h; not a resubmit** |
+| C | mf · K5 half 2 | 25977 | **25993** | 2026-09-19 | 🟢 COMPLETE, 6/6 — 21-09 20:33 UTC |
+| C | af · K5 half 2 | 25978 | **25995** | 2026-09-19 | 🟠 **RUNNING** — started 21-09 20:33:45 UTC (queued behind 25993), `dpcc-t` trial 2/10. Same ~13 h profile as 25993 → expected done ~22-09 09:30 UTC. **Not a resubmit** |
+| D | diffusion · K20 | 25951 *(attempt 1)* | *(direct eval job)* | 2026-09-19 | 🔴 **CANCELLED AT TIME LIMIT** 20-09 11:18:55 UTC. Delivered `diffuser` (10/10) and `dpcc-r` (10/10, 67,033 s = 18.6 h for that one variant); `dpcc-r-tightened` stopped at trial 2/10 → **partial cell on disk, must be deleted before any diffusion re-run**. Five variants never started |
 
 9 drivers → 12 children. Child IDs are printed in each driver's own log,
 `Slurm_Codes/logs/2026-09-19/13_*_eval_k_sweep_<driver>.log`.
@@ -315,9 +315,48 @@ rm -rf  logs/UAV_MIX/uav-pillars/plans/mix_uav_af/*/Eaf_K1_*_u7xl  # the crashed
 
 `u7xlchk` (group V) is **untouched and remains valid** — it completed hours earlier.
 
-### 3d. 🔴 Group D (25951) is running but cannot finish, for an unrelated reason
+### 3d. ✅ Group D (25951) — CLOSED BY DECISION, 2026-09-21: the diffusion baseline is reported UNPROJECTED only
 
-It is alive and producing valid rows, but the arithmetic does not work:
+**Decision (author, 2026-09-21).** The diffusion K=20 arm on UAV-pillars is **not re-run**. The thesis
+reports the baseline on this scene from its **raw network output only** — variant `diffuser`, no
+projection of any kind — and states that per-step projection at K=20 is not evaluable within the
+cluster's 24 h job limit. The delivered `dpcc-r` cell stays on disk but is **not printed**: a single
+projected rule with no `c`/`t`/tightened siblings would be an incomplete row, not a comparison.
+The 2/10 partial `dpcc-r-tightened` cell is to be deleted:
+
+```bash
+rm -rf logs/UAV_MIX/uav-pillars/plans/mix_uav_diffusion/*/Ediffusion_K20_*_u7xl/6/pillars_xl_*/dpcc-r-tightened
+```
+
+**The numbers that make it infeasible** — all measured on 25951, none estimated:
+
+| quantity | value | source |
+| :-- | --: | :-- |
+| `proj_ms` per control step, `dpcc-r`, K=20 | **10,387 ms** | `TIMING` line |
+| same, flow models at K=5 (for scale) | 2,272–3,355 ms | 25989/25991/25992 |
+| same, flow models at K=1 / K=2 | 122–265 / 96–162 ms | group A |
+| one 10-flight variant, `dpcc-r` | **67,033 s = 18.6 h** | trial 10/10 stamp |
+| one 10-flight variant, `dpcc-r-tightened` (2 trials measured) | 6,588 s/trial → **18.3 h** | trial 2/10 stamp |
+| `c` and `t` rules relative to `r`, measured at K=5 | ×1.18–1.32 (+6% tightened) | fm/mf K=5 |
+| → `dpcc-c`, `dpcc-c-tightened` at K=20, projected | **~24.4 h, ~26 h** | exceeds the cap on their own |
+| six per-step variants, ten flights each | **~118–130 h ≈ 5 GPU-days** | sum |
+| job `--time` cap | **24 h** | cluster rule |
+| endpoint projection for this arm | **unavailable by construction** | `engine_registry`: `supports_hardflow=False` for ddpm (no velocity field) |
+
+So the per-step block for the baseline cannot be completed inside the protocol: one variant per 24 h
+job fits only for the `r` rules; the `c` rules do not fit at all without cutting `n_trials` below the
+ten flights every other row uses, and the eval has no trial-offset option to shard a variant across
+jobs (episode ids are `10_000 + i`, so two half-jobs would overwrite each other). The reason is the
+budget itself: projection cost scales with K, and K=20 is the baseline's *training* step count, not a
+choice — no cheaper pillars checkpoint exists.
+
+**What the paper says, with the delivered numbers.** Diffusion K=20, `pillars_xl`, seed 6, ten
+flights, raw output: `success = 0.000`, `success_relaxed = 1.000`, `safe = 1.000`,
+`goal_reached = 0.000`, `track_err = 0.319`. The baseline crosses the goal line on every flight,
+contact-free, and never comes within 0.30 m of the goal point. Its S&C is 0 before any constraint is
+applied. (For the record only, not for print: the delivered `dpcc-r` cell also reads `success = 0.000`.)
+
+What 25951 actually did, kept for history:
 
 | | measured |
 | :-- | --: |
@@ -330,9 +369,10 @@ At 6 h it had finished variant 1 (`diffuser`) and was on trial 3/10 of variant 2
 having produced **two of seven variants**. Projection cost scales hard with K and K=20 is four
 times the K=5 budget that already walled the `pillars_hg` jobs.
 
-**Group D must be restructured as one job per variant** (`UAV_MIX_VARIANTS=<single>`), and even
-then each is ~19 h against a 24 h cap — or `n_trials` reduced for the baseline arm, which would
-break protocol comparability with the other arms and needs an explicit decision.
+~~Group D must be restructured as one job per variant~~ — **superseded by the decision above.** The
+restructure was costed (one variant per job, ~19–26 h each, ~5 GPU-days) and rejected: the baseline
+reads 0.000 unprojected, every delivered projected cell on this scene reads 0.00 (§3e), and the
+scene's scoring is itself under review. Compute here would be spent twice.
 
 **Also recorded from 25951, and it matters for the scene's claim:** the diffusion baseline's
 *unprojected* row reads `success=0.000`, `goal_reached=0.000`, `success_relaxed=1.000`,
@@ -349,6 +389,101 @@ is 0 before any constraint is applied. This is a property of the baseline on pil
 > K=20. That fits in 2.9 GiB, but not with much room, and a full disk mid-wave corrupts whatever
 > job is mid-write. Free space before the K=5 jobs (B/C) start, or be ready to.
 
+### 3e. 🔴 FIRST READ OF THE WAVE, 2026-09-21 — sanity check before any DA
+
+**Status.** 10 of 12 attempt-2 children complete, 2 running and on track, diffusion walled at 2/7
+variants. No crash, no disk event, every finished cell has all its variants. **As a run, the wave is
+clean.** As a *result*, it is a floor, and that has to be said before anyone builds a table on it.
+
+**The numbers, straight from the eval's per-variant summary lines.** These print `success` (goal
+reached within 0.30 m **and** contact-free) and `safe` (contact-free); S&C is not printed, but
+S&C ≤ `success` by definition, so **every 0.00 below is an S&C of 0.00**.
+
+*Per-step block — `success`, geometry `pillars_xl`, tag `u7xl`, seed 6, 10 flights per cell:*
+
+| model | $\nfe$ | unproj. | $r$ | $r$ tight | $c$ | $c$ tight | $t$ | $t$ tight |
+| :-- | --: | --: | --: | --: | --: | --: | --: | --: |
+| MeanFM (mf) | 1 | 0.10 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 |
+| MeanFM | 2 | 0.30 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 |
+| MeanFM | 5 | **0.90** | 0.10 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 |
+| CI-MeanFM (af) | 1 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 |
+| CI-MeanFM | 2 | 0.20 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 |
+| CI-MeanFM | 5 | 0.00 | 0.10 | 0.00 | 0.00 | 0.00 | *(running)* | *(running)* |
+| FM (fm) | 1 | **0.80** | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 |
+| FM | 2 | 0.30 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 |
+| FM | 5 | **0.90** | 0.00 | 0.00 | 0.00 | 0.00 | *(running)* | *(running)* |
+| Diffusion | 20 | 0.00 | 0.00 | *(partial)* | — | — | — | — |
+
+*Endpoint block at $\nfe=5$ (`hardflow_new` single / $r$ / $c$ / $t$):* MeanFM **0.00 / 0.00 / 0.00 / 0.00**.
+fm and af endpoint rows are in the two running jobs.
+
+**Read against `pillars_hg`** (the withheld tables, `v3/withheld/20260918_uav_pillars_section.tex`):
+at `_hg`, $\nfe=5$ per-step reached S&C 0.80–1.00 (FM $c$ 1.00, MeanFM $c$-tight 0.90, CI-MeanFM
+$t$-tight 0.90) and endpoint 0.90–1.00. At `_xl` the same cells read **0.00–0.10**. Across all
+finished projected cells — 36 at $\nfe\le2$, 14 at $\nfe=5$, 4 endpoint — **53 of 54 are exactly 0.00**
+and the 54th is 0.10. The unprojected rows, which are geometry-independent, reproduce their `_hg`
+values (mf/fm 0.90 at $\nfe=5$, as the verify cell already showed).
+
+**So the scene flipped from one degenerate regime to the other.** `_hg`: every plan already feasible,
+projector had nothing to repair, models could not be ordered. `_xl`: projector repairs every plan
+into one that **never reaches the goal**, models cannot be ordered. Neither version orders the four
+models, which is the one thing the section exists for. **This wave, as it stands, cannot restore
+`sec:res:uav:pillars`.**
+
+**Two more signals in the logs, both unexplained without the results tree:**
+
+1. At $\nfe\le2$ every projected row is `success=0.00, success_relaxed=1.00, safe=1.00` — the drone
+   **crosses the goal line, contact-free, but ends more than 0.30 m from the goal point.** That is a
+   *lateral* miss (altitude is locked: `actions[2]` is degenerate, ±3.1e-05 m/step).
+2. At $\nfe=5$ `safe` collapses on the per-step rows — fm `dpcc-r` **0.00**, `dpcc-r`-tight 0.00, mf
+   `dpcc-c` 0.00, af `dpcc-c` 0.40 — meaning **MuJoCo contact in most or all flights**, which the
+   $\nfe\le2$ rows never show. A plan obeying $|y|\ge1.26$ cannot touch an $r=0.12$ pillar at
+   $y=\pm0.6$; either the plan is not being obeyed, or the contact is the floor.
+
+**Leading hypothesis — the goal criterion, not the projector.** The goal sits at $(3.2,\ \pm1.11)$, the
+end of the demonstrated channel, with radius $0.30$. The constraint forces the flown lane out to
+$|y|\ge1.26$. Nothing brings it back: the models were trained only on $|y|=1.11$ straight lines, so a
+drone displaced to $1.3$–$1.5$ continues straight. That alone spends $0.15$ of the $0.30$ radius;
+the measured tracking error on these cells is $0.34$–$0.45$ m. A displaced plan plus that error lands
+outside $0.30$ almost every time, which is exactly the $\nfe\le2$ signature (line crossed, safe, goal
+missed). If this is right, the projected flights may well be *constraint-satisfying* — `n_violations`
+low, `collision_free` high — and fail only the goal test. That would be a **metric/geometry mismatch**
+in the scene design, not a model result, and it is fixable at evaluation time (goal placed on the
+detour lane, or radius sized to the detour + tracking error, as U16 did explicitly for the corridor
+slide: "after the exit the goal needs only $y\ge-0.30$").
+
+**Alternative — the projector's output is not being flown.** Both DPCC per-step and HardFlow solve
+with SLSQP; 25993 logs `[hardflow][NLP-FAILURE] first non-converged SLSQP solve at tau=0.600 …
+keeping scipy's last iterate, which may be INFEASIBLE` on every HardFlow variant. If the per-step
+projector is likewise returning non-converged iterates, the plan is neither the demonstration nor a
+legal detour, which would also explain the $\nfe=5$ contacts.
+
+**What separates the two — four `results.json` files, nothing else:**
+
+| cell | why |
+| :-- | :-- |
+| fm K1 `dpcc-c` (job 25988) | the cleanest $\nfe\le2$ floor row |
+| mf K5 `dpcc-r` (25991) | the only non-zero projected cell (0.10) |
+| fm K5 `dpcc-r` (25989) | `safe=0.00` — the contact case |
+| mf K5 `hardflow_new-r` (25993) | endpoint, with the NLP-FAILURE line |
+
+Read, per rollout: `goal.dist` (hypothesis 1 predicts a cluster just above 0.30, lateral),
+`constraint.n_violations` / `collision_free` (hypothesis 1 predicts *low* violations on projected rows —
+the opposite of what a broken projector gives), `physical.min_z` / `contact_frac` (floor vs pillar),
+`homotopy_flown`, and `projection_health` (`cb_tripped`, `backstop_hits`). The `constraint_overview.png`
+of one cell and `diffuser.png` vs `dpcc-c.png` top-down plots settle the lateral question by eye.
+
+**What is usable from this wave regardless of the verdict:** the timing column. Per control step,
+`proj_ms`: $\nfe=1$ 122–265 ms, $\nfe=2$ 96–162 ms, $\nfe=5$ 2.3–3.4 s (per-step), HardFlow at
+$\nfe=5$ 77–313 ms, diffusion $\nfe=20$ **10.4 s**. Those are clean, and the diffusion number is why
+group D cannot fit in 24 h.
+
+**Recommendation.** Do **not** submit the diffusion remainder (5 × ~19 h) or the $\nfe=3$ rung of
+`PENDING_20260922` §16 until the four files above have been read. If hypothesis 1 holds, the fix is a
+goal/radius change at evaluation time and the whole wave has to be re-scored or re-run anyway, so
+compute spent now is compute spent twice. `pillars_xxl` is off the table in either case — the scene is
+already too hard for the metric, not too easy.
+
 ## 4. What "done" looks like
 
 A batch in which, for geometry `pillars_xl`, tag `u7xl`, seed 6:
@@ -357,8 +492,8 @@ A batch in which, for geometry `pillars_xl`, tag `u7xl`, seed 6:
 - the **unprojected** (`diffuser`) rows show real failure — that is the whole point of the wave, and if
   they do not, stop and raise the radius rather than reporting the result;
 - `n_violations` is non-zero wherever S&C is below 1;
-- the diffusion baseline has `dpcc-r` and `dpcc-r-tightened` this time — they were missing on the old
-  geometry and left a gap in the baseline's row.
+- ~~the diffusion baseline has `dpcc-r` and `dpcc-r-tightened` this time~~ — **withdrawn 2026-09-21
+  (§3d): the baseline is reported unprojected only, with the K=20 time argument.**
 
 Then `DA_in_Paper/analysis/pillars_grid.py` runs against the new batch with `GEO_PREFIX = 'pillars_xl'`,
 and `v3/withheld/20260918_uav_pillars_section.tex` is restored with every number recomputed.

@@ -114,6 +114,19 @@ def _legend_strip(width, engines):
 # ═══════════════════════════════════════════════════════════════════════════
 #  D3IL-aligning: final box-to-target distance against time per control step
 # ═══════════════════════════════════════════════════════════════════════════
+# The outcome axis of both alignment frontiers (v3.61, author): the median final
+# distance as a percentage of the mean starting distance, drawn on a log axis. 100 %
+# is a box that was not moved at all; tab:va-models prints the complement in brackets
+# (the share of the distance closed), so 16 % here is the table's (84 %).
+PCT_LABEL = 'final distance, % of the start (log)'
+PCT_TICKS = [10, 20, 50, 100]
+PCT_YLIM = (9.0, 125.0)
+
+
+def _pct_of_start(d):
+    return 100.0 * d / S.ALIGNING_INITIAL_DISTANCE
+
+
 def _aligning_cells(corpus):
     """-> {(engine, K): {'y': median final distance, 'ms': mean time per control step, 'n': contexts}}
 
@@ -174,14 +187,19 @@ def fig_aligning_tradeoff(outdir):
     xlo, xhi = min(p['ms'] for p in pts) * 0.6, max(p['ms'] for p in pts) * 1.9
     # No title and no protocol line inside the drawing: which run, which seed and which
     # projection state this is belongs to the caption, not to the page (author, v3.49).
+    # v3.61 (author): the outcome axis is the final distance as a PERCENTAGE of the
+    # starting distance, on a log scale -- not metres. 100 % is a box that was not
+    # moved; the bracketed share in tab:va-models is the complement of this number.
+    for p in pts:
+        p['y'] = _pct_of_start(p['y'])
     f = Fig(760, 430, ml=92, mr=22, mt=26, mb=74, font=FONT)
-    f.axes((xlo, xhi), (0.0, 0.52), xlog=True)
-    f.frame(dec_ticks(xlo, xhi), [0.0, 0.1, 0.2, 0.3, 0.4, 0.5],
-            'time per control step [ms] (log)', 'final box-to-target distance [m]',
+    f.axes((xlo, xhi), PCT_YLIM, xlog=True, ylog=True)
+    f.frame(dec_ticks(xlo, xhi), PCT_TICKS,
+            'time per control step [ms] (log)', PCT_LABEL,
             '', '',
-            xfmt=fmt_num, yfmt=lambda v: f'{v:.1f}')
-    # where the box started: everything above this line moved the box less than half way
-    y0 = f.Y(S.ALIGNING_INITIAL_DISTANCE)
+            xfmt=fmt_num, yfmt=lambda v: f'{v:g}')
+    # where the box started: everything on this line did not move the box
+    y0 = f.Y(100.0)
     f.s.append(f'<line x1="{f.L}" y1="{y0:.1f}" x2="{f.R}" y2="{y0:.1f}" stroke="#c0392b" '
                f'stroke-width="1.4" stroke-dasharray="6,4"/>')
     f.text(f.L + 8, y0 - 9, 'box not moved', 11, '#c0392b', anchor='start', bold=True)
@@ -192,8 +210,10 @@ def fig_aligning_tradeoff(outdir):
             if i + 1 < len(front):
                 st.append((f.X(front[i + 1]['ms']), f.Y(q['y'])))
         f.poly(st, '#222', dash='6,4', w=1.6)
-    # With K=100 included, the old direction key covers both right-hand data points.
-    # Axis labels state the two quantities; keep the data area clear.
+    # The direction key was dropped when K=100 was added because it covered the two
+    # right-hand points; the author asked for it back (v3.61). Bottom-left is empty
+    # on this axis pair, and it is the corner the arrow points INTO.
+    _dirarrow(f, -1, +1, x0=f.L + 14 * FONT + 38 * FONT, y0=f.B - 14 * FONT - 37 * FONT)
     _scatter(f, pts, front)
     hdr = _legend_strip(760, [e for e in MODEL_ORDER if any(k[0] == e for k in cells)])
     from svg.fmpcc_svg import save_grid
@@ -258,14 +278,21 @@ def fig_aligning_projected_tradeoff(outdir):
         and (q['ms'] < p['ms'] or q['y'] < p['y']) for q in eligible)),
         key=lambda p: p['ms'])
     xlo, xhi = min(p['ms'] for p in pts) * 0.65, max(p['ms'] for p in pts) * 1.55
+    # v3.61 (author): percentage of the starting distance on a log axis, as in
+    # fig_aligning_tradeoff. The frontier is unchanged in substance -- it is computed
+    # on the eligible (>= 9/10 violation-free) points only -- but the legend now says
+    # what a hollow marker means, which the old drawing left to the caption.
+    for p in pts:
+        p['y'] = _pct_of_start(p['y'])
     f = Fig(760, 430, ml=92, mr=22, mt=26, mb=74, font=FONT)
-    f.axes((xlo, xhi), (0.0, 0.52), xlog=True)
-    f.frame(dec_ticks(xlo, xhi), [0.0, 0.1, 0.2, 0.3, 0.4, 0.5],
-            'time per control step [ms] (log)', 'final box-to-target distance [m]', '', '',
-            xfmt=fmt_num, yfmt=lambda v: f'{v:.1f}')
-    y0 = f.Y(S.ALIGNING_INITIAL_DISTANCE)
+    f.axes((xlo, xhi), PCT_YLIM, xlog=True, ylog=True)
+    f.frame(dec_ticks(xlo, xhi), PCT_TICKS,
+            'time per control step [ms] (log)', PCT_LABEL, '', '',
+            xfmt=fmt_num, yfmt=lambda v: f'{v:g}')
+    y0 = f.Y(100.0)
     f.s.append(f'<line x1="{f.L}" y1="{y0:.1f}" x2="{f.R}" y2="{y0:.1f}" '
                'stroke="#777" stroke-width="1.4" stroke-dasharray="6,4"/>')
+    f.text(f.L + 8, y0 - 9, 'box not moved', 11, '#777', anchor='start', bold=True)
     if len(front) > 1:
         staircase = []
         for i, p in enumerate(front):
@@ -273,7 +300,7 @@ def fig_aligning_projected_tradeoff(outdir):
             if i + 1 < len(front):
                 staircase.append((f.X(front[i + 1]['ms']), f.Y(p['y'])))
         f.poly(staircase, '#34495e', dash='6,4', w=1.6)
-    _dirarrow(f, -1, +1, y0=f.B - 92)
+    _dirarrow(f, -1, +1, x0=f.L + 14 * FONT + 38 * FONT, y0=f.B - 14 * FONT - 37 * FONT)
     pos = _dodge(f, pts, gap=19)
     front_ids = {id(p) for p in front}
     for p in pts:
@@ -295,11 +322,13 @@ def fig_aligning_projected_tradeoff(outdir):
     for eng in ('mf', 'af', 'fm'):
         h.marker(x, 21, 'o', colours[eng], r=6.5)
         h.text(x + 14, 25, S.ENGINE_LABEL[eng], 11, '#111')
-        x += 125
+        x += 118
     for kind, name in (('o', 'per-step'), ('s', 'endpoint')):
         h.marker(x, 21, kind, '#777', r=6.5)
         h.text(x + 14, 25, name, 11, '#111')
-        x += 145
+        x += 108
+    h.marker(x, 21, 'o', '#777', filled=False, r=6.5)
+    h.text(x + 14, 25, '< 9/10 clean', 11, '#111')
     from svg.fmpcc_svg import save_grid
     path = save_grid([f], os.path.join(outdir, 'fig_aligning_projected_tradeoff.svg'),
                      cols=1, gap=8, header=h)

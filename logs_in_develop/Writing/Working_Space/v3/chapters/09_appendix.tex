@@ -43,39 +43,218 @@ zero-length fraction: \texttt{mix\_visual\_aligning/models/mf\_diffusion.py:353-
 
 \chapter{Extended Results}\label{app:results}
 
-\section*{Intermediate diffusion budget on D3IL-avoiding}
+\section*{Endpoint projection across the step budget on D3IL-avoiding}
 
-\autoref{tab:avoiding-dpcc-protocol} locks the main comparison to one and two network evaluations,
-with the diffusion model at its native twenty-step budget as the baseline of record. The available
-intermediate diffusion checkpoint is reported here rather than inserted as an unmatched budget in that
-comparison.
+\autoref{tab:hf-ladder} reduces this evaluation to how many of the three selection rules of per-step
+projection endpoint projection is ahead of. The numbers behind those counts are below. Every entry is
+analytic average-velocity matching at activation threshold $0.5$, on \textbf{five training seeds (6--10)
+$\times$ three geometries $\times$ two episodes} --- 15 seed--geometry cells and 30 episodes --- with
+mean $\pm$ the sample standard deviation over the seeds.
 
 \begin{table}[htpb]
-  \caption[Diffusion at ten denoising steps]{The diffusion model at $\nfe=10$ on D3IL-avoiding, at the
-  protocol of \ac{DPCC}: five training seeds $\times$ two episodes per geometry, tightened constraints,
-  four candidate plans and the temporal U-Net of $4.0$\,M parameters. Values are mean $\pm$ the standard
-  deviation over the training seeds.}
-  \label{tab:app:diffusion-k10}
+  \caption[Endpoint against per-step projection, per budget]{Endpoint projection against the three
+  selection rules of per-step projection on D3IL-avoiding, per step budget. Endpoint projection is shown
+  under temporal consistency, the rule it is operated with. \textbf{The time per control step is not
+  printed here and the counts in \autoref{tab:hf-ladder} do not use it}: in this evaluation endpoint
+  projection was given one candidate plan and per-step projection four, so the two are not priced on the
+  same work. The matched timing comparison, with four candidates on both sides, is
+  \autoref{fig:projector-cost}.}
+  \label{tab:app:hf-ladder-detail}
   \centering
-  \small
-  \begin{tabularx}{0.82\linewidth}{@{}c rrr@{}}
+  \footnotesize
+  \begin{tabularx}{\linewidth}{@{}r L rr rr@{}}
     \toprule
-    Rule & S\&C & Steps & ms/step \\
+    & & \multicolumn{2}{c}{Tightened} & \multicolumn{2}{c}{Untightened} \\
+    \cmidrule(lr){3-4}\cmidrule(lr){5-6}
+    $\nfe$ & Projection and rule & S\&C & Steps & S\&C & Steps \\
     \midrule
-    $r$ & $0.900 \pm 0.091$ & $75.1 \pm 7.3$  & $327.2 \pm 35.4$ \\
-    $c$ & $1.000 \pm 0.000$ & $70.3 \pm 11.5$ & $309.8 \pm 11.2$ \\
-    $t$ & $1.000 \pm 0.000$ & $68.7 \pm 7.0$  & $321.7 \pm 14.4$ \\
+    1  & per-step, $r$        & $0.900 \pm 0.149$ & $64.3 \pm 2.6$ & $0.333 \pm 0.236$ & $63.5 \pm 6.6$ \\
+       & per-step, $c$        & $0.933 \pm 0.091$ & $72.4 \pm 8.4$ & $0.600 \pm 0.253$ & $74.0 \pm 11.2$ \\
+       & per-step, $t$        & $0.967 \pm 0.075$ & $58.6 \pm 2.2$ & $0.500 \pm 0.167$ & $65.5 \pm 5.9$ \\
+       & endpoint, $t$        & $1.000 \pm 0.000$ & $63.8 \pm 3.3$ & $0.533 \pm 0.139$ & $59.3 \pm 8.8$ \\
+    \midrule
+    2  & per-step, $r$        & $0.967 \pm 0.075$ & $65.1 \pm 2.6$ & $0.467 \pm 0.139$ & $63.0 \pm 5.4$ \\
+       & per-step, $c$        & $0.933 \pm 0.091$ & $97.2 \pm 4.8$ & $0.800 \pm 0.139$ & $97.3 \pm 9.7$ \\
+       & per-step, $t$        & $0.967 \pm 0.075$ & $59.4 \pm 2.0$ & $0.467 \pm 0.075$ & $58.8 \pm 2.7$ \\
+       & endpoint, $t$        & $0.933 \pm 0.091$ & $64.8 \pm 1.3$ & $0.567 \pm 0.190$ & $59.4 \pm 5.2$ \\
+    \midrule
+    5  & per-step, $r$        & $0.867 \pm 0.139$ & $69.2 \pm 4.8$ & $0.433 \pm 0.149$ & $69.1 \pm 5.4$ \\
+       & per-step, $c$        & $0.833 \pm 0.167$ & $61.5 \pm 3.6$ & $0.633 \pm 0.217$ & $64.3 \pm 6.1$ \\
+       & per-step, $t$        & $0.933 \pm 0.149$ & $60.6 \pm 2.4$ & $0.500 \pm 0.264$ & $60.4 \pm 4.8$ \\
+       & endpoint, $t$        & $0.933 \pm 0.149$ & $66.6 \pm 1.5$ & $0.533 \pm 0.139$ & $67.6 \pm 7.1$ \\
+    \midrule
+    10 & per-step, $r$        & $0.833 \pm 0.236$ & $73.9 \pm 2.9$ & $0.467 \pm 0.321$ & $72.9 \pm 4.1$ \\
+       & per-step, $c$        & $0.833 \pm 0.118$ & $59.4 \pm 1.6$ & $0.533 \pm 0.217$ & $60.2 \pm 4.7$ \\
+       & per-step, $t$        & $0.933 \pm 0.149$ & $63.6 \pm 1.9$ & $0.400 \pm 0.149$ & $61.4 \pm 6.3$ \\
+       & endpoint, $t$        & $0.833 \pm 0.167$ & $66.4 \pm 2.7$ & $0.633 \pm 0.183$ & $63.5 \pm 2.3$ \\
     \bottomrule
   \end{tabularx}
 \end{table}
-\dataref{analysis\_results\_checkpoint/19-09-UAV-Pillars-Exclude/
-batch\_avoiding\_combined\_20260919\_132703; DA\_in\_Paper/analysis/
-avoiding\_rules\_by\_protocol.py}
+
+\dataref{temp/1108/Revised\_2/batch\_avoiding\_combined\_20260811\_221322, analytic average-velocity
+matching on the temporal U-Net (\texttt{H8\_K*\_Meuler\_T0.5\_A0.5\_B1\_\ldots MeanFlowODE}, \texttt{bbunet});
+per-step rows \texttt{dpcc-\{r,c,t\}}, endpoint rows \texttt{hardflow\_new-t}; seed-mean over the
+geometries, then mean and sample standard deviation over the five seeds, the convention of
+\autoref{sec:setup:metrics:spread}. Recomputed 2026-09-21; the per-step cells reproduce the
+corresponding rows of \autoref{tab:avoiding-dpcc-protocol} exactly.}
+
+\section{D3IL-avoiding at Every Evaluated Budget}\label{app:avoiding-budgets}
+
+\autoref{tab:avoiding-raw-models} and \autoref{tab:avoiding-dpcc-protocol} print the budgets the models
+are operated at and the two at which every model is measured. Two models were also evaluated under the
+full protocol at $\nfe=5$ and $10$ --- analytic average-velocity matching at both, the diffusion baseline
+at ten --- and those rows are here, on the same five seeds $\times$ three geometries $\times$ two episodes
+and reduced the same way. They are kept out of the chapter because a table in which one model has four
+budgets and another two invites a comparison across rows that share no budget. Instantaneous-velocity
+matching at $\nfe=5$ exists only on one seed under the protocol and only in the twenty-episode campaign
+on five, so it has no row here either.
+
+\begin{table}[htpb]
+  \caption[D3IL-avoiding without projection, every budget]{\autoref{tab:avoiding-raw-models} at every
+  budget evaluated under the protocol: the cells of \autoref{tab:app:avoiding-dpcc-full} at the same protocol --- five training seeds $\times$
+  two episodes per geometry, averaged per geometry and then over the three; tightened constraints, four
+  candidate plans, temporal U-Net of $4.0$\,M parameters. Success is reaching the goal, S\&C is reaching
+  it while satisfying the constraints at every step, and violating steps are counted per episode
+  (\autoref{sec:setup:metrics:avoiding}); each cell is the mean $\pm$ the standard deviation over the
+  five seeds (\autoref{sec:setup:metrics:spread}). The evaluation records one unprojected arm per cell,
+  so this table has no counterpart of the rule column: two of the three rules are defined on the
+  projection. The diffusion $\nfe=2$ five-seed cell is pending. \baselinemark\ the baseline of record at its own budget.}
+  \label{tab:app:avoiding-raw-full}
+  \centering
+  \footnotesize
+  \begin{tabularx}{\linewidth}{@{}L r rrrrr@{}}
+    \toprule
+    Model & $\nfe$ & Success & S\&C & \shortstack{Violating\\steps} & Steps & ms/step \\
+    \midrule
+    MeanFM    & 1  & $1.000 \pm 0.000$ & $0.033 \pm 0.075$ & $15.5 \pm 2.1$ & $63.4 \pm 5.6$ & $10.3 \pm 0.4$ \\
+    MeanFM    & 2  & $1.000 \pm 0.000$ & $0.033 \pm 0.075$ & $15.5 \pm 0.4$ & $62.7 \pm 1.8$ & $19.3 \pm 0.2$ \\
+    MeanFM    & 5  & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $16.4 \pm 2.0$ & $64.2 \pm 3.0$ & $46.3 \pm 0.4$ \\
+    MeanFM    & 10 & $1.000 \pm 0.000$ & $0.167 \pm 0.167$ & $14.2 \pm 2.7$ & $63.8 \pm 1.2$ & $91.7 \pm 0.6$ \\
+    \midrule
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & $1.000 \pm 0.000$ & $0.033 \pm 0.075$ & $15.6 \pm 0.7$ & $60.5 \pm 1.5$ & $9.8 \pm 0.2$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2 & $1.000 \pm 0.000$ & $0.033 \pm 0.075$ & $15.7 \pm 0.7$ & $62.9 \pm 1.2$ & $18.7 \pm 0.3$ \\
+    \midrule
+    FM        & 1  & $1.000 \pm 0.000$ & $0.100 \pm 0.091$ & $16.5 \pm 3.4$ & $68.6 \pm 5.9$ & $9.0 \pm 0.0$ \\
+    FM        & 2  & $1.000 \pm 0.000$ & $0.100 \pm 0.091$ & $15.6 \pm 2.6$ & $61.7 \pm 2.2$ & $17.8 \pm 0.0$ \\
+    FM        & 20 & $1.000 \pm 0.000$ & $0.133 \pm 0.075$ & $16.5 \pm 2.1$ & $70.2 \pm 6.3$ & $183.5 \pm 0.7$ \\
+    \midrule
+    Diffusion & 1  & $0.933 \pm 0.149$ & $0.000 \pm 0.000$ & $19.0 \pm 2.9$ & $68.3 \pm 16.1$ & $9.4 \pm 0.1$ \\
+    Diffusion & 2  & \multicolumn{5}{l}{\emph{pending: five-seed evaluation}} \\
+    Diffusion & 10 & $0.967 \pm 0.075$ & $0.067 \pm 0.149$ & $19.1 \pm 2.7$ & $72.8 \pm 8.1$ & $88.8 \pm 0.3$ \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$0.967 \pm 0.075$} & \mainconfig{$0.100 \pm 0.091$} & \mainconfig{$17.9 \pm 2.5$} & \mainconfig{$67.8 \pm 16.8$} & \mainconfig{$179.3 \pm 1.2$} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\begin{table}[htpb]
+  \caption[D3IL-avoiding at the protocol of DPCC, every budget]{\autoref{tab:avoiding-dpcc-protocol} at
+  every budget evaluated under the protocol of \ac{DPCC}:
+  five training seeds $\times$ two episodes per geometry, averaged per geometry and then over the three;
+  tightened constraints, four candidate plans, temporal U-Net of $4.0$\,M parameters. Rules: $r$ random,
+  $c$ cumulative projection cost, $t$ temporal consistency. Columns as in
+  \autoref{sec:setup:metrics:avoiding}, each mean $\pm$ the standard deviation over the seeds
+  (\autoref{sec:setup:metrics:spread}). The $\nfe=20$ FM row and native diffusion baseline are retained;
+  diffusion at $\nfe=2$ is pending across five seeds. \selectedmark\ the
+  operating point, \baselinemark\ the baseline of record, bold the cells that clear it on all three
+  columns.}
+  \label{tab:app:avoiding-dpcc-full}
+  \centering
+  \footnotesize
+  \begin{tabularx}{\linewidth}{@{}L r c rrr@{}}
+    \toprule
+    Model & $\nfe$ & Rule & S\&C & Steps & ms/step \\
+    \midrule
+    MeanFM     & 1 & $r$ & $0.900 \pm 0.149$ & $64.3 \pm 2.6$ & $19.2 \pm 1.6$ \\
+                     &    & $c$ & $0.933 \pm 0.091$ & $72.4 \pm 8.4$ & $18.3 \pm 0.5$ \\
+                     &    & \mainconfig{\selectedmark\ $t$} & \mainconfig{$0.967 \pm 0.075$} & \mainconfig{$58.6 \pm 2.2$} & \mainconfig{$18.3 \pm 0.2$} \\
+    MeanFM     & 2 & $r$ & $0.967 \pm 0.075$ & $65.1 \pm 2.6$ & $27.6 \pm 0.5$ \\
+                     &    & $c$ & $0.933 \pm 0.091$ & $97.2 \pm 4.8$ & $27.1 \pm 0.2$ \\
+                     &    & $t$ & $0.967 \pm 0.075$ & $59.4 \pm 2.0$ & $27.7 \pm 0.5$ \\
+    MeanFM     & 5 & $r$ & $0.867 \pm 0.139$ & $69.2 \pm 4.8$ & $216.6 \pm 16.4$ \\
+                     &    & $c$ & $0.833 \pm 0.167$ & $61.5 \pm 3.6$ & $209.8 \pm 20.9$ \\
+                     &    & $t$ & $0.933 \pm 0.149$ & $60.6 \pm 2.4$ & $223.8 \pm 14.5$ \\
+    MeanFM     & 10 & $r$ & $0.833 \pm 0.236$ & $73.9 \pm 2.9$ & $391.7 \pm 37.6$ \\
+                     &    & $c$ & $0.833 \pm 0.118$ & $59.4 \pm 1.6$ & $373.2 \pm 32.0$ \\
+                     &    & $t$ & $0.933 \pm 0.149$ & $63.6 \pm 1.9$ & $402.3 \pm 29.0$ \\
+    \midrule
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & $r$ & $1.000 \pm 0.000$ & $61.5 \pm 0.8$ & $17.9 \pm 0.2$ \\
+                     &    & $c$ & $0.967 \pm 0.075$ & $68.4 \pm 2.3$ & $18.0 \pm 0.6$ \\
+                     &    & \textbf{$t$} & \textbf{$1.000 \pm 0.000$} & \textbf{$59.2 \pm 1.2$} & \textbf{$18.1 \pm 0.2$} \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2 & $r$ & $0.900 \pm 0.149$ & $63.3 \pm 1.3$ & $27.0 \pm 0.3$ \\
+                     &    & $c$ & $0.933 \pm 0.091$ & $89.7 \pm 8.2$ & $26.6 \pm 0.2$ \\
+                     &    & $t$ & $1.000 \pm 0.000$ & $60.1 \pm 3.4$ & $27.0 \pm 0.2$ \\
+    \midrule
+    FM         & 1 & $r$ & $1.000 \pm 0.000$ & $67.9 \pm 1.2$ & $17.4 \pm 0.1$ \\
+                     &    & \textbf{$c$} & \textbf{$1.000 \pm 0.000$} & \textbf{$67.0 \pm 0.8$} & \textbf{$17.3 \pm 0.1$} \\
+                     &    & $t$ & $1.000 \pm 0.000$ & $68.2 \pm 1.7$ & $17.7 \pm 0.6$ \\
+    FM         & 2 & $r$ & $1.000 \pm 0.000$ & $65.7 \pm 0.8$ & $26.2 \pm 0.9$ \\
+                     &    & $c$ & $1.000 \pm 0.000$ & $67.0 \pm 3.8$ & $25.5 \pm 0.2$ \\
+                     &    & $t$ & $1.000 \pm 0.000$ & $63.8 \pm 1.9$ & $25.9 \pm 0.2$ \\
+    FM         & 20 & $r$ & $0.867 \pm 0.075$ & $73.3 \pm 7.9$ & $852.6 \pm 624.9$ \\
+                     &    & $c$ & $1.000 \pm 0.000$ & $63.2 \pm 1.5$ & $476.7 \pm 26.0$ \\
+                     &    & $t$ & $1.000 \pm 0.000$ & $63.7 \pm 2.2$ & $486.5 \pm 41.4$ \\
+    \midrule
+    Diffusion  & 1 & $r$ & $0.600 \pm 0.303$ & $67.7 \pm 10.1$ & $33.9 \pm 8.6$ \\
+                     &    & $c$ & $0.667 \pm 0.391$ & $72.1 \pm 17.6$ & $33.3 \pm 14.5$ \\
+                     &    & $t$ & $0.600 \pm 0.190$ & $73.5 \pm 14.1$ & $33.3 \pm 13.2$ \\
+    Diffusion  & 2 & \multicolumn{4}{l}{\emph{pending: five-seed evaluation}} \\
+    Diffusion  & 10 & $r$ & $0.900 \pm 0.091$ & $75.1 \pm 7.3$ & $327.2 \pm 35.4$ \\
+                     &    & $c$ & $1.000 \pm 0.000$ & $70.3 \pm 11.5$ & $309.8 \pm 11.2$ \\
+                     &    & \textbf{$t$} & \textbf{$1.000 \pm 0.000$} & \textbf{$68.7 \pm 7.0$} & \textbf{$321.7 \pm 14.4$} \\
+    Diffusion  & 20 & $r$ & $0.967 \pm 0.075$ & $74.7 \pm 5.8$ & $573.2 \pm 22.2$ \\
+                     &    & \mainconfig{\baselinemark\ $c$} & \mainconfig{$1.000 \pm 0.000$} & \mainconfig{$70.1 \pm 8.2$} & \mainconfig{$553.4 \pm 28.0$} \\
+                     &    & $t$ & $1.000 \pm 0.000$ & $76.1 \pm 15.7$ & $563.0 \pm 25.4$ \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\dataref{analysis\_results\_checkpoint/19-09-UAV-Pillars-Exclude/batch\_avoiding\_combined\_20260919\_132703;
+the $\nfe=5$ and $10$ rows recounted at v3.60 (census in
+\texttt{data\_status/PENDING\_20260922\_all\_lacking\_runs.md} \S13); every other row is the chapter's.}
 
 \section{Twenty-Episode Evaluation on D3IL-avoiding}\label{app:avoiding-twenty-episode}
 
 The extended evaluation uses twenty episodes per training seed and geometry, one hundred per geometry.
 Coverage at $\nfe=20$ is listed in \autoref{tab:coverage-k20}.
+
+\paragraph{The baseline reproduction at this protocol.}
+\autoref{tab:target} reproduces \ac{DPCC} at the protocol \ac{DPCC} itself reports on, and that is the
+reproduction the thesis uses. The same configuration was also run at twenty episodes per seed.
+\autoref{tab:target-twenty} keeps that result here rather than beside the published one, because it is not
+a like-for-like reproduction: it finished the \emph{both-hard} geometry for one training seed rather than
+five (\autoref{tab:coverage-k20}), so the three geometries it averages are not equally covered. It is
+recorded and it is not relied on --- no claim in \autoref{ch:results} or
+\autoref{sec:setup:baselines:avoiding} rests on it.
+
+\begin{table}[htpb]
+  \caption[The DPCC baseline at twenty episodes per seed]{The \ac{DPCC} baseline at twenty episodes per
+  seed, beside the published result and the reproduction at the protocol of \ac{DPCC} that
+  \autoref{tab:target} reports. Metrics as in \autoref{sec:setup:metrics:avoiding}; S\&C denotes success
+  with constraint satisfaction, time is seconds per control step, and the spread on the reproduced rows is
+  the standard deviation over episodes, pooled over the training seeds within a geometry and then averaged
+  over the geometries. $^{\dagger}$ \textbf{The twenty-episode row does not rest on the coverage the other
+  two do} and is printed for the record.}
+  \label{tab:target-twenty}
+  \centering
+  \small
+  \begin{tabularx}{\linewidth}{@{}L c c c c c@{}}
+    \toprule
+    Source and protocol & Steps & Success & S\&C & \shortstack{Violating\\steps} & s/step \\
+    \midrule
+    Published \parencite[Table~1]{romer2025diffusion}
+      & $69.0\pm12.9$ & $1.00$ & $0.98$ & $0.0\pm0.3$ & --- \\
+    Reproduced, protocol of \ac{DPCC}
+      & $70.1\pm9.0$ & $1.000$ & $1.000$ & $0.0\pm0.0$ & $0.553$ \\
+    Reproduced, 20 episodes per seed$^{\dagger}$
+      & $69.0\pm12.0$ & $0.997$ & $0.983$ & $0.03\pm0.17$ & $0.563$ \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\dataref{Twenty-episode row: temp/2508/batch\_avoiding\_combined\_20260825\_143212. Protocol-of-\ac{DPCC}
+row: analysis\_results\_checkpoint/19-09-UAV-Pillars-Exclude/batch\_avoiding\_combined\_20260919\_132703.
+Both: diffusion $\nfe=20$, cumulative projection cost, tightened; mean per geometry, then across the three
+geometries.}
 
 What the larger sample buys is resolution. At ten episodes per geometry a success rate resolves to
 $0.1$, so a rate of $1.00$ there is not evidence of a rate of $1.00$: the baseline's perfect rates fall
@@ -190,7 +369,7 @@ analysis\_results\_checkpoint/19-09-UAV-Pillars-Exclude/batch\_avoiding\_combine
 DA\_in\_Paper/analysis/avoiding\_unprojected\_and\_budget20.py, block C}
 \guard{The baseline row of \autoref{tab:state-headline} is therefore five seeds on two geometries plus
 one seed on the third. The gap is recorded in
-\texttt{data\_status/PENDING\_20260920\_all\_lacking\_runs.md} and is not closed here: the author has
+\texttt{data\_status/PENDING\_20260922\_all\_lacking\_runs.md} and is not closed here: the author has
 ruled the re-run out on cost.}
 
 \paragraph{Matched step budgets.}
@@ -251,6 +430,161 @@ cells that are not the same.}
 
 \FloatBarrier
 
+
+\section{D3IL-aligning at Every Evaluated Budget}\label{app:aligning-budgets}
+
+\autoref{tab:va-models} prints the two budgets, $\nfe=20$ and $100$, at which all four models have an
+unprojected cell. The cells at $\nfe=2$ and $10$ exist for one or two models only and are here; the
+\emph{not evaluated} rows are the three model--budget cells R16 of the run ledger would fill.
+
+\begin{table}[htpb]
+  \caption[Alignment without projection, every budget]{\autoref{tab:va-models} at every evaluated
+  budget: the generative models on D3IL-aligning, plans executed without projection, untightened constraint set. Final box-to-target
+  distance over the ten contexts, from an initial $0.4530$\,m; in brackets, the share of that distance
+  the box was moved towards its target (\autoref{sec:setup:metrics:aligning}); \emph{unmoved}: contexts
+  in which the box does not move. An explicit ``not evaluated'' row marks a missing model--budget cell.
+  Mean and time are mean $\pm$ the sample standard deviation over the
+  contexts (\autoref{sec:setup:metrics:spread}). Raw cells evaluated over a thirty-context superset are
+  restricted to the same ten before they are reduced. Temporal U-Net of $4.0$\,M parameters, FiLM
+  conditioning, training seed 6.
+  \selectedmark\ the selected configuration.}
+  \label{tab:app:va-models-full}
+  \centering
+  \footnotesize
+  \begin{tabularx}{\linewidth}{@{}L r rrr r@{}}
+    \toprule
+    Model & $\nfe$ & Median [m] & Mean [m] & Unmoved & ms/step \\
+    \midrule
+    \mainconfig{\selectedmark\ MeanFM} & \mainconfig{20} & \mainconfig{0.0741 (84\,\%)} & \mainconfig{$0.093 \pm 0.073$} & \mainconfig{0/10} & \mainconfig{$190.5 \pm 2.0$} \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 20 & 0.3897 (14\,\%) & $0.325 \pm 0.224$ & 2/10  & $189.1 \pm 5.6$ \\
+    FM         & 20 & 0.4085 (10\,\%) & $0.327 \pm 0.160$ & 4/10  & $295.8 \pm 1.9$ \\ % order: MeanFM, CI-MeanFM, FM, Diffusion
+    Diffusion  & 20 & 0.4619 ($-2$\,\%) & $0.468 \pm 0.399$ & 5/10 & $298.3 \pm 2.0$ \\
+    \midrule
+    MeanFM     & 2  & 0.2779 (39\,\%) & $0.368 \pm 0.301$ & 0/10  & $28.4 \pm 2.0$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2  & 0.3738 (17\,\%) & $0.357 \pm 0.201$ & 2/10  & $28.7 \pm 5.7$ \\
+    \midrule
+    MeanFM     & 10 & 0.1194 (74\,\%) & $0.173 \pm 0.153$ & 1/10 & $99.2 \pm 1.9$ \\
+    CI-MeanFM  & 10 & \multicolumn{4}{l}{\emph{not evaluated}} \\
+    FM         & 10 & \multicolumn{4}{l}{\emph{not evaluated}} \\
+    Diffusion  & 10 & \multicolumn{4}{l}{\emph{not evaluated}} \\
+    \midrule
+    MeanFM     & 100 & 0.0673 (85\,\%) & $0.136 \pm 0.148$ & 0/10 & $892.4 \pm 1.8$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 100 & 0.1791 (60\,\%) & $0.327 \pm 0.323$ & 0/10 & $902.2 \pm 1.5$ \\
+    FM         & 100 & 0.4247 (6\,\%) & $0.352 \pm 0.180$ & 0/10 & $1425.0 \pm 1.8$ \\
+    Diffusion  & 100 & 0.1849 (59\,\%) & $0.236 \pm 0.188$ & 0/10 & $1521.9 \pm 2.9$ \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\dataref{analysis\_results\_checkpoint/15-09/batch\_va2\_20260915\_100754, recomputed by
+DA\_in\_Paper/analysis/va\_results.py, every row restricted to the ten shared contexts; the $\nfe=20$ and
+$100$ rows are the chapter's.}
+
+\section{UAV-s-curve at the Budgets on Disk}\label{app:uav-scurve-budgets}
+
+Before the matched grids of \autoref{sec:res:uav:scurve} were laid out, the scene was evaluated with
+each model at the budget it is strongest at --- instantaneous-velocity matching at $\nfe=20$, analytic
+average-velocity matching at $10$, the consistency-interpolated model at $5$ --- and, without projection,
+at one further budget per model. No two of those budgets coincide, so every row below is a per-model
+record and none is read against another. They are kept because they carry the abort mechanism and the
+projection cost the chapter quotes, and because the consistency-interpolated $\nfe=5$ block is the one
+cell the matched projection grid already has.
+
+\begin{table}[htpb]
+  \caption[UAV-s-curve: unprojected cells outside the matched grid]{UAV-s-curve, plans executed without
+  projection at the two budgets that are not on the ladder of \autoref{tab:uav-scurve}; columns as
+  there, ten flights per row, training seed 6.}
+  \label{tab:app:uav-scurve-unprojected-extra}
+  \centering
+  \small
+  \begin{tabularx}{\linewidth}{@{}L r r r r r r@{}}
+    \toprule
+    Model & $\nfe$ & Passed & Distance [m] & Safe & Aborted & ms/step \\
+    \midrule
+    MeanFM & 10 & 0/10 & 2.809 & 0/10 & 10/10 & 88.8 \\
+    FM     & 20 & 6/10 & 1.193 & 6/10 & 4/10  & 170.4 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{batch\_uav\_20260919\_111701, tag \texttt{u18sc}, variant \texttt{diffuser}. The earlier
+\texttt{u7hg} campaign also holds an unprojected MeanFM $\nfe=10$ cell, of thirteen flights with two
+passed; the switched-wall re-run flew the cell again and the chapter uses the re-run throughout, as
+\autoref{tab:uav-controller} does.}
+
+\begin{table}[htpb]
+  \caption[UAV-s-curve: the re-run with endpoint projection]{UAV-s-curve after the switched-wall
+  correction, \textbf{each model at a different budget} --- the one it is strongest at --- six projection
+  variants per model, ten flights per variant, training seed 6. \textbf{The three rows are therefore not a
+  model comparison} and are not read as one: every cell is $0.00$ on both outcome columns, and what the
+  table reports is the abort mode they share. \emph{Aborted}: flights ended early by the divergence guard because the
+  vehicle inverted. The last column counts the same aborts on the unprojected plan alone, where no
+  projection has touched the trajectory.}
+  \label{tab:app:uav-scurve-aborts}
+  \centering
+  \small
+  \begin{tabularx}{\linewidth}{@{}L r rr r r@{}}
+    \toprule
+    Model & $\nfe$ & S\&C & \shortstack{Collision-\\free} & Aborted & \shortstack{Aborted,\\unprojected} \\
+    \midrule
+    FM        & 20 & 0.00 & 0.00 & 34/60 & 4/10 \\
+    MeanFM    & 10 & 0.00 & 0.00 & 55/60 & 10/10 \\
+    CI-MeanFM & 5  & 0.00 & 0.00 & 52/60 & 8/10 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{analysis\_results\_checkpoint/19-09-UAV-Pillars-Exclude/batch\_uav\_20260919\_111701, tag u18sc;
+uav\_results.py, s-curve block; DA\_20260919 \S3. The guard fires on
+\texttt{body z-axis} $\cdot$ \texttt{world z} $<0$ and predates this evaluation, so the earlier s-curve
+numbers were produced under it too.}
+
+\begin{table}[htpb]
+  \caption[UAV-s-curve: the projection variants behind the zeros]{UAV-s-curve, the six projection
+  variants of \autoref{tab:app:uav-scurve-aborts} printed individually, ten flights each, training seed 6.
+  Success with constraint satisfaction is $0.00$ in every cell and is omitted. \emph{None}: flown
+  unprojected. \emph{Endpoint, single}: the single-candidate form, without a selection rule.
+  \emph{Aborted}: ended early by the divergence guard. \emph{Passed}: crossed the finish line, within the
+  constraints or not. Per-step projection has one rule here, for the reason given above.}
+  \label{tab:app:uav-scurve-variants}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabularx}{\linewidth}{@{}L r L rr r@{}}
+    \toprule
+    Model & $\nfe$ & Projection & Aborted & Passed & ms/step \\
+    \midrule
+    FM        & 20 & none              & 4/10  & 6/10 & 170.4 \\
+              &    & per-step, $t$     & 10/10 & 0/10 & 3609.9 \\
+              &    & endpoint, single  & 5/10  & 5/10 & 554.8 \\
+              &    & endpoint, $r$     & 6/10  & 4/10 & 1811.2 \\
+              &    & endpoint, $c$     & 5/10  & 4/10 & 2149.1 \\
+              &    & endpoint, $t$     & 4/10  & 6/10 & 1938.9 \\
+    \midrule
+    MeanFM    & 10 & none              & 10/10 & 0/10 & 88.8 \\
+              &    & per-step, $t$     & 7/10  & 2/10 & 2591.2 \\
+              &    & endpoint, single  & 9/10  & 0/10 & 278.2 \\
+              &    & endpoint, $r$     & 9/10  & 0/10 & 706.4 \\
+              &    & endpoint, $c$     & 10/10 & 0/10 & 525.6 \\
+              &    & endpoint, $t$     & 10/10 & 0/10 & 653.7 \\
+    \midrule
+    CI-MeanFM & 5  & none              & 8/10  & 2/10 & 45.0 \\
+              &    & per-step, $t$     & 7/10  & 2/10 & 1360.9 \\
+              &    & endpoint, single  & 9/10  & 1/10 & 116.7 \\
+              &    & endpoint, $r$     & 9/10  & 0/10 & 264.5 \\
+              &    & endpoint, $c$     & 10/10 & 0/10 & 316.5 \\
+              &    & endpoint, $t$     & 9/10  & 0/10 & 392.3 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{analysis\_results\_checkpoint/19-09-UAV-Pillars-Exclude/batch\_uav\_20260919\_111701,
+\texttt{per\_rollout\_detail}, run tags \texttt{u18sc} and \texttt{EPlatest\_u18sc}; cells
+\texttt{s\_curve|fm|K20}, \texttt{s\_curve|mf|K10|bbunet|dp0.5} and \texttt{s\_curve|af|K5|bbunet};
+variants \texttt{diffuser}, \texttt{dpcc-t} and \texttt{hardflow\_sls\{,-r,-c,-t\}}}
+\guard{Analytic average-velocity matching is the one model whose aborts fall under projection, $10/10$
+to $7/10$. It is also the model that aborts on every unprojected flight, so the projected number is not
+evidence that the projection helps: it is a count over flights that were already being ended by the
+guard. Nothing in these tables separates the projection methods on the task, because no cell solves it,
+and nothing in them ranks the models, because no two rows share a budget.}
+
 \chapter{Reproducibility}\label{app:repro}
 
 \section*{Quadrotor dimensions}
@@ -260,7 +594,7 @@ cells that are not the same.}
   \includegraphics[width=0.75\linewidth]{fig_platform_x2_dimensions}
   \caption[X2 dimensions and projection footprint]{The Skydio X2 rotor disks (radius $0.13$\,m), body
   and $0.54\times0.62$\,m collision footprint (dotted), drawn to scale. The dashed circle is the
-  $0.31$\,m radius used to inflate the projection constraints.}
+  $0.31$\,m rotor reach used to inflate the projection constraints.}
   \label{fig:platform-x2-dimensions}
 \end{figure}
 \FloatBarrier

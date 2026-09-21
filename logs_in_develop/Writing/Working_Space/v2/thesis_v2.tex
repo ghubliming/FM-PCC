@@ -13,8 +13,9 @@
 %    Ch 1  introduction and the six contributions (the guideline)
 %    Ch 2  the concepts behind each contribution -- no equations
 %    Ch 3  the papers per aspect -- no equations
-%    Ch 4  all the mathematics, grouped: formulation, overview, generative models,
-%          plant dynamics, constraint projection, low-level control, environments
+%    Ch 4  all the mathematics, grouped: formulation, overview, plant dynamics and
+%          control, generative models, constraint projection, environments
+%          (reordered in v2.24; "Low-Level Control" is no longer a section of its own)
 %  Section numbers quoted below this line predate v2.14; the labels are unchanged.
 %
 %  WHAT v2 ADDS OVER v1
@@ -54,6 +55,13 @@
 %
 %  STRUCTURE DELTA vs. v1 -- see README.md in this folder.
 %
+%  CROSS-DRAFT STATE  (update this line in every pass that reads the inbox)
+%    This file is current against  v3.60  (2026-09-21)  and  v4: not started.
+%    Every cross-draft note addressed to v2 up to that version has been applied
+%    or answered; the ledger is ../cross_draft/INBOX.md, and the machine-readable
+%    copy is CROSS_STATE.json in this folder. v2 owns Ch 1-4, the abstract, the
+%    preamble, the acronyms and bibliography.bib -- nothing under v3/ or v4/.
+%
 %  BUILD: latexmk -pdf thesis_v2.tex
 %     or: pdflatex thesis_v2.tex ; biber thesis_v2 ; pdflatex x2
 % =============================================================================
@@ -92,6 +100,7 @@
   \usepackage[autostyle]{csquotes}
   \usepackage{amsmath,amssymb,amsthm}
   \usepackage{graphicx}
+  \graphicspath{{figures/}}
   \usepackage{booktabs}
   \usepackage{xcolor}
   \usepackage[printonlyused]{acronym}
@@ -224,8 +233,8 @@ Three objectives are studied: instantaneous-velocity matching, analytic average-
 consistency-interpolated average-velocity matching, whose target mixes the instantaneous velocity with
 the network's own prediction; the integration budget is selected at deployment. On the
 obstacle-avoidance benchmark of DPCC, the aim is to preserve success and
-constraint satisfaction while reducing network evaluations, wall-clock time and the control steps
-required to reach the goal. Constraint enforcement forms a second contribution. DPCC projects the
+constraint satisfaction while reducing network evaluations, the time to compute one action and the
+control steps required to reach the goal. Constraint enforcement forms a second contribution. DPCC projects the
 current iterate at every sampling step; endpoint projection predicts and projects the final trajectory,
 then guides later sampling steps towards it. The analysis identifies the step budget at which this
 guidance becomes active. After evaluation on the DPCC benchmark, the controller is extended to two
@@ -360,8 +369,10 @@ This thesis makes six contributions.
   \item \textbf{A quadrotor benchmark.} The controller is carried to an underactuated, open-loop
     unstable system: the manipulator with inverse kinematics is replaced by a quadrotor commanded
     through its rotor thrusts, and the stack is tested from state observations in three environments
-    of increasing difficulty. Apart from the vehicle model, everything in this benchmark was built for
-    this thesis.
+    of increasing difficulty. It is where the constraint mechanism is asked to hold on a plant that
+    cannot stand still: the manipulator absorbs a bad plan by stopping, the quadrotor flies it out
+    (\autoref{sec:bg:quadrotor}). Apart from the vehicle model, everything in this benchmark was
+    built for this thesis.
     \begin{enumerate}
       \item The quadrotor model is the Skydio X2 from MuJoCo Menagerie
         \parencite{todorov2012mujoco,zakka2022menagerie}.
@@ -516,7 +527,16 @@ A manipulator in position control is fully actuated and holds its configuration 
 planned sequence of end-effector positions becomes joint commands through \ac{IK}. A quadrotor is
 different. Its four rotors produce a thrust along one body axis and three moments, so it controls four
 of its six degrees of freedom directly and must tilt in order to translate, and hover is an unstable
-equilibrium that requires continuous feedback. Such an underactuated, open-loop unstable vehicle is
+equilibrium that requires continuous feedback.
+
+What separates the two platforms for a controller that plans is what a bad plan costs. A manipulator
+can stop. Holding the last setpoint costs it nothing, the arm stays where it is, and the clearance it
+had it keeps, so a plan that is wrong is absorbed between the planner and the joints. A quadrotor has
+no such state, because staying in place is itself a flight. An error in the commanded position is not
+held but flown out, over metres of travel, and an attitude that is not recovered ends the flight on
+the floor. The planner is the same on both; the margin for error is not.
+
+Such an underactuated, open-loop unstable vehicle is
 controlled in cascade: an outer loop turns a position error into a desired thrust vector, which fixes a
 desired attitude, and an inner loop tracks that attitude. Geometric controllers formulate the attitude
 error directly on the rotation group and thereby avoid the singularities of local coordinates
@@ -724,14 +744,18 @@ against it.
 
 \subsection{The Plan Variable}
 
-At control step $t$ the model proposes a horizon of $H+1$ state--action pairs,
+At control step $t$ the model proposes a horizon of $H$ state--action pairs,
 \begin{equation}\label{eq:method:plan}
   \vect{x}
-  = \left(\vect{s}_{t:t+H|t},\,\vect{a}_{t:t+H|t}\right) \in \R^{n},
-  \qquad n = (H+1)\,d,
+  = \left(\vect{s}_{t:t+H-1|t},\,\vect{a}_{t:t+H-1|t}\right) \in \R^{n},
+  \qquad n = H\,d,
 \end{equation}
 where $\vect{s}_{t+i|t}$ denotes the prediction for time $t+i$ made at time $t$, and $d$ is the
-per-step transition width. The generative model is conditional on a context
+per-step transition width. Every environment in this thesis plans $H = 8$ steps, so a plan is a
+block of $8 \times d$ numbers, which the network reads as a length-$8$ signal of $d$ channels
+(\autoref{sec:method:backbone}) and the projection as $8$ horizon blocks
+(\autoref{sec:method:proj}); $d$ is $6$, $9$ and $12$ in the three environments
+(\autoref{tab:embodiments}). The generative model is conditional on a context
 $\vect{c} = (\vect{s}_{t},g)$, imposed by inpainting: the entries of $\vect{x}$ corresponding to
 the current observation are overwritten with their known values after every sampler step, and
 the same entries are zeroed in every training target so that no gradient is spent on them.
@@ -774,7 +798,7 @@ $\matr{J}\sidx{b}$ is the drone's inertia tensor; the two never appear in the sa
     Symbol & Meaning & Range / type \\
     \midrule
     $t$ & control timestep (physical time) & $\mathbb{N}$ \\
-    $H$ & planning horizon; a plan holds $H+1$ steps & $\mathbb{N}$ \\
+    $H$ & planning horizon: the number of steps in a plan; $H=8$ throughout & $\mathbb{N}$ \\
     $\vect{s}_{t},\vect{a}_{t}$ & state, action & $\mathcal{S}$, $\mathcal{A}$ \\
     $\vect{s}_{t+i|t}$ & prediction for $t+i$ made at $t$ & \\
     $\vect{x}$ & the plan, flattened & $\R^{n}$ \\
@@ -868,7 +892,7 @@ environment in this thesis.
     reasoning are carried in \texttt{config/uav\_projection.yaml:125--127} and
     \texttt{config/visual\_aligning\_eval.yaml}.}
   \item \textbf{Anchoring both the commanded and the measured channel is what couples the plan to
-    the plant.} If only the measured position were constrained, the projector could return a plan
+    the plant.} If only the measured position were constrained, the projection could return a plan
     whose commanded channel is unreachable; if only the commanded one were, the plan would be
     admissible in a space the robot never occupies. \autoref{sec:method:deployment} shows the same
     two-channel structure in all three environments, and \autoref{sec:method:proj} gives the row form.
@@ -887,7 +911,7 @@ and no mismatch ball, because the constraint is imposed on the true kinematic ch
 
 The two designs sit at opposite ends of one trade. Exact kinematics inside the program give
 feasibility on the real chain, and tie the program to one robot and the plan to that robot's joints.
-The surrogate gives an end-effector plan and a projector that transfer unchanged from a planar arm to
+The surrogate gives an end-effector plan and a projection that transfer unchanged from a planar arm to
 a spatial one to a quadrotor, with feasibility that holds for the model and not for the plant. This
 thesis takes the second end: one projection method, held fixed across two embodiments, is what RQ3 is about.
 $\gamma$ is where the cost is booked.
@@ -1188,9 +1212,8 @@ and re-sampled, which is the warm-start of
 
 \emph{One deliberate departure.} Contacts are disabled in the planner's copy of the model. The
 tracker therefore plans against the vehicle's free-flight dynamics only, and obstacle avoidance
-remains entirely the projector's job. This is not a shortcut: it keeps the constraint mechanism a
-single identifiable component, so that swapping the tracker cannot silently change how constraints
-are enforced, so the swap stays a controlled comparison.
+remains entirely the projection's job. The constraint mechanism stays one identifiable component,
+and exchanging the tracker leaves the way constraints are enforced unchanged.
 Defaults: $N = 16$, $H\sidx{mjpc} = 0.3\,\textrm{s}$ of physics steps, five improvement iterations
 per call, $\sigma = 0.3$, $w_{v} = 0.1$.
 \srcnote{\texttt{mix\_uav\_test/mjpc\_tracker.py:70--155}, which wraps
@@ -1398,8 +1421,20 @@ Sampling is \eqref{eq:bg:fm:euler}. Relative to the baseline this deletes the sc
 the noise-to-sample conversion \eqref{eq:bg:ddpm:x0} and the posterior mean
 \eqref{eq:bg:ddpm:mean}, and it deletes the noise injected at every reverse step. The
 conditioning mask, the loss reduction and the backbone are untouched.
+
+The transport time is not drawn uniformly, and the three models do not draw it alike.
+Instantaneous-velocity matching puts its mass towards $\ftime = 0$, the noise end of the path,
+where the interpolant carries least of the data and the field is hardest to fit; the two
+average-velocity objectives draw the pair $(\ftime,r)$ with its mass towards $\ftime = 1$, the data
+end, which is the end their interval is anchored against. The distributions and their parameters
+are configuration values and are given with the training protocol in
+\autoref{sec:setup:protocol}.
 \srcnote{\texttt{flow\_matcher\_v3/models/diffusion.py:273--299}
-(\texttt{q\_sample}, \texttt{p\_losses}).}
+(\texttt{q\_sample}, \texttt{p\_losses}) and \texttt{:300--307} / \texttt{mix\_visual\_aligning/models/fm\_diffusion.py:300--307}
+(\texttt{loss}: $\ftime = 1 - \operatorname{Beta}(\alpha,\beta)$, so $\ftime$ is
+$\operatorname{Beta}(\beta,\alpha)$ on this thesis's data-at-one axis);
+\texttt{flow\_matcher\_v3\_meanflow/models/mf\_diffusion.py:349--367}
+(\texttt{t\_schedule: 'logit\_normal'}, the pair drawn through a sigmoid of a normal).}
 
 \subsection{Analytic Average-Velocity Matching}\label{sec:method:meanflow}
 
@@ -1475,7 +1510,8 @@ Three properties of \eqref{eq:bg:mf:loss} are used later in this thesis.
     $\afield\sidx{tgt}$ carries the factor $(\ftime-r)$, so at $r=\ftime$ the target collapses to
     $\vfield_{\ftime}$ and \eqref{eq:bg:mf:loss} becomes \eqref{eq:bg:fm:loss}. Analytic
     average-velocity matching is thus a strict generalisation of instantaneous-velocity matching, and the fraction of training
-    samples drawn with $r \neq \ftime$ is a genuine hyperparameter: at zero it is instantaneous-velocity matching
+    samples drawn with $r \neq \ftime$ is a hyperparameter of the objective: at zero it is
+    instantaneous-velocity matching
     \parencite[Tab.~1a]{geng2025meanflow}. The same collapse applies, for a different reason, to the
     consistency-interpolated objective of \autoref{sec:method:alphaflow}, which is how a set of earlier runs
     was found to be mislabelled.
@@ -1744,7 +1780,7 @@ program
     &= \arg\min_{\tilde{\vect{x}}\in\mathcal{Z}} \;\|\vect{x}-\tilde{\vect{x}}\|_{2}^{2}
     \label{eq:bg:mpc:proj} \\
   \text{s.t.}\quad & \vect{s}_{t'+1|t} = f\!\left(\vect{s}_{t'|t},\vect{a}_{t'|t}\right),
-    \qquad \forall t' \in \{t,\dots,t+H\},
+    \qquad \forall t' \in \{t,\dots,t+H-2\},
     \label{eq:bg:mpc:dyn}
 \end{align}
 with projection cost $c_{\mathcal{Z}_{f}}(\vect{x}) = \|\vect{x}-\proj{\mathcal{Z}_{f}}(\vect{x})\|_{2}^{2}$.
@@ -1797,15 +1833,15 @@ the constraint families are \texttt{SafetyConstraints}, \texttt{DynamicConstrain
 \subsubsection*{The dynamics rows, written out}
 
 The Euler model \eqref{eq:method:dpcc:euler} enters \eqref{eq:method:proj:eq} as one equality row per
-integrated channel per horizon step. Writing $z_{i,d}$ for dimension $d$ of horizon block $i$, a
+integrated channel per consecutive pair of horizon blocks, $H-1$ of them per channel. Writing $z_{i,d}$ for dimension $d$ of horizon block $i$, a
 channel pair $(d\sidx{pos},d\sidx{act})$ contributes
 \begin{equation}\label{eq:method:proj:deriv}
   z_{i,d\sidx{pos}} + t\sidx{s}\,z_{i,d\sidx{act}} - z_{i+1,d\sidx{pos}} = 0,
-  \qquad i = 0,\dots,H-1,
+  \qquad i = 0,\dots,H-2,
 \end{equation}
 plus one row pinning $z_{0,d\sidx{pos}}$ to the measured current state --- the only row whose
 right-hand side changes at every control step. Two details of \eqref{eq:method:proj:deriv} are easy
-to get wrong and are therefore stated. First, the projector operates in \emph{normalised}
+to get wrong and are therefore stated. First, the projection operates in \emph{normalised}
 coordinates, so each row is rescaled by the per-dimension data range: with
 $\Delta_{d} = z_{\textrm{max},d} - z_{\textrm{min},d}$ and
 $\Sigma_{d} = z_{\textrm{max},d} + z_{\textrm{min},d}$, the implemented row is
@@ -1971,9 +2007,32 @@ $\ftime_{\nfe} = 1$, so the output equals $\hat{\vect{x}}_{1}^{\star}\in\mathcal
 constraints \parencite[Prop.~1]{li2025hardflow}. The optimisation runs only in the later sampling
 steps, where the prediction \eqref{eq:method:hf:post} is accurate \parencite{li2025hardflow}.
 \eqref{eq:method:hf:ref}--\eqref{eq:method:hf:pull} are the steps of
-\parencite[Alg.~1]{li2025hardflow}, written in the notation of this thesis; the source shows the
-sequence of corrected predictions on the obstacle-avoidance task used here
-\parencite[Fig.~11]{li2025hardflow}.
+\parencite[Alg.~1]{li2025hardflow}, written in the notation of this thesis.
+\autoref{fig:hardflow-generation} shows the sequence they produce on the obstacle-avoidance task
+used here, as the source draws it. The state the solver holds is disordered until the last steps,
+while the prediction it constrains is a trajectory from the first step on; the constraint is
+imposed where the plan already exists.
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=\linewidth]{fig_hardflow_endpoint_generation}
+  \caption[Endpoint projection over the sampling steps]{Endpoint projection over the sampling
+  steps, on the obstacle-avoidance task. The upper
+  row draws the intermediate sample $\vect{x}_{\ftime}$ the solver actually holds; the lower row
+  draws the predicted final sample $\mathcal{M}_{\ftime}(\vect{x}_{\ftime})$ of
+  \eqref{eq:method:hf:post}, which is the point the program \eqref{eq:method:hf:solve} constrains.
+  Red disks are the obstacles and the shaded wedges the excluded halfspaces; the green band is the
+  goal region, the solid grey curve the path already executed and the dashed grey curve its
+  continuation. Columns are every second step of a ten-step solver, and the policy replans, so the
+  panels are one planning instance of an episode. Figure reproduced, unaltered, from
+  \parencite[Fig.~11]{li2025hardflow} under the Creative Commons Attribution~4.0 licence; the task,
+  the constraint set and the run are the source's.}
+  \label{fig:hardflow-generation}
+\end{figure}
+\srcnote{Image file \texttt{figures/fig\_hardflow\_endpoint\_generation.png}, copied byte-for-byte
+from \texttt{Pic/R2\_visual\_d3il.png} of the arXiv source package
+\texttt{aux\_repo/HardFlow\_Paper\_Files/arXiv-2511.08425v3/} (\texttt{main.tex:1273--1278}, there
+Fig.~11). Licence \texttt{CC BY 4.0}, recorded in the PDF metadata of \texttt{2511.08425v3.pdf}.}
 
 \subsubsection*{The configuration used here}
 
@@ -2109,6 +2168,11 @@ $\rho$ is the quadratic row
   \left\|\vect{p}_{i}-\vect{o}\right\|_{2}^{2} \ge \rho^{2},
 \end{equation}
 which makes the feasible set non-convex.
+
+A third family bounds the action rather than the position. The planned increment is held inside a
+box whose per-channel limits are read off the demonstrations at evaluation time, so the bound
+follows the dataset rather than the scene and is the same family in all three environments. It is
+referred to below as the action bound.
 \srcnote{Halfspace rows: \texttt{utils/constraints\_helpers.py} (\texttt{formulate\_halfspace\_constraints});
 quadratic rows: \texttt{aux\_repo/dpcc/diffuser/sampling/projection.py:410--462}
 (\texttt{ObstacleConstraints}).}
@@ -2123,12 +2187,12 @@ end-effector position, $\vect{s} = (\vect{p}\sidx{des},\vect{p})\in\R^{4}$, the 
 increment $\Delta\vect{p}\in\R^{2}$, and the four dynamics rows are \eqref{eq:method:dpcc:euler}. The
 test-time constraints are halfspaces \eqref{eq:method:env:halfspace} and circular regions
 \eqref{eq:method:env:disk} on the measured position, none of which the demonstrations respect, together
-with a box on the action given by the range of the demonstrated actions
-\parencite[Sec.~6.1]{romer2025diffusion}. The baseline runs in the configuration of \ac{DPCC} --- the
-same plan horizon, number of diffusion steps, action weight and number of candidate plans --- on the
+with the action bound \parencite[Sec.~6.1]{romer2025diffusion}. The baseline runs in the configuration of \ac{DPCC} --- the
+same plan horizon, number of diffusion steps and number of candidate plans --- on the
 same constraint geometries.
 \srcnote{Setup parity checked 2026-09-14: \texttt{aux\_repo/dpcc/config/avoiding-d3il.py:22--27, 69}
-(horizon 8, \texttt{n\_diffusion\_steps} 20, \texttt{action\_weight} 10, plan \texttt{batch\_size} 4)
+(horizon 8, \texttt{n\_diffusion\_steps} 20, plan \texttt{batch\_size} 4; the action loss weight is
+\emph{not} shared and is not claimed here)
 against \texttt{config/avoiding-d3il.py:318--323} and \texttt{\_mpc\_batch} (default 4); the two
 \texttt{projection\_eval.yaml} differ only in \texttt{write\_to\_file} and \texttt{seeds}, so the
 constraint geometries are identical. Candidate count varied as a factor elsewhere is v3's protocol.}
@@ -2146,7 +2210,14 @@ pipeline is D3IL's, and the pairing is ours'').}
 It uses the controller stack of the manipulator; what changes is the plan and the observation. The action is a three-dimensional increment $\Delta\vect{p}\in\R^{3}$, the state
 half of the observation is $(\vect{p}\sidx{des},\vect{p})\in\R^{6}$ --- commanded and measured
 end-effector position --- and the plan width is therefore $d = 9$ per horizon step, laid out as
-$(\vect{a},\vect{p}\sidx{des},\vect{p})$. The six dynamics rows of
+$(\vect{a},\vect{p}\sidx{des},\vect{p})$. The pose of the box and the pose of its target are drawn
+afresh for every episode and appear nowhere in that vector, so the two camera views are the only
+place the policy can read them.
+\srcnote{Draw ranges: \texttt{gym\_aligning/envs/aligning.py:62--67} (\texttt{box\_space},
+\texttt{target\_space}); observation width:
+\texttt{fm\_visual\_aligning/datasets/sequence.py}, \texttt{ParityAligningDataset.OBS\_DIM}
+$=6$, selected at
+\texttt{diffuser\_visual\_aligning\_test/train\_visual\_aligning\_dpcc.py:168--170}.} The six dynamics rows of
 \eqref{eq:method:proj:deriv} are the pairs
 \begin{equation}\label{eq:method:dep:varows}
   \left(d\sidx{pos},d\sidx{act}\right) \in
@@ -2162,11 +2233,16 @@ backbone never sees an image (\autoref{sec:method:backbone}). Below the setpoint
 that of the state-based benchmark.
 \srcnote{Methodology\_Sources/AUX\_visual\_aligning\_env.md \S2.}
 
-Its constraint set is a workspace box on the planned end-effector position,
-$\vect{p}\sidx{min}\le\vect{p}_{i}\le\vect{p}\sidx{max}$, and a box on the action given by the range of
-the demonstrated actions; the table carries no walls, so the task has no halfspaces.
-\srcnote{\texttt{config/visual\_aligning\_eval.yaml}: \texttt{workspace\_bounds} per geometry,
-\texttt{action\_bounds: 'auto'}.}
+Its constraint set is built from the same two forms. A halfspace
+\eqref{eq:method:env:halfspace} runs diagonally across the far corner of the table and excludes it,
+and a circular keep-out region \eqref{eq:method:env:disk} sits in the table plane between the box
+and its target. A workspace box $\vect{p}\sidx{min}\le\vect{p}_{i}\le\vect{p}\sidx{max}$ bounds the
+planned end-effector position to the reachable part of the table, and the action carries the action
+bound.
+\srcnote{\texttt{config/visual\_aligning\_eval.yaml}: \texttt{active\_geo\_variants:
+[combined\_5]}, whose \texttt{constraint\_types} are dynamics, workspace bounds, one
+\texttt{halfspace\_constraints} entry and one \texttt{sphere\_outside} entry in
+$(x,y)$, plus \texttt{action\_bounds: 'auto'}.}
 
 \subsection{Quadrotor Scenes}\label{sec:method:env:uav}
 
@@ -2191,12 +2267,16 @@ The constraint set of each scene combines four families:
     \end{equation}
   \item keep-out disks \eqref{eq:method:env:disk} for the pillars, for the free ends of the corridor
     walls and for the inner corners of the s-curve;
-  \item a box on the action given by the range of the demonstrated actions.
+  \item the action bound.
 \end{itemize}
-Walls and disks are inflated by the vehicle radius $r\sidx{b}$, so a plan for the vehicle's centre keeps
-its body clear. The empty scene carries no constraints and serves as the unconstrained reference.
+Walls and disks are inflated by the vehicle's \emph{rotor reach} $r\sidx{b}$ --- the largest distance
+from the centre to a rotor tip along a body axis --- so that a plan drawn for the vehicle's centre
+keeps its body clear. That offset is carried by every surface in every geometry, and it is not the
+tightening \eqref{eq:method:dpcc:tighten}: the two are separate quantities, applied for separate
+reasons, and only the tightening is varied as an experimental factor. The empty scene carries no constraints and serves as the unconstrained reference.
 \srcnote{\texttt{config/uav\_projection.yaml}: \texttt{corridor\_hg}, \texttt{pillars\_hg},
-\texttt{s\_curve\_hg} (\texttt{planning\_inflation.r\_drone}, per-segment \texttt{x\_active}); model
+\texttt{s\_curve\_hg} (\texttt{inflation.r\_drone} and the per-scene \texttt{planning\_inflation}
+that overrides it for the planner, per-segment \texttt{x\_active}); model
 provenance in \texttt{Methodology\_Sources/AUX\_uav\_model\_and\_scenes.md}.}
 
 \subsubsection*{Expert demonstrations}
@@ -2287,7 +2367,7 @@ from a distributed or multi-GPU run. The full hardware and software inventory, i
 versions, is given in \autoref{app:repro}, \autoref{tab:compute}.
 \srcnote{Slurm\_Codes/sbatch/templates/2026\_04\_30\_job\_template.sh; every log header in Slurm\_Codes/logs/}
 
-Two properties of this machine bear directly on how the wall-clock measurements in
+Two properties of this machine bear directly on how the timing measurements in
 \autoref{ch:results} may be read, and both argue for reading them as \emph{indicative} rather than as
 a hardware benchmark.
 

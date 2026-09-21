@@ -377,7 +377,7 @@ registered in `INBOX.md`. The v3 `.tex` was not touched.
 
 ## 2026-09-20 — wave 3, staged for the cluster
 
-`PENDING_20260920_all_lacking_runs.md` replaced the older gap lists with one current checklist.
+`PENDING_20260922_all_lacking_runs.md` replaced the older gap lists with one current checklist.
 Its **section 4** is the only part that is a transfer; sections 1–3 are evaluations and trainings and
 belong in a `pipeline_*.sh`, not in a fetcher. Reading section 4 item by item against the artefacts
 actually on disk changes what is left to fetch:

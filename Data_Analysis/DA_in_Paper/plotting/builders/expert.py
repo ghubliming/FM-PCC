@@ -29,6 +29,11 @@ from .scenes import _uav_constraint_panel, FONT_CONSTRAINT
 CLEAN = '#1e8449'
 VIOLATING = '#c0392b'
 START = '#2471a3'
+# [v3.60] The vehicle silhouette is a SCALE REFERENCE, not a verdict. A violation is read off the
+# path line against surfaces that already carry the 0.31 m rotor reach, so colouring the body by
+# its own overlap drew the test twice and invited the reading that the wing is what violates.
+# Neutral slate; only the path is green or red. (Author, 2026-09-21.)
+VEHICLE = '#5d6d7e'
 PANEL_W = 560
 
 DATA = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -112,10 +117,10 @@ def fig_expert_uav(outdir):
             f.poly(pts, colour, w=2.1)
             f.marker(pts[0][0], pts[0][1], 's', START, filled=True, r=4.0, ew=1.2)
             f.marker(pts[-1][0], pts[-1][1], 'o', colour, filled=True, r=4.2, ew=1.3)
-        # The vehicle drawn to scale at the tightest moment of each route. A path is a line
-        # and an obstacle is a line, so a line that stays outside another line looks safe;
-        # the quadrotor is 0.62 m across and collides with its body, which is the whole
-        # reason the constraint set is inflated at all. Drawn last so it sits over the path.
+        # The vehicle drawn to scale at the tightest moment of each route, so the free channel
+        # can be judged against the size of the aircraft. It is a ruler, not a test: the body is
+        # already inside the inflated boundary, because every surface here carries r_drone.
+        # Drawn last so it sits over the path.
         #
         # De-cluttered: on UAV-corridor all three lanes are tightest at the same x, and three
         # bodies drawn there are one blob. Each vehicle therefore goes to the tightest moment
@@ -124,18 +129,18 @@ def fig_expert_uav(outdir):
         # lane is inside the slide.
         placed = []
         for route in block['routes']:
-            spot, overlap = route['worst_xy'], route['worst_overlap']
+            spot = route['worst_xy']
             for cand in route.get('tight_order') or []:
                 cx, cy, ov = cand
-                # a violating route must be shown at a moment where it violates, or the
-                # vehicle would be drawn green on a red path
+                # a violating route is shown at a moment where it does violate -- that is the
+                # moment worth seeing the aircraft at
                 if not route['clean'] and ov <= 0:
                     continue
                 if all(math.hypot(cx - px, cy - py) >= 3.4 * r for px, py in placed):
-                    spot, overlap = [cx, cy], ov
+                    spot = [cx, cy]
                     break
             placed.append(spot)
-            _vehicle(f, spot, r, VIOLATING if overlap > 0 else CLEAN)
+            _vehicle(f, spot, r, VEHICLE)
         f.end_clip()
         drawn.append(f)
     if not drawn:
@@ -145,7 +150,8 @@ def fig_expert_uav(outdir):
     legend = _legend(width, [
         (CLEAN, '', 'reference path satisfies the constraints'),
         (VIOLATING, '', 'reference path crosses them'),
-        (None, '', f"the vehicle to scale at each route's tightest moment ({r:g} m disk)"),
+        (None, '', f"the vehicle to scale, for size only: the {r:g} m reach is already "
+                   f"in the surfaces"),
     ], cols=1)
     path = save_grid(drawn, os.path.join(outdir, 'fig_expert_uav.svg'), cols=2, gap=8,
                      header=legend)

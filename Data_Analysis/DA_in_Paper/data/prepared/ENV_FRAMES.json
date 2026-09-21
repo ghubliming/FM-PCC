@@ -39,6 +39,16 @@
     "frame": 200,
     "source": "d3il/figures/github_readme.gif"
   },
+  "fig_render_avoiding_start": {
+    "crop": [
+      0,
+      0,
+      320,
+      180
+    ],
+    "frame": 0,
+    "source": "d3il/figures/github_readme.gif"
+  },
   "fig_render_uav_corridor": {
     "crop": null,
     "frame": 0,

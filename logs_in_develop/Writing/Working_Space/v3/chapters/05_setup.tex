@@ -74,8 +74,9 @@ computes rotor thrusts at every physics step.
   files the experiments load, without their environments. Left: the Panda manipulator, from the model files
   of D3IL, used for D3IL-avoiding and D3IL-aligning. Right: the Skydio X2 model from MuJoCo
   Menagerie with the MuJoCo MPC task patch, used in the three aerial scenes. Both are simulated by
-  MuJoCo. The two renders are not to scale with each other; dimensions are in
-  \autoref{tab:platforms} and \autoref{fig:platform-x2-dimensions} in the appendix.}
+  MuJoCo. The two renders are not to scale with each other. The dimensions of both platforms are in
+  \autoref{tab:platforms}; the quadrotor's rotor layout and the footprint the projection uses for it are
+  drawn in \autoref{fig:platform-x2-dimensions}, in \autoref{app:repro}.}
   \label{fig:platforms}
 \end{figure}
 
@@ -170,13 +171,20 @@ geometry-to-constraint mapping \texttt{scripts/eval.py:93--102}; counts by
 
 \begin{figure}[htpb]
   \centering
-  \includegraphics[width=0.82\linewidth]{fig_render_avoiding}
+  \begin{minipage}[b]{0.47\linewidth}\centering
+    \includegraphics[width=\linewidth]{fig_render_avoiding_start}\\[0.3em]
+    {\footnotesize Start pose}
+  \end{minipage}\hfill
+  \begin{minipage}[b]{0.47\linewidth}\centering
+    \includegraphics[width=\linewidth]{fig_render_avoiding}\\[0.3em]
+    {\footnotesize Goal passed}
+  \end{minipage}
   \caption[The obstacle-avoidance task in MuJoCo]{The Panda manipulator in the MuJoCo obstacle-avoidance
-  scene, with its end effector beyond the green goal line. The six red posts lie between the starting
-  side of the workspace and that line.}
+  scene. Left: the starting pose, with six red posts between the arm and the goal line. Right: the
+  end effector beyond the green goal line.}
   \label{fig:env-avoiding}
 \end{figure}
-\dataref{\texttt{d3il/figures/github\_readme.gif}, frame 200, first MuJoCo tile; extracted by
+\dataref{\texttt{d3il/figures/github\_readme.gif}, frames 0 and 200, first MuJoCo tile; extracted by
 \texttt{DA\_in\_Paper/plotting/prep/extract\_env\_frames.py}.}
 
 
@@ -340,8 +348,8 @@ unstable (\autoref{sec:bg:quadrotor}), and its plan is tracked by the controller
 
 \begin{table}[!htbp]
   \caption[Quadrotor scenes]{The constraint set of each quadrotor scene: halfspaces and circular
-  keep-out regions (\autoref{sec:method:env:uav}). Each boundary is inflated by the vehicle radius of
-  $0.31$\,m before it reaches the solver, and the tightened variants move it a further $0.025$\,m
+  keep-out regions (\autoref{sec:method:env:uav}). Each boundary is inflated by the vehicle's rotor reach
+  of $0.31$\,m before it reaches the solver, and the tightened variants move it a further $0.025$\,m
   inward.}
   \label{tab:uav-scenes}
   \centering
@@ -378,7 +386,7 @@ not active.}
 The three scenes use the same two constraint forms as D3IL-avoiding --- halfspaces and circular
 keep-out regions --- so the projection solves the same kinds of rows in the air as on the table
 (\autoref{fig:constraints-uav}). What differs is that a wall acts only over the span of $x$ on which it
-exists, and that every wall, pillar and corner disk is inflated by the vehicle radius of $0.31$\,m before
+exists, and that every wall, pillar and corner disk is inflated by the rotor reach of $0.31$\,m before
 it reaches the solver, because the vehicle is a body and not a point. The tightened variants move each of
 these boundaries a further $0.025$\,m inward, the margin of \ac{DPCC}.
 \srcnote{\texttt{config/uav\_projection.yaml}: \texttt{workspace\_bounds} of \texttt{corridor\_v2\_slide},
@@ -427,7 +435,7 @@ channel between the pillar pairs.
   \caption[The constraint sets of the quadrotor scenes]{The constraint set of each quadrotor scene, seen
   from above, in the terms of \autoref{fig:constraints-avoiding}: halfspaces and circular keep-out
   regions, all three panels drawn alike. The obstacle is the solid line or the red disk --- a wall, the
-  sloping halfspace of UAV-corridor, or a pillar; the grey band is what the vehicle radius of $0.31$\,m adds around
+  sloping halfspace of UAV-corridor, or a pillar; the grey band is what the rotor reach of $0.31$\,m adds around
   it, and the dashed boundary a further $0.025$\,m of tightening. The faint wash beyond a wall is the
   rest of the halfspace it excludes. White is where the plan may go. On UAV-pillars the dark core is the
   $0.12$\,m pillar the simulator contains and the pale disk the $0.35$\,m keep-out region enforced at
@@ -574,15 +582,26 @@ That figure draws the references the generator laid out rather than the flights 
 is the conservative choice: a constraint crossed by the reference is crossed by construction rather than
 by tracking error.
 
+One thing has to be read correctly in that figure and in every quadrotor result that follows. A violation
+is a property of the \emph{path}, not of the aircraft: what is tested is the line of vehicle centres
+against the constraint surfaces, and those surfaces already carry the $0.31$\,m rotor reach
+(\autoref{tab:eval}), so the vehicle's own extent is inside the boundary rather than measured against it.
+A route turns red when its centre line crosses an inflated surface, and nothing is ever scored by sweeping
+the rotor disks through an obstacle. The scenes are built to be flyable on those terms --- the free
+channel that remains after inflation is a real one --- so a red route means a plan that had somewhere else
+to go, not a vehicle too large for the gap.
+
 \begin{figure}[htpb]
   \centering
   \includegraphics[width=\linewidth]{fig_expert_uav}
   \caption[The demonstrated routes against the quadrotor constraints]{The reference path of every
-  demonstrated route, over the constraint set of \autoref{fig:constraints-uav}: obstacles inflated by the
-  vehicle radius, the tightened boundary dashed. One path per passage class of \autoref{tab:uav-demos}.
-  Green: the path satisfies the constraints; red: it crosses them. On each route the vehicle is drawn to
-  scale at its tightest moment, the rotor disks and body of \autoref{fig:platforms}, because a
-  quadrotor collides with its body and not with its centre line. The pillars panel uses the enlarged
+  demonstrated route, over the constraint set of \autoref{fig:constraints-uav}: every surface already
+  inflated by the $0.31$\,m rotor reach, the tightened boundary dashed. One path per passage class of
+  \autoref{tab:uav-demos}. Green: the drawn path satisfies the constraints; red: the drawn path crosses
+  them. The violation is read off the path line alone, because the vehicle's extent is already inside the
+  inflated boundary; the grey silhouette on each route is the vehicle to scale at its tightest moment
+  (\autoref{fig:platforms}), shown so the gaps can be judged against the aircraft and not as a second
+  test. The pillars panel uses the enlarged
   test-time keep-out radius of $0.35$\,m. Drawn are the references the demonstrations track and not the
   flights themselves; altitude does not enter, because every constraint here is horizontal.}
   \label{fig:expert-uav}
@@ -653,8 +672,9 @@ Each flight is scored by
     criterion of D3IL-avoiding transferred to the air --- there an episode succeeds when the end effector
     crosses the goal line (\autoref{sec:setup:metrics:avoiding}), here when the vehicle crosses the line
     that closes its route;
-  \item whether it is collision-free: no control step on which the vehicle, with its body radius of
-    $0.31$\,m, violates a constraint;
+  \item whether it is collision-free: no control step on which the flown path violates a constraint. The
+    test is on the path, not on the airframe: the surfaces it is tested against already carry the
+    $0.31$\,m rotor reach (\autoref{tab:eval});
   \item success with constraint satisfaction: the goal passed on a collision-free flight, as on
     D3IL-avoiding;
   \item the number of control steps (steps per flight), and the final distance to the goal point of the
@@ -717,7 +737,7 @@ cumulative projection cost over $B=4$ candidate plans \parencite[Sec.~6.1]{romer
   \caption[The DPCC baseline, published and reproduced]{The DPCC baseline on the obstacle-avoidance
   task: the published result and its reproduction in this thesis, on the metrics of
   \autoref{sec:setup:metrics:avoiding}. S\&C denotes success with constraint satisfaction; time is
-  seconds per control step. The spread on the reproduced rows is the standard deviation over episodes,
+  seconds per control step. The spread on the reproduced row is the standard deviation over episodes,
   pooled over the five training seeds within a geometry and then averaged over the three geometries, so it
   carries both the seed-to-seed and the episode-to-episode variation.}
   \label{tab:target}
@@ -731,40 +751,65 @@ cumulative projection cost over $B=4$ candidate plans \parencite[Sec.~6.1]{romer
       & $69.0\pm12.9$ & $1.00$ & $0.98$ & $0.0\pm0.3$ & --- \\
     Reproduced, protocol of \ac{DPCC}
       & $70.1\pm9.0$ & $1.000$ & $1.000$ & $0.0\pm0.0$ & $0.553$ \\
-    Reproduced, 20 episodes per seed
-      & $69.0\pm12.0$ & $0.997$ & $0.983$ & $0.03\pm0.17$ & $0.563$ \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
-\dataref{temp/2508/batch\_avoiding\_combined\_20260825\_143212; diffusion $\nfe=20$, cumulative
-projection cost, tightened; mean per geometry, then across the three geometries}
+\dataref{analysis\_results\_checkpoint/19-09-UAV-Pillars-Exclude/batch\_avoiding\_combined\_20260919\_132703;
+diffusion $\nfe=20$, cumulative projection cost, tightened; mean per geometry, then across the three
+geometries. The same cell is \autoref{tab:avoiding-dpcc-protocol}'s baseline of record, where the spread is
+taken across seeds instead and reads $70.1\pm8.2$ steps.}
 
-The reproduction at the protocol of \ac{DPCC} uses its five training seeds and two episodes per seed and
-geometry (\autoref{sec:setup:protocol:avoiding}). The evaluation with twenty episodes per seed completed the
-\emph{both-hard} geometry for one training seed rather than five.
+The reproduction uses the five training seeds and two episodes per seed and geometry that \ac{DPCC} itself
+reports on (\autoref{sec:setup:protocol:avoiding}). A longer evaluation of the same configuration, at
+twenty episodes per seed, exists and is \emph{not} used here or in \autoref{ch:results}: it did not
+complete, finishing the \emph{both-hard} geometry for one training seed rather than five, so its numbers
+rest on a different and smaller set of cells than the row above. It is kept for the record in
+\autoref{app:avoiding-twenty-episode}.
 
 \subsection{Vision-Conditioned Alignment}\label{sec:setup:baselines:aligning}
 
 No published result exists for the configuration evaluated here, so there is no external baseline to
 reproduce, as there is on D3IL-avoiding. The task itself is D3IL's \parencite{jia2024towards}, which
 evaluates imitation-learning policies on it from images: two $96\times96$ RGB views, front and in-hand,
-encoded by the ResNet encoder of Diffusion Policy. An episode succeeds there when the box matches the
-target pose within a tolerance and its coloured sides match those of the target.
+each passed through its own ResNet-18 convolutional trunk with spatial-softmax pooling.
 
-Those reported results say how hard the task is. From images the strongest policy is BESO, a
+What D3IL scores as \emph{success} on this task is a threshold on the final pose of the box, and both
+halves of it must hold at once: the box centre within $0.018$\,m of the target centre \emph{and} the box
+orientation within $0.048\pi \approx 8.6^{\circ}$ of the target orientation, the second of which is what
+makes the coloured sides line up. An episode that meets both counts as $1$ and every other episode as $0$;
+the published figure is the share of episodes counted $1$.
+
+That metric is not used anywhere in this thesis. No success rate is defined on the alignment task here: an
+episode is scored by the final distance from the box to its target in the table plane, as a distance and
+never as a threshold, and orientation is not scored at all
+(\autoref{sec:setup:metrics:aligning}, \autoref{tab:va-vs-d3il}). The D3IL numbers that follow are read
+as a statement about how hard the task is, and no cell of \autoref{ch:results} is ever set against one of
+them.
+
+From images the strongest policy is BESO, a
 score-based policy with a history of observations, at $0.359\pm0.031$; next are DDPM-GPT at
 $0.316\pm0.026$ and DDPM-ACT, which adds action chunking, at $0.278\pm0.071$. From the state the same task
 is solved far more often: VAE-ACT reaches $0.891\pm0.022$ and BESO $0.861\pm0.016$. On obstacle avoidance
 from the state BESO reaches $0.950\pm0.015$ \parencite[Table~3]{jia2024towards}. Seen from images, this is a
 task that the policies of D3IL finish in roughly a third of episodes, where obstacle avoidance from the
-state is close to solved.
+state (D3IL-avoiding) is close to solved.
 
-Those policies are small, and most of what they carry is perception. On this task the heads are transformers of
-four layers at an embedding width of $72$ (BESO, DDPM-GPT) and encoder--decoder transformers of two and
-four layers at a width of $64$ (DDPM-ACT, VAE-ACT) \parencite[Table~9]{jia2024towards}, each well under a
-million parameters. What carries the weight of an image-conditioned policy there is the encoder: each
-of the two camera streams has its own ResNet-18 trunk of roughly $11$\,M parameters. This thesis
+Those policies are small, and most of what they carry is perception. The \emph{head} --- everything behind
+the image encoder --- is a four-layer transformer at an embedding width of $72$ for BESO and DDPM-GPT. For
+DDPM-ACT and VAE-ACT it is an encoder--decoder pair at a width of $64$, two layers in the encoder and four
+in the decoder; VAE-ACT carries a third two-layer stack at the same width, the variational branch that
+produces its latent \parencite[Table~9]{jia2024towards}.
+
+Counted out at those shapes, with the four-fold feed-forward expansion the implementation uses, a
+width-$72$ block is $63.0$\,k parameters and the four-layer stack $0.25$\,M. A width-$64$ encoder block is
+$49.9$\,k and a decoder block $62.3$\,k --- the difference is the three cross-attention projections --- so
+DDPM-ACT's two stacks come to $0.35$\,M and VAE-ACT's three stacks, with its embeddings and output heads,
+to $0.47$\,M. None of the four heads reaches half a million parameters.
+
+What carries the weight of an image-conditioned policy there is the encoder, and it is not close: each of
+the two camera streams has its own ResNet-18 trunk of roughly $11$\,M parameters, so the perception is
+about $22$\,M against a policy of under half a million --- some fifty times the head it feeds. This thesis
 takes that encoder over unchanged (\autoref{sec:method:backbone}) and places the $4.0$\,M temporal U-Net
 of the state-based benchmark behind it, so the two set-ups differ in the planner and not in how the
 images are seen.
@@ -774,12 +819,20 @@ images are seen.
 Encoder: \texttt{rgb\_model} = \texttt{agents/models/vision/model\_getter.py} \texttt{get\_resnet}
 (robomimic \texttt{VisualCore}, backbone \texttt{ResNet18Conv}, spatial-softmax pooling over $32$ keypoints,
 linear to $64$), with \texttt{share\_rgb\_model: False}, so one trunk per view; $11$\,M is the convolutional
-trunk of ResNet-18 without its classifier. D3IL publishes no parameter counts --- the bound on the heads
-follows from the layer and width values above.}
+trunk of ResNet-18 without its classifier. D3IL publishes no parameter counts, so the head counts above
+were computed, 2026-09-21, from the shipped configuration and model code rather than quoted. Shapes:
+\texttt{configs/agents/act\_vision\_agent.yaml:29--58} and
+\texttt{ddpm\_encdec\_vision\_agent.yaml:40--59} (\texttt{embed\_dim: 64}, \texttt{n\_heads: 4},
+encoder \texttt{n\_layers: 2}, decoder \texttt{n\_layers: 4}, \texttt{cross\_embed: 64}; \texttt{act} has
+the extra \texttt{action\_encoder} at \texttt{n\_layers: 2}). Blocks:
+\texttt{agents/models/act/act\_vae.py} \texttt{EncoderBlock}/\texttt{DecoderBlock} --- four $d\times d$
+projections with bias for self-attention, three more for cross-attention, a $4d$ feed-forward, and two
+bias-free \texttt{LayerNorm}s; \texttt{ActVAE.\_\_init\_\_} adds the state, action and latent projections,
+the action head, the latent projection and the position embeddings at \texttt{window\_size: 8}.
+Arithmetic: $4(d^2{+}d) + (8d^2{+}5d) + 2d$ per encoder block, $+\,3(d^2{+}d)$ per decoder block.}
 
-That number is the reference for how difficult the task is, not a baseline for this thesis, because
-the two set-ups differ in what the network produces and in what happens to it afterwards
-(\autoref{tab:va-vs-d3il}). The comparison for the flow-based models is therefore made inside the thesis:
+The two set-ups also differ in what the network produces and in what happens to it afterwards
+(\autoref{tab:va-vs-d3il}), which is the second reason those numbers are a reference and not a baseline. The comparison for the flow-based models is therefore made inside the thesis:
 the diffusion model of \ac{DPCC}, trained on the same demonstrations with the same visual encoder,
 backbone, horizon and projection, at $\nfe=20$.
 
@@ -986,7 +1039,11 @@ compute available to this work.
     Projection method & none, per-step or endpoint & per result & per result & per result \\
     Projected position & coordinates constrained in the plan & $x,y$ (2D) & $x,y,z$ (3D) & $x,y,z$ (3D) \\
     Activation threshold $\eta$ & share of the sampling steps the projection runs on & $0.5$; $1.0$ at the budget floor & lowered with the budget & $0.5$ \\
-    Tightening & margin the constraints are shrunk by & $0.025$ & $0.025$ & $0.025 + 0.31$ \\
+    Tightening $\delta$ & safety margin, in metres, that every constraint surface is shrunk by; the
+      value \ac{DPCC} introduces, and the only quantity the tightened variants change & $0.025$ & $0.025$ & $0.025$ \\
+    Body inflation & separate offset, in metres, moving every surface outward so the \emph{vehicle}
+      clears it and not only its centre point; the manipulator's end effector is constrained as a point
+      and carries none & none & none & $0.31$ \\
     Replanning & how often a new plan is generated & every step & every step & every step \\
     Episode limit & control steps before a run is stopped & 200 & 400 & 396 / 634 / 871 \\
     Low-level control & how a setpoint reaches the actuators & \multicolumn{2}{p{3.9cm}}{IK, then joint-space PD} & cascaded geometric PID \\
@@ -1035,9 +1092,40 @@ is the same argument at the opposite end: at the budget floor half of the sampli
 one step is the terminal one, so the threshold is raised until the method has anything to act on at all.
 \autoref{sec:setup:protocol:guiding} works that arithmetic through.
 
-The \emph{tightening} margin is $0.025$ in all three environments, the value \ac{DPCC} introduces. The
-quadrotor adds the vehicle radius of $0.31$\,m on top of it, because the quadrotor is a body of that size
-and the constraint is written for a point.
+The \emph{tightening} margin is $0.025$\,m in all three environments, the value \ac{DPCC} introduces. It
+shrinks the feasible set, so that a plan which satisfies a constraint numerically still has room left to be
+tracked, and it is the one quantity the tightened variants of a constraint set change.
+
+\emph{Body inflation} is a second offset and a different quantity, and only the quadrotor carries it. A
+constraint is written for a point, and the manipulator's end effector is treated as one; a quadrotor is
+not a point, so every surface of the quadrotor scenes is moved outward before the projection ever sees it
+--- by the vehicle's rotor reach of $0.31$\,m. The configuration also defines a planning pad of $0.02$\,m
+on top of that reach, but every scene evaluated here switches the pad off for the planner, so the planner
+and the collision scorer are offset by the same $0.31$\,m. The $0.31$\,m is the
+largest per-axis distance from the centre of mass to the rim of a rotor disk at zero yaw: the four rotors
+sit at $(\pm 0.14, \pm 0.18)$\,m and each disk has a radius of $0.13$\,m, so the reach is
+$0.18+0.13=0.31$\,m across the vehicle and $0.14+0.13=0.27$\,m along it, and the larger of the two is
+taken. The two offsets are kept apart in the configuration and are kept apart here, because they answer
+different questions: $0.025$ is margin, $0.31$ is geometry.
+\srcnote{Both numbers verified, 2026-09-21. Tightening: \texttt{config/uav\_projection.yaml:152}
+(\texttt{enlarge\_constraints: 0.025}, commented \enquote{tightening margin (DPCC paper); active only for
+-tightened variants}); the same value in \texttt{config/projection\_eval.yaml} and
+\texttt{config/visual\_aligning\_eval.yaml}. Inflation: \texttt{config/uav\_projection.yaml:175}
+(\texttt{inflation: \{r\_drone: 0.31, margin\_base: 0.02\}}), applied in \texttt{setup\_dpcc\_projector}
+and documented at \texttt{:160--174} as an always-on offset \emph{distinct from} the tightened enlarge.
+Rotor geometry: \texttt{d3il/environments/d3il/models/mj/robot/quadrotor/quadrotor\_modified.xml:43--46}
+(rotor centres $(\pm.14,\pm.18)$) and \texttt{:17} (\texttt{ellipsoid size=".13 .13 .01"}); the same
+$0.31$ is \texttt{uav\_expert\_data\_collect/trajectories.py:44}
+(\texttt{PILLAR\_ROTOR\_REACH}), the number the demonstrated channels were laid out around. The file-level
+default \texttt{inflation} carries \texttt{margin\_base: 0.02}, but every evaluated scene entry sets
+\texttt{planning\_inflation: \{r\_drone: 0.31, margin\_base: 0.0\}} (\texttt{:360}, \texttt{:376},
+\texttt{:438}, \texttt{:513}), and the planner reads that override first
+(\texttt{mix\_uav\_test/eval\_mix\_uav.py:924}, \texttt{:1017}, \texttt{:1279}); the execution-time
+scorer \texttt{\_exec\_constraint\_violations} (\texttt{:793--806}) reads \texttt{r\_drone} alone and
+checks the flown path against the raw geometry $\oplus$ the rotor reach. Planner and scorer are therefore
+both offset by $0.31$\,m, the planner by a further $0.025$ when tightened. Corrected 2026-09-22 on v2's
+check (INBOX, v2.25): the $0.31 + 0.02$ this note carried at v3.60 was the file default, not what the
+evaluated scenes run.}
 
 
 \begin{table}[htpb]

@@ -6,32 +6,7 @@ Last built **2026-09-21**. Every thesis figure lives in this store; drafts recei
 
 | figure | group | corpus | protocol |
 | :-- | :-- | :-- | :-- |
-| `fig_env_avoiding` | env | `Data_Analysis/DA_in_Paper/data/avoiding_scene.json` | 96 D3IL demonstrations (measured end-effector position) |
-| `fig_constraints_avoiding` | env | `Data_Analysis/DA_in_Paper/data/avoiding_scene.json` | config/projection_eval.yaml geometries; 96 D3IL demonstrations |
-| `fig_avoiding_tradeoff` | da | `Data_Analysis/analysis_results_checkpoint/19-09-UAV-Pillars-Exclude/batch_avoiding_combined_20260919_132703` | 5 seeds (6-10) x 2 episodes = 10 episodes per cell |
-| `fig_avoiding_k_ladder` | da | `Data_Analysis/analysis_results_checkpoint/19-09-UAV-Pillars-Exclude/batch_avoiding_combined_20260919_132703` | 5 seeds (6-10) x 2 episodes = 10 episodes per cell |
-| `fig_avoiding_raw_models` | da | `temp/0309/batch_avoiding_combined_20260903_133730` | seed 6, 20 trials, top-right-hard, no projection |
-| `fig_avoiding_projector_cost` | da | `temp/0609/I/batch_avoiding_combined_20260906_125724` | 4 seeds (7-10) x 3 geometries x 2 trials = 24 rollouts per row |
-| `fig_scene_avoiding` | env | `d3il gym_avoiding_env avoiding_objects.get_obj_list` | primitives, orthographic |
-| `fig_scene_aligning` | env | `d3il robot_push_box.xml + aligning_objects.py` | primitives, orthographic |
-| `fig_scene_uav_corridor` | env | `d3il/.../quadrotor/scenes/scene_corridor_v2.xml` | MJCF geometry, orthographic |
-| `fig_scene_uav_pillars` | env | `d3il/.../quadrotor/scenes/scene_pillars.xml` | MJCF geometry, orthographic |
-| `fig_scene_uav_scurve` | env | `d3il/.../quadrotor/scenes/scene_s_curve.xml` | MJCF geometry, orthographic |
-| `fig_constraints_uav` | env | `config/uav_projection.yaml :: corridor_v2_slide, pillars_hg, s_curve_hg` | transcribed in sources.UAV_CONSTRAINTS; inflation r_drone 0.31 m, tightening 0.025 m |
-| `fig_constraints_aligning` | env | `config/visual_aligning_eval.yaml :: combined_5 halfspace_constraints and obstacle_constraints, enlarge_constraints 0.03 m` | transcribed in sources.ALIGNING_CONSTRAINTS; box, target and start from sources.D3IL_SCENES[aligning] |
-| `fig_aligning_contexts` | env | `10 contexts from sources.ALIGNING_CONTEXTS (recovered from analysis_results_checkpoint/15-09/batch_va2_20260915_100754, mf_K20 cell; mean box-to-target distance 0.4530 m)` | draw ranges gym_aligning/envs/aligning.py:62-67 | constraint set sources.ALIGNING_CONSTRAINTS | footprint sizes sources.D3IL_SCENES[aligning] |
-| `fig_platform_x2_dimensions` | env | `d3il/.../quadrotor/quadrotor_modified.xml rotor and body geoms` | transcribed in sources.X2_GEOMETRY; inflation radius from sources.UAV_CONSTRAINTS |
-| `fig_uav_scurve_paths` | da | `data/uav_paths.json (extract/uav_paths.py)` | 2 cells, 13 flights; runs Emf_K10_mpc4_mjpc_T0.5_u7hg, Emf_K10_mpc4_pid_stopgo_T0.5_u7hg; scene and constraints from sources.UAV_CONSTRAINTS, drawn by scenes._uav_constraint_panel |
-| `fig_uav_pillars_paths` | da | `data/uav_paths.json (extract/uav_paths.py)` | 4 cells, 40 flights; runs Eaf_K5_mpc4_pid_stopgo_T0.5_EPlatest_u7hg, Ediffusion_K20_mpc4_pid_stopgo_T0.5_u7hg, Efm_K5_mpc4_pid_stopgo_T0.5_u7hg, Emf_K5_mpc4_pid_stopgo_T0.5_u7hg; scene and constraints from sources.UAV_CONSTRAINTS, drawn by scenes._uav_constraint_panel |
-| `fig_uav_corridor_paths` | da | `data/uav_paths.json (extract/uav_paths.py)` | 10 cells, 120 flights; runs Eaf_K1_mpc4_pid_stopgo_T0.5_EPlatest_u17cv2, Eaf_K3_mpc4_pid_stopgo_T0.5_EPlatest_u17cv2, Eaf_K5_mpc4_pid_stopgo_T0.5_EPlatest_u17cv2, Ediffusion_K20_mpc4_pid_stopgo_T0.5_u17cv2, Efm_K1_mpc4_pid_stopgo_T0.5_u17cv2, Efm_K3_mpc4_pid_stopgo_T0.5_u17cv2, Efm_K5_mpc4_pid_stopgo_T0.5_u17cv2, Emf_K1_mpc4_pid_stopgo_T0.5_u17cv2, Emf_K3_mpc4_pid_stopgo_T0.5_u17cv2, Emf_K5_mpc4_pid_stopgo_T0.5_u17cv2; scene and constraints from sources.UAV_CONSTRAINTS, drawn by scenes._uav_constraint_panel |
-| `fig_expert_uav` | env | `data/expert_paths.json (extract/expert_paths.py)` | uav_expert_data_collect/trajectories.py reference paths, one per homotopy class of generator.py::HOMOTOPY_CLASSES; constraints from sources.UAV_CONSTRAINTS, drawn by scenes._uav_constraint_panel |
-| `fig_expert_aligning` | env | `data/expert_paths.json (extract/expert_paths.py)` | d3il/environments/dataset/data/aligning/{train,test}_contexts.pkl, 60 + 60 contexts; constraints from sources.ALIGNING_CONSTRAINTS |
-| `fig_aligning_tradeoff` | da | `Data_Analysis/analysis_results_checkpoint/15-09/batch_va2_20260915_100754` | seed 6, ten shared enumerated contexts (paired; raw cells with 30 contexts are restricted) | unprojected, combined_5/diffuser |
 | `fig_aligning_projected_tradeoff` | da | `Data_Analysis/analysis_results_checkpoint/15-09/batch_va2_20260915_100754` | seed 6, ten shared enumerated contexts (paired; raw cells with 30 contexts are restricted) | combined_5-tightened, random selection, 10 shared contexts; 10 complete cells; frontier requires at least 9/10 violation-free contexts |
-| `fig_aligning_outcomes` | da | `Data_Analysis/analysis_results_checkpoint/15-09/batch_va2_20260915_100754` | seed 6, ten shared enumerated contexts (paired; raw cells with 30 contexts are restricted) | geometry combined_5-tightened, variants diffuser, dpcc-r, hardflow_sls-r | stems are context_final_xy_dist, the column tab:va-projection medians |
-| `fig_uav_corridor_tradeoff` | da | `Data_Analysis/analysis_results_checkpoint/19-09-UAV-Pillars-Exclude/batch_uav_20260919_111701` | seed 6, 12 flights per corridor configuration (4 per route L/C/R) | tag u17cv2, dpcc-{r,c,t}-bounds_free-pdes-tightened |
-| `fig_avoiding_paths` | da | `data/exec_paths.json (extract/exec_paths.py)` | 4 cells, episode 2 of 2 drawn in each cell (8 evaluated in total); geometry top-right-hard, variant dpcc-t-tightened; constraint set from data/avoiding_scene.json, drawn by avoiding.geometry_panel |
-| `fig_aligning_paths` | da | `data/exec_paths.json (extract/exec_paths.py)` | 3 cells, 6 drawn paths, episode positions (3, 6), context IDs (0, 5) from ten per cell; geometry combined_5-tightened; EXECUTED END-EFFECTOR xy position (the box pose is not logged); constraint set from sources.ALIGNING_CONSTRAINTS |
 
 ## Vendored — copied from where they were produced
 
@@ -39,25 +14,58 @@ Each was checked against `/workspaces/aux_repo/` before entering the store.
 
 | figure | group | source | provenance |
 | :-- | :-- | :-- | :-- |
-| `fig_platform_panda` | env | `Data_Analysis/DA_in_Paper/data/prepared/fig_platform_panda.png` | MuJoCo render of the D3IL Panda model file (aux_repo/d3il .../robot/panda.xml), ready pose, background removed. prep/render_mujoco_scenes.py, PLATFORM_RENDERS. Rendered here. |
-| `fig_platform_x2` | env | `Data_Analysis/DA_in_Paper/data/prepared/fig_platform_x2.png` | MuJoCo render of quadrotor_modified.xml (Skydio X2, MuJoCo Menagerie), level, background removed. prep/render_mujoco_scenes.py, PLATFORM_RENDERS. Rendered here. |
-| `fig_raw_plans_meanflow_K1` | demo | `Data_Analysis/DA_Result_Curated_MD/Report_20260819_MF_UNet/fig6a_plans_mfunet_K1_seed6_both-hard.png` | Report_20260819_MF_UNet fig 6a; per-episode MPC diagnostics, no projection, seed 6, both-hard, K=1. Ours; verified absent from aux_repo. Cut to (2312, 92, 2715, 492): top row, last column: every plan of the episode overlaid on the scene. |
-| `fig_raw_plans_diffusion_K1` | demo | `Data_Analysis/DA_Result_Curated_MD/Report_20260819_MF_UNet/fig6b_plans_dpcc_K1_seed6_both-hard.png` | Report_20260819_MF_UNet fig 6b; same protocol, diffusion baseline at K=1. Ours; verified absent from aux_repo. Cut to (2312, 92, 2715, 492): top row, last column: every plan of the episode overlaid on the scene. |
-| `fig_raw_plans_meanflow_K2` | demo | `Data_Analysis/DA_Result_Curated_MD/Report_20260819_MF_UNet/fig6c_plans_mfunet_K2_seed6_both-hard.png` | Report_20260819_MF_UNet fig 6c; same protocol, K=2. Ours; verified absent from aux_repo. Cut to (2312, 92, 2715, 492): top row, last column: every plan of the episode overlaid on the scene. |
-| `fig_raw_plans_fm_K1` | demo | `Data_Analysis/DA_Result_Curated_MD/Report_20260903_AF_UNet/fig8e_plans_fm_K1_seed6.png` | Report_20260903_AF_UNet fig 8e; per-episode MPC diagnostics, no projection, seed 6, both-hard, K=1, instantaneous-velocity matching (aw10). Ours; verified absent from aux_repo. Cut to (2312, 574, 2715, 947): episode 1, last column: every plan of the episode overlaid on the scene. Stretched to 403x400 so the plot frame matches the 08-19 panels of the same matrix. |
-| `fig_raw_plans_fm_K2` | demo | `Data_Analysis/DA_Result_Curated_MD/Report_20260903_AF_UNet/fig8f_plans_fm_K2_seed6.png` | Report_20260903_AF_UNet fig 8f; same protocol, K=2. Ours; verified absent from aux_repo. Cut to (2312, 574, 2715, 947): episode 1, last column: every plan of the episode overlaid on the scene. Stretched to 403x400 so the plot frame matches the 08-19 panels of the same matrix. |
-| `fig_raw_plans_af_K1` | demo | `Data_Analysis/DA_Result_Curated_MD/Report_20260903_AF_UNet/fig8a_plans_af_K1_seed6.png` | Report_20260903_AF_UNet fig 8a; same protocol, K=1, consistency-interpolated average-velocity matching (U-Net, alpha_end 0.2). Ours; verified absent from aux_repo. Cut to (2312, 574, 2715, 947): episode 1, last column: every plan of the episode overlaid on the scene. Stretched to 403x400 so the plot frame matches the 08-19 panels of the same matrix. |
-| `fig_raw_plans_af_K2` | demo | `Data_Analysis/DA_Result_Curated_MD/Report_20260903_AF_UNet/fig8b_plans_af_K2_seed6.png` | Report_20260903_AF_UNet fig 8b; same protocol, K=2. Ours; verified absent from aux_repo. Cut to (2312, 574, 2715, 947): episode 1, last column: every plan of the episode overlaid on the scene. Stretched to 403x400 so the plot frame matches the 08-19 panels of the same matrix. |
-| `fig_raw_plans_diffusion_K2` | demo | `Data_Analysis/DA_Result_Curated_MD/Report_20260903_AF_UNet/fig8h_plans_dpcc_K2_seed6.png` | Report_20260903_AF_UNet fig 8h; per-episode MPC diagnostics, no projection, seed 6, both-hard, diffusion baseline TRAINED AND RUN at K=2 (aw10). Ours; verified absent from aux_repo. Cut to (2312, 92, 2715, 492): top row, last column: every plan of the episode overlaid on the scene. |
-| `fig_raw_plans_diffusion_K20` | demo | `Data_Analysis/DA_Result_Curated_MD/Report_20260903_AF_UNet/fig8i_plans_dpcc_K20_seed6.png` | Report_20260903_AF_UNet fig 8i; per-episode MPC diagnostics, no projection, seed 6, both-hard, diffusion baseline at its native K=20 (aw10), from the thres0.5 campaign. Ours; verified absent from aux_repo. Cut to (2312, 92, 2715, 492): top row, last column: every plan of the episode overlaid on the scene. |
-| `fig_raw_goal_reached_K1` | da | `Data_Analysis/DA_Result_Curated_MD/Report_20260903_AF_UNet/fig7_raw_diffuser_K1.svg` | Report_20260903_AF_UNet fig 7; goal reached without projection at K=1, top-right-hard, seed 6, 20 trials. Ours; verified absent from aux_repo. |
-| `fig_render_avoiding` | env | `Data_Analysis/DA_in_Paper/data/prepared/fig_render_avoiding.png` | D3IL tracked MuJoCo montage, frame 200, top-left 320x180 tile; extracted by prep/extract_env_frames.py. |
-| `fig_render_aligning` | env | `Data_Analysis/DA_in_Paper/data/prepared/fig_render_aligning.png` | D3IL tracked simulator montage, frame 0, alignment tile; extracted by prep/extract_env_frames.py. |
-| `fig_aligning_camera_overhead` | demo | `Data_Analysis/DA_in_Paper/data/prepared/fig_aligning_camera_overhead.png` | D3IL expert alignment demonstration, rollout 0 frame 60, left 96x96 tile: the fixed bp-cam observation consumed by the visual policy; extracted by prep/extract_env_frames.py. |
-| `fig_aligning_camera_wrist` | demo | `Data_Analysis/DA_in_Paper/data/prepared/fig_aligning_camera_wrist.png` | Same expert demonstration and instant, right 96x96 tile: the wrist-mounted inhand-cam observation consumed by the visual policy; extracted by prep/extract_env_frames.py. |
-| `fig_render_uav_corridor` | env | `Data_Analysis/DA_in_Paper/data/prepared/fig_render_uav_corridor.png` | MuJoCo render of scene_corridor_v2.xml with the Skydio X2 mesh, vehicle placed at the start of the generator reference path (uav_expert_data_collect/trajectories.py), path drawn in. prep/render_mujoco_scenes.py, declared in MUJOCO_RENDERS. Ours. |
-| `fig_render_uav_pillars` | env | `Data_Analysis/DA_in_Paper/data/prepared/fig_render_uav_pillars.png` | MuJoCo render of scene_pillars.xml with the Skydio X2 mesh, vehicle placed at the start of the generator reference path (uav_expert_data_collect/trajectories.py), path drawn in. prep/render_mujoco_scenes.py, declared in MUJOCO_RENDERS. Ours. |
-| `fig_render_uav_scurve` | env | `Data_Analysis/DA_in_Paper/data/prepared/fig_render_uav_scurve.png` | MuJoCo render of scene_s_curve.xml with the Skydio X2 mesh, vehicle placed at the start of the generator reference path (uav_expert_data_collect/trajectories.py), path drawn in. prep/render_mujoco_scenes.py, declared in MUJOCO_RENDERS. Ours. |
+
+## Other files in the store
+
+Present in the store but not produced by this run (e.g. a matplotlib figure from `mpl/`).
+
+| figure | location |
+| :-- | :-- |
+| `fig_aligning_camera_overhead` | `demo/fig_aligning_camera_overhead.png` |
+| `fig_aligning_camera_wrist` | `demo/fig_aligning_camera_wrist.png` |
+| `fig_aligning_contexts` | `env/fig_aligning_contexts.png`, `env/fig_aligning_contexts.svg` |
+| `fig_aligning_outcomes` | `da/fig_aligning_outcomes.png`, `da/fig_aligning_outcomes.svg` |
+| `fig_aligning_paths` | `da/fig_aligning_paths.png`, `da/fig_aligning_paths.svg` |
+| `fig_aligning_tradeoff` | `da/fig_aligning_tradeoff.png`, `da/fig_aligning_tradeoff.svg` |
+| `fig_avoiding_k_ladder` | `da/fig_avoiding_k_ladder.png`, `da/fig_avoiding_k_ladder.svg` |
+| `fig_avoiding_paths` | `da/fig_avoiding_paths.png`, `da/fig_avoiding_paths.svg` |
+| `fig_avoiding_projector_cost` | `da/fig_avoiding_projector_cost.png`, `da/fig_avoiding_projector_cost.svg` |
+| `fig_avoiding_raw_models` | `da/fig_avoiding_raw_models.png`, `da/fig_avoiding_raw_models.svg` |
+| `fig_avoiding_tradeoff` | `da/fig_avoiding_tradeoff.png`, `da/fig_avoiding_tradeoff.svg` |
+| `fig_constraints_aligning` | `env/fig_constraints_aligning.png`, `env/fig_constraints_aligning.svg` |
+| `fig_constraints_avoiding` | `env/fig_constraints_avoiding.png`, `env/fig_constraints_avoiding.svg` |
+| `fig_constraints_uav` | `env/fig_constraints_uav.png`, `env/fig_constraints_uav.svg` |
+| `fig_env_avoiding` | `env/fig_env_avoiding.png`, `env/fig_env_avoiding.svg` |
+| `fig_expert_aligning` | `env/fig_expert_aligning.png`, `env/fig_expert_aligning.svg` |
+| `fig_expert_uav` | `env/fig_expert_uav.png`, `env/fig_expert_uav.svg` |
+| `fig_platform_panda` | `env/fig_platform_panda.png` |
+| `fig_platform_x2` | `env/fig_platform_x2.png` |
+| `fig_platform_x2_dimensions` | `env/fig_platform_x2_dimensions.png`, `env/fig_platform_x2_dimensions.svg` |
+| `fig_raw_goal_reached_K1` | `da/fig_raw_goal_reached_K1.png`, `da/fig_raw_goal_reached_K1.svg` |
+| `fig_raw_plans_af_K1` | `demo/fig_raw_plans_af_K1.png` |
+| `fig_raw_plans_af_K2` | `demo/fig_raw_plans_af_K2.png` |
+| `fig_raw_plans_diffusion_K1` | `demo/fig_raw_plans_diffusion_K1.png` |
+| `fig_raw_plans_diffusion_K2` | `demo/fig_raw_plans_diffusion_K2.png` |
+| `fig_raw_plans_diffusion_K20` | `demo/fig_raw_plans_diffusion_K20.png` |
+| `fig_raw_plans_fm_K1` | `demo/fig_raw_plans_fm_K1.png` |
+| `fig_raw_plans_fm_K2` | `demo/fig_raw_plans_fm_K2.png` |
+| `fig_raw_plans_meanflow_K1` | `demo/fig_raw_plans_meanflow_K1.png` |
+| `fig_raw_plans_meanflow_K2` | `demo/fig_raw_plans_meanflow_K2.png` |
+| `fig_render_aligning` | `env/fig_render_aligning.png` |
+| `fig_render_avoiding` | `env/fig_render_avoiding.png` |
+| `fig_render_avoiding_start` | `env/fig_render_avoiding_start.png` |
+| `fig_render_uav_corridor` | `env/fig_render_uav_corridor.png` |
+| `fig_render_uav_pillars` | `env/fig_render_uav_pillars.png` |
+| `fig_render_uav_scurve` | `env/fig_render_uav_scurve.png` |
+| `fig_scene_aligning` | `env/fig_scene_aligning.png`, `env/fig_scene_aligning.svg` |
+| `fig_scene_avoiding` | `env/fig_scene_avoiding.png`, `env/fig_scene_avoiding.svg` |
+| `fig_scene_uav_corridor` | `env/fig_scene_uav_corridor.png`, `env/fig_scene_uav_corridor.svg` |
+| `fig_scene_uav_pillars` | `env/fig_scene_uav_pillars.png`, `env/fig_scene_uav_pillars.svg` |
+| `fig_scene_uav_scurve` | `env/fig_scene_uav_scurve.png`, `env/fig_scene_uav_scurve.svg` |
+| `fig_uav_corridor_paths` | `da/fig_uav_corridor_paths.png`, `da/fig_uav_corridor_paths.svg` |
+| `fig_uav_corridor_tradeoff` | `da/fig_uav_corridor_tradeoff.png`, `da/fig_uav_corridor_tradeoff.svg` |
+| `fig_uav_pillars_paths` | `da/fig_uav_pillars_paths.png`, `da/fig_uav_pillars_paths.svg` |
+| `fig_uav_scurve_paths` | `da/fig_uav_scurve_paths.png`, `da/fig_uav_scurve_paths.svg` |
 
 ## Planned — specified in a draft, not yet made
 

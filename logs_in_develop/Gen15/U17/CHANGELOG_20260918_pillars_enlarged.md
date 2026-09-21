@@ -175,8 +175,9 @@ do not touch pillars and are unaffected.
       expert-route probes flipped from passing to 52-54/200 violating samples. 9 of 10 rollouts
       show 51-53 violating steps at ~0.066 m mean penetration (predicted max 0.15 m); the 10th is
       the single failed flight (223 violations, goal missed) and alone lifts the mean to 68.7.
-- [~] **groups A–C submitted (attempt 2): drivers 25970–25978**, 9 drivers -> 12 children,
-      2026-09-19, on 43 GiB free. Running; results pending.
+- [x] **groups A–C submitted (attempt 2): drivers 25970–25978** -> children 25984–25995, 2026-09-19,
+      on 43 GiB free. **2026-09-21: 10/12 complete, 25994 (fm K5 half 2) and 25995 (af K5 half 2)
+      running and on track; no crash, no disk event.** Child map and end times: runbook §3b.
       - Attempt 1 (drivers 25942–25950 -> children 25952–25963) **died of a full filesystem**:
         25952 crashed `OSError: [Errno 28]` and the other eleven children never started, because
         Slurm could not create their log files on a disk with 2.9 GiB free. Post-mortem and the
@@ -186,7 +187,49 @@ do not touch pillars and are unaffected.
         no error from either side. It also cannot finish as designed — `dpcc-r` measures 6809 s
         per trial, so one variant is ~19 h and seven are ~130 h against a 24 h cap. It needs one
         job per variant (runbook §3d).
-- [ ] group D re-run, restructured as one job per variant
-- [ ] all 12 children landed; child IDs into the runbook's run map
+- [x] group D (25951) — `CANCELLED DUE TO TIME LIMIT` 20-09 11:18:55 UTC with `diffuser` + `dpcc-r`
+      delivered (18.6 h for `dpcc-r` alone, 10.4 s `proj_ms` per step) and `dpcc-r-tightened` at 2/10
+      (partial cell on disk — delete before any re-run). Five variants never started.
+- [x] group D remainder — **CLOSED BY DECISION 2026-09-21, not run.** The diffusion baseline is
+      reported on pillars from its raw output only (`diffuser`: success 0.000, relaxed 1.000, safe
+      1.000, track_err 0.319) with the time argument: `proj_ms` 10.4 s/step at K=20 → ~18.5 h per
+      `r` variant, `c` rules ~24–26 h (over the cap), ~5 GPU-days for the block, endpoint unavailable
+      by construction. Delivered `dpcc-r` kept on disk, not printed; partial `dpcc-r-tightened`
+      deleted. Runbook §3d; PENDING_20260922 §16 carries the general ⏱ time rule for K=20 per-step rows.
+- [ ] the two running children land; child IDs already in the runbook's run map
+
+## 8. 🔴 First read of the wave, 2026-09-21 — it is a floor
+
+Full table and reasoning: runbook §3e. The short version:
+
+- **As a run: clean.** Every finished cell carries all its variants; the unprojected rows reproduce
+  their `pillars_hg` values (mf/fm 0.90 at K=5), which pins the whole difference on the constraint.
+- **As a result: 53 of 54 finished projected cells read `success = 0.00`** (S&C ≤ success), the 54th
+  0.10. All three flow models, all budgets, per-step and endpoint alike. At `pillars_hg` the K=5 cells
+  read 0.80–1.00.
+- **Signature at K≤2:** `success_relaxed=1.00, safe=1.00, goal_reached=0.00` — the drone crosses the
+  goal line, contact-free, and ends more than 0.30 m from the goal point. Lateral miss (altitude is
+  locked by the degenerate `actions[2]` bound). **At K=5** `safe` collapses on per-step rows (fm
+  `dpcc-r` 0.00, mf `dpcc-c` 0.00): MuJoCo contact, which a plan obeying $|y|\ge1.26$ cannot produce
+  against $r=0.12$ pillars — so either the plan is not obeyed or the contact is the floor.
+- **Leading hypothesis — the goal criterion.** Goal at $(3.2,\pm1.11)$, radius 0.30; the constraint
+  pushes the lane to $|y|\ge1.26$ and nothing brings it back (the models only know straight
+  $|y|=1.11$ lines). That spends 0.15 of the 0.30, and the measured tracking error is 0.34–0.45. If
+  right, the projected flights may be constraint-satisfying and fail only the goal test — a
+  scene-design flaw at evaluation time, the same thing U16 pre-empted for the corridor slide by
+  checking the goal against the detour. **Alternative:** SLSQP non-convergence — 25993 logs
+  `[hardflow][NLP-FAILURE] … keeping scipy's last iterate, which may be INFEASIBLE` on every HardFlow
+  variant.
+- **What decides it:** `results.json` of four cells (fm K1 `dpcc-c`; mf K5 `dpcc-r`; fm K5 `dpcc-r`;
+  mf K5 `hardflow_new-r`) — `goal.dist`, `n_violations`/`collision_free`, `min_z`/`contact_frac`,
+  `projection_health`. Hypothesis 1 predicts goal distances clustered just above 0.30 with *low*
+  violations; a broken projector predicts the opposite.
+- **Consequence for the thesis:** this wave, as it stands, **cannot restore `sec:res:uav:pillars`** —
+  it replaced one degenerate regime with the other. The timing column is usable regardless.
+- **Consequence for compute:** nothing more on pillars until those four files are read. Not the
+  $\nfe=3$ rung of `PENDING_20260922` §16, not the diffusion remainder, and `pillars_xxl` is off the
+  table either way.
+- `PENDING_20260922_all_lacking_runs.md` called this unit "Gen15 U7" in four places; corrected to
+  U17 (U7 is the 2026-09-04 honest-geometry unit that produced `pillars_hg`).
 - [ ] `DA_in_Paper/analysis/pillars_grid.py` with `GEO_PREFIX = 'pillars_xl'`
 - [ ] `v3/withheld/20260918_uav_pillars_section.tex` restored, every number recomputed

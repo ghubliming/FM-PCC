@@ -62,7 +62,7 @@ Pipeline: `extract/exec_paths.py` (numpy, reads the gitignored `temp/20-09` and 
 **Item 4 as originally written is not satisfied and cannot be by a download.** It asks for the *box*
 paths; the evaluation logs only the end effector (`obs_all` is `[des_xyz | xyz]` of the end effector).
 What is drawn is the end-effector path, which is the quantity the constraint set applies to. The box
-path needs an evaluation re-run with the pose recorded — `PENDING_20260920_all_lacking_runs.md`, D10c —
+path needs an evaluation re-run with the pose recorded — `PENDING_20260922_all_lacking_runs.md`, D10c —
 and the figure's `\guard` says so in the thesis.
 
 ## STATUS 2026-09-20 (v3.53) — `fig_avoiding_paths` re-scoped by the author
@@ -78,6 +78,6 @@ Two consequences:
   `fig:raw-plans`**, same checkpoints and budgets, with the projector switched on — the two figures
   are a matched before/after of the projector rather than two different selections;
 * the diffusion `both-hard` artefact this figure was waiting on is **no longer needed**
-  (`PENDING_20260920_all_lacking_runs.md` §11).
+  (`PENDING_20260922_all_lacking_runs.md` §11).
 
 Counts: 19, 19, 17 and 20 of 20 episodes reach the goal; **all 80 are violation-free**.

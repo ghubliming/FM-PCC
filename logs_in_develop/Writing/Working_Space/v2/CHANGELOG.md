@@ -14,6 +14,46 @@ Format: what changed · why · what it is sourced from · what it left open.
 
 ---
 
+## v2.25 — 2026-09-21 · seven inbox items closed; translation table re-swept; the quadrotor incentive; the endpoint-projection figure → [`changelogs/v2.25_20260921_inbox_translation_uav_incentive_hardflow_figure.md`](changelogs/v2.25_20260921_inbox_translation_uav_incentive_hardflow_figure.md)
+
+**Date: 2026-09-21.** Six items from the author. The → v2 inbox queue is now **empty**.
+- **All seven open inbox items closed.** v3.60 rotor reach (not "vehicle radius", and not the
+  tightening); v3.58 the plan holds **$H$** transitions and $n = Hd$, with the two dynamics-row
+  ranges and the transport-time description that follow; v3.51 the action bound stays in Chapter 4
+  but is defined **once**, in the §4.6 intro; v3.48 "wall-clock" is gone; v3.46 needed no edit
+  (§4.6.3 already builds the quadrotor demonstrations in two layers); v3.43 the action weight is not
+  shared and is no longer claimed; v3.36 the box pose is drawn per episode and is not observed, and
+  the alignment constraint set is the evaluated `combined_5` geometry.
+- **Translation table re-swept** against Ch 1–4. Five mismatches fixed: *wall clock*, *projector* →
+  projection, *"a genuine hyperparameter"*, the defensive *"This is not a shortcut: …"*, and
+  `action_weight`. Clear on the rescan: flagship, tier, regime in prose, arm A/B/C, S&C, naive,
+  shipped, funnel, Pareto, a global "better", statistical tests.
+- **The quadrotor incentive is stated.** §2.7 now says what *underactuated, open-loop unstable* costs
+  a controller that plans: a manipulator stops and keeps the clearance it had; a quadrotor has no
+  such state, so the error is flown out over metres, and an attitude not recovered ends the flight.
+  Contribution 5 carries the one-sentence form.
+- **§4.5.3 has the figure.** HardFlow's Fig. 11 — the generation sequence of endpoint projection on
+  the obstacle-avoidance task — reproduced from the vendored arXiv source under **CC BY 4.0**, with
+  the attribution in the caption. This is v2's first figure: `figures/` and `\graphicspath` are new.
+- **Table 4.1 stays in the main text.** `NOTES_tum_formatting_rules.md` instructs that the global
+  notation convention be fixed in the method formalisation section, and the TUM template offers no
+  front-matter symbol-list slot. Decision recorded, not re-litigated.
+- **v2 now records which v3 it is current against**: a CROSS-DRAFT STATE block in the file header and
+  `CROSS_STATE.json`, the mirror of `v3/inherited/SYNC_STATE.json`. Currently **v3.60 (2026-09-21)**.
+
+**For v3:** 🔴 **v3.60's own note is wrong on one number** — the three evaluated scenes set
+`planning_inflation: {r_drone: 0.31, margin_base: 0.0}`, which overrides `inflation` for the planner,
+so planner and scorer both carry $0.31$; check the new *Body inflation* row of `tab:eval` before it
+prints `0.31 + 0.02`.
+**For v3:** `eq:method:plan` now holds $H$ transitions, $n = Hd$, $H = 8$; `eq:bg:mpc:dyn` runs to
+$t+H-2$ and `eq:method:proj:deriv` to $H-2$, matching `projection.py:369` (`horizon - 1` rows).
+**For v3:** v2 has a `figures/` folder and a `\graphicspath` now — one CC BY 4.0 image the merge must
+carry; it is not produced by `export_to_draft.py`.
+**For v3:** the Chapter 4 transport-time paragraph points at `sec:setup:protocol`, not
+`app:training-time-laws`, because v2 has no such label; say the word and v2 will repoint it.
+**For v4:** the notation table stays in §4.1.3 — the decision and the rule behind it are filed, and
+pair with the open acronym-placement question.
+
 ## v2.24 — 2026-09-18 · Chapter 4 reorganised; RQ1 names its axes; network capacity in Table 3.1 → [`changelogs/v2.24_20260918_ch4_reorganised_rq1_axes_and_capacity.md`](changelogs/v2.24_20260918_ch4_reorganised_rq1_axes_and_capacity.md)
 
 **Date: 2026-09-18.** Six items from the author, plus the two open inbox items for v2:

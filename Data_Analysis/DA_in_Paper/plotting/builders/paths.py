@@ -70,8 +70,17 @@ def _panel(scn, panel, first, r_drone, tight, colour_by_pass=False):
             continue
         colour = CLEAN if (ep['passed'] if colour_by_pass else ep['clean']) else VIOLATING
         pts = [(f.X(x), f.Y(y)) for x, y in xy]
-        f.poly(pts, colour, w=1.9, dash='' if colour_by_pass or ep['passed'] else '6,4')
-        f.marker(pts[-1][0], pts[-1][1], 'o', colour, filled=True if colour_by_pass else ep['passed'], r=4.2, ew=1.3)
+        # [v3.60] A dash at '6,4' is destroyed by superposition: twelve near-coincident
+        # not-passed flights fill in each other's gaps and the bundle reads as solid, which
+        # is exactly how the projected diffusion panel came to look like a success. A sparse
+        # dot pattern on a thinner stroke survives the overlap, and the end mark is enlarged
+        # because on this scene it is the only per-flight evidence of where the flight
+        # stopped. Colour still reports the constraint, not the goal. (Author, 2026-09-21.)
+        missed = not (colour_by_pass or ep['passed'])
+        f.poly(pts, colour, w=1.5 if missed else 1.9, dash='2,7' if missed else '')
+        f.marker(pts[-1][0], pts[-1][1], 'o', colour,
+                 filled=True if colour_by_pass else ep['passed'],
+                 r=5.6 if missed else 4.2, ew=2.0 if missed else 1.3)
     # one start mark for the whole panel: every flight of a cell launches from the same pose
     sx, sy = eps[0]['xy'][0] if eps else (None, None)
     if sx is not None:
@@ -85,7 +94,7 @@ def _legend(width, colour_by_pass=False):
     items = [('line', CLEAN, '', 'passed the finish line' if colour_by_pass else 'collision-free flight'),
              ('line', VIOLATING, '', 'did not pass' if colour_by_pass else 'entered an obstacle')]
     if not colour_by_pass:
-        items.append(('line', '#5d6d7e', '6,4', 'did not pass the goal'))
+        items.append(('line', '#5d6d7e', '2,7', 'did not pass the goal (dotted, hollow end)'))
     items.append(('mark', START, '', 'launch pose · flight end'))
     row_y, col_x, size = (30, 76), (16, width // 2 + 16), 18
     for i, (kind, colour, dash, lab) in enumerate(items):

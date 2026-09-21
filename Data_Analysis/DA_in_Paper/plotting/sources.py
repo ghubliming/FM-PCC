@@ -309,6 +309,12 @@ PLATFORM_RENDERS = {
 }
 
 ENV_RENDER_FRAMES = {
+    'fig_render_avoiding_start': {
+        'source': 'd3il/figures/github_readme.gif',
+        'frame': 0,
+        'crop': (0, 0, 320, 180),
+        'what': 'MuJoCo obstacle-avoidance arm at the starting pose',
+    },
     'fig_render_avoiding': {
         'source': 'd3il/figures/github_readme.gif',
         'frame': 200,
@@ -565,6 +571,10 @@ VENDORED = {
         'Data_Analysis/DA_Result_Curated_MD/Report_20260903_AF_UNet/fig7_raw_diffuser_K1.svg',
         'Report_20260903_AF_UNet fig 7; goal reached without projection at K=1, '
         'top-right-hard, seed 6, 20 trials. Ours; verified absent from aux_repo.'),
+    'fig_render_avoiding_start': ('env',
+        'Data_Analysis/DA_in_Paper/data/prepared/fig_render_avoiding_start.png',
+        'D3IL tracked MuJoCo montage, frame 0, top-left 320x180 tile; extracted by '
+        'prep/extract_env_frames.py.'),
     'fig_render_avoiding': ('env',
         'Data_Analysis/DA_in_Paper/data/prepared/fig_render_avoiding.png',
         'D3IL tracked MuJoCo montage, frame 200, top-left 320x180 tile; extracted by '

@@ -1,7 +1,13 @@
 # SLURM RUNBOOK — 2026-09-20 · remaining thesis runs
 
+> **⚠ SUPERSEDED 2026-09-22 — never run.** Phases B (R25), C3/D (R18) and E (the K20 `both-hard`
+> repair) were struck by the author (v3.52, v3.55); R26 was reopened (v3.57) and R30/R31 were opened
+> (v3.60/v3.61). The executable plan is now
+> [`SLURM_RUNBOOK_20260922_all_lacking_runs.md`](SLURM_RUNBOOK_20260922_all_lacking_runs.md) with the driver
+> `Slurm_Codes/temp_bash/pipeline_20260922_all_lacking_runs.sh`. Kept as history; do not submit from here.
+
 Source of scope:
-[`PENDING_20260920_all_lacking_runs.md`](PENDING_20260920_all_lacking_runs.md). This runbook replaces
+[`PENDING_20260922_all_lacking_runs.md`](PENDING_20260922_all_lacking_runs.md). This runbook replaces
 groups G/H/I of the 2026-09-18 runbook for future submissions. In particular, its old group I must not
 be used as written: one monolithic five-seed diffusion job can exceed 24 hours, as the K20 campaign did.
 

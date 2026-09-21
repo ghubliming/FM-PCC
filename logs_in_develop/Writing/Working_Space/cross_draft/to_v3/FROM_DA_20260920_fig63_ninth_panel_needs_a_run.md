@@ -114,4 +114,4 @@ staging. That figure has no builder yet, so it is not a `\hole` you can fill thi
 Recorded in
 [`LEDGER_20260918_v3_figure_artefact_fetch.md`](../../../../../Data_Analysis/analysis_results_checkpoint/LEDGER_20260918_v3_figure_artefact_fetch.md),
 2026-09-20 section, and as §8 of
-[`PENDING_20260920_all_lacking_runs.md`](../../data_status/PENDING_20260920_all_lacking_runs.md).
+[`PENDING_20260922_all_lacking_runs.md`](../../data_status/PENDING_20260922_all_lacking_runs.md).

@@ -84,7 +84,7 @@ and `09_appendix.tex`, mapped to the row that owns it. If a marker is added to t
 | `tab:avoiding-dpcc-protocol` — no $\nfe=2$ diffusion row, no $\nfe=10$ FM row | `\guard` (acceptable) | covered by `fig:k-ladder` |
 | `tab:state-headline` — baseline at $\nfe=20$ only; no CI-MeanFM at the extended protocol | explicit missing rows + `\hole` | R18, R25, R26 |
 | `tab:state-headline` — no FM $\nfe=10$; MeanFM $\nfe=20$ on two geometries | `\guard` (acceptable) | covered by `fig:k-ladder` |
-| `fig:raw-plans` — eight panels | ✅ complete | R5, R24 closed. **v3.48 adds a ninth cell**, the diffusion baseline at $\nfe=20$: a download, tracked as D10d in `PENDING_20260920_all_lacking_runs.md` |
+| `fig:raw-plans` — eight panels | ✅ complete | R5, R24 closed. **v3.48 adds a ninth cell**, the diffusion baseline at $\nfe=20$: a download, tracked as D10d in `PENDING_20260922_all_lacking_runs.md` |
 | ~~`sec:res:avoiding:raw` — quantify plan smoothness~~ | removed at v3.47 | D1 retired |
 | `tab:hf-ladder` — endpoint $B=1$ against per-step $B=4$ | `\guard` | R14 |
 | `sec:res:avoiding:projection` — endpoint floor at 4 seeds × 3 × 2 | `\provisional` | R7 |

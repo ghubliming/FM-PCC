@@ -1,0 +1,10 @@
+{
+  "v2_version": "v2.25 — 2026-09-21",
+  "current_against_v3": "v3.60 (2026-09-21)",
+  "current_against_v4": "not started",
+  "checked_at": "2026-09-21",
+  "inbox": "../cross_draft/INBOX.md",
+  "note": "Every cross-draft note addressed to v2 up to v3.60 has been applied or answered. The mirror of this file on the v3 side is v3/inherited/SYNC_STATE.json, which records which v2 revision v3 absorbed.",
+  "thesis_v2_sha256_16": "0acf5f0df4499a98",
+  "bibliography_sha256_16": "5c046b2902675a09"
+}
