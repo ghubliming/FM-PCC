@@ -21,6 +21,13 @@ is sourced from · what it left open.
 
 ---
 
+## v3.68 — 2026-09-22 · KEY UPDATE: quadrotor chapters rebuilt — pillars v2 (the avoiding planner flown) → corridor v3 (tilt + roof) → s-curve as a controller caveat; cells blank for the 23-09 runs → [`changelogs/v3.68_20260922_pillars_v2_corridor_v3_scurve_caveat.md`](changelogs/v3.68_20260922_pillars_v2_corridor_v3_scurve_caveat.md)
+
+- **Ch 5:** scene order and roles rewritten; pillars = the avoiding planner (human manipulator demonstrations, not retrained) flown by the quadrotor in the field scaled by 36 — said plainly, with a guard that it is not learning to fly; corridor = slide + roof; s-curve = caveat. `tab:uav-scenes`, `tab:uav-demos`, metrics, `tab:protocol`, §5.5.3.3 follow; figure captions carry `\outdated` notes until R39/R33 rebuild the panels.
+- 🔴 **Ch 6 §6.3:** 6.3.1/6.3.2/6.3.3 in the order pillars → corridor → s-curve; pillars-v2 templates (`tab:uav-pillars-raw`, `tab:uav-pillars`, `tab:uav-pillars-endpoint`, `fig:uav-pillars-paths`) as *table vs air* comparisons, all pending R39; the three `pillars_hg` blocks archived; **s-curve reduced to its four pilot cells** (unprojected, all failing at each model's best budget) + pointer to the controller caveat; conclusion as holes.
+- **Item 4 checked:** the unprojected s-curve does *not* pass the goal line under brake-to-rest (0–7 of 10; MeanFM K10 0/10, all inverted) while MuJoCo MPC flies the same plans → controller, not planner; R40 (20 min) proves it is the setpoint policy and not the loop.
+- Ledger: R31 struck, R38 optional, R40 opened (23-09 file §4); issues for the run agent in §5. `check.py` passes. **Bundles (closing v3.68):** `bundle/output/thesis_v3_20260922_162325_new.zip` + `_clean` + `_nonotes`, 45/45 figures, refs resolve, `--verify` byte-faithful.
+
 ## v3.67 — 2026-09-22 · All-tightened: every untightened cell withdrawn from Ch 5/6/appendix; Ch 5 says why once; R37/R38 owed → [`changelogs/v3.67_20260922_all_tightened.md`](changelogs/v3.67_20260922_all_tightened.md)
 
 - **Ch 5 §5.2.1:** the rule and the reason — every result of Ch 6 is on the tightened set (DPCC's set; the only set on which a projected plan satisfies the constraint at all; the plain set ranks nothing). Unprojected plans unaffected.

@@ -1,5 +1,7 @@
 # PENDING RUN — UAV-corridor v3: the grid, the arms, the Slurm order, and what the thesis reads from it (R33)
 
+> **Superseded on 2026-09-23 by [`PENDING_20260923_uav_corridor_v3_pillars_v2_paper_runs.md`](PENDING_20260923_uav_corridor_v3_pillars_v2_paper_runs.md)** (geometry decided: tilt **and** hump; paper-only variants; tag `p23cv3`; runbook beside it). Kept for history; do not submit from here.
+
 **2026-09-22 · v3.66 · author's methodology (changelog item 5), recorded here as the run specification.**
 Ledger entry: `PENDING_20260922_all_lacking_runs.md` §23 / R33. Chapter 5/6 corridor blocks are blank until this lands.
 

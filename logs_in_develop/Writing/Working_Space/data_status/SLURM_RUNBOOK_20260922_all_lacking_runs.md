@@ -42,7 +42,7 @@ visual-aligning training. G and H are opt-in.
 | **A** | R2 | 🔴 | D3IL-aligning diffusion $\nfe=20$, seed 6, **10 contexts**, `combined_5` + tightened twin, `diffuser`+`dpcc-r/c/t` | no | 1 | none | ~1.5 h |
 | **B1** | R26 | 🟡 | D3IL-avoiding diffusion $\nfe=2$ **training**, seeds 7, 8, 9, 10, one job each | **4** | 4 | none | ~11 h total (2 h 41 m each) |
 | **B2** | R26 | 🟡 | diffusion $\nfe=2$ evaluation, seeds 6–10, 3 geometries, 2 episodes, the stock 17-variant list, tag `_msgdpccproto` | no | 1 | `afterok` all of B1 | ~1.5 h |
-| **C** | R30 | 🟢 | UAV-corridor diffusion under `dpcc-t-tightened`, 12 flights, tag `u17cv2` | no | 1 | none | ~1 h |
+| ~~**C**~~ | ~~R30~~ | ⛔ | **superseded 23-09** — the corridor is re-run as corridor v3 (R33) and pillars v2 is R39: `SLURM_RUNBOOK_20260923_uav_corridor_v3_pillars_v2.md` | — | — | — | — |
 | **D** | R31 | 🟡 | UAV-s-curve **unprojected**: mf $\nfe=1,3,5$ · af $3$ · fm $1,3,5$, `diffuser`, 10 flights, tag `u7hg` | no | 7 | none | ~1 h total |
 | **E** | R31 | 🟡 | UAV-s-curve **projected**: mf $3,5$ · af $3$ · fm $3,5$ × {`diffuser`,`dpcc-t`,`hardflow_new`,`-r`,`-c`,`-t`}, 10 flights, tag `u18sc` | no | 5 | none | ~6 h **per cell** → ~30 h |
 | **F1/F2** | R16 | 🟡 | D3IL-aligning fm and af at $\nfe=10$, $T=0.4$ (the budget the existing mf $\nfe=10$ row used), 10 contexts | no | 2 | none | ~1 h each |
@@ -56,7 +56,7 @@ so it should enter the queue early; A is a single one-hour job and can run besid
 Recommended submission if time is short:
 
 1. `WAVE="A B"` — the blocker and the long pole (≈ 14 GPU-h, 6 jobs).
-2. `WAVE="C D"` — two cheap groups that close stated gaps (≈ 2 GPU-h, 8 children).
+2. `WAVE="D"` — one cheap group that closes a stated gap (C is superseded, see the 23-09 runbook).
 3. `WAVE="E"` — only after the `R31_PERSTEP` choice is confirmed (≈ 30 GPU-h, 5 children).
 4. `WAVE="F"` — one training plus three evaluations (≈ 6 GPU-h).
 5. `G`, `H` — only with spare capacity.
@@ -161,7 +161,7 @@ the three tightened rules enter the tables.
 
 A failed B1 keeps B2 held (`afterok`); never bypass the dependency with a missing seed.
 
-### C · R30 — corridor diffusion under the flow rows' variant
+### C · R30 — corridor diffusion under the flow rows' variant — ⛔ SUPERSEDED 23-09 (see `SLURM_RUNBOOK_20260923_uav_corridor_v3_pillars_v2.md`; do not submit)
 
 `eval_mix_uav.sh diffusion corridor 6 12 fm_only none ""` with `UAV_MIX_GEO_VARIANTS=corridor_v2_slide`,
 `UAV_MIX_VARIANTS=dpcc-t-tightened`, `FMPCC_SAFE_EPS_FRAC=1.0`, `FMPCC_SAFE_EPS_MODE=scaled`, tag

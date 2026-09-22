@@ -1,5 +1,12 @@
 # PENDING — 2026-09-22 · complete current list of missing runs and artefacts
 
+> **23-09 (v3.67+):** every UAV-**corridor** and UAV-**pillars** run item of this ledger (R30, R32, R33 and the 22-09
+> corridor spec) is **superseded by [`PENDING_20260923_uav_corridor_v3_pillars_v2_paper_runs.md`](PENDING_20260923_uav_corridor_v3_pillars_v2_paper_runs.md)**
+> and its runbook [`SLURM_RUNBOOK_20260923_uav_corridor_v3_pillars_v2.md`](SLURM_RUNBOOK_20260923_uav_corridor_v3_pillars_v2.md)
+> (R33 corridor v3 = tilt + hump, paper-only variants, tightened only, tag `p23cv3`; **R39** pillars v2 representative set,
+> tags `p23pv2turbo` / `p23pv2live`). The rows below are kept for history and are not to be run from here.
+
+
 **Renamed from `PENDING_20260920_all_lacking_runs.md` on 2026-09-22.** Same file, same history, nothing
 removed; only the date in the name moved forward. Older changelogs (v3.44–v3.59) still cite the previous
 name and were deliberately left alone, because they are a record of what was true when they were written.
@@ -32,7 +39,7 @@ items were closed without a run**, because the data already existed and had simp
 | CI-MeanFM $\nfe=2$ on UAV-s-curve | made `tab:uav-scurve` a matched comparison | v3.60 |
 | The activation-threshold evidence ($\eta=0.5$ vs $0.1$ at $\nfe=100$) | new discussion in §6.2.2 | v3.60 |
 
-### Since the census, later on 2026-09-22 (v3.61 → v3.67) — a running addendum, nothing above removed
+### Since the census, later on 2026-09-22 (v3.61 → v3.68) — a running addendum, nothing above removed
 
 | what | where | version |
 | :-- | :-- | :-- |
@@ -52,6 +59,7 @@ items were closed without a run**, because the data already existed and had simp
 | **R34 opened (optional):** endpoint projection at the uncompressed threshold η = 0.5, K = 100, untightened, mf — the last empty cell of Table 6.6 | §23 | v3.66 |
 | **R35 opened:** endpoint projection on CI-MeanFM at K = 20, tightened, r/c/t — the empty block of Table 6.8 | §23 | v3.66 |
 | **R36 opened:** D3IL-avoiding matched-candidate (4 vs 4) endpoint-vs-per-step cells that Table 6.3 lacks: CI-MeanFM and FM at K = 3 (seed 6), MeanFM at K = 10 with four candidates (seed 6), optionally MeanFM K = 3 on seed 6 | §23 | v3.66 |
+| **v3.68 (author): pillars v2 + corridor v3 are the scenes, s-curve is a caveat.** Ch 5/6 quadrotor parts rebuilt in the order pillars → corridor → s-curve with the data blank (R39, R33). S-curve prints its pilot cells only → **R31 struck** (the low-K grid is no longer printed), **R38 ⚪ optional** (the projected pilots are not needed for the caveat), **R40 opened** (the s-curve plan under the other two velocity-setpoint policies — the one datum the caveat lacks); all in the 23-09 file | §26 | v3.68 |
 | 🔴 **ALL-TIGHTENED (author):** every untightened cell withdrawn from Ch 5/6/appendix. **R37 opened** (tightened threshold ladder, Table 6.6, both projectors), **R38 opened** (tightened s-curve projected cells, Table 6.15 + appendix), **R34 folded into R37**, **R33 trimmed** (untightened corridor arm dropped, 68 cells) | §24 | v3.67 |
 
 ### The open list, by priority
@@ -63,11 +71,12 @@ wall-clock: queue time and the 24 h `--time` cap are not in it.
 | :-- | :-- | :-- | :-- | --: |
 | **R23** | ⛔ **ABANDONED 2026-09-22 → FALLBACK to `pillars_hg`** | UAV-pillars at `pillars_xl` — **Gen15 U17 abandoned; the thesis restores the withheld `pillars_hg` section with its caveat** (`Gen15/U17/CLOSURE_20260922_U17_abandoned.md`) (Gen15 U17, Slurm jobs up to 25995, author, 2026-09-22). Coverage, cost and whether anything is still new are filled in by the author when the wave ends; see §16. **No new pillars run is listed until then.** 🔴 **First read 2026-09-21: 10/12 children complete, 2 running, diffusion walled at 2/7 (✅ diffusion arm CLOSED BY DECISION — reported unprojected only, K=20 projection is ~1 GPU-day per variant and the `c` rules exceed 24 h; see §16) — and 53 of 54 finished projected cells read `success = 0.00`. Read [`SLURM_RUNBOOK_20260919_pillars_enlarged.md` §3e](SLURM_RUNBOOK_20260919_pillars_enlarged.md) before scheduling anything on this scene** | no | ~5 GPU-days spent, see §16 |
 | **R2** | 🔴 | D3IL-aligning: the tightened projected diffusion baseline, per-step r/c/t at K = 20, η = 0.2 — the *pending (R2)* row of Table 6.8 (v3.66); endpoint on diffusion is not defined and not owed | no | ~1.5 h |
-| **R33** | 🔴 **the corridor run** | UAV-corridor v3 (geometry A = U19 hump after coding, or B = v2 slide re-run; author's call): **68 cells / 816 flights** on the fixed grid, tightened only (v3.67), K20 last — `PENDING_20260922_corridor_v3_run.md` | no (U19 coding under A) | ~1.5–2 GPU-days |
+| **R33** | 🔴 **moved → 23-09 file** | UAV-corridor v3 = **tilt + hump** (author, 23-09), 68 cells, paper-only variants, tag `p23cv3` — spec and runbook in `PENDING_20260923_uav_corridor_v3_pillars_v2_paper_runs.md` | no (U19 coding first) | ~1.5–2 GPU-days |
+| **R39** | 🔴 **new, 23-09 file** | UAV-pillars v2 (Gen15 U18): the **representative** set — G1 pilot, five replay cells (T1–T5), two live cells (L1, L2); tags `p23pv2turbo` / `p23pv2live` | no | < 30 min CPU + ~40 min GPU |
 | **R35** | 🟡 | D3IL-aligning: endpoint projection on CI-MeanFM at K = 20, tightened, r/c/t (Table 6.8 block) | no | ~1 h |
 | **R36** | 🟡 | D3IL-avoiding: matched four-candidate endpoint-vs-per-step at K = 3 for CI-MeanFM and FM, and MeanFM at K = 10 with four candidates, seed 6 (Table 6.3 *lacking* cells) | no | ~2 h |
 | **R37** | 🔴 | D3IL-aligning **tightened threshold ladder** (Table 6.6, now blank): MeanFM, random rule, `combined_5-tightened`, `dpcc-r` + `hardflow_sls-r` at (K, η) = (2, 0.5), (10, 0.4), (20, 0.2), (100, 0.1), (100, 0.5); the K20/η0.2 and K10/η0.4 cells already exist tightened (Table 6.7) → **3 new pairs**: K2 η0.5 both, K100 η0.1 both, K100 η0.5 both | no | ~2 h (the η0.5 K100 pair dominates) |
-| **R38** | 🟡 | UAV-s-curve **tightened projected cells**: CI-MeanFM K5, MeanFM K10, FM K20 with `dpcc-t-tightened` + `hardflow_sls{,-r,-c,-t}-tightened`; diffusion K20 `dpcc-t-tightened` (Table 6.15, appendix tables) | no | ~4 h (per-step s-curve cells run 1.4–3.6 s/step) |
+| ~~R38~~ | ⚪ optional (v3.68) | tightened s-curve projected cells — not needed for the caveat; run only with spare capacity | no | ~4 h |
 | ~~R34~~ | folded into R37 | endpoint at η = 0.5, K = 100 is now one of R37's pairs | — | — |
 | **R26** | 🟡 | D3IL-avoiding: five-seed diffusion $\nfe=2$ | **4 trainings** | ~11 h (training) + 15 min |
 | **R16** | 🟡 widened at v3.62, narrowed at v3.63, **narrowed again at v3.66 (K = 1 dropped)** | D3IL-aligning, the unprojected ladder $\nfe\in\{2,10,20,100\}$ for the **three flow-based models**: the **three** cells `tab:va-models` prints as *pending* — CI-MeanFM 10; FM 2, 10 (§20, §23). ~~Diffusion at 1, 2, 10~~ struck: the author removed every diffusion row but $\nfe=20$ from Table 6.5 (v3.63, third round) | no | ~2 h (6 evaluations) |
@@ -75,9 +84,9 @@ wall-clock: queue time and the 24 h `--time` cap are not in it.
 | **R7 / R14** | 🟡 | D3IL-avoiding: candidate-matched endpoint vs per-step projection, 5 seeds × 20 episodes | no | ~6.5 h |
 | **R9** | 🟡 | FM with unit-scale initial noise, all three environments | no | ~3 h |
 | **R15** | 🟡 | UAV-s-curve: MuJoCo MPC at ten flights instead of three | no | 30 min unprojected / ~6.5 h projected |
-| **R30** | 🟢 | UAV-corridor: diffusion under plain `dpcc-t-tightened` — removes the last confound in Table 6.8 | no | ~1 h |
-| **R32** | 🟡 **new at v3.63** | UAV-pillars (`pillars_hg`): MeanFM and FM at $\nfe=1$, the seven per-step configurations (unprojected, `dpcc-{r,c,t}` plain and tightened), ten flights each — the two *pending* rows of `tab:uav-pillars` and `tab:uav-pillars-best` | no | ~2 h (140 flights at 60–85 ms/step × ~500 steps) |
-| **R31** | 🟡 | UAV-s-curve: **the matched grid** — unprojected at $\nfe\in\{1,2,3,5\}$ for the three flow models (7 of 12 cells missing), and the corridor-shaped projection grid at $\nfe\in\{3,5\}$ (5 of 6 cells missing). Opened at v3.61, §18; the draft prints the grid with the missing cells marked \emph{pending} | no | ~1 h unprojected + ~30 h projected |
+| ~~R30~~ | ⛔ superseded (23-09) | corridor-v2 diffusion twin — the v2 corpus is archived (v3.66); the corridor is R33 in the 23-09 file | — | — |
+| ~~R32~~ | ⛔ superseded (23-09) | `pillars_hg` K = 1 rows — the pillars scene is flawed/disabled (v3.65) and is replaced by pillars v2, **R39** in the 23-09 file | — | — |
+| ~~R31~~ | ⛔ struck (v3.68) | the s-curve K ladder is no longer printed; the scene is a controller caveat with its pilot cells (Table 6.14). Any further s-curve run is R40 in the 23-09 file | — | — |
 | ~~**R29**~~ | ⬜ **superseded by R31** (v3.61) | UAV-s-curve: matched-budget switched-wall re-run — the matched grid of R31 contains it | — | — |
 | D10c | 🟡 | Box-pose logging, then re-evaluation of MeanFM $\nfe=20$ | no | ~1 h + a logging change |
 | D11 | 🟢 | Matched full executed-step timing on D3IL-avoiding, for a total-time frontier | no | ~3 h + instrumentation |
@@ -921,3 +930,11 @@ S&C/violation columns are scored on the plain boundary and are, if anything, opt
 
 `v3/RECAP_20260922_tightened_vs_untightened.md` §1–§3 describe the situation *before* this decision and are superseded by
 it; a banner there says so.
+
+## 25 · 23-09 — corridor and pillars leave this ledger
+
+See the banner at the top: R30 and R32 are struck, R33 is moved, R39 is new; all four live in `PENDING_20260923_uav_corridor_v3_pillars_v2_paper_runs.md` with the runbook `SLURM_RUNBOOK_20260923_uav_corridor_v3_pillars_v2.md`. `PENDING_20260922_corridor_v3_run.md` carries a superseded banner. Everything not about those two scenes (R2, R16, R26, R31, R36, R37, R38, …) stays here.
+
+## 26 · v3.68 — the quadrotor chapters are rebuilt around pillars v2 and corridor v3; the s-curve is a caveat
+
+R31 struck, R38 optional, **R40** (s-curve: the same unprojected MeanFM $\nfe=10$ plan under `pid` and `pid_const_v`, and the expert reference replayed under `pid_stopgo`) opened in `PENDING_20260923_uav_corridor_v3_pillars_v2_paper_runs.md` §4. The pillars-v2 and corridor-v3 runs are R39/R33 there. `v3/withheld/20260922_v3.68_archive/` holds what left the chapters.

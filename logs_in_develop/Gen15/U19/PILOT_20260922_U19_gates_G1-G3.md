@@ -81,12 +81,15 @@ already here: 7–8 vs 9–11 steps). Two ways to run the wave, the author's cal
 need to fix the env for the model / projector."* The residue is the plant trailing a feasible setpoint — the system under
 test, not the scene — so the scene stays byte-identical to v2 and the wave measures it as it is. B is not run.
 
-The exact jobs (both geometries, U16 layout, seed 6, 12 flights; ≈ 17 eval jobs each — 5 per flow engine + 2 diffusion):
+The exact jobs — **superseded 2026-09-23 by the paper driver** (runbook `SLURM_RUNBOOK_20260923_uav_corridor_v3_pillars_v2.md`
+§1–§2 variant lists, 68 cells per scene, tags `p23cv3t` / `p23cv3ah`, both scenes, author: "two scenes as piloted"):
 
 ```bash
-bash Slurm_Codes/temp_bash/eval_20260922_u19_corridor_v3.sh submit                                   # tilt   → tag u19cv3t
-GEO=corridor_v3_ablation_hump bash Slurm_Codes/temp_bash/eval_20260922_u19_corridor_v3.sh submit     # hump   → tag u19cv3ah
+bash Slurm_Codes/temp_bash/eval_20260923_p23_corridor_v3.sh              # plan
+bash Slurm_Codes/temp_bash/eval_20260923_p23_corridor_v3.sh submit all   # C1 → C5, both scenes (36 submissions / 62 eval jobs / 136 cells)
 ```
+
+(The 22-09 driver's `submit` — U16 layout, tags `u19cv3*` — is kept for reference only; do not run both.)
 
 ## 5 · Small things seen
 

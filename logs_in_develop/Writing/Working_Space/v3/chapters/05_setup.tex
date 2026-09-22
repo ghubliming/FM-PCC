@@ -339,30 +339,37 @@ unstable (\autoref{sec:bg:quadrotor}), and its plan is tracked by the controller
 (\autoref{fig:env-uav}, \autoref{tab:uav-scenes}):
 
 \begin{description}
-  \item[UAV-corridor] --- \outdated{v3.66: the corridor is being re-evaluated on a new budget grid
-    (R33); the geometry below is corridor v2 and is superseded once the corridor-v3 run lands. Archived:
-    \texttt{withheld/20260922\_v3.66\_archive}.} The entry test. Two parallel walls leave a clear width of $1.90$\,m. In the
-    horizontal $x$--$y$ plane, a halfspace boundary slopes by $14^\circ$ from the upper wall at the
-    entrance to $0.05$\,m below the centre line at the exit. It requires a lateral route change of
-    $0.25$--$0.49$\,m before the exit. Every constraint of the scene, the walls included, is a vertical
-    surface: it constrains the horizontal position only, and the altitude is bounded by nothing but the
-    workspace box (\autoref{fig:uav-corridor-altitude}).
-    The models are trained on the demonstrations of a narrower corridor and never see this halfspace, so it is
-    a test-time constraint in the same sense as the halfspaces of D3IL-avoiding.
-  \item[UAV-pillars] --- \flawed{temporarily disabled, v3.65: the scene is under review} six cylindrical pillars stand in two rows across three columns, and the vehicle
-    must choose a way through them. Its constraint set is the clearance its own demonstrations were
-    generated to keep (\autoref{sec:setup:data:uav}), so the plans are feasible before any projection
-    runs and the scene measures how much of a feasible plan each method preserves rather than whether it
-    can repair one; \autoref{sec:res:uav:pillars} reads it on those terms.
-  \item[UAV-s-curve] --- a tracking-controller stress test. Two offset corridor segments, joined by a
-    diagonal passage, require two sharp changes of direction from the generated trajectory.
+  \item[UAV-pillars] --- the cross-embodiment test. The obstacle field of D3IL-avoiding
+    (\autoref{sec:setup:tasks:avoiding}) is scaled by $36$, so that the rod's radius becomes the vehicle's
+    rotor reach, and its six obstacles are extruded into pillars; the three test-time constraint
+    geometries of that benchmark are mapped into the arena at the same scale. The planner is the one
+    trained on the avoiding demonstrations and is not retrained: the quadrotor executes the plans it
+    produces, so the scene asks whether a plan the projector has repaired on the table is flyable by a
+    vehicle, with a plant's tracking error between the plan and the path. It is a scene on which the
+    constraint is new to the data, which is what gives the projector something to do;
+    \autoref{sec:res:uav:pillars} reads it on those terms. \outdated{v3.68: pillars v2 (Gen15 U18), data
+    pending R39; the pillars panels of the figures below still show the superseded six-pillar scene.}
+  \item[UAV-corridor] --- the three-dimensional test. Two parallel walls leave a clear width of $1.90$\,m.
+    In the horizontal $x$--$y$ plane a halfspace boundary slopes by $14^\circ$ from the upper wall at the
+    entrance to $0.05$\,m below the centre line at the exit, and in the vertical $x$--$z$ plane a second
+    boundary rises like a roof from the floor at $x=-1.5$\,m to $1.10$\,m at $x=0$ and falls back to the
+    floor at $x=1.5$\,m. Together they require a lateral route change of $0.25$--$0.49$\,m and a climb of
+    about $0.4$\,m before the exit --- a detour in all three coordinates. The models are trained on the
+    demonstrations of a narrower, level corridor and never see either boundary, so both are test-time
+    constraints in the same sense as the halfspaces of D3IL-avoiding. \outdated{v3.68: corridor v3, data
+    pending R33; the corridor panels of the figures below show the scene without its roof.}
+  \item[UAV-s-curve] --- the tracking-controller caveat. Two offset corridor segments, joined by a
+    diagonal passage, require two sharp changes of direction, and the scene is reported for what those
+    turns do to the controller (\autoref{sec:res:uav:controller}), not as a third benchmark.
 \end{description}
 
 \begin{table}[!htbp]
   \caption[Quadrotor scenes]{The constraint set of each quadrotor scene: halfspaces and circular
-  keep-out regions (\autoref{sec:method:env:uav}). Each boundary is inflated by the vehicle's rotor reach
-  of $0.31$\,m before it reaches the solver, and the tightened variants move it a further $0.025$\,m
-  inward.}
+  keep-out regions (\autoref{sec:method:env:uav}). On UAV-corridor and UAV-s-curve each boundary is
+  inflated by the vehicle's rotor reach of $0.31$\,m before it reaches the solver, and the tightened
+  variants move it a further $0.025$\,m inward. On UAV-pillars the boundaries are those of D3IL-avoiding
+  mapped into the arena, and the vehicle's extent enters through the scale, which sends the rod's radius
+  onto the rotor reach.}
   \label{tab:uav-scenes}
   \centering
   \small
@@ -372,13 +379,14 @@ unstable (\autoref{sec:bg:quadrotor}), and its plan is tracked by the controller
     \toprule
     Scene & Constraint & Values \\
     \midrule
-    UAV-corridor \outdated{v2, R33}
-      & two wall halfspaces & inner faces $y=\pm0.95$\,m, active over $x\in[-2,2]$; clear width $1.90$\,m \\
-      & sloping halfspace & from $(-2.0,\,0.95)$ to $(2.0,\,-0.05)$, a descent of $14^\circ$ \\
-      & wall ends & four disks of radius $0.05$\,m at $x=\pm2$, $y=\pm1$ \\
+    UAV-pillars
+      & three avoiding geometries, mapped & the halfspaces and the keep-out disk of \emph{top-left-hard}, \emph{top-right-hard} and \emph{both-hard} (\autoref{tab:avoiding-geometries}) at scale $36$: keep-out radius $2.88$\,m; physical pillars of radius $0.90$ and $1.08$\,m in an arena of $21.6\times25.2$\,m \\
     \addlinespace[2pt]
-    UAV-pillars \flawed{disabled}
-      & six disks & radius $0.12$\,m at $x\in\{-2,0,2\}$ and $y=\pm0.6$\,m \\
+    UAV-corridor
+      & two wall halfspaces & inner faces $y=\pm0.95$\,m, active over $x\in[-2,2]$; clear width $1.90$\,m \\
+      & sloping halfspace ($x$--$y$) & from $(-2.0,\,0.95)$ to $(2.0,\,-0.05)$, a descent of $14^\circ$ \\
+      & roof halfspaces ($x$--$z$) & from $(-1.5,\,0)$ to $(0,\,1.10)$ and from $(0,\,1.10)$ to $(1.5,\,0)$, the plan above both, each active over its own span of $x$ \\
+      & wall ends & four disks of radius $0.05$\,m at $x=\pm2$, $y=\pm1$ \\
     \addlinespace[2pt]
     UAV-s-curve
       & four switched wall halfspaces & feasible $y\in[-1.25,-0.35]$ over $x\in[-3,-0.5]$, and $y\in[0.35,1.25]$ over $x\in[0.5,3]$ \\
@@ -386,22 +394,24 @@ unstable (\autoref{sec:bg:quadrotor}), and its plan is tracked by the controller
     \bottomrule
   \end{tabularx}
 \end{table}
-\srcnote{\texttt{config/uav\_projection.yaml}: \texttt{corridor\_v2\_slide} (scene
-\texttt{scene\_corridor\_v2.xml}), \texttt{pillars\_hg}, \texttt{s\_curve\_hg};
-\texttt{inflation.r\_drone: 0.31}; \texttt{enlarge\_constraints: 0.025}. The six
-\texttt{sphere\_outside} rows of \texttt{pillars\_hg} carry \texttt{radius: 0.12}, the pillar of
-\texttt{quadrotor\_modified.xml}. The enlarged entries \texttt{pillars\_xl} (0.35) and
-\texttt{pillars\_xxl} (0.55) of Gen15 U17 are kept behind an ABANDONED banner and are never active;
-v3.63, 2026-09-22, after \texttt{Gen15/U17/CLOSURE\_20260922\_U17\_abandoned.md}.}
+\srcnote{\texttt{config/uav\_projection.yaml}: \texttt{corridor\_v3} (scene \texttt{scene\_corridor\_v2.xml},
+the slide of \texttt{corridor\_v2\_slide} plus the two \texttt{plane: xz} roof halfspaces; Gen15 U19, coding
+pending R33), \texttt{s\_curve\_hg}; \texttt{inflation.r\_drone: 0.31}; \texttt{enlarge\_constraints: 0.025}.
+UAV-pillars: \texttt{uav\_avoiding\_bridge/frame.py} (\texttt{SCALE} 36, keep-out $2.88$\,m, pillars
+$0.90$/$1.08$\,m, rod radius $0.01 \to 0.36$) and the avoiding constraint sets of
+\texttt{config/projection\_eval.yaml}. The earlier \texttt{pillars\_hg} entry (0.12 m pillars, quadrotor
+demonstrations) and the abandoned \texttt{pillars\_xl}/\texttt{xxl} are no longer used; v3.68.}
 
 The three scenes use the same two constraint forms as D3IL-avoiding --- halfspaces and circular
 keep-out regions --- so the projection solves the same kinds of rows in the air as on the table
-(\autoref{fig:constraints-uav}). What differs is that a wall acts only over the span of $x$ on which it
-exists, and that every wall, pillar and corner disk is inflated by the rotor reach of $0.31$\,m before
-it reaches the solver, because the vehicle is a body and not a point. The tightened variants move each of
-these boundaries a further $0.025$\,m inward, the margin of \ac{DPCC}.
-\srcnote{\texttt{config/uav\_projection.yaml}: \texttt{workspace\_bounds} of \texttt{corridor\_v2\_slide},
-\texttt{pillars\_hg}, \texttt{s\_curve\_hg}; \texttt{planning\_inflation.r\_drone: 0.31};
+(\autoref{fig:constraints-uav}); on UAV-pillars they are the avoiding rows themselves. What differs on the
+two scenes with quadrotor demonstrations is that a wall acts only over the span of $x$ on which it exists,
+that the corridor's roof is a halfspace in the vertical plane, and that every wall, roof and corner disk is
+inflated by the rotor reach of $0.31$\,m before it reaches the solver, because the vehicle is a body and
+not a point. The tightened variants move each of these boundaries a further $0.025$\,m inward, the margin
+of \ac{DPCC}.
+\srcnote{\texttt{config/uav\_projection.yaml}: \texttt{workspace\_bounds} of \texttt{corridor\_v3},
+\texttt{s\_curve\_hg}; \texttt{planning\_inflation.r\_drone: 0.31};
 \texttt{enlarge\_constraints: 0.025}, applied to the geometric constraints of \texttt{-tightened} variants only
 (\texttt{eval\_mix\_uav.py:1019}).}
 
@@ -410,14 +420,14 @@ these boundaries a further $0.025$\,m inward, the margin of \ac{DPCC}.
   \begin{minipage}{0.78\linewidth}
   \centering
   \begin{minipage}{0.30\linewidth}\centering
-    \includegraphics[width=\linewidth]{fig_render_uav_corridor}\\[-0.1em]
-    \includegraphics[width=\linewidth]{fig_scene_uav_corridor}\\[0.2em]
-    {\footnotesize UAV-corridor}
-  \end{minipage}\hfill
-  \begin{minipage}{0.30\linewidth}\centering
     \includegraphics[width=\linewidth]{fig_render_uav_pillars}\\[-0.1em]
     \includegraphics[width=\linewidth]{fig_scene_uav_pillars}\\[0.2em]
-    {\footnotesize UAV-pillars \flawed{disabled, v3.65}}
+    {\footnotesize UAV-pillars \outdated{superseded scene, R39}}
+  \end{minipage}\hfill
+  \begin{minipage}{0.30\linewidth}\centering
+    \includegraphics[width=\linewidth]{fig_render_uav_corridor}\\[-0.1em]
+    \includegraphics[width=\linewidth]{fig_scene_uav_corridor}\\[0.2em]
+    {\footnotesize UAV-corridor \outdated{without the roof, R33}}
   \end{minipage}\hfill
   \begin{minipage}{0.30\linewidth}\centering
     \includegraphics[width=\linewidth]{fig_render_uav_scurve}\\[-0.1em]
@@ -425,20 +435,22 @@ these boundaries a further $0.025$\,m inward, the margin of \ac{DPCC}.
     {\footnotesize UAV-s-curve}
   \end{minipage}
   \end{minipage}
-  \caption[The quadrotor scenes]{The three quadrotor scenes. Upper row: each
-  scene rendered in MuJoCo from its scene file, with the Skydio X2 at the start of the reference path of
-  the demonstrations (green), seen from behind the start. The path shown for the pillars passes the three
-  pillar pairs on the left, right and left. Lower row: an orthographic view of the same scene file, which
-  shows the whole arrangement at true proportions --- the corridor walls, the six pillars, and the two
-  offset passages of UAV-s-curve. The lower row plots only the $x$--$y$ coordinates; altitude $z$ is
-  omitted from these plan views.}
+  \caption[The quadrotor scenes]{The three quadrotor scenes, in the order of this chapter. Upper row: each
+  scene rendered in MuJoCo from its scene file, with the Skydio X2 at the start, seen from behind the
+  start. Lower row: an orthographic view of the same scene file, which shows the whole arrangement at true
+  proportions. The lower row plots only the $x$--$y$ coordinates; altitude $z$ is omitted from these plan
+  views. \outdated{v3.68: the pillars panels show the superseded six-pillar scene and the corridor panels
+  the corridor without its roof; both pairs are replaced when the pillars-v2 arena and the corridor-v3
+  scene are rendered (R39, R33).}}
   \label{fig:env-uav}
 \end{figure}
 
 \autoref{fig:constraints-uav} shows the constraint sets applied to plans in the three scenes.
 A wall constrains only the span of $x$ over which it exists, which is why the halfspace it excludes
-stops short of the panel edge; and on UAV-pillars the inflated pillars leave three channels open ---
-the two outside the rows, which the demonstrations use, and the one between them, which they never do.
+stops short of the panel edge; on UAV-pillars the constraint set is the avoiding one of
+\autoref{fig:constraints-avoiding}, drawn in the arena at its scale. \outdated{v3.68: the pillars panel of
+\autoref{fig:constraints-uav} still shows the superseded six-pillar scene and the corridor panel lacks the
+roof; both are rebuilt with R39 and R33.}
 
 \begin{figure}[!htbp]
   \centering
@@ -448,8 +460,8 @@ the two outside the rows, which the demonstrations use, and the one between them
   regions, all three panels drawn alike. The obstacle is the solid line or the red disk --- a wall, the
   sloping halfspace of UAV-corridor, or a pillar; the grey band is what the rotor reach of $0.31$\,m adds around
   it, and the dashed boundary a further $0.025$\,m of tightening. The faint wash beyond a wall is the
-  rest of the halfspace it excludes. White is where the plan may go. On UAV-pillars the red disk is the
-  $0.12$\,m pillar the simulator contains, and the constraint enforces that pillar and nothing larger.}
+  rest of the halfspace it excludes. White is where the plan may go. The corridor's roof, a halfspace in
+  the vertical plane, cannot be drawn in this view and is described in \autoref{tab:uav-scenes}.}
   \label{fig:constraints-uav}
 \end{figure}
 
@@ -518,14 +530,27 @@ the checkpoint (\autoref{tab:train}).
 
 \subsection{Quadrotor Benchmark}\label{sec:setup:data:uav}
 
-The demonstrations were generated for this thesis as described in \autoref{sec:method:env:uav}. That
-section gives the waypoint-and-arc construction, cosine speed profile, tracking equations, rejection
-rule and recorded observation--action pair; \autoref{tab:uav-demos} records only their numerical and
-scene-specific parameters. The corridor with the sloping halfspace reuses the demonstrations
-and trained models of the corridor, because the halfspace is a test-time constraint.
+Two of the three scenes have quadrotor demonstrations, and one has none. On UAV-pillars the planner is
+the one trained on the demonstrations of D3IL-avoiding (\autoref{sec:setup:data:avoiding}) --- human
+teleoperation of a manipulator, recorded on the table --- and it is not retrained: the scene is that
+obstacle field scaled into an arena, and the quadrotor executes the plans the planner produces there
+(\autoref{sec:setup:tasks:uav}). What the scene therefore tests is the execution of a projected plan by a
+different plant, and not a policy trained to fly; a quadrotor deployed outside simulation would need
+demonstrations of its own, which this thesis does not have.
+\guard{On UAV-pillars the demonstrations are the manipulator's. Nothing on that scene is evidence about
+learning to fly from flight data; it is evidence about whether a plan repaired by the projector survives
+execution by a vehicle with tracking error.}
+
+The demonstrations of UAV-corridor and UAV-s-curve were generated for this thesis as described in
+\autoref{sec:method:env:uav}. That section gives the waypoint-and-arc construction, cosine speed profile,
+tracking equations, rejection rule and recorded observation--action pair; \autoref{tab:uav-demos} records
+only their numerical and scene-specific parameters. The corridor with the sloping halfspace and the roof
+reuses the demonstrations and trained models of the level corridor, because both boundaries are test-time
+constraints.
 
 \begin{table}[!htbp]
-  \caption[Quadrotor demonstrations]{Generation of the quadrotor demonstrations. Shared by all scenes:
+  \caption[Quadrotor demonstrations]{Generation of the quadrotor demonstrations of UAV-corridor and
+  UAV-s-curve; UAV-pillars has none and uses the avoiding planner. Shared by the two scenes:
   altitude drawn uniformly from $[0.90,1.30]$\,m per episode, physics step $0.01$\,s, recording every
   third physics step ($0.03$\,s), the nominal gains of the tracking controller, rejection of an episode
   that falls below $0.50$\,m or touches an obstacle on more than the stated fraction of its steps.
@@ -537,15 +562,15 @@ and trained models of the corridor, because the halfspace is a test-time constra
   \renewcommand{\arraystretch}{0.92}
   \begin{tabularx}{\linewidth}{@{}l L L L@{}}
     \toprule
-    & UAV-corridor & UAV-pillars & UAV-s-curve \\
+    & UAV-pillars & UAV-corridor & UAV-s-curve \\
     \midrule
-    Passage classes & three lanes at $y\in\{-0.12,\,0,\,0.12\}$\,m & sides of the three pillar pairs: (L,L,L), (L,R,L), (R,L,R), (R,R,R) & one \\
-    Reference path & straight, $x$ from $-2.8$ to $2.8$\,m & waypoints joined by arcs of radius $\le0.45$\,m & waypoints joined by arcs of radius $\le0.45$\,m \\
-    Duration & $[6,10]$\,s & $[10,16]$\,s & $[16,22]$\,s \\
-    Lateral offset & start, $[-0.03,0.03]$\,m, centre lane & --- & whole path, $[-0.04,0.04]$\,m \\
-    Maximum contact fraction & $2\,\%$ & $0.1\,\%$ & $8\,\%$ \\
-    Episodes generated & 500 & 500 & 500 \\
-    Episodes accepted & 500 & 475 (18 too low, 7 in contact) & 500 \\
+    Passage classes & --- (the D3IL-avoiding demonstrations) & three lanes at $y\in\{-0.12,\,0,\,0.12\}$\,m & one \\
+    Reference path & --- & straight, $x$ from $-2.8$ to $2.8$\,m & waypoints joined by arcs of radius $\le0.45$\,m \\
+    Duration & --- & $[6,10]$\,s & $[16,22]$\,s \\
+    Lateral offset & --- & start, $[-0.03,0.03]$\,m, centre lane & whole path, $[-0.04,0.04]$\,m \\
+    Maximum contact fraction & --- & $2\,\%$ & $8\,\%$ \\
+    Episodes generated & --- & 500 & 500 \\
+    Episodes accepted & --- & 500 & 500 \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -560,7 +585,7 @@ per passage class (\autoref{tab:uav-demos}), and every episode is then \emph{flo
 cascaded geometric controller the evaluation uses (\autoref{sec:method:deployment}), under the same
 physics and at the same time step. What is recorded is the measured state of that flight, not the
 reference. An episode is kept only if the flight it produced stays airborne and within its contact
-budget, which is why $25$ of the $500$ pillar episodes were rejected (\autoref{tab:uav-demos}). Each
+budget (\autoref{tab:uav-demos}). Each
 demonstration is therefore a trajectory the plant has been shown to track, and \emph{expert} means that
 in this thesis and nothing more: a competent generated flight, not a human one.
 
@@ -578,27 +603,12 @@ for the left, centre and right lane --- because the halfspace is introduced at t
 when the demonstrations were flown. The scene in which the constraint is new to the data is exactly the
 scene in which the projection has something to do.
 
-\begin{pillarsflawed}
-UAV-pillars is the first kind. Its demonstrated channels lie at $|y|=1.11$\,m because the generator
-derived them from the pillar radius, the rotor reach and a safety margin, and the constraint set enforces
-the same clearance --- so all four routes satisfy it, tightening included (\autoref{fig:expert-uav}), and
-the projection has nothing to repair. The scene is evaluated on those terms, and
-\autoref{sec:res:uav:pillars} reads it as the preservation case beside the corridor's repair case.
 
-An attempt to turn it into the second kind was made and is not reported. The keep-out radius was
-enlarged at evaluation time only, from the $0.12$\,m pillar the simulator contains to $0.35$\,m, so that
-none of the four demonstrated routes satisfied the constraint any more --- each crossed it by $0.15$\,m
---- and a clean flight would have had to leave the demonstrated lane, as on UAV-corridor. Under that set
-the evaluation ranked nothing. The enlarged pillars closed the channel between the two rows by only a few
-centimetres on each side, and every projector in the study, per-step and endpoint alike, routed the plan
-into that physically open but forbidden channel rather than outward into the legal detour: the flights
-crossed the finish line, which is success under the criterion of \autoref{sec:setup:metrics:uav}, while
-violating the keep-out at every column, so no configuration of any model was collision-free and success
-with constraint satisfaction was $0.00$ throughout, the unprojected rows included. A scene in which the
-projector finds the forbidden lane easier than the legal one measures the geometry and not the planner,
-so the enlargement was abandoned and every pillars result in this thesis is on the constraint set its
-demonstrations satisfy.
-\end{pillarsflawed}
+UAV-pillars is the second kind by construction, and more sharply than the corridor: its constraint sets are
+the three test-time geometries of D3IL-avoiding, which $0$, $1$ and $2$ of the $96$ demonstrations satisfy
+(\autoref{sec:setup:tasks:avoiding}), so on that scene the projector has the same repair to do as on the
+table, and the vehicle adds only what a plant adds --- tracking error between the plan and the path.
+\autoref{sec:res:uav:pillars} reads it on those terms.
 
 That figure draws the references the generator laid out rather than the flights that tracked them, which
 is the conservative choice: a constraint crossed by the reference is crossed by construction rather than
@@ -623,20 +633,22 @@ to go, not a vehicle too large for the gap.
   them. The violation is read off the path line alone, because the vehicle's extent is already inside the
   inflated boundary; the grey silhouette on each route is the vehicle to scale at its tightest moment
   (\autoref{fig:platforms}), shown so the gaps can be judged against the aircraft and not as a second
-  test. On UAV-pillars (\flawed{disabled, v3.65}) all four routes clear the inflated pillars and on UAV-s-curve the single route
-  clears the walls; on UAV-corridor every lane crosses the sloping halfspace, which is added at test time.
-  Drawn are the references the demonstrations track and not the
-  flights themselves; altitude does not enter, because every constraint here is horizontal.}
+  test. On UAV-s-curve the single route clears the walls; on UAV-corridor every lane crosses the sloping
+  halfspace, which is added at test time, and every lane passes under the roof, which the plan view cannot
+  show. Drawn are the references the demonstrations track and not the flights themselves. \outdated{v3.68:
+  the pillars panel shows the superseded six-pillar scene and its generated routes; UAV-pillars now has no
+  quadrotor demonstrations, and the panel is dropped or replaced by the avoiding demonstrations in the arena
+  when the figure store is rebuilt (R39).}}
   \label{fig:expert-uav}
 \end{figure}
 \dataref{DA\_in\_Paper/data/expert\_paths.json, extract/expert\_paths.py; reference paths from
 uav\_expert\_data\_collect/trajectories.py, one per class of generator.py \texttt{HOMOTOPY\_CLASSES};
 acceptance rule \texttt{generator.py} \texttt{SCENE\_MAX\_CONTACT\_FRACTION}, \texttt{Z\_FLOOR\_MARGIN}}
 
-\srcnote{Collection jobs \texttt{21475} (corridor), \texttt{21482} (pillars), \texttt{21476} (s-curve):
-\texttt{n\_trials=500 gain=pid\_default}; \texttt{DONE saved=475 rejected=25 \ldots floor=18 contact=7} for pillars,
-\texttt{saved=500 rejected=0} for the other two. The trained models load the same counts: buffer shapes
-$(500,360,6)$, $(475,560,6)$ and $(500,750,6)$ in the training logs. Gain set \texttt{pid\_default}:
+\srcnote{Collection jobs \texttt{21475} (corridor), \texttt{21476} (s-curve): \texttt{n\_trials=500
+gain=pid\_default}, \texttt{saved=500 rejected=0}; buffer shapes $(500,360,6)$ and $(500,750,6)$ in the
+training logs. The pillars collection \texttt{21482} (475 accepted) belongs to the superseded
+\texttt{pillars\_hg} scene and is not used (v3.68). Gain set \texttt{pid\_default}:
 \texttt{generator.py:73}, both scales $1.0$.}
 
 % =============================================================================
@@ -701,11 +713,10 @@ Each flight is scored by
     $0.31$\,m rotor reach (\autoref{tab:eval});
   \item success with constraint satisfaction: success on a collision-free flight, as on
     D3IL-avoiding;
-  \item whether the goal point is reached: the flight ends within $0.30$\,m of it, contact-free --- the
-    evaluation's strict criterion, which a flight that crosses the finish line and then overshoots or
-    never settles fails. It is printed beside success on UAV-pillars, the one scene on which the two
-    criteria order the models differently (\autoref{sec:res:uav:pillars}) \flawed{UAV-pillars is
-    temporarily disabled, v3.65};
+  \item on UAV-pillars, the metrics of D3IL-avoiding (\autoref{sec:setup:metrics:avoiding}) scored on the
+    flown path --- success at the mapped goal line, success with constraint satisfaction, violating
+    control steps, control steps --- so that a plan's outcome on the table and its outcome in the air are
+    read in the same units, together with whether the vehicle made contact with a pillar;
   \item the number of control steps (steps per flight), and the final distance to the goal point of the
     route (metres), which describes where a flight that does not succeed ends;
   \item the time to compute one action (milliseconds, \autoref{sec:setup:metrics:avoiding}), split into
@@ -1176,9 +1187,9 @@ evaluated scenes run.}
     D3IL-aligning & 1
       & 10 contexts $\times$ 1 episode; the diffusion model 3 episodes per context
       & the ten contexts, compared context by context \\
-    UAV-corridor \outdated{v2} & 1 & 12 flights, four on each of the routes L, C and R & the twelve flights \\
-    UAV-pillars \flawed{disabled} & 1 & 10 flights & the ten flights \\
-    UAV-s-curve & 1 & 10 flights & the ten flights \\
+    UAV-pillars & 5 (1 for the closed-loop check) & the avoiding cell's episodes, $5\times2$ per geometry & the three constraint geometries, as on D3IL-avoiding \\
+    UAV-corridor & 1 & 12 flights, four on each of the routes L, C and R & the twelve flights \\
+    UAV-s-curve & 1 & 10 flights per pilot cell & the ten flights \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -1209,21 +1220,24 @@ initial box and target position, \texttt{DA\_in\_Paper/analysis/va\_results.py}.
 
 \subsubsection{Quadrotor Benchmark}\label{sec:setup:protocol:uav}
 
-\outdated{v3.66: the UAV-corridor protocol below is the v2 protocol; the corridor-v3 grid (budgets,
-projectors, one seed, run order) is in \texttt{data\_status/PENDING\_20260922\_corridor\_v3\_run.md} and
-replaces it when the run lands.} The three scenes are evaluated and reported separately, never pooled. UAV-corridor has twelve flights,
-four on each of its left, centre and right routes, so each route contributes equally. UAV-corridor constrains the commanded
-position in addition to the measured one and leaves the action unconstrained, so its projection configuration is not
-the one used on the other two scenes. Every flight is tracked by the cascaded geometric controller
-with the brake-to-rest velocity setpoint defined in \autoref{sec:method:geometric}; the one exception is the controller
-comparison of \autoref{sec:res:uav:controller}, which replaces the controller by MuJoCo MPC and says so.
-\srcnote{\texttt{Gen15/U16/DA\_20260914\_corridor\_v2\_paper\_full.md} \S1
-(\texttt{-bounds\_free-pdes-tightened}, \texttt{pid\_stopgo}, $n=12$);
-\texttt{Campaign\_20260907\_five\_missions/DA\_20260912\_pillars\_diffusion\_baseline\_reference.md} \S8;
-\texttt{batch\_uav\_20260915\_100816/per\_rollout\_detail.csv}, column \texttt{controller}: all 960 rows on
-\texttt{pillars\_hg} and 880 of the 889 rows on \texttt{s\_curve\_hg} are \texttt{pid\_stopgo}, the other 9
-\texttt{mjpc}; \texttt{pid\_stopgo} sets \texttt{v\_des} $=0$ at each setpoint,
-\texttt{eval\_mix\_uav.py:1598, 1716--1720}.}
+The three scenes are evaluated and reported separately, never pooled, and each on its own protocol.
+UAV-pillars is evaluated at the protocol of the cells it flies: the avoiding cells of
+\autoref{sec:setup:protocol:avoiding} --- five training seeds $\times$ two episodes per geometry, the three
+geometries --- for the configurations \autoref{ch:results} selects on D3IL-avoiding, and one seed for the
+closed-loop check. UAV-corridor has twelve flights per configuration, four on each of its left, centre and
+right routes, so each route contributes equally, on a budget grid that puts every model at one to three
+evaluations and instantaneous-velocity matching up to twenty; it constrains the commanded position in
+addition to the measured one and leaves the action unconstrained, so its projection configuration is not the
+one used on the other two scenes. UAV-s-curve is evaluated as pilots, ten flights per cell, each model at
+the budget it is strongest at. Every flight is tracked by the cascaded geometric controller with the
+brake-to-rest velocity setpoint defined in \autoref{sec:method:geometric}; the one exception is the
+controller comparison of \autoref{sec:res:uav:controller}, which replaces the controller by MuJoCo MPC and
+says so.
+\srcnote{Corridor v3 and pillars v2: \texttt{data\_status/PENDING\_20260923\_uav\_corridor\_v3\_pillars\_v2\_paper\_runs.md}
+(grid, arms, tags \texttt{p23cv3}, \texttt{p23pv2turbo}/\texttt{p23pv2live}); the corridor stack is U16's
+(\texttt{-bounds\_free-pdes-tightened}, \texttt{pid\_stopgo}, $n=12$). S-curve pilots:
+\texttt{batch\_uav\_20260919\_111701}, tags \texttt{u18sc}, \texttt{u7hg}; \texttt{pid\_stopgo} sets
+\texttt{v\_des} $=0$ at each setpoint, \texttt{eval\_mix\_uav.py:1598, 1716--1720}.}
 
 % OPEN (author, 2026-09-20): this subsection may be dropped. Not decided. It is the worked example
 % behind \eqref{eq:method:degen:ngen}; if it goes, the two settings read off below have to move into
