@@ -14,6 +14,11 @@
 #
 #   overrides:  GEOS="corridor_v3_tilt"  SEEDS="6"  NTRIALS=12  RECORD=none  bash ... submit all
 #
+#   WAVE-BY-WAVE CHAIN (C1 finishes → C2 starts, never the whole grid in squeue at once):
+#   bash Slurm_Codes/temp_bash/eval_20260923_p23_corridor_v3_master.sh start        # see that script
+#   (it calls this one with P23_DIRECT=1 P23_JOBIDS_FILE=<file>: every eval job is then submitted directly — the same
+#    per-K sbatch call eval_k_sweep.sh makes — and its job id recorded, so the next wave can depend on it.)
+#
 # PAPER-ONLY (PENDING_20260923 §0): tightened only, `-bounds_free-pdes-tightened` stack, seed 6, 12 flights (4 per route),
 # no untightened twin, no ablation variants. `-tightened` is always the LAST token (DA reads it with endswith).
 #
@@ -117,9 +122,39 @@ run() {  # $1=label $2=n_children $3..=command
     if [ "$MODE" = "plan" ]; then return 0; fi
     "$@"
 }
+# ── P23_DIRECT=1: submit every eval job DIRECTLY (no eval_k_sweep.sh parent) and record its id ──
+# The per-K call is byte-for-byte what eval_k_sweep.sh does for each K (sbatch --parsable, 24 h, the
+# submit.sh log-name convention, env exported), so the results are identical; the only difference
+# is that the id is known here, which the wave-by-wave master needs for its --dependency.
+P23_DIRECT="${P23_DIRECT:-0}"
+P23_JOBIDS_FILE="${P23_JOBIDS_FILE:-}"
+EVAL_SH=Slurm_Codes/sbatch/uav_mix/eval_mix_uav.sh
+_direct_child() {  # $1=engine $2=seed $3=K-or-empty $4=trials $5=record   (env already set by the caller)
+    local e="$1" s="$2" k="$3" n="$4" rec="$5"
+    local DATE TIME LOG_DIR ID
+    DATE=$(date +%Y-%m-%d); TIME=$(date +%H_%M_%S); LOG_DIR="Slurm_Codes/logs/$DATE"; mkdir -p "$LOG_DIR"
+    ID=$(sbatch --parsable --time=24:00:00 --output="$LOG_DIR/${TIME}_%x_%j.log" --error="$LOG_DIR/${TIME}_%x_%j.log" \
+         "$EVAL_SH" "$e" corridor "$s" "$n" fm_only "$rec" "$k") || { echo "      ❌ sbatch failed (${e} K=${k:-plan})"; return 1; }
+    ID="${ID%%;*}"
+    echo "      → job ${ID}  (${e} K=${k:-20/plan})"
+    [ -n "$P23_JOBIDS_FILE" ] && echo "$ID" >> "$P23_JOBIDS_FILE"
+    return 0
+}
 flow_job() {  # $1=geo $2=engine $3=seed $4="K list" $5=variants(csv) $6=trials $7=record $8=tag
     local geo="$1" e="$2" s="$3" ks="$4" v="$5" n="$6" rec="$7" tag="$8"
     local nk; nk=$(echo $ks | wc -w)
+    if [ "$P23_DIRECT" = "1" ]; then
+        N_SUB=$((N_SUB + 1)); N_CHILD=$((N_CHILD + nk))
+        printf '  %-3s %s\n' "$N_SUB" "[${geo}] ${e} seed ${s} K=[${ks}] n=${n}: ${v}"
+        [ "$MODE" = "plan" ] && return 0
+        local k
+        for k in $ks; do
+            # shellcheck disable=SC2046
+            env "${UNSET[@]}" "${BASE_ENV[@]}" FMPCC_UAV_EVAL_TAG="${tag}" UAV_MIX_GEO_VARIANTS="${geo}" UAV_MIX_VARIANTS="${v}" $(engine_env "$e") \
+                bash -c 'source /dev/stdin' <<< "$(declare -f _direct_child); P23_JOBIDS_FILE='${P23_JOBIDS_FILE}'; EVAL_SH='${EVAL_SH}'; _direct_child '$e' '$s' '$k' '$n' '$rec'"
+        done
+        return 0
+    fi
     # shellcheck disable=SC2046
     run "[${geo}] ${e} seed ${s} K=[${ks}] n=${n}: ${v}" "$nk" \
         env "${UNSET[@]}" "${BASE_ENV[@]}" FMPCC_UAV_EVAL_TAG="${tag}" UAV_MIX_GEO_VARIANTS="${geo}" UAV_MIX_VARIANTS="${v}" $(engine_env "$e") \
@@ -127,6 +162,14 @@ flow_job() {  # $1=geo $2=engine $3=seed $4="K list" $5=variants(csv) $6=trials 
 }
 diff_job() {  # $1=geo $2=seed $3=variants(csv) $4=trials $5=record $6=tag   (diffusion K20 = plan block, no K arg)
     local geo="$1" s="$2" v="$3" n="$4" rec="$5" tag="$6"
+    if [ "$P23_DIRECT" = "1" ]; then
+        N_SUB=$((N_SUB + 1)); N_CHILD=$((N_CHILD + 1))
+        printf '  %-3s %s\n' "$N_SUB" "[${geo}] diffusion seed ${s} K=20 n=${n}: ${v}"
+        [ "$MODE" = "plan" ] && return 0
+        env "${UNSET[@]}" "${BASE_ENV[@]}" FMPCC_UAV_EVAL_TAG="${tag}" UAV_MIX_GEO_VARIANTS="${geo}" UAV_MIX_VARIANTS="${v}" \
+            bash -c 'source /dev/stdin' <<< "$(declare -f _direct_child); P23_JOBIDS_FILE='${P23_JOBIDS_FILE}'; EVAL_SH='${EVAL_SH}'; _direct_child diffusion '$s' '' '$n' '$rec'"
+        return 0
+    fi
     run "[${geo}] diffusion seed ${s} K=20 n=${n}: ${v}" 1 \
         env "${UNSET[@]}" "${BASE_ENV[@]}" FMPCC_UAV_EVAL_TAG="${tag}" UAV_MIX_GEO_VARIANTS="${geo}" UAV_MIX_VARIANTS="${v}" \
         ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_mix/eval_mix_uav.sh diffusion corridor "$s" "$n" fm_only "$rec" ""

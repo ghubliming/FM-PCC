@@ -85,8 +85,10 @@ The exact jobs — **superseded 2026-09-23 by the paper driver** (runbook `SLURM
 §1–§2 variant lists, 68 cells per scene, tags `p23cv3t` / `p23cv3ah`, both scenes, author: "two scenes as piloted"):
 
 ```bash
-bash Slurm_Codes/temp_bash/eval_20260923_p23_corridor_v3.sh              # plan
-bash Slurm_Codes/temp_bash/eval_20260923_p23_corridor_v3.sh submit all   # C1 → C5, both scenes (36 submissions / 62 eval jobs / 136 cells)
+bash Slurm_Codes/temp_bash/eval_20260923_p23_corridor_v3_master.sh plan      # what each link submits
+bash Slurm_Codes/temp_bash/eval_20260923_p23_corridor_v3_master.sh start     # the CHAIN: C1 finishes → C2 starts → … → C5 (author: not the whole grid in squeue)
+bash Slurm_Codes/temp_bash/eval_20260923_p23_corridor_v3_master.sh status
+# or, everything at once:  bash Slurm_Codes/temp_bash/eval_20260923_p23_corridor_v3.sh submit all   (36 submissions / 62 eval jobs / 136 cells)
 ```
 
 (The 22-09 driver's `submit` — U16 layout, tags `u19cv3*` — is kept for reference only; do not run both.)
