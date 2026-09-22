@@ -828,7 +828,8 @@ def _exec_constraint_violations(obs_traj, config):
             if nrm < 1e-9:
                 continue
             nx, ny = (-dy / nrm, dx / nrm)                  # left normal of the segment
-            signed = nx * (p[0] - x1) + ny * (p[1] - y1)    # + on the 'above'/left side
+            q = p[2] if _hs_plane(hs) == 'xz' else p[1]     # [U19] second coord: y, or z for an x-z entry
+            signed = nx * (p[0] - x1) + ny * (q - y1)       # + on the 'above'/left side
             feasible = signed if side == 'above' else -signed
             step_pen += max(0.0, r_drone - feasible)        # clear when feasible >= r_drone
         for ob in obstacles:
@@ -1034,6 +1035,8 @@ def plot_geo_constraints(geo_name, config, out_dir, is_tightened=False, basename
         their RAW endpoints — x_active only shortens a segment, so this stays a superset."""
         vals = []
         for hs in halfspace_list:
+            if axis == 1 and _hs_plane(hs) == 'xz':
+                continue                                  # [U19] an x-z entry has no y extent
             _triple, _xa = _normalize_halfspace(hs)
             vals += [float(_triple[0][axis]), float(_triple[1][axis])]
         for obs in obstacle_list:
@@ -1115,6 +1118,14 @@ def plot_geo_constraints(geo_name, config, out_dir, is_tightened=False, basename
                           cz + r*np.outer(np.ones_like(u), np.cos(v)), color='tomato', alpha=0.25, linewidth=0)
     _hs_zlo, _hs_zhi = (lb_d[2], ub_d[2]) if lb_d is not None else _Z_DISP
     for hs in halfspace_list:
+        if _hs_plane(hs) == 'xz':
+            # [U19] a roof/floor: a sloped sheet z = f(x) spanning the whole y frame
+            (hx1, hz1), (hx2, hz2), side, _ = _wall_xy(hs)      # second coord IS z here
+            _ylo, _yhi = _ylim()
+            ax3.add_collection3d(_P3C([[
+                [hx1, _ylo, hz1], [hx2, _ylo, hz2], [hx2, _yhi, hz2], [hx1, _yhi, hz1],
+            ]], alpha=0.30, facecolor='darkorange', edgecolor='saddlebrown', lw=0.8))
+            continue
         (hx1, hy1), (hx2, hy2), side, _ = _wall_xy(hs)
         ax3.add_collection3d(_P3C([[
             [hx1, hy1, _hs_zlo], [hx2, hy2, _hs_zlo], [hx2, hy2, _hs_zhi], [hx1, hy1, _hs_zhi],
@@ -1137,6 +1148,8 @@ def plot_geo_constraints(geo_name, config, out_dir, is_tightened=False, basename
         ax_xy.text(0.5, 0.5, 'no bounds', ha='center', va='center', transform=ax_xy.transAxes,
                    fontsize=9, color='gray')
     for hs in halfspace_list:
+        if _hs_plane(hs) == 'xz':
+            continue                                      # [U19] roof/floor: side panel only
         (hx1, hy1), (hx2, hy2), side, x_active = _wall_xy(hs)
         ax_xy.plot([hx1, hx2], [hy1, hy2], color='darkorange', lw=2.0,
                    label='halfspace wall' if hs is halfspace_list[0] else None)
@@ -1178,12 +1191,40 @@ def plot_geo_constraints(geo_name, config, out_dir, is_tightened=False, basename
         ax_xz.add_patch(_mpa.Circle((float(obs['center'][0]), cz_mid), obs['radius']+margin,
                                      lw=1.2, edgecolor='tomato', facecolor='tomato',
                                      alpha=0.25, linestyle='--'))
+    _xz_drawn = False
     for hs in halfspace_list:
+        if _hs_plane(hs) == 'xz':
+            # [Gen15 U19] an x-z entry (roof/floor): the raw line and the ENFORCED line, i.e. the
+            # raw line shifted by margin (perpendicular) toward the feasible side, exactly what
+            # formulate_halfspace_constraints puts in the QP — same colours as the top-down panel.
+            (hx1, hz1), (hx2, hz2), side, x_active = _wall_xy(hs)
+            if abs(hx2 - hx1) < 1e-9:
+                continue
+            _s = (hz2 - hz1) / (hx2 - hx1)
+            _off = margin * np.hypot(1.0, _s) * (1.0 if side == 'above' else -1.0)
+            ax_xz.plot([hx1, hx2], [hz1, hz2], color='darkorange', lw=2.0, zorder=4,
+                       label=None if _xz_drawn else 'halfspace roof/floor (raw)')
+            ax_xz.plot([hx1, hx2], [hz1 + _off, hz2 + _off], color='crimson', lw=1.4, ls='--', zorder=5,
+                       label=None if _xz_drawn else f'enforced (raw ± margin {margin:.3f} m ⊥)')
+            ax_xz.fill_between([hx1, hx2], [hz1, hz2], [hz1 + _off, hz2 + _off],
+                               color='crimson', alpha=0.13, lw=0, zorder=1)
+            _mx, _mz = (hx1 + hx2) / 2, (hz1 + hz2) / 2 + _off
+            ax_xz.annotate('', xy=(_mx, _mz + (0.2 if side == 'above' else -0.2)), xytext=(_mx, _mz),
+                           arrowprops=dict(arrowstyle='->', color='darkorange', lw=1.3), zorder=6)
+            if x_active is not None:
+                ax_xz.text(_mx, _mz, f'x∈[{x_active[0]:.1f},{x_active[1]:.1f}]', fontsize=5,
+                           color='saddlebrown', ha='center', va='bottom', zorder=7)
+            _xz_drawn = True
+            continue
         (hx1, hy1), (hx2, hy2), side, x_active = _wall_xy(hs)
         xb_lo, xb_hi = sorted((hx1, hx2))
         ax_xz.axvspan(xb_lo, xb_hi, color='darkorange', alpha=0.13, zorder=1)
         ax_xz.axvline(xb_lo, color='darkorange', lw=1.0, ls='--', alpha=0.8, zorder=2)
         ax_xz.axvline(xb_hi, color='darkorange', lw=1.0, ls='--', alpha=0.8, zorder=2)
+    if _xz_drawn:
+        _h, _l = ax_xz.get_legend_handles_labels()
+        _seen = dict(zip(_l, _h))
+        ax_xz.legend(_seen.values(), _seen.keys(), fontsize=6, loc='upper right')
     ax_xz.set_xlim(*_xlim()); ax_xz.set_ylim(*_zlim())
 
     if 'dynamics' in ctypes:
@@ -1208,6 +1249,23 @@ def _normalize_halfspace(hs):
         line = hs['line']
         return [line[0], line[1], hs['side']], hs.get('x_active')
     return [hs[0], hs[1], hs[2]], None
+
+
+def _hs_plane(hs):
+    """[Gen15 U19] the plane a halfspace entry lives in: 'xy' (default — every pre-U19 entry,
+    behaviour byte-identical) or 'xz' (opt-in: `plane: xz` in the dict form).
+
+    An `xz` entry reads its `line` as [[x, z], [x, z]] and its `side` as 'above' = larger z
+    feasible — a roof the plan must climb over (corridor_v3_hump) or a floor it must stay above.
+    The list form is always 'xy'. Consumers: setup_dpcc_projector (binds the row's second
+    coordinate to the z column), _exec_constraint_violations (scores against p_z), and the
+    drawing code (an xz entry is drawn in the side panels, never in the top-down ones).
+    `x_active` windowing reads x in both planes, so the per-replan switching is unchanged.
+    """
+    plane = str(hs.get('plane', 'xy')).lower() if isinstance(hs, dict) else 'xy'
+    if plane not in ('xy', 'xz'):
+        raise ValueError(f"halfspace `plane` must be 'xy' or 'xz', got {plane!r}: {hs}")
+    return plane
 
 
 def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
@@ -1342,12 +1400,18 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
         constraint_list += [('deriv', [6, 0]), ('deriv', [7, 1]), ('deriv', [8, 2])]  # DC_FIX p     ← act
 
     if 'halfspace' in ctypes and 'geo_free' not in variant:
-        _hs = {'x': _DIM['x'], 'y': _DIM['y']}
         for hs in config.get('halfspace_constraints', []):
             triple, x_active = _normalize_halfspace(hs)
             if x_active is not None and current_x is not None:
                 if not (x_active[0] <= float(current_x) <= x_active[1]):
                     continue                              # wall not live in this x-segment
+            # [Gen15 U19] `plane: xz` binds the line's second coordinate to the z column instead
+            # of y. formulate_halfspace_constraints only reads the two indices named 'x' and 'y',
+            # so the sloped branch, the side convention ('above' = larger second coordinate
+            # feasible) and the perpendicular tightening carry over unchanged. Under `-pdes` the
+            # _DIM table already points at p_des, so the binding is inherited. HardFlow consumes
+            # this same list (return_constraint_list=True) — nothing to add there.
+            _hs = {'x': _DIM['x'], 'y': _DIM['z'] if _hs_plane(hs) == 'xz' else _DIM['y']}
             C_row, d = utils.formulate_halfspace_constraints(triple, margin, trajectory_dim, _hs)
             constraint_list.append(('ineq', (C_row, d)))
 
@@ -1467,6 +1531,8 @@ def _add_virtual_geometry(mujoco, scn, geo_config, z, variant=''):
         return
     r = float((geo_config.get('inflation') or {}).get('r_drone', 0.0))
     for hs in geo_config.get('halfspace_constraints', []) or []:
+        if _hs_plane(hs) == 'xz':
+            continue            # [U19] roof/floor: no top-down footprint to paint (side panels only)
         triple, x_active = _normalize_halfspace(hs)
         (x1, y1), (x2, y2), side = triple[0], triple[1], triple[2]
         if abs(x2 - x1) < 1e-9:

@@ -58,3 +58,4 @@ states a narrower scope in its first lines**, as `PENDING_20260917_dpcc_protocol
 - Quadrotor: `logs_in_develop/Gen15/U16/DA_20260914_corridor_v2_paper_full.md`,
   `logs_in_develop/Gen15/Campaign_20260907_five_missions/CLOSURE_20260910_uav_engine_ladder_final.md`
 - Endpoint projection at low budget: `logs_in_develop/aggregated_hardflow_lowK/DA_20260824_does_HF_pay_when_it_actually_runs.md`
+- v3.65 (2026-09-22): UAV-pillars on hold (flawed, disabled in the draft), R32 on hold; corridor altitude answered from the staged rollouts, no run; R33 = Gen15 U19 `corridor_v3` z-ramp, plan only → `PENDING_20260922_all_lacking_runs.md` §22

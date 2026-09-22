@@ -6,7 +6,7 @@ Last built **2026-09-22**. Every thesis figure lives in this store; drafts recei
 
 | figure | group | corpus | protocol |
 | :-- | :-- | :-- | :-- |
-| `fig_aligning_tradeoff` | da | `Data_Analysis/analysis_results_checkpoint/15-09/batch_va2_20260915_100754` | seed 6, ten shared enumerated contexts (paired; raw cells with 30 contexts are restricted) | unprojected, combined_5/diffuser |
+| `fig_uav_corridor_altitude` | da | `data/uav_paths.json (extract/uav_paths.py, group corridor_altitude)` | 4 models x 2 arms, 12 flights each; runs Eaf_K3_mpc4_pid_stopgo_T0.5_EPlatest_u17cv2, Ediffusion_K20_mpc4_pid_stopgo_T0.5_u17cv2, Efm_K3_mpc4_pid_stopgo_T0.5_u17cv2, Emf_K3_mpc4_pid_stopgo_T0.5_u17cv2; altitude limits from config/uav_projection.yaml corridor_v2_slide.workspace_bounds z and sources.UAV_CONSTRAINTS r_drone |
 
 ## Vendored — copied from where they were produced
 
@@ -27,6 +27,7 @@ Present in the store but not produced by this run (e.g. a matplotlib figure from
 | `fig_aligning_outcomes` | `da/fig_aligning_outcomes.png`, `da/fig_aligning_outcomes.svg` |
 | `fig_aligning_paths` | `da/fig_aligning_paths.png`, `da/fig_aligning_paths.svg` |
 | `fig_aligning_projected_tradeoff` | `da/fig_aligning_projected_tradeoff.png`, `da/fig_aligning_projected_tradeoff.svg` |
+| `fig_aligning_tradeoff` | `da/fig_aligning_tradeoff.png`, `da/fig_aligning_tradeoff.svg` |
 | `fig_avoiding_k_ladder` | `da/fig_avoiding_k_ladder.png`, `da/fig_avoiding_k_ladder.svg` |
 | `fig_avoiding_paths` | `da/fig_avoiding_paths.png`, `da/fig_avoiding_paths.svg` |
 | `fig_avoiding_projector_cost` | `da/fig_avoiding_projector_cost.png`, `da/fig_avoiding_projector_cost.svg` |

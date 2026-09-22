@@ -18,8 +18,10 @@ persists: the builders never read the drop again once `data/uav_paths.json` exis
 
 Sources, read at run time, not typed in:
   <run>/<variant>.npz     obs_all -- 6-D per control step, [des_pos(0:3) | pos(3:6)].
-                          The FLOWN position is dims 3:5 (x, y); dim 5 is z, kept for the
-                          altitude check only. One entry per episode, ragged.
+                          The FLOWN position is dims 3:5 (x, y); dim 5 is z. Until v3.65
+                          z was read for the altitude check only; since v3.65 it travels
+                          with every path as `z`, for the corridor altitude figure (F4).
+                          One entry per episode, ragged.
   <run>/results.json      summary + rollouts[]: per-episode outcome, index-aligned with
                           obs_all, and `homotopy` / `homotopy_flown` (L/C/R) on corridor.
 
@@ -96,6 +98,22 @@ PANELS = {
          'uav-corridor', 'mix_uav_diffusion', DF, 'Ediffusion_K20_mpc4_pid_stopgo_T0.5_u17cv2',
          'dpcc-t-bounds_free-pdes-tightened'),
     ]),
+    # F4 -- fig:uav-corridor-altitude (v3.65). The SAME flights as F3 seen from the side:
+    # for each model, the unprojected arm (`diffuser`) and the projected arm of tab:uav-corridor
+    # at one budget, so the builder can pair them by title. Every corridor constraint acts in
+    # x-y; this figure exists to show what the altitude does while the slide is being cleared.
+    # The author asked (2026-09-22) whether the corridor also slides in z: it does not, and the
+    # figure is the evidence. Flow models at K = 3 (the budget the chapter reads), diffusion at 20.
+    'corridor_altitude': ('UAV-corridor', [
+        (lab, sub, 'uav-corridor', folder, model, f'{pre}_K{k}_mpc4_pid_stopgo_T0.5{suf}_u17cv2', var)
+        for lab, folder, model, pre, suf, k in (
+            ('Average-velocity matching', 'mix_uav_mf', MF, 'Emf', '', 3),
+            ('Instantaneous-velocity matching', 'mix_uav_fm', FM, 'Efm', '', 3),
+            ('Consistency-interpolated', 'mix_uav_af', AF, 'Eaf', '_EPlatest', 3),
+            ('Diffusion baseline', 'mix_uav_diffusion', DF, 'Ediffusion', '', 20),
+        ) for sub, var in ((f'{k} function evaluations, unprojected', 'diffuser'),
+                           (f'{k} function evaluations, per-step projection', 'dpcc-t-bounds_free-pdes-tightened'))
+    ]),
 }
 
 
@@ -134,6 +152,8 @@ def episodes(npz_path, res_path):
         r = rollouts[i] if i < len(rollouts) else {}
         out.append({
             'xy': [[round(float(x), NDP), round(float(y), NDP)] for x, y in xy[keep]],
+            # v3.65: the flown altitude at the same kept steps (obs_all dim 5)
+            'z': [round(float(v), NDP) for v in a[keep, 5]],
             'passed': bool(passed[i]),
             'clean': bool(clean[i]),
             'homotopy': r.get('homotopy'),
@@ -179,7 +199,7 @@ def main():
         'generated': datetime.date.today().isoformat(),
         'stride': STRIDE,
         'source_root': os.path.relpath(args.root, REPO),
-        'note': ('Flown positions from obs_all[:, 3:5] of each run npz, staged from the cluster '
+        'note': ('Flown positions from obs_all[:, 3:5] (and altitude from dim 5, v3.65) of each run npz, staged from the cluster '
                  'on 2026-09-18 (fetch_20260918_v3_figure_artefacts.sh, groups F1-F3). The drop '
                  'itself is under the gitignored temp/; this extract is the committed record.'),
         'figures': figures,

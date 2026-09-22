@@ -32,7 +32,7 @@ items were closed without a run**, because the data already existed and had simp
 | CI-MeanFM $\nfe=2$ on UAV-s-curve | made `tab:uav-scurve` a matched comparison | v3.60 |
 | The activation-threshold evidence ($\eta=0.5$ vs $0.1$ at $\nfe=100$) | new discussion in §6.2.2 | v3.60 |
 
-### Since the census, later on 2026-09-22 (v3.61 → v3.63) — a running addendum, nothing above removed
+### Since the census, later on 2026-09-22 (v3.61 → v3.65) — a running addendum, nothing above removed
 
 | what | where | version |
 | :-- | :-- | :-- |
@@ -43,6 +43,9 @@ items were closed without a run**, because the data already existed and had simp
 | Pillars success metric double-checked: S&C reproduces; the strict goal-reached criterion now printed beside it | §21 | v3.63 |
 | The K=100 CI-MeanFM and FM cells were in Table 6.5 but not in Fig 6.6 since v3.60 — drawn now | — | v3.62 |
 | §6.3 restructured before/after projection; two new unprojected tables (`tab:uav-corridor-raw`, `tab:uav-pillars-raw`) — **no run**, every cell recounted from the corpora | — | v3.64 |
+| **Every UAV-pillars block of Ch 5/6 is marked FLAWED and temporarily disabled** (author; scene under review, nothing deleted, `\pillarsflawedfalse` restores). R32 stays listed but is **on hold** until the author says what the review changes | §22 | v3.65 |
+| Corridor altitude answered from the staged rollouts — **no run**: constraints are planar, projection moves z as a by-product (new `fig:uav-corridor-altitude`) | §22 | v3.65 |
+| **R33 opened (plan only):** Gen15 U19 `corridor_v3`, a ramp in x–z on the wide corridor — coding + pilot + wave; nothing in the thesis rests on it (`\guard` in §6.3.2) | §22, `Gen15/U19/PLAN_…` | v3.65 |
 
 ### The open list, by priority
 
@@ -834,3 +837,26 @@ collision-free) reproduce exactly. Under the evaluator's **strict** criterion (`
 `GOAL_RADIUS = 0.30`) the order reverses — MeanFM endpoint-$r$ 0.90 against FM single-candidate 0.40 — because six FM
 flights cross the line and never settle (end 0.36–0.39 m away). Both criteria are now printed side by side in
 Tables 6.10 and 6.11 and defined in Chapter 5; the thesis criterion stays the finish line.
+
+## 22 · v3.65 — UAV-pillars on hold (flawed, disabled); corridor altitude answered without a run; U19 planned
+
+**Pillars.** The author declared every UAV-pillars part of Chapters 5 and 6 flawed and asked for it to be
+temporarily disabled without deleting anything. Done in the draft with a switch (`pillarsflawed` environment,
+`\flawed{}` marks; changelog v3.65 §3). Consequence for this ledger: **R32** (`pillars_hg` MeanFM/FM at $\nfe=1$)
+is not struck but **on hold** — whether it is still the right run depends on what the review of the scene
+changes. No new pillars run is listed. The §6.4 summary rows for pillars (v3.63 changelog §1) stay unpasted.
+
+**Corridor altitude — no run needed.** The question "does the corridor slide in z" was answered from
+`config/uav_projection.yaml` (all corridor constraints are `[x, y]`; the box $[0.30, 1.80]$ inflates to
+$[0.61, 1.49]$) and the staged rollouts of 2026-09-18 (`obs_all[:, 5]`): flown $z\in[0.86, 1.37]$ m; the projected
+arm differs from the unprojected one by up to $0.14$–$0.27$ m per flight, growing towards the exit, a by-product of
+the lateral correction under `-bounds_free`. Figure `fig_uav_corridor_altitude` built from the existing drop; the
+drop already held the `diffuser` cells, so nothing had to be fetched.
+
+**R33 — Gen15 U19 `corridor_v3` (plan only, `logs_in_develop/Gen15/U19/PLAN_20260922_U19_corridor_v3_z_slide.md`).**
+A ramp rising along $x$ inside the wide corridor, as a physical slab in a new scene XML and as an $x$–$z$ halfspace
+for the projector, so the corridor tests a climb the way v2 tests a lateral move. Cost, if the author goes ahead:
+coding (three small sites + one XML + one submitter) then a pilot of 2 flights × 3 arms (~20 min GPU) and, on a
+pass, a wave of the v2 paper layout (mf/fm/af at $\nfe\in\{1,3,5\}$, diffusion 20, 4 projected variants, 12 flights;
+~1 GPU-day, as U16 was). **Nothing in the thesis rests on it**: §6.3.2 carries a `\guard` saying the projector's
+behaviour against an altitude constraint is untested by the corridor.

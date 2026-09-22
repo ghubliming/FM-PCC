@@ -333,10 +333,12 @@ unstable (\autoref{sec:bg:quadrotor}), and its plan is tracked by the controller
   \item[UAV-corridor] --- the entry test. Two parallel walls leave a clear width of $1.90$\,m. In the
     horizontal $x$--$y$ plane, a halfspace boundary slopes by $14^\circ$ from the upper wall at the
     entrance to $0.05$\,m below the centre line at the exit. It requires a lateral route change of
-    $0.25$--$0.49$\,m before the exit.
+    $0.25$--$0.49$\,m before the exit. Every constraint of the scene, the walls included, is a vertical
+    surface: it constrains the horizontal position only, and the altitude is bounded by nothing but the
+    workspace box (\autoref{fig:uav-corridor-altitude}).
     The models are trained on the demonstrations of a narrower corridor and never see this halfspace, so it is
     a test-time constraint in the same sense as the halfspaces of D3IL-avoiding.
-  \item[UAV-pillars] --- six cylindrical pillars stand in two rows across three columns, and the vehicle
+  \item[UAV-pillars] --- \flawed{temporarily disabled, v3.65: the scene is under review} six cylindrical pillars stand in two rows across three columns, and the vehicle
     must choose a way through them. Its constraint set is the clearance its own demonstrations were
     generated to keep (\autoref{sec:setup:data:uav}), so the plans are feasible before any projection
     runs and the scene measures how much of a feasible plan each method preserves rather than whether it
@@ -364,7 +366,7 @@ unstable (\autoref{sec:bg:quadrotor}), and its plan is tracked by the controller
       & sloping halfspace & from $(-2.0,\,0.95)$ to $(2.0,\,-0.05)$, a descent of $14^\circ$ \\
       & wall ends & four disks of radius $0.05$\,m at $x=\pm2$, $y=\pm1$ \\
     \addlinespace[2pt]
-    UAV-pillars
+    UAV-pillars \flawed{disabled}
       & six disks & radius $0.12$\,m at $x\in\{-2,0,2\}$ and $y=\pm0.6$\,m \\
     \addlinespace[2pt]
     UAV-s-curve
@@ -404,7 +406,7 @@ these boundaries a further $0.025$\,m inward, the margin of \ac{DPCC}.
   \begin{minipage}{0.30\linewidth}\centering
     \includegraphics[width=\linewidth]{fig_render_uav_pillars}\\[-0.1em]
     \includegraphics[width=\linewidth]{fig_scene_uav_pillars}\\[0.2em]
-    {\footnotesize UAV-pillars}
+    {\footnotesize UAV-pillars \flawed{disabled, v3.65}}
   \end{minipage}\hfill
   \begin{minipage}{0.30\linewidth}\centering
     \includegraphics[width=\linewidth]{fig_render_uav_scurve}\\[-0.1em]
@@ -564,6 +566,7 @@ for the left, centre and right lane --- because the halfspace is introduced at t
 when the demonstrations were flown. The scene in which the constraint is new to the data is exactly the
 scene in which the projection has something to do.
 
+\begin{pillarsflawed}
 UAV-pillars is the first kind. Its demonstrated channels lie at $|y|=1.11$\,m because the generator
 derived them from the pillar radius, the rotor reach and a safety margin, and the constraint set enforces
 the same clearance --- so all four routes satisfy it, tightening included (\autoref{fig:expert-uav}), and
@@ -583,6 +586,7 @@ with constraint satisfaction was $0.00$ throughout, the unprojected rows include
 projector finds the forbidden lane easier than the legal one measures the geometry and not the planner,
 so the enlargement was abandoned and every pillars result in this thesis is on the constraint set its
 demonstrations satisfy.
+\end{pillarsflawed}
 
 That figure draws the references the generator laid out rather than the flights that tracked them, which
 is the conservative choice: a constraint crossed by the reference is crossed by construction rather than
@@ -607,7 +611,7 @@ to go, not a vehicle too large for the gap.
   them. The violation is read off the path line alone, because the vehicle's extent is already inside the
   inflated boundary; the grey silhouette on each route is the vehicle to scale at its tightest moment
   (\autoref{fig:platforms}), shown so the gaps can be judged against the aircraft and not as a second
-  test. On UAV-pillars all four routes clear the inflated pillars and on UAV-s-curve the single route
+  test. On UAV-pillars (\flawed{disabled, v3.65}) all four routes clear the inflated pillars and on UAV-s-curve the single route
   clears the walls; on UAV-corridor every lane crosses the sloping halfspace, which is added at test time.
   Drawn are the references the demonstrations track and not the
   flights themselves; altitude does not enter, because every constraint here is horizontal.}
@@ -688,7 +692,8 @@ Each flight is scored by
   \item whether the goal point is reached: the flight ends within $0.30$\,m of it, contact-free --- the
     evaluation's strict criterion, which a flight that crosses the finish line and then overshoots or
     never settles fails. It is printed beside success on UAV-pillars, the one scene on which the two
-    criteria order the models differently (\autoref{sec:res:uav:pillars});
+    criteria order the models differently (\autoref{sec:res:uav:pillars}) \flawed{UAV-pillars is
+    temporarily disabled, v3.65};
   \item the number of control steps (steps per flight), and the final distance to the goal point of the
     route (metres), which describes where a flight that does not succeed ends;
   \item the time to compute one action (milliseconds, \autoref{sec:setup:metrics:avoiding}), split into
@@ -1160,7 +1165,7 @@ evaluated scenes run.}
       & 10 contexts $\times$ 1 episode; the diffusion model 3 episodes per context
       & the ten contexts, compared context by context \\
     UAV-corridor & 1 & 12 flights, four on each of the routes L, C and R & the twelve flights \\
-    UAV-pillars & 1 & 10 flights & the ten flights \\
+    UAV-pillars \flawed{disabled} & 1 & 10 flights & the ten flights \\
     UAV-s-curve & 1 & 10 flights & the ten flights \\
     \bottomrule
   \end{tabularx}

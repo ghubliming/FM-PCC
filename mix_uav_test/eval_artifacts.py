@@ -146,7 +146,10 @@ def geometry_anchors(geo_config, obstacles, variant=''):
         for hs in geo_config.get('halfspace_constraints', []):
             (x1, y1), (x2, y2), _side, _xa = _fs_wall_xy(hs)
             xs += [float(x1), float(x2)]
-            ys += [float(y1), float(y2)]
+            if _fs_hs_plane(hs) == 'xz':
+                zs += [float(y1), float(y2)]      # [U19] second coordinate is z for a roof/floor
+            else:
+                ys += [float(y1), float(y2)]
     if (not geo_off) and 'obstacles' in ctypes:
         for ob in geo_config.get('obstacle_constraints', []):
             c = ob.get('center', [0.0, 0.0])
@@ -286,11 +289,13 @@ def _scorer_r_drone(geo_config):
     return float(((geo_config or {}).get('inflation') or {}).get('r_drone', 0.0))
 
 
-def halfspace_body_boundaries(geo_config, variant=''):
-    """[(xs, raw_y, body_y, side), ...] for every enforced halfspace, clipped to x_active.
+def halfspace_body_boundaries(geo_config, variant='', plane='xy'):
+    """[(xs, raw_q, body_q, side), ...] for every enforced halfspace in `plane`, clipped to x_active.
 
-    body_y is the line the drone CENTRE must stay on the feasible side of. Near-vertical lines
-    (no y = f(x) form) are skipped — none of the UAV scenes use one.
+    q is y for the default `plane='xy'` (every pre-U19 caller) and z for `plane='xz'` ([Gen15 U19]
+    roof/floor entries, drawn on the side panels). body_q is the line the drone CENTRE must stay
+    on the feasible side of. Near-vertical lines (no q = f(x) form) are skipped — none of the
+    UAV scenes use one.
     """
     if not geo_config or 'geo_free' in (variant or ''):
         return []
@@ -299,6 +304,8 @@ def halfspace_body_boundaries(geo_config, variant=''):
     r = _scorer_r_drone(geo_config)
     out = []
     for hs in geo_config.get('halfspace_constraints', []) or []:
+        if _fs_hs_plane(hs) != plane:
+            continue
         (x1, y1), (x2, y2), side, x_active = _fs_wall_xy(hs)
         if abs(x2 - x1) < 1e-9:
             continue
@@ -332,7 +339,8 @@ def step_violations(P, geo_config, variant=''):
             if n < 1e-9:
                 continue
             nx, ny = -(y2 - y1) / n, (x2 - x1) / n
-            signed = nx * (P[:, 0] - x1) + ny * (P[:, 1] - y1)
+            q = P[:, 2] if _fs_hs_plane(hs) == 'xz' else P[:, 1]   # [U19] y, or z for a roof/floor
+            signed = nx * (P[:, 0] - x1) + ny * (q - y1)
             feas = signed if side == 'above' else -signed
             live = np.ones(len(P), dtype=bool) if x_active is None else \
                 (P[:, 0] >= x_active[0]) & (P[:, 0] <= x_active[1])
@@ -362,6 +370,27 @@ def _draw_body_boundaries(ax, geo_config, variant=''):
         return []
     return [_Line2D([0], [0], color='crimson', ls='--', lw=1.4,
                     label=f'drone-centre limit (wall − r_drone {_scorer_r_drone(geo_config):.2f} m)')]
+
+
+def _draw_body_boundaries_xz(ax_xz, geo_config, variant=''):
+    """[Gen15 U19] the side-panel twin of _draw_body_boundaries: every enforced `plane: xz`
+    halfspace (roof / floor) as the raw line (darkorange) + the drone-centre limit (crimson,
+    dashed) with the forbidden strip between them shaded. Returns (legend handles, z values
+    the window must keep in frame)."""
+    from matplotlib.lines import Line2D as _Line2D
+    bnds = halfspace_body_boundaries(geo_config, variant, plane='xz')
+    keep = []
+    for xs, raw, body, side in bnds:
+        ax_xz.plot(xs, raw, color='darkorange', lw=2.0, zorder=6)
+        ax_xz.plot(xs, body, color='crimson', lw=1.4, ls='--', zorder=6)
+        ax_xz.fill_between(xs, body, raw, color='crimson', alpha=0.13, lw=0, zorder=1)
+        keep += [float(np.clip(raw.min(), -1, 4)), float(np.clip(body.max(), -1, 4)),
+                 float(np.clip(raw.max(), -1, 4)), float(np.clip(body.min(), -1, 4))]
+    if not bnds:
+        return [], keep
+    return [_Line2D([0], [0], color='darkorange', lw=2.0, label='halfspace roof/floor (raw, x-z)'),
+            _Line2D([0], [0], color='crimson', ls='--', lw=1.4,
+                    label=f'drone-centre limit (roof ± r_drone {_scorer_r_drone(geo_config):.2f} m ⊥)')], keep
 
 
 def plot_overview(out_dir, variant, scene, rollouts, geo_config=None, variant_flags=None):
@@ -428,6 +457,7 @@ def plot_overview(out_dir, variant, scene, rollouts, geo_config=None, variant_fl
     if _draw_obstacles is not None:
         _draw_obstacles(ax_xy, obstacles)
     _handles = []
+    _xz_handles, _zfix_geo = [], []        # [U19] filled below when a geo_config is given
     if geo_config:
         # [Gen15 U15] the ENFORCED geometry (halfspaces, obstacles, box) + where the drone centre
         # actually has to stay. Without it a virtual constraint was invisible in this plot.
@@ -437,6 +467,8 @@ def plot_overview(out_dir, variant, scene, rollouts, geo_config=None, variant_fl
         _handles += draw_projector_geometry(ax_xy, _xz_hidden, geo_config, _vflags)
         _xz_hidden.remove()                     # keep tight_layout happy
         _handles += _draw_body_boundaries(ax_xy, geo_config, _vflags)
+        # [Gen15 U19] roof/floor entries (`plane: xz`) live on the SIDE panel: raw + centre limit.
+        _xz_handles, _zfix_geo = _draw_body_boundaries_xz(ax_xz, geo_config, _vflags)
         from matplotlib.lines import Line2D as _L2
         _handles += [_L2([0], [0], color='0.5', lw=6, alpha=0.3, label='drone body (2 × r_drone)'),
                      _L2([0], [0], marker='o', color='w', markerfacecolor='red', ms=5,
@@ -451,7 +483,9 @@ def plot_overview(out_dir, variant, scene, rollouts, geo_config=None, variant_fl
                   label=f'airborne gate z={AIRBORNE_Z} m')
     ax_xz.set_title(f'{scene} — side (x, z): altitude')
     ax_xz.set_xlabel('x [m]'); ax_xz.set_ylabel('z [m]')
-    ax_xz.grid(True, alpha=0.3); ax_xz.legend(loc='best', fontsize=8)
+    ax_xz.grid(True, alpha=0.3)
+    _xz_h, _xz_l = ax_xz.get_legend_handles_labels()
+    ax_xz.legend(handles=list(_xz_h) + (_xz_handles if geo_config else []), loc='best', fontsize=8)
 
     # Div_Abort: clamp the overview to a window one runaway trial cannot destroy (same rule as
     # the foresight SVG — flown paths set the scale, obstacles stay in frame). Aborted traces
@@ -459,7 +493,8 @@ def plot_overview(out_dir, variant, scene, rollouts, geo_config=None, variant_fl
     _gx, _gy, _gz = geometry_anchors(None, obstacles)
     _xl = view_window(_all_x, fixed=_gx)
     _yl = view_window(_all_y, fixed=_gy)
-    _zl = view_window(_all_z, fixed=list(_gz) + [0.0, AIRBORNE_Z], pad=0.15)
+    _zl = view_window(_all_z, fixed=list(_gz) + [0.0, AIRBORNE_Z] + (_zfix_geo if geo_config else []),
+                      pad=0.15)      # [U19] keep a roof/floor in frame
     if _xl:
         ax_xy.set_xlim(*_xl); ax_xz.set_xlim(*_xl)
     if _yl:
@@ -639,6 +674,15 @@ def _fs_normalize_halfspace(hs):
     return [hs[0], hs[1], hs[2]], None
 
 
+def _fs_hs_plane(hs):
+    """[Gen15 U19] local copy of eval_mix_uav._hs_plane: 'xy' (default) or 'xz' (`plane: xz`,
+    the line is [[x, z], [x, z]] and 'above' = larger z feasible — a roof / floor)."""
+    plane = str(hs.get('plane', 'xy')).lower() if isinstance(hs, dict) else 'xy'
+    if plane not in ('xy', 'xz'):
+        raise ValueError(f"halfspace `plane` must be 'xy' or 'xz', got {plane!r}: {hs}")
+    return plane
+
+
 def _fs_wall_xy(hs):
     """Resolve a halfspace to (p1, p2, side, x_active), clipped to its live x-range so the
     s_curve per-segment walls are drawn only where they are actually enforced."""
@@ -698,8 +742,28 @@ def draw_projector_geometry(ax_xy, ax_xz, geo_config, variant=''):
         ax_xz.axhline(ub_d[2], color='steelblue', ls='--', lw=1.0, alpha=0.7, zorder=2)
 
     cz_mid = (lb_d[2] + ub_d[2]) / 2 if lb_d is not None else 0.9
+    _n_xz = 0
     for hs in hs_list:
         (hx1, hy1), (hx2, hy2), side, x_active = _fs_wall_xy(hs)
+        if _fs_hs_plane(hs) == 'xz':
+            # [Gen15 U19] roof/floor: raw line + the ENFORCED line (raw shifted by the margin,
+            # perpendicular, toward the feasible side) on the SIDE axis; nothing on top-down.
+            if abs(hx2 - hx1) < 1e-9:
+                continue
+            _s = (hy2 - hy1) / (hx2 - hx1)
+            _off = margin * np.hypot(1.0, _s) * (1.0 if side == 'above' else -1.0)
+            ax_xz.plot([hx1, hx2], [hy1, hy2], color='darkorange', lw=2.2, zorder=6)
+            ax_xz.plot([hx1, hx2], [hy1 + _off, hy2 + _off], color='darkorange', lw=1.2, ls='--', zorder=6)
+            ax_xz.fill_between([hx1, hx2], [hy1, hy2], [hy1 + _off, hy2 + _off],
+                               color='darkorange', alpha=0.10, lw=0, zorder=1)
+            _mx, _mz = (hx1 + hx2) / 2, (hy1 + hy2) / 2 + _off
+            ax_xz.annotate('', xy=(_mx, _mz + (0.25 if side == 'above' else -0.25)), xytext=(_mx, _mz),
+                           arrowprops=dict(arrowstyle='->', color='darkorange', lw=1.4), zorder=6)
+            if x_active is not None:
+                ax_xz.text(_mx, _mz, f'x∈[{x_active[0]:.1f},{x_active[1]:.1f}]', fontsize=6,
+                           color='saddlebrown', ha='center', va='bottom', zorder=7)
+            _n_xz += 1
+            continue
         ax_xy.plot([hx1, hx2], [hy1, hy2], color='darkorange', lw=2.2, zorder=6)
         dx, dy = hx2 - hx1, hy2 - hy1; nrm = np.hypot(dx, dy) or 1.0
         nx, ny = (-dy/nrm, dx/nrm) if side == 'above' else (dy/nrm, -dx/nrm)  # arrow → feasible side
@@ -722,8 +786,11 @@ def draw_projector_geometry(ax_xy, ax_xz, geo_config, variant=''):
     handles = []
     if show_box:
         handles.append(_Line2D([0], [0], color='steelblue', ls='--', lw=1.4, label='workspace box (enforced)'))
-    if hs_list:
+    if len(hs_list) > _n_xz:
         handles.append(_Line2D([0], [0], color='darkorange', lw=2.2, label='halfspace wall (enforced)'))
+    if _n_xz:
+        handles.append(_Line2D([0], [0], color='darkorange', lw=2.2, ls='--',
+                               label='halfspace roof/floor (enforced, side panel)'))
     if obs_list:
         handles.append(_Line2D([0], [0], marker='o', color='w', markerfacecolor='tomato',
                                markersize=9, alpha=0.6, label='obstacle+margin (enforced)'))

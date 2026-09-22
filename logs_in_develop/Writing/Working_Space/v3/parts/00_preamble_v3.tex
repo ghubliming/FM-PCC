@@ -38,6 +38,25 @@
 % text rather than a footnote, because a caveat in a footnote gets dropped when
 % the sentence is quoted.
 \newcommand{\guard}[1]{\textcolor{violet}{\emph{#1}}}
+
+% \flawed{...}  (v3.65, author 2026-09-22) a passage the author has declared FLAWED
+% and temporarily DISABLED: it stays in the source and in the build, printed in
+% grey under a red banner, so that nothing is deleted, every label it defines
+% still resolves, and no reader can mistake it for a result. The UAV-pillars
+% material of Chapters 5 and 6 is the first use. Flip \pillarsflawedfalse to
+% print those blocks normally again once the scene has been re-evaluated.
+% Counted by tools/check.py; must reach zero before submission.
+\newif\ifpillarsflawed
+\pillarsflawedtrue
+\newcommand{\flawed}[1]{\textcolor{red}{\textbf{[FLAWED:} #1\textbf{]}}}
+\newenvironment{pillarsflawed}{%
+  \ifpillarsflawed
+    \par\noindent\flawed{UAV-pillars --- this block is temporarily disabled (author, 2026-09-22,
+    v3.65). The evaluation on this scene is under review and will be updated; until then nothing in
+    it may be cited, and its numbers are printed in grey for the record only.}\par
+    \color{black!55}%
+  \fi}{%
+  \ifpillarsflawed\normalcolor\fi}
 % Bold identifies a main experimental configuration selected in the surrounding
 % text. Monochrome emphasis survives grayscale printing and does not rely on
 % colour perception.

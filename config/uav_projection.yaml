@@ -843,6 +843,82 @@ geo_constraint_variants:
       - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0,  1.0], radius: 0.05}
 
   # ══════════════════════════════════════════════════════════════════════════════
+  # [Gen15 U19 2026-09-22] corridor_v3_hump — the WIDE corridor with a constraint on ALTITUDE
+  #
+  # WHY. corridor_v2_slide tests a lateral move only: walls, slide and wall caps are all [x, y]
+  # and z is bounded by the workspace box alone, which never binds (flown 0.86-1.37 m inside
+  # [0.61, 1.49]). The `-bounds_free` stack released the dz action cap that froze z in U11-U13
+  # (max projected-unprojected dz 0.001 m then; 0.14-0.27 m now, as a by-product). This entry
+  # asks the projector to move z ON DEMAND. Plan: logs_in_develop/Gen15/U19/PLAN_20260922_U19_corridor_v3_z_slide.md
+  #
+  # WHAT. Scene XML, model, checkpoint, routes, goals, projector stack and metrics are those of
+  # corridor_v2_slide. The 14 deg x-y slide is DROPPED (so the scene isolates z) and replaced by a
+  # HUMP in the x-z plane: a roof rising from the floor at x = -1.5 to H = 1.10 m at x = 0 and
+  # falling back to the floor at x = +1.5, as two `plane: xz` halfspaces windowed by x_active
+  # (the s_curve mechanism, rotated into the vertical plane). Virtual, like the slide: no geom,
+  # the drone flies through it in MuJoCo, a crossing is SCORED as a violation.
+  #   `plane: xz` (new, U19): line = [[x, z], [x, z]], side 'above' = larger z feasible.
+  #   Pre-U19 entries carry no `plane` key and behave byte-identically.
+  #   slope 1.10/1.5 = 0.733 -> the projector's inflated roof sits 0.31*sqrt(1+0.733^2) = 0.385 m
+  #   above the raw roof (vertical), +0.030 m with -tightened.
+  #   required drone-centre z at the peak (x = 0): >= 1.485 (1.515 tightened)
+  #   flown band without projection (v2, 96 flights): 0.86-1.24 m  -> EVERY flight violates
+  #   climb from the 1.11 m launch: ~0.40 m (the slide asked 0.24-0.49 m laterally)
+  #   ceiling raised 1.80 -> 2.80 (no ceiling geom; U12/U13 did the same): escape slot
+  #   z in [1.515, 2.49] = 0.97 m; at 1.80 the slot would be -0.03 m, infeasible.
+  #   lateral escape: none by construction (the roof spans the corridor width).
+  #   divergence guard: corridor envelope z ub 1.30 + 2.0 m slack = 3.30 m, a 0.4 m climb cannot trip it.
+  #   the finish line is a plane through the route end (x = 2.8, 1.3 m after the hump), so
+  #   altitude does not affect success; the strict goal (3-D, <= 0.30 m) may drop if the drone
+  #   is still high. Report both, as the corridor DA already does.
+  # NOT in `active_geo_variants`; select per job with UAV_MIX_GEO_VARIANTS=corridor_v3_hump.
+  # Driver: Slurm_Codes/temp_bash/eval_20260922_u19_corridor_v3_hump.sh  (tag u19cv3)
+  # ══════════════════════════════════════════════════════════════════════════════
+  - name: corridor_v3_hump
+    scene: corridor
+    scene_xml: scene_corridor_v2.xml
+    geo_tag_suffix: '_cv3h'       # new folder family, never pooled with _cv2s
+    constraint_types: ['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds']
+    planning_inflation: {r_drone: 0.31, margin_base: 0.0}
+    workspace_bounds:             # ceiling 1.80 -> 2.80 (synthetic, no ceiling geom); rest as corridor_v2_slide
+      lb: [-4.0, -.inf, 0.30]
+      ub: [ 4.0,  .inf, 2.80]
+    halfspace_constraints:        # the WIDE walls (plane xy, default) + THE HUMP (plane xz)
+      - {line: [[-2.0, -0.95], [2.0, -0.95]], side: 'above', x_active: [-2.0, 2.0]}
+      - {line: [[-2.0,  0.95], [2.0,  0.95]], side: 'below', x_active: [-2.0, 2.0]}
+      - {plane: xz, line: [[-1.5, 0.0], [0.0, 1.10]], side: 'above', x_active: [-1.5, 0.0]}   # U19 hump, rising
+      - {plane: xz, line: [[ 0.0, 1.10], [1.5, 0.0]], side: 'above', x_active: [ 0.0, 1.5]}   # U19 hump, falling
+    obstacle_constraints:         # the four wall-end caps, identical to corridor_v2_slide
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0, -1.0], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0, -1.0], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0,  1.0], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0,  1.0], radius: 0.05}
+
+  # [Gen15 U19] SECOND RUNG, milder: H = 0.90 -> required centre z at the peak >= 1.285 (1.315
+  # tightened), climb ~0.2 m, still violated by every unprojected flight (band top 1.24). DEFINED,
+  # NOT SCHEDULED: run only if corridor_v3_hump fails gate G2 AND the failure is a climb that stops
+  # short (G3 passes). Select with UAV_MIX_GEO_VARIANTS=corridor_v3_hump_lo (GEO=... in the driver).
+  - name: corridor_v3_hump_lo
+    scene: corridor
+    scene_xml: scene_corridor_v2.xml
+    geo_tag_suffix: '_cv3hl'      # its own folder family
+    constraint_types: ['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds']
+    planning_inflation: {r_drone: 0.31, margin_base: 0.0}
+    workspace_bounds:
+      lb: [-4.0, -.inf, 0.30]
+      ub: [ 4.0,  .inf, 2.80]
+    halfspace_constraints:
+      - {line: [[-2.0, -0.95], [2.0, -0.95]], side: 'above', x_active: [-2.0, 2.0]}
+      - {line: [[-2.0,  0.95], [2.0,  0.95]], side: 'below', x_active: [-2.0, 2.0]}
+      - {plane: xz, line: [[-1.5, 0.0], [0.0, 0.90]], side: 'above', x_active: [-1.5, 0.0]}   # U19 hump H=0.90, rising
+      - {plane: xz, line: [[ 0.0, 0.90], [1.5, 0.0]], side: 'above', x_active: [ 0.0, 1.5]}   # U19 hump H=0.90, falling
+    obstacle_constraints:
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0, -1.0], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0, -1.0], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0,  1.0], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0,  1.0], radius: 0.05}
+
+  # ══════════════════════════════════════════════════════════════════════════════
   # 🔴🔴🔴 [Gen15 U17 — ABANDONED 2026-09-22, TOTAL FAILURE] 🔴🔴🔴
   #
   # DO NOT USE `pillars_xl` OR `pillars_xxl`. DO NOT SUBMIT JOBS AGAINST THEM. DO NOT PUT THEIR

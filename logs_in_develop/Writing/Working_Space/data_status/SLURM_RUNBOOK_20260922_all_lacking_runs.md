@@ -231,9 +231,11 @@ unless told to.
 
 | group | job IDs | revision | state / verification |
 | :-- | :-- | :-- | :-- |
-| A · R2 | **26051** | 999152f1 | submitted 2026-09-22 (12 h limit); cluster yaml already at `n_contexts: 10` — log should print `10 -> 10` |
+| A · R2 | **26051** | 999152f1 | RUNNING since 07:57 UTC; identity lines correct (`n_contexts 10 -> 10`, `combined_5` + twin, 4 variants, `_msglr22`). **Measured: ~18 min per unprojected item, ~75 min per projected item → ~8 h for the 8 items**, not the ledger's 1.5 h (the 265–450 ms/step figure is per replan, not per rollout wall time). Expected end ~16:00 UTC, inside the 12 h limit |
 | B1 · R26 train ×4 | **26052** s7 · **26053** s8 · **26054** s9 · **26055** s10 | 999152f1 | submitted 2026-09-22, 6 h limit each (the cluster copy predates the 12 h default; 2.2× the measured 2 h 41 m) |
 | B2 · R26 eval | **26056** | 999152f1 | submitted 2026-09-22, `afterok:26052:26053:26054:26055`, 6 h limit |
+
+🟠 **Queue note, 2026-09-22 13:15 UTC:** the account runs under `QOSMaxCpuPerUserLimit` — two 8-CPU jobs at a time. 26051 (5 h 18 m) and 26053 (s8, 1 h 06 m) were running; 26054/26055/26056 pending on the QOS. Chained on two slots the wave ends ~20:30 UTC. If other runs are more urgent, `scontrol hold 26054 26055 26056` (nothing lost, dependency intact) and `release` later; never cancel s9/s10 alone, that strands B2 as `DependencyNeverSatisfied`.
 | C · R30 | — | — | planned, not submitted |
 | D · R31 unprojected ×7 | — | — | planned, not submitted |
 | E · R31 projected ×5 | — | — | planned; `R31_PERSTEP` to confirm |

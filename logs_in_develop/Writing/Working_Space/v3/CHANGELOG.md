@@ -21,6 +21,13 @@ is sourced from · what it left open.
 
 ---
 
+## v3.65 — 2026-09-22 · The corridor is planar (side-view figure added); every UAV-pillars block marked FLAWED and temporarily disabled; z-sloped corridor planned as Gen15 U19 → [`changelogs/v3.65_20260922_corridor_altitude_pillars_flawed_u19_plan.md`](changelogs/v3.65_20260922_corridor_altitude_pillars_flawed_u19_plan.md)
+
+- **Corridor QA answered in the text:** every corridor constraint is a vertical surface; altitude is bounded by the workspace box alone ($[0.61, 1.49]$ m after inflation), never approached ($0.86$–$1.37$ m flown). **New `fig:uav-corridor-altitude`** (side view, unprojected grey vs projected blue, four models) and an *Altitude* paragraph in §6.3.2: the projection moves $z$ by up to $0.14$–$0.27$ m per flight as a by-product of the lateral correction with the action box released, not as a constraint response; a `\guard` points at U19. One sentence in the Ch 5 corridor item. Figure store: `z` kept in `uav_paths.json`, new builder `altitude.py`.
+- 🔴 **UAV-pillars disabled and marked flawed, nothing deleted:** new `\flawed{}` macro and `pillarsflawed` environment (`\ifpillarsflawed`, default on: red banner + grey text; labels still resolve). Wrapped: §6.3.1 and §6.3.2 pillars subsubsections, the §6.3.3 endpoint table + paragraph, §5.3.3's two pillars paragraphs; inline marks in the §6.3 intro, frontier paragraph, UAV conclusion, Ch 5 item/table rows/captions/metric bullet. §6.4 and `08_conclusion.tex` untouched. Note to v4 in the INBOX.
+- **Gen15 U19 plan written** (`Gen15/U19/PLAN_20260922_U19_corridor_v3_z_slide.md`): a ramp in $x$–$z$ on the wide corridor, `plane: xz` halfspaces, four gates; no code, nothing run.
+- `check.py`: all mechanical checks pass, 6 999 lines, 41 figures, flawed 10. **No bundle built.**
+
 ## v3.64 — 2026-09-22 · §6.3 rebuilt in the order of §6.1/§6.2 (before projection → after projection → the two projectors); the alignment threshold is compressed because the budget is high → [`changelogs/v3.64_20260922_uav_prepost_structure_threshold_compressed.md`](changelogs/v3.64_20260922_uav_prepost_structure_threshold_compressed.md)
 
 - **§6.2.2:** the threshold paragraph is re-headed and re-led — the DPCC default $\eta=0.5$ is set for small budgets and is not runnable at $\nfe=20$/$100$ (10 / 50 solves per candidate per step), so the threshold is *compressed* to a roughly constant number of guiding steps; `tab:va-threshold` is the ladder it was chosen on. No number changed.

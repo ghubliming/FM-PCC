@@ -13,7 +13,7 @@ What it does check, which is most of what actually breaks a first build:
   braces        net brace delta per file is zero
   figures       every \\includegraphics target exists as .svg or .pdf
   inputs        every \\input in the master resolves to a file
-  drafting      counts \\hole, \\provisional, \\guard, \\srcnote, \\dataref
+  drafting      counts \\hole, \\provisional, \\guard, \\srcnote, \\dataref, \\flawed
                 -- all five must be gone before submission
 
 Usage:  python3 tools/check.py [--verbose]
@@ -37,7 +37,7 @@ RE_BEGIN = re.compile(r'\\begin\{([^}]+)\}')
 RE_END = re.compile(r'\\end\{([^}]+)\}')
 RE_GRAPHIC = re.compile(r'\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}')
 RE_BIBKEY = re.compile(r'^\s*@\w+\s*\{\s*([^,\s]+)\s*,', re.M)
-DRAFT_MACROS = ['hole', 'provisional', 'guard', 'srcnote', 'dataref', 'todofigure']
+DRAFT_MACROS = ['hole', 'provisional', 'guard', 'srcnote', 'dataref', 'todofigure', 'flawed']
 
 
 def strip_comments(text):

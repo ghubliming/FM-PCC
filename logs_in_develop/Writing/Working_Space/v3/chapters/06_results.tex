@@ -9,6 +9,8 @@
 %                                  (corridor-raw, pillars-raw), 6.3.2 the same cells AFTER per-step projection
 %                                  (+ frontier, paths; s-curve kept in one piece), 6.3.3 per-step vs endpoint
 %                                  (corridor + pillars endpoint tables); caveat on the tracking controller, v3.26)
+%                                  v3.65: every UAV-pillars block is wrapped in pillarsflawed (author: temporarily
+%                                  disabled, marked flawed, nothing deleted); corridor gets fig:uav-corridor-altitude
 %    6.4 Comparison across environments (recap tables only, v3.26)
 %  v3.26: no p-values or test names anywhere (author rule, translation table s8 r8).
 %  Individual changelog: changelogs/v3.7_20260914_ch5-8_restructure.md
@@ -1303,6 +1305,9 @@ UAV-corridor is the scene with a test-time constraint the demonstrations do not 
 on which the plans are feasible before projection, so that its projected rows measure what a method preserves
 rather than what it repairs, and UAV-s-curve records the tracking-controller failure examined in
 \autoref{sec:res:uav:controller}; it is kept in one piece in \autoref{sec:res:uav:scurve}.
+\flawed{Every UAV-pillars block of this section is temporarily disabled (author, 2026-09-22, v3.65): the
+evaluation on that scene is under review. The blocks stay in place, printed in grey, and no claim of this
+chapter may rest on them until they are updated.}
 
 All results use training seed 6
 (\autoref{sec:setup:protocol:uav}). Every generative model is a temporal U-Net with $3.96$--$3.97$\,M
@@ -1384,6 +1389,7 @@ variant \texttt{diffuser}, geometry \texttt{corridor\_cv2s}: \texttt{success\_re
 \texttt{avg\_time\_ms}; recounted 2026-09-22 (v3.63).}
 
 \FloatBarrier
+\begin{pillarsflawed}
 \subsubsection{UAV-pillars}\label{sec:res:uav:pillars}
 
 e least to repair, and reading it requires saying
@@ -1442,6 +1448,7 @@ tags \texttt{u7hg} and \texttt{EPlatest\_u7hg}, variant \texttt{diffuser}: \text
 \texttt{collision\_free\_completed}, \texttt{n\_success\_relaxed\_and\_constraints},
 \texttt{n\_success\_and\_constraints}, \texttt{n\_violations}, \texttt{avg\_time\_ms}; recounted 2026-09-22
 (v3.64). The S\&C column reproduces the \emph{no proj.} column of \autoref{tab:uav-pillars}.}
+\end{pillarsflawed}
 
 \FloatBarrier
 \subsection{Projection}\label{sec:res:uav:projected}
@@ -1585,7 +1592,7 @@ u17cv2, variants \texttt{dpcc-\{r,c,t\}-bounds\_free-pdes-tightened}; built by
 DA\_in\_Paper/plotting/builders/frontier.py. Every point reproduces its cell of
 \autoref{tab:uav-corridor-projection}.}
 
-UAV-pillars is not drawn as a frontier: \autoref{tab:uav-pillars-best} already places each model at its best
+UAV-pillars (\flawed{disabled, v3.65}) is not drawn as a frontier: \autoref{tab:uav-pillars-best} already places each model at its best
 configuration per projection block and budget, and the scene supports no single selected configuration
 (\autoref{sec:res:uav:pillars:projected}). UAV-s-curve has
 data, but every configuration it has --- projected and unprojected, at every budget flown --- scores
@@ -1627,7 +1634,44 @@ that all stop short.
 \dataref{DA\_in\_Paper/data/uav\_paths.json, extract/uav\_paths.py; ten cells of
 batch\_uav\_20260915\_100816, tag u17cv2}
 
+\paragraph{Altitude.} Every constraint of this scene acts on the horizontal position. The two walls, the
+sloping halfspace and the wall-end caps are vertical surfaces, and the altitude of the plan is bounded by
+nothing but the workspace box, whose limits after inflation --- $0.61$ and $1.49$\,m --- lie $0.3$\,m or
+more from any altitude that was flown. The corridor therefore tests a lateral route change and nothing in
+$z$. \autoref{fig:uav-corridor-altitude} shows the flights of \autoref{fig:uav-corridor-paths} from the
+side, without and with projection, so that this is seen rather than assumed. The projection does move the
+altitude: launched from the same $1.11$\,m, the unprojected flights of the two average-velocity models sink
+by $0.08$\,m over the corridor while their projected flights hold $1.10$--$1.11$\,m, and flight by flight
+the two arms differ by up to $0.14$--$0.22$\,m for the flow-based models and $0.27$\,m for the diffusion
+baseline, the difference growing along $x$ towards the exit, where the slide is tightest. That is a
+by-product of the lateral correction --- the sample is regenerated after each correction, and the
+configuration of this scene releases the action box (\autoref{sec:setup:protocol:uav}), so $z$ is free to
+follow --- and not a response to a constraint, because none acts on $z$ within the flown band.
+\guard{Whether the projector clears a constraint that acts on altitude is not tested by this scene; a
+corridor with a sloping surface in $x$--$z$ is planned (Gen15 U19), and no claim here rests on it.}
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=\textwidth]{fig_uav_corridor_altitude}
+  \caption[UAV-corridor: flown altitude, without and with projection]{UAV-corridor seen from the side:
+  the altitude $z$ of every flight over its position $x$ along the corridor, one panel per model at
+  $\nfe=3$ and the diffusion baseline at $\nfe=20$; grey without projection, blue under the per-step
+  projection of \autoref{tab:uav-corridor}; twelve flights per arm, training seed 6. The shaded span is
+  the length of the walls and of the sloping halfspace, both of which act on the horizontal position only.
+  The dashed lines are the only altitude limits the projector sees, the workspace box after inflation by
+  the rotor reach. The altitude axis is stretched: $1.2$\,m of altitude spans the height of a panel that
+  is $5.6$\,m long. A dot marks where a flight ended, filled for success. Panel titles: MeanFM, FM,
+  CI-MeanFM, Diffusion.}
+  \label{fig:uav-corridor-altitude}
+\end{figure}
+\dataref{DA\_in\_Paper/data/uav\_paths.json, group \texttt{corridor\_altitude}, extract/uav\_paths.py
+(\texttt{obs\_all} dim 5); eight cells of batch\_uav\_20260915\_100816, tag u17cv2, variants
+\texttt{diffuser} and \texttt{dpcc-t-bounds\_free-pdes-tightened}; box limits
+config/uav\_projection.yaml \texttt{corridor\_v2\_slide.workspace\_bounds}; the sink, hold and paired
+differences recounted from the same rollouts 2026-09-22 (v3.65).}
+
 \FloatBarrier
+\begin{pillarsflawed}
 \subsubsection{UAV-pillars}\label{sec:res:uav:pillars:projected}
 
 The evaluation covers two blocks of configurations, and they behave differently enough that averaging
@@ -1830,6 +1874,7 @@ constraints. With D3IL-aligning (\autoref{sec:res:aligning:consistency}) and D3I
 the task is saturated and behind it where the task separates the models; it is ahead of it in no
 environment.
 \dataref{uav\_results.py, pillars K1/K2/K5; Campaign CLOSURE\_20260910 \S2, \S4; DA\_20260910 T1}
+\end{pillarsflawed}
 
 \FloatBarrier
 \subsubsection{UAV-s-curve}\label{sec:res:uav:scurve}
@@ -2048,6 +2093,7 @@ that reason.
 The projection configuration of this scene differs from that of the other quadrotor scene
 (\autoref{sec:setup:protocol:uav}), so the scenes are not pooled.
 
+\begin{pillarsflawed}
 \begin{table}[htpb]
   \caption[UAV-pillars: endpoint projection]{UAV-pillars, the endpoint block: the measure of
   \autoref{tab:uav-pillars} under endpoint projection, which exists at $\nfe=5$ only. \emph{single}: one candidate; $r$, $c$, $t$: the
@@ -2094,6 +2140,7 @@ three flow-based models: per-step = \texttt{dpcc-\{r,c,t\}} plain and \texttt{-t
 flights), endpoint = \texttt{hardflow\_sls} and \texttt{-\{r,c,t\}} (120 flights);
 \texttt{phys\_safe}, \texttt{n\_violations}, \texttt{proj\_ms}; recounted 2026-09-22 (v3.63): 43/180,
 89/180, 1611\,ms and 0/120, 41/120, 104\,ms reproduce exactly.}
+\end{pillarsflawed}
 
 
 On UAV-s-curve, neither method yields a flight that succeeds within the constraints, so the scene
@@ -2243,7 +2290,8 @@ used everywhere else in this thesis. It is used here to locate the limit, and it
 UAV-corridor shows that the flow-based planners fly under constraints: analytic and
 consistency-interpolated average-velocity matching with per-step projection at $\nfe=3$ succeed
 collision-free on every flight, at a sixth of the time of the diffusion baseline, which stays collision-free
-but never reaches the finish line. UAV-pillars, on which the plans are feasible before projection, ranks
+but never reaches the finish line. \flawed{The UAV-pillars sentence that follows is disabled, v3.65.}
+UAV-pillars, on which the plans are feasible before projection, ranks
 nothing among the three flow-based models: instantaneous-velocity matching with endpoint projection succeeds
 collision-free on all ten flights at $78$\,ms per control step, analytic average-velocity matching on nine
 of ten in a shorter path, and at $\nfe=2$ the order is reversed; the one ordering that holds in every cell
