@@ -6,6 +6,25 @@
 > (R33 corridor v3 = tilt + hump, paper-only variants, tightened only, tag `p23cv3`; **R39** pillars v2 representative set,
 > tags `p23pv2turbo` / `p23pv2live`). The rows below are kept for history and are not to be run from here.
 
+## NOW — what the thesis is lacking as of 2026-09-23 (v3.68d). Read this table only; everything below is history.
+
+| ID | where it shows in the draft | run | GPU |
+| :-- | :-- | :-- | --: |
+| **R39** 🔴 | Ch 6 §6.3.1 UAV-pillars — every cell *pending* | pillars v2 representative set (pilot + 5 replay cells + 2 live cells) — **23-09 file** | < 1 h |
+| **R33** 🔴 | Ch 6 §6.3.2 UAV-corridor — every cell *pending*, tilt + hump blocks | corridor v3, two scenes, 68 cells each, K20 last — **23-09 file** | ~2 GPU-days |
+| **R2** 🔴 | Table 6.8 diffusion per-step row *pending* | D3IL-aligning diffusion K20, `combined_5-tightened`, `dpcc-r/c/t`, ten contexts | ~1.5 h |
+| **R37** 🔴 | Table 6.6 all rows *pending* | tightened threshold ladder: MeanFM random rule — per-step K2 η0.5; per-step + endpoint at K100 η0.1 and K100 η0.5 (K10/K20 exist) | ~2 h |
+| **R16** 🟡 | Table 6.5 three rows *pending* | unprojected CI-MeanFM K10; FM K2, K10 | ~1 h |
+| **R35** 🟡 | Table 6.8 CI-MeanFM endpoint block *pending* | `hardflow_new-r/c/t` on CI-MeanFM K20 T0.2 tightened | ~1 h |
+| **R36** 🟡 | Table 6.3 *lacking* cells | avoiding 4-candidate matched: CI-MeanFM + FM at K3, MeanFM K10 (seed 6) | ~2 h |
+| **R40** 🟡 | §6.3.3 s-curve guard (the caveat's missing datum) | MeanFM K10 unprojected under `pid` and `pid_const_v`; expert reference under `pid_stopgo` — **23-09 file §4** | ~20 min |
+| **R26** 🟡 | Tables 6.1/6.2 diffusion K2 row (seed 6 only) | four diffusion K2 trainings (seeds 7–10) + eval | ~11 h |
+
+**Struck / no longer used** (kept below for history): R23 (pillars_xl, abandoned), R30, R32 (corridor v2 / pillars_hg
+twins), R31 (s-curve K ladder), R34 (folded into R37), R38 (s-curve projected, optional), R7/R14 (replaced by R36),
+R9 (unit-scale noise — nothing claims it), R15 (MJPC ten flights — the caveat is a demo), R17 (repeat runs),
+R27 (endpoint on diffusion is not defined), R28 (not owed). The corridor-v2 and pillars_hg corpora are archived.
+
 
 **Renamed from `PENDING_20260920_all_lacking_runs.md` on 2026-09-22.** Same file, same history, nothing
 removed; only the date in the name moved forward. Older changelogs (v3.44–v3.59) still cite the previous
@@ -69,21 +88,21 @@ wall-clock: queue time and the 24 h `--time` cap are not in it.
 
 | ID | Priority | One line | Training? | ~GPU time |
 | :-- | :-- | :-- | :-- | --: |
-| **R23** | ⛔ **ABANDONED 2026-09-22 → FALLBACK to `pillars_hg`** | UAV-pillars at `pillars_xl` — **Gen15 U17 abandoned; the thesis restores the withheld `pillars_hg` section with its caveat** (`Gen15/U17/CLOSURE_20260922_U17_abandoned.md`) (Gen15 U17, Slurm jobs up to 25995, author, 2026-09-22). Coverage, cost and whether anything is still new are filled in by the author when the wave ends; see §16. **No new pillars run is listed until then.** 🔴 **First read 2026-09-21: 10/12 children complete, 2 running, diffusion walled at 2/7 (✅ diffusion arm CLOSED BY DECISION — reported unprojected only, K=20 projection is ~1 GPU-day per variant and the `c` rules exceed 24 h; see §16) — and 53 of 54 finished projected cells read `success = 0.00`. Read [`SLURM_RUNBOOK_20260919_pillars_enlarged.md` §3e](SLURM_RUNBOOK_20260919_pillars_enlarged.md) before scheduling anything on this scene** | no | ~5 GPU-days spent, see §16 |
+| ~~R23~~ | ⛔ abandoned; and `pillars_hg` itself superseded by pillars v2 (R39) | UAV-pillars at `pillars_xl` — **Gen15 U17 abandoned; the thesis restores the withheld `pillars_hg` section with its caveat** (`Gen15/U17/CLOSURE_20260922_U17_abandoned.md`) (Gen15 U17, Slurm jobs up to 25995, author, 2026-09-22). Coverage, cost and whether anything is still new are filled in by the author when the wave ends; see §16. **No new pillars run is listed until then.** 🔴 **First read 2026-09-21: 10/12 children complete, 2 running, diffusion walled at 2/7 (✅ diffusion arm CLOSED BY DECISION — reported unprojected only, K=20 projection is ~1 GPU-day per variant and the `c` rules exceed 24 h; see §16) — and 53 of 54 finished projected cells read `success = 0.00`. Read [`SLURM_RUNBOOK_20260919_pillars_enlarged.md` §3e](SLURM_RUNBOOK_20260919_pillars_enlarged.md) before scheduling anything on this scene** | no | ~5 GPU-days spent, see §16 |
 | **R2** | 🔴 | D3IL-aligning: the tightened projected diffusion baseline, per-step r/c/t at K = 20, η = 0.2 — the *pending (R2)* row of Table 6.8 (v3.66); endpoint on diffusion is not defined and not owed | no | ~1.5 h |
-| **R33** | 🔴 **moved → 23-09 file** | UAV-corridor v3 = **tilt + hump** (author, 23-09), 68 cells, paper-only variants, tag `p23cv3` — spec and runbook in `PENDING_20260923_uav_corridor_v3_pillars_v2_paper_runs.md` | no (U19 coding first) | ~1.5–2 GPU-days |
+| **R33** | 🔴 **23-09 file** | UAV-corridor v3 = **two scenes, tilt and hump** (author, 23-09), 68 cells each, paper-only variants, tags `p23cv3t` / `p23cv3ah` — spec and runbook in `PENDING_20260923_uav_corridor_v3_pillars_v2_paper_runs.md` | no (U19 coding first) | ~1.5–2 GPU-days |
 | **R39** | 🔴 **new, 23-09 file** | UAV-pillars v2 (Gen15 U18): the **representative** set — G1 pilot, five replay cells (T1–T5), two live cells (L1, L2); tags `p23pv2turbo` / `p23pv2live` | no | < 30 min CPU + ~40 min GPU |
 | **R35** | 🟡 | D3IL-aligning: endpoint projection on CI-MeanFM at K = 20, tightened, r/c/t (Table 6.8 block) | no | ~1 h |
 | **R36** | 🟡 | D3IL-avoiding: matched four-candidate endpoint-vs-per-step at K = 3 for CI-MeanFM and FM, and MeanFM at K = 10 with four candidates, seed 6 (Table 6.3 *lacking* cells) | no | ~2 h |
-| **R37** | 🔴 | D3IL-aligning **tightened threshold ladder** (Table 6.6, now blank): MeanFM, random rule, `combined_5-tightened`, `dpcc-r` + `hardflow_sls-r` at (K, η) = (2, 0.5), (10, 0.4), (20, 0.2), (100, 0.1), (100, 0.5); the K20/η0.2 and K10/η0.4 cells already exist tightened (Table 6.7) → **3 new pairs**: K2 η0.5 both, K100 η0.1 both, K100 η0.5 both | no | ~2 h (the η0.5 K100 pair dominates) |
+| **R37** | 🔴 | D3IL-aligning **tightened threshold ladder** (Table 6.6, now blank): MeanFM, random rule, `combined_5-tightened`: per-step at K2 η0.5 (no endpoint there — no guiding step), per-step + endpoint at K100 η0.1 and K100 η0.5; the K10/η0.4 and K20/η0.2 cells exist tightened (Table 6.7) | no | ~2 h (the η0.5 K100 pair dominates) |
 | ~~R38~~ | ⚪ optional (v3.68) | tightened s-curve projected cells — not needed for the caveat; run only with spare capacity | no | ~4 h |
 | ~~R34~~ | folded into R37 | endpoint at η = 0.5, K = 100 is now one of R37's pairs | — | — |
 | **R26** | 🟡 | D3IL-avoiding: five-seed diffusion $\nfe=2$ | **4 trainings** | ~11 h (training) + 15 min |
 | **R16** | 🟡 widened at v3.62, narrowed at v3.63, **narrowed again at v3.66 (K = 1 dropped)** | D3IL-aligning, the unprojected ladder $\nfe\in\{2,10,20,100\}$ for the **three flow-based models**: the **three** cells `tab:va-models` prints as *pending* — CI-MeanFM 10; FM 2, 10 (§20, §23). ~~Diffusion at 1, 2, 10~~ struck: the author removed every diffusion row but $\nfe=20$ from Table 6.5 (v3.63, third round) | no | ~2 h (6 evaluations) |
-| **R28** | 🟡 | D3IL-avoiding: FM at $\nfe=5$ (seeds 7–10) and $\nfe=10$ ($T{=}0.5$, five seeds) — **not owed**, nothing claims those cells | no | ~2 h |
-| **R7 / R14** | 🟡 | D3IL-avoiding: candidate-matched endpoint vs per-step projection, 5 seeds × 20 episodes | no | ~6.5 h |
-| **R9** | 🟡 | FM with unit-scale initial noise, all three environments | no | ~3 h |
-| **R15** | 🟡 | UAV-s-curve: MuJoCo MPC at ten flights instead of three | no | 30 min unprojected / ~6.5 h projected |
+| ~~R28~~ | ⛔ not owed — struck 23-09 | D3IL-avoiding: FM at $\nfe=5$ (seeds 7–10) and $\nfe=10$ ($T{=}0.5$, five seeds) — **not owed**, nothing claims those cells | no | ~2 h |
+| ~~R7 / R14~~ | ⛔ replaced by R36 — struck 23-09 | D3IL-avoiding: candidate-matched endpoint vs per-step projection, 5 seeds × 20 episodes | no | ~6.5 h |
+| ~~R9~~ | ⛔ nothing claims it — struck 23-09 | FM with unit-scale initial noise, all three environments | no | ~3 h |
+| ~~R15~~ | ⛔ the caveat is a demo — struck 23-09 | UAV-s-curve: MuJoCo MPC at ten flights instead of three | no | 30 min unprojected / ~6.5 h projected |
 | ~~R30~~ | ⛔ superseded (23-09) | corridor-v2 diffusion twin — the v2 corpus is archived (v3.66); the corridor is R33 in the 23-09 file | — | — |
 | ~~R32~~ | ⛔ superseded (23-09) | `pillars_hg` K = 1 rows — the pillars scene is flawed/disabled (v3.65) and is replaced by pillars v2, **R39** in the 23-09 file | — | — |
 | ~~R31~~ | ⛔ struck (v3.68) | the s-curve K ladder is no longer printed; the scene is a controller caveat with its pilot cells (Table 6.14). Any further s-curve run is R40 in the 23-09 file | — | — |
@@ -156,8 +175,8 @@ if the extended comparison is to be complete.
 | ID | Missing work | Value |
 | :-- | :-- | :-- |
 | ~~**R16 extension**~~ | ⬜ absorbed into R16 at v3.62 | — |
-| **R17** | repeat the projected alignment configurations | measures run-to-run variation |
-| **R27** | diffusion baseline under endpoint projection on UAV-corridor at $\nfe=20$, single/$r$/$c$/$t$, twelve flights each | endpoint projection has never been evaluated on diffusion in any environment |
+| ~~R17~~ | struck 23-09 | — |
+| ~~R27~~ | struck 23-09 — endpoint projection is not defined for the diffusion sampler | endpoint projection has never been evaluated on diffusion in any environment |
 
 R11 is retired: v3.47 removes the subsection it was meant to support. R24 is closed: all eight
 raw-plan panels are present.
@@ -938,3 +957,39 @@ See the banner at the top: R30 and R32 are struck, R33 is moved, R39 is new; all
 ## 26 · v3.68 — the quadrotor chapters are rebuilt around pillars v2 and corridor v3; the s-curve is a caveat
 
 R31 struck, R38 optional, **R40** (s-curve: the same unprojected MeanFM $\nfe=10$ plan under `pid` and `pid_const_v`, and the expert reference replayed under `pid_stopgo`) opened in `PENDING_20260923_uav_corridor_v3_pillars_v2_paper_runs.md` §4. The pillars-v2 and corridor-v3 runs are R39/R33 there. `v3/withheld/20260922_v3.68_archive/` holds what left the chapters.
+
+**Correction (23-09, v3.68 second round):** the corridor is **two scenes** — `corridor_v3_tilt` (the slide leaned −60°, tag `p23cv3t`) and `corridor_v3_ablation_hump` (the roof, tag `p23cv3ah`) — read separately in the thesis; there is no slide + roof scene. Pilots done 22-09; author: run the waves. Details in the 23-09 file §1.1.
+
+**R37 narrowed (v3.68d, 23-09):** the K = 2 / η = 0.5 endpoint pair is struck — a two-step budget has no guiding step, so Table 6.6 prints a dash there and Table 6.7 no endpoint row at K = 2; R37 = the per-step K2 pair plus both projectors at K100 η0.1 and K100 η0.5 (the K10 η0.4 and K20 η0.2 cells exist tightened).
+
+**23-09, v3.68d:** the NOW table at the top is the current list; R7/R14, R9, R15, R17, R27, R28 struck (see the open list); R37 narrowed (no K2 endpoint pair).
+
+---
+
+## 27 · 23-09 — R2 was run at the wrong threshold, and R37's cost was under-estimated
+
+**R2 is NOT closed by job 26051.** That job had the right model, budget, geometry, rules and
+context count, but its driver passed no threshold, so the eval took `diffusion_timestep_threshold:
+0.5` from the shared yaml and wrote `…/H8_K20_**T0.5**_…_msglr22/6`. Table 6.8 is the operating
+point only, K = 20 and **eta = 0.2** (§23), and its three flow rows are keyed `_T0.2_`. The author
+ruled the T0.5 cells out on 23-09: *"so R2 is wrong! it is dead. so we need resubmit it!"*
+Re-run as **`_msgR2fix`** at eta = 0.2, chained after 26112. The T0.5 folders are kept, not deleted;
+they are a valid eta = 0.5 cell that nothing currently prints.
+
+**R37's "~2 h" estimate holds for two of its three pairs only.** Worked from this file's own §14
+measurement (15,218 ms per control step at K = 100, eta = 0.5) over a 400-step, ten-context cell,
+and doubled because the geo loop always runs the plain geometry beside the tightened twin:
+
+| pair | one job | verdict |
+| :-- | --: | :-- |
+| K2 eta0.5, per-step | ~0.5 h | queued |
+| K100 eta0.1, per-step + endpoint | ~5.6 h | queued |
+| **K100 eta0.5, per-step or endpoint** | **~33.8 h each** | 🔴 **over the 24 h cap — not queued** |
+
+Options are listed in `SLURM_RUNBOOK_20260922_all_lacking_runs.md`; the cheapest honest one is to
+drop the pair, because §14 already carries the eta0.5-vs-eta0.1 cost evidence that §6.2.2 argues from.
+
+**Submitted 23-09 as one serial chain** (`Slurm_Codes/temp_bash/pipeline_20260923_red_wave.sh`, a single
+self-contained driver that generates its own `_rw23_*` job files):
+26112 → R2fix → R37a → R37b. **Queued for later, unchanged in scope:** R16, R35 (part 2, one
+aligning script), R36 (part 3). R33, R39 and R40 stay in the 23-09 file.

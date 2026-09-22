@@ -107,12 +107,61 @@ UAV_SCENE_DIR = 'd3il/environments/d3il/models/mj/robot/quadrotor/scenes'
 # Every boundary is inflated by the vehicle radius before it reaches the solver
 # (planning_inflation.r_drone), and a tightened variant shrinks it by
 # enlarge_constraints on top of that.
+def _pillars_v2_scene():
+    """[v3.68b, 2026-09-23] UAV-pillars = the D3IL-avoiding field flown by the quadrotor (Gen15 U18).
+
+    The constraint set is the avoiding `both-hard` geometry (the two halfspaces and the keep-out
+    disk of data/avoiding_scene.json, i.e. config/projection_eval.yaml) mapped into the arena by
+    the similarity map of uav_avoiding_bridge/frame.py at SCALE 36:
+        X =  36 * (y_a - 0.035),   Y = -36 * (x_a - 0.5)
+    The six physical pillars are the avoiding obstacles under the same map (r 0.025/0.03 -> 0.90/1.08 m).
+    The map sends the rod radius (0.01) onto the drone's reach (0.36), so the planner's constraint
+    set is used as it is: no further inflation is drawn (`r_drone` 0 for this scene), and the
+    tightening is the avoiding one, 0.025 -> 0.90 m. top-left-hard and top-right-hard are subsets
+    (one halfspace + the disk each), as in fig_constraints_avoiding.
+    """
+    import json as _json
+    if not os.path.isfile(AVOIDING_SCENE):
+        return None
+    sc = _json.load(open(AVOIDING_SCENE))
+    S_ = 36.0
+    w = lambda xa, ya: (S_ * (ya - 0.035), -S_ * (xa - 0.5))
+    g = sc['geometries']['both-hard']
+    hs = []
+    for h in g['halfspaces']:
+        (ax_, ay), (bx, by) = h['p0'], h['p1']
+        P0, P1 = w(ax_, ay), w(bx, by)
+        # the feasible side in world terms: test a point just inside the avoiding feasible side
+        m = (by - ay) / (bx - ax_)
+        tx, ty = ax_, ay + (-0.05 if h['feasible_side'] == 'below' else 0.05) + m * 0
+        TX, TY = w(tx, ty)
+        M = (P1[1] - P0[1]) / (P1[0] - P0[0])
+        side = 'above' if TY > P0[1] + M * (TX - P0[0]) else 'below'
+        # keep the segment ordered by X so the panel's x_active clip is well defined
+        if P1[0] < P0[0]:
+            P0, P1 = P1, P0
+        hs.append({'p0': P0, 'p1': P1, 'side': side, 'x_active': (-12.06, 13.14)})
+    dk = g['disk']
+    C = w(*dk['center'])
+    disks = [{'c': C, 'r': S_ * dk['radius'], 'r_phys': S_ * 0.03 if abs(dk['center'][1] + 0.1) < 0.02 else S_ * 0.025}]
+    for (xa, ya) in sc['obstacles']['centers']:
+        if abs(xa - dk['center'][0]) < 1e-6 and abs(ya - dk['center'][1]) < 0.02:
+            continue           # the keep-out sits on this pillar; drawn above
+        r = 0.03 if abs(ya + 0.1) < 1e-6 else sc['obstacles']['radius']
+        disks.append({'c': w(xa, ya), 'r': S_ * r})
+    return {'name': 'UAV-pillars', 'title': 'UAV-pillars',
+            'sub': 'the avoiding field at scale 36, both-hard',
+            'xlim': (-13.0, 14.0), 'ylim': (-11.5, 11.5),
+            'r_drone': 0.0, 'tightening': S_ * sc['tightening'],
+            'halfspaces': hs, 'disks': disks}
+
+
 UAV_CONSTRAINTS = {
     'r_drone': 0.31,
     'tightening': 0.025,
     'scenes': [
         {'name': 'UAV-corridor', 'title': 'UAV-corridor',
-         'sub': 'two walls and the test-time slide',
+         'sub': 'walls; the slide leaned, cut at z = 1.11 m',
          'xlim': (-2.8, 2.8), 'ylim': (-1.4, 1.4),
          'halfspaces': [
              {'p0': (-2.0, -0.95), 'p1': (2.0, -0.95), 'side': 'above', 'x_active': (-2.0, 2.0)},
@@ -122,20 +171,6 @@ UAV_CONSTRAINTS = {
          ],
          'disks': [{'c': (-2.0, -1.0), 'r': 0.05}, {'c': (2.0, -1.0), 'r': 0.05},
                    {'c': (-2.0, 1.0), 'r': 0.05}, {'c': (2.0, 1.0), 'r': 0.05}]},
-        # [2026-09-22, v3.63] UAV-pillars is drawn at the radius the thesis evaluates it at:
-        # `pillars_hg`, the 0.12 m pillar the simulator contains, inflated by the rotor reach
-        # like every other obstacle. From 2026-09-19 to 22 this entry carried the ENLARGED
-        # `pillars_xl` keep-out (0.35, with the 0.12 pillar as `r_phys`); that campaign (Gen15
-        # U17) is ABANDONED -- every projector routed into the forbidden centre lane and the
-        # scene ranked nothing -- and the thesis fell back to `pillars_hg` with its caveat
-        # (Gen15/U17/CLOSURE_20260922_U17_abandoned.md). No `pillars_xl` number or drawing
-        # may appear in a thesis figure.
-        {'name': 'UAV-pillars', 'title': 'UAV-pillars',
-         'sub': 'six pillars',
-         'xlim': (-3.0, 3.0), 'ylim': (-1.9, 1.9),
-         'halfspaces': [],
-         'disks': [{'c': (x, y), 'r': 0.12}
-                   for x in (-2.0, 0.0, 2.0) for y in (-0.6, 0.6)]},
         {'name': 'UAV-s-curve', 'title': 'UAV-s-curve',
          'sub': 'two offset passages',
          'xlim': (-3.4, 3.4), 'ylim': (-1.7, 1.7),
@@ -148,6 +183,10 @@ UAV_CONSTRAINTS = {
          'disks': [{'c': (-0.5, -0.3), 'r': 0.05}, {'c': (0.5, 0.3), 'r': 0.05}]},
     ],
 }
+# v3.68b: scene order of the chapters -- pillars first
+_pv2 = _pillars_v2_scene()
+if _pv2:
+    UAV_CONSTRAINTS['scenes'].insert(0, _pv2)
 
 # The two D3IL manipulation scenes are built in Python, not XML, so their
 # primitives are transcribed here WITH the symbol they come from. MuJoCo cylinder
@@ -267,11 +306,15 @@ MUJOCO_RENDERS = {
         'lookat': (-0.6, 0.0, 0.8), 'distance': 5.6, 'azimuth': 14.0, 'elevation': -24.0,
         'path_rgba': (0.20, 0.85, 0.35, 1.0),
     },
+    # [v3.68c, 2026-09-23] UAV-pillars = the avoiding field at scale 36 (Gen15 U18): the arena
+    # XML, the vehicle at the mapped avoiding start, and ONE avoiding demonstration mapped into
+    # the arena as the path (there is no quadrotor demonstration on this scene). Rendered in the
+    # container with MUJOCO_GL=osmesa.
     'fig_render_uav_pillars': {
-        'scene': 'scene_pillars.xml', 'size': (1600, 1100),
-        'path_fn': 'pillar_path', 'path_args': (('L', 'R', 'L'), 1.1, 13.0),
-        'lookat': (-0.6, 0.0, 0.8), 'distance': 6.6, 'azimuth': 28.0, 'elevation': -26.0,
-        'path_rgba': (0.20, 0.85, 0.35, 1.0),
+        'scene': 'scene_avoiding_pillars_s36.xml', 'size': (1600, 1100),
+        'path_fn': 'avoiding_demo', 'path_args': (0, 1.0),
+        'lookat': (-1.0, 0.0, 0.8), 'distance': 27.0, 'azimuth': 22.0, 'elevation': -26.0,
+        'path_rgba': (0.20, 0.85, 0.35, 1.0), 'tube_radius': 0.09,   # the arena is 25 m long
     },
     'fig_render_uav_scurve': {
         'scene': 'scene_s_curve.xml', 'size': (1600, 1100),

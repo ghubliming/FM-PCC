@@ -34,6 +34,7 @@ Present in the store but not produced by this run (e.g. a matplotlib figure from
 | `fig_avoiding_tradeoff` | `da/fig_avoiding_tradeoff.png`, `da/fig_avoiding_tradeoff.svg` |
 | `fig_constraints_aligning` | `env/fig_constraints_aligning.png`, `env/fig_constraints_aligning.svg` |
 | `fig_constraints_avoiding` | `env/fig_constraints_avoiding.png`, `env/fig_constraints_avoiding.svg` |
+| `fig_constraints_avoiding_sets` | `env/fig_constraints_avoiding_sets.png`, `env/fig_constraints_avoiding_sets.svg` |
 | `fig_constraints_uav` | `env/fig_constraints_uav.png`, `env/fig_constraints_uav.svg` |
 | `fig_env_avoiding` | `env/fig_env_avoiding.png`, `env/fig_env_avoiding.svg` |
 | `fig_expert_aligning` | `env/fig_expert_aligning.png`, `env/fig_expert_aligning.svg` |

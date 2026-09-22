@@ -113,13 +113,14 @@ def fig_scene_uav_corridor(outdir):
 
 
 def fig_scene_uav_pillars(outdir):
+    """Pillars v2 (v3.68b): the D3IL-avoiding field at scale 36, extruded into pillars (Gen15 U18)."""
     sc = _uav_scene(
-        'scene_pillars.xml',
+        'scene_avoiding_pillars_s36.xml',
         dict(azimuth=54, elevation=30))
     if sc is None:
         return None
     path = sc.save(os.path.join(outdir, 'fig_scene_uav_pillars.svg'))
-    return path, 'd3il/.../quadrotor/scenes/scene_pillars.xml | MJCF geometry, orthographic'
+    return path, 'd3il/.../quadrotor/scenes/scene_avoiding_pillars_s36.xml | MJCF geometry, orthographic'
 
 
 def fig_scene_uav_scurve(outdir):
@@ -215,6 +216,10 @@ FONT_CONSTRAINT = 1.55
 
 def _uav_constraint_panel(scn, w, first, r_drone, tight):
     from svg.fmpcc_svg import clip_halfplane
+    # v3.68b: a scene may carry its own inflation and tightening (UAV-pillars: the avoiding
+    # constraint set mapped as it is, r_drone 0, tightening 0.025 * 36)
+    r_drone = scn.get('r_drone', r_drone)
+    tight = scn.get('tightening', tight)
     fs = FONT_CONSTRAINT
     (x0, x1), (y0, y1) = scn['xlim'], scn['ylim']
     ml, mr, mt, mb = int(42 * fs), int(10 * fs), int(46 * fs), int(46 * fs)
@@ -222,8 +227,9 @@ def _uav_constraint_panel(scn, w, first, r_drone, tight):
     ph = pw * (y1 - y0) / (x1 - x0)                  # equal aspect: 1 m is 1 m on both axes
     f = Fig(w, int(round(ph + mt + mb)), ml=ml, mr=mr, mt=mt, mb=mb, font=fs)
     f.axes((x0, x1), (y0, y1))
-    tx = [v for v in range(int(math.ceil(x0)), int(math.floor(x1)) + 1)]
-    ty = [v for v in range(int(math.ceil(y0)), int(math.floor(y1)) + 1)]
+    step = 5 if (x1 - x0) > 12 else 1
+    tx = [v for v in range(int(math.ceil(x0)), int(math.floor(x1)) + 1) if v % step == 0]
+    ty = [v for v in range(int(math.ceil(y0)), int(math.floor(y1)) + 1) if v % step == 0]
     f.frame(tx, ty, 'x [m]', 'y [m]' if first else '', scn['title'], scn['sub'],
             xfmt=lambda v: f'{v:g}', yfmt=lambda v: f'{v:g}')
     f.clip_to_box()
@@ -282,6 +288,67 @@ def _uav_constraint_panel(scn, w, first, r_drone, tight):
     return f
 
 
+def _uav_side_panel(kind, w, first, r_drone, tight):
+    """[v3.68d] UAV-corridor from the side (x-z), route C: the two constraints that leave the
+    horizontal plane. `kind` = 'tilt' (the v2 slide leaned -60 deg about z_ref = 1.11: the body
+    clears when s_xy(x,0) - tan(60)(z - z_ref) >= r, i.e. below a ceiling that descends along x)
+    or 'hump' (the roof 0 -> 1.10 m at x = 0 -> 0 over x in [-1.5, 1.5]; the body clears above
+    the roof inflated by r*sqrt(1+m^2)). Numbers from config/uav_projection.yaml
+    (corridor_v3_tilt: z_lean deg -60 z_ref 1.11, ub_z 1.80; corridor_v3_ablation_hump: ub_z 2.80).
+    """
+    fs = FONT_CONSTRAINT
+    (x0, x1) = (-2.8, 2.8)
+    (z0, z1) = (0.2, 1.9) if kind == 'tilt' else (0.2, 2.95)
+    ml, mr, mt, mb = int(42 * fs), int(10 * fs), int(46 * fs), int(46 * fs)
+    f = Fig(w, 300, ml=ml, mr=mr, mt=mt, mb=mb, font=fs)
+    f.axes((x0, x1), (z0, z1))
+    title = 'UAV-corridor, tilt' if kind == 'tilt' else 'UAV-corridor, hump'
+    sub = 'side view along route C (y = 0)'
+    f.frame([-2, -1, 0, 1, 2], [0.5, 1.0, 1.5] + ([2.0, 2.5] if kind == 'hump' else []),
+            'x [m]', 'z [m]' if first else '', title, sub,
+            xfmt=lambda v: f'{v:g}', yfmt=lambda v: f'{v:.1f}')
+    f.clip_to_box()
+    lb_z, ub_z = 0.30, (1.80 if kind == 'tilt' else 2.80)
+    for z in (lb_z + r_drone, ub_z - r_drone):
+        f.dline([(x0, z), (x1, z)], '#5d6d7e', w=1.2, dash='3,4')
+    f.text(f.X(x1) - 6, f.Y(ub_z - r_drone) + (12 if kind == 'tilt' else -5), 'workspace box after inflation', 9.0, '#5d6d7e', anchor='end')
+    xs = [x0 + (x1 - x0) * i / 200 for i in range(201)]
+    if kind == 'tilt':
+        t = math.tan(math.radians(60.0)); z_ref = 1.11
+        m = (-0.05 - 0.95) / 4.0; b = 0.95 - m * (-2.0)
+        s_xy = lambda x: (m * x + b) / math.hypot(1.0, m)       # signed distance below the slide at y = 0
+        active = [x for x in xs if -2.0 <= x <= 2.0]
+        ceil = lambda x, extra: z_ref + (s_xy(x) - r_drone - extra) / t
+        raw = lambda x: z_ref + s_xy(x) / t                      # the plane itself (a point clears it)
+        f.polygon([(active[0], z1)] + [(x, ceil(x, 0.0)) for x in active] + [(active[-1], z1)],
+                  '#5d6d7e', opacity=0.10)
+        f.polygon([(x, raw(x)) for x in active] + [(x, ceil(x, 0.0)) for x in reversed(active)],
+                  '#5d6d7e', opacity=0.24)
+        f.dline([(x, raw(x)) for x in active], '#34495e', w=2.6)
+        f.dline([(x, ceil(x, 0.0)) for x in active], '#34495e', w=1.2)
+        f.dline([(x, ceil(x, tight)) for x in active], '#34495e', w=1.4, dash='7,5')
+        f.text(f.X(x0) + 6, f.Y(z1) + 14, 'excluded: above the leaned plane', 9.0, '#34495e')
+    else:
+        H = 1.10; m = H / 1.5
+        k = math.hypot(1.0, m)
+        roof = lambda x: max(0.0, H - abs(x) * m) if abs(x) <= 1.5 else 0.0
+        lift = lambda x, extra: roof(x) + (r_drone + extra) * (k if abs(x) <= 1.5 else 1.0)
+        span = [x for x in xs if -1.5 <= x <= 1.5]
+        f.polygon([(span[0], z0)] + [(x, lift(x, 0.0)) for x in span] + [(span[-1], z0)],
+                  '#5d6d7e', opacity=0.10)
+        f.polygon([(x, roof(x)) for x in span] + [(x, lift(x, 0.0)) for x in reversed(span)],
+                  '#5d6d7e', opacity=0.24)
+        f.dline([(x, roof(x)) for x in span], '#34495e', w=2.6)
+        f.dline([(x, lift(x, 0.0)) for x in span], '#34495e', w=1.2)
+        f.dline([(x, lift(x, tight)) for x in span], '#34495e', w=1.4, dash='7,5')
+        f.text(f.X(0.0), f.Y(0.42), 'the roof: excluded below', 9.0, '#34495e', anchor='middle')
+    # the launch altitude and the flown band of the level corridor, for scale
+    f.dline([(x0, 1.11), (x1, 1.11)], '#2471a3', w=1.2, dash='1,3')
+    f.text(f.X(x0) + 6, f.Y(1.11) + 12 if kind == 'tilt' else f.Y(1.11) - 5, 'launch altitude 1.11 m', 9.0, '#2471a3')
+    f.end_clip()
+    return f
+
+
 def fig_constraints_uav(outdir):
     """The three aerial constraint sets, from above, as the projection sees them."""
     from svg.fmpcc_svg import save_grid
@@ -290,10 +357,13 @@ def fig_constraints_uav(outdir):
         return None
     r, t = C['r_drone'], C['tightening']
     panels = [_uav_constraint_panel(scn, 470, i == 0, r, t) for i, scn in enumerate(C['scenes'])]
-    width = sum(p.w for p in panels) + 2 * 8
+    # v3.68d: the corridor's two constraints leave the plane of the top view; a second row
+    # shows each from the side along route C.
+    panels += [_uav_side_panel('tilt', 470, True, r, t), _uav_side_panel('hump', 470, False, r, t)]
+    width = sum(p.w for p in panels[:3]) + 2 * 8
     h = Fig(width, 104, ml=0, mr=0, mt=0, mb=0, font=FONT_CONSTRAINT)
     x = 16
-    items = [('wall', 'the obstacle: wall or slide'),
+    items = [('wall', 'the obstacle: wall, slide, plane or roof'),
              ('band', f'excluded: inflated by the vehicle radius {r:g} m'),
              ('area', 'excluded: beyond the obstacle'),
              ('dash', f'tightened by a further {t:g} m')]
@@ -313,8 +383,10 @@ def fig_constraints_uav(outdir):
             h.poly([(x - 14, y), (x + 14, y)], '#34495e', dash='9,6', w=3)
         h.text(x + 26, y + 7, lab, size, '#111')
     path = save_grid(panels, os.path.join(outdir, 'fig_constraints_uav.svg'), cols=3, gap=8, header=h)
-    return path, ('config/uav_projection.yaml :: corridor_v2_slide, pillars_hg, s_curve_hg '
-                  f'| transcribed in sources.UAV_CONSTRAINTS; inflation r_drone {r:g} m, tightening {t:g} m')
+    return path, ('config/uav_projection.yaml :: corridor_v3_tilt (cut at z_ref), s_curve_hg; '
+                  'UAV-pillars = data/avoiding_scene.json both-hard mapped by uav_avoiding_bridge/frame.py at scale 36 '
+                  f'| transcribed in sources.UAV_CONSTRAINTS; inflation r_drone {r:g} m, tightening {t:g} m '
+                  '(pillars: 0 / 0.90 m)')
 
 
 # ═══════════════════════════════════════════════════════════════════════════

@@ -363,6 +363,50 @@ def geometry_panel(sc, name, w, title, sub, ylab, font):
     return f
 
 
+def fig_constraints_avoiding_sets(outdir):
+    """[v3.68c] The three D3IL-avoiding constraint sets ALONE -- no demonstrations -- so that Chapter 5
+    can say what a halfspace and a keep-out disk are before the demonstrations are drawn over them
+    (fig_constraints_avoiding). Same scene file, same geometry_panel, same code path as the executed-path
+    figures of Chapter 6; each element is labelled once, on the first panel."""
+    from svg.fmpcc_svg import save_grid
+    sc = _scene()
+    if sc is None:
+        return None
+    d = sc['tightening']
+    panels = []
+    for i, name in enumerate(('top-left-hard', 'top-right-hard', 'both-hard')):
+        g = sc['geometries'][name]
+        f = geometry_panel(sc, name, 470, name, '', i == 0, FONT_ENV)
+        (x0, x1), _ = sc['ax_limits']
+        if i == 0:
+            # the excluded side of top-left-hard is the lower right of the panel: label it there
+            f.text(f.X(x1) - 6, f.Y(-0.24), 'halfspace:', 10.5, '#34495e', anchor='end', bold=True)
+            f.text(f.X(x1) - 6, f.Y(-0.275), 'excluded side', 10.5, '#34495e', anchor='end', bold=True)
+        dk = g['disk']
+        cx, cy, r = dk['center'][0], dk['center'][1], dk['radius']
+        f.text(f.X(cx), f.Y(cy - r - d) + 14, 'keep-out disk', 10.5, '#34495e', anchor='middle', bold=True)
+        f.text(f.X(x1) - 6, f.Y(sc['goal_y']) - 8, 'goal line', 10.5, '#1e8449', anchor='end', bold=True)
+        f.end_clip()
+        panels.append(f)
+    width = sum(p_.w for p_ in panels) + 2 * 8
+    h = Fig(width, 52, ml=0, mr=0, mt=0, mb=0, font=FONT_ENV)
+    x, y = 16, 26
+    for kind, lab in (('area', 'excluded for the planned position'), ('dash', f'tightened by {d:g} m'),
+                      ('obst', f'obstacle, radius {sc["obstacles"]["radius"]:g} m'), ('goal', 'goal line')):
+        if kind == 'area':
+            h.s.append(f'<rect x="{x - 8}" y="{y - 8}" width="16" height="16" fill="#5d6d7e" fill-opacity="0.32" stroke="#34495e"/>')
+        elif kind == 'dash':
+            h.poly([(x - 10, y), (x + 10, y)], '#34495e', dash='7,5', w=2)
+        elif kind == 'obst':
+            h.marker(x, y, 'o', '#c0392b', r=6.5)
+        else:
+            h.poly([(x - 10, y), (x + 10, y)], '#27ae60', w=5)
+        h.text(x + 20, y + 7, lab, 11, '#111')
+        x += 60 + len(lab) * 12.0
+    path = save_grid(panels, os.path.join(outdir, 'fig_constraints_avoiding_sets.svg'), cols=3, gap=8, header=h)
+    return path, 'Data_Analysis/DA_in_Paper/data/avoiding_scene.json | config/projection_eval.yaml geometries, no demonstrations'
+
+
 def fig_constraints_avoiding(outdir):
     from svg.fmpcc_svg import clip_halfplane, save_grid
     sc = _scene()
@@ -474,17 +518,22 @@ def fig_avoiding_k_ladder(outdir):
     DASH = {'af': '7,4'}
     RAD = {'af': 3.2}
     DRAW_ORDER = ('mf', 'fm', 'diffusion', 'af')
+    # v3.68d (author): CI-MeanFM and FM coincide at 1.000 on both budgets and the two lines
+    # were one. They are now displaced by +-0.006 on the outcome axis -- a drawing offset,
+    # named in the caption, that moves the lines and not the data.
+    YOFF = {'af': +0.006, 'fm': -0.006}
     drawn = []
     for eng in DRAW_ORDER:
         rule = S.AVOIDING_DPCC_RULE[eng]
         pts = [(K, rows[(eng, K, rule)]) for K in KS if (eng, K, rule) in rows]
         if not pts:
             continue
+        off = YOFF.get(eng, 0.0)
         if len(pts) > 1:
-            f.poly([(f.X(K), f.Y(r['n_success_and_constraints'])) for K, r in pts],
+            f.poly([(f.X(K), f.Y(r['n_success_and_constraints'] + off)) for K, r in pts],
                    S.ENGINE_COLOUR_DISTINCT[eng], w=2.0, dash=DASH.get(eng, ''))
         for K, r in pts:
-            f.marker(f.X(K), f.Y(r['n_success_and_constraints']), MARK[eng],
+            f.marker(f.X(K), f.Y(r['n_success_and_constraints'] + off), MARK[eng],
                      S.ENGINE_COLOUR_DISTINCT[eng], filled=(r['n_geometries'] == 3),
                      r=RAD.get(eng, 5.0))
         drawn.append(eng)
@@ -631,6 +680,7 @@ ALL = [
     # (name, group, builder), in the order the figures appear in the thesis
     ('fig_env_avoiding', 'env', fig_env_avoiding),
     ('fig_constraints_avoiding', 'env', fig_constraints_avoiding),
+    ('fig_constraints_avoiding_sets', 'env', fig_constraints_avoiding_sets),
     ('fig_avoiding_tradeoff', 'da', fig_avoiding_tradeoff),
     ('fig_avoiding_k_ladder', 'da', fig_avoiding_k_ladder),
     ('fig_avoiding_raw_models', 'da', fig_avoiding_raw_models),

@@ -227,20 +227,136 @@ unless told to.
 
 ## 7 · Submission record
 
+### 🔴 23-09 · two defects in this wave, and what survives of the driver
+
+**1 · The B2 dependency never attached (my error).** `submit_file()` passed the dependency as the
+environment variable `SBATCH_DEPENDENCY` through `submit.sh` instead of the explicit `--dependency=`
+flag. Job **26056** was therefore queued with reason `QOSMaxCpuPerUserLimit`, never `(Dependency)`, and
+**started while its training job 26055 was still running**. Its own pre-flight only asked whether *any*
+`state_*.pt` existed, and training writes one every 1000 steps, so a half-trained seed 10 passed the
+check. The author cancelled it after 45 min. **Re-submitted as 26112** with
+`./Slurm_Codes/submit_after.sh 26055 …`, the repo's own dependent wrapper, which uses the explicit flag.
+**Rule for every future driver: dependencies go through `Slurm_Codes/submit_after.sh`, never through an
+environment variable, and a checkpoint guard compares the step number against a completed reference
+seed rather than testing for existence.** Both fixes are in the local driver; the cluster copy predates them.
+
+**2 · 🟠 Job 26051 (A · R2) ran at the wrong projection threshold.** It took η from the shared yaml
+(`diffusion_timestep_threshold: 0.5`) because group A passed no `LR_T`, and wrote
+`…/H8_K20_**T0.5**_…_msglr22/6`. Table 6.8 is **η = 0.2** (v3.66: "the operating point only, K = 20,
+η = 0.2"), and its three flow rows are all keyed `_T0.2_`. The cells 26051 produced are tightened, K20,
+`dpcc-r/c/t`, ten contexts — everything except the threshold. **R2 is therefore not closed by 26051
+unless the author decides the diffusion row keeps DPCC's native η = 0.5.** A re-run at η = 0.2 costs
+less than the original (5 projected steps per replan instead of 11): ~4–5 h. Decision needed.
+
+### 23-09 · the RED wave, submitted as one serial chain
+
+> ✅ **SUBMITTED 23-09.** `26112 → 26113 (R2fix) → 26114 (R37a) → 26115 (R37b)`, every link
+> `afterok` on the one before it, all through `submit_after.sh`. Anchor 26112 was `PENDING` at
+> submission. The cluster yaml reads `n_contexts: 10`, so the in-memory injection is a no-op
+> safeguard there.
+
+Author, 23-09: *"set the dependency chain, the V_A rerun after 26112 then the other red alert run
+after the V_A run"*, and *"others we will run later, but mark/remember in the pending md/runbook"*.
+
+```
+26112  B2 · R26 diffusion K2 five-seed eval        [already queued, afterok:26055]
+  └─►  R2fix   aligning diffusion K20 @ eta 0.2     ~4.5 h   tag _msgR2fix
+         └─►  R37a  MeanFM K2   eta 0.5, per-step   ~0.5 h   tag _msgR37
+                └─►  R37b  MeanFM K100 eta 0.1, per-step + endpoint  ~5.6 h   tag _msgR37
+```
+
+**ONE file to copy to the cluster:** `Slurm_Codes/temp_bash/pipeline_20260923_red_wave.sh`. It
+writes every wrapper and sbatch file it needs (`_rw23_*`) at run time, exactly as the 22-09
+driver did, so nothing is referenced by filename and the driver can be renamed freely. An
+earlier three-file version (a chain plus two link scripts) was deleted: the links were looked up
+by name, and the first submission attempt failed on the cluster because only the chain had been
+copied across. Author: *"they are created from the last temp bash? can you just reuse redo the
+same way? dont find it. it is unreliable."*
+
+```bash
+bash Slurm_Codes/temp_bash/pipeline_20260923_red_wave.sh                  # PLAN
+ANCHOR=26112 bash Slurm_Codes/temp_bash/pipeline_20260923_red_wave.sh submit
+ANCHOR=none  bash ... submit      # if 26112 has already finished and left the queue
+```
+
+Every link is submitted through `Slurm_Codes/submit_after.sh`, never the environment variable.
+~11 h of compute after 26112.
+
+| tag | what it marks |
+| :-- | :-- |
+| `_msgR2fix` | the eta = 0.2 diffusion row of Table 6.8. 26051's `_msglr22` eta = 0.5 folders are left alone |
+| `_msgR37` | the tightened threshold-ladder cells of Table 6.6 |
+
+#### 🔴 R37c does not fit the cluster and is NOT queued
+
+The third pair of the ladder, K = 100 at eta = 0.5, costs far more than the ledger's "~2 h"
+estimate for all of R37. From the ledger's own measurement (§14): 50 guiding steps, **15,218 ms
+per control step**. An alignment cell is 400 steps x 10 contexts:
+
+| pair | ms/step | one item | items (plain + tightened) | job |
+| :-- | --: | --: | --: | --: |
+| K2 eta0.5 per-step | ~191 | 0.2 h | 2 | **0.5 h** |
+| K100 eta0.1 per-step | 1,195 | 1.3 h | 2 | 2.7 h |
+| K100 eta0.1 endpoint | 1,309 | 1.5 h | 2 | 2.9 h |
+| **K100 eta0.5, either arm** | **15,218** | **16.9 h** | **2** | **🔴 33.8 h** |
+
+The geo loop always runs the plain geometry beside the tightened twin, and there is no
+tightened-only switch, so even a single variant is two items. 33.8 h is over the 24 h cap.
+The driver refuses it unless `WAVE="… R37c" ALLOW_OVERCAP=1`. Three ways out, all the author's call:
+
+1. **drop it** — §14 already carries the eta0.5-vs-eta0.1 cost evidence at K = 100 (12.7x the
+   cost for 6 mm of final distance), which is the argument §6.2.2 actually makes;
+2. **authorise skipping the plain twin** (a change to the geo loop) — each variant then fits one
+   24 h job at ~17 h;
+3. **fewer contexts for that pair only** — breaks the ten-context protocol.
+
+### 🟡 Queued for the next parts, not submitted now
+
+Marked here so they are not lost. One part at a time, as agreed.
+
+| next | ID | what | ~GPU | entrypoint |
+| :-- | :-- | :-- | --: | :-- |
+| part 2 | **R16** | aligning unprojected: CI-MeanFM K10; FM K2, K10 | ~1 h | same aligning eval; three cells, `diffuser` only |
+| part 2 | **R35** | aligning endpoint on CI-MeanFM K20, tightened, r/c/t | ~1 h | same eval + `HFFM_VARIANTS` |
+| part 3 | **R36** | avoiding matched 4-candidate: CI-MeanFM + FM at K3, MeanFM K10, seed 6 | ~2 h | `eval_dpcc_job.sh` family, `FMPCC_MPC_BATCH=4` |
+| separate | R33, R39, R40 | corridor v3, pillars v2, s-curve caveat | ~2 GPU-days | the **23-09** file and its own runbook — not this ledger |
+
+R16 and R35 are both the aligning entrypoint at seed 6 and should be one script, built after
+the red wave lands so the spec cannot shift under it.
+
+### Which groups of this driver are still alive (23-09 NOW table)
+
+| group | status |
+| :-- | :-- |
+| A · R2 | ⚠ alive but **must pass η = 0.2**; 26051's T0.5 output is a different cell |
+| B · R26 | ✅ running: trainings 26052–26055, eval **26112** on `afterok:26055` |
+| C · R30 | — | — | ⛔ superseded 23-09 — the corridor is R33 in the 23-09 file |
+| D / E · R31 | ⛔ struck at v3.68 — the s-curve K ladder is no longer printed |
+| F · R16 | ⚠ rework: R16 is now three unprojected cells (CI-MeanFM K10; FM K2, K10). F3/F4, the diffusion K10 training, is struck — Table 6.5 keeps diffusion at K20 only |
+| G · R15 | — | — | ⛔ struck 23-09 — the MJPC caveat is a demo |
+| H · R28 | — | — | ⛔ struck 23-09 — not owed |
+
+**Still owed in THIS ledger** (R33/R39/R40 belong to the 23-09 file): R37 🔴, R2 🔴, R16 🟡, R35 🟡, R36 🟡.
+
+
 **2026-09-22 submit, `WAVE="A B"`:** PLAN then SUBMIT from the cluster copy `Slurm_Codes/temp_bash/22-09-pending.sh`; pre-flight passed at revision 999152f1 (38 dirty paths, docs only), 174 GB free. Six jobs accepted in order A → B1 ×4 → B2. Groups C, D, E, F, G, H remain unsubmitted.
 
 | group | job IDs | revision | state / verification |
 | :-- | :-- | :-- | :-- |
-| A · R2 | **26051** | 999152f1 | RUNNING since 07:57 UTC; identity lines correct (`n_contexts 10 -> 10`, `combined_5` + twin, 4 variants, `_msglr22`). **Measured: ~18 min per unprojected item, ~75 min per projected item → ~8 h for the 8 items**, not the ledger's 1.5 h (the 265–450 ms/step figure is per replan, not per rollout wall time). Expected end ~16:00 UTC, inside the 12 h limit |
+| A · R2 | **26051** | 999152f1 | ⚠ **η = 0.5, not the 0.2 Table 6.8 needs** (see above). RUNNING since 07:57 UTC; identity lines correct (`n_contexts 10 -> 10`, `combined_5` + twin, 4 variants, `_msglr22`). **Measured: ~18 min per unprojected item, ~75 min per projected item → ~8 h for the 8 items**, not the ledger's 1.5 h (the 265–450 ms/step figure is per replan, not per rollout wall time). Expected end ~16:00 UTC, inside the 12 h limit |
 | B1 · R26 train ×4 | **26052** s7 · **26053** s8 · **26054** s9 · **26055** s10 | 999152f1 | submitted 2026-09-22, 6 h limit each (the cluster copy predates the 12 h default; 2.2× the measured 2 h 41 m) |
-| B2 · R26 eval | **26056** | 999152f1 | submitted 2026-09-22, `afterok:26052:26053:26054:26055`, 6 h limit |
+| B2 · R26 eval | ~~26056~~ → **26112** | 999152f1 | 26056 ran unchained and was cancelled (see above). **26112** re-submitted via `submit_after.sh 26055`, dependency verified |
+| **R2fix · R2** | **26113** | 1e8e707d | ✅ submitted 23-09, `afterok:26112`. Aligning diffusion K20, **η = 0.2**, seed 6, 10 contexts, `combined_5` + tightened twin, `diffuser`+`dpcc-r/c/t`, tag `_msgR2fix`, 12 h limit. Replaces 26051 for Table 6.8 |
+| **R37a · R37** | **26114** | 1e8e707d | ✅ submitted 23-09, `afterok:26113`. MeanFM K2, η = 0.5, per-step `dpcc-r`, tag `_msgR37`, 6 h limit |
+| **R37b · R37** | **26115** | 1e8e707d | ✅ submitted 23-09, `afterok:26114`. MeanFM K100, η = 0.1, `dpcc-r` + `hardflow_new-r`, tag `_msgR37`, 16 h limit |
+| R37c · R37 | — | — | 🔴 NOT queued: ~33.8 h per variant against a 24 h cap. Author decision pending (three options above) |
 
 🟠 **Queue note, 2026-09-22 13:15 UTC:** the account runs under `QOSMaxCpuPerUserLimit` — two 8-CPU jobs at a time. 26051 (5 h 18 m) and 26053 (s8, 1 h 06 m) were running; 26054/26055/26056 pending on the QOS. Chained on two slots the wave ends ~20:30 UTC. If other runs are more urgent, `scontrol hold 26054 26055 26056` (nothing lost, dependency intact) and `release` later; never cancel s9/s10 alone, that strands B2 as `DependencyNeverSatisfied`.
 | C · R30 | — | — | planned, not submitted |
-| D · R31 unprojected ×7 | — | — | planned, not submitted |
-| E · R31 projected ×5 | — | — | planned; `R31_PERSTEP` to confirm |
-| F1/F2 · R16 fm/af | — | — | planned, not submitted |
-| F3/F4 · R16 diffusion train → eval | — | — | planned, not submitted |
+| D · R31 unprojected ×7 | — | — | ⛔ struck v3.68 — the s-curve K ladder is no longer printed |
+| E · R31 projected ×5 | — | — | ⛔ struck v3.68 — same |
+| F1/F2 · R16 fm/af | — | — | ⚠ superseded — R16 is now three unprojected cells; queued as part 2 |
+| F3/F4 · R16 diffusion train → eval | — | — | ⛔ struck v3.63 — Table 6.5 keeps diffusion at K20 only |
 | G · R15 | — | — | opt-in, not submitted |
 | H · R28 | — | — | opt-in, not submitted |
 | Required result folders downloaded | **human only** | — | `XXX` |

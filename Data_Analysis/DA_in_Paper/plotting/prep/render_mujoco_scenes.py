@@ -38,6 +38,16 @@ STAMP = os.path.join(S.PREPARED, 'MUJOCO_RENDERS.json')
 def reference_path(spec, n=160):
     """Sample the demonstration generator's own reference path for this scene."""
     import numpy as np
+    if spec['path_fn'] == 'avoiding_demo':
+        # v3.68c: UAV-pillars flies the avoiding planner; its "demonstration" is a D3IL-avoiding
+        # demonstration mapped into the arena by uav_avoiding_bridge/frame.py (scale 36).
+        import json as _json
+        sys.path.insert(0, S.REPO)
+        from uav_avoiding_bridge import frame as F
+        idx, alt = spec['path_args']
+        sc = _json.load(open(S.AVOIDING_SCENE))
+        xy = sc['demonstrations'][idx]
+        return [np.array([*F.to_world_xy(x, y), alt]) for x, y in xy]
     sys.path.insert(0, os.path.join(S.REPO, 'uav_expert_data_collect'))
     import trajectories as T
     fn = getattr(T, spec['path_fn'])
@@ -91,7 +101,7 @@ def render(name, spec):
 
     r = mujoco.Renderer(m, h, w)
     r.update_scene(d, camera=cam)
-    add_tube(r.scene, path, spec['path_rgba'])
+    add_tube(r.scene, path, spec['path_rgba'], radius=spec.get('tube_radius', 0.018))
     img = Image.fromarray(r.render())
     dst = os.path.join(S.PREPARED, name + '.png')
     img.save(dst)
@@ -153,6 +163,7 @@ def declared(spec):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--check', action='store_true', help='report staleness, write nothing')
+    ap.add_argument('--only', default=None, help='render only the names containing this substring')
     a = ap.parse_args()
     try:
         with open(STAMP) as fh:
@@ -171,10 +182,14 @@ def main():
 
     os.makedirs(S.PREPARED, exist_ok=True)
     for name, spec in getattr(S, 'PLATFORM_RENDERS', {}).items():
+        if a.only and a.only not in name:
+            continue
         dst, size = render_platform(name, spec)
         old[name] = declared(spec)
         print(f'wrote  data/prepared/{os.path.basename(dst)}  {size[0]}x{size[1]}  (platform)')
     for name, spec in S.MUJOCO_RENDERS.items():
+        if a.only and a.only not in name:
+            continue
         dst, size = render(name, spec)
         old[name] = declared(spec)
         print(f'wrote  data/prepared/{os.path.basename(dst)}  {size[0]}x{size[1]}  ({spec["scene"]})')

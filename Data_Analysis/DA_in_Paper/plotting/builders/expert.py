@@ -102,7 +102,10 @@ def fig_expert_uav(outdir):
     r, t = C['r_drone'], C['tightening']
 
     drawn = []
-    for i, block in enumerate(D['uav']):
+    # v3.68b: UAV-pillars has no quadrotor demonstrations (its planner is the avoiding one), so
+    # its old six-pillar routes are not drawn; the corridor and the s-curve remain.
+    blocks = [b for b in D['uav'] if b['scene'] != 'UAV-pillars']
+    for i, block in enumerate(blocks):
         scn = _scene(block['scene'])
         if not scn:
             continue

@@ -20,19 +20,25 @@ pillars items (R32) are superseded by this file and say so there. Companion runb
 
 ## 1 · R33 — UAV-corridor v3
 
-### 1.1 Geometry — tilt **and** hump (author: "we use both")
+### 1.1 Geometry — TWO scenes, read separately (author 22/23-09; corrected here after the U19 note of 23-09)
 
-`corridor_v3` = the wide corridor of v2 (`scene_corridor_v2.xml`, walls y = ±1.0, unchanged) **+ the v2 lateral slide**
-(`[[-2, 0.95], [2, -0.05]]`, side below, x_active [−2, 2]) **+ the U19 hump in the x–z plane** (two `plane: xz` halfspaces,
-`[[-1.5, 0], [0, 1.10]]` and `[[0, 1.10], [1.5, 0]]`, side above, x_active switched), ceiling `ub[2]` 1.80 → 2.80.
-The drone therefore has to move sideways by 0.24–0.47 m *and* climb ≈ 0.40 m — a 3-D detour; both constraints are
-virtual (scored, no geom), as the v2 slide was. Geo tag suffix `_cv3`. Details, numbers and the three code sites
-(`plane: xz`) are in `logs_in_develop/Gen15/U19/PLAN_20260922_U19_corridor_v3_z_slide.md` — **the only change to that
-plan is that the slide is kept.** The coding (config entry + `plane` key + scorer + drawing guard + submitter) must land
-before wave C1 and is the run agent's first task; G0 (offline preview of the inflated hump against the flown band) is
-part of it.
+| entry (`config/uav_projection.yaml`) | what | suffix | tag |
+| :-- | :-- | :-- | :-- |
+| **`corridor_v3_tilt`** — the corridor | the v2 slide **leaned over** by −60° about the launch altitude (`z_lean: {deg: -60, z_ref: 1.11}`): one x–y–z plane that pushes the drone sideways **and down**; walls, caps, box, ceiling 1.80, XML, model, routes, goals byte-identical to v2 | `_cv3t` | **`p23cv3t`** |
+| **`corridor_v3_ablation_hump`** — the second constraint | no slide; the x–z roof (0 → 1.10 m at x = 0 → 0 over x ∈ [−1.5, 1.5], two `plane: xz` halfspaces), ceiling 1.80 → 2.80 | `_cv3ah` | **`p23cv3ah`** |
 
-### 1.2 The grid (68 cells, 816 flights)
+The thesis reads the two as separate constraint geometries, the way D3IL-avoiding reads top-left-hard / top-right-hard /
+both-hard: every corridor table has a *tilt* block and a *hump* block, nothing is averaged across them, and nothing is
+called "v3" or "ablation" in the text — it is UAV-corridor with two constraints. **There is no combined slide + hump
+scene.** (`corridor_v3_ablation_hump_lo`, H = 0.90, is defined and not scheduled.)
+
+**Pilots (C0) are done — 22-09, jobs 26071/26072** (`Gen15/U19/PILOT_20260922_U19_gates_G1-G3.md`): G0 and G1 pass on
+both; G3 passes (projected flights descend 0.15–0.29 m under the tilt, climb 0.30–0.40 m over the hump); G2 fails on
+every projected arm by 6–11 shallow steps (≤ 2–6 cm) at the geometric switch point with the setpoint clean (plant lag
+~0.5 m). **Author's decision: run the waves as they are; no scene change.** The "stop if G2 fails" rule below is
+overridden for this reason.
+
+### 1.2 The grid (68 cells per scene → 136 cells, 1 632 flights)
 
 | model | $\nfe$ | unprojected | per-step (DPCC projector, η = 0.5) | endpoint (HF) |
 | :-- | :-- | :-- | :-- | :-- |
@@ -42,27 +48,29 @@ part of it.
 | Diffusion | 20 | `diffuser` | `dpcc-{r,c,t}-bounds_free-pdes-tightened` | — (not defined) |
 
 Stack as U16: `FMPCC_SAFE_EPS_FRAC=1.0`, `FMPCC_SAFE_EPS_MODE=scaled`, `pid_stopgo`, `mpc4`, `T0.5`, af knobs
-`UAV_MIX_BONE_AF=unet UAV_MIX_AF_ALPHA_END=0.2 UAV_MIX_EPOCH=latest`. HF only where it has a guiding step (K ≥ 3).
+`UAV_MIX_BONE_AF=unet UAV_MIX_AF_ALPHA_END=0.2 UAV_MIX_EPOCH=latest`. HF only where it has a guiding step (K ≥ 3). **Both scenes get the same grid.** Input names for HardFlow are `hardflow_new{,-r,-c,-t}-…` (the eval writes the folders as `hardflow_sls-…`, which is what the DA reads).
 
 ### 1.3 Gates (stop at the first failure; the U11–U14 lesson)
 
 | gate | test | pass |
 | :-- | :-- | :-- |
 | G0 | offline preview: inflated hump + slide vs the v2 flown band (0.86–1.24 m; y band ±0.64) | hump roof at the peak > 1.24 m; escape slot ≥ 0.6 m; lateral gap ≥ 0.31 m stays open |
-| G1 | smoke: mf K3, 3 trials (L/C/R), `diffuser` + `dpcc-t-…` + `hardflow_sls-t-…`, GIF on | log shows `corridor_v3`, tag `p23cv3`, exactly the requested variants; `diffuser` violates on 3/3 |
-| G2 | same smoke | at least one projected arm collision-free ≥ 2/3 **and** success ≥ 2/3 |
-| G3 | paired z of `dpcc-t` vs `diffuser` at x ∈ [−0.5, 0.5] | > 0.15 m on every projected flight (the plan climbs; a shorter flight is not a climb) |
+| G1 | smoke: mf K3, 3 trials (L/C/R), `diffuser` + `dpcc-t-…` + `hardflow_new-t-…`, GIF on — **done 22-09** | log shows the scene, its tag, exactly the requested variants; `diffuser` violates on 3/3 — **pass on both scenes** |
+| G2 | same smoke | at least one projected arm collision-free ≥ 2/3 and success ≥ 2/3 — **failed on both by a plant-lag residue; author: run anyway** |
+| G3 | paired z of `dpcc-t` vs `diffuser` | > 0.15 m on every projected flight — **pass on both** (descent 0.15–0.29 m, climb 0.30–0.40 m) |
 
 ### 1.4 Waves (details and commands in the runbook)
 
 | wave | cells | ~GPU | reads |
 | :-- | :-- | --: | :-- |
-| C0 | smoke (G1–G3) | 20 min | — |
+| C0 | smoke (G1–G3) — **done** | — | — |
 | C1 | all `diffuser`: mf/af K1,2,3; fm K1,2,3,5,20; diffusion 20 | 1 h | Table 6.9 complete |
 | C2 | PCC r/c/t: mf/af/fm at K1, 2, 3 | 3 h | Table 6.11/6.16 flow rows at K ≤ 3 |
 | C3 | HF single/r/c/t: mf/af at K3, fm at K3, 5; PCC r/c/t fm K5 | 3 h | HF-vs-PCC comparison |
 | C4 | fm K20: PCC r/c/t + HF single/r/c/t | 4 h | the FM ladder top |
 | C5 | **diffusion K20: PCC r/c/t — last, one variant per job** | ~1 GPU-day per variant on v2; `c` near the 24 h wall | the baseline |
+
+Each wave runs on **both scenes** (`p23cv3t` then `p23cv3ah`); driver `Slurm_Codes/temp_bash/eval_20260923_p23_corridor_v3.sh` (`plan` / `smoke` / `submit C1..C5|all`). The HF jobs carry `dpcc-t` (the eval's matched-budget guard) and C2 runs `dpcc-t` only at K = 1, 2 — same 68 cells per scene, each once.
 
 ### 1.5 What the thesis reads (structure already in Chapter 6, cells blank)
 
@@ -157,10 +165,8 @@ the tracker; no projection variant, no other K.
 2. `DA_UAV_v1/discovery.py` has never seen a `_cv3` geometry tag; check l.117 parses it before the C1 batch.
 3. The U18 scale changed from 10 (plan) to **36** (fix3, `frame.py`); Chapter 5 now describes the arena at 36
    (21.6 × 25.2 m, keep-out 2.88 m, pillars 0.90/1.08 m). If the pilot ends at another scale, tell v3.
-4. The U19 hump numbers were computed for the hump alone; with the slide kept (author: both), G0 must check the lateral
-   band and the roof **jointly** — the drone needs |y| room and headroom at the same x.
-5. Corridor v3 needs the `plane: xz` coding **and** the config entry `corridor_v3` before any job; the runbook's step 0.2
-   is not optional.
+4. ~~joint G0 for slide + roof~~ — moot: the two constraints are separate scenes (U19 note, 23-09); G0 passed on each.
+5. ~~coding first~~ — done: `corridor_v3_tilt` (`z_lean`) and `corridor_v3_ablation_hump` (`plane: xz`) are in `config/uav_projection.yaml`; `DA_UAV_v1/discovery.py` parses the leading `corridor` token (checked by the run side).
 6. The chapter's figures (`fig_constraints_uav`, `fig_expert_uav`, the pillars renders) still draw `pillars_hg` and the
    corridor without its roof; the figure store needs a pillars-v2 arena panel (from `frame.py`) and a corridor-v3 panel
    after the runs — a DA_in_Paper task, listed here so it is not forgotten.
@@ -169,8 +175,8 @@ the tracker; no projection variant, no other K.
 
 | item | GPU | CPU |
 | :-- | --: | --: |
-| R33 corridor v3, C0–C4 | ~11 h | — |
-| R33 corridor v3, C5 diffusion K20 | ~1 GPU-day (can be cut to `t` only: ~8 h) | — |
+| R33 corridor, C1–C4, **both scenes** | ~22 h | — |
+| R33 corridor, C5 diffusion K20, both scenes | ~2 GPU-days (cut to `t` only: ~16 h) | — |
 | R39 pillars v2, G1 + P1 | — | < 30 min |
 | R39 pillars v2, P2 | ~40 min | — |
 | R40 s-curve controller pilot | ~20 min | — |

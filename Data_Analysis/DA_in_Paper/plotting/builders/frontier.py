@@ -121,13 +121,23 @@ def _legend_strip(width, engines):
 # to the target and 0 % a box not moved at all; it is the bracketed number of
 # tab:va-models. v3.61 drew the complement (final distance as % of the start, log axis),
 # which put 100 % at the bad end and read as inverted.
-PCT_LABEL = 'distance closed, % of the start'
-PCT_TICKS = [0, 20, 40, 60, 80, 100]
-PCT_YLIM = (-12.0, 104.0)
+PCT_LABEL = 'distance closed, % of the start (log scale)'
+# v3.68d (author): the axis is STRETCHED towards 100 %: a point is placed at
+# -log10(distance left / start), so 0 % sits at 0, 50 % at 0.30, 80 % at 0.70, 90 % at 1.0,
+# and the crowded top of the drawing (84 % vs 85 %) opens up. Tick labels stay in %.
+PCT_TICKS = [0, 50, 80, 90, 95]
+PCT_YLIM = (-0.07, 1.36)
 
 
 def _pct_closed(d):
     return 100.0 * (1.0 - d / S.ALIGNING_INITIAL_DISTANCE)
+
+
+def _ypos(share):
+    """Axis position of a share-closed value: log in the distance left."""
+    import math
+    left = max(1.0 - share / 100.0, 1e-3)
+    return -math.log10(left)
 
 
 def _aligning_cells(corpus):
@@ -194,13 +204,14 @@ def fig_aligning_tradeoff(outdir):
     # moved towards its target, linear, 100 % at the top -- the bracketed number of
     # tab:va-models. (v3.61 drew final distance as % of the start on a log axis.)
     for p in pts:
-        p['y'] = _pct_closed(p['y'])
+        p['y'] = _ypos(_pct_closed(p['y']))
+    tick_at = {_ypos(t): t for t in PCT_TICKS}
     f = Fig(760, 430, ml=92, mr=22, mt=26, mb=74, font=FONT)
     f.axes((xlo, xhi), PCT_YLIM, xlog=True)
-    f.frame(dec_ticks(xlo, xhi), PCT_TICKS,
+    f.frame(dec_ticks(xlo, xhi), sorted(tick_at),
             'time per control step [ms] (log)', PCT_LABEL,
             '', '',
-            xfmt=fmt_num, yfmt=lambda v: f'{v:g}')
+            xfmt=fmt_num, yfmt=lambda v: f'{tick_at[v]:g}')
     # where the box started: everything on this line did not move the box
     y0 = f.Y(0.0)
     f.s.append(f'<line x1="{f.L}" y1="{y0:.1f}" x2="{f.R}" y2="{y0:.1f}" stroke="#c0392b" '
@@ -288,7 +299,8 @@ def fig_aligning_projected_tradeoff(outdir):
     # on the eligible (>= 9/10 violation-free) points only, on the distances, before
     # the axis conversion -- and the legend says what a hollow marker means.
     for p in pts:
-        p['y'] = _pct_closed(p['y'])
+        p['y'] = _ypos(_pct_closed(p['y']))
+    tick_at = {_ypos(t): t for t in PCT_TICKS}
     # v3.63 (author): say on the page that this is AFTER projection and show what it is
     # read against -- the unprojected MeanFM cells of fig_aligning_tradeoff are drawn as
     # faint grey rings at the same budgets, so the reader sees the price of projection
@@ -300,15 +312,15 @@ def fig_aligning_projected_tradeoff(outdir):
     xlo = min(xlo, min(v['ms'] for v in before.values()) * 0.65) if before else xlo
     f = Fig(760, 430, ml=92, mr=22, mt=26, mb=74, font=FONT)
     f.axes((xlo, xhi), PCT_YLIM, xlog=True)
-    f.frame(dec_ticks(xlo, xhi), PCT_TICKS,
+    f.frame(dec_ticks(xlo, xhi), sorted(tick_at),
             'time per control step [ms] (log)', PCT_LABEL, '', '',
-            xfmt=fmt_num, yfmt=lambda v: f'{v:g}')
+            xfmt=fmt_num, yfmt=lambda v: f'{tick_at[v]:g}')
     f.text(f.R - 8, f.T + 18, 'after projection, tightened constraints', 11, '#333', anchor='end', bold=True)
     y0 = f.Y(0.0)
     f.s.append(f'<line x1="{f.L}" y1="{y0:.1f}" x2="{f.R}" y2="{y0:.1f}" '
                'stroke="#777" stroke-width="1.4" stroke-dasharray="6,4"/>')
     for K, v in before.items():
-        bx, by = f.X(v['ms']), f.Y(_pct_closed(v['y']))
+        bx, by = f.X(v['ms']), f.Y(_ypos(_pct_closed(v['y'])))
         f.s.append(f'<circle cx="{bx:.1f}" cy="{by:.1f}" r="6.5" fill="none" stroke="#9a9a9a" '
                    'stroke-width="1.6" stroke-dasharray="2,2"/>')
         f.text(bx - 10, by - 10, K, 11, '#9a9a9a', anchor='end')
