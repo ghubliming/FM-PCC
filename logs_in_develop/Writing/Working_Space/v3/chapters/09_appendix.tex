@@ -111,14 +111,9 @@ on five, so it has no row here either.
 
 \begin{table}[htpb]
   \caption[D3IL-avoiding without projection, every budget]{\autoref{tab:avoiding-raw-models} at every
-  budget evaluated under the protocol: the cells of \autoref{tab:app:avoiding-dpcc-full} at the same protocol --- five training seeds $\times$
-  two episodes per geometry, averaged per geometry and then over the three; tightened constraints, four
-  candidate plans, temporal U-Net of $4.0$\,M parameters. Success is reaching the goal, S\&C is reaching
-  it while satisfying the constraints at every step, and violating steps are counted per episode
-  (\autoref{sec:setup:metrics:avoiding}); each cell is the mean $\pm$ the standard deviation over the
-  five seeds (\autoref{sec:setup:metrics:spread}). The evaluation records one unprojected arm per cell,
-  so this table has no counterpart of the rule column: two of the three rules are defined on the
-  projection. The diffusion $\nfe=2$ five-seed cell is pending. \baselinemark\ the baseline of record at its own budget.}
+  budget evaluated under the protocol; columns, protocol and marks as there. What this table adds are the
+  intermediate budgets, which exist for analytic average-velocity matching and the baseline only. The
+  diffusion $\nfe=2$ five-seed cell is pending.}
   \label{tab:app:avoiding-raw-full}
   \centering
   \footnotesize
@@ -141,22 +136,16 @@ on five, so it has no row here either.
     Diffusion & 1  & $0.933 \pm 0.149$ & $0.000 \pm 0.000$ & $19.0 \pm 2.9$ & $68.3 \pm 16.1$ & $9.4 \pm 0.1$ \\
     Diffusion & 2  & \multicolumn{5}{l}{\emph{pending: five-seed evaluation}} \\
     Diffusion & 10 & $0.967 \pm 0.075$ & $0.067 \pm 0.149$ & $19.1 \pm 2.7$ & $72.8 \pm 8.1$ & $88.8 \pm 0.3$ \\
-    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$0.967 \pm 0.075$} & \mainconfig{$0.100 \pm 0.091$} & \mainconfig{$17.9 \pm 2.5$} & \mainconfig{$67.8 \pm 16.8$} & \mainconfig{$179.3 \pm 1.2$} \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$0.967 \pm 0.075$} & \mainconfig{$0.100 \pm 0.091$} & \mainconfig{$17.9 \pm 2.5$} & \mainconfig{$67.8 \pm 16.8$} & \mainconfig{$179.3 \pm 1.2$}  \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
 \begin{table}[htpb]
   \caption[D3IL-avoiding at the protocol of DPCC, every budget]{\autoref{tab:avoiding-dpcc-protocol} at
-  every budget evaluated under the protocol of \ac{DPCC}:
-  five training seeds $\times$ two episodes per geometry, averaged per geometry and then over the three;
-  tightened constraints, four candidate plans, temporal U-Net of $4.0$\,M parameters. Rules: $r$ random,
-  $c$ cumulative projection cost, $t$ temporal consistency. Columns as in
-  \autoref{sec:setup:metrics:avoiding}, each mean $\pm$ the standard deviation over the seeds
-  (\autoref{sec:setup:metrics:spread}). The $\nfe=20$ FM row and native diffusion baseline are retained;
-  diffusion at $\nfe=2$ is pending across five seeds. \selectedmark\ the
-  operating point, \baselinemark\ the baseline of record, bold the cells that clear it on all three
-  columns.}
+  every budget evaluated under the protocol of \ac{DPCC}; columns, rules, protocol and marks as there.
+  What this table adds are the intermediate budgets, which exist for analytic average-velocity matching
+  and the baseline only; diffusion at $\nfe=2$ is pending across five seeds.}
   \label{tab:app:avoiding-dpcc-full}
   \centering
   \footnotesize
@@ -166,7 +155,7 @@ on five, so it has no row here either.
     \midrule
     MeanFM     & 1 & $r$ & $0.900 \pm 0.149$ & $64.3 \pm 2.6$ & $19.2 \pm 1.6$ \\
                      &    & $c$ & $0.933 \pm 0.091$ & $72.4 \pm 8.4$ & $18.3 \pm 0.5$ \\
-                     &    & \mainconfig{\selectedmark\ $t$} & \mainconfig{$0.967 \pm 0.075$} & \mainconfig{$58.6 \pm 2.2$} & \mainconfig{$18.3 \pm 0.2$} \\
+                     &    & \mainconfig{\selectedmark\ $t$} & \mainconfig{$0.967 \pm 0.075$} & \mainconfig{$58.6 \pm 2.2$} & \mainconfig{$18.3 \pm 0.2$}  \\
     MeanFM     & 2 & $r$ & $0.967 \pm 0.075$ & $65.1 \pm 2.6$ & $27.6 \pm 0.5$ \\
                      &    & $c$ & $0.933 \pm 0.091$ & $97.2 \pm 4.8$ & $27.1 \pm 0.2$ \\
                      &    & $t$ & $0.967 \pm 0.075$ & $59.4 \pm 2.0$ & $27.7 \pm 0.5$ \\
@@ -202,7 +191,7 @@ on five, so it has no row here either.
                      &    & $c$ & $1.000 \pm 0.000$ & $70.3 \pm 11.5$ & $309.8 \pm 11.2$ \\
                      &    & \textbf{$t$} & \textbf{$1.000 \pm 0.000$} & \textbf{$68.7 \pm 7.0$} & \textbf{$321.7 \pm 14.4$} \\
     Diffusion  & 20 & $r$ & $0.967 \pm 0.075$ & $74.7 \pm 5.8$ & $573.2 \pm 22.2$ \\
-                     &    & \mainconfig{\baselinemark\ $c$} & \mainconfig{$1.000 \pm 0.000$} & \mainconfig{$70.1 \pm 8.2$} & \mainconfig{$553.4 \pm 28.0$} \\
+                     &    & \mainconfig{\baselinemark\ $c$} & \mainconfig{$1.000 \pm 0.000$} & \mainconfig{$70.1 \pm 8.2$} & \mainconfig{$553.4 \pm 28.0$}  \\
                      &    & $t$ & $1.000 \pm 0.000$ & $76.1 \pm 15.7$ & $563.0 \pm 25.4$ \\
     \bottomrule
   \end{tabularx}
@@ -318,7 +307,7 @@ $\nfe=20$ under the three rules, the largest gap between them being eleven episo
     \midrule
     MeanFM     & 1 & $r$ & $0.930 \pm 0.032$ & $64.7 \pm 1.8$ & $18.4 \pm 0.1$ \\
                      &    & $c$ & $0.943 \pm 0.040$ & $72.0 \pm 4.1$ & $18.0 \pm 0.4$ \\
-                     &    & \mainconfig{\selectedmark\ $t$} & \mainconfig{$0.993 \pm 0.015$} & \mainconfig{$61.0 \pm 1.0$} & \mainconfig{$18.1 \pm 0.3$} \\
+                     &    & \mainconfig{\selectedmark\ $t$} & \mainconfig{$0.993 \pm 0.015$} & \mainconfig{$61.0 \pm 1.0$} & \mainconfig{$18.1 \pm 0.3$}  \\
     MeanFM     & 2 & $r$ & $0.933 \pm 0.041$ & $65.9 \pm 1.4$ & $27.3 \pm 0.2$ \\
                      &    & $c$ & $0.927 \pm 0.030$ & $98.0 \pm 10.4$ & $26.8 \pm 0.4$ \\
                      &    & $t$ & $0.993 \pm 0.009$ & $60.4 \pm 0.9$ & $27.1 \pm 0.3$ \\
@@ -334,7 +323,7 @@ $\nfe=20$ under the three rules, the largest gap between them being eleven episo
                      &    & $t$ & $0.987 \pm 0.032$ & $67.3 \pm 3.3$ & $465.8 \pm 36.0$ \\
     \midrule
     Diffusion  & 20$^{\dagger}$ & $r$ & $0.967 \pm 0.025$ & $73.9 \pm 8.7$ & $580.7 \pm 18.0$ \\
-                     &    & \mainconfig{\baselinemark\ $c$} & \mainconfig{$0.983 \pm 0.025$} & \mainconfig{$69.0 \pm 11.5$} & \mainconfig{$563.5 \pm 29.6$} \\
+                     &    & \mainconfig{\baselinemark\ $c$} & \mainconfig{$0.983 \pm 0.025$} & \mainconfig{$69.0 \pm 11.5$} & \mainconfig{$563.5 \pm 29.6$}  \\
                      &    & $t$ & $0.960 \pm 0.045$ & $82.8 \pm 14.7$ & $564.3 \pm 29.5$ \\
     \bottomrule
   \end{tabularx}
@@ -414,7 +403,7 @@ evaluations two of the three take longer per action than the diffusion baseline 
     CI-MeanFM & 2  & $t$ & $1.000$ & $59.7$ & $28.6$  & training seed 6, 3 geometries \\
     CI-MeanFM & 20 & $t$ & $0.950$ & $62.4$ & $1018.3$ & \\
     \midrule
-    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$c$} & \mainconfig{$0.983 \pm 0.025$} & \mainconfig{$69.0 \pm 11.5$} & \mainconfig{$563.5 \pm 29.6$} & 5 seeds, 3 geometries; \emph{both-hard} seed 6 only \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$c$} & \mainconfig{$0.983 \pm 0.025$} & \mainconfig{$69.0 \pm 11.5$} & \mainconfig{$563.5 \pm 29.6$} & \mainconfig{5 seeds, 3 geometries; \emph{both-hard} seed 6 only}  \\
     \bottomrule
   \end{tabularx}
 \end{table}

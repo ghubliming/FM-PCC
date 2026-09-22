@@ -5,8 +5,10 @@
 %  then a section that recaps the two comparisons across all environments:
 %    6.1 Obstacle avoidance       (DPCC's benchmark; + caveat on DPCC's metrics, v3.26)
 %    6.2 Vision-conditioned alignment (seed 6, 10 contexts)
-%    6.3 Quadrotor benchmark      (seed 6; models per scene; pillars RESTORED v3.63 on pillars_hg, with its caveat;
-%                                  projection; caveat on the tracking controller, v3.26)
+%    6.3 Quadrotor benchmark      (seed 6; v3.64: built like 6.1/6.2 -- 6.3.1 models BEFORE projection
+%                                  (corridor-raw, pillars-raw), 6.3.2 the same cells AFTER per-step projection
+%                                  (+ frontier, paths; s-curve kept in one piece), 6.3.3 per-step vs endpoint
+%                                  (corridor + pillars endpoint tables); caveat on the tracking controller, v3.26)
 %    6.4 Comparison across environments (recap tables only, v3.26)
 %  v3.26: no p-values or test names anywhere (author rule, translation table s8 r8).
 %  Individual changelog: changelogs/v3.7_20260914_ch5-8_restructure.md
@@ -96,7 +98,7 @@ With the projector switched off, \autoref{tab:avoiding-raw-models} measures goal
     \midrule
     Diffusion & 1  & $0.933 \pm 0.149$ & $0.000 \pm 0.000$ & $19.0 \pm 2.9$ & $68.3 \pm 16.1$ & $9.4 \pm 0.1$ \\
     Diffusion & 2  & \multicolumn{5}{l}{\emph{pending: five-seed evaluation}} \\
-    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$0.967 \pm 0.075$} & \mainconfig{$0.100 \pm 0.091$} & \mainconfig{$17.9 \pm 2.5$} & \mainconfig{$67.8 \pm 16.8$} & \mainconfig{$179.3 \pm 1.2$} \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$0.967 \pm 0.075$} & \mainconfig{$0.100 \pm 0.091$} & \mainconfig{$17.9 \pm 2.5$} & \mainconfig{$67.8 \pm 16.8$} & \mainconfig{$179.3 \pm 1.2$}  \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -358,7 +360,7 @@ projection cost in the same way.
     \midrule
     MeanFM     & 1 & $r$ & $0.900 \pm 0.149$ & $64.3 \pm 2.6$ & $19.2 \pm 1.6$ \\
                      &    & $c$ & $0.933 \pm 0.091$ & $72.4 \pm 8.4$ & $18.3 \pm 0.5$ \\
-                     &    & \mainconfig{\selectedmark\ $t$} & \mainconfig{$0.967 \pm 0.075$} & \mainconfig{$58.6 \pm 2.2$} & \mainconfig{$18.3 \pm 0.2$} \\
+                     &    & \mainconfig{\selectedmark\ $t$} & \mainconfig{$0.967 \pm 0.075$} & \mainconfig{$58.6 \pm 2.2$} & \mainconfig{$18.3 \pm 0.2$}  \\
     MeanFM     & 2 & $r$ & $0.967 \pm 0.075$ & $65.1 \pm 2.6$ & $27.6 \pm 0.5$ \\
                      &    & $c$ & $0.933 \pm 0.091$ & $97.2 \pm 4.8$ & $27.1 \pm 0.2$ \\
                      &    & $t$ & $0.967 \pm 0.075$ & $59.4 \pm 2.0$ & $27.7 \pm 0.5$ \\
@@ -385,7 +387,7 @@ projection cost in the same way.
                      &    & $t$ & $0.600 \pm 0.190$ & $73.5 \pm 14.1$ & $33.3 \pm 13.2$ \\
     Diffusion  & 2 & \multicolumn{4}{l}{\emph{pending: five-seed evaluation}} \\
     Diffusion  & 20 & $r$ & $0.967 \pm 0.075$ & $74.7 \pm 5.8$ & $573.2 \pm 22.2$ \\
-                     &    & \mainconfig{\baselinemark\ $c$} & \mainconfig{$1.000 \pm 0.000$} & \mainconfig{$70.1 \pm 8.2$} & \mainconfig{$553.4 \pm 28.0$} \\
+                     &    & \mainconfig{\baselinemark\ $c$} & \mainconfig{$1.000 \pm 0.000$} & \mainconfig{$70.1 \pm 8.2$} & \mainconfig{$553.4 \pm 28.0$}  \\
                      &    & $t$ & $1.000 \pm 0.000$ & $76.1 \pm 15.7$ & $563.0 \pm 25.4$ \\
     \bottomrule
   \end{tabularx}
@@ -766,11 +768,12 @@ box unmoved in four of ten contexts and the diffusion baseline in five of ten.
 \begin{table}[htpb]
   \caption[Alignment: the generative models without projection]{The generative models on
   D3IL-aligning, plans executed without projection, untightened constraint set, at every step budget
-  of the ladder $\nfe \in \{1, 2, 10, 20, 100\}$. Final box-to-target
+  of the ladder $\nfe \in \{1, 2, 10, 20, 100\}$ for the three flow-based models; the diffusion baseline
+  at the budget it was trained with. Final box-to-target
   distance over the ten contexts, from an initial $0.4530$\,m; in brackets, the share of that distance
   the box was moved towards its target (\autoref{sec:setup:metrics:aligning}); \emph{unmoved}: contexts
   in which the box does not move. A row printed \emph{pending} is a model--budget cell that has not been
-  evaluated; $\nfe=20$ and $100$ are the two budgets at which all four models have one.
+  evaluated; $\nfe=20$ is the budget at which all four models have one.
   Mean and time are mean $\pm$ the sample standard deviation over the
   contexts (\autoref{sec:setup:metrics:spread}). Raw cells evaluated over a thirty-context superset are
   restricted to the same ten before they are reduced. Temporal U-Net of $4.0$\,M parameters, FiLM
@@ -786,19 +789,16 @@ box unmoved in four of ten contexts and the diffusion baseline in five of ten.
     MeanFM     & 1 & \multicolumn{4}{l}{\emph{pending}} \\
     CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & \multicolumn{4}{l}{\emph{pending}} \\
     FM         & 1 & \multicolumn{4}{l}{\emph{pending}} \\
-    Diffusion  & 1 & \multicolumn{4}{l}{\emph{pending}} \\
     \midrule
     MeanFM     & 2  & 0.2779 (39\,\%) & $0.368 \pm 0.301$ & 0/10  & $28.4 \pm 2.0$ \\
     CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2  & 0.3738 (17\,\%) & $0.357 \pm 0.201$ & 2/10  & $28.7 \pm 5.7$ \\
     FM         & 2 & \multicolumn{4}{l}{\emph{pending}} \\
-    Diffusion  & 2 & \multicolumn{4}{l}{\emph{pending}} \\
     \midrule
     MeanFM     & 10 & 0.1194 (74\,\%) & $0.173 \pm 0.153$ & 1/10 & $99.2 \pm 1.9$ \\
     CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 10 & \multicolumn{4}{l}{\emph{pending}} \\
     FM         & 10 & \multicolumn{4}{l}{\emph{pending}} \\
-    Diffusion  & 10 & \multicolumn{4}{l}{\emph{pending}} \\
     \midrule
-    \mainconfig{\selectedmark\ MeanFM} & \mainconfig{20} & \mainconfig{0.0741 (84\,\%)} & \mainconfig{$0.093 \pm 0.073$} & \mainconfig{0/10} & \mainconfig{$190.5 \pm 2.0$} \\
+    \mainconfig{\selectedmark\ MeanFM} & \mainconfig{20} & \mainconfig{0.0741 (84\,\%)} & \mainconfig{$0.093 \pm 0.073$} & \mainconfig{0/10} & \mainconfig{$190.5 \pm 2.0$}  \\
     CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 20 & 0.3897 (14\,\%) & $0.325 \pm 0.224$ & 2/10  & $189.1 \pm 5.6$ \\
     FM         & 20 & 0.4085 (10\,\%) & $0.327 \pm 0.160$ & 4/10  & $295.8 \pm 1.9$ \\ % order: MeanFM, CI-MeanFM, FM, Diffusion
     Diffusion  & 20 & 0.4619 ($-2$\,\%) & $0.468 \pm 0.399$ & 5/10 & $298.3 \pm 2.0$ \\
@@ -806,16 +806,16 @@ box unmoved in four of ten contexts and the diffusion baseline in five of ten.
     MeanFM     & 100 & 0.0673 (85\,\%) & $0.136 \pm 0.148$ & 0/10 & $892.4 \pm 1.8$ \\
     CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 100 & 0.1791 (60\,\%) & $0.327 \pm 0.323$ & 0/10 & $902.2 \pm 1.5$ \\
     FM         & 100 & 0.4247 (6\,\%) & $0.352 \pm 0.180$ & 0/10 & $1425.0 \pm 1.8$ \\
-    Diffusion  & 100 & 0.1849 (59\,\%) & $0.236 \pm 0.188$ & 0/10 & $1521.9 \pm 2.9$ \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
 \dataref{analysis\_results\_checkpoint/15-09/batch\_va2\_20260915\_100754, recomputed by
 DA\_in\_Paper/analysis/va\_results.py, every row restricted to the ten shared contexts; agrees with
-Gen14 CLOSURE\_20260907 \S1, R.1, R.3 on the paired comparisons. The eleven \emph{pending} rows are
-R16 of the run ledger (v3.62): no model has an $\nfe=1$ cell on this task; the diffusion cells below its
-trained chain lengths need a checkpoint each.}
+Gen14 CLOSURE\_20260907 \S1, R.1, R.3 on the paired comparisons. The six \emph{pending} rows are R16 of
+the run ledger (v3.62, narrowed v3.63): no flow-based model has an $\nfe=1$ cell on this task. The
+diffusion baseline is compared at its trained budget only; its $\nfe=100$ cell (median $0.1849$\,m,
+$1521.9$\,ms) exists in the corpus and is not printed, by the author's decision.}
 \guard{The ordering rests on analytic average-velocity matching's margins, which hold in nine and ten of
 ten contexts; the level result for instantaneous-velocity matching and diffusion is the absence of a
 difference at ten contexts, not evidence that they are equal.}
@@ -829,13 +829,12 @@ $0.0068$\,m while raising the time per control step from $190.5$ to $892.4$\,ms.
 where one network evaluation already saturates the task (\autoref{sec:res:state}), alignment rewards
 additional evaluations.
 
-The budget is also the one place on this task where all four models are measured twice. At $\nfe=20$ and
-again at $\nfe=100$ every model has an unprojected cell, and the ordering is the same at both: analytic
-average-velocity matching first ($0.0741$ and $0.0673$\,m), then the diffusion baseline
-($0.4619$ and $0.1849$\,m) and the consistency-interpolated model ($0.3897$ and $0.1791$\,m), with
-instantaneous-velocity matching last and barely moving ($0.4085$ and $0.4247$\,m). A hundred evaluations
-buy the diffusion baseline and the consistency-interpolated model a great deal --- both more than halve
-their median --- and buy instantaneous-velocity matching nothing at all. Below twenty the ladder is
+The three flow-based models are measured at $\nfe=100$ as well, and the ordering among them is the same as
+at twenty: analytic average-velocity matching first ($0.0741$ and $0.0673$\,m), then the
+consistency-interpolated model ($0.3897$ and $0.1791$\,m), with instantaneous-velocity matching last and
+barely moving ($0.4085$ and $0.4247$\,m). A hundred evaluations buy the consistency-interpolated model a
+great deal --- it more than halves its median --- and buy instantaneous-velocity matching nothing at all.
+The diffusion baseline is compared at the budget it was trained with, as everywhere in this chapter. Below twenty the ladder is
 incomplete: at $\nfe=10$ only analytic average-velocity matching has a recorded cell, at $\nfe=2$ the
 two average-velocity models have one, and at $\nfe=1$ no model has been evaluated; those cells are
 printed \emph{pending} in \autoref{tab:va-models} rather than left blank.
@@ -855,14 +854,12 @@ line at $0\,\%$ is a box that was not moved and $100\,\%$ at the top is a box de
 that would print on top of each other are displaced by a few pixels, which moves the drawing and not the
 data; and the boxed arrow is the direction in which both axes improve.
 
-Four of the eleven configurations are on it, and all four are analytic average-velocity matching, at
+Four of the ten configurations are on it, and all four are analytic average-velocity matching, at
 $\nfe=2$, $10$, $20$ and $100$. Every other model at every budget is dominated, and the way they are dominated
 is the result: at $\nfe=20$ the consistency-interpolated objective, instantaneous-velocity matching and
 the diffusion baseline all sit close to the line at which the box was not moved at all, at between $189$
 and $298$\,ms per control step, while the analytic objective at $\nfe=2$ --- a seventh to a tenth of
-that cost --- has already closed two fifths of the distance. Diffusion at its native $\nfe=100$
-costs $1521.9$\,ms per control step and ends $0.1849$\,m away; MeanFM at $\nfe=20$ ends
-$0.0741$\,m away at $190.5$\,ms. MeanFM's own $\nfe=100$ point reduces that median distance
+that cost --- has already closed two fifths of the distance. MeanFM's own $\nfe=100$ point reduces its median distance
 by only $0.0068$\,m at $4.7$ times its $\nfe=20$ cost.
 
 \begin{figure}[htpb]
@@ -914,22 +911,26 @@ average-velocity matching comes closest to the target at $\nfe=20$ (\autoref{sec
 so that is the model and the budget the projection is put on. The projected results below are all read
 on it.
 
-\paragraph{Why the activation threshold is not left at its default.}
-The projector runs on the last $\lceil \eta\nfe \rceil$ sampling steps, so at a fixed share $\eta$ its
-cost grows with the budget: every extra sampling step in the active window is another program solved,
-for each of the four candidate plans, at each of up to four hundred control steps. At the default
-$\eta=0.5$ a twenty-step budget means ten solves per candidate per control step, and a hundred-step
-budget means fifty. That is not a projector one can operate, and on this task it was measured rather
-than assumed. At $\nfe=100$ the same model, constraint set and selection rule cost
+\paragraph{The activation threshold is compressed, because the budget is high.}
+Everything about the threshold on this task follows from one fact: D3IL-aligning is the task that needs a
+large step budget, and the default of \ac{DPCC}, $\eta=0.5$, was set for small ones. The projector runs
+on the last $\lceil \eta\nfe \rceil$ sampling steps, so at a fixed share $\eta$ its cost grows with the
+budget: every extra sampling step in the active window is another program solved, for each of the four
+candidate plans, at each of up to four hundred control steps. On D3IL-avoiding at one or two evaluations
+the default costs one solve; here, at $\nfe=20$, it would be ten solves per candidate per control step,
+and at $\nfe=100$ fifty. At those budgets the default threshold is not a projector one can run, and on
+this task that was measured rather than assumed. At $\nfe=100$ the same model, constraint set and
+selection rule cost
 $\mathbf{15{,}218 \pm 3{,}885}$\,ms per control step at $\eta=0.5$ and
 $\mathbf{1{,}195 \pm 180}$\,ms at $\eta=0.1$ --- a factor of $12.7$ --- while the median final distance
 was $0.1816$\,m in the first case and $0.1876$\,m in the second, a difference of $6$\,mm on a box that
 starts $0.4530$\,m from its target.
 
-The threshold is therefore set so that the projector keeps a roughly constant \emph{number} of guiding
-steps instead of a constant share: $\eta=0.2$ at $\nfe=20$ and $\eta=0.4$ at $\nfe=10$, which is three
-guiding steps at both (\autoref{sec:setup:protocol:guiding}), where on D3IL-avoiding at one evaluation
-there were none. What a lower threshold gives up is the early part of sampling, where the sample is still
+The threshold is therefore compressed as the budget grows, so that the projector keeps a roughly constant
+\emph{number} of guiding steps instead of a constant share: $\eta=0.2$ at $\nfe=20$ and $\eta=0.4$ at
+$\nfe=10$, which is three guiding steps at both (\autoref{sec:setup:protocol:guiding}), where on
+D3IL-avoiding at one evaluation there were none. Every projected alignment result of this chapter is under
+that compressed threshold, and \autoref{tab:va-threshold} is the ladder it was chosen on. What a lower threshold gives up is the early part of sampling, where the sample is still
 far from its final shape and the projection has least to hold on to; what it buys is a projected
 configuration whose time per action is of the same order as the generation it is attached to.
 \dataref{analysis\_results\_checkpoint/15-09/batch\_va2\_20260915\_100754, analytic average-velocity
@@ -937,6 +938,46 @@ matching at $\nfe=100$ on \texttt{combined\_5} under random selection:
 \texttt{H8\_K100\_Meuler\_T0.5\_\ldots VisualMeanFlow} against
 \texttt{H8\_K100\_Meuler\_T0.1\_\ldots VisualMeanFlow}, the same ten contexts. The $\eta$ value is the
 \texttt{T} token of the run directory.}
+
+Each row of \autoref{tab:va-threshold} is the analytic average-velocity model under per-step projection
+with random selection on the untightened set, the configuration of the $\nfe=100$ comparison; the number
+of guiding steps is the quantity held roughly constant, and the two $\nfe=100$ rows are the measured cost
+of the uncompressed default against the compressed one.
+
+\begin{table}[htpb]
+  \caption[Alignment: the activation threshold across the budget ladder]{The activation threshold
+  $\eta$ on D3IL-aligning: analytic average-velocity matching under per-step projection with random
+  selection, untightened constraint set, ten contexts, training seed 6. \emph{Solves}: sampling steps the
+  projector acts on, $\lceil \eta\nfe \rceil$, one program each per candidate per control step;
+  \emph{guiding}: those minus the terminal one (\autoref{sec:setup:protocol:guiding}). \emph{ms/step}:
+  mean $\pm$ the sample standard deviation over the contexts, unprojected and projected; \emph{median}:
+  median final box-to-target distance, projected, from $0.4530$\,m; \emph{clean}: contexts free of
+  violations, projected. The $\nfe=100$ pair is the same model, constraint set and rule at two thresholds.
+  The chapter's projected results (\autoref{tab:va-projection}) are on the tightened set at $\nfe=20$,
+  $\eta=0.2$.}
+  \label{tab:va-threshold}
+  \centering
+  \footnotesize
+  \begin{tabularx}{\linewidth}{@{}r r r r r r r r@{}}
+    \toprule
+    $\nfe$ & $\eta$ & Solves & Guiding & \shortstack{ms/step\\unprojected} & \shortstack{ms/step\\projected} & Median [m] & Clean \\
+    \midrule
+    2   & 0.5 & 1  & 0  & $28 \pm 2$   & $50 \pm 8$        & 0.2395 & 3/10 \\
+    10  & 0.4 & 4  & 3  & $99 \pm 2$   & $383 \pm 163$     & 0.0490 & 3/10 \\
+    20  & 0.2 & 4  & 3  & $190 \pm 2$  & $347 \pm 150$     & 0.1245 & 3/10 \\
+    100 & 0.1 & 10 & 9  & $925 \pm 2$  & $1195 \pm 179$    & 0.1876 & 2/10 \\
+    100 & 0.5 & 50 & 49 & $892 \pm 2$  & $15218 \pm 3885$  & 0.1816 & 2/10 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{analysis\_results\_checkpoint/15-09/batch\_va2\_20260915\_100754, \texttt{combined\_5},
+variants \texttt{diffuser} and \texttt{dpcc-r}, folders \texttt{H8\_K\{2,10,20,100\}\_Meuler\_T\{0.5,0.4,0.2,0.1|0.5\}\_\ldots
+VisualMeanFlow\_VTrue\_mpc4\_filmv1\_Emf}, every row restricted to the ten shared contexts; recounted
+2026-09-22 (v3.63). The two unprojected $\nfe=100$ rows differ by $33$\,ms because they are separate
+runs of the same checkpoint.}
+\guard{On the untightened set the projected medians do not improve monotonically with the budget
+($0.0490$\,m at $\nfe=10$ against $0.1245$ at $20$); the table is read for the cost column, which is
+what the threshold decides, and not as a ranking of budgets --- that is \autoref{tab:va-models}.}
 
 \autoref{tab:va-projection} compares the two projection methods on the analytic average-velocity model,
 on tightened constraints, under all three selection rules.
@@ -975,7 +1016,7 @@ and not across blocks.
        & per-step  & $r$  & 9/10  & 2.7  & 8/10 & 0.179 (61\,\%) & $265.9 \pm 101.9$ \\
        &           & $c$  & 9/10  & 4.3  & 6/10 & 0.333 (27\,\%) & $325.3 \pm 165.8$ \\
        &           & $t$  & 8/10  & 1.5  & 7/10 & 0.228 (50\,\%) & $323.2 \pm 175.0$ \\
-       & endpoint  & \mainconfig{\selectedmark\ $r$} & \mainconfig{10/10} & \mainconfig{0.0} & \mainconfig{8/10} & \mainconfig{0.197 (57\,\%)} & \mainconfig{$275.3 \pm 102.4$} \\
+       & \mainconfig{endpoint}  & \mainconfig{\selectedmark\ $r$} & \mainconfig{10/10} & \mainconfig{0.0} & \mainconfig{8/10} & \mainconfig{0.197 (57\,\%)} & \mainconfig{$275.3 \pm 102.4$}  \\
        &           & $c$  & 10/10 & 0.0  & 6/10 & 0.323 (29\,\%) & $282.3 \pm 104.1$ \\
        &           & $t$  & 9/10  & 0.6  & 7/10 & 0.230 (49\,\%) & $301.5 \pm 128.6$ \\
     \midrule
@@ -1111,7 +1152,7 @@ by a margin that is consistent rather than large, and at a comparable price.
     MeanFM    & 10 & $r$ & 10/10 & 0.0  & 8/10 & 0.242 (47\,\%) & $192.5 \pm 72.3$ \\
               &    & $c$ & 8/10  & 0.6  & 4/10 & 0.425 (6\,\%)  & $204.2 \pm 79.4$ \\
               &    & $t$ & 8/10  & 2.3  & 6/10 & 0.255 (44\,\%) & $222.1 \pm 99.0$ \\
-    \mainconfig{\selectedmark\ MeanFM} & \mainconfig{20} & \mainconfig{$r$} & \mainconfig{10/10} & \mainconfig{0.0} & \mainconfig{8/10} & \mainconfig{0.197 (57\,\%)} & \mainconfig{$275.3 \pm 102.4$} \\
+    \mainconfig{\selectedmark\ MeanFM} & \mainconfig{20} & \mainconfig{$r$} & \mainconfig{10/10} & \mainconfig{0.0} & \mainconfig{8/10} & \mainconfig{0.197 (57\,\%)} & \mainconfig{$275.3 \pm 102.4$}  \\
               &    & $c$ & 10/10 & 0.0  & 6/10 & 0.323 (29\,\%) & $282.3 \pm 104.1$ \\
               &    & $t$ & 9/10  & 0.6  & 7/10 & 0.230 (49\,\%) & $301.5 \pm 128.6$ \\
     CI-MeanFM & 2  & \multicolumn{6}{l}{--- not evaluated} \\
@@ -1120,7 +1161,7 @@ by a margin that is consistent rather than large, and at a comparable price.
               &    & $c$ & 5/10  & 10.4 & 3/10 & 0.425 (6\,\%)  & $502.4 \pm 212.0$ \\
               &    & $t$ & 5/10  & 7.5  & 2/10 & 0.425 (6\,\%)  & $452.4 \pm 193.4$ \\
     \midrule
-    \baselinemark\ Diffusion & 20 & \multicolumn{6}{l}{\emph{not evaluated on tightened constraints}} \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \multicolumn{6}{l}{\mainconfig{\emph{not evaluated on tightened constraints}}}  \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -1165,20 +1206,29 @@ better, and one, context~7, that no configuration on this task moves at all.
 \texttt{DA\_in\_Paper/figures/da/fig\_aligning\_outcomes.svg} draws the same ten records.}
 
 The projected configurations of \autoref{tab:va-projection-models} are compared on the two axes of
-\autoref{fig:aligning-tradeoff} in \autoref{fig:aligning-projected-tradeoff}. Only configurations with
-at least nine of ten contexts free of violations enter the cost frontier; the others remain visible.
-The plotted runs use random selection and the same tightened constraint set. The diffusion model is
-absent because it was not evaluated on that set (\autoref{sec:res:aligning:projection}).
+\autoref{fig:aligning-tradeoff} in \autoref{fig:aligning-projected-tradeoff}, and what separates the two
+drawings is said on the page. Every point of the second is a plan \emph{after} projection on the tightened
+set, so it is dearer per control step and, for the same model and budget, further from the target than its
+unprojected twin --- which is drawn as a faint grey ring for analytic average-velocity matching at the same
+three budgets, so the price can be read directly: at $\nfe=20$, from $84\,\%$ of the distance closed at
+$190$\,ms to $61\,\%$ at $266$\,ms. What that price buys is the constraint: a filled point keeps at least
+nine of ten contexts free of violations, which is this task's counterpart of success with constraint
+satisfaction, where the unprojected plan keeps one or two. Only filled points enter the cost frontier; the
+hollow ones remain visible. The plotted runs use random selection. The diffusion model is absent because it
+was not evaluated on that set (\autoref{sec:res:aligning:projection}).
 
 \begin{figure}[htpb]
   \centering
   \includegraphics[width=0.92\linewidth]{fig_aligning_projected_tradeoff}
-  \caption[Alignment after projection: outcome against cost]{D3IL-aligning after projection, on the
+  \caption[Alignment after projection: outcome against cost]{D3IL-aligning \emph{after projection}, on the
   axes of \autoref{fig:aligning-tradeoff}: the share of the starting distance the box was moved towards
   its target, against the mean time to compute one action, log axis, over the same ten contexts;
   tightened constraints, random selection, training seed 6. Colour identifies MeanFM, CI-MeanFM or FM;
-  circles are per-step projection and squares endpoint projection. Filled points keep at least nine
-  contexts free of violations; hollow ones do not and cannot be on the frontier, whatever their distance
+  circles are per-step projection and squares endpoint projection. The faint dashed grey rings are the
+  unprojected MeanFM cells of \autoref{fig:aligning-tradeoff} at $\nfe=2$, $10$ and $20$, drawn so the
+  cost of projecting can be read against the same budget. Filled points keep at least nine
+  contexts free of violations --- the counterpart on this task of success with constraint satisfaction ---
+  hollow ones do not and cannot be on the frontier, whatever their distance
   --- which is why the cheapest point in the drawing, MeanFM at $\nfe=2$ under per-step projection, is
   hollow. Rings and the dashed staircase mark the non-dominated filled points; the boxed arrow is the
   direction in which both axes improve. The horizontal dashed line at $0\,\%$ is a box not moved.
@@ -1245,10 +1295,14 @@ conclusion is limited to training-set contexts.
 \section{Quadrotor Benchmark}\label{sec:res:uav}
 % =============================================================================
 
-The three scenes of \autoref{sec:setup:tasks:uav} appear in order. UAV-corridor reports a completed
-comparison on a test-time constraint. UAV-pillars reports the scene on which the plans are feasible before
-projection, so its projected rows measure what a method preserves rather than what it repairs. UAV-s-curve
-records the tracking-controller failure examined in \autoref{sec:res:uav:controller}.
+The section is built like the two manipulation benchmarks: the generative models are read first on the plans
+they generate, executed without projection (\autoref{sec:res:uav:models}); the same cells are then read under
+the projector of \ac{DPCC} (\autoref{sec:res:uav:projected}), where the cost frontier and the flown paths
+are; and the two projection methods are compared against each other last (\autoref{sec:res:uav:projection}).
+UAV-corridor is the scene with a test-time constraint the demonstrations do not satisfy, UAV-pillars the scene
+on which the plans are feasible before projection, so that its projected rows measure what a method preserves
+rather than what it repairs, and UAV-s-curve records the tracking-controller failure examined in
+\autoref{sec:res:uav:controller}; it is kept in one piece in \autoref{sec:res:uav:scurve}.
 
 All results use training seed 6
 (\autoref{sec:setup:protocol:uav}). Every generative model is a temporal U-Net with $3.96$--$3.97$\,M
@@ -1279,20 +1333,128 @@ whose own table marks \texttt{pid} \enquote{No --- \texttt{dt\_fm} jitter} and \
 
 \subsection{Generative Models}\label{sec:res:uav:models}
 
+\subsubsection{UAV-corridor}\label{sec:res:uav:corridor:raw}
+
+Without projection, every model flies the route it learned and ignores the sloping halfspace, which it never
+saw in training (\autoref{tab:uav-corridor-raw}). All four succeed on all twelve flights, and none of them
+flies a single flight collision-free: $43$ to $56$ control steps per flight violate the halfspace, and the
+count barely moves with the budget. The diffusion baseline is in that group --- unprojected it crosses the
+finish line on every flight, in $264$ control steps, with $49.8$ violating steps per flight. Nothing here
+orders the models, because the constraint fails by construction for every one of them; what the table fixes
+is the price of generation alone, $9$ to $45$\,ms per control step for the flow-based models across the
+ladder and $181$\,ms for the baseline at its budget, against which the projected costs of
+\autoref{sec:res:uav:corridor} are read. No cost frontier is drawn for this arm: with success with
+constraint satisfaction at $0.00$ in every cell there is nothing to trade against time.
+
+\begin{table}[htpb]
+  \caption[UAV-corridor: the generative models before projection]{UAV-corridor with the sloping test-time
+  halfspace, \textbf{before projection}: the plan flown as generated, twelve flights per row (four per
+  route), training seed 6. \emph{Success}: crosses the finish line. \emph{Collision-free}: no violating
+  control step. \emph{S\&C}: success on a collision-free flight. \emph{Violating steps}: per flight,
+  mean $\pm$ the sample standard deviation over the twelve, as is the time
+  (\autoref{sec:setup:metrics:spread}); the three count columns are counts. \baselinemark\ the diffusion
+  model of \ac{DPCC}. The same cells after projection are \autoref{tab:uav-corridor}.}
+  \label{tab:uav-corridor-raw}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabularx}{\linewidth}{@{}L r rrr rr@{}}
+    \toprule
+    Model & $\nfe$ & Success & \shortstack{Collision-\\free} & S\&C & \shortstack{Violating\\steps} & ms/step \\
+    \midrule
+    MeanFM & 1 & 12/12 & 0/12 & 0/12 & $54.2 \pm 14.3$ & $9.5 \pm 0.3$ \\
+    MeanFM & 3 & 12/12 & 0/12 & 0/12 & $54.8 \pm 12.7$ & $27.2 \pm 0.3$ \\
+    MeanFM & 5 & 12/12 & 0/12 & 0/12 & $54.6 \pm 12.6$ & $45.2 \pm 0.4$ \\
+    \midrule
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & 12/12 & 0/12 & 0/12 & $54.8 \pm 12.6$ & $9.4 \pm 0.3$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & 12/12 & 0/12 & 0/12 & $56.1 \pm 12.3$ & $26.9 \pm 0.4$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 5 & 12/12 & 0/12 & 0/12 & $56.2 \pm 12.3$ & $44.6 \pm 0.3$ \\
+    \midrule
+    FM & 1 & 12/12 & 0/12 & 0/12 & $42.6 \pm 12.1$ & $9.1 \pm 0.3$ \\
+    FM & 3 & 12/12 & 0/12 & 0/12 & $46.1 \pm 12.7$ & $26.7 \pm 0.9$ \\
+    FM & 5 & 12/12 & 0/12 & 0/12 & $47.6 \pm 12.8$ & $43.7 \pm 0.5$ \\
+    \midrule
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{12/12} & \mainconfig{0/12} & \mainconfig{0/12} & \mainconfig{$49.8 \pm 13.1$} & \mainconfig{$180.6 \pm 1.5$} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{analysis\_results\_checkpoint/19-09-UAV-Pillars-Exclude/batch\_uav\_20260919\_111701, tag u17cv2,
+variant \texttt{diffuser}, geometry \texttt{corridor\_cv2s}: \texttt{success\_relaxed},
+\texttt{collision\_free\_completed}, \texttt{n\_success\_relaxed\_and\_constraints}, \texttt{n\_violations},
+\texttt{avg\_time\_ms}; recounted 2026-09-22 (v3.63).}
+
+\FloatBarrier
+\subsubsection{UAV-pillars}\label{sec:res:uav:pillars}
+
+e least to repair, and reading it requires saying
+that first. Executed with no projection at all, instantaneous-velocity matching succeeds
+collision-free on all ten flights and analytic average-velocity matching on nine
+(\autoref{tab:uav-pillars}, first column). The plans are already feasible. What the projected rows then
+measure is not whether a method can make an infeasible plan feasible --- the question UAV-corridor
+answers --- but how much of an already feasible plan each method preserves. Consistency-interpolated
+average-velocity matching and the diffusion baseline are the two that do need repair: neither finishes a
+single clean flight unprojected, and the baseline crosses the line on every flight while violating the
+pillar clearance on $132$ control steps per flight. (\autoref{sec:setup:data:uav} records the attempt to
+enlarge the keep-out until the demonstrated routes became infeasible, and why it is not reported.)
+
+\autoref{tab:uav-pillars-raw} is that reading as a table: every model crosses the finish line on every
+flight, so the scene orders the models on the constraint alone, and the two average-velocity models at
+$\nfe=5$ are the only cells that are collision-free on most flights without help. The \emph{goal} column,
+the evaluation's strict criterion (\autoref{sec:setup:metrics:uav}), already shows the one place where the
+two criteria part: instantaneous-velocity matching at $\nfe=5$ is collision-free on all ten flights and
+settles at the goal on nine.
+
+\begin{table}[htpb]
+  \caption[UAV-pillars: the generative models before projection]{UAV-pillars, \textbf{before projection}:
+  the plan flown as generated, ten flights per row, geometry \texttt{pillars\_hg}, training seed 6.
+  \emph{Success}: crosses the finish line. \emph{Collision-free}: no violating control step. \emph{S\&C}:
+  success on a collision-free flight. \emph{Goal}: ended within $0.30$\,m of the goal point, contact-free
+  and collision-free. \emph{Violating steps}: per flight, mean $\pm$ the sample standard deviation over the
+  ten, as is the time (\autoref{sec:setup:metrics:spread}). \emph{Pending}: not yet evaluated on this
+  geometry (R32). \baselinemark\ the diffusion model of \ac{DPCC}. The same cells under per-step
+  projection are the first column of \autoref{tab:uav-pillars}.}
+  \label{tab:uav-pillars-raw}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabularx}{\linewidth}{@{}L r rrrr rr@{}}
+    \toprule
+    Model & $\nfe$ & Success & \shortstack{Collision-\\free} & S\&C & Goal & \shortstack{Violating\\steps} & ms/step \\
+    \midrule
+    MeanFM & 1 & \multicolumn{6}{l}{\emph{pending}} \\
+    MeanFM & 2 & 10/10 & 3/10 & 3/10 & 3/10 & $139.0 \pm 96.1$ & $18.2 \pm 0.2$ \\
+    MeanFM & 5 & 10/10 & 9/10 & 9/10 & 9/10 & $18.2 \pm 57.6$ & $44.7 \pm 0.2$ \\
+    \midrule
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & 10/10 & 0/10 & 0/10 & 0/10 & $162.4 \pm 27.9$ & $9.3 \pm 0.2$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2 & 10/10 & 2/10 & 2/10 & 2/10 & $156.0 \pm 82.4$ & $18.1 \pm 0.2$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 5 & 10/10 & 0/10 & 0/10 & 0/10 & $197.7 \pm 9.3$ & $44.6 \pm 0.2$ \\
+    \midrule
+    FM & 1 & \multicolumn{6}{l}{\emph{pending}} \\
+    FM & 2 & 10/10 & 3/10 & 3/10 & 3/10 & $121.1 \pm 84.2$ & $17.1 \pm 0.2$ \\
+    FM & 5 & 10/10 & 10/10 & 10/10 & 9/10 & $0.0 \pm 0.0$ & $43.1 \pm 0.2$ \\
+    \midrule
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{10/10} & \mainconfig{0/10} & \mainconfig{0/10} & \mainconfig{0/10} & \mainconfig{$132.3 \pm 15.3$} & \mainconfig{$182.9 \pm 3.6$} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{analysis\_results\_checkpoint/15-09/batch\_uav\_20260915\_100816, geometry \texttt{pillars\_hg},
+tags \texttt{u7hg} and \texttt{EPlatest\_u7hg}, variant \texttt{diffuser}: \texttt{success\_relaxed},
+\texttt{collision\_free\_completed}, \texttt{n\_success\_relaxed\_and\_constraints},
+\texttt{n\_success\_and\_constraints}, \texttt{n\_violations}, \texttt{avg\_time\_ms}; recounted 2026-09-22
+(v3.64). The S\&C column reproduces the \emph{no proj.} column of \autoref{tab:uav-pillars}.}
+
+\FloatBarrier
+\subsection{Projection}\label{sec:res:uav:projected}
+
+The same cells are now read with the projector of \ac{DPCC} switched on --- per-step projection, the
+configuration of \autoref{sec:setup:protocol:uav} --- which is where the models separate, where the cost
+frontier lives, and where the flown paths are drawn. Endpoint projection is compared against it in
+\autoref{sec:res:uav:projection}.
+
 \subsubsection{UAV-corridor}\label{sec:res:uav:corridor}
 
-Without projection, every model flies the route it learned and ignores the sloping halfspace, which it never saw in
-training. All four succeed on all twelve flights, and none of them flies a single flight
-collision-free: $43$ to $56$ control steps per flight violate the halfspace. The diffusion baseline is in
-that group --- unprojected it crosses the finish line on every flight, in $264$ control steps, with $49.8$
-violating steps per flight. \autoref{tab:uav-corridor} prints every cell twice, before and after
-projection, so that the pair can be read line by line; the unprojected line is the same for every model
---- success on every flight, collision-free on none --- because on this scene the constraint fails by
-construction without the projector. \textbf{Everything reported after the table has the projector
-switched on.}
-
 With per-step projection the models separate, and they separate on the constraint rather than on the goal
-(\autoref{tab:uav-corridor}). Analytic average-velocity matching and consistency-interpolated
+(\autoref{tab:uav-corridor}; the same cells before projection are \autoref{tab:uav-corridor-raw}). Analytic average-velocity matching and consistency-interpolated
 average-velocity matching succeed collision-free on all twelve flights at $\nfe=3$ and at $\nfe=5$.
 Instantaneous-velocity matching succeeds on every flight too, but not collision-free: it keeps $1.5$
 to $5.2$ shallow violating steps per flight and is collision-free on at most two of twelve. The diffusion
@@ -1326,55 +1488,43 @@ matching on the constraint, $12/12$ against $0/12$, and ahead of the diffusion b
 $12/12$ against $0/12$, at $0.16$ of its time per control step.
 
 \begin{table}[htpb]
-  \caption[UAV-corridor: the generative models before and after projection]{UAV-corridor with the
-  sloping test-time halfspace, every model--budget cell before and after projection, twelve flights
-  per row (four per route). \emph{None}: the plan flown as generated. \emph{Per-step}: the projector of
-  \ac{DPCC} with temporal consistency on tightened constraints, the configuration every later result of
-  this scene uses. \emph{Success}: crosses the finish line. \emph{Collision-free}: no violating control
-  step. \emph{S\&C}: success on a collision-free flight. \emph{Violating steps}: per flight,
-  mean $\pm$ the sample standard deviation over the twelve, as is the time
-  (\autoref{sec:setup:metrics:spread}); the three count columns are counts. Training seed 6.
-  \selectedmark\ the selected configuration, \baselinemark\ the diffusion model of \ac{DPCC}.}
+  \caption[UAV-corridor: the generative models after projection]{UAV-corridor with the sloping test-time
+  halfspace, \textbf{after projection}: every row is per-step projection with temporal consistency on
+  tightened constraints, the configuration every later result of this scene uses; twelve flights per row
+  (four per route). The same cells before projection are \autoref{tab:uav-corridor-raw}. \emph{Success}:
+  crosses the finish line. \emph{Collision-free}: no violating control step. \emph{S\&C}: success on a
+  collision-free flight. \emph{Violating steps}: per flight, mean $\pm$ the sample standard deviation over
+  the twelve, as is the time (\autoref{sec:setup:metrics:spread}); the three count columns are counts.
+  Training seed 6. \selectedmark\ the selected configuration, \baselinemark\ the diffusion model of
+  \ac{DPCC}.}
   \label{tab:uav-corridor}
   \centering
   \footnotesize
-  \setlength{\tabcolsep}{2.5pt}
-  \begin{tabularx}{\linewidth}{@{}L r l rrr rr@{}}
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabularx}{\linewidth}{@{}L r rrr rr@{}}
     \toprule
-    Model & $\nfe$ & Projection & Success & \shortstack{Collision-\\free} & S\&C & \shortstack{Violating\\steps} & ms/step \\
+    Model & $\nfe$ & Success & \shortstack{Collision-\\free} & S\&C & \shortstack{Violating\\steps} & ms/step \\
     \midrule
-    MeanFM & 1 & none     & 12/12 & 0/12  & 0/12  & $54.2 \pm 14.3$ & $9.5 \pm 0.3$ \\
-           &   & per-step & 12/12 & 2/12  & 2/12  & $1.8 \pm 1.1$   & $29.1 \pm 0.5$ \\
-    \mainconfig{\selectedmark\ MeanFM} & \mainconfig{3} & \mainconfig{none} & \mainconfig{12/12} & \mainconfig{0/12} & \mainconfig{0/12} & \mainconfig{$54.8 \pm 12.7$} & \mainconfig{$27.2 \pm 0.3$} \\
-           &   & \mainconfig{per-step} & \mainconfig{12/12} & \mainconfig{12/12} & \mainconfig{12/12} & \mainconfig{$0.0 \pm 0.0$} & \mainconfig{$99.1 \pm 1.1$} \\
-    MeanFM & 5 & none     & 12/12 & 0/12  & 0/12  & $54.6 \pm 12.6$ & $45.2 \pm 0.4$ \\
-           &   & per-step & 12/12 & 12/12 & 12/12 & $0.0 \pm 0.0$   & $143.9 \pm 3.7$ \\
+    MeanFM                         & 1  & 12/12 & 2/12  & 2/12  & $1.8 \pm 1.1$ & $29.1 \pm 0.5$ \\
+    \mainconfig{\selectedmark\ MeanFM} & \mainconfig{3} & \mainconfig{12/12} & \mainconfig{12/12} & \mainconfig{12/12} & \mainconfig{$0.0 \pm 0.0$} & \mainconfig{$99.1 \pm 1.1$} \\
+    MeanFM                         & 5  & 12/12 & 12/12 & 12/12 & $0.0 \pm 0.0$ & $143.9 \pm 3.7$ \\
     \midrule
-    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & none & 12/12 & 0/12 & 0/12 & $54.8 \pm 12.6$ & $9.4 \pm 0.3$ \\
-           &   & per-step & 12/12 & 4/12  & 4/12  & $1.2 \pm 1.2$   & $29.0 \pm 0.3$ \\
-    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & none & 12/12 & 0/12 & 0/12 & $56.1 \pm 12.3$ & $26.9 \pm 0.4$ \\
-           &   & per-step & 12/12 & 12/12 & 12/12 & $0.0 \pm 0.0$   & $101.9 \pm 4.1$ \\
-    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 5 & none & 12/12 & 0/12 & 0/12 & $56.2 \pm 12.3$ & $44.6 \pm 0.3$ \\
-           &   & per-step & 12/12 & 12/12 & 12/12 & $0.0 \pm 0.0$   & $141.8 \pm 1.7$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1  & 12/12 & 4/12  & 4/12  & $1.2 \pm 1.2$ & $29.0 \pm 0.3$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3  & 12/12 & 12/12 & 12/12 & $0.0 \pm 0.0$ & $101.9 \pm 4.1$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 5  & 12/12 & 12/12 & 12/12 & $0.0 \pm 0.0$ & $141.8 \pm 1.7$ \\
     \midrule
-    FM     & 1 & none     & 12/12 & 0/12  & 0/12  & $42.6 \pm 12.1$ & $9.1 \pm 0.3$ \\
-           &   & per-step & 12/12 & 0/12  & 0/12  & $5.2 \pm 0.8$   & $29.2 \pm 0.6$ \\
-    FM     & 3 & none     & 12/12 & 0/12  & 0/12  & $46.1 \pm 12.7$ & $26.7 \pm 0.9$ \\
-           &   & per-step & 12/12 & 0/12  & 0/12  & $2.1 \pm 0.8$   & $86.4 \pm 1.5$ \\
-    FM     & 5 & none     & 12/12 & 0/12  & 0/12  & $47.6 \pm 12.8$ & $43.7 \pm 0.5$ \\
-           &   & per-step & 12/12 & 2/12  & 2/12  & $1.5 \pm 1.0$   & $133.5 \pm 4.7$ \\
+    FM                             & 1  & 12/12 & 0/12  & 0/12  & $5.2 \pm 0.8$ & $29.2 \pm 0.6$ \\
+    FM                             & 3  & 12/12 & 0/12  & 0/12  & $2.1 \pm 0.8$ & $86.4 \pm 1.5$ \\
+    FM                             & 5  & 12/12 & 2/12  & 2/12  & $1.5 \pm 1.0$ & $133.5 \pm 4.7$ \\
     \midrule
-    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{none} & \mainconfig{12/12} & \mainconfig{0/12} & \mainconfig{0/12} & \mainconfig{$49.8 \pm 13.1$} & \mainconfig{$180.6 \pm 1.5$} \\
-           &   & \mainconfig{per-step} & \mainconfig{0/12} & \mainconfig{12/12} & \mainconfig{0/12} & \mainconfig{$0.0 \pm 0.0$} & \mainconfig{$625.5 \pm 22.0$} \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{0/12} & \mainconfig{12/12} & \mainconfig{0/12} & \mainconfig{$0.0 \pm 0.0$} & \mainconfig{$625.5 \pm 22.0$} \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
 \dataref{analysis\_results\_checkpoint/19-09-UAV-Pillars-Exclude/batch\_uav\_20260919\_111701, tag u17cv2, recomputed by
 DA\_in\_Paper/analysis/uav\_results.py; agrees with Gen15/U16/DA\_20260914\_corridor\_v2\_paper\_full \S3--\S7.
-The \emph{none} rows are the \texttt{diffuser} variant of the same cells, recounted 2026-09-22 (v3.63):
-\texttt{success\_relaxed}, \texttt{collision\_free\_completed}, \texttt{n\_success\_relaxed\_and\_constraints},
-\texttt{n\_violations}, \texttt{avg\_time\_ms}.}
+The unprojected twins of these cells are \autoref{tab:uav-corridor-raw}.}
 \guard{The three flow-based projected rows are the projection variant \texttt{dpcc-t-tightened}. The diffusion row
 is \texttt{dpcc-t-bounds\_free-pdes-tightened}: the same per-step projector and the same tightened
 geometry, with the action-magnitude bound released and the plan anchored on the commanded rather than the
@@ -1437,7 +1587,7 @@ DA\_in\_Paper/plotting/builders/frontier.py. Every point reproduces its cell of
 
 UAV-pillars is not drawn as a frontier: \autoref{tab:uav-pillars-best} already places each model at its best
 configuration per projection block and budget, and the scene supports no single selected configuration
-(\autoref{sec:res:uav:pillars}). UAV-s-curve has
+(\autoref{sec:res:uav:pillars:projected}). UAV-s-curve has
 data, but every configuration it has --- projected and unprojected, at every budget flown --- scores
 $0.00$ success with constraint satisfaction (\autoref{tab:uav-scurve}, \autoref{tab:uav-scurve-projection}).
 A cost frontier over points that all share one outcome is a ranking of failures by price, so what that
@@ -1478,25 +1628,16 @@ that all stop short.
 batch\_uav\_20260915\_100816, tag u17cv2}
 
 \FloatBarrier
-\subsubsection{UAV-pillars}\label{sec:res:uav:pillars}
-
-UAV-pillars is the scene on which the projection has the least to repair, and reading it requires saying
-that first. Executed with no projection at all, instantaneous-velocity matching succeeds
-collision-free on all ten flights and analytic average-velocity matching on nine
-(\autoref{tab:uav-pillars}, first column). The plans are already feasible. What the projected rows then
-measure is not whether a method can make an infeasible plan feasible --- the question UAV-corridor
-answers --- but how much of an already feasible plan each method preserves. Consistency-interpolated
-average-velocity matching and the diffusion baseline are the two that do need repair: neither finishes a
-single clean flight unprojected, and the baseline crosses the line on every flight while violating the
-pillar clearance on $132$ control steps per flight. (\autoref{sec:setup:data:uav} records the attempt to
-enlarge the keep-out until the demonstrated routes became infeasible, and why it is not reported.)
+\subsubsection{UAV-pillars}\label{sec:res:uav:pillars:projected}
 
 The evaluation covers two blocks of configurations, and they behave differently enough that averaging
 across them hides the result. The per-step block is seven configurations --- the plan without projection,
-and per-step projection with each of the three selection rules on plain and on tightened constraints ---
-and is evaluated at every budget that exists for a model. The endpoint block is four configurations, a
-single candidate and each of the three rules, and exists only at $\nfe=5$.
-\autoref{tab:uav-pillars} reports the first and \autoref{tab:uav-pillars-endpoint} the second.
+which is \autoref{tab:uav-pillars-raw} again, and per-step projection with each of the three selection
+rules on plain and on tightened constraints --- and is evaluated at every budget that exists for a model;
+\autoref{tab:uav-pillars} reports it. The endpoint block is four configurations, a single candidate and
+each of the three rules, exists only at $\nfe=5$, and is the projection-method comparison of
+\autoref{sec:res:uav:projection} (\autoref{tab:uav-pillars-endpoint}); its best cells are carried into
+\autoref{tab:uav-pillars-best} below so that each model can be placed at its best configuration.
 
 \begin{table}[htpb]
   \caption[UAV-pillars: per-step projection at every evaluated budget]{UAV-pillars, the per-step block:
@@ -1504,7 +1645,8 @@ single candidate and each of the three rules, and exists only at $\nfe=5$.
   cell, full constraint set, geometry \texttt{pillars\_hg}. Every budget at which a model was evaluated on
   this geometry is listed. $r$, $c$, $t$: random selection, cumulative projection cost, temporal
   consistency. \emph{tight.}: the tightened constraint set. The mean is over the seven configurations of
-  the row, which are the same seven in every row. Consistency-interpolated average-velocity matching with
+  the row, which are the same seven in every row. A row printed \emph{pending} is a model--budget cell
+  not yet evaluated on this geometry. Consistency-interpolated average-velocity matching with
   $\alpha_{\mathrm{end}}=0.2$. Temporal U-Net, $3.96$--$3.97$\,M parameters; training seed 6.
   ---: not evaluated.}
   \label{tab:uav-pillars}
@@ -1517,6 +1659,7 @@ single candidate and each of the three rules, and exists only at $\nfe=5$.
     \cmidrule(lr){4-6}\cmidrule(lr){7-9}
     Model & $\nfe$ & proj. & $r$ & $c$ & $t$ & $r$ & $c$ & $t$ & mean \\
     \midrule
+    MeanFM    & 1  & \multicolumn{8}{l}{\emph{pending}} \\
     MeanFM    & 2  & 0.30 & 0.70 & 0.40 & 0.40 & 0.40 & 0.40 & 0.40 & 0.429 \\
     MeanFM    & 5  & 0.90 & 0.20 & 0.80 & 0.40 & 0.10 & 0.90 & 0.80 & 0.586 \\
     \midrule
@@ -1524,10 +1667,11 @@ single candidate and each of the three rules, and exists only at $\nfe=5$.
     CI-MeanFM & 2  & 0.20 & 0.20 & 0.20 & 0.50 & 0.30 & 0.30 & 0.40 & 0.300 \\
     CI-MeanFM & 5  & 0.00 & 0.10 & 0.90 & 0.80 & 0.00 & 0.00 & 0.90 & 0.386 \\
     \midrule
+    FM        & 1  & \multicolumn{8}{l}{\emph{pending}} \\
     FM        & 2  & 0.30 & 0.50 & 0.20 & 0.30 & 0.40 & 0.50 & 0.20 & 0.343 \\
     FM        & 5  & 1.00 & 0.00 & 1.00 & 0.80 & 0.00 & 0.90 & 0.40 & 0.586 \\
     \midrule
-    Diffusion & 20 & 0.00 & ---  & 0.00 & 0.00 & ---  & 0.10 & 0.30 & 0.080 \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{0.00} & --- & \mainconfig{0.00} & \mainconfig{0.00} & --- & \mainconfig{0.10} & \mainconfig{0.30} & \mainconfig{0.080} \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -1536,33 +1680,10 @@ single candidate and each of the three rules, and exists only at $\nfe=5$.
 \texttt{EPlatest\_u7hg}, mask \texttt{all}; recomputed cell by cell by
 \texttt{DA\_in\_Paper/analysis/pillars\_grid.py}, which resolves the model of every candidate through
 \texttt{candidate\_axes.csv} (\texttt{Full\_Path}) and excludes the \texttt{geo\_free} variants}
-\hole{MeanFM and FM at $\nfe=1$ on this geometry. Both exist at $\nfe=1$ only on the earlier
-\texttt{pillars} geometry, which is a different constraint set and cannot be put in this table.
-CI-MeanFM is the only model with an $\nfe=1$ row here, so the first budget carries no comparison.}
-\guard{The diffusion baseline was not evaluated with random selection, plain or tightened; its mean is
-over the five configurations it has.}
-
-\begin{table}[htpb]
-  \caption[UAV-pillars: endpoint projection]{UAV-pillars, the endpoint block: the same measure under
-  endpoint projection, which exists at $\nfe=5$ only. \emph{single}: one candidate; $r$, $c$, $t$: the
-  three selection rules over four candidates. The diffusion baseline has no endpoint row on this scene.}
-  \label{tab:uav-pillars-endpoint}
-  \centering
-  \footnotesize
-  \setlength{\tabcolsep}{6pt}
-  \begin{tabularx}{\linewidth}{@{}L r rrrr r@{}}
-    \toprule
-    Model & $\nfe$ & single & $r$ & $c$ & $t$ & mean \\
-    \midrule
-    MeanFM    & 5  & 0.50 & 0.90 & 0.70 & 0.70 & 0.700 \\
-    CI-MeanFM & 5  & 0.20 & 0.40 & 0.40 & 0.30 & 0.325 \\
-    FM        & 5  & \mainconfig{\selectedmark\ 1.00} & 1.00 & 0.90 & 0.90 & \textbf{0.950} \\
-    Diffusion & 20 & ---  & ---  & ---  & ---  & --- \\
-    \bottomrule
-  \end{tabularx}
-\end{table}
-\dataref{same batch and geometry as \autoref{tab:uav-pillars}, variants \texttt{hardflow\_sls}
-and \texttt{hardflow\_sls-\{r,c,t\}}}
+\guard{The two \emph{pending} rows are R32 of the run ledger: MeanFM and FM exist at $\nfe=1$ only on
+the earlier \texttt{pillars} geometry, a different constraint set that cannot be put in this table, so
+the first budget carries no comparison until they are flown here. The diffusion baseline was not
+evaluated with random selection, plain or tightened; its mean is over the five configurations it has.}
 
 \paragraph{What the two blocks say.} On the seven per-step configurations at $\nfe=5$, analytic
 average-velocity matching and instantaneous-velocity matching are level: both average $0.586$, both reach
@@ -1601,31 +1722,35 @@ $0.40$ against $0.90$. The baseline reaches $0.30$ and costs $4.4$\,s per contro
   block --- per-step (seven configurations) and endpoint (four). Comparing per block is what keeps the
   diffusion baseline in the comparison: it has no endpoint row here, and neither has any model at
   $\nfe\le2$. \emph{S\&C}: success on a collision-free flight; every row succeeded on all ten
-  flights, so the success column is omitted. \emph{viol.}: violating control steps per flight; \emph{steps}: control
-  steps, the episode ending after $634$. Ten flights per cell, training seed 6. A bold filled circle marks
+  flights, so the success column is omitted. \emph{goal}: the same configuration under the strict criterion,
+  ended within $0.30$\,m of the goal point, contact-free and collision-free. \emph{viol.}: violating
+  control steps per flight; \emph{steps}: control steps, the episode ending after $634$. \emph{Pending}: not
+  yet evaluated on this geometry (R32). Ten flights per cell, training seed 6. A bold filled circle marks
   the baseline of record. No configuration is marked as selected: the scene does not support one
   (\autoref{sec:res:uav:conclusion}).}
   \label{tab:uav-pillars-best}
   \centering
   \footnotesize
-  \setlength{\tabcolsep}{3pt}
-  \begin{tabularx}{\linewidth}{@{}L r L rrr L rrr@{}}
+  \setlength{\tabcolsep}{2.5pt}
+  \begin{tabularx}{\linewidth}{@{}L r L rrrr L rrrr@{}}
     \toprule
-    & & \multicolumn{4}{c}{best per-step configuration} & \multicolumn{4}{c}{best endpoint configuration} \\
-    \cmidrule(lr){3-6}\cmidrule(lr){7-10}
-    Model & $\nfe$ & Rule & S\&C & viol. & steps & Rule & S\&C & viol. & steps \\
+    & & \multicolumn{5}{c}{best per-step configuration} & \multicolumn{5}{c}{best endpoint configuration} \\
+    \cmidrule(lr){3-7}\cmidrule(lr){8-12}
+    Model & $\nfe$ & Rule & S\&C & goal & viol. & steps & Rule & S\&C & goal & viol. & steps \\
     \midrule
-    MeanFM    & 2  & $r$              & 0.70 & 54.7 & 491 & ---            & ---  & ---   & --- \\
-    MeanFM    & 5  & tight., $c$      & 0.90 & 20.1 & 432 & $r$            & 0.90 & 21.4  & 442 \\
+    MeanFM    & 1  & \multicolumn{10}{l}{\emph{pending}} \\
+    MeanFM    & 2  & $r$              & 0.70 & 0.70 & 54.7 & 491 & ---            & ---  & ---  & ---   & --- \\
+    MeanFM    & 5  & tight., $c$      & 0.90 & 0.80 & 20.1 & 432 & $r$            & 0.90 & \textbf{0.90} & 21.4  & 442 \\
     \midrule
-    CI-MeanFM & 1  & tight., $t$      & 0.70 & 53.7 & 592 & ---            & ---  & ---   & --- \\
-    CI-MeanFM & 2  & $t$              & 0.50 & 91.3 & 528 & ---            & ---  & ---   & --- \\
-    CI-MeanFM & 5  & tight., $t$      & 0.90 & 22.4 & 453 & $c$            & 0.40 & 113.8 & 616 \\
+    CI-MeanFM & 1  & tight., $t$      & 0.70 & 0.20 & 53.7 & 592 & ---            & ---  & ---  & ---   & --- \\
+    CI-MeanFM & 2  & $t$              & 0.50 & 0.50 & 91.3 & 528 & ---            & ---  & ---  & ---   & --- \\
+    CI-MeanFM & 5  & tight., $t$      & 0.90 & 0.70 & 22.4 & 453 & $c$            & 0.40 & 0.10 & 113.8 & 616 \\
     \midrule
-    FM        & 2  & $r$              & 0.50 & 97.7 & 538 & ---            & ---  & ---   & --- \\
-    FM        & 5  & $c$              & 1.00 & 0.0  & 558 & single cand.   & 1.00 & 0.0   & 562 \\
+    FM        & 1  & \multicolumn{10}{l}{\emph{pending}} \\
+    FM        & 2  & $r$              & 0.50 & 0.50 & 97.7 & 538 & ---            & ---  & ---  & ---   & --- \\
+    FM        & 5  & $c$              & 1.00 & 0.40 & 0.0  & 558 & single cand.   & 1.00 & 0.40 & 0.0   & 562 \\
     \midrule
-    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{tight., $t$} & \mainconfig{0.30} & \mainconfig{101.0} & \mainconfig{634} & \mainconfig{---} & \mainconfig{---} & \mainconfig{---} & \mainconfig{---} \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{tight., $t$} & \mainconfig{0.30} & \mainconfig{0.00} & \mainconfig{101.0} & \mainconfig{634} & \mainconfig{---} & \mainconfig{---} & \mainconfig{---} & \mainconfig{---} & \mainconfig{---}  \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -1645,6 +1770,22 @@ flight loses the field, violates the clearance on $214$ steps and runs to the li
 the whole difference in the rate. So instantaneous-velocity matching is the model that never fails outright
 here, and analytic average-velocity matching the one that flies the shorter, tighter path when it succeeds;
 neither statement is a ranking of the two.
+
+The \emph{goal} columns say the same thing as a number, and they reverse the order. Under the evaluation's
+strict criterion --- the flight ends within $0.30$\,m of the goal point, contact-free and collision-free ---
+analytic average-velocity matching keeps $0.90$ with endpoint projection and $0.80$ with per-step, because
+the flights that cross the line also settle, while instantaneous-velocity matching falls from $1.00$ to
+$0.40$ in both blocks, because the six flights that cross and never settle end $0.36$ to $0.39$\,m away,
+outside the radius. Every quadrotor scene of this thesis scores success at the finish line
+(\autoref{sec:setup:metrics:uav}), and the tables keep that criterion; the strict one is printed beside it
+here because UAV-pillars is the one scene on which the two order the models differently, and the difference
+is exactly those six flights. Which of the two a reader prefers is a question about the task --- whether
+crossing the goal or stopping at it is what the scene asks --- and not about the data: both counts are
+read from the same ten flights.
+\dataref{\texttt{per\_rollout\_detail.csv}, tag u7hg, $\nfe=5$: FM \texttt{hardflow\_sls}
+\texttt{goal\_reached} $=0.40$, \texttt{goal\_dist} $0.34$\,m mean; MeanFM \texttt{hardflow\_sls-r}
+$0.90$, $0.33$\,m; recounted 2026-09-22 (v3.63) after the author asked whether the success metric was
+wrong --- it is not; the two criteria differ, and both are now printed.}
 
 \autoref{fig:uav-pillars-paths} draws those four configurations, and it shows what the table cannot: the
 models do not fail by stopping short, they fail by committing to a side. Instantaneous-velocity matching
@@ -1742,7 +1883,7 @@ missing cells are R31 in the run ledger.
                   & 3  & \multicolumn{5}{l}{\emph{pending}} \\
                   & 5  & \multicolumn{5}{l}{\emph{pending}} \\
     \midrule
-    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{0/10} & \mainconfig{2.432} & \mainconfig{0/10} & \mainconfig{8/10} & \mainconfig{173.9} \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{0/10} & \mainconfig{2.432} & \mainconfig{0/10} & \mainconfig{8/10} & \mainconfig{173.9}  \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -1807,7 +1948,7 @@ whose filled cells are already zero.
     FM        & 3 & \multicolumn{5}{l}{\emph{pending}} \\
               & 5 & \multicolumn{5}{l}{\emph{pending}} \\
     \midrule
-    \baselinemark\ Diffusion & 20 & per-step, $t$ & 10/10 & 0/10 & 0.00 & 2885.1 \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{per-step, $t$} & \mainconfig{10/10} & \mainconfig{0/10} & \mainconfig{0.00} & \mainconfig{2885.1}  \\
               &    & endpoint & \multicolumn{4}{l}{--- never run on the diffusion model} \\
     \bottomrule
   \end{tabularx}
@@ -1853,22 +1994,6 @@ between $\nfe=3$ and $\nfe=5$, while per-step projection stays at $1.00$ through
 lengthens the ODE whose endpoint the single solve has to anticipate, so the prediction it corrects is
 further from what the sampler finally produces.
 
-On UAV-pillars, endpoint projection is the method. It holds the best configuration of the scene ---
-instantaneous-velocity matching, a single candidate, $1.00$ at $78$\,ms per control step --- and the best
-configuration of analytic average-velocity matching as well, $0.90$ at $154$\,ms. Averaged over the
-$\nfe=5$ configurations of \autoref{tab:uav-pillars} and \autoref{tab:uav-pillars-endpoint}, it spends
-$104$\,ms per control step in projection against $1611$\,ms for per-step projection, and none of its $120$
-flights loses physical safety --- no contact and no loss of altitude --- against $43$ of the $180$ flights
-with per-step projection. It is not free of constraint violations: $41$ of its flights violate the
-clearance at least once, against $89$ with per-step projection. The projection configuration of that scene
-differs from UAV-corridor's (\autoref{sec:setup:protocol:uav}), so the two are not pooled, and what the
-scene shows is preservation of a feasible plan, not repair.
-\dataref{batch\_uav\_20260915\_100816, geometry \texttt{pillars\_hg}, tag \texttt{u7hg}, $\nfe=5$, the
-three flow-based models: per-step = \texttt{dpcc-\{r,c,t\}} plain and \texttt{-tightened} (180
-flights), endpoint = \texttt{hardflow\_sls} and \texttt{-\{r,c,t\}} (120 flights);
-\texttt{phys\_safe}, \texttt{n\_violations}, \texttt{proj\_ms}; recounted 2026-09-22 (v3.63): 43/180,
-89/180, 1611\,ms and 0/120, 41/120, 104\,ms reproduce exactly.}
-
 \begin{table}[htpb]
   \caption[UAV-corridor: the two projection methods under every selection rule]{UAV-corridor, success with
   constraint satisfaction --- success on a collision-free flight --- for both projection methods
@@ -1887,7 +2012,7 @@ flights), endpoint = \texttt{hardflow\_sls} and \texttt{-\{r,c,t\}} (120 flights
     \cmidrule(lr){3-5}\cmidrule(l){6-9}
     Model & $\nfe$ & $r$ & $c$ & $t$ & single & $r$ & $c$ & $t$ \\
     \midrule
-    MeanFM & 3 & 1.00 & 1.00 & \mainconfig{\selectedmark\ 1.00} & 0.42 & 0.50 & 0.58 & 0.42 \\
+    \mainconfig{MeanFM} & \mainconfig{3} & \mainconfig{1.00} & \mainconfig{1.00} & \mainconfig{\selectedmark\ 1.00} & \mainconfig{0.42} & \mainconfig{0.50} & \mainconfig{0.58} & \mainconfig{0.42}  \\
            & 5 & 1.00 & 1.00 & 1.00 & 0.00 & 0.08 & 0.33 & 0.17 \\
     \midrule
     CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & 1.00 & 1.00 & 1.00 & 0.25 & 0.33 & 0.42 & 0.58 \\
@@ -1896,7 +2021,7 @@ flights), endpoint = \texttt{hardflow\_sls} and \texttt{-\{r,c,t\}} (120 flights
     FM     & 3 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 \\
            & 5 & 0.00 & 0.08 & 0.17 & 0.00 & 0.00 & 0.00 & 0.00 \\
     \midrule
-    \baselinemark\ Diffusion & 20 & 0.00 & 0.00 & 0.00 & --- & --- & --- & --- \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{0.00} & \mainconfig{0.00} & \mainconfig{0.00} & --- & --- & --- & ---  \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -1922,6 +2047,54 @@ that reason.
 
 The projection configuration of this scene differs from that of the other quadrotor scene
 (\autoref{sec:setup:protocol:uav}), so the scenes are not pooled.
+
+\begin{table}[htpb]
+  \caption[UAV-pillars: endpoint projection]{UAV-pillars, the endpoint block: the measure of
+  \autoref{tab:uav-pillars} under endpoint projection, which exists at $\nfe=5$ only. \emph{single}: one candidate; $r$, $c$, $t$: the
+  three selection rules over four candidates. The left block is success with constraint satisfaction, the
+  thesis criterion (the finish line crossed, collision-free). The right block, \emph{goal reached}, is the
+  evaluation's strict criterion for the same flights: ended within $0.30$\,m of the goal point,
+  contact-free and collision-free (\autoref{sec:setup:metrics:uav}). The diffusion baseline has no
+  endpoint row on this scene.}
+  \label{tab:uav-pillars-endpoint}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3.5pt}
+  \begin{tabularx}{\linewidth}{@{}L r rrrr r rrrr@{}}
+    \toprule
+    & & \multicolumn{5}{c}{S\&C: finish line crossed} & \multicolumn{4}{c}{goal reached, $\le 0.30$\,m} \\
+    \cmidrule(lr){3-7}\cmidrule(lr){8-11}
+    Model & $\nfe$ & single & $r$ & $c$ & $t$ & mean & single & $r$ & $c$ & $t$ \\
+    \midrule
+    MeanFM    & 5  & 0.50 & 0.90 & 0.70 & 0.70 & 0.700 & 0.50 & \textbf{0.90} & 0.70 & 0.70 \\
+    CI-MeanFM & 5  & 0.20 & 0.40 & 0.40 & 0.30 & 0.325 & 0.10 & 0.20 & 0.10 & 0.10 \\
+    \mainconfig{FM}        & \mainconfig{5}  & \mainconfig{\selectedmark\ 1.00} & \mainconfig{1.00} & \mainconfig{0.90} & \mainconfig{0.90} & \mainconfig{\textbf{0.950}} & \mainconfig{0.40} & \mainconfig{0.40} & \mainconfig{0.50} & \mainconfig{0.50}  \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & --- & --- & --- & --- & --- & --- & --- & --- & --- \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{same batch and geometry as \autoref{tab:uav-pillars}, variants \texttt{hardflow\_sls}
+and \texttt{hardflow\_sls-\{r,c,t\}}; S\&C = \texttt{n\_success\_relaxed\_and\_constraints}, goal
+reached = \texttt{n\_success\_and\_constraints} (\texttt{success = goal\_reached and safe},
+\texttt{eval\_mix\_uav.py}, \texttt{GOAL\_RADIUS = 0.30}); both recounted from
+\texttt{per\_rollout\_detail.csv} 2026-09-22 (v3.63) on the author's request to double-check the
+metric. The S\&C values reproduce; the strict column is what the author's expectation --- that the
+average-velocity model should lead --- corresponds to.}
+
+On UAV-pillars (\autoref{tab:uav-pillars-endpoint}), endpoint projection is the method. It holds the best configuration of the scene ---
+instantaneous-velocity matching, a single candidate, $1.00$ at $78$\,ms per control step --- and the best
+configuration of analytic average-velocity matching as well, $0.90$ at $154$\,ms. Averaged over the
+$\nfe=5$ configurations of \autoref{tab:uav-pillars} and \autoref{tab:uav-pillars-endpoint}, it spends
+$104$\,ms per control step in projection against $1611$\,ms for per-step projection, and none of its $120$
+flights loses physical safety --- no contact and no loss of altitude --- against $43$ of the $180$ flights
+with per-step projection. It is not free of constraint violations: $41$ of its flights violate the
+clearance at least once, against $89$ with per-step projection. What the scene shows is preservation of a feasible plan, not repair.
+\dataref{batch\_uav\_20260915\_100816, geometry \texttt{pillars\_hg}, tag \texttt{u7hg}, $\nfe=5$, the
+three flow-based models: per-step = \texttt{dpcc-\{r,c,t\}} plain and \texttt{-tightened} (180
+flights), endpoint = \texttt{hardflow\_sls} and \texttt{-\{r,c,t\}} (120 flights);
+\texttt{phys\_safe}, \texttt{n\_violations}, \texttt{proj\_ms}; recounted 2026-09-22 (v3.63): 43/180,
+89/180, 1611\,ms and 0/120, 41/120, 104\,ms reproduce exactly.}
+
 
 On UAV-s-curve, neither method yields a flight that succeeds within the constraints, so the scene
 does not rank them (\autoref{sec:res:uav:scurve}).

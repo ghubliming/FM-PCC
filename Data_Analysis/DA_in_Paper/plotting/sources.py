@@ -895,10 +895,12 @@ ALIGNING_CELLS = {
 # four models have a cell (v3.60 published the CI-MeanFM and FM cells; v3.62 added them
 # here, so fig_aligning_tradeoff shows every row of tab:va-models). Figures and tables
 # must use the same recorded subset.
+# v3.63 (author): the diffusion baseline is compared at its trained budget only; its K=100
+# cell stays in ALIGNING_CELLS for the record and is not drawn, matching tab:va-models.
 ALIGNING_REPORTED = {('mf', 2), ('mf', 10), ('mf', 20), ('mf', 100),
                      ('af', 2), ('af', 20), ('af', 100),
                      ('fm', 20), ('fm', 100),
-                     ('diffusion', 20), ('diffusion', 100)}
+                     ('diffusion', 20)}
 # The untightened set is the only geometry on which all four models were evaluated,
 # and `diffuser` is the unprojected arm -- the model on its own, which is what the
 # generative-model comparison of section 6.2.1 is made on.

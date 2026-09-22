@@ -21,6 +21,12 @@ is sourced from · what it left open.
 
 ---
 
+## v3.64 — 2026-09-22 · §6.3 rebuilt in the order of §6.1/§6.2 (before projection → after projection → the two projectors); the alignment threshold is compressed because the budget is high → [`changelogs/v3.64_20260922_uav_prepost_structure_threshold_compressed.md`](changelogs/v3.64_20260922_uav_prepost_structure_threshold_compressed.md)
+
+- **§6.2.2:** the threshold paragraph is re-headed and re-led — the DPCC default $\eta=0.5$ is set for small budgets and is not runnable at $\nfe=20$/$100$ (10 / 50 solves per candidate per step), so the threshold is *compressed* to a roughly constant number of guiding steps; `tab:va-threshold` is the ladder it was chosen on. No number changed.
+- 🔴 **§6.3 is three parts now:** 6.3.1 the models *before* projection (**new** `tab:uav-corridor-raw`, `tab:uav-pillars-raw`), 6.3.2 the same cells *after* per-step projection (`tab:uav-corridor` projected-only again, `tab:uav-pillars`, best table, frontier, paths; s-curve kept whole), 6.3.3 per-step vs endpoint (`tab:uav-pillars-endpoint` moved beside `tab:uav-corridor-projection`). Labels Chapters 5 and 8 cite stay where the meaning is. No run, no cell changed.
+- `check.py`: all mechanical checks pass, 6 927 lines. **No bundle built.**
+
 ## v3.63 — 2026-09-22 · UAV-pillars falls back to `pillars_hg`; the enlarged campaign (U17) failed and is abandoned → [`changelogs/v3.63_20260922_pillars_fallback_hg_u17_abandoned.md`](changelogs/v3.63_20260922_pillars_fallback_hg_u17_abandoned.md)
 
 - **Info box acted on:** the DA note of 2026-09-22 — `pillars_xl` is all zero in 94 cells, every projector routes into the forbidden centre lane; author decision: fall back. INBOX row ✅.
@@ -29,7 +35,9 @@ is sourced from · what it left open.
 - Figures: pillars drawn at 0.12 m again; `expert_paths.json` re-extracted (4/4 clean); `fig_constraints_uav`, `fig_expert_uav`, `fig_uav_pillars_paths` rebuilt and exported.
 - 🔒 **§6.4 untouched (author lock):** its three summary tables still lack a pillars row; the rows are in the changelog, ready for when it is unlocked.
 - `check.py`: all mechanical checks pass, 6 761 lines, 40 figures.
-- **Bundles:** `bundle/output/thesis_v3_20260922_101932_new.zip`, `…101932_new_clean.zip`, `…101933_new_nonotes.zip` — 44/44 figures render, cross-references resolve, `--verify` byte-faithful; supersede the v3.62 `094334/094335` set.
+- **Second round, same entry:** Fig 6.7 says *after projection* on the page and draws Fig 6.6's unprojected MeanFM cells as grey rings; the **threshold study** (§6.2.2 prose) gets `tab:va-threshold`; the pillars `\hole` is two *pending* K=1 rows → **R32**; 🔴 **Table 6.10's metric double-checked**: S&C reproduces; under the evaluator's strict goal-reached criterion MeanFM leads (0.90 vs FM 0.40) because six FM flights cross and never settle — both criteria now printed, strict one defined in Ch 5. **No bundle for the second round.**
+- **Third round, same entry:** appendix Tables kept, their duplicated captions cut to what the copy adds; **every row marked ▶ or • is bold on every cell** (17 rows in Ch 6, 6 in the appendix; two pillars diffusion rows get the dot); **Table 6.5 keeps diffusion at K=20 only** (K=100 row and three pending rows removed, Fig 6.6 follows, R16 narrowed to six flow-model evaluations); ledger §0 gets a running addendum, nothing deleted.
+- **Bundles (closing v3.63):** `bundle/output/thesis_v3_20260922_105444_new.zip`, `…105445_new_clean.zip`, `…105445_new_nonotes.zip` — 44/44 figures render, cross-references resolve, `--verify` byte-faithful; supersede the `101932/101933` set of the first round.
 
 ## v3.62 — 2026-09-22 · Fig 6.3 on a broken step axis, Table 6.5 as the whole ladder with *pending* cells, alignment frontiers as the share closed, Fig 6.8 with nine contexts → [`changelogs/v3.62_20260922_broken_axis_full_ladder_closed_share_nine_paths.md`](changelogs/v3.62_20260922_broken_axis_full_ladder_closed_share_nine_paths.md)
 

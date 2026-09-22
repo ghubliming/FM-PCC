@@ -6,7 +6,7 @@ Last built **2026-09-22**. Every thesis figure lives in this store; drafts recei
 
 | figure | group | corpus | protocol |
 | :-- | :-- | :-- | :-- |
-| `fig_uav_pillars_paths` | da | `data/uav_paths.json (extract/uav_paths.py)` | 4 cells, 40 flights; runs Eaf_K5_mpc4_pid_stopgo_T0.5_EPlatest_u7hg, Ediffusion_K20_mpc4_pid_stopgo_T0.5_u7hg, Efm_K5_mpc4_pid_stopgo_T0.5_u7hg, Emf_K5_mpc4_pid_stopgo_T0.5_u7hg; scene and constraints from sources.UAV_CONSTRAINTS, drawn by scenes._uav_constraint_panel |
+| `fig_aligning_tradeoff` | da | `Data_Analysis/analysis_results_checkpoint/15-09/batch_va2_20260915_100754` | seed 6, ten shared enumerated contexts (paired; raw cells with 30 contexts are restricted) | unprojected, combined_5/diffuser |
 
 ## Vendored — copied from where they were produced
 
@@ -27,7 +27,6 @@ Present in the store but not produced by this run (e.g. a matplotlib figure from
 | `fig_aligning_outcomes` | `da/fig_aligning_outcomes.png`, `da/fig_aligning_outcomes.svg` |
 | `fig_aligning_paths` | `da/fig_aligning_paths.png`, `da/fig_aligning_paths.svg` |
 | `fig_aligning_projected_tradeoff` | `da/fig_aligning_projected_tradeoff.png`, `da/fig_aligning_projected_tradeoff.svg` |
-| `fig_aligning_tradeoff` | `da/fig_aligning_tradeoff.png`, `da/fig_aligning_tradeoff.svg` |
 | `fig_avoiding_k_ladder` | `da/fig_avoiding_k_ladder.png`, `da/fig_avoiding_k_ladder.svg` |
 | `fig_avoiding_paths` | `da/fig_avoiding_paths.png`, `da/fig_avoiding_paths.svg` |
 | `fig_avoiding_projector_cost` | `da/fig_avoiding_projector_cost.png`, `da/fig_avoiding_projector_cost.svg` |
@@ -65,6 +64,7 @@ Present in the store but not produced by this run (e.g. a matplotlib figure from
 | `fig_scene_uav_scurve` | `env/fig_scene_uav_scurve.png`, `env/fig_scene_uav_scurve.svg` |
 | `fig_uav_corridor_paths` | `da/fig_uav_corridor_paths.png`, `da/fig_uav_corridor_paths.svg` |
 | `fig_uav_corridor_tradeoff` | `da/fig_uav_corridor_tradeoff.png`, `da/fig_uav_corridor_tradeoff.svg` |
+| `fig_uav_pillars_paths` | `da/fig_uav_pillars_paths.png`, `da/fig_uav_pillars_paths.svg` |
 | `fig_uav_scurve_paths` | `da/fig_uav_scurve_paths.png`, `da/fig_uav_scurve_paths.svg` |
 
 ## Planned — specified in a draft, not yet made

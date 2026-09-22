@@ -132,7 +132,10 @@ for exp in exps:
                     minari_dataset = minari.load_dataset(exp, download=True)
                     env = minari_dataset.recover_environment(eval_env=True) if 'pointmaze' in exp else minari_dataset.recover_environment()    # Set render_mode='human' to visualize the environment
                 elif 'avoiding' in exp:
-                    env = ObstacleAvoidanceEnv()
+                    # [Gen15 U18] plant switch: FMPCC_AVOIDING_PLANT=uav flies the quadrotor in the scaled pillars_v2 scene
+                    # (uav_avoiding_bridge/); default 'panda' returns ObstacleAvoidanceEnv() exactly as before.
+                    from uav_avoiding_bridge.factory import make_avoiding_env
+                    env = make_avoiding_env(ObstacleAvoidanceEnv)
                     env.start()
 
                 if robot_name == 'pointmaze': env.env.env.env.point_env.frame_skip = 2

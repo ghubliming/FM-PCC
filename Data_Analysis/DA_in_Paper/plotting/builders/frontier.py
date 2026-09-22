@@ -288,14 +288,29 @@ def fig_aligning_projected_tradeoff(outdir):
     # the axis conversion -- and the legend says what a hollow marker means.
     for p in pts:
         p['y'] = _pct_closed(p['y'])
+    # v3.63 (author): say on the page that this is AFTER projection and show what it is
+    # read against -- the unprojected MeanFM cells of fig_aligning_tradeoff are drawn as
+    # faint grey rings at the same budgets, so the reader sees the price of projection
+    # (further from the target, dearer per step) and its purchase (filled = at least
+    # nine of ten contexts free of violations, which is this task's success with
+    # constraint satisfaction). An unprojected plan does not depend on the constraint
+    # set, so those points are the same on the untightened and the tightened set.
+    before = {K: v for (e, K), v in _aligning_cells(c).items() if e == 'mf' and K in (2, 10, 20)}
+    xlo = min(xlo, min(v['ms'] for v in before.values()) * 0.65) if before else xlo
     f = Fig(760, 430, ml=92, mr=22, mt=26, mb=74, font=FONT)
     f.axes((xlo, xhi), PCT_YLIM, xlog=True)
     f.frame(dec_ticks(xlo, xhi), PCT_TICKS,
             'time per control step [ms] (log)', PCT_LABEL, '', '',
             xfmt=fmt_num, yfmt=lambda v: f'{v:g}')
+    f.text(f.R - 8, f.T + 18, 'after projection, tightened constraints', 11, '#333', anchor='end', bold=True)
     y0 = f.Y(0.0)
     f.s.append(f'<line x1="{f.L}" y1="{y0:.1f}" x2="{f.R}" y2="{y0:.1f}" '
                'stroke="#777" stroke-width="1.4" stroke-dasharray="6,4"/>')
+    for K, v in before.items():
+        bx, by = f.X(v['ms']), f.Y(_pct_closed(v['y']))
+        f.s.append(f'<circle cx="{bx:.1f}" cy="{by:.1f}" r="6.5" fill="none" stroke="#9a9a9a" '
+                   'stroke-width="1.6" stroke-dasharray="2,2"/>')
+        f.text(bx - 10, by - 10, K, 11, '#9a9a9a', anchor='end')
     # under the line, centred: hollow points sit ON the line at both ends of the axis
     f.text((f.L + f.R) / 2, y0 + 17, 'box not moved', 11, '#777', anchor='middle', bold=True)
     if len(front) > 1:
@@ -322,18 +337,23 @@ def fig_aligning_projected_tradeoff(outdir):
             else:   # K=20 per-step: its endpoint twin sits just below-right, so label up-left
                 lx, ly, anchor = x - 16, y - 16, 'end'
             f.text(lx, ly, p['K'], 11, '#333', anchor=anchor)
-    h = Fig(760, 42, ml=0, mr=0, mt=0, mb=0, font=FONT)
+    h = Fig(760, 62, ml=0, mr=0, mt=0, mb=0, font=FONT)
     x = 20
     for eng in ('mf', 'af', 'fm'):
-        h.marker(x, 21, 'o', colours[eng], r=6.5)
-        h.text(x + 14, 25, S.ENGINE_LABEL[eng], 11, '#111')
+        h.marker(x, 18, 'o', colours[eng], r=6.5)
+        h.text(x + 14, 22, S.ENGINE_LABEL[eng], 11, '#111')
         x += 118
     for kind, name in (('o', 'per-step'), ('s', 'endpoint')):
-        h.marker(x, 21, kind, '#777', r=6.5)
-        h.text(x + 14, 25, name, 11, '#111')
+        h.marker(x, 18, kind, '#777', r=6.5)
+        h.text(x + 14, 22, name, 11, '#111')
         x += 108
-    h.marker(x, 21, 'o', '#777', filled=False, r=6.5)
-    h.text(x + 14, 25, '< 9/10 clean', 11, '#111')
+    x = 20
+    h.marker(x, 45, 'o', '#777', filled=False, r=6.5)
+    h.text(x + 14, 49, '< 9/10 contexts violation-free', 11, '#111')
+    x += 300
+    h.s.append(f'<circle cx="{x}" cy="45" r="6.5" fill="none" stroke="#9a9a9a" stroke-width="1.6" '
+               'stroke-dasharray="2,2"/>')
+    h.text(x + 14, 49, 'MeanFM before projection, same budget', 11, '#111')
     from svg.fmpcc_svg import save_grid
     path = save_grid([f], os.path.join(outdir, 'fig_aligning_projected_tradeoff.svg'),
                      cols=1, gap=8, header=h)

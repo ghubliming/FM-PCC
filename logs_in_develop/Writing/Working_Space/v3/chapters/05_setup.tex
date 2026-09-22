@@ -685,6 +685,10 @@ Each flight is scored by
     $0.31$\,m rotor reach (\autoref{tab:eval});
   \item success with constraint satisfaction: success on a collision-free flight, as on
     D3IL-avoiding;
+  \item whether the goal point is reached: the flight ends within $0.30$\,m of it, contact-free --- the
+    evaluation's strict criterion, which a flight that crosses the finish line and then overshoots or
+    never settles fails. It is printed beside success on UAV-pillars, the one scene on which the two
+    criteria order the models differently (\autoref{sec:res:uav:pillars});
   \item the number of control steps (steps per flight), and the final distance to the goal point of the
     route (metres), which describes where a flight that does not succeed ends;
   \item the time to compute one action (milliseconds, \autoref{sec:setup:metrics:avoiding}), split into

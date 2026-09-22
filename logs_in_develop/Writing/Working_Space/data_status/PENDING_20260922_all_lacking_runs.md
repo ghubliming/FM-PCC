@@ -32,6 +32,18 @@ items were closed without a run**, because the data already existed and had simp
 | CI-MeanFM $\nfe=2$ on UAV-s-curve | made `tab:uav-scurve` a matched comparison | v3.60 |
 | The activation-threshold evidence ($\eta=0.5$ vs $0.1$ at $\nfe=100$) | new discussion in §6.2.2 | v3.60 |
 
+### Since the census, later on 2026-09-22 (v3.61 → v3.63) — a running addendum, nothing above removed
+
+| what | where | version |
+| :-- | :-- | :-- |
+| R23 (`pillars_xl`) **ran and was abandoned**; the thesis fell back to `pillars_hg` with its caveat | §16 (superseded banner), §21 | v3.63 |
+| R31 opened: UAV-s-curve as a matched grid, 7 unprojected + 5 projected cells pending; R29 superseded by it | §18 | v3.61 |
+| R16 widened to the whole alignment ladder, then narrowed to the three flow-based models (six evaluations) when the author kept diffusion at $\nfe=20$ only | §20 | v3.62 / v3.63 |
+| R32 opened: `pillars_hg` MeanFM and FM at $\nfe=1$ (two *pending* rows) | §21 | v3.63 |
+| Pillars success metric double-checked: S&C reproduces; the strict goal-reached criterion now printed beside it | §21 | v3.63 |
+| The K=100 CI-MeanFM and FM cells were in Table 6.5 but not in Fig 6.6 since v3.60 — drawn now | — | v3.62 |
+| §6.3 restructured before/after projection; two new unprojected tables (`tab:uav-corridor-raw`, `tab:uav-pillars-raw`) — **no run**, every cell recounted from the corpora | — | v3.64 |
+
 ### The open list, by priority
 
 Runtime is a **rough GPU-time estimate**, derived as described under the table. It is compute, not
@@ -42,12 +54,13 @@ wall-clock: queue time and the 24 h `--time` cap are not in it.
 | **R23** | ⛔ **ABANDONED 2026-09-22 → FALLBACK to `pillars_hg`** | UAV-pillars at `pillars_xl` — **Gen15 U17 abandoned; the thesis restores the withheld `pillars_hg` section with its caveat** (`Gen15/U17/CLOSURE_20260922_U17_abandoned.md`) (Gen15 U17, Slurm jobs up to 25995, author, 2026-09-22). Coverage, cost and whether anything is still new are filled in by the author when the wave ends; see §16. **No new pillars run is listed until then.** 🔴 **First read 2026-09-21: 10/12 children complete, 2 running, diffusion walled at 2/7 (✅ diffusion arm CLOSED BY DECISION — reported unprojected only, K=20 projection is ~1 GPU-day per variant and the `c` rules exceed 24 h; see §16) — and 53 of 54 finished projected cells read `success = 0.00`. Read [`SLURM_RUNBOOK_20260919_pillars_enlarged.md` §3e](SLURM_RUNBOOK_20260919_pillars_enlarged.md) before scheduling anything on this scene** | no | ~5 GPU-days spent, see §16 |
 | **R2** | 🔴 | D3IL-aligning: the tightened projected diffusion baseline — blocks the four-model pre/post-projection merge | no | ~1.5 h |
 | **R26** | 🟡 | D3IL-avoiding: five-seed diffusion $\nfe=2$ | **4 trainings** | ~11 h (training) + 15 min |
-| **R16** | 🟡 **widened at v3.62** | D3IL-aligning, the full unprojected ladder $\nfe\in\{1,2,10,20,100\}$: the **eleven** cells `tab:va-models` now prints as *pending* — all four models at $\nfe=1$; FM and diffusion at $2$; CI-MeanFM, FM and diffusion at $10$ (§20) | **3 trainings** (diffusion at chain lengths 1, 2, 10) | ~9 h (training) + ~3 h (11 evaluations) |
+| **R16** | 🟡 widened at v3.62, **narrowed at v3.63** | D3IL-aligning, the unprojected ladder $\nfe\in\{1,2,10,20,100\}$ for the **three flow-based models**: the **six** cells `tab:va-models` prints as *pending* — MeanFM 1; CI-MeanFM 1, 10; FM 1, 2, 10 (§20). ~~Diffusion at 1, 2, 10~~ struck: the author removed every diffusion row but $\nfe=20$ from Table 6.5 (v3.63, third round) | no | ~2 h (6 evaluations) |
 | **R28** | 🟡 | D3IL-avoiding: FM at $\nfe=5$ (seeds 7–10) and $\nfe=10$ ($T{=}0.5$, five seeds) — **not owed**, nothing claims those cells | no | ~2 h |
 | **R7 / R14** | 🟡 | D3IL-avoiding: candidate-matched endpoint vs per-step projection, 5 seeds × 20 episodes | no | ~6.5 h |
 | **R9** | 🟡 | FM with unit-scale initial noise, all three environments | no | ~3 h |
 | **R15** | 🟡 | UAV-s-curve: MuJoCo MPC at ten flights instead of three | no | 30 min unprojected / ~6.5 h projected |
 | **R30** | 🟢 | UAV-corridor: diffusion under plain `dpcc-t-tightened` — removes the last confound in Table 6.8 | no | ~1 h |
+| **R32** | 🟡 **new at v3.63** | UAV-pillars (`pillars_hg`): MeanFM and FM at $\nfe=1$, the seven per-step configurations (unprojected, `dpcc-{r,c,t}` plain and tightened), ten flights each — the two *pending* rows of `tab:uav-pillars` and `tab:uav-pillars-best` | no | ~2 h (140 flights at 60–85 ms/step × ~500 steps) |
 | **R31** | 🟡 | UAV-s-curve: **the matched grid** — unprojected at $\nfe\in\{1,2,3,5\}$ for the three flow models (7 of 12 cells missing), and the corridor-shaped projection grid at $\nfe\in\{3,5\}$ (5 of 6 cells missing). Opened at v3.61, §18; the draft prints the grid with the missing cells marked \emph{pending} | no | ~1 h unprojected + ~30 h projected |
 | ~~**R29**~~ | ⬜ **superseded by R31** (v3.61) | UAV-s-curve: matched-budget switched-wall re-run — the matched grid of R31 contains it | — | — |
 | D10c | 🟡 | Box-pose logging, then re-evaluation of MeanFM $\nfe=20$ | no | ~1 h + a logging change |
@@ -97,7 +110,8 @@ which the pillars runbook's own measurements do not support. It is withdrawn, no
 | **R23** | ⛔ **ABANDONED 2026-09-22 → fallback to `pillars_hg`** (Gen15 U17, jobs 25970–25995 complete, all-zero grid; `Gen15/U17/CLOSURE_20260922_U17_abandoned.md`) | UAV-pillars at `pillars_xl`: **no longer a run.** v3.63 restored the withheld `pillars_hg` section with its caveat (§21); no `pillars_xl` number is in the draft | — | — |
 | ~~**R25**~~ | ⬜ **NO LONGER NEEDED — ruled out on cost by the author, v3.52.** The rows it filled are removed from `tab:state-headline`; §6.1.2.7 answers the question from existing data | D3IL-avoiding: CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$, $\nfe=1,2$, all three rules, **20 episodes per seed and geometry**, seeds 6--10 | no | ~~fills the two pending rows of `tab:state-headline`~~ — those rows are removed (§10); CI-MeanFM is reported at seed 6 in `tab:avoiding-budget20`. Would refine, not open, a claim |
 | **R26** | 🟡 **REOPENED by the author at v3.57:** five-seed diffusion $\nfe=2$ is visibly pending in Tables 6.1 and 6.2 | D3IL-avoiding: train diffusion $\nfe=2$ seeds 7--10, then evaluate five seeds at two episodes per geometry under unprojected and three projected rules | **four trainings** | fills the pending cells in `tab:avoiding-raw-models` and `tab:avoiding-dpcc-protocol`; seed 6 alone cannot be pooled into a five-seed row |
-| **R16** | 🟡 **widened at v3.62** | D3IL-aligning, unprojected, untightened set, ten contexts: MeanFM $\nfe=1$; CI-MeanFM ($\alpha_{\mathrm{end}}=0.2$) $\nfe=1,10$; FM $\nfe=1,2,10$; diffusion $\nfe=1,2,10$ — each diffusion budget needs a checkpoint trained at that noise-schedule length | diffusion: **three trainings**; flow models: evaluation only | fills the eleven *pending* rows of `tab:va-models` (v3.62 prints the whole ladder in the main text; the appendix copy is gone); MeanFM $\nfe=2,10$ and every $\nfe=20,100$ cell already exist |
+| **R32** | 🟡 new at v3.63 | UAV-pillars on `pillars_hg`, tag as `u7hg`: MeanFM $\nfe=1$ and FM $\nfe=1$ under `diffuser`, `dpcc-r`, `dpcc-c`, `dpcc-t` and their `-tightened` variants, ten flights each (the CI-MeanFM $\nfe=1$ row already exists under `EPlatest_u7hg`) | no | fills the two *pending* rows the author asked for instead of the old `\hole`; the earlier `pillars` geometry's K=1 cells are a different constraint set and cannot substitute |
+| **R16** | 🟡 widened at v3.62, narrowed at v3.63 | D3IL-aligning, unprojected, untightened set, ten contexts: MeanFM $\nfe=1$; CI-MeanFM ($\alpha_{\mathrm{end}}=0.2$) $\nfe=1,10$; FM $\nfe=1,2,10$. ~~Diffusion $\nfe=1,2,10$ (three trainings)~~ struck at v3.63: Table 6.5 keeps the diffusion baseline at its trained budget only, by the author | no | fills the six *pending* rows of `tab:va-models`; the diffusion $\nfe=100$ cell exists and is deliberately not printed |
 | ~~**R18**~~ | ⬜ **NO LONGER NEEDED — ruled out on cost by the author, v3.52.** `tab:state-headline` no longer advertises the below-native-budget rows | D3IL-avoiding: extended evaluation of diffusion at $\nfe=1,10$; add $\nfe=2$ after R26 | no for 1/10 | ~~fills the below-native-budget rows absent from `tab:state-headline`~~ — no longer advertised there (§10) |
 | **R7** | 🟡 | D3IL-avoiding: candidate-matched endpoint versus per-step projection, five seeds $\times$ twenty episodes | no | replaces the provisional four-seed, two-episode result |
 | **R14** | 🟡 | D3IL-avoiding: repeat the endpoint budget ladder with the same candidate count for both projectors | no | removes the confound from `tab:hf-ladder` |
@@ -770,6 +784,10 @@ it is printed because MeanFM's one-evaluation regime is the thesis's central cla
 
 ### R16, widened — exact scope
 
+> **Narrowed 2026-09-22, v3.63 third round (author):** Table 6.5 keeps the diffusion baseline at $\nfe=20$ only, so the
+> diffusion arm below (three trainings) is **struck**; the diffusion $\nfe=100$ row was also removed from the table
+> (the cell stays in the corpus and in the ledger's census). R16 is now the six flow-model evaluations, ~2 h.
+
 | arm | cells | needs |
 | :-- | :-- | :-- |
 | flow models, evaluation only | MeanFM 1 · CI-MeanFM 1, 10 · FM 1, 2, 10 | the existing seed-6 checkpoints; ~20 min per cell at the recorded ms/step × 10 contexts |
@@ -806,6 +824,13 @@ centimetres only, and every projector routes into it. Post-mortem `DA_in_Paper/a
 tables still have **no UAV-pillars row** and its first sentence still says "each of the three environments that
 yield a result". The rows to add when the section is unlocked, in the v3.62 wording, are in the v3.63 changelog.
 
-**Runs.** None new. The restored section carries its old `\hole` (MeanFM and FM at $
-fe=1$ on `pillars_hg`);
-R12/R13/R21/R22 stay ⏸ superseded unless the author reopens them. R23 is closed. R2, R30, R31, R16 unchanged.
+**Runs.** Second round, same day: the restored section's `\hole` (MeanFM and FM at $\nfe=1$ on `pillars_hg`) is
+now two *pending* rows and **R32** (~2 h, no training). R12/R13/R21/R22 stay ⏸ superseded. R23 is closed. R2, R30,
+R31, R16 unchanged.
+
+**Metric check, same round (no run).** The author asked whether Table 6.10's success metric is wrong because MeanFM
+"should always be better". Recounted from `per_rollout_detail.csv`: the printed S&C values (finish line crossed,
+collision-free) reproduce exactly. Under the evaluator's **strict** criterion (`success = goal_reached and safe`,
+`GOAL_RADIUS = 0.30`) the order reverses — MeanFM endpoint-$r$ 0.90 against FM single-candidate 0.40 — because six FM
+flights cross the line and never settle (end 0.36–0.39 m away). Both criteria are now printed side by side in
+Tables 6.10 and 6.11 and defined in Chapter 5; the thesis criterion stays the finish line.
