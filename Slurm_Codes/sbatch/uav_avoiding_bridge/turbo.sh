@@ -12,7 +12,8 @@
 #      ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_avoiding_bridge/turbo.sh            # PLAN ONLY (dry-run)
 #      GO=1 ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_avoiding_bridge/turbo.sh       # run the PILOT (gate G1)
 #      GO=1 MODE=all ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_avoiding_bridge/turbo.sh   # the whole corpus
-#  Knobs (env): MODE=pilot|all  REPLAYS="clock settle"  HZ=1  VMAX=1.0  GRACE_S=2  SCALE=36  LIMIT=0 (episodes/cell)
+#      GO=1 MODE=paper ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_avoiding_bridge/turbo.sh # P1 paper set (10 cells, tag p23pv2turbo)
+#  Knobs (env): MODE=pilot|all|paper|papergif  REPLAYS="clock settle"  HZ=1  VMAX=1.0  GRACE_S=2  SCALE=36  LIMIT=0 (episodes/cell)
 #               GIF=N (overhead MuJoCo GIF for the first N episodes per cell; GPU needed -> submit turbo_gif.sh)
 #               EXTRA="…" appended to every turbo.py call (e.g. --force, --no-png, --max-cells 5)
 #  Pilot = gate G1 of the U18 plan: FM K20 extended cell (msg20trials), seed 6, all three geometries,
@@ -82,18 +83,54 @@ case "$MODE" in
             --geos both-hard top-left-hard top-right-hard --variants diffuser dpcc-r-tightened) ;;
   all)
     SELECT=() ;;
-  *) echo "MODE must be pilot|all"; exit 2 ;;
+  paper|papergif)
+    # P1 of PENDING_20260923 §2.3: the representative set at DPCC's protocol. Five calls; folder names are the exact
+    # Full_Path entries of the 19-09 batch CSV. `papergif` = only T1 and T4 (the two cells the thesis pictures):
+    # run it through turbo_gif.sh (GPU) with GIF=2 BEFORE `paper`, which then skips those two cells as done.
+    SELECT=() ;;
+  *) echo "MODE must be pilot|all|paper|papergif"; exit 2 ;;
 esac
+P23_COMMON=(--seeds 6 7 8 9 10 --geos top-left-hard top-right-hard both-hard)
+P23_CALLS=(
+  "T1|--engine flow_matching_v3_meanflow --train-glob *bbunet* --eval-glob H8_K1_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE --variants diffuser dpcc-t-tightened"
+  "T2|--engine flow_matching_v3_alphaflow --train-glob *bbunet*ae0.2* --eval-glob *K1_*msgdpccproto --variants diffuser dpcc-t-tightened"
+  "T3|--engine flow_matching_v3_ode_selectable --eval-glob H8_K1_*msgdpccproto --variants diffuser dpcc-t-tightened"
+  "T4|--engine diffusion --eval-glob H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5 --variants diffuser dpcc-c-tightened"
+)
+P23_T5="--engine flow_matching_v3_meanflow --train-glob *bbunet* --eval-glob H8_K3_*A1_B4*msghfmink* --seeds 7 8 9 10 --geos top-left-hard top-right-hard both-hard --variants dpcc-t-tightened hardflow_sls-t-tightened"
 
 DRY=(--dry-run); [ "$GO" = "1" ] && DRY=()
 echo "[ u18 ] out_root=$OUT_ROOT"
 echo "[ u18 ] MODE=$MODE GO=$GO replays='$REPLAYS' hz=$HZ vmax=$VMAX grace=${GRACE_S}s scale=$FMPCC_AVOID_UAV_SCALE limit=$LIMIT extra='$EXTRA'"
-for R in $REPLAYS; do
-  TAG="uavpv2${STAG}turbo"; [ "$R" = "settle" ] && TAG="uavpv2${STAG}turboset"
-  echo "--------------------------------------------------------------------------------"
-  echo "[ u18 ] replay=$R  tag=$TAG"
-  echo "--------------------------------------------------------------------------------"
-  python uav_avoiding_bridge/turbo.py "${SELECT[@]}" --tag "$TAG" --replay "$R" --hz "$HZ" \
+run_turbo() {   # $1 = tag, $2 = replay, rest = selection
+  local TAG="$1" R="$2"; shift 2
+  python uav_avoiding_bridge/turbo.py "$@" --tag "$TAG" --replay "$R" --hz "$HZ" \
       --grace-s "$GRACE_S" --vmax "$VMAX" --limit-episodes "$LIMIT" --out-root "$OUT_ROOT" --gif "$GIF" --foresight "$FORESIGHT" "${DRY[@]}" $EXTRA
-done
+}
+if [ "$MODE" = "paper" ] || [ "$MODE" = "papergif" ]; then
+  set -f                                              # the selections carry fnmatch globs (*bbunet*): no shell expansion
+  TAG="${TAG:-p23pv2turbo}"; R="${REPLAYS%% *}"      # one replay policy for the paper set (clock unless overridden)
+  echo "[ u18 ] MODE=$MODE tag=$TAG replay=$R"
+  for entry in "${P23_CALLS[@]}"; do
+    name="${entry%%|*}"; sel="${entry#*|}"
+    if [ "$MODE" = "papergif" ] && [ "$name" != "T1" ] && [ "$name" != "T4" ]; then continue; fi
+    echo "--------------------------------------------------------------------------------"; echo "[ u18 ] $name: $sel"
+    # shellcheck disable=SC2086
+    run_turbo "$TAG" "$R" "${P23_COMMON[@]}" $sel
+  done
+  if [ "$MODE" = "paper" ]; then
+    echo "--------------------------------------------------------------------------------"; echo "[ u18 ] T5: $P23_T5"
+    # shellcheck disable=SC2086
+    run_turbo "$TAG" "$R" $P23_T5
+  fi
+  set +f
+else
+  for R in $REPLAYS; do
+    TAG="uavpv2${STAG}turbo"; [ "$R" = "settle" ] && TAG="uavpv2${STAG}turboset"
+    echo "--------------------------------------------------------------------------------"
+    echo "[ u18 ] replay=$R  tag=$TAG"
+    echo "--------------------------------------------------------------------------------"
+    run_turbo "$TAG" "$R" "${SELECT[@]}"
+  done
+fi
 [ "$GO" = "1" ] || echo "[ u18 ] dry-run only. Re-submit with GO=1 to fly."

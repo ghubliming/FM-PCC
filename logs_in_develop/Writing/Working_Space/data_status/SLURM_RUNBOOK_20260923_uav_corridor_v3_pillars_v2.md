@@ -4,6 +4,25 @@
 Cluster i6-gpu-1, submit through `Slurm_Codes/submit.sh`. Every command is `plan` (dry) by default. Nothing here was
 run from the container. Group C (R30) and the s-curve corridor-style notes of the 22-09 runbook are superseded by this file.
 
+> **🔴 Run-side amendments, 2026-09-23 (U19 session, author-approved) — read before §0–§2.**
+> 1. **Corridor v3 is TWO scenes, not one.** Author: *"two scenes as piloted."* `corridor_v3_tilt` (the v2 slide leaned
+>    −60° about the launch altitude; one x–y–z plane; tag **`p23cv3t`**, folder `corridor_cv3t_…`) is *the* v3;
+>    `corridor_v3_ablation_hump` (roof only, ceiling 2.80; tag **`p23cv3ah`**, folder `corridor_cv3ah_…`) is an ablation.
+>    The combined `corridor_v3` / `p23cv3` / `hs=5` of §0.2 and §1 is **not run**. Step 0.2's coding landed differently
+>    (`plane: xz` and `z_lean` keys, helpers `_hs_plane` / `_hs_lean`, no third return value) — see
+>    `Gen15/U19/CHANGELOG_20260922_U19_corridor_v3_coding1.md`. Cross-draft note: `cross_draft/to_v3/FROM_U19_20260923_corridor_v3_is_two_scenes.md`.
+> 2. **C0 was run on 22-09** (jobs 26071 hump / 26072 tilt, tags `u19smokecv3ah` / `u19smokecv3t`): G1 PASS, **G3 PASS**
+>    (the projector moves z on demand), **G2 FAIL** on every projected arm — 6–11 steps of ≤ 2–6 cm at the window end /
+>    apex with the setpoint clean (plant lag). **Author overrode the stop rule**: *"if it is the model / projector, no need
+>    to fix the env"* → waves run on the unchanged scenes. `Gen15/U19/PILOT_20260922_U19_gates_G1-G3.md`.
+> 3. **Driver** = `Slurm_Codes/temp_bash/eval_20260923_p23_corridor_v3.sh` (`plan` / `smoke` / `submit C1..C5|all`), both
+>    scenes, 68 cells each; launched **wave-by-wave** through `…_p23_corridor_v3_master.sh start` (one 10-min CPU link per
+>    wave, next link queued with `--dependency=afterany` on the wave's job ids; squeue holds one wave + one pending master).
+> 4. **HardFlow spelling:** the eval accepts only the registered input names `hardflow_new{,-r,-c,-t}-…` and writes the
+>    folders as `hardflow_sls-…`; §1's `HF_*` names are the folder names. **C3 composition:** the eval refuses a job with
+>    HardFlow variants and no `dpcc-*` row, so the HF jobs carry `dpcc-t` and C2 runs `dpcc-t` only at K = 1, 2 (§2's
+>    C2/C3/C4 rows are re-cut accordingly; same 68 cells, each once). Diffusion K20 `diffuser` is in C1 as written.
+
 ## 0 · Before the first job
 
 | step | what | check |
@@ -42,51 +61,67 @@ from the two npz). **If G2 or G3 fails, stop and report; do not submit C1–C5.*
 HardFlow rule: never submit an HF variant without its `dpcc` row in the same run family (the eval's own guard). K20 flow
 cells and diffusion K20 go last (C4, C5) so the fast waves are never behind them.
 
-## 3 · Pillars v2 — commands
+## 3 · Pillars v2 — commands (rev 2, 2026-09-23: implemented as tracked sbatch, no hand-copied temp bash)
 
-```
-# gates G0/G1 (CPU, minutes): the pilot as shipped
-./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_avoiding_bridge/turbo.sh                  # dry-run: lists the pilot cells
-GO=1 ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_avoiding_bridge/turbo.sh             # G1
-```
-Read: `agree k/20` ≥ 19 per cell, `contact eps 0` on legal episodes, `gap_a p95` within the Panda's. If not: `HZ=3`, then
-`EXTRA="--gain pid_high_gain"`, then `REPLAYS=settle`, then `SCALE` up — one change at a time, re-run the pilot.
+Everything below arrives with `git pull` (the U17 lesson: gitignored `temp_bash/` had to be copied by hand). Every
+driver is **plan-by-default**: without `GO=1` it prints what it would run and exits. Repo root, cluster.
 
-```
-# P1 — the representative replay (CPU): five turbo.py calls, tag p23pv2turbo, clock replay
-COMMON="--tag p23pv2turbo --replay clock --seeds 6 7 8 9 10 --geos top-left-hard top-right-hard both-hard"
-python uav_avoiding_bridge/turbo.py $COMMON --engine meanflow   --eval-glob 'H8_K1_*'  --variants diffuser dpcc-t-tightened
-python uav_avoiding_bridge/turbo.py $COMMON --engine alphaflow  --eval-glob 'H8_K1_*'  --variants diffuser dpcc-t-tightened
-python uav_avoiding_bridge/turbo.py $COMMON --engine fmv3       --eval-glob 'K1_*'     --variants diffuser dpcc-t-tightened
-python uav_avoiding_bridge/turbo.py $COMMON --engine dpcc       --eval-glob '*K20*'    --variants diffuser dpcc-c-tightened
-python uav_avoiding_bridge/turbo.py --tag p23pv2turbo --replay clock --seeds 7 8 9 10 --engine meanflow \
-       --eval-glob 'H8_K3_*A1_B4*msghfmink*' --variants dpcc-t-tightened hardflow_sls-t-tightened
-```
-Wrap the five calls in a copy of `turbo.sh` (`MODE=paper`) so they run as one CPU job; `--dry-run` first and confirm
-**exactly ten cells** are listed (engine folder names: check `ls logs/avoiding-d3il/plans/` and adjust the `--engine`
-substrings; the DPCC-protocol cells are the ones the 19-09 batch aggregated, `_msgdpccproto` where that tag exists).
-GIFs: `GIF=2` through `turbo_gif.sh` (GPU) for the MeanFM K1 and diffusion K20 cells only.
+**Gates G0/G1 — done.** Pilot 26076 (36×) and the live check 26077 passed (`Gen15/U18/CHANGELOG_…fix4…`,
+`Gen15/U18/L1_20260922_live_vs_turbo_result.md`): agreement 17–20/20, live within 0.05 of the Panda on every cell,
+0 contacts / 0 divergence live. Gap p95 0.007 units vs the Panda's 0.03–0.13. Nothing to re-gate.
 
+```bash
+# ── P1a: the two pictured cells WITH GIFs (T1 MeanFM K1, T4 diffusion K20), GPU, 2 GIFs per cell — run FIRST
+GO=1 MODE=papergif GIF=2 ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_avoiding_bridge/turbo_gif.sh
+# ── P1b: the whole representative set T1–T5 (CPU, < 15 min); T1/T4 are skipped as done, T2/T3/T5 are flown
+MODE=paper      ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_avoiding_bridge/turbo.sh      # dry-run: must list 10 cells (T1–T4 × 2 + T5 × 2)
+GO=1 MODE=paper ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_avoiding_bridge/turbo.sh
+# ── P2: live closed loop (GPU, minutes each)
+GO=1 ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_avoiding_bridge/live_p2_meanflow.sh    # L1: MeanFM K1 bbunet, diffuser + dpcc-t-tightened, seed 6, 3 geos × 2
+GO=1 ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_avoiding_bridge/live_p2_dpcc.sh        # L2: diffusion K20, dpcc-c-tightened, seed 6, 3 geos × 2
 ```
-# P2 — live closed loop (GPU): the avoiding eval sbatch with the plant switched in
-FMPCC_AVOIDING_PLANT=uav FMPCC_RUN_MSG=p23pv2live  <MeanFlow eval sbatch>  K=1  seed 6  variants diffuser,dpcc-t-tightened  2 episodes × 3 geometries
-FMPCC_AVOIDING_PLANT=uav FMPCC_RUN_MSG=p23pv2live  <DPCC eval sbatch>      K=20 seed 6  variants dpcc-c-tightened           2 episodes × 3 geometries
-```
-`FMPCC_RUN_MSG` must contain `uav` (the factory refuses otherwise) — `p23pv2live` does. Log must show the plant's
-`track_err / gap_a p95 / contacts` lines. Compare with T1/T4 per (geometry, episode).
+
+What `MODE=paper` selects (exact folder names from the 19-09 batch CSV `Full_Path`; tag `p23pv2turbo`, `clock` replay,
+DPCC protocol seeds 6–10 × 3 geometries × 2 episodes unless stated):
+
+| # | `--engine` | `--train-glob` / `--eval-glob` | variants | seeds |
+| :-- | :-- | :-- | :-- | :-- |
+| T1 | `flow_matching_v3_meanflow` | `*bbunet*` / `H8_K1_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE` | `diffuser`, `dpcc-t-tightened` | 6–10 |
+| T2 | `flow_matching_v3_alphaflow` | `*bbunet*ae0.2*` / `*K1_*msgdpccproto` | same | 6–10 |
+| T3 | `flow_matching_v3_ode_selectable` | — / `H8_K1_*msgdpccproto` | same | 6–10 |
+| T4 | `diffusion` | — / `H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5` | `diffuser`, `dpcc-c-tightened` | 6–10 |
+| T5 | `flow_matching_v3_meanflow` | `*bbunet*` / `H8_K3_*A1_B4*msghfmink*` | `dpcc-t-tightened`, `hardflow_sls-t-tightened` | 7–10 |
+
+Outputs: `logs/UAV_MIX/uav-pillars/plans/avoiding_bridge/<engine>/<train>/<eval>_msgp23pv2turbo/<seed>/results/halfspace_<geo>/`
+(`<eval>-p23pv2turbo` where the source already carries a `_msg` tag) — per cell npz, cell png, `eval_<variant>.log`,
+world png, sidecar, 3 MPC-foresight SVGs; GIFs only from P1a under `diagnostics/<variant>/rollout_<i>.gif`.
+Live results stay where the avoiding evals write: `…/H8_K1_…_msgp23pv2live/6/results/` (MeanFlow tree) and
+`plans/diffusion/H8_K20_…_thres0.5_msgp23pv2live/6/results/`; plant sidecars under `avoiding_bridge/_live/p23pv2live/`.
+The live runs use `config/meanflow_projection_eval_u18_live.yaml` (`--config`) and `config/projection_eval_u18_live_dpcc.yaml`
+(`FMPCC_PROJ_CFG`, a new one-line hook in `scripts/eval.py`) — copies of the shared yamls with only seeds / trials / variants
+changed. `MF_BACKBONE=unet` selects the T1 checkpoints.
+
+Read in the P1 log, per cell: `panda …` vs `drone …`, `agree k/n`, `ended {…}`, `plant track_err / gap_a p95 / contact eps`.
+Read in the P2 logs: the eval's own `Success rate / Constraints satisfied / … / Average computation time` blocks and the
+`[ uav-plant ] sidecar ->` lines. Comparison: `python uav_avoiding_bridge/compare_live_turbo.py --live <…_msgp23pv2live/6/results>
+--turbo <…p23pv2turbo/6/results>` on the downloaded folders.
 
 ## 4 · Completion checks
 
 | for | check |
 | :-- | :-- |
-| corridor | 68 result folders under `…_p23cv3/6/corridor_cv3_…/`; `projection_health.n_tripped_trials = 0`; `divergence.n_aborted_trials` reported per cell; DA_UAV_v1 batch runs with tag `p23cv3` only; `data_quality.csv` clean |
-| pillars v2 | ten `p23pv2turbo` cells with `agree` lines and sidecars; two `p23pv2live` cells; the T-vs-L agreement table |
+| corridor | **68 result folders per scene**: `…_p23cv3t/6/corridor_cv3t_…/` and `…_p23cv3ah/6/corridor_cv3ah_…/`; `projection_health.n_tripped_trials = 0`; `divergence.n_aborted_trials` reported per cell; DA_UAV_v1 batch runs **per tag** (`p23cv3t`, then `p23cv3ah`), never pooled; `data_quality.csv` clean |
+| pillars v2 | ten `p23pv2turbo` cells (each with `agree` line, npz, png, eval log, sidecar, 3 SVGs; T1/T4 with 2 GIFs); two `p23pv2live` runs (3 geometries each); the T-vs-L agreement from `compare_live_turbo.py` |
 | both | download with `Slurm_Codes/download_remote_logs/export_to_laptop.sh` into `temp/2309/`; nothing pooled with older tags |
 
 ## 5 · Submission record (fill in)
 
 | date | wave | job ids | outcome |
 | :-- | :-- | :-- | :-- |
-| | | | |
+| 2026-09-22 | C0 pilots (as `u19smoke*`, U16 layout) | 26071 (hump), 26072 (tilt) | done; G1/G3 pass, G2 fail by plant-lag residue; author: run as is |
+| 2026-09-23 | chain start | master 26078 (`p23_master_C1`) | ran; submitted C1, queued C2 |
+| 2026-09-23 | **C1** `diffuser` (both scenes: mf/af K1,2,3, fm K1,2,3,5,20, diffusion K20) | 26079–26102 (24 eval jobs) | queued (`AssocGrpGRES` at submit time) |
+| 2026-09-23 | C2 master | 26103 (`p23_master_C2`, Dependency: afterany C1) | pending |
+| | C2 / C3 / C4 / C5 | (queued by each link in turn — read the `p23_master_*` logs in `Slurm_Codes/logs/<date>/`) | |
 
 Claude (Fable 5.1, Claude Code) · 2026-09-23 · not run from the container.

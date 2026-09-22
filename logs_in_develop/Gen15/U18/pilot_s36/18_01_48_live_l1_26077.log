@@ -1,0 +1,134 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Tue Sep 22 16:20:12 UTC 2026   NAME: live_l1   ID: 26077   NODE: i6-gpu-1
+GIT REV:   3a0016da
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+================================================================================
+wrote /data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/quadrotor/scenes/scene_avoiding_pillars_s36.xml
+scale 36  altitude 1 m  origin_a (0.5, 0.035)
+field X [-12.06, 13.14]  Y [-10.80, 10.80]  start (-11.34, -0.90)  finish X = 11.34
+  l1_obs         a=(0.500,-0.100) r=0.030  ->  w=(-4.86,-0.00) r=1.080
+  l2_top_obs     a=(0.425,0.080) r=0.025  ->  w=(+1.62,+2.70) r=0.900
+  l2_bottom_obs  a=(0.575,0.080) r=0.025  ->  w=(+1.62,-2.70) r=0.900
+  l3_top_obs     a=(0.350,0.260) r=0.025  ->  w=(+8.10,+5.40) r=0.900
+  l3_mid_obs     a=(0.500,0.260) r=0.025  ->  w=(+8.10,-0.00) r=0.900
+  l3_bottom_obs  a=(0.650,0.260) r=0.025  ->  w=(+8.10,-5.40) r=0.900
+[ u18 L1 ] plant=uav tag=uavpv2s36live20 yaml=config/projection_eval_u18_live.yaml scale=36 hz=1 ff=0 vmax=1.0 replay=clock K=20 seed=6
+pybullet build time: Nov 28 2023 23:45:17
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+
+[ eval ] Overriding seeds from config to: [6]
+[ config/avoiding-d3il ] custom_msg="uavpv2s36live20" -> results dirs end in "_msguavpv2s36live20"
+[ eval ] Overriding flow_steps_v3 (K) from config to: 20
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msguavpv2s36live20/6
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/6
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+[ uav-plant ] scene=scene_avoiding_pillars_s36.xml scale=36 alt=1 control 1 Hz -> 100 physics steps of 0.01 s per setpoint (period 1.000 s), replay=clock, feedforward=False, v_max=1 m/s, gain=pid_default, contact terminates=True
+------------------------Running avoiding-d3il - top-right-hard - diffuser (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 68.40 +- 9.19
+Avg number of constraint violations: 32.45 +- 2.58
+Avg total violation: 9.639 +- 2.055
+Average computation time per step: 0.169
+Tracking error: 0.036
+------------------------Running avoiding-d3il - top-right-hard - dpcc-r-tightened (6)----------------------------
+Success rate: 0.95
+Constraints satisfied: 0.95
+Success rate (goal and constraints): 0.95
+Avg number of steps: 73.32 +- 7.55
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.316
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+
+[ uav-plant ] sidecar -> /u/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/avoiding_bridge/_live/uavpv2s36live20/uav_plant_records_uavpv2s36live20.json
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/6
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+[ uav-plant ] scene=scene_avoiding_pillars_s36.xml scale=36 alt=1 control 1 Hz -> 100 physics steps of 0.01 s per setpoint (period 1.000 s), replay=clock, feedforward=False, v_max=1 m/s, gain=pid_default, contact terminates=True
+------------------------Running avoiding-d3il - top-left-hard - diffuser (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 68.40 +- 9.19
+Avg number of constraint violations: 12.25 +- 2.21
+Avg total violation: 0.257 +- 0.125
+Average computation time per step: 0.171
+Tracking error: 0.036
+------------------------Running avoiding-d3il - top-left-hard - dpcc-r-tightened (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 75.55 +- 10.60
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.468
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_ode_selectable/models/diffusion.py
+
+[ uav-plant ] sidecar -> /u/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/avoiding_bridge/_live/uavpv2s36live20/uav_plant_records_uavpv2s36live20.json
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/6
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+[ uav-plant ] scene=scene_avoiding_pillars_s36.xml scale=36 alt=1 control 1 Hz -> 100 physics steps of 0.01 s per setpoint (period 1.000 s), replay=clock, feedforward=False, v_max=1 m/s, gain=pid_default, contact terminates=True
+------------------------Running avoiding-d3il - both-hard - diffuser (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 68.40 +- 9.19
+Avg number of constraint violations: 15.25 +- 6.16
+Avg total violation: 2.489 +- 1.255
+Average computation time per step: 0.171
+Tracking error: 0.036
+------------------------Running avoiding-d3il - both-hard - dpcc-r-tightened (6)----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.30 +- 3.12
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.535
+[ uav-plant ] sidecar -> /u/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/avoiding_bridge/_live/uavpv2s36live20/uav_plant_records_uavpv2s36live20.json
+[ u18 L1 ] done
+================================================================================
+JOB END:   Tue Sep 22 17:06:05 UTC 2026
+================================================================================

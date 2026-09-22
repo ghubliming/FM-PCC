@@ -1556,3 +1556,11 @@ Eval:
 
 # HF min K test on mf/af -- UNET 
 25444
+
+---
+
+# Gen15 U19 — corridor v3 (tilt) + ablation hump  (2026-09-22/23)
+Pilots (mf K3, 3 trials, u19smoke*): 26071 hump, 26072 tilt  -> G1/G3 pass, G2 fail (2-6 cm plant lag), author: run as is
+Paper waves (runbook 23-09, tags p23cv3t / p23cv3ah, 68 cells per scene), wave-by-wave chain:
+  26078 p23_master_C1 -> C1 diffuser eval jobs 26079-26102 (24) ; 26103 p23_master_C2 pending (afterany C1)
+  C2..C5: see the p23_master_* logs in Slurm_Codes/logs/2026-09-23/

@@ -33,7 +33,9 @@ args_cli, remaining_argv = parser.parse_known_args()
 sys.argv = [sys.argv[0]] + remaining_argv
 
 # Load configuration
-with open('config/projection_eval.yaml', 'r') as file:
+# [Gen15 U18 fix6] FMPCC_PROJ_CFG selects the projection yaml (default unchanged) - same override the FM eval and
+# config/avoiding-d3il.py use; lets the live UAV-plant check run a 1-variant yaml without editing this one.
+with open(os.environ.get('FMPCC_PROJ_CFG', 'config/projection_eval.yaml'), 'r') as file:
     config = yaml.safe_load(file)
 
 # General

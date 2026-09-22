@@ -27,4 +27,8 @@ attitude loop) → ff OFF, rate-limited reference 1 m/s, 1 Hz; settle mode is th
 - Nothing in `mix_uav*` / `uav_projection.yaml` changed; old `pillars_hg` stays the section of record until G2
   passes; do not notify v3 before that.
 
+**Paper runs (PENDING_20260923 §2, R39):** tracked drivers only — `turbo.sh MODE=paper|papergif` (T1–T5, tag
+`p23pv2turbo`), `live_p2_meanflow.sh` / `live_p2_dpcc.sh` (tag `p23pv2live`), yamls `*_u18_live*.yaml`. L1 check
+(job 26077) showed live = Panda within 0.05; both modes validated. Never pool `p23pv2*` with `uavpv2s10*`/`s36*`.
+
 Related: [[u17-pillars-xl-floor-result]], [[slurm-sbatch-is-real-entrypoint]], [[da-requires-csv-never-from-logs]]

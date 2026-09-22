@@ -39,10 +39,12 @@ def make_avoiding_env(default_cls=None):
     if side:                                   # Mode L: dump the plant sidecar when the eval closes the env
         os.makedirs(side, exist_ok=True)
         _close = plant.close
+        _n = [0]
         def _close_and_dump():
             _close()
+            _n[0] += 1                        # the eval closes the env once per geometry: one file each, never overwritten
             try:
-                path = plant.save_records(os.path.join(side, f'uav_plant_records_{tag}.json'))
+                path = plant.save_records(os.path.join(side, f'uav_plant_records_{tag}_{_n[0]:02d}.json'))
                 print(f'[ uav-plant ] sidecar -> {path}')
             except Exception as exc:           # pragma: no cover
                 print(f'[ uav-plant ] sidecar dump failed: {exc}')
