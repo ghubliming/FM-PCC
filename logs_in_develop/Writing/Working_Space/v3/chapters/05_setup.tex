@@ -337,11 +337,10 @@ unstable (\autoref{sec:bg:quadrotor}), and its plan is tracked by the controller
     The models are trained on the demonstrations of a narrower corridor and never see this halfspace, so it is
     a test-time constraint in the same sense as the halfspaces of D3IL-avoiding.
   \item[UAV-pillars] --- six cylindrical pillars stand in two rows across three columns, and the vehicle
-    must choose a way through them. At test time the projection enforces a keep-out radius larger than
-    the pillar the simulator contains, so that the demonstrated routes no longer satisfy the constraint
-    set and reaching the goal cleanly requires leaving them (\autoref{sec:setup:data:uav}). The scene is
-    described here because it supplies the demonstrations and the trained models; its enlarged-set
-    comparison is pending in \autoref{sec:res:uav:pillars}.
+    must choose a way through them. Its constraint set is the clearance its own demonstrations were
+    generated to keep (\autoref{sec:setup:data:uav}), so the plans are feasible before any projection
+    runs and the scene measures how much of a feasible plan each method preserves rather than whether it
+    can repair one; \autoref{sec:res:uav:pillars} reads it on those terms.
   \item[UAV-s-curve] --- a tracking-controller stress test. Two offset corridor segments, joined by a
     diagonal passage, require two sharp changes of direction from the generated trajectory.
 \end{description}
@@ -366,8 +365,7 @@ unstable (\autoref{sec:bg:quadrotor}), and its plan is tracked by the controller
       & wall ends & four disks of radius $0.05$\,m at $x=\pm2$, $y=\pm1$ \\
     \addlinespace[2pt]
     UAV-pillars
-      & six disks & physical pillar radius $0.12$\,m at $x\in\{-2,0,2\}$ and $y=\pm0.6$\,m; the
-        projection enforces an enlarged keep-out radius of $0.35$\,m at test time \\
+      & six disks & radius $0.12$\,m at $x\in\{-2,0,2\}$ and $y=\pm0.6$\,m \\
     \addlinespace[2pt]
     UAV-s-curve
       & four switched wall halfspaces & feasible $y\in[-1.25,-0.35]$ over $x\in[-3,-0.5]$, and $y\in[0.35,1.25]$ over $x\in[0.5,3]$ \\
@@ -376,12 +374,12 @@ unstable (\autoref{sec:bg:quadrotor}), and its plan is tracked by the controller
   \end{tabularx}
 \end{table}
 \srcnote{\texttt{config/uav\_projection.yaml}: \texttt{corridor\_v2\_slide} (scene
-\texttt{scene\_corridor\_v2.xml}), \texttt{pillars\_xl}, \texttt{s\_curve\_hg};
+\texttt{scene\_corridor\_v2.xml}), \texttt{pillars\_hg}, \texttt{s\_curve\_hg};
 \texttt{inflation.r\_drone: 0.31}; \texttt{enlarge\_constraints: 0.025}. The six
-\texttt{sphere\_outside} rows of \texttt{pillars\_xl} carry \texttt{radius: 0.35}; the pillars of
-\texttt{quadrotor\_modified.xml} stay at $0.12$\,m, so the enlargement is a constraint and not a change
-of the simulated scene. \texttt{pillars\_hg}, the entry that enforced $0.12$, is kept for rollback and is
-not active.}
+\texttt{sphere\_outside} rows of \texttt{pillars\_hg} carry \texttt{radius: 0.12}, the pillar of
+\texttt{quadrotor\_modified.xml}. The enlarged entries \texttt{pillars\_xl} (0.35) and
+\texttt{pillars\_xxl} (0.55) of Gen15 U17 are kept behind an ABANDONED banner and are never active;
+v3.63, 2026-09-22, after \texttt{Gen15/U17/CLOSURE\_20260922\_U17\_abandoned.md}.}
 
 The three scenes use the same two constraint forms as D3IL-avoiding --- halfspaces and circular
 keep-out regions --- so the projection solves the same kinds of rows in the air as on the table
@@ -426,8 +424,8 @@ these boundaries a further $0.025$\,m inward, the margin of \ac{DPCC}.
 
 \autoref{fig:constraints-uav} shows the constraint sets applied to plans in the three scenes.
 A wall constrains only the span of $x$ over which it exists, which is why the halfspace it excludes
-stops short of the panel edge; and on UAV-pillars the enlarged keep-out radius is what closes the centre
-channel between the pillar pairs.
+stops short of the panel edge; and on UAV-pillars the inflated pillars leave three channels open ---
+the two outside the rows, which the demonstrations use, and the one between them, which they never do.
 
 \begin{figure}[!htbp]
   \centering
@@ -437,9 +435,8 @@ channel between the pillar pairs.
   regions, all three panels drawn alike. The obstacle is the solid line or the red disk --- a wall, the
   sloping halfspace of UAV-corridor, or a pillar; the grey band is what the rotor reach of $0.31$\,m adds around
   it, and the dashed boundary a further $0.025$\,m of tightening. The faint wash beyond a wall is the
-  rest of the halfspace it excludes. White is where the plan may go. On UAV-pillars the dark core is the
-  $0.12$\,m pillar the simulator contains and the pale disk the $0.35$\,m keep-out region enforced at
-  test time.}
+  rest of the halfspace it excludes. White is where the plan may go. On UAV-pillars the red disk is the
+  $0.12$\,m pillar the simulator contains, and the constraint enforces that pillar and nothing larger.}
   \label{fig:constraints-uav}
 \end{figure}
 
@@ -567,16 +564,25 @@ for the left, centre and right lane --- because the halfspace is introduced at t
 when the demonstrations were flown. The scene in which the constraint is new to the data is exactly the
 scene in which the projection has something to do.
 
-UAV-pillars was originally the first kind and is being rebuilt into the second. Its demonstrated channels
-lie at $|y|=1.11$\,m because the generator derived them from the pillar radius, the rotor reach and a
-safety margin, and the constraint set it was first evaluated against enforced the same clearance --- so
-all four routes satisfied it and the projection had nothing to repair. The obstacles are therefore
-enlarged at test time, from the $0.12$\,m pillar the simulator contains to a keep-out radius of
-$0.35$\,m, exactly as the sloping halfspace and the obstacle-avoidance halfspaces are introduced after the fact in the other two
-benchmarks. \autoref{fig:expert-uav} is drawn against that enlarged set: all four demonstrated routes now
-cross it, each by $0.15$\,m and on more than a hundred samples of its length, and the centre channel
-closes, so a plan that reaches the goal without violating has to leave the demonstrated route. The scene
-has a prepared result slot in \autoref{sec:res:uav:pillars}; its enlarged-geometry evaluation is pending.
+UAV-pillars is the first kind. Its demonstrated channels lie at $|y|=1.11$\,m because the generator
+derived them from the pillar radius, the rotor reach and a safety margin, and the constraint set enforces
+the same clearance --- so all four routes satisfy it, tightening included (\autoref{fig:expert-uav}), and
+the projection has nothing to repair. The scene is evaluated on those terms, and
+\autoref{sec:res:uav:pillars} reads it as the preservation case beside the corridor's repair case.
+
+An attempt to turn it into the second kind was made and is not reported. The keep-out radius was
+enlarged at evaluation time only, from the $0.12$\,m pillar the simulator contains to $0.35$\,m, so that
+none of the four demonstrated routes satisfied the constraint any more --- each crossed it by $0.15$\,m
+--- and a clean flight would have had to leave the demonstrated lane, as on UAV-corridor. Under that set
+the evaluation ranked nothing. The enlarged pillars closed the channel between the two rows by only a few
+centimetres on each side, and every projector in the study, per-step and endpoint alike, routed the plan
+into that physically open but forbidden channel rather than outward into the legal detour: the flights
+crossed the finish line, which is success under the criterion of \autoref{sec:setup:metrics:uav}, while
+violating the keep-out at every column, so no configuration of any model was collision-free and success
+with constraint satisfaction was $0.00$ throughout, the unprojected rows included. A scene in which the
+projector finds the forbidden lane easier than the legal one measures the geometry and not the planner,
+so the enlargement was abandoned and every pillars result in this thesis is on the constraint set its
+demonstrations satisfy.
 
 That figure draws the references the generator laid out rather than the flights that tracked them, which
 is the conservative choice: a constraint crossed by the reference is crossed by construction rather than
@@ -601,8 +607,9 @@ to go, not a vehicle too large for the gap.
   them. The violation is read off the path line alone, because the vehicle's extent is already inside the
   inflated boundary; the grey silhouette on each route is the vehicle to scale at its tightest moment
   (\autoref{fig:platforms}), shown so the gaps can be judged against the aircraft and not as a second
-  test. The pillars panel uses the enlarged
-  test-time keep-out radius of $0.35$\,m. Drawn are the references the demonstrations track and not the
+  test. On UAV-pillars all four routes clear the inflated pillars and on UAV-s-curve the single route
+  clears the walls; on UAV-corridor every lane crosses the sloping halfspace, which is added at test time.
+  Drawn are the references the demonstrations track and not the
   flights themselves; altitude does not enter, because every constraint here is horizontal.}
   \label{fig:expert-uav}
 \end{figure}
@@ -668,17 +675,18 @@ metric is defined here or reported in \autoref{ch:results}.}
 
 Each flight is scored by
 \begin{itemize}
-  \item whether the goal is passed: the vehicle crosses the finish line of its scene. This is the success
+  \item success: the vehicle crosses the finish line of its scene. This is the success
     criterion of D3IL-avoiding transferred to the air --- there an episode succeeds when the end effector
     crosses the goal line (\autoref{sec:setup:metrics:avoiding}), here when the vehicle crosses the line
-    that closes its route;
+    that closes its route. Every quadrotor table and figure of \autoref{ch:results} calls a flight that
+    does so a \emph{success} and prints the count of them;
   \item whether it is collision-free: no control step on which the flown path violates a constraint. The
     test is on the path, not on the airframe: the surfaces it is tested against already carry the
     $0.31$\,m rotor reach (\autoref{tab:eval});
-  \item success with constraint satisfaction: the goal passed on a collision-free flight, as on
+  \item success with constraint satisfaction: success on a collision-free flight, as on
     D3IL-avoiding;
   \item the number of control steps (steps per flight), and the final distance to the goal point of the
-    route (metres), which describes where a flight that does not pass the goal ends;
+    route (metres), which describes where a flight that does not succeed ends;
   \item the time to compute one action (milliseconds, \autoref{sec:setup:metrics:avoiding}), split into
     generation and projection.
 \end{itemize}
@@ -1148,6 +1156,7 @@ evaluated scenes run.}
       & 10 contexts $\times$ 1 episode; the diffusion model 3 episodes per context
       & the ten contexts, compared context by context \\
     UAV-corridor & 1 & 12 flights, four on each of the routes L, C and R & the twelve flights \\
+    UAV-pillars & 1 & 10 flights & the ten flights \\
     UAV-s-curve & 1 & 10 flights & the ten flights \\
     \bottomrule
   \end{tabularx}

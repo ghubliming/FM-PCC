@@ -17,9 +17,15 @@ For corridor and pillars, two independent outcomes are drawn:
     stroke   solid = passed the goal, dashed = did not
     end mark filled = passed the goal, hollow = did not
 
-For the s-curve controller comparison alone, the author requested the simpler pass/fail key:
-green means passed the finish line, red means not passed. Panel subtitles still print the
-separate clean counts. Corridor and pillars retain the independent two-channel key.
+For the s-curve controller comparison alone, the author requested the simpler key:
+green means success (crossed the finish line), red means no success. Panel subtitles still
+print the separate clean counts. Corridor and pillars retain the independent two-channel key.
+
+v3.63 (author): a flight that crashed (`safe` false: contact or loss of altitude) or that
+the divergence guard ended (`aborted`) gets a CROSS at its end instead of a dot, in every
+figure that has such a flight. The flags come from the extract, not from the drawing.
+Wording: the chapter calls a flight that crosses the finish line a *success*, so the
+subtitles and legends say success, not passed.
 """
 import json
 import os
@@ -60,7 +66,7 @@ def _panel(scn, panel, first, r_drone, tight, colour_by_pass=False):
     # shared with fig_constraints_uav.
     # Kept short on purpose: at FONT_CONSTRAINT a longer subtitle runs off the panel.
     local = dict(scn, title=panel['title'],
-                 sub=f"{panel['sub']} · {passed}/{n} passed · {clean}/{n} clean")
+                 sub=f"{panel['sub']} · {passed}/{n} success · {clean}/{n} clean")
     f = _uav_constraint_panel(local, PANEL_W, first, r_drone, tight)
 
     f.clip_to_box()
@@ -78,9 +84,12 @@ def _panel(scn, panel, first, r_drone, tight, colour_by_pass=False):
         # stopped. Colour still reports the constraint, not the goal. (Author, 2026-09-21.)
         missed = not (colour_by_pass or ep['passed'])
         f.poly(pts, colour, w=1.5 if missed else 1.9, dash='2,7' if missed else '')
-        f.marker(pts[-1][0], pts[-1][1], 'o', colour,
-                 filled=True if colour_by_pass else ep['passed'],
-                 r=5.6 if missed else 4.2, ew=2.0 if missed else 1.3)
+        if _failed(ep):
+            _xmark(f, pts[-1][0], pts[-1][1], colour)
+        else:
+            f.marker(pts[-1][0], pts[-1][1], 'o', colour,
+                     filled=True if colour_by_pass else ep['passed'],
+                     r=5.6 if missed else 4.2, ew=2.0 if missed else 1.3)
     # one start mark for the whole panel: every flight of a cell launches from the same pose
     sx, sy = eps[0]['xy'][0] if eps else (None, None)
     if sx is not None:
@@ -89,18 +98,38 @@ def _panel(scn, panel, first, r_drone, tight, colour_by_pass=False):
     return f
 
 
-def _legend(width, colour_by_pass=False):
+def _failed(ep):
+    """Crashed, or ended by the divergence guard. Absent flags (older extracts) count as no."""
+    return bool(ep.get('aborted')) or ep.get('safe') is False
+
+
+def _xmark(f, x, y, colour, r=6.0, w=2.4):
+    """A cross where a flight ended: the vehicle crashed or lost control there."""
+    k = f.font or 1.0
+    r, w = r * k, w * k
+    for dx, dy in ((-1, -1), (-1, 1)):
+        f.s.append(f'<line x1="{x + dx * r:.1f}" y1="{y + dy * r:.1f}" x2="{x - dx * r:.1f}" '
+                   f'y2="{y - dy * r:.1f}" stroke="{colour}" stroke-width="{w:.1f}" stroke-linecap="round"/>')
+
+
+def _legend(width, colour_by_pass=False, failures=False):
     h = Fig(width, 104, ml=0, mr=0, mt=0, mb=0, font=FONT_CONSTRAINT)
-    items = [('line', CLEAN, '', 'passed the finish line' if colour_by_pass else 'collision-free flight'),
-             ('line', VIOLATING, '', 'did not pass' if colour_by_pass else 'entered an obstacle')]
+    items = [('line', CLEAN, '', 'success: crossed the finish line' if colour_by_pass else 'collision-free flight'),
+             ('line', VIOLATING, '', 'no success' if colour_by_pass else 'entered an obstacle')]
     if not colour_by_pass:
-        items.append(('line', '#5d6d7e', '2,7', 'did not pass the goal (dotted, hollow end)'))
+        items.append(('line', '#5d6d7e', '2,7', 'no success (dotted, hollow end)'))
     items.append(('mark', START, '', 'launch pose · flight end'))
-    row_y, col_x, size = (30, 76), (16, width // 2 + 16), 18
+    if failures:
+        items.append(('x', '#5d6d7e', '', 'crashed or lost control'))
+    if len(items) > 4:
+        h = Fig(width, 150, ml=0, mr=0, mt=0, mb=0, font=FONT_CONSTRAINT)
+    row_y, col_x, size = (30, 76, 122), (16, width // 2 + 16), 18
     for i, (kind, colour, dash, lab) in enumerate(items):
         x, y = col_x[i % 2], row_y[i // 2]
         if kind == 'line':
             h.poly([(x - 14, y), (x + 14, y)], colour, w=3.0, dash=dash)
+        elif kind == 'x':
+            _xmark(h, x, y, colour)
         else:
             h.marker(x - 8, y, 's', colour, filled=True, r=4.0, ew=1.2)
             h.marker(x + 8, y, 'o', '#5d6d7e', filled=True, r=4.2, ew=1.3)
@@ -125,8 +154,9 @@ def _build(key, filename, cols, outdir, colour_by_pass=False):
     drawn = [_panel(scn, p, i % cols == 0, r, t, colour_by_pass) for i, p in enumerate(panels)]
     width = max(sum(d.w for d in drawn[i:i + cols]) + 8 * (min(cols, len(drawn) - i) - 1)
                 for i in range(0, len(drawn), cols))
+    failures = any(_failed(e) for q in panels for e in q['episodes'])
     path = save_grid(drawn, os.path.join(outdir, filename), cols=cols, gap=8,
-                     header=_legend(width, colour_by_pass))
+                     header=_legend(width, colour_by_pass, failures))
     flights = sum(p['n'] for p in panels)
     srcs = ', '.join(sorted({p['tag'] for p in panels}))
     return path, (f"data/uav_paths.json (extract/uav_paths.py) | {len(panels)} cells, "

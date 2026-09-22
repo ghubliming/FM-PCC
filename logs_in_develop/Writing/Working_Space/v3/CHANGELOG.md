@@ -21,6 +21,28 @@ is sourced from · what it left open.
 
 ---
 
+## v3.63 — 2026-09-22 · UAV-pillars falls back to `pillars_hg`; the enlarged campaign (U17) failed and is abandoned → [`changelogs/v3.63_20260922_pillars_fallback_hg_u17_abandoned.md`](changelogs/v3.63_20260922_pillars_fallback_hg_u17_abandoned.md)
+
+- **Info box acted on:** the DA note of 2026-09-22 — `pillars_xl` is all zero in 94 cells, every projector routes into the forbidden centre lane; author decision: fall back. INBOX row ✅.
+- 🔴 **The withheld `pillars_hg` section is back in §6.3** (prose, three tables, flown-path figure), with the v3.62 *success* wording and its caveat first; the v3.56 `pillars_xl` templates, `\hole`s and `\todofigure` are gone (`\todofigure` = 0). §6.3 intro, frontier paragraph, projection paragraph (six aggregates re-verified) and UAV conclusion read `pillars_hg` again.
+- **Chapter 5 back to the 0.12 m pillar** (`tab:uav-scenes`, srcnote, two captions, protocol row), and **§5.3.3 tells the attempt**: no demonstrated route satisfied the enlarged set; in evaluation the flights *succeeded* while violating at every column, nothing was collision-free, the scene ranked nothing.
+- Figures: pillars drawn at 0.12 m again; `expert_paths.json` re-extracted (4/4 clean); `fig_constraints_uav`, `fig_expert_uav`, `fig_uav_pillars_paths` rebuilt and exported.
+- 🔒 **§6.4 untouched (author lock):** its three summary tables still lack a pillars row; the rows are in the changelog, ready for when it is unlocked.
+- `check.py`: all mechanical checks pass, 6 761 lines, 40 figures.
+- **Bundles:** `bundle/output/thesis_v3_20260922_101932_new.zip`, `…101932_new_clean.zip`, `…101933_new_nonotes.zip` — 44/44 figures render, cross-references resolve, `--verify` byte-faithful; supersede the v3.62 `094334/094335` set.
+
+## v3.62 — 2026-09-22 · Fig 6.3 on a broken step axis, Table 6.5 as the whole ladder with *pending* cells, alignment frontiers as the share closed, Fig 6.8 with nine contexts → [`changelogs/v3.62_20260922_broken_axis_full_ladder_closed_share_nine_paths.md`](changelogs/v3.62_20260922_broken_axis_full_ladder_closed_share_nine_paths.md)
+
+- **Read with v3.61 and v3.60**; four author items on the v3.61 result.
+- **Fig 6.3:** log axis tried and rejected (range under ×2, nothing moved). The step axis is **broken at 80**, the solved band takes 74 % of the height; the *better* key moves to the legend strip.
+- 🔴 **Table 6.5 prints the ladder $\{1,2,10,20,100\}$** for all four models, *pending* in 11 of 20 cells; the v3.61 appendix copy is removed. **R16 widened** (ledger §20): 8 flow evaluations + 3 diffusion trainings.
+- **Figs 6.6, 6.7:** axis is now the **share of the distance closed, linear, 100 % = delivered**, the table's bracketed number. 🔴 Fig 6.6 had been **missing the CI-MeanFM and FM K=100 rows** of its own table since v3.60; both drawn now, frontier unchanged.
+- **Fig 6.8:** all nine moving contexts drawn; the middle panel's one violating path is now in view. The unmoved context (7) is left out, and the caption says why.
+- **Second round, same entry:** Fig 6.9's success axis is **log** in flights of twelve with a floor for zero, and its frontier no longer rings zero-success or 0.1 ms "wins"; **Table 6.8 prints every cell before and after projection**; 🔴 the quadrotor metric is **success** everywhere (defined once in Ch 5; 47 "passed" occurrences replaced in Ch 6, the appendix and the figure legends); **Fig 6.12 marks crashed or aborted flights with a cross**, from flags the extract now records (`uav_paths.json` regenerated, otherwise identical).
+- Source-safety check on the author's note: v3.61 is in HEAD (`999152f1`), the working-tree diff is exactly this changelog's edits, all draft files are LF in index and on disk; `core.autocrlf = true` is the only thing that could rewrite them (author's call).
+- `check.py`: all mechanical checks pass, 6 611 lines. v2.25 not absorbed.
+- **Bundles** (closing the update, on the author's word): `bundle/output/thesis_v3_20260922_094334_new.zip`, `…094335_new_clean.zip`, `…094335_new_nonotes.zip` — 43/43 figures render, cross-references resolve, `--verify` byte-faithful; supersede the v3.61 `085914/085915` set.
+
 ## v3.61 — 2026-09-22 · concise tables restored (full ones in the appendix), alignment frontiers on a log-percent axis, UAV-s-curve as a matched grid → [`changelogs/v3.61_20260922_tables_concise_frontiers_percent_scurve_grid.md`](changelogs/v3.61_20260922_tables_concise_frontiers_percent_scurve_grid.md)
 
 - **Read with v3.60**; this pass amends its §1, §12 and §27 on the author's review.
@@ -29,7 +51,8 @@ is sourced from · what it left open.
 - 🔴 **Tables 6.1, 6.2, 6.5 are the concise pre-v3.60 tables again** (restored from `git show HEAD`); the K=5/K=10 and K=2/K=10 rows live in `tab:app:avoiding-raw-full`, `tab:app:avoiding-dpcc-full`, `tab:app:va-models-full`. Rule: a main table maximises the budgets all models share; the appendix carries every evaluated budget.
 - Fig 6.6 has its *better* key back; **Figs 6.6 and 6.7 use the final distance as a percentage of the start on a log axis**, not metres; Fig 6.7's legend and caption say why its cheapest point is hollow.
 - 🔴 **UAV-s-curve is a matched grid with the missing cells printed as *pending*** — unprojected at $\{1,2,3,5\}$ (7 of 13 cells pending), projected at $\{3,5\}$ in the corridor's shape (5 of 6 cells pending); the ragged per-model records moved to `app:uav-scurve-budgets`. Ledger **R31** (§18) lists the cells; R29 superseded.
-- `check.py`: all mechanical checks pass, 6 606 lines. v2.25 not absorbed. **No bundle built.**
+- `check.py`: all mechanical checks pass, 6 606 lines. v2.25 not absorbed.
+- **Bundles** (built after the six items, on the author's word): `bundle/output/thesis_v3_20260922_085914_new.zip`, `…085915_new_clean.zip`, `…085915_new_nonotes.zip` — 43/43 figures render, cross-references resolve, `--verify` byte-faithful; supersede the v3.60 `205646/205651` set.
 
 > 📄 **Start here for v3.60:** [`BRIEFING_20260922_v3.60.md`](BRIEFING_20260922_v3.60.md) --- the
 > questions answered, the three things worth knowing, the four decisions waiting on the author, and the

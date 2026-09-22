@@ -6138,3 +6138,27 @@ Comprehensive data analysis of the MPC candidate fan ($B=4$ vs $B=1$) on `avoidi
    - Released updated batch archives `batch_avoiding_combined_20260919_132703` and `batch_uav_20260919_111701`. Gated `pillars_hg` behind `PILLARS_EXCLUDED = True` in analysis scripts pending `pillars_xl` execution.
    - Added `clean_gifs_sweep.sh` under `tools/clean_gifs/sweep/` for batch sweep and inspection of visual rollout artifacts.
    - Completed raw plan visual matrices across all models (`fig_raw_plans_af_K1/K2`, `fig_raw_plans_fm_K1/K2`, `fig_raw_plans_diffusion_K2`).
+
+
+***
+
+## Gen15 U17 `pillars_xl` Floor Forensics, Diffusion Timing Decision & Frontier Tooling (September 20–21, 2026)
+
+**Keywords**: Gen15, U17, pillars_xl floor, goal radius vs detour geometry, disk exhaustion recovery, diffusion K20 timeout, avoiding unprojected spread, Pareto frontier plots, commits b24faaa8, a3545da7, 999152f1.
+
+1. **U17 `pillars_xl` Wave Execution and Floor Collapse Forensics** (`CHANGELOG_20260918_pillars_enlarged.md` §8, jobs 25970–25995):
+   - **Cluster Execution & Disk Recovery**: Attempt 1 (jobs 25942–25963) failed when job 25952 crashed with `Errno 28: No space left on device` on 2.9 GiB free space. Attempt 2 succeeded after pruning 43 GiB on the node, delivering 10/12 completed children with 2 on track.
+   - **Diffusion Baseline Time Limit**: Job 25951 (Diffusion K=20) reached Slurm's 24-hour limit after finishing only `diffuser` and `dpcc-r` (measuring 10.4 s/step `proj_ms`, requiring ~130 hours for all 7 variants). Formally decided not to run remaining K=20 per-step diffusion variants on pillars, reporting raw diffusion baseline outputs with latency-scaling analysis.
+   - **Floor Result & Geometric Diagnosis**: 53 of 54 completed projected cells scored `success = 0.00` across all models and budgets. At $K \le 2$, flights crossed the finish line contact-free (`relaxed = 1.00`, `safe = 1.00`), but missed the lateral goal radius (`goal_reached = 0.00`). Diagnosed goal-budget geometric mismatch: goal is at $(3.2, \pm 1.11)$ with radius $0.30$ m; obstacles force $|y| \ge 1.26$ m (spending $0.15$ m on detour), leaving insufficient margin against drone tracking error ($0.34$–$0.45$ m). At $K=5$, `safe` collapsed on per-step variants due to MuJoCo contact or floor clipping, alongside repeated `[NLP-FAILURE]` reports in HardFlow.
+   - **Operational Resolution**: Gated further pillars compute pending root-cause verification of 4 designated `results.json` files; confirmed `sec:res:uav:pillars` remains withheld from results drafts.
+
+2. **D3IL-Avoiding Unprojected Baselines and Candidate Spread Auditing** (`avoiding_unprojected_and_budget20.py`, `avoiding_table_spread.py`, `DA_20260920_corpus_completeness_audit.md`):
+   - Audited candidate variation across seeds and geometries for unprojected baselines and high-budget ($K=20$) comparison rows.
+   - Established standalone extraction scripts verifying metric reproducibility and cross-seed consistency between the 5-seed and 20-episode regimes.
+
+3. **Pareto Frontier Generation and Execution Path Plotters** (`builders/frontier.py`, `builders/exec_paths.py`, `extract/exec_paths.py`):
+   - Implemented automated Pareto tradeoff builders in `Data_Analysis/DA_in_Paper/plotting/builders/frontier.py` generating standardized tradeoff figures (`fig_avoiding_tradeoff`, `fig_aligning_tradeoff`, `fig_aligning_projected_tradeoff`, `fig_uav_corridor_tradeoff`).
+   - Built end-effector and quadrotor execution trajectory plotters overlaying actual executed rollouts on 2D constraint geometry.
+
+4. **Repository-Wide Lacking Run Consolidation** (`PENDING_20260922_all_lacking_runs.md`, `SLURM_RUNBOOK_20260922_all_lacking_runs.md`):
+   - Consolidated remaining experimental gaps across all three environments (Avoiding, Visual Aligning, and UAV) into unified tracking ledgers and execution runbooks.

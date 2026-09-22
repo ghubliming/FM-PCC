@@ -101,6 +101,36 @@ DEMO_CLEAN = '#1e8449'      # a demonstration that satisfies the geometry it is 
 DEMO_VIOLATING = '#c0392b'  # one that crosses it -- same two colours as the path figures
 
 
+Y_BREAK = 80          # control steps; the axis is compressed above this value
+Y_LOWER_SHARE = 0.74  # share of the panel height given to the range below the break
+
+
+def _broken(ylo, yhi):
+    """Value -> virtual axis value for a y axis broken at Y_BREAK.
+
+    Below the break the map is the identity; above it the slope is chosen so that
+    [ylo, Y_BREAK] takes Y_LOWER_SHARE of the height and [Y_BREAK, yhi] the rest. When
+    nothing lies above the break the map is the identity throughout.
+    """
+    if yhi <= Y_BREAK:
+        return lambda y: y
+    s = ((1.0 - Y_LOWER_SHARE) / Y_LOWER_SHARE) * (Y_BREAK - ylo) / (yhi - Y_BREAK)
+    return lambda y: y if y <= Y_BREAK else Y_BREAK + (y - Y_BREAK) * s
+
+
+def _break_marks(f, y):
+    """Two short slanted strokes on each spine, the conventional sign of a broken axis,
+    and a faint dashed line across the panel at the same height."""
+    k = f.font or 1.0
+    d, g = 5.0 * k, 2.6 * k
+    f.s.append(f'<line x1="{f.L}" y1="{y:.1f}" x2="{f.R}" y2="{y:.1f}" stroke="#bbb" '
+               f'stroke-width="1" stroke-dasharray="2,4"/>')
+    for x in (f.L, f.R):
+        for dy in (-g, g):
+            f.s.append(f'<line x1="{x - d:.1f}" y1="{y + dy + d * 0.6:.1f}" x2="{x + d:.1f}" '
+                       f'y2="{y + dy - d * 0.6:.1f}" stroke="#222" stroke-width="{1.6 * k:.1f}"/>')
+
+
 def _tradeoff_panel(rows, title, sub, ylab=True):
     """One panel: time per control step (log x) against control steps (y).
 
@@ -118,29 +148,35 @@ def _tradeoff_panel(rows, title, sub, ylab=True):
         return None
     pts, front = S.pareto_front(pts, band=PARETO_BAND)
     xlo, xhi = min(p['avg_time'] for p in pts) * 0.6, max(p['avg_time'] for p in pts) * 1.7
-    ylo, yhi = min(p['n_steps'] for p in pts) - 4, max(p['n_steps'] for p in pts) + 6
-    # Headroom for the boxed direction key: without it the box lands on the diffusion
-    # points in the top right of two panels. The band is empty of data by construction.
-    yhi += 0.26 * (yhi - ylo)
-    step = 5 if yhi - ylo <= 45 else 10
+    ylo, yhi = min(p['n_steps'] for p in pts) - 3, max(p['n_steps'] for p in pts) + 8
+    # v3.62 (author): the step axis is BROKEN at Y_BREAK. Every configuration that solves
+    # the task sits between the high fifties and the high seventies; only the two hollow
+    # K=2 points and one diffusion cell lie above, and on a plain axis they pushed the
+    # cluster into a third of the panel (a log axis was tried first and changed nothing,
+    # the range being under a factor of two). Below the break the axis is linear and
+    # takes Y_LOWER_SHARE of the height; above it the axis is linear again but
+    # compressed. The break is marked on both spines and named in the caption.
+    v = _broken(ylo, yhi)
     f = Fig(540, 424, ml=86, mr=18, mt=48, mb=72, font=FONT)   # mt: geometry heading only, no subtitle
-    f.axes((xlo, xhi), (ylo, yhi), xlog=True)
-    f.frame(dec_ticks(xlo, xhi), [t for t in range(0, 300, step) if ylo <= t <= yhi],
+    f.axes((xlo, xhi), (ylo, v(yhi)), xlog=True)
+    lower = [t for t in range(0, 300, 5) if ylo <= t <= Y_BREAK]
+    upper = [t for t in range(0, 300, 10) if Y_BREAK < t <= yhi]
+    labels = {v(t): f'{t:.0f}' for t in lower + upper}
+    f.frame(dec_ticks(xlo, xhi), sorted(labels),
             'time per control step [s] (log)', 'control steps' if ylab else '', title, sub,
-            xfmt=fmt_num, yfmt=lambda v: f'{v:.0f}')
+            xfmt=fmt_num, yfmt=lambda t: labels[t])
+    _break_marks(f, f.Y(v(Y_BREAK)))
     if len(front) > 1:
         st = []
         for i, q in enumerate(front):
-            st.append((f.X(q['avg_time']), f.Y(q['n_steps'])))
+            st.append((f.X(q['avg_time']), f.Y(v(q['n_steps']))))
             if i + 1 < len(front):
-                st.append((f.X(front[i + 1]['avg_time']), f.Y(q['n_steps'])))
+                st.append((f.X(front[i + 1]['avg_time']), f.Y(v(q['n_steps']))))
         f.poly(st, '#222', dash='6,4', w=1.6)
-    from .frontier import _dirarrow
-    _dirarrow(f, -1, +1)            # fewer control steps, less time per step
     for q in front:
-        f.ring(f.X(q['avg_time']), f.Y(q['n_steps']), r=13)
+        f.ring(f.X(q['avg_time']), f.Y(v(q['n_steps'])), r=13)
     for q in pts:
-        x, y = f.X(q['avg_time']), f.Y(q['n_steps'])
+        x, y = f.X(q['avg_time']), f.Y(v(q['n_steps']))
         f.marker(x, y, RULE_MARK[q['rule']], S.ENGINE_COLOUR_DISTINCT[q['engine']], filled=q['eligible'], r=6.5, ew=1.6)
         # label above-right for one selection rule and below-right for the other, so the
         # two rules of one model at the same budget do not print on top of each other
@@ -155,12 +191,26 @@ def _legend_strip(width, protocol):
     for eng in MODELS:
         h.marker(x, 22, 'o', S.ENGINE_COLOUR_DISTINCT[eng], r=6.5)
         h.text(x + 14, 26, S.ENGINE_LABEL[eng], 11, '#111')
-        x += 34 + len(S.ENGINE_LABEL[eng]) * 10.5
+        x += 32 + len(S.ENGINE_LABEL[eng]) * 10.5
     x += 20
     for rule, lab in (('dpcc-c-tightened', 'cumulative projection cost'), ('dpcc-t-tightened', 'temporal consistency')):
         h.marker(x, 22, RULE_MARK[rule], '#777', r=6.5)
         h.text(x + 14, 26, lab, 11, '#111')
-        x += 34 + len(lab) * 10.5
+        x += 28 + len(lab) * 9.0
+    # v3.62: the boxed direction key is drawn ONCE, here, instead of inside each panel,
+    # where its box cost a quarter of the height (the axis is broken instead, see
+    # _tradeoff_panel). Same drawing as the frontier module's boxed key, at legend size.
+    x += 10
+    col = '#34495e'
+    h.s.append(f'<rect x="{x - 4}" y="4" width="34" height="36" rx="3" fill="#fff" '
+               f'stroke="{col}" stroke-width="1.2"/>')
+    cx, cy, L = x + 13, 22, 9
+    h.s.append(f'<line x1="{cx + L}" y1="{cy - L}" x2="{cx - L}" y2="{cy + L}" stroke="{col}" '
+               'stroke-width="2.2" stroke-linecap="round"/>')
+    for hx, hy in ((cx - L + 8, cy + L), (cx - L, cy + L - 8)):
+        h.s.append(f'<line x1="{cx - L}" y1="{cy + L}" x2="{hx}" y2="{hy}" stroke="{col}" '
+                   'stroke-width="2.2" stroke-linecap="round"/>')
+    h.text(x + 38, 26, 'better', 11, col, bold=True)
     return h
 
 

@@ -41,7 +41,12 @@ START = '#2471a3'
 DATA = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                     '..', 'data', 'exec_paths.json')
 FONT_PATHS = 1.55
-ALIGNING_SHOWN = (3, 6)  # one raw violation and one raw violation-free path, both fully in view
+# v3.62 (author): every context is drawn, not two of them. Episode position 8 (context 6)
+# is left out in all three panels: its logged end-effector path has no extent at all
+# (the arm never leaves the start), so it would print as a dot on the start marker.
+# With all nine the middle panel shows its one violating path, which the earlier
+# two-context choice (positions 3 and 6) happened to skip.
+ALIGNING_SHOWN = (0, 1, 2, 3, 4, 5, 6, 7, 9)
 AVOIDING_SHOWN = 1  # episode 2, the same initial condition in all four model-budget cells
 
 
@@ -128,7 +133,7 @@ def fig_aligning_paths(outdir):
             c = S.ALIGNING_CONTEXTS[ep['context']]
             f.marker(f.X(c['box'][0]), f.Y(c['box'][1]), 'o', '#8a7a55', filled=True, r=2.6, ew=0.9)
             f.marker(f.X(c['target'][0]), f.Y(c['target'][1]), 'o', '#8a7a55', filled=False, r=3.0, ew=1.1)
-        _draw(f, episodes, w=2.1)
+        _draw(f, episodes, w=1.6)
         sx, sy = episodes[0]['xy'][0]
         f.marker(f.X(sx), f.Y(sy), 's', START, filled=True, r=4.2, ew=1.2)
         f.end_clip()

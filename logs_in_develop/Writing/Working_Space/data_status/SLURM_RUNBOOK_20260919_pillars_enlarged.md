@@ -1,5 +1,7 @@
 # SLURM RUNBOOK — UAV-pillars with the obstacles enlarged at test time
 
+> # ⛔ CLOSED — Gen15 U17 ABANDONED 2026-09-22 (total failure). Nothing in this runbook is to be submitted again. Fallback: `pillars_hg`. Closure: [`Gen15/U17/CLOSURE_20260922_U17_abandoned.md`](../../../Gen15/U17/CLOSURE_20260922_U17_abandoned.md). §3c–§3f are the post-mortem.
+
 **Opened 2026-09-18 for the 19-09 wave.** Diagnosis and the geometry ladder:
 [`PENDING_20260918_pillars_geometry_redesign.md`](PENDING_20260918_pillars_geometry_redesign.md).
 
@@ -478,8 +480,49 @@ of one cell and `diffuser.png` vs `dpcc-c.png` top-down plots settle the lateral
 $\nfe=5$ 77–313 ms, diffusion $\nfe=20$ **10.4 s**. Those are clean, and the diffusion number is why
 group D cannot fit in 24 h.
 
-**Recommendation.** Do **not** submit the diffusion remainder (5 × ~19 h) or the $\nfe=3$ rung of
-`PENDING_20260922` §16 until the four files above have been read. If hypothesis 1 holds, the fix is a
+### 3f. 🔴 VERDICT, 2026-09-22 — the batch is in, and it is an all-zero grid
+
+Wave complete: 25994 and 25995 ended cleanly (both `JOB END`, 6/6 variants, every projected row
+`success = 0.00`). Batch of record: `analysis_results_checkpoint/22-09-UAV-Pillars/batch_uav_20260922_113112`,
+94 cells × 10 flights. Full analysis: `DA_in_Paper/analysis/DA_20260922_pillars_xl_wave.md`.
+
+**Under the thesis metric — S&C = goal line passed on a collision-free flight — every one of the 94
+cells is 0.00, and so is the collision-free rate, the unprojected rows included.** No flight of the
+940 was collision-free. That is a stronger statement than §3e's strict-success floor, and it settles
+the two hypotheses:
+
+- **The goal-radius hypothesis is refuted.** It predicted near misses (just above 0.30 m) with *low*
+  violation counts. The batch shows goal distances of **0.6–5 m**, every projected flight exhausting
+  the 634-step budget, and violation counts **higher** under projection than without it (MeanFM
+  $\nfe=5$: 68.7 → 322–462; FM $\nfe=5$: 102 → 227–311; endpoint ~230–250 for all three).
+- **The projector takes the forbidden centre corridor** (DA_20260922 §3, per-flight classification).
+  The lane between the two pillar rows is physically open (0.96 m against a 0.62 m vehicle) and is
+  closed by the 0.66 m keep-out by only 6 cm each side. Every endpoint-projected flight of MeanFM and
+  FM (38/40) flies it: contact-free, across the finish line, ~1 m to the side of the goal point,
+  0.37–0.44 m inside the keep-out at each column. Per-step at $\nfe\le2$ does the same; per-step at
+  $\nfe=5$ under $r$/$c$ weaves between lanes and hits pillars on 8–10 flights of 10. HardFlow logs
+  `[NLP-FAILURE] non-converged SLSQP` on every variant — the last iterate kept *is* the centre lane.
+  Under the thesis's relaxed success these flights **pass**; S&C is zero solely through
+  `collision_free = 0`. The plans are coherent, not garbage — they go to the wrong lane.
+- **The author's visual check (2026-09-22) is explained, not contradicted:** the per-variant trajectory
+  PNG draws the physical 0.12 m pillars (`eval_artifacts.py:383`), not the enforced 0.66 m keep-out;
+  `constraint_overview.png` in the same folder draws the enforced surface. "Score only the trajectory"
+  is already what the scorer does (centre point vs inflated obstacle = vehicle disc vs raw obstacle,
+  and the same set the projector was given); dropping the 0.31 m would make the demonstrated lane
+  (0.51 m from a pillar axis) and the centre lane (0.45 m) both legal against a 0.35 m keep-out — the
+  scene trivially feasible again. The counts stand.
+
+**Consequences.** `tab:uav-pillars`, `tab:uav-pillars-projection` and `fig_uav_pillars_xl_paths` are
+**not filled**; `sec:res:uav:pillars` stays withheld. The scene is degenerate in both directions
+(feasible-by-construction at $R=0.12$, unrepairable-by-this-projector at $R=0.35$); `pillars_xxl` is
+off the table. The $\nfe=3$ rung and the diffusion remainder are closed — there is nothing for them
+to fill. Rescuing the scene now has a specific lever: close the centre corridor decisively (a virtual wall
+along $y=0$ over the pillar span, or a keep-out overlapping by more than the solver tolerance) so the
+outer detour is the only lane a local projector can settle into — a geometry change plus a re-run,
+new work, not owed to the draft.
+
+**Recommendation (superseded by §3f).** ~~Do **not** submit the diffusion remainder (5 × ~19 h) or the $\nfe=3$ rung of
+`PENDING_20260922` §16 until the four files above have been read.~~ If hypothesis 1 holds, the fix is a
 goal/radius change at evaluation time and the whole wave has to be re-scored or re-run anyway, so
 compute spent now is compute spent twice. `pillars_xxl` is off the table in either case — the scene is
 already too hard for the metric, not too easy.

@@ -95,7 +95,7 @@ context/episode count and dependency of every job. `WAVE` is used instead of `GR
 Knobs (all optional): `ALIGN_TAG` (default `lr22`), `ALIGN_NCTX` (10), `ALIGN_SEED` (6), `R16_T` (0.4),
 `R26_TRAIN_SEEDS` ("7 8 9 10"), `R26_TAG` (`dpccproto`), `R31_PERSTEP` (`dpcc-t`), `R30_TAG` (`u17cv2`),
 `R31U_TAG` (`u7hg`), `R31P_TAG` (`u18sc`), `R15_TAG` (`u19mjpc`), `R28_KS` ("5 10"), `SCURVE_NTRIALS` (10),
-`CORRIDOR_NTRIALS` (12), `RECORD` (`none`), `AVOID_TRAIN_HOURS` (6), `ALIGN_HOURS` (12), `FORCE_DISK=1`.
+`CORRIDOR_NTRIALS` (12), `RECORD` (`none`), `AVOID_TRAIN_HOURS` (12), `AVOID_EVAL_HOURS` (12), `ALIGN_HOURS` (12), `FORCE_DISK=1`.
 
 ## 4 · Pre-flight gates
 
@@ -149,7 +149,7 @@ Reject if it shows three contexts, the held-out split, or a `results/` root inst
 ### B · R26 — diffusion $\nfe=2$, five seeds
 
 B1 (`_lr22_B1_r26_avoid_train_K2_s<seed>.sh` → `_lr22_avoid_train.py`): `scripts/train.py --seed <s>`
-with `base['diffusion']['n_diffusion_steps']=2` patched in memory, exactly as job 25965. Six-hour limit
+with `base['diffusion']['n_diffusion_steps']=2` patched in memory, exactly as job 25965. Twelve-hour limit (author: every job in the 12–24 h window; job 25965 took 2 h 41 m)
 (2× the measured 2 h 41 m). Must print `TRAIN n_diffusion_steps -> 2` and end with a listing of
 `logs/avoiding-d3il/diffusion/H8_K2_Dmodels.GaussianDiffusion_aw10/<seed>/`.
 
@@ -227,11 +227,13 @@ unless told to.
 
 ## 7 · Submission record
 
+**2026-09-22 submit, `WAVE="A B"`:** PLAN then SUBMIT from the cluster copy `Slurm_Codes/temp_bash/22-09-pending.sh`; pre-flight passed at revision 999152f1 (38 dirty paths, docs only), 174 GB free. Six jobs accepted in order A → B1 ×4 → B2. Groups C, D, E, F, G, H remain unsubmitted.
+
 | group | job IDs | revision | state / verification |
 | :-- | :-- | :-- | :-- |
-| A · R2 | — | — | planned, not submitted |
-| B1 · R26 train ×4 | — | — | planned, not submitted |
-| B2 · R26 eval | — | — | planned, dependent on B1 |
+| A · R2 | **26051** | 999152f1 | submitted 2026-09-22 (12 h limit); cluster yaml already at `n_contexts: 10` — log should print `10 -> 10` |
+| B1 · R26 train ×4 | **26052** s7 · **26053** s8 · **26054** s9 · **26055** s10 | 999152f1 | submitted 2026-09-22, 6 h limit each (the cluster copy predates the 12 h default; 2.2× the measured 2 h 41 m) |
+| B2 · R26 eval | **26056** | 999152f1 | submitted 2026-09-22, `afterok:26052:26053:26054:26055`, 6 h limit |
 | C · R30 | — | — | planned, not submitted |
 | D · R31 unprojected ×7 | — | — | planned, not submitted |
 | E · R31 projected ×5 | — | — | planned; `R31_PERSTEP` to confirm |

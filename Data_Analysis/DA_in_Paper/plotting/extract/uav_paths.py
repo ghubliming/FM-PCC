@@ -24,10 +24,13 @@ Sources, read at run time, not typed in:
                           obs_all, and `homotopy` / `homotopy_flown` (L/C/R) on corridor.
 
 What a path is drawn as, decided here rather than in the builder:
-  passed      success.strict        -- reached the goal within its budget
+  passed      success_relaxed       -- crossed the finish line (the chapter's "success")
   clean       constraint.collision_free -- never entered an inflated obstacle
-The two are independent: a flight can reach the goal THROUGH a pillar, which is the whole
-point of the projection comparison, so both flags travel with every path.
+  aborted     divergence_aborted    -- the divergence guard ended the flight early
+  safe        phys_safe             -- no contact and no loss of altitude
+The first two are independent: a flight can reach the goal THROUGH a pillar, which is the
+whole point of the projection comparison, so both flags travel with every path. The last
+two (v3.63) let a builder mark where a flight that crashed or lost control ended.
 """
 import argparse
 import datetime
@@ -136,6 +139,11 @@ def episodes(npz_path, res_path):
             'homotopy': r.get('homotopy'),
             'homotopy_flown': r.get('homotopy_flown'),
             'min_z': round(float(d['phys_min_z'][i]), NDP),
+            # v3.63: the two per-flight failure flags the s-curve figure marks with an X
+            'aborted': bool(d['divergence_aborted'][i]) if 'divergence_aborted' in d.files else None,
+            'safe': bool(d['phys_safe'][i]) if 'phys_safe' in d.files else None,
+            'reason': (str(d['divergence_reason'][i]) if 'divergence_reason' in d.files
+                       and bool(d['divergence_aborted'][i]) else None),
         })
     return out
 

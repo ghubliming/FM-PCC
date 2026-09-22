@@ -4,6 +4,8 @@
 of [`PENDING_20260918_verified_data_audit.md`](PENDING_20260918_verified_data_audit.md) §C.
 Runbook: [`SLURM_RUNBOOK_20260919_pillars_enlarged.md`](SLURM_RUNBOOK_20260919_pillars_enlarged.md).
 
+> # ⛔ OUTCOME 2026-09-22: the redesign was run in full and ABANDONED. `pillars_xl` returned S&C = 0.00 in all 94 cells — every projector routes into the forbidden centre corridor between the pillar rows (which the 0.66 m keep-out closes by only 6 cm). **The thesis falls back to `pillars_hg` with the §1 caveat stated in the prose.** Closure: [`Gen15/U17/CLOSURE_20260922_U17_abandoned.md`](../../../Gen15/U17/CLOSURE_20260922_U17_abandoned.md). The diagnosis in §1–§2 below remains correct; the fix in §3 did not work.
+>
 > ✅ **IMPLEMENTED 2026-09-18 as Gen15 U17** — config + driver only; no Python touched, no model
 > retrained, no MJCF edited. `pillars_xl` (R 0.35) and `pillars_xxl` (R 0.55) are in
 > `config/uav_projection.yaml`; `pillars_hg` is kept untouched as the control condition. Driver:

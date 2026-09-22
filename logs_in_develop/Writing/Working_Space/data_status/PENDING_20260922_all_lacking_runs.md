@@ -39,10 +39,10 @@ wall-clock: queue time and the 24 h `--time` cap are not in it.
 
 | ID | Priority | One line | Training? | ~GPU time |
 | :-- | :-- | :-- | :-- | --: |
-| **R23** | 🟠 **RUNNING** | UAV-pillars at `pillars_xl` — **the campaign is on the cluster** (Gen15 U17, Slurm jobs up to 25995, author, 2026-09-22). Coverage, cost and whether anything is still new are filled in by the author when the wave ends; see §16. **No new pillars run is listed until then.** 🔴 **First read 2026-09-21: 10/12 children complete, 2 running, diffusion walled at 2/7 (✅ diffusion arm CLOSED BY DECISION — reported unprojected only, K=20 projection is ~1 GPU-day per variant and the `c` rules exceed 24 h; see §16) — and 53 of 54 finished projected cells read `success = 0.00`. Read [`SLURM_RUNBOOK_20260919_pillars_enlarged.md` §3e](SLURM_RUNBOOK_20260919_pillars_enlarged.md) before scheduling anything on this scene** | no | ~5 GPU-days spent, see §16 |
+| **R23** | ⛔ **ABANDONED 2026-09-22 → FALLBACK to `pillars_hg`** | UAV-pillars at `pillars_xl` — **Gen15 U17 abandoned; the thesis restores the withheld `pillars_hg` section with its caveat** (`Gen15/U17/CLOSURE_20260922_U17_abandoned.md`) (Gen15 U17, Slurm jobs up to 25995, author, 2026-09-22). Coverage, cost and whether anything is still new are filled in by the author when the wave ends; see §16. **No new pillars run is listed until then.** 🔴 **First read 2026-09-21: 10/12 children complete, 2 running, diffusion walled at 2/7 (✅ diffusion arm CLOSED BY DECISION — reported unprojected only, K=20 projection is ~1 GPU-day per variant and the `c` rules exceed 24 h; see §16) — and 53 of 54 finished projected cells read `success = 0.00`. Read [`SLURM_RUNBOOK_20260919_pillars_enlarged.md` §3e](SLURM_RUNBOOK_20260919_pillars_enlarged.md) before scheduling anything on this scene** | no | ~5 GPU-days spent, see §16 |
 | **R2** | 🔴 | D3IL-aligning: the tightened projected diffusion baseline — blocks the four-model pre/post-projection merge | no | ~1.5 h |
 | **R26** | 🟡 | D3IL-avoiding: five-seed diffusion $\nfe=2$ | **4 trainings** | ~11 h (training) + 15 min |
-| **R16** | 🟡 | D3IL-aligning: CI-MeanFM, FM and diffusion at $\nfe=10$ | 1 training (diffusion) | ~3 h (training) + 1 h |
+| **R16** | 🟡 **widened at v3.62** | D3IL-aligning, the full unprojected ladder $\nfe\in\{1,2,10,20,100\}$: the **eleven** cells `tab:va-models` now prints as *pending* — all four models at $\nfe=1$; FM and diffusion at $2$; CI-MeanFM, FM and diffusion at $10$ (§20) | **3 trainings** (diffusion at chain lengths 1, 2, 10) | ~9 h (training) + ~3 h (11 evaluations) |
 | **R28** | 🟡 | D3IL-avoiding: FM at $\nfe=5$ (seeds 7–10) and $\nfe=10$ ($T{=}0.5$, five seeds) — **not owed**, nothing claims those cells | no | ~2 h |
 | **R7 / R14** | 🟡 | D3IL-avoiding: candidate-matched endpoint vs per-step projection, 5 seeds × 20 episodes | no | ~6.5 h |
 | **R9** | 🟡 | FM with unit-scale initial noise, all three environments | no | ~3 h |
@@ -61,7 +61,7 @@ wall-clock: queue time and the 24 h `--time` cap are not in it.
 | :-- | :-- | --: |
 | **R27** | Diffusion baseline under endpoint projection on UAV-corridor at $\nfe=20$, four rules × 12 flights | ~3.5 h |
 | **R17** | Repeat the projected alignment configurations, to measure run-to-run variation | ~2 h |
-| **R16 extension** | D3IL-aligning: FM at $\nfe=2$ | ~20 min |
+| ~~**R16 extension**~~ | ⬜ **absorbed into R16 at v3.62** (FM at $\nfe=2$ is one of its eleven cells) | — |
 
 ### How the estimates were made
 
@@ -94,10 +94,10 @@ which the pillars runbook's own measurements do not support. It is withdrawn, no
 | ID | Priority | Missing work | Training? | Draft effect / blocker |
 | :-- | :-- | :-- | :-- | :-- |
 | **R2** | 🔴 | D3IL-aligning: tightened diffusion baseline at $\nfe=20$ on the ten thesis contexts | no | closes the baseline row in `sec:res:aligning:projection`; first resolve why the evaluation config says `n_contexts: 3` |
-| **R23** | 🟠 **RUNNING** (Gen15 U17, jobs ≤ 25995) | UAV-pillars at `pillars_xl`: the campaign is on the cluster. What it covers, and whether the $\{1,3,5\}$ ladder of §16 leaves any cell still to run, is **to be clarified by the author** after the wave ends — see §16 | no | fills the visible `sec:res:uav:pillars` table and figure templates once the delivered cells are censused |
+| **R23** | ⛔ **ABANDONED 2026-09-22 → fallback to `pillars_hg`** (Gen15 U17, jobs 25970–25995 complete, all-zero grid; `Gen15/U17/CLOSURE_20260922_U17_abandoned.md`) | UAV-pillars at `pillars_xl`: **no longer a run.** v3.63 restored the withheld `pillars_hg` section with its caveat (§21); no `pillars_xl` number is in the draft | — | — |
 | ~~**R25**~~ | ⬜ **NO LONGER NEEDED — ruled out on cost by the author, v3.52.** The rows it filled are removed from `tab:state-headline`; §6.1.2.7 answers the question from existing data | D3IL-avoiding: CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$, $\nfe=1,2$, all three rules, **20 episodes per seed and geometry**, seeds 6--10 | no | ~~fills the two pending rows of `tab:state-headline`~~ — those rows are removed (§10); CI-MeanFM is reported at seed 6 in `tab:avoiding-budget20`. Would refine, not open, a claim |
 | **R26** | 🟡 **REOPENED by the author at v3.57:** five-seed diffusion $\nfe=2$ is visibly pending in Tables 6.1 and 6.2 | D3IL-avoiding: train diffusion $\nfe=2$ seeds 7--10, then evaluate five seeds at two episodes per geometry under unprojected and three projected rules | **four trainings** | fills the pending cells in `tab:avoiding-raw-models` and `tab:avoiding-dpcc-protocol`; seed 6 alone cannot be pooled into a five-seed row |
-| **R16** | 🟡 | D3IL-aligning: CI-MeanFM and FM at $\nfe=10$; diffusion $\nfe=10$ requires a checkpoint trained at that noise-schedule length | diffusion: **one training**; flow models: evaluation | fills the three visibly unmeasured $\nfe=10$ rows of `tab:va-models`; MeanFM $\nfe=10$ already exists |
+| **R16** | 🟡 **widened at v3.62** | D3IL-aligning, unprojected, untightened set, ten contexts: MeanFM $\nfe=1$; CI-MeanFM ($\alpha_{\mathrm{end}}=0.2$) $\nfe=1,10$; FM $\nfe=1,2,10$; diffusion $\nfe=1,2,10$ — each diffusion budget needs a checkpoint trained at that noise-schedule length | diffusion: **three trainings**; flow models: evaluation only | fills the eleven *pending* rows of `tab:va-models` (v3.62 prints the whole ladder in the main text; the appendix copy is gone); MeanFM $\nfe=2,10$ and every $\nfe=20,100$ cell already exist |
 | ~~**R18**~~ | ⬜ **NO LONGER NEEDED — ruled out on cost by the author, v3.52.** `tab:state-headline` no longer advertises the below-native-budget rows | D3IL-avoiding: extended evaluation of diffusion at $\nfe=1,10$; add $\nfe=2$ after R26 | no for 1/10 | ~~fills the below-native-budget rows absent from `tab:state-headline`~~ — no longer advertised there (§10) |
 | **R7** | 🟡 | D3IL-avoiding: candidate-matched endpoint versus per-step projection, five seeds $\times$ twenty episodes | no | replaces the provisional four-seed, two-episode result |
 | **R14** | 🟡 | D3IL-avoiding: repeat the endpoint budget ladder with the same candidate count for both projectors | no | removes the confound from `tab:hf-ladder` |
@@ -116,7 +116,7 @@ if the extended comparison is to be complete.
 
 | ID | Missing work | Value |
 | :-- | :-- | :-- |
-| **R16 extension** | D3IL-aligning: FM at $\nfe=2$ | optional additional low-budget point after the three visible $\nfe=10$ gaps |
+| ~~**R16 extension**~~ | ⬜ absorbed into R16 at v3.62 | — |
 | **R17** | repeat the projected alignment configurations | measures run-to-run variation |
 | **R27** | diffusion baseline under endpoint projection on UAV-corridor at $\nfe=20$, single/$r$/$c$/$t$, twelve flights each | endpoint projection has never been evaluated on diffusion in any environment |
 
@@ -449,8 +449,9 @@ any kind; the spread printed in those tables is across contexts, as `sec:setup:m
 
 | $\nfe$ | MeanFM | CI-MeanFM | FM | Diffusion |
 | :-- | :-- | :-- | :-- | :-- |
-| 2 | ✅ | ✅ | ❌ | ❌ |
-| 10 | ✅ | ❌ | ❌ | ❌ (**R16**) |
+| 1 | ❌ | ❌ | ❌ | ❌ *(row added at v3.62 — all four are R16)* |
+| 2 | ✅ | ✅ | ❌ (**R16**) | ❌ (**R16**) |
+| 10 | ✅ | ❌ (**R16**) | ❌ (**R16**) | ❌ (**R16**) |
 | 20 | ✅ | ✅ | ✅ | ✅ |
 | 100 | ✅ | ✅ **newly published, v3.60** | ✅ **newly published, v3.60** | ✅ |
 
@@ -546,6 +547,8 @@ fixed (dotted stroke, enlarged hollow end mark).
 
 ## 16 · 2026-09-22 — UAV-pillars (R23), restated here with a corrected budget ladder
 
+> ⛔ **SUPERSEDED 2026-09-22, later the same day.** The campaign this section specified ran to completion and is **abandoned** (all-zero grid, every projector takes the forbidden centre lane). Nothing below is to be run. See §21 and the closure record.
+
 **This section is the live specification for the pillars campaign.** It supersedes the budget list in the
 older pillars PENDING/RUNBOOK files for the purposes of the thesis; those files are kept as history and
 are not to be run from.
@@ -627,7 +630,18 @@ separate the two**; they are named in the runbook §3e. Until they are read, **n
 — the $\nfe=3$ rung, the diffusion remainder and `pillars_xxl` all wait, and `pillars_xxl` is off the
 table in either outcome (the scene is too hard for the metric, not too easy).
 
-**Uncertain, therefore not marked as a run:** the $\nfe=3$ rung. The mechanical case for it stands
+⛔ **VERDICT, 2026-09-22 — the batch is in, and U17 is ABANDONED.** Author decision the same day: **fall back to `pillars_hg`** — v3 restores `v3/withheld/20260918_uav_pillars_section.tex` (three tables, flown-path figure) with the caveat that the unprojected flows are already feasible there, and removes the `pillars_xl` templates. `pillars_hg` is therefore **no longer withdrawn**; the "What must not happen" bullet below about `pillars_hg` is superseded. Closure: `Gen15/U17/CLOSURE_20260922_U17_abandoned.md`. 94 cells × 10 flights: **S&C = 0.00 and collision-free =
+0.00 in every cell, unprojected rows included.** Projection adds violating steps rather than removing
+them: every projector routes the plan into the **centre corridor between the pillar rows** — physically
+open, closed by the enforced keep-out by only 6 cm — contact-free and across the finish line (relaxed
+success 1.00) but ~1 m from the goal point and 0.4 m inside the keep-out at every column; per-step at
+$\nfe=5$ additionally hits pillars. The goal-radius hypothesis of the first read is refuted; the local
+projectors prefer the forbidden lane to the 0.15 m outer detour, and the scene ranks nothing. **`tab:uav-pillars`,
+`tab:uav-pillars-projection` and `fig_uav_pillars_xl_paths` are not filled and the section stays
+withheld.** The $\nfe=3$ rung, the diffusion remainder and `pillars_xxl` are all closed. Analysis of
+record: `DA_in_Paper/analysis/DA_20260922_pillars_xl_wave.md`; runbook §3f.
+
+~~**Uncertain, therefore not marked as a run:** the $\nfe=3$ rung.~~ The mechanical case for it stands
 (§15 and the block above), but whether it is *already* in the running wave is the first question in the
 table. **Do not schedule it before that is answered.**
 
@@ -643,7 +657,7 @@ table. **Do not schedule it before that is answered.**
 
 ### What must not happen
 
-- 🔴 **No `pillars_hg` number may fill these slots.** The old geometry enforced exactly the clearance its
+- ~~🔴 **No `pillars_hg` number may fill these slots.**~~ **SUPERSEDED 2026-09-22 — `pillars_hg` is the fallback and is restored, with its caveat in the prose.** Original text kept for the record: The old geometry enforced exactly the clearance its
   own demonstration generator was built to keep, so every demonstrated route satisfied it and the scene
   measured nothing. It is withdrawn from the thesis.
 - 🔴 **The `u7xlchk` verification is one unprojected cell, not the campaign.** It confirms the enlarged
@@ -731,3 +745,67 @@ projected · **F** R16 (fm, af evals + diffusion $\nfe=10$ train → eval) · **
 Nothing here changes a decision above: R23 has **no** group (§16 gate), R25/R18 stay struck, R7/R14/R9
 stay unwritten until their prerequisites are settled. One choice is left open for E — plain `dpcc-t`
 (as `u18sc`) or `dpcc-t-tightened` (as the corridor) — see the runbook §5 E.
+
+## 20 · v3.62 — Table 6.5 prints the whole budget ladder, and eleven of its twenty cells are empty (R16 widened)
+
+The author asked for $\nfe=1$, $2$ and $10$ back in `tab:va-models` — *"just showing K20 is not enough … build THE
+TABLE and mark lack for missing data"*. The table now prints the ladder $\{1, 2, 10, 20, 100\}$ for all four
+models with *pending* in every unevaluated cell, and the v3.61 appendix copy (`tab:app:va-models-full`,
+`app:aligning-budgets`) is removed as redundant. Corpus: `15-09/batch_va2_20260915_100754`, geometry
+`combined_5`, variant `diffuser`, keyed on the `H8_K<n>_…` folder prefix.
+
+### Census, unprojected, ten shared contexts
+
+| $\nfe$ | MeanFM | CI-MeanFM ($\alpha_{\mathrm{end}}=0.2$) | FM | Diffusion |
+| :-- | :-- | :-- | :-- | :-- |
+| 1 | ⬜ pending | ⬜ pending | ⬜ pending | ⬜ pending (checkpoint) |
+| 2 | ✅ 0.2779 (39 %) | ✅ 0.3738 (17 %) | ⬜ pending | ⬜ pending (checkpoint) |
+| 10 | ✅ 0.1194 (74 %) | ⬜ pending | ⬜ pending | ⬜ pending (checkpoint) |
+| 20 | ✅ 0.0741 (84 %) | ✅ 0.3897 (14 %) | ✅ 0.4085 (10 %) | ✅ 0.4619 (−2 %) |
+| 100 | ✅ 0.0673 (85 %) | ✅ 0.1791 (60 %) | ✅ 0.4247 (6 %) | ✅ 0.1849 (59 %) |
+
+**No model has an $\nfe=1$ cell on this task** — the corpus has no `H8_K1_` folder for `combined_5/diffuser`.
+The $\nfe=1$ row is the one the author did not name explicitly ("1,2,10 or pick whatever you think we need");
+it is printed because MeanFM's one-evaluation regime is the thesis's central claim on the other two scenes.
+
+### R16, widened — exact scope
+
+| arm | cells | needs |
+| :-- | :-- | :-- |
+| flow models, evaluation only | MeanFM 1 · CI-MeanFM 1, 10 · FM 1, 2, 10 | the existing seed-6 checkpoints; ~20 min per cell at the recorded ms/step × 10 contexts |
+| diffusion | 1, 2, 10 | **one training per chain length** (the K=20 and K=100 checkpoints are separate models already); then three evaluations |
+
+Cost: ~3 h per diffusion training (the v3.60 figure for one), so ~9 h training, plus ~3 h for the eleven
+evaluations. ±50 %. The two `R16 extension` rows (FM at $\nfe=2$) are absorbed.
+
+### Also done in this pass, no run needed
+
+`fig_aligning_tradeoff` had **two table rows missing**: the CI-MeanFM and FM cells at $\nfe=100$ that v3.60
+added to the table were never added to the figure's cell registry (`sources.ALIGNING_CELLS/REPORTED`). Both
+reproduce the table exactly from the corpus (0.1791 m / 902.2 ms; 0.4247 m / 1425.0 ms) and are now drawn.
+The frontier is unchanged: both are dominated by MeanFM at $\nfe=20$.
+
+## 21 · v3.63 — UAV-pillars falls back to `pillars_hg`; the enlarged campaign (R23) is abandoned
+
+**Trigger:** `cross_draft/to_v3/FROM_DA_20260922_pillars_u17_abandoned_fallback_hg.md`, on the author's decision.
+The `pillars_xl` wave (94 cells × 10 flights, jobs 25970–25995) is **S&C 0.00 and collision-free 0.00 in every
+cell, unprojected rows included**: the enlarged keep-out closes the channel between the pillar rows by
+centimetres only, and every projector routes into it. Post-mortem `DA_in_Paper/analysis/DA_20260922_pillars_xl_wave.md`.
+
+**What v3.63 did in the draft**
+
+| where | change |
+| :-- | :-- |
+| `06_results.tex` §6.3.1.2 | the withheld `pillars_hg` section is **back verbatim** (prose, `tab:uav-pillars`, `tab:uav-pillars-endpoint`, `tab:uav-pillars-best`, `fig:uav-pillars-paths`), with the v3.62 *success* wording, its caveat as the first paragraph, and one pointer to the abandoned attempt; the v3.56 `pillars_xl` templates, `\hole`s and `	odofigure` are gone |
+| `06_results.tex` §6.3 intro, cost-frontier paragraph, §6.3.3 projection, §6.3.5 conclusion | read the `pillars_hg` result again (the projection paragraph's 43/180, 89/180, 1611 ms and 0/120, 41/120, 104 ms **re-verified against the 15-09 corpus today**) |
+| `05_setup.tex` §5.2.3, `tab:uav-scenes`, its `\srcnote`, `fig:constraints-uav` and `fig:expert-uav` captions, `tab:protocol` | back to the 0.12 m pillar; a pillars row in the protocol table |
+| `05_setup.tex` §5.3.3 (expert data) | **new paragraph, author's ask:** the enlargement is described and *why it is not reported* — none of the demonstrated routes satisfied the enlarged set; in evaluation the flights crossed the finish line (success) while violating at every column, so nothing was collision-free and the scene ranked nothing |
+| figures | `sources.UAV_CONSTRAINTS` pillars back to r = 0.12; `expert_paths.json` re-extracted (pillars 4/4 clean); `fig_constraints_uav`, `fig_expert_uav`, `fig_uav_pillars_paths` rebuilt and exported |
+
+**Not done, and why.** §6.4 *Comparison across Environments* is 🔒 locked by the author (v3.60): its three summary
+tables still have **no UAV-pillars row** and its first sentence still says "each of the three environments that
+yield a result". The rows to add when the section is unlocked, in the v3.62 wording, are in the v3.63 changelog.
+
+**Runs.** None new. The restored section carries its old `\hole` (MeanFM and FM at $
+fe=1$ on `pillars_hg`);
+R12/R13/R21/R22 stay ⏸ superseded unless the author reopens them. R23 is closed. R2, R30, R31, R16 unchanged.

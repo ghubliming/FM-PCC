@@ -1,5 +1,8 @@
 # Gen15 · U17 — UAV-pillars enlarged at test time (`pillars_xl`, `pillars_xxl`)
 
+> # 🔴 ABANDONED 2026-09-22 — TOTAL FAILURE. Closure: [`CLOSURE_20260922_U17_abandoned.md`](CLOSURE_20260922_U17_abandoned.md).
+> The thesis falls back to `pillars_hg` (Gen15 U7). Nothing below fills a thesis slot; it is kept as the record of how the unit failed.
+
 **2026-09-18.** Config + driver only. **No Python was touched, no model retrained, no MJCF edited.**
 
 - Diagnosis: [`PENDING_20260918_pillars_geometry_redesign.md`](../../Writing/Working_Space/data_status/PENDING_20260918_pillars_geometry_redesign.md)
@@ -196,7 +199,25 @@ do not touch pillars and are unaffected.
       `r` variant, `c` rules ~24–26 h (over the cap), ~5 GPU-days for the block, endpoint unavailable
       by construction. Delivered `dpcc-r` kept on disk, not printed; partial `dpcc-r-tightened`
       deleted. Runbook §3d; PENDING_20260922 §16 carries the general ⏱ time rule for K=20 per-step rows.
-- [ ] the two running children land; child IDs already in the runbook's run map
+- [x] the two running children landed 2026-09-22 (25994 fm, 25995 af — both 6/6, all 0.00).
+      **Wave complete: 12/12 children, 94 cells, 940 flights.**
+- [x] **DA of record written: `DA_in_Paper/analysis/DA_20260922_pillars_xl_wave.md`** over
+      `analysis_results_checkpoint/22-09-UAV-Pillars/batch_uav_20260922_113112`.
+
+## 9. 🔴 VERDICT, 2026-09-22 — all-zero grid; the goal-radius hypothesis of §8 is refuted
+
+Under the thesis S&C **every one of the 94 cells is 0.00 and so is the collision-free rate — the
+unprojected rows too.** Projection *adds* violating steps (MeanFM K5 68.7 → 322–462), every projected
+flight exhausts the 634-step budget, goal distances are 0.6–5 m, and and the projected flights go to one
+place: the **centre corridor between the pillar rows** — physically open (0.96 m vs 0.62 m vehicle),
+closed by the 0.66 m keep-out by 6 cm each side. 38/40 endpoint flights of MeanFM+FM fly it
+contact-free across the finish line, ~1 m from the goal point, 0.37–0.44 m inside the keep-out;
+per-step at K5 under r/c weaves and hits pillars (8–10/10). HardFlow's SLSQP reports non-convergence
+on every variant and keeps that lane as its last iterate. The plans are coherent, not garbage — they
+take the forbidden lane instead of the 0.15 m outer detour. Under relaxed success they pass; S&C is
+zero solely via `collision_free = 0`. The author's visual check is explained: the trajectory PNG
+draws the physical 0.12 m pillars, not the enforced 0.66 m keep-out (DA_20260922 §6). `sec:res:uav:pillars` stays
+withheld; nothing from this wave fills a slot. §8's hypothesis 1 is withdrawn. Details: runbook §3f.
 
 ## 8. 🔴 First read of the wave, 2026-09-21 — it is a floor
 

@@ -843,7 +843,29 @@ geo_constraint_variants:
       - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0,  1.0], radius: 0.05}
 
   # ══════════════════════════════════════════════════════════════════════════════
-  # [Gen15 U17 2026-09-18] pillars_xl / pillars_xxl — the pillars ENLARGED at test time
+  # 🔴🔴🔴 [Gen15 U17 — ABANDONED 2026-09-22, TOTAL FAILURE] 🔴🔴🔴
+  #
+  # DO NOT USE `pillars_xl` OR `pillars_xxl`. DO NOT SUBMIT JOBS AGAINST THEM. DO NOT PUT THEIR
+  # NUMBERS IN ANY TABLE. The entries are kept below ONLY so the 22-09 batch and its post-mortem
+  # stay reproducible (Data_Analysis/DA_in_Paper/analysis/DA_20260922_pillars_xl_wave.md).
+  #
+  # WHAT HAPPENED. The full wave ran (94 cells x 10 flights, jobs 25970-25995) and returned an
+  # ALL-ZERO grid under the thesis metric: S&C = 0.00 and collision_free = 0.00 in every cell,
+  # unprojected rows included. The enlarged keep-out (0.35 + 0.31 = 0.66 m) closes the corridor
+  # between the two pillar rows by only 6 cm per side while it is physically 0.96 m wide, and every
+  # projector in the study (DPCC per-step AND HardFlow endpoint) routes the plan INTO that forbidden
+  # centre corridor instead of 0.15 m OUTWARD into the legal detour: contact-free, across the finish
+  # line, ~1 m from the goal point, 0.4 m inside the keep-out at every column; per-step at K=5 then
+  # weaves between lanes and hits pillars on 8-10 flights of 10. HardFlow's SLSQP reports
+  # non-convergence on every variant. The geometry is degenerate in the opposite direction to
+  # `pillars_hg`: there the projector had nothing to repair, here it cannot repair anything.
+  #
+  # DECISION (author, 2026-09-22): U17 abandoned. THE THESIS FALLS BACK TO `pillars_hg` (Gen15 U7),
+  # with its caveat stated. Closure: logs_in_develop/Gen15/U17/CLOSURE_20260922_U17_abandoned.md.
+  # Diffusion K=20 per-step projection on pillars is ALSO closed: 10.4 s per control step, 18.6 h
+  # per variant against the 24 h cap (runbook §3d).
+  # ══════════════════════════════════════════════════════════════════════════════
+  # [Gen15 U17 2026-09-18] pillars_xl / pillars_xxl — the pillars ENLARGED at test time  (ABANDONED, see above)
   #
   # WHY. `pillars_hg` tests the wrong thing. The constraint set it enforces is the one the
   # demonstration generator was built to satisfy:
@@ -923,7 +945,7 @@ geo_constraint_variants:
   # Changelog: logs_in_develop/Gen15/U17/
   # ══════════════════════════════════════════════════════════════════════════════
 
-  - name: pillars_xl
+  - name: pillars_xl            # 🔴 ABANDONED 2026-09-22 (Gen15 U17) — do not use; see the banner above
     scene: pillars
     geo_tag_suffix: '_xl'         # distinct results folder — can never pool with '' or '_hg'
     constraint_types: ['dynamics', 'geo_bounds', 'obstacles', 'bounds']
@@ -940,7 +962,7 @@ geo_constraint_variants:
       - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0,  0.6], radius: 0.35}
 
   # ⚠️ SECOND RUNG — DEFINED, NOT SCHEDULED. See the warning above.
-  - name: pillars_xxl
+  - name: pillars_xxl           # 🔴 ABANDONED 2026-09-22 (Gen15 U17) — never run; do not use
     scene: pillars
     geo_tag_suffix: '_xxl'
     constraint_types: ['dynamics', 'geo_bounds', 'obstacles', 'bounds']

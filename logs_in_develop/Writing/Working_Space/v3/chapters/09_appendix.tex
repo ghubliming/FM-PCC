@@ -431,55 +431,6 @@ cells that are not the same.}
 \FloatBarrier
 
 
-\section{D3IL-aligning at Every Evaluated Budget}\label{app:aligning-budgets}
-
-\autoref{tab:va-models} prints the two budgets, $\nfe=20$ and $100$, at which all four models have an
-unprojected cell. The cells at $\nfe=2$ and $10$ exist for one or two models only and are here; the
-\emph{not evaluated} rows are the three model--budget cells R16 of the run ledger would fill.
-
-\begin{table}[htpb]
-  \caption[Alignment without projection, every budget]{\autoref{tab:va-models} at every evaluated
-  budget: the generative models on D3IL-aligning, plans executed without projection, untightened constraint set. Final box-to-target
-  distance over the ten contexts, from an initial $0.4530$\,m; in brackets, the share of that distance
-  the box was moved towards its target (\autoref{sec:setup:metrics:aligning}); \emph{unmoved}: contexts
-  in which the box does not move. An explicit ``not evaluated'' row marks a missing model--budget cell.
-  Mean and time are mean $\pm$ the sample standard deviation over the
-  contexts (\autoref{sec:setup:metrics:spread}). Raw cells evaluated over a thirty-context superset are
-  restricted to the same ten before they are reduced. Temporal U-Net of $4.0$\,M parameters, FiLM
-  conditioning, training seed 6.
-  \selectedmark\ the selected configuration.}
-  \label{tab:app:va-models-full}
-  \centering
-  \footnotesize
-  \begin{tabularx}{\linewidth}{@{}L r rrr r@{}}
-    \toprule
-    Model & $\nfe$ & Median [m] & Mean [m] & Unmoved & ms/step \\
-    \midrule
-    \mainconfig{\selectedmark\ MeanFM} & \mainconfig{20} & \mainconfig{0.0741 (84\,\%)} & \mainconfig{$0.093 \pm 0.073$} & \mainconfig{0/10} & \mainconfig{$190.5 \pm 2.0$} \\
-    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 20 & 0.3897 (14\,\%) & $0.325 \pm 0.224$ & 2/10  & $189.1 \pm 5.6$ \\
-    FM         & 20 & 0.4085 (10\,\%) & $0.327 \pm 0.160$ & 4/10  & $295.8 \pm 1.9$ \\ % order: MeanFM, CI-MeanFM, FM, Diffusion
-    Diffusion  & 20 & 0.4619 ($-2$\,\%) & $0.468 \pm 0.399$ & 5/10 & $298.3 \pm 2.0$ \\
-    \midrule
-    MeanFM     & 2  & 0.2779 (39\,\%) & $0.368 \pm 0.301$ & 0/10  & $28.4 \pm 2.0$ \\
-    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2  & 0.3738 (17\,\%) & $0.357 \pm 0.201$ & 2/10  & $28.7 \pm 5.7$ \\
-    \midrule
-    MeanFM     & 10 & 0.1194 (74\,\%) & $0.173 \pm 0.153$ & 1/10 & $99.2 \pm 1.9$ \\
-    CI-MeanFM  & 10 & \multicolumn{4}{l}{\emph{not evaluated}} \\
-    FM         & 10 & \multicolumn{4}{l}{\emph{not evaluated}} \\
-    Diffusion  & 10 & \multicolumn{4}{l}{\emph{not evaluated}} \\
-    \midrule
-    MeanFM     & 100 & 0.0673 (85\,\%) & $0.136 \pm 0.148$ & 0/10 & $892.4 \pm 1.8$ \\
-    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 100 & 0.1791 (60\,\%) & $0.327 \pm 0.323$ & 0/10 & $902.2 \pm 1.5$ \\
-    FM         & 100 & 0.4247 (6\,\%) & $0.352 \pm 0.180$ & 0/10 & $1425.0 \pm 1.8$ \\
-    Diffusion  & 100 & 0.1849 (59\,\%) & $0.236 \pm 0.188$ & 0/10 & $1521.9 \pm 2.9$ \\
-    \bottomrule
-  \end{tabularx}
-\end{table}
-
-\dataref{analysis\_results\_checkpoint/15-09/batch\_va2\_20260915\_100754, recomputed by
-DA\_in\_Paper/analysis/va\_results.py, every row restricted to the ten shared contexts; the $\nfe=20$ and
-$100$ rows are the chapter's.}
-
 \section{UAV-s-curve at the Budgets on Disk}\label{app:uav-scurve-budgets}
 
 Before the matched grids of \autoref{sec:res:uav:scurve} were laid out, the scene was evaluated with
@@ -499,7 +450,7 @@ cell the matched projection grid already has.
   \small
   \begin{tabularx}{\linewidth}{@{}L r r r r r r@{}}
     \toprule
-    Model & $\nfe$ & Passed & Distance [m] & Safe & Aborted & ms/step \\
+    Model & $\nfe$ & Success & Distance [m] & Safe & Aborted & ms/step \\
     \midrule
     MeanFM & 10 & 0/10 & 2.809 & 0/10 & 10/10 & 88.8 \\
     FM     & 20 & 6/10 & 1.193 & 6/10 & 4/10  & 170.4 \\
@@ -508,7 +459,7 @@ cell the matched projection grid already has.
 \end{table}
 \dataref{batch\_uav\_20260919\_111701, tag \texttt{u18sc}, variant \texttt{diffuser}. The earlier
 \texttt{u7hg} campaign also holds an unprojected MeanFM $\nfe=10$ cell, of thirteen flights with two
-passed; the switched-wall re-run flew the cell again and the chapter uses the re-run throughout, as
+successes; the switched-wall re-run flew the cell again and the chapter uses the re-run throughout, as
 \autoref{tab:uav-controller} does.}
 
 \begin{table}[htpb]
@@ -542,7 +493,7 @@ numbers were produced under it too.}
   variants of \autoref{tab:app:uav-scurve-aborts} printed individually, ten flights each, training seed 6.
   Success with constraint satisfaction is $0.00$ in every cell and is omitted. \emph{None}: flown
   unprojected. \emph{Endpoint, single}: the single-candidate form, without a selection rule.
-  \emph{Aborted}: ended early by the divergence guard. \emph{Passed}: crossed the finish line, within the
+  \emph{Aborted}: ended early by the divergence guard. \emph{Success}: crossed the finish line, within the
   constraints or not. Per-step projection has one rule here, for the reason given above.}
   \label{tab:app:uav-scurve-variants}
   \centering
@@ -550,7 +501,7 @@ numbers were produced under it too.}
   \setlength{\tabcolsep}{4pt}
   \begin{tabularx}{\linewidth}{@{}L r L rr r@{}}
     \toprule
-    Model & $\nfe$ & Projection & Aborted & Passed & ms/step \\
+    Model & $\nfe$ & Projection & Aborted & Success & ms/step \\
     \midrule
     FM        & 20 & none              & 4/10  & 6/10 & 170.4 \\
               &    & per-step, $t$     & 10/10 & 0/10 & 3609.9 \\

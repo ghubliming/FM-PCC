@@ -50,8 +50,13 @@ from collections import defaultdict
 REPO = '/workspaces/FM-PCC'
 CSV = os.path.join(REPO, 'Data_Analysis/analysis_results_checkpoint/19-09-UAV-Pillars-Exclude/'
                          'batch_uav_20260919_111701/per_rollout_detail.csv')
-# Flip to False only when pillars is re-evaluated on the enlarged geometry (see the module docstring).
-PILLARS_EXCLUDED = True
+# 2026-09-22: flipped back to False by AUTHOR DECISION. The enlarged geometry (pillars_xl, Gen15 U17)
+# was evaluated in full and ABANDONED — S&C = 0.00 in all 94 cells; every projector routes into the
+# forbidden centre corridor (DA_20260922_pillars_xl_wave.md, Gen15/U17/CLOSURE_20260922_U17_abandoned.md).
+# The thesis falls back to pillars_hg WITH the caveat in the module docstring stated in the prose:
+# the unprojected flows are already feasible there, so the projected rows measure preservation of a
+# feasible plan, not repair of an infeasible one.
+PILLARS_EXCLUDED = False
 M = ('n_success', 'success_relaxed', 'n_success_and_constraints', 'n_success_relaxed_and_constraints',
      'collision_free_completed', 'n_violations', 'n_steps', 'avg_time_ms', 'goal_dist')
 

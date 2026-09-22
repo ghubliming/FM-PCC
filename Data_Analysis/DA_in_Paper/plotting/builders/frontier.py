@@ -24,6 +24,7 @@ then compete on two costs) and does not apply to a continuous outcome.
 Stdlib only, like every builder.
 """
 import csv
+import math
 import os
 import statistics as stats
 
@@ -85,15 +86,16 @@ def _frontier(pts, better):
 def _scatter(f, pts, front, label_key='K'):
     """Points, rings on the non-dominated ones, and a budget label beside each.
 
-    The label sits above the marker for the diffusion baseline and below it for every
+    The label sits below the marker for the diffusion baseline and above it for every
     other model, so that two models at the same budget and nearly the same cost -- which
-    is exactly where FM and the baseline land on D3IL-aligning -- do not overprint."""
+    is exactly where FM and the baseline land on D3IL-aligning, the baseline the lower
+    of the two on the closed-share axis (v3.62) -- do not overprint."""
     fx = {id(p) for p in front}
     pos = _dodge(f, pts)
     for p in pts:
         x, y = pos[id(p)]
         f.marker(x, y, 'o', S.ENGINE_COLOUR_DISTINCT[p['engine']], filled=id(p) in fx, r=6.5, ew=1.6)
-        dy = -11 if p['engine'] == 'diffusion' else 19
+        dy = 19 if p['engine'] == 'diffusion' else -11
         f.text(x + 17, y + dy, p[label_key], 11, '#111' if id(p) in fx else '#777')
     for p in front:
         f.ring(*pos[id(p)], r=13)
@@ -114,17 +116,18 @@ def _legend_strip(width, engines):
 # ═══════════════════════════════════════════════════════════════════════════
 #  D3IL-aligning: final box-to-target distance against time per control step
 # ═══════════════════════════════════════════════════════════════════════════
-# The outcome axis of both alignment frontiers (v3.61, author): the median final
-# distance as a percentage of the mean starting distance, drawn on a log axis. 100 %
-# is a box that was not moved at all; tab:va-models prints the complement in brackets
-# (the share of the distance closed), so 16 % here is the table's (84 %).
-PCT_LABEL = 'final distance, % of the start (log)'
-PCT_TICKS = [10, 20, 50, 100]
-PCT_YLIM = (9.0, 125.0)
+# The outcome axis of both alignment frontiers (v3.62, author): the share of the starting
+# distance the box was moved TOWARDS its target, on a linear axis. 100 % is a box delivered
+# to the target and 0 % a box not moved at all; it is the bracketed number of
+# tab:va-models. v3.61 drew the complement (final distance as % of the start, log axis),
+# which put 100 % at the bad end and read as inverted.
+PCT_LABEL = 'distance closed, % of the start'
+PCT_TICKS = [0, 20, 40, 60, 80, 100]
+PCT_YLIM = (-12.0, 104.0)
 
 
-def _pct_of_start(d):
-    return 100.0 * d / S.ALIGNING_INITIAL_DISTANCE
+def _pct_closed(d):
+    return 100.0 * (1.0 - d / S.ALIGNING_INITIAL_DISTANCE)
 
 
 def _aligning_cells(corpus):
@@ -187,19 +190,19 @@ def fig_aligning_tradeoff(outdir):
     xlo, xhi = min(p['ms'] for p in pts) * 0.6, max(p['ms'] for p in pts) * 1.9
     # No title and no protocol line inside the drawing: which run, which seed and which
     # projection state this is belongs to the caption, not to the page (author, v3.49).
-    # v3.61 (author): the outcome axis is the final distance as a PERCENTAGE of the
-    # starting distance, on a log scale -- not metres. 100 % is a box that was not
-    # moved; the bracketed share in tab:va-models is the complement of this number.
+    # v3.62 (author): the outcome axis is the share of the starting distance the box was
+    # moved towards its target, linear, 100 % at the top -- the bracketed number of
+    # tab:va-models. (v3.61 drew final distance as % of the start on a log axis.)
     for p in pts:
-        p['y'] = _pct_of_start(p['y'])
+        p['y'] = _pct_closed(p['y'])
     f = Fig(760, 430, ml=92, mr=22, mt=26, mb=74, font=FONT)
-    f.axes((xlo, xhi), PCT_YLIM, xlog=True, ylog=True)
+    f.axes((xlo, xhi), PCT_YLIM, xlog=True)
     f.frame(dec_ticks(xlo, xhi), PCT_TICKS,
             'time per control step [ms] (log)', PCT_LABEL,
             '', '',
             xfmt=fmt_num, yfmt=lambda v: f'{v:g}')
     # where the box started: everything on this line did not move the box
-    y0 = f.Y(100.0)
+    y0 = f.Y(0.0)
     f.s.append(f'<line x1="{f.L}" y1="{y0:.1f}" x2="{f.R}" y2="{y0:.1f}" stroke="#c0392b" '
                f'stroke-width="1.4" stroke-dasharray="6,4"/>')
     f.text(f.L + 8, y0 - 9, 'box not moved', 11, '#c0392b', anchor='start', bold=True)
@@ -211,9 +214,10 @@ def fig_aligning_tradeoff(outdir):
                 st.append((f.X(front[i + 1]['ms']), f.Y(q['y'])))
         f.poly(st, '#222', dash='6,4', w=1.6)
     # The direction key was dropped when K=100 was added because it covered the two
-    # right-hand points; the author asked for it back (v3.61). Bottom-left is empty
-    # on this axis pair, and it is the corner the arrow points INTO.
-    _dirarrow(f, -1, +1, x0=f.L + 14 * FONT + 38 * FONT, y0=f.B - 14 * FONT - 37 * FONT)
+    # right-hand points; the author asked for it back (v3.61). With the closed share on
+    # the axis, better is up-left; the top-left corner is empty, and it is the corner
+    # the arrow points INTO.
+    _dirarrow(f, -1, -1, x0=f.L + 14 * FONT + 38 * FONT, y0=f.T + 14 * FONT + 37 * FONT)
     _scatter(f, pts, front)
     hdr = _legend_strip(760, [e for e in MODEL_ORDER if any(k[0] == e for k in cells)])
     from svg.fmpcc_svg import save_grid
@@ -278,21 +282,22 @@ def fig_aligning_projected_tradeoff(outdir):
         and (q['ms'] < p['ms'] or q['y'] < p['y']) for q in eligible)),
         key=lambda p: p['ms'])
     xlo, xhi = min(p['ms'] for p in pts) * 0.65, max(p['ms'] for p in pts) * 1.55
-    # v3.61 (author): percentage of the starting distance on a log axis, as in
+    # v3.62 (author): share of the starting distance closed, linear, as in
     # fig_aligning_tradeoff. The frontier is unchanged in substance -- it is computed
-    # on the eligible (>= 9/10 violation-free) points only -- but the legend now says
-    # what a hollow marker means, which the old drawing left to the caption.
+    # on the eligible (>= 9/10 violation-free) points only, on the distances, before
+    # the axis conversion -- and the legend says what a hollow marker means.
     for p in pts:
-        p['y'] = _pct_of_start(p['y'])
+        p['y'] = _pct_closed(p['y'])
     f = Fig(760, 430, ml=92, mr=22, mt=26, mb=74, font=FONT)
-    f.axes((xlo, xhi), PCT_YLIM, xlog=True, ylog=True)
+    f.axes((xlo, xhi), PCT_YLIM, xlog=True)
     f.frame(dec_ticks(xlo, xhi), PCT_TICKS,
             'time per control step [ms] (log)', PCT_LABEL, '', '',
             xfmt=fmt_num, yfmt=lambda v: f'{v:g}')
-    y0 = f.Y(100.0)
+    y0 = f.Y(0.0)
     f.s.append(f'<line x1="{f.L}" y1="{y0:.1f}" x2="{f.R}" y2="{y0:.1f}" '
                'stroke="#777" stroke-width="1.4" stroke-dasharray="6,4"/>')
-    f.text(f.L + 8, y0 - 9, 'box not moved', 11, '#777', anchor='start', bold=True)
+    # under the line, centred: hollow points sit ON the line at both ends of the axis
+    f.text((f.L + f.R) / 2, y0 + 17, 'box not moved', 11, '#777', anchor='middle', bold=True)
     if len(front) > 1:
         staircase = []
         for i, p in enumerate(front):
@@ -300,7 +305,7 @@ def fig_aligning_projected_tradeoff(outdir):
             if i + 1 < len(front):
                 staircase.append((f.X(front[i + 1]['ms']), f.Y(p['y'])))
         f.poly(staircase, '#34495e', dash='6,4', w=1.6)
-    _dirarrow(f, -1, +1, x0=f.L + 14 * FONT + 38 * FONT, y0=f.B - 14 * FONT - 37 * FONT)
+    _dirarrow(f, -1, -1, x0=f.L + 14 * FONT + 38 * FONT, y0=f.T + 14 * FONT + 37 * FONT)
     pos = _dodge(f, pts, gap=19)
     front_ids = {id(p) for p in front}
     for p in pts:
@@ -314,8 +319,8 @@ def fig_aligning_projected_tradeoff(outdir):
                 lx, ly, anchor = x - 16, y - 16, 'end'
             elif p['K'] == 10:
                 lx, ly, anchor = x + 17, y - 16, 'start'
-            else:
-                lx, ly, anchor = x + 17, y + 25, 'start'
+            else:   # K=20 per-step: its endpoint twin sits just below-right, so label up-left
+                lx, ly, anchor = x - 16, y - 16, 'end'
             f.text(lx, ly, p['K'], 11, '#333', anchor=anchor)
     h = Fig(760, 42, ml=0, mr=0, mt=0, mb=0, font=FONT)
     x = 20
@@ -388,16 +393,37 @@ def fig_uav_corridor_tradeoff(outdir):
         if key not in best or (v['y'], -v['ms']) > (best[key]['y'], -best[key]['ms']):
             best[key] = dict(engine=e, K=K, rule=rule, ms=v['ms'], y=v['y'])
     pts = list(best.values())
-    front = _frontier(pts, lambda a, b: a['y'] > b['y'])
+    n_flights = max(v['n'] for v in cells.values())
+    # v3.63 (author): the success axis is LOGARITHMIC in the number of successful flights.
+    # Zero cannot be drawn on a log axis, so the configurations that never succeed sit on
+    # a floor band under an axis break. Two rules go with that: a configuration with no
+    # successful flight is not a trade-off and is not eligible for the frontier (before,
+    # FM at K=1 was ringed for being the cheapest point at 0.00); and two costs within one
+    # per cent of each other are one cost, so a 0.1 ms tie at K=1 cannot put a worse
+    # point on the frontier. Ties in success do not dominate, as before, which is why the
+    # four configurations at 1.00 all stay on it.
+    eligible = [p for p in pts if p['y'] > 0]
+    front = sorted((p for p in eligible if not any(
+        q is not p and q['y'] > p['y'] and q['ms'] <= p['ms'] * 1.01 for q in eligible)),
+        key=lambda p: p['ms'])
     xlo, xhi = min(p['ms'] for p in pts) * 0.6, max(p['ms'] for p in pts) * 1.9
+    lo = 1.0 / n_flights                       # one successful flight
+    floor = math.log10(lo) - 0.30              # where the zero-success points are drawn
+    v = lambda y: math.log10(y) if y > 0 else floor
+    ticks = [k / n_flights for k in (1, 2, 4, 6, n_flights) if k <= n_flights]
+    labels = {floor: f'0/{n_flights}', **{v(t): f'{round(t * n_flights)}/{n_flights}' for t in ticks}}
     # Title and protocol line removed for the same reason as in fig_aligning_tradeoff
     # (author, v3.49): the caption states the scene, the seed and the flights per cell.
     f = Fig(760, 430, ml=92, mr=22, mt=26, mb=74, font=FONT)
-    f.axes((xlo, xhi), (-0.06, 1.12), xlog=True)
-    f.frame(dec_ticks(xlo, xhi), [0.0, 0.25, 0.5, 0.75, 1.0],
-            'time per control step [ms] (log)', 'success with constraint satisfaction',
+    f.axes((xlo, xhi), (floor - 0.10, 0.08), xlog=True)
+    f.frame(dec_ticks(xlo, xhi), sorted(labels),
+            'time per control step [ms] (log)', 'success with constraint satisfaction (log)',
             '', '',
-            xfmt=fmt_num, yfmt=lambda v: f'{v:.2f}')
+            xfmt=fmt_num, yfmt=lambda t: labels[t])
+    from .avoiding import _break_marks
+    _break_marks(f, f.Y((floor + math.log10(lo)) / 2))
+    for p in pts:
+        p['y'] = v(p['y'])
     if len(front) > 1:
         st = []
         for i, q in enumerate(front):

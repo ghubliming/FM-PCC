@@ -122,20 +122,19 @@ UAV_CONSTRAINTS = {
          ],
          'disks': [{'c': (-2.0, -1.0), 'r': 0.05}, {'c': (2.0, -1.0), 'r': 0.05},
                    {'c': (-2.0, 1.0), 'r': 0.05}, {'c': (2.0, 1.0), 'r': 0.05}]},
-        # [2026-09-19] UAV-pillars is drawn at the ENLARGED test-time radius of `pillars_xl`
-        # (config/uav_projection.yaml, Gen15 U17: radius 0.35 on all six sphere_outside rows),
-        # not at the 0.12 of `pillars_hg`. `pillars_hg` enforced exactly the clearance its own
-        # demonstration generator was built to keep, so the demonstrated routes satisfied it and
-        # the scene measured nothing; it is withdrawn from the thesis and being re-evaluated at
-        # 0.35. `r_phys` is the pillar the simulator actually contains, which does NOT change --
-        # the MJCF geometry stays at 0.12 so the demonstrations and checkpoints remain valid, and
-        # a panel therefore shows a small physical pillar inside a larger enforced keep-out disk.
-        # That difference is the point of the redesign and the drawing carries it.
+        # [2026-09-22, v3.63] UAV-pillars is drawn at the radius the thesis evaluates it at:
+        # `pillars_hg`, the 0.12 m pillar the simulator contains, inflated by the rotor reach
+        # like every other obstacle. From 2026-09-19 to 22 this entry carried the ENLARGED
+        # `pillars_xl` keep-out (0.35, with the 0.12 pillar as `r_phys`); that campaign (Gen15
+        # U17) is ABANDONED -- every projector routed into the forbidden centre lane and the
+        # scene ranked nothing -- and the thesis fell back to `pillars_hg` with its caveat
+        # (Gen15/U17/CLOSURE_20260922_U17_abandoned.md). No `pillars_xl` number or drawing
+        # may appear in a thesis figure.
         {'name': 'UAV-pillars', 'title': 'UAV-pillars',
-         'sub': 'six pillars, enlarged at test time',
+         'sub': 'six pillars',
          'xlim': (-3.0, 3.0), 'ylim': (-1.9, 1.9),
          'halfspaces': [],
-         'disks': [{'c': (x, y), 'r': 0.35, 'r_phys': 0.12}
+         'disks': [{'c': (x, y), 'r': 0.12}
                    for x in (-2.0, 0.0, 2.0) for y in (-0.6, 0.6)]},
         {'name': 'UAV-s-curve', 'title': 'UAV-s-curve',
          'sub': 'two offset passages',
@@ -699,11 +698,8 @@ def prepared_path(key):
 # \includegraphics{<name>}, remove the entry here, and export.
 # Entry: name -> (group, where the draft asks for it, what it must show / how).
 PLANNED = {
-    'fig_uav_pillars_xl_paths': (
-        'da', 'v3/chapters/06_results.tex, fig:uav-pillars-xl-paths',
-        'Executed paths from the complete pillars_xl campaign only; draw the enlarged '
-        'test-time constraint set, choose and identify model--projection cells from the '
-        'completed comparison table. Never reuse the older pillars_hg path figure.'),
+    # [v3.63] fig_uav_pillars_xl_paths was PLANNED here from v3.56 to v3.62; the pillars_xl
+    # campaign is abandoned and the entry is withdrawn. PLANNED is empty again.
     # Before the pillars result slot reopened in v3.56, PLANNED was empty as of 2026-09-19.
     # The last entry to leave was fig_raw_plans_diffusion_K2, the eighth panel of
     # fig:raw-plans; it is in VENDORED above. It was the only one of the eight that
@@ -889,16 +885,19 @@ ALIGNING_CELLS = {
     ('mf', 100):  ('H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_mf_diffusion.VisualMeanFlow', None),
     ('af', 2):    ('H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow', '_msgafon02_s6'),
     ('af', 20):   ('H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow', '_msgafon02_s6'),
+    ('af', 100):  ('H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow', None),
     ('fm', 20):   ('H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching', None),
+    ('fm', 100):  ('H8_K100_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching', None),
     ('diffusion', 20):  ('H8_K20_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion', None),
     ('diffusion', 100): ('H8_K100_T0.5_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion', None),
 }
-# Budgets the thesis reports on this task. K=100 shows the measured tail of both the
-# MeanFM solver budget and diffusion's native chain length; the other models have no
-# K=100 cells. Figures and tables must use the same recorded subset.
+# Budgets the thesis reports on this task. K=100 is the second budget at which all
+# four models have a cell (v3.60 published the CI-MeanFM and FM cells; v3.62 added them
+# here, so fig_aligning_tradeoff shows every row of tab:va-models). Figures and tables
+# must use the same recorded subset.
 ALIGNING_REPORTED = {('mf', 2), ('mf', 10), ('mf', 20), ('mf', 100),
-                     ('af', 2), ('af', 20),
-                     ('fm', 20),
+                     ('af', 2), ('af', 20), ('af', 100),
+                     ('fm', 20), ('fm', 100),
                      ('diffusion', 20), ('diffusion', 100)}
 # The untightened set is the only geometry on which all four models were evaluated,
 # and `diffuser` is the unprojected arm -- the model on its own, which is what the
