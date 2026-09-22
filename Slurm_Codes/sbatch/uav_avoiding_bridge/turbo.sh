@@ -12,12 +12,14 @@
 #      ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_avoiding_bridge/turbo.sh            # PLAN ONLY (dry-run)
 #      GO=1 ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_avoiding_bridge/turbo.sh       # run the PILOT (gate G1)
 #      GO=1 MODE=all ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_avoiding_bridge/turbo.sh   # the whole corpus
-#  Knobs (env): MODE=pilot|all  REPLAYS="clock settle"  HZ=5  GRACE_S=2  SCALE=10  LIMIT=0 (episodes/cell)
+#  Knobs (env): MODE=pilot|all  REPLAYS="clock settle"  HZ=1  VMAX=1.0  GRACE_S=2  SCALE=36  LIMIT=0 (episodes/cell)
+#               GIF=N (overhead MuJoCo GIF for the first N episodes per cell; GPU needed -> submit turbo_gif.sh)
 #               EXTRA="…" appended to every turbo.py call (e.g. --force, --no-png, --max-cells 5)
 #  Pilot = gate G1 of the U18 plan: FM K20 extended cell (msg20trials), seed 6, all three geometries,
 #          `diffuser` + `dpcc-r-tightened`, 20 episodes, replayed with BOTH policies (clock, settle).
-#  Outputs land beside the sources: <eval>_msguavpv2s10turbo/… (clock) and …turboset/… (settle);
-#  per run a JSON in logs/avoiding-d3il/plans/_uav_turbo_runs/. Idempotent: existing cells are skipped.
+#  Outputs (fix2): logs/UAV_MIX/uav-pillars/plans/avoiding_bridge/<engine>/<train>/<eval>_msguavpv2s10turbo/… (clock)
+#  and …turboset/… (settle) — the UAV-pillars scene folder, avoiding-style layout below it; per run a JSON in
+#  …/avoiding_bridge/_uav_turbo_runs/. OUT_ROOT=… overrides. Idempotent: existing cells are skipped.
 # ──────────────────────────────────────────────────────────────────────────────────────────────
 set -eo pipefail
 
@@ -40,21 +42,35 @@ export FMPCC="$REPO"
 export D3IL_ROOT="$FMPCC/d3il"
 export PYTHONPATH="$FMPCC:$D3IL_ROOT:$PYTHONPATH"
 export MPLBACKEND="agg"
-# CPU job, nothing is rendered: tell MuJoCo to skip GL entirely. Without it `import mujoco` walks the
-# glfw -> egl -> osmesa fallback chain and dies in PyOpenGL (first pilot, job 26067). The GPU evals keep
-# their MUJOCO_GL=egl; this file is the only CPU MuJoCo entrypoint in the repo.
-export MUJOCO_GL="disable"
-unset PYOPENGL_PLATFORM
+FORESIGHT="${FORESIGHT:-3}"   # foresight SVGs per cell (matplotlib, CPU)
+GIF="${GIF:-0}"
+if [ "$GIF" -gt 0 ]; then
+    # GIF recording needs a GL context: EGL pinned to the allocated GPU, exactly as the UAV eval jobs do.
+    # Submit through turbo_gif.sh (it carries --gres=gpu:1); this branch only sets the environment.
+    export MUJOCO_GL="egl"
+    export PYOPENGL_PLATFORM="egl"
+    export CUDA_DEVICE_ORDER="PCI_BUS_ID"
+    export MUJOCO_EGL_DEVICE_ID="${CUDA_VISIBLE_DEVICES%%,*}"
+    echo "[ GPU-CHECK ] CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES  MUJOCO_EGL_DEVICE_ID=$MUJOCO_EGL_DEVICE_ID"
+    if [ -z "$MUJOCO_EGL_DEVICE_ID" ]; then echo "[ u18 ] GIF>0 but no GPU allocated: use turbo_gif.sh"; exit 1; fi
+else
+    # CPU job, nothing is rendered: tell MuJoCo to skip GL entirely. Without it `import mujoco` walks the
+    # glfw -> egl -> osmesa fallback chain and dies in PyOpenGL (first pilot, job 26067).
+    export MUJOCO_GL="disable"
+    unset PYOPENGL_PLATFORM
+fi
 cd "$REPO"
 
 MODE="${MODE:-pilot}"
 GO="${GO:-0}"
 REPLAYS="${REPLAYS:-clock settle}"
-HZ="${HZ:-5}"
+HZ="${HZ:-1}"          # fix3: clock mode = 1 setpoint/s at scale 36 (reference rate-limited to VMAX)
+VMAX="${VMAX:-1.0}"       # fix3: reference rate limit; feed-forward OFF (EXTRA="--ff" to opt in, unstable > 0.5 m/s)
 GRACE_S="${GRACE_S:-2}"
 LIMIT="${LIMIT:-0}"
 EXTRA="${EXTRA:-}"
-export FMPCC_AVOID_UAV_SCALE="${SCALE:-10}"
+OUT_ROOT="${OUT_ROOT:-$REPO/logs/UAV_MIX/uav-pillars/plans/avoiding_bridge}"
+export FMPCC_AVOID_UAV_SCALE="${SCALE:-36}"   # fix3: 36 = rod radius (0.01) -> drone reach (0.36)
 STAG="s${FMPCC_AVOID_UAV_SCALE}"
 
 # regenerate the scene for this scale (idempotent; asserts the frame<->scene match at plant load)
@@ -70,13 +86,14 @@ case "$MODE" in
 esac
 
 DRY=(--dry-run); [ "$GO" = "1" ] && DRY=()
-echo "[ u18 ] MODE=$MODE GO=$GO replays='$REPLAYS' hz=$HZ grace=${GRACE_S}s scale=$FMPCC_AVOID_UAV_SCALE limit=$LIMIT extra='$EXTRA'"
+echo "[ u18 ] out_root=$OUT_ROOT"
+echo "[ u18 ] MODE=$MODE GO=$GO replays='$REPLAYS' hz=$HZ vmax=$VMAX grace=${GRACE_S}s scale=$FMPCC_AVOID_UAV_SCALE limit=$LIMIT extra='$EXTRA'"
 for R in $REPLAYS; do
   TAG="uavpv2${STAG}turbo"; [ "$R" = "settle" ] && TAG="uavpv2${STAG}turboset"
   echo "--------------------------------------------------------------------------------"
   echo "[ u18 ] replay=$R  tag=$TAG"
   echo "--------------------------------------------------------------------------------"
   python uav_avoiding_bridge/turbo.py "${SELECT[@]}" --tag "$TAG" --replay "$R" --hz "$HZ" \
-      --grace-s "$GRACE_S" --limit-episodes "$LIMIT" "${DRY[@]}" $EXTRA
+      --grace-s "$GRACE_S" --vmax "$VMAX" --limit-episodes "$LIMIT" --out-root "$OUT_ROOT" --gif "$GIF" --foresight "$FORESIGHT" "${DRY[@]}" $EXTRA
 done
 [ "$GO" = "1" ] || echo "[ u18 ] dry-run only. Re-submit with GO=1 to fly."

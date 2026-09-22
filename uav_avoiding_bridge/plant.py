@@ -35,13 +35,13 @@ Z_PLACEHOLDER = 0.12          # what robot_state()[2] returns; the loop passes i
 
 
 def _drone_reach_m():
-    return 0.31               # rotor reach of the X2 (trajectories.PILLAR_ROTOR_REACH); diagnostics only
+    return F.DRONE_REACH_M    # radial rotor reach of the X2 (0.36); diagnostics only
 
 
 class UavAvoidingPlant:
-    def __init__(self, scale=None, control_hz=5.0, altitude=None, feedforward=True, gain='pid_default',
-                 replay='clock', settle_eps=0.05, settle_max_s=2.0, terminate_on_contact=True,
-                 max_steps_per_episode=250, xml_path=None, verbose=True):
+    def __init__(self, scale=None, control_hz=1.0, altitude=None, feedforward=False, gain='pid_default',
+                 replay='clock', settle_eps=0.05, settle_max_s=4.0, terminate_on_contact=True,
+                 max_steps_per_episode=250, xml_path=None, verbose=True, v_max=1.0):
         import mujoco
         import uav_expert_data_collect.generator as gen
         self._mujoco, self._gen = mujoco, gen
@@ -53,6 +53,14 @@ class UavAvoidingPlant:
         assert replay in ('clock', 'settle'), replay
         self.replay = replay
         self.settle_eps, self.settle_max_s = float(settle_eps), float(settle_max_s)
+        # fix3: clock mode tracks a RATE-LIMITED reference (<= v_max) that slides toward each stored setpoint.
+        # Velocity feed-forward is OFF by default: with this CascadedPID any sustained v_des above ~0.5 m/s saturates
+        # the four motors through the attitude loop and flips the drone (pilot 26073: tilt 50-70 deg, |v| 6 m/s;
+        # reproduced locally at every scale and rate, with and without the rate limiter). Without feed-forward the
+        # PD loop trails the moving reference by Kd/Kp * v ~ 0.2-0.3 m at 36x = 0.007 avoiding units, which is
+        # below the Panda's own setpoint gap (0.02-0.04) - measured on four local episodes. `feedforward=True` is
+        # kept as an opt-in for slow references (v_max <= 0.4).
+        self.v_max = float(v_max)
         self.terminate_on_contact = bool(terminate_on_contact)
         self.max_steps_per_episode = int(max_steps_per_episode)
 
@@ -76,12 +84,67 @@ class UavAvoidingPlant:
         self.episode = -1
         self.records = []           # per-episode dicts (sidecar)
         self._rec = None
+        # GIF recording (opt-in, needs a GL context: MUJOCO_GL=egl on a GPU node). Reuses the proven overhead camera
+        # of uav_expert_data_collect/generate_trajectory_gifs._render_overhead and the writer
+        # mix_uav_test/eval_artifacts.save_rollout_gif, exactly as the UAV-pillars evals do.
+        self._renderer, self.gif_on, self._frames = None, False, []
+        self._gif_stride, self._gif_cam_dist, self._gif_max_frames = 20, 8.0, 900
         self._init_episode_state()
         if verbose:
             print(f'[ uav-plant ] scene={os.path.basename(path)} scale={self.scale:g} alt={self.altitude:g} '
                   f'control {self.control_hz:g} Hz -> {self.n_sub} physics steps of {self.dt:g} s per setpoint '
-                  f'(period {self.period_s:.3f} s), replay={self.replay}, feedforward={self.feedforward}, '
+                  f'(period {self.period_s:.3f} s), replay={self.replay}, feedforward={self.feedforward}, v_max={self.v_max:g} m/s, '
                   f'gain={gain}, contact terminates={self.terminate_on_contact}', flush=True)
+
+    # ── GIF recording (opt-in) ──────────────────────────────────────────────────────────────────
+    def enable_gif(self, res=160, cam_distance=8.0, frame_stride=20, max_frames=900):
+        """Create ONE renderer for the plant's lifetime (never per episode: one GL context, freed in close())."""
+        try:
+            self._renderer = self._mujoco.Renderer(self.model, height=int(res), width=int(res))
+        except Exception as exc:                                   # pragma: no cover - cluster-only
+            print(f'[ uav-plant ] render unavailable ({exc}); GIF skipped')
+            self._renderer = None
+            return False
+        self._gif_cam_dist, self._gif_stride, self._gif_max_frames = float(cam_distance), int(frame_stride), int(max_frames)
+        return True
+
+    def _frame(self, tag=''):
+        """Top-down frame, free camera looking straight down at the drone (generate_trajectory_gifs._render_overhead,
+        with the distance as a knob because the 36x scene is far larger than the trained UAV scenes)."""
+        mj, d = self._mujoco, self.data
+        cam = mj.MjvCamera()
+        cam.type = mj.mjtCamera.mjCAMERA_FREE
+        cam.lookat[:] = d.qpos[:3]
+        cam.distance = self._gif_cam_dist
+        cam.azimuth = 0.0
+        cam.elevation = -90.0
+        self._renderer.update_scene(d, camera=cam)
+        frame = self._renderer.render().copy()
+        try:
+            import cv2
+            w, x, y, z = d.qpos[3:7]
+            tilt = float(np.degrees(np.arccos(np.clip(1 - 2 * (x * x + y * y), -1, 1))))
+            txt = (f's{self.env_step_counter} z{d.qpos[2]:.2f} v{np.linalg.norm(d.qvel[:3]):.1f} tilt{tilt:.0f}' + tag)
+            cv2.putText(frame, txt, (3, 12), cv2.FONT_HERSHEY_SIMPLEX, 0.33, (255, 255, 255), 1, cv2.LINE_AA)
+        except Exception:                                          # pragma: no cover
+            pass
+        return frame
+
+    def pop_frames(self):
+        fr, self._frames = self._frames, []
+        if len(fr) > self._gif_max_frames:                         # keep the file bounded (U17 disk lesson)
+            idx = np.linspace(0, len(fr) - 1, self._gif_max_frames).round().astype(int)
+            fr = [fr[i] for i in idx]
+        return fr
+
+    def _free_renderer(self):
+        if self._renderer is not None:
+            try:
+                if hasattr(self._renderer, 'close'):
+                    self._renderer.close()
+            except Exception:                                      # pragma: no cover
+                pass
+            self._renderer = None
 
     # ── contract ────────────────────────────────────────────────────────────────────────────────
     def start(self):
@@ -101,6 +164,9 @@ class UavAvoidingPlant:
         for _ in range(int(round(0.5 / self.dt))):
             self._ctrl_step(self._start_w, np.zeros(3))
         self._p_des_w = self._start_w.copy()
+        self._ref_w = self._start_w.copy()
+        self._frames = []
+        self._phys_step_in_episode = 0
         self._rec = {'episode': self.episode, 'steps': [], 'contact_steps': 0, 'diverged': None,
                      'success': False, 'ended': None, 'start_w': self._start_w.tolist()}
         return self._obs2()
@@ -128,20 +194,33 @@ class UavAvoidingPlant:
 
     def close(self):
         self._finish_record()
+        self._free_renderer()
 
     # ── the core: track one avoiding-frame setpoint for one control period ──────────────────────
     def track(self, sp_a):
         P = np.array([*F.to_world_xy(float(sp_a[0]), float(sp_a[1]), self.scale), self.altitude])
         if self.replay == 'clock':
-            v_des = (P - self._p_des_w) / self.period_s if self.feedforward else np.zeros(3)
             n_steps, settled = self.n_sub, None
         else:
-            v_des, n_steps, settled = np.zeros(3), int(round(self.settle_max_s / self.dt)), False
+            n_steps, settled = int(round(self.settle_max_s / self.dt)), False
         contact, errs, diverged, t0 = False, [], None, time.perf_counter()
         for i in range(n_steps):
-            hit = self._ctrl_step(P, v_des)
+            if self.replay == 'clock':
+                # slide the reference toward P at <= v_max; feed-forward = the reference's own velocity
+                gap = P - self._ref_w
+                step = min(np.linalg.norm(gap), self.v_max * self.dt)
+                ref_new = self._ref_w + (gap / np.linalg.norm(gap) * step if step > 1e-12 else 0.0)
+                v_des = (ref_new - self._ref_w) / self.dt if self.feedforward else np.zeros(3)
+                self._ref_w = ref_new
+                hit = self._ctrl_step(self._ref_w, v_des)
+            else:
+                hit = self._ctrl_step(P, np.zeros(3))
             contact = contact or hit
             errs.append(float(np.linalg.norm(self.data.qpos[:3] - P)))
+            if self.gif_on and self._renderer is not None:
+                self._phys_step_in_episode += 1
+                if hit or self._phys_step_in_episode % self._gif_stride == 0:
+                    self._frames.append(self._frame(' CONTACT' if hit else ''))
             if hit and self.terminate_on_contact:
                 break
             diverged = self._divergence()
@@ -155,10 +234,11 @@ class UavAvoidingPlant:
         gap_a = float(np.linalg.norm(np.asarray(sp_a, float) - np.asarray(F.to_avoiding_xy(p[0], p[1], self.scale))))
         info = {'contact': bool(contact), 'diverged': diverged, 'track_err_end': errs[-1] if errs else 0.0,
                 'track_err_max': max(errs) if errs else 0.0, 'gap_a': gap_a, 'settled': settled,
+                'ref_lag_m': float(np.linalg.norm(P - self._ref_w)) if self.replay == 'clock' else 0.0,
                 'phys_steps': len(errs), 'p_w': p.tolist(), 'p_des_w': P.tolist(),
                 'speed': float(np.linalg.norm(self.data.qvel[:3])), 'wall_ms': (time.perf_counter() - t0) * 1e3}
         if self._rec is not None:
-            row = {k: info[k] for k in ('track_err_end', 'track_err_max', 'gap_a', 'phys_steps', 'speed')}
+            row = {k: info[k] for k in ('track_err_end', 'track_err_max', 'gap_a', 'phys_steps', 'speed', 'ref_lag_m')}
             row.update({'p_w': info['p_w'], 'contact': info['contact']})
             self._rec['steps'].append(row)
             self._rec['contact_steps'] += int(contact)
@@ -240,6 +320,7 @@ class UavAvoidingPlant:
                 'contact_steps': int(self._rec['contact_steps']), 'diverged': self._rec['diverged'],
                 'success': bool(self._rec['success']), 'ended': self._rec['ended'],
                 'speed_max_ms': float(max(s['speed'] for s in st)),
+                'ref_lag_p95_m': float(np.percentile([s['ref_lag_m'] for s in st], 95)),
             }
             self.records.append(self._rec)
         self._rec = None
@@ -247,7 +328,7 @@ class UavAvoidingPlant:
     def settings(self):
         return {'scale': self.scale, 'altitude': self.altitude, 'control_hz': self.control_hz, 'period_s': self.period_s,
                 'physics_dt': self.dt, 'feedforward': self.feedforward, 'gain': self.gain, 'replay': self.replay,
-                'settle_eps': self.settle_eps, 'settle_max_s': self.settle_max_s,
+                'settle_eps': self.settle_eps, 'settle_max_s': self.settle_max_s, 'v_max': self.v_max,
                 'terminate_on_contact': self.terminate_on_contact, 'scene_xml': self.xml_path,
                 'origin_a': list(F.ORIGIN_A), 'drone_reach_m': _drone_reach_m()}
 

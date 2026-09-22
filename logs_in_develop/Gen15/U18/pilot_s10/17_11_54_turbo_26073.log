@@ -1,0 +1,108 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Tue Sep 22 15:11:55 UTC 2026   NAME: turbo   ID: 26073   NODE: i6-gpu-1
+GIT REV:   44f2515c
+================================================================================
+wrote /data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/quadrotor/scenes/scene_avoiding_pillars_s10.xml
+scale 10  altitude 1 m  origin_a (0.5, 0.035)
+field X [-3.35, 3.65]  Y [-3.00, 3.00]  start (-3.15, -0.25)  finish X = 3.15
+  l1_obs         a=(0.500,-0.100) r=0.030  ->  w=(-1.35,-0.00) r=0.300
+  l2_top_obs     a=(0.425,0.080) r=0.025  ->  w=(+0.45,+0.75) r=0.250
+  l2_bottom_obs  a=(0.575,0.080) r=0.025  ->  w=(+0.45,-0.75) r=0.250
+  l3_top_obs     a=(0.350,0.260) r=0.025  ->  w=(+2.25,+1.50) r=0.250
+  l3_mid_obs     a=(0.500,0.260) r=0.025  ->  w=(+2.25,-0.00) r=0.250
+  l3_bottom_obs  a=(0.650,0.260) r=0.025  ->  w=(+2.25,-1.50) r=0.250
+[ u18 ] MODE=pilot GO=1 replays='clock settle' hz=5 grace=2s scale=10 limit=0 extra=''
+--------------------------------------------------------------------------------
+[ u18 ] replay=clock  tag=uavpv2s10turbo
+--------------------------------------------------------------------------------
+[ turbo ] root=/data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans
+[ turbo ] 6 matching cells, 6 to run (0 already have uavpv2s10turbo output)  tag=uavpv2s10turbo replay=clock hz=5 ff=True grace=2s limit=all
+scale 10  altitude 1 m  origin_a (0.5, 0.035)
+field X [-3.35, 3.65]  Y [-3.00, 3.00]  start (-3.15, -0.25)  finish X = 3.15
+  l1_obs         a=(0.500,-0.100) r=0.030  ->  w=(-1.35,-0.00) r=0.300
+  l2_top_obs     a=(0.425,0.080) r=0.025  ->  w=(+0.45,+0.75) r=0.250
+  l2_bottom_obs  a=(0.575,0.080) r=0.025  ->  w=(+0.45,-0.75) r=0.250
+  l3_top_obs     a=(0.350,0.260) r=0.025  ->  w=(+2.25,+1.50) r=0.250
+  l3_mid_obs     a=(0.500,0.260) r=0.025  ->  w=(+2.25,-0.00) r=0.250
+  l3_bottom_obs  a=(0.650,0.260) r=0.025  ->  w=(+2.25,-1.50) r=0.250
+   flow_matching_v3_ode_selectable        H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20tr s6 both-hard       diffuser
+   flow_matching_v3_ode_selectable        H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20tr s6 both-hard       dpcc-r-tightened
+   flow_matching_v3_ode_selectable        H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20tr s6 top-left-hard   diffuser
+   flow_matching_v3_ode_selectable        H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20tr s6 top-left-hard   dpcc-r-tightened
+   flow_matching_v3_ode_selectable        H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20tr s6 top-right-hard  diffuser
+   flow_matching_v3_ode_selectable        H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20tr s6 top-right-hard  dpcc-r-tightened
+[ uav-plant ] scene=scene_avoiding_pillars_s10.xml scale=10 alt=1 control 5 Hz -> 20 physics steps of 0.01 s per setpoint (period 0.200 s), replay=clock, feedforward=True, gain=pid_default, contact terminates=True
+[ turbo ] 1/6 flow_matching_v3_ode_selectable | H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchin | s6 both-hard diffuser  n=20 5s
+           panda  succ 1.00  S&C 0.05  cf 0.05  viol 12.2  steps 67.7
+           drone  succ 0.15  S&C 0.00  cf 0.00  viol 4.0  steps 52.0   agree 3/20  ended {'success': 3, 'contact': 15, 'exhausted': 0, 'cap': 0, 'diverged': 2}
+           plant  track_err mean 0.081 m  p95 0.646 m  gap_a p95 0.0572 (panda 0.0273)  contact eps 15  vmax 6.04 m/s
+[ turbo ] 2/6 flow_matching_v3_ode_selectable | H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchin | s6 both-hard dpcc-r-tightened  n=20 4s
+           panda  succ 1.00  S&C 1.00  cf 1.00  viol 0.0  steps 61.9
+           drone  succ 0.15  S&C 0.15  cf 0.15  viol 0.1  steps 45.8   agree 3/20  ended {'success': 3, 'contact': 12, 'exhausted': 0, 'cap': 0, 'diverged': 5}
+           plant  track_err mean 0.137 m  p95 1.604 m  gap_a p95 0.1455 (panda 0.0412)  contact eps 12  vmax 6.18 m/s
+[ turbo ] 3/6 flow_matching_v3_ode_selectable | H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchin | s6 top-left-hard diffuser  n=20 5s
+           panda  succ 1.00  S&C 0.05  cf 0.05  viol 10.8  steps 67.7
+           drone  succ 0.15  S&C 0.00  cf 0.00  viol 8.9  steps 52.0   agree 3/20  ended {'success': 3, 'contact': 15, 'exhausted': 0, 'cap': 0, 'diverged': 2}
+           plant  track_err mean 0.081 m  p95 0.646 m  gap_a p95 0.0572 (panda 0.0273)  contact eps 15  vmax 6.04 m/s
+[ turbo ] 4/6 flow_matching_v3_ode_selectable | H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchin | s6 top-left-hard dpcc-r-tightened  n=20 4s
+           panda  succ 1.00  S&C 0.95  cf 0.95  viol 0.3  steps 78.8
+           drone  succ 0.00  S&C 0.00  cf 0.00  viol 0.0  steps 47.8   agree 0/20  ended {'success': 0, 'contact': 13, 'exhausted': 0, 'cap': 0, 'diverged': 7}
+           plant  track_err mean 0.106 m  p95 0.937 m  gap_a p95 0.0595 (panda 0.1352)  contact eps 13  vmax 6.10 m/s
+[ turbo ] 5/6 flow_matching_v3_ode_selectable | H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchin | s6 top-right-hard diffuser  n=20 5s
+           panda  succ 1.00  S&C 0.00  cf 0.00  viol 31.6  steps 67.7
+           drone  succ 0.15  S&C 0.00  cf 0.00  viol 17.9  steps 52.0   agree 3/20  ended {'success': 3, 'contact': 15, 'exhausted': 0, 'cap': 0, 'diverged': 2}
+           plant  track_err mean 0.081 m  p95 0.646 m  gap_a p95 0.0572 (panda 0.0273)  contact eps 15  vmax 6.04 m/s
+[ turbo ] 6/6 flow_matching_v3_ode_selectable | H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchin | s6 top-right-hard dpcc-r-tightened  n=20 4s
+           panda  succ 0.95  S&C 0.95  cf 0.95  viol 0.0  steps 73.2
+           drone  succ 0.05  S&C 0.05  cf 0.05  viol 0.0  steps 45.4   agree 2/20  ended {'success': 1, 'contact': 16, 'exhausted': 0, 'cap': 0, 'diverged': 3}
+           plant  track_err mean 0.070 m  p95 0.436 m  gap_a p95 0.0312 (panda 0.0338)  contact eps 16  vmax 6.15 m/s
+[ turbo ] done: 6 cells in 28s -> /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/_uav_turbo_runs
+--------------------------------------------------------------------------------
+[ u18 ] replay=settle  tag=uavpv2s10turboset
+--------------------------------------------------------------------------------
+[ turbo ] root=/data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans
+[ turbo ] 6 matching cells, 6 to run (0 already have uavpv2s10turboset output)  tag=uavpv2s10turboset replay=settle hz=5 ff=True grace=2s limit=all
+scale 10  altitude 1 m  origin_a (0.5, 0.035)
+field X [-3.35, 3.65]  Y [-3.00, 3.00]  start (-3.15, -0.25)  finish X = 3.15
+  l1_obs         a=(0.500,-0.100) r=0.030  ->  w=(-1.35,-0.00) r=0.300
+  l2_top_obs     a=(0.425,0.080) r=0.025  ->  w=(+0.45,+0.75) r=0.250
+  l2_bottom_obs  a=(0.575,0.080) r=0.025  ->  w=(+0.45,-0.75) r=0.250
+  l3_top_obs     a=(0.350,0.260) r=0.025  ->  w=(+2.25,+1.50) r=0.250
+  l3_mid_obs     a=(0.500,0.260) r=0.025  ->  w=(+2.25,-0.00) r=0.250
+  l3_bottom_obs  a=(0.650,0.260) r=0.025  ->  w=(+2.25,-1.50) r=0.250
+   flow_matching_v3_ode_selectable        H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20tr s6 both-hard       diffuser
+   flow_matching_v3_ode_selectable        H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20tr s6 both-hard       dpcc-r-tightened
+   flow_matching_v3_ode_selectable        H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20tr s6 top-left-hard   diffuser
+   flow_matching_v3_ode_selectable        H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20tr s6 top-left-hard   dpcc-r-tightened
+   flow_matching_v3_ode_selectable        H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20tr s6 top-right-hard  diffuser
+   flow_matching_v3_ode_selectable        H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20tr s6 top-right-hard  dpcc-r-tightened
+[ uav-plant ] scene=scene_avoiding_pillars_s10.xml scale=10 alt=1 control 5 Hz -> 20 physics steps of 0.01 s per setpoint (period 0.200 s), replay=settle, feedforward=True, gain=pid_default, contact terminates=True
+[ turbo ] 1/6 flow_matching_v3_ode_selectable | H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchin | s6 both-hard diffuser  n=20 16s
+           panda  succ 1.00  S&C 0.05  cf 0.05  viol 12.2  steps 67.7
+           drone  succ 0.25  S&C 0.00  cf 0.00  viol 7.1  steps 55.0   agree 4/20  ended {'success': 5, 'contact': 15, 'exhausted': 0, 'cap': 0, 'diverged': 0}
+           plant  track_err mean 0.043 m  p95 0.051 m  gap_a p95 0.0051 (panda 0.0273)  contact eps 15  vmax 0.15 m/s
+[ turbo ] 2/6 flow_matching_v3_ode_selectable | H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchin | s6 both-hard dpcc-r-tightened  n=20 17s
+           panda  succ 1.00  S&C 1.00  cf 1.00  viol 0.0  steps 61.9
+           drone  succ 0.25  S&C 0.25  cf 0.25  viol 0.0  steps 53.5   agree 5/20  ended {'success': 5, 'contact': 15, 'exhausted': 0, 'cap': 0, 'diverged': 0}
+           plant  track_err mean 0.049 m  p95 0.050 m  gap_a p95 0.0050 (panda 0.0412)  contact eps 15  vmax 0.13 m/s
+[ turbo ] 3/6 flow_matching_v3_ode_selectable | H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchin | s6 top-left-hard diffuser  n=20 16s
+           panda  succ 1.00  S&C 0.05  cf 0.05  viol 10.8  steps 67.7
+           drone  succ 0.25  S&C 0.00  cf 0.00  viol 11.3  steps 55.0   agree 5/20  ended {'success': 5, 'contact': 15, 'exhausted': 0, 'cap': 0, 'diverged': 0}
+           plant  track_err mean 0.043 m  p95 0.051 m  gap_a p95 0.0051 (panda 0.0273)  contact eps 15  vmax 0.15 m/s
+[ turbo ] 4/6 flow_matching_v3_ode_selectable | H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchin | s6 top-left-hard dpcc-r-tightened  n=20 14s
+           panda  succ 1.00  S&C 0.95  cf 0.95  viol 0.3  steps 78.8
+           drone  succ 0.20  S&C 0.20  cf 0.20  viol 0.0  steps 51.8   agree 4/20  ended {'success': 4, 'contact': 15, 'exhausted': 0, 'cap': 0, 'diverged': 1}
+           plant  track_err mean 0.042 m  p95 0.073 m  gap_a p95 0.0073 (panda 0.1352)  contact eps 15  vmax 0.19 m/s
+[ turbo ] 5/6 flow_matching_v3_ode_selectable | H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchin | s6 top-right-hard diffuser  n=20 16s
+           panda  succ 1.00  S&C 0.00  cf 0.00  viol 31.6  steps 67.7
+           drone  succ 0.25  S&C 0.00  cf 0.00  viol 21.2  steps 55.0   agree 5/20  ended {'success': 5, 'contact': 15, 'exhausted': 0, 'cap': 0, 'diverged': 0}
+           plant  track_err mean 0.043 m  p95 0.051 m  gap_a p95 0.0051 (panda 0.0273)  contact eps 15  vmax 0.15 m/s
+[ turbo ] 6/6 flow_matching_v3_ode_selectable | H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchin | s6 top-right-hard dpcc-r-tightened  n=20 11s
+           panda  succ 0.95  S&C 0.95  cf 0.95  viol 0.0  steps 73.2
+           drone  succ 0.10  S&C 0.10  cf 0.10  viol 0.0  steps 44.0   agree 3/20  ended {'success': 2, 'contact': 18, 'exhausted': 0, 'cap': 0, 'diverged': 0}
+           plant  track_err mean 0.043 m  p95 0.075 m  gap_a p95 0.0075 (panda 0.0338)  contact eps 18  vmax 0.15 m/s
+[ turbo ] done: 6 cells in 92s -> /data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/_uav_turbo_runs
+================================================================================
+JOB END:   Tue Sep 22 15:13:56 UTC 2026
+================================================================================

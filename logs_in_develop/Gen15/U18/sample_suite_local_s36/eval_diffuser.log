@@ -1,0 +1,13 @@
+------------------------ turbo replay fm | e | seed 6 | both-hard | diffuser ----------------------------
+source npz : 
+plant      : {'scale': 36.0, 'altitude': 1.0, 'control_hz': 1.0, 'period_s': 1.0, 'physics_dt': 0.01, 'feedforward': False, 'gain': 'pid_default', 'replay': 'settle', 'settle_eps': 0.05, 'settle_max_s': 4.0, 'v_max': 1.0, 'terminate_on_contact': True, 'scene_xml': '/workspaces/FM-PCC/d3il/environments/d3il/models/mj/robot/quadrotor/scenes/scene_avoiding_pillars_s36.xml', 'origin_a': [0.5, 0.035], 'drone_reach_m': 0.36}
+n episodes : 2   wall 1.0 s
+
+PANDA  Success rate: 1.00   Constraints satisfied: 1.00   Success (goal and constraints): 1.00   Avg violations: 0.00   Avg steps: 65.0
+DRONE  Success rate: 1.00   Constraints satisfied: 1.00   Success (goal and constraints): 1.00   Avg violations: 0.00   Avg steps: 65.0
+agree (success, cf) on 2/2 episodes   ended {}
+plant  track_err mean 0.050 m  p95 0.050 m   gap_a p95 0.0050 (panda 0.0300)   contact episodes 0   |v|max 0.20 m/s
+
+ep  ended      succ  S&C  cf  viol  total_viol  steps  src_len  grace
+ 0  success    1     0    0    20     3.7776     73     74     0
+ 1  success    1     0    0    15     3.2211     57     58     0

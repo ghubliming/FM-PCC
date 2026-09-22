@@ -1,6 +1,6 @@
 # Memory Index
 
-- [Python OK for debug/analysis here; pipeline runs on cluster](docker-no-python-cluster-only.md) — interpreter allowed for debugging always & data analysis on request; NEVER run training/eval/pipeline locally (cluster job)
+- [Python OK for debug/analysis here; pipeline runs on cluster](docker-no-python-cluster-only.md) — interpreter allowed for debugging always & data analysis on request; python3.14 has numpy/matplotlib/mujoco for local debug replays; NEVER run training/eval/pipeline locally (cluster job)
 - [Never auto-commit, no Claude co-author](no-auto-commit-no-coauthor.md) — user commits manually; omit Co-Authored-By trailer
 - [No unrequested CODE edits — but always update MDs](no-unrequested-code-edits.md) — code/config needs a go-ahead; report/analysis MDs: write the update immediately, never ask
 - [FM-PCC dev-logs navigation](fmpcc-dev-logs-navigation.md) — MASTER_TEST_HISTORY.md is the index; repo based on aux_repo/dpcc; unfinished project
@@ -26,4 +26,4 @@
 - [DA requires real result data](da-requires-csv-never-from-logs.md) — batch CSVs OR raw result folders (results.json/rollouts/npz) are OK; sbatch/eval console logs alone are not
 - [🚨 GATED: 2026-09-07 lost-history recovery](crisis-recovery-lost-chat-2026-09-07.md) — open the dossier ONLY when the user explicitly says "resume from the Claude Code crisis" / "continue the lost chat"; Sep-7 transcripts unrecoverable, 2 key sessions + a chat↔MD↔topic bridge table located in the 09-06 backup
 - [U17 pillars_xl ABANDONED → fallback pillars_hg](u17-pillars-xl-floor-result.md) — all-zero grid (Sep 2026): every projector takes the forbidden centre corridor; never use/run pillars_xl or xxl; pillars_hg section restored WITH its preservation-not-repair caveat; v3 notified
-- [U18 pillars_v2 = avoiding planners flown by the quadrotor (bridge)](u18-pillars-v2-avoiding-bridge.md) — uav_avoiding_bridge/, 10× scaled scene, Mode T replays stored obs_all (CPU), Mode L env switch; user gave full authority; pilot not run yet
+- [U18 pillars_v2 = avoiding planners flown by the quadrotor (bridge)](u18-pillars-v2-avoiding-bridge.md) — uav_avoiding_bridge/, 36× scaled scene (rod radius→drone reach), Mode T replays stored obs_all (CPU, MUJOCO_GL=disable), Mode L env switch; ff OFF in clock mode; s10 pilot = contacts everywhere; user gave full authority

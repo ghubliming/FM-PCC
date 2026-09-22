@@ -24,7 +24,7 @@ if REPO not in sys.path:
 from uav_avoiding_bridge import frame as F                                   # noqa: E402
 from uav_avoiding_bridge.scoring import geometry_for, load_projection_cfg   # noqa: E402
 
-DRONE_REACH = 0.31     # m, rotor reach (trajectories.PILLAR_ROTOR_REACH)
+DRONE_REACH = F.DRONE_REACH_M     # m, radial rotor reach (0.36)
 GEOS = ('top-left-hard', 'top-right-hard', 'both-hard')
 C_PILLAR, C_CONS, C_FINISH = '#d98c40', '#1f4fd8', '#2ca02c'
 
@@ -132,10 +132,9 @@ def _numbers(scale):
     s = scale
     gap = 0.15 - 2 * 0.025
     return (f'scale {s:g}: arena {s * 0.6:.1f} × {s * 0.7:.1f} m · pillars r = {s * 0.025:.2f} / {s * 0.03:.2f} m · '
-            f'keep-out disk r = {s * 0.08:.2f} m (tightened +{s * 0.025:.2f}) · drone reach {DRONE_REACH} m\n'
-            f'row-2/3 opening {s * gap:.2f} m → centred pass clearance {s * gap / 2:.2f} m − reach = '
-            f'{s * gap / 2 - DRONE_REACH:+.2f} m of tracking slack · action bound {s * 0.01:.2f}–{s * 0.012:.2f} m/step '
-            f'→ {s * 0.01 * 5:.1f}–{s * 0.012 * 5:.1f} m/s at 5 Hz')
+            f'keep-out disk r = {s * 0.08:.2f} m (tightened +{s * 0.025:.2f}) · drone radial reach {DRONE_REACH} m = rod radius × {DRONE_REACH / s / 0.01:.2f}\n'
+            f'row-2/3 opening {s * gap:.2f} m · Panda paths hug obstacles at 0.01–0.02 units → {s * 0.01:.2f}–{s * 0.02:.2f} m in the world · '
+            f'action bound {s * 0.01:.2f}–{s * 0.012:.2f} m/step → clock mode tracks a reference rate-limited to 0.6 m/s')
 
 
 def main():
@@ -171,15 +170,16 @@ def main():
     fig.savefig(p, dpi=120, bbox_inches='tight'); plt.close(fig); print('wrote', p)
 
     # scale ladder: both-hard at 3, 6, 8, 10, 12 — the "does the drone fit" picture
-    ladder = (3, 6, 8, 10, 12)
+    ladder = (3, 10, 20, 36, 45)
     fig, axes = plt.subplots(1, len(ladder), figsize=(4.2 * len(ladder), 5))
     geo = geometry_for('both-hard', cfg)
     for ax, sc in zip(axes, ladder):
         draw_world(ax, geo, sc, arena=False, legend=False)
-        gap = sc * (0.15 - 0.05) / 2 - DRONE_REACH
-        ax.set_title(f'scale {sc}: row-2/3 slack {gap:+.2f} m', fontsize=10, color=('r' if gap < 0.05 else 'k'))
+        hug = sc * 0.012 - DRONE_REACH        # a path hugging at 0.012 units (rod radius + 2 mm): slack in the world
+        ax.set_title(f'scale {sc}: hugging-path slack {hug:+.2f} m', fontsize=10, color=('r' if hug < 0.0 else 'k'))
         ax.set_xlabel(''); ax.set_ylabel('')
-    fig.suptitle('scale ladder (both-hard): orange halo = pillar + 0.31 m rotor reach; when the halos of a row touch, the drone cannot pass', fontsize=10)
+    fig.suptitle('scale ladder (both-hard): orange halo = pillar + 0.36 m radial rotor reach. The Panda paths pass the obstacles at the rod radius '
+                 '(0.01-0.02 units), so the faithful scale maps 0.01 onto 0.36: x36', fontsize=10)
     p = os.path.join(args.out, 'constraint_overview_scale_ladder_world.png')
     fig.savefig(p, dpi=110, bbox_inches='tight'); plt.close(fig); print('wrote', p)
 

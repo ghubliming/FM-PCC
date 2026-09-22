@@ -1,6 +1,6 @@
 ---
 name: u18-pillars-v2-avoiding-bridge
-description: "Gen15 U18 pillars_v2 (Sep 2026): D3IL-avoiding planners executed by the quadrotor in a 10x similarity-scaled scene via uav_avoiding_bridge/; Mode T replays stored obs_all (no NN/NLP, CPU), Mode L = env switch in the five avoiding evals; user gave full authority; not run yet"
+description: "Gen15 U18 pillars_v2 (Sep 2026): D3IL-avoiding planners executed by the quadrotor in a 36x similarity-scaled scene (rod radius 0.01 -> drone reach 0.36) via uav_avoiding_bridge/; Mode T replays stored obs_all (no NN/NLP, CPU), Mode L = env switch in the five avoiding evals; user gave full authority; not run yet"
 metadata:
   type: project
 ---
@@ -8,13 +8,15 @@ metadata:
 **U18 `pillars_v2` (2026-09-22, replaces the abandoned U17 idea).** Reuse ALL trained avoiding models + their
 DPCC/HardFlow projectors + the three test-time geometries + scorer unchanged; swap only the plant: quadrotor +
 CascadedPID in `scene_avoiding_pillars_s10.xml` (avoiding field × 10, six 2 m pillars; X = s(y_a−0.035),
-Y = −s(x_a−0.5), z = 1.0). Code: `uav_avoiding_bridge/{frame,scene,plant,scoring,turbo,factory}.py`;
+Y = −s(x_a−0.5), z = 1.0). Code: `uav_avoiding_bridge/{frame,scene,plant,scoring,turbo,factory,overview_plot}.py`;
 driver `Slurm_Codes/sbatch/uav_avoiding_bridge/turbo.sh` (dry-run unless GO=1). Plan + changelog in
 `logs_in_develop/Gen15/U18/`. The user said "you fully have the authority on this U18".
 
-**Why 10×, not the user's 2–3×:** the X2 spans 0.62 m; demonstrated gap clearance is 0.05 avoiding-units →
-s·0.05 − 0.31 m of tracking slack (negative below 8×). Each geometry = 1–2 halfspaces + ONE keep-out disk (0.08),
-NOT a disk per pillar; physical pillars are avoided by the learned behaviour.
+**Why 36× (fix3, pilot 26073):** the Panda paths hug obstacles at the rod radius (0.009–0.02 units); the X2's
+radial reach is 0.36 m → faithful scale 0.36/0.01 = 36. At 10× the drone hit pillars in 15–18/20 episodes with
+perfect tracking (settle mode). Each geometry = 1–2 halfspaces + ONE keep-out disk (0.08), NOT a disk per pillar.
+**Clock mode:** velocity feed-forward flips the CascadedPID above ~0.5 m/s of v_des (motor saturation via the
+attitude loop) → ff OFF, rate-limited reference 1 m/s, 1 Hz; settle mode is the geometric bound.
 
 **How to apply:**
 - Mode T (turbo) = the paper grid candidate: every avoiding npz has `obs_all`; replay its setpoints, rescore on

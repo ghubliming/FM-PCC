@@ -11,7 +11,8 @@ and the result layout are the avoiding ones. Only the plant (Panda + IK → quad
 | `scene.py` | generates `d3il/…/quadrotor/scenes/scene_avoiding_pillars_s<scale>.xml` from `frame.py` (`python uav_avoiding_bridge/scene.py`). The committed XML is generated output. |
 | `plant.py` | `UavAvoidingPlant`: the `ObstacleAvoidanceEnv` stand-in (`start/reset/robot_state/step/close`, avoiding units in and out). PID tracking for one control period per setpoint (`clock`, 5 Hz, velocity feed-forward) or until settled (`settle`). Contact / divergence end the episode as a failure. Records a per-episode sidecar. Asserts the scene matches the frame at load. |
 | `scoring.py` | the avoiding violation arithmetic copied from the eval loop (halfspace / keep-out / bounds, same phases, same conventions) so Mode T scores exactly as Mode L. |
-| `turbo.py` | **Mode T**: walk `logs/avoiding-d3il/plans`, replay every episode's stored setpoint sequence, rescore on the drone path, write the mirrored `<eval>_msg<tag>/…/<variant>.npz` (+ `_uav_plant.json`, `_uav_world.png`). `--dry-run` first. |
+| `turbo.py` | **Mode T**: walk `logs/avoiding-d3il/plans`, replay every episode's stored setpoint sequence, rescore on the drone path, write `<out-root>/<engine>/<train>/<eval>_msg<tag>/<seed>/results/halfspace_<geo>/<variant>.npz` (+ `_uav_plant.json`, `_uav_world.png`), `<out-root>` = `logs/UAV_MIX/uav-pillars/plans/avoiding_bridge` (fix2). `--dry-run` first. |
+| `artifacts.py` | the per-cell suite of Mode T: `<variant>.png` (avoiding-style cell figure), `eval_<variant>.log`, and the UAV suite's MPC-foresight SVG (`eval_artifacts.write_mpc_foresight`) fed with the replay in the UAV rollout schema. |
 | `factory.py` | **Mode L**: `make_avoiding_env(ObstacleAvoidanceEnv)` — the one-line hook in the five eval scripts. `FMPCC_AVOIDING_PLANT=uav` selects the plant; requires `FMPCC_RUN_MSG` containing `uav`. |
 
 ## Run
@@ -25,7 +26,9 @@ python uav_avoiding_bridge/turbo.py --engine flow_matching_v3_ode_selectable --e
 FMPCC_AVOIDING_PLANT=uav FMPCC_RUN_MSG=uavpv2s10 python FM_v3_ode_selectable_test/eval_flow_matching_v3_ode_selectable.py --flow-steps 20 --seed 6
 ```
 
-Knobs: `FMPCC_AVOID_UAV_HZ` (5), `FMPCC_AVOID_UAV_FF` (1), `FMPCC_AVOID_UAV_GAIN` (`pid_default`),
+GIFs (Mode T): `--gif N` on a GPU node with `MUJOCO_GL=egl` — `Slurm_Codes/sbatch/uav_avoiding_bridge/turbo_gif.sh`.
+
+Knobs: `FMPCC_AVOID_UAV_HZ` (1), `FMPCC_AVOID_UAV_FF` (0), `FMPCC_AVOID_UAV_GAIN` (`pid_default`),
 `FMPCC_AVOID_UAV_REPLAY` (`clock`|`settle`), `FMPCC_AVOID_UAV_SCALE` (10), `FMPCC_AVOID_UAV_ALT` (1.0).
 
 ## Reading the output

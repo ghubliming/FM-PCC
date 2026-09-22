@@ -5,6 +5,12 @@ Internal name `pillars_v2` (a.k.a. "pillars-v2 avoiding"); in the thesis simply 
 Predecessor: [U17](../U17/CLOSURE_20260922_U17_abandoned.md) (abandoned 2026-09-22, all-zero grid).
 **rev 2 (same day):** adds **Mode T — bridging-turbo** (§3.3): replay the *stored* avoiding executions through the
 drone plant, no network, no NLP. Mode L (live closed loop) is kept unchanged. Both share one plant.
+**rev 4 (same day, after pilot 26073):** the scale is **36**, not 10 — the Panda paths hug the obstacles at the rod
+radius (0.009–0.02 units), so the faithful map sends the rod radius (0.01) onto the drone's radial reach (0.36 m);
+at 10× the drone touched a pillar in 15–18 of 20 episodes with perfect tracking. Clock mode: feed-forward off
+(this PID flips above ≈ 0.5 m/s of `v_des`), rate-limited reference 1 m/s, 1 setpoint/s. Details and evidence:
+[`CHANGELOG_…fix3_scale36_clock_mode.md`](CHANGELOG_20260922_U18_fix3_scale36_clock_mode.md). §2.3–2.4 below are
+superseded where they say 10× / 5 Hz / feed-forward.
 **rev 3 (same day, coded):** §2.2–2.3 corrected — each avoiding geometry selects **one** keep-out disk (not a disk per
 pillar); the physical margin comes from the demonstrated gap clearance. Implementation: `uav_avoiding_bridge/`,
 changelog [`CHANGELOG_20260922_U18_pillars_v2_bridge_coding1.md`](CHANGELOG_20260922_U18_pillars_v2_bridge_coding1.md).
@@ -224,8 +230,10 @@ failure — that difference is the result.
 | `Slurm_Codes/temp_bash/eval_2026MMDD_u18_pillars_v2.sh` | new, gitignored | ~180 | plan-by-default driver: group **T** (turbo, CPU partition, no GPU) and the live groups below; copies the U17 driver's pre-flight pattern |
 | `logs_in_develop/Gen15/U18/CHANGELOG_…md` | new | — | after coding |
 
-Result folders: unchanged layout, the message tag makes them distinct —
-`logs/avoiding-d3il/plans/<engine>/<train>/<eval>_msguavpv2s10/<seed>/results/halfspace_<geo>/<variant>.npz`.
+Result folders: Mode L writes in the avoiding tree with the message tag —
+`logs/avoiding-d3il/plans/<engine>/<train>/<eval>_msguavpv2s10/<seed>/results/halfspace_<geo>/<variant>.npz`;
+Mode T (fix2) mirrors that layout under the UAV-pillars scene folder —
+`logs/UAV_MIX/uav-pillars/plans/avoiding_bridge/<engine>/<train>/<eval>_msguavpv2s10turbo/<seed>/results/halfspace_<geo>/<variant>.npz`.
 The batch reporter and `avoiding_rules_by_protocol.py` select on `Folder_Name`, so a `pillars_v2` DA script is that
 file with the suffix changed.
 

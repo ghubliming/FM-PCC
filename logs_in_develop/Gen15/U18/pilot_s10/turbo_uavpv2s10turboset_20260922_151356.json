@@ -1,0 +1,316 @@
+{
+ "args": {
+  "root": "/data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans",
+  "engine": [
+   "flow_matching_v3_ode_selectable"
+  ],
+  "train_glob": null,
+  "eval_glob": [
+   "*K20*msg20trials"
+  ],
+  "seeds": [
+   6
+  ],
+  "geos": [
+   "both-hard",
+   "top-left-hard",
+   "top-right-hard"
+  ],
+  "variants": [
+   "diffuser",
+   "dpcc-r-tightened"
+  ],
+  "tag": "uavpv2s10turboset",
+  "replay": "settle",
+  "hz": 5.0,
+  "no_ff": false,
+  "gain": "pid_default",
+  "no_contact_stop": false,
+  "grace_s": 2.0,
+  "limit_episodes": 0,
+  "dry_run": false,
+  "force": false,
+  "no_png": false,
+  "max_cells": 0
+ },
+ "settings": {
+  "scale": 10.0,
+  "altitude": 1.0,
+  "control_hz": 5.0,
+  "period_s": 0.2,
+  "physics_dt": 0.01,
+  "feedforward": true,
+  "gain": "pid_default",
+  "replay": "settle",
+  "settle_eps": 0.05,
+  "settle_max_s": 2.0,
+  "terminate_on_contact": true,
+  "scene_xml": "/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/quadrotor/scenes/scene_avoiding_pillars_s10.xml",
+  "origin_a": [
+   0.5,
+   0.035
+  ],
+  "drone_reach_m": 0.31
+ },
+ "cells": [
+  {
+   "cell": {
+    "engine": "flow_matching_v3_ode_selectable",
+    "train": "H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10",
+    "eval": "H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials",
+    "seed": 6,
+    "geo": "both-hard",
+    "variant": "diffuser"
+   },
+   "n": 20,
+   "wall_s": 15.648561174049973,
+   "panda": {
+    "success": 1.0,
+    "sc": 0.05,
+    "cf": 0.05,
+    "n_viol": 12.2,
+    "n_steps": 67.7
+   },
+   "drone": {
+    "success": 0.25,
+    "sc": 0.0,
+    "cf": 0.0,
+    "n_viol": 7.1,
+    "n_steps": 54.95
+   },
+   "agree_episodes": 4,
+   "ended": {
+    "success": 5,
+    "contact": 15,
+    "exhausted": 0,
+    "cap": 0,
+    "diverged": 0
+   },
+   "plant": {
+    "track_err_mean_m": 0.04322138694248952,
+    "track_err_p95_m": 0.05135926198974977,
+    "gap_a_p95": 0.005135925217407029,
+    "gap_a_mean": 0.004322138135793029,
+    "panda_gap_a_p95": 0.02733230567707904,
+    "contact_episodes": 15,
+    "speed_max_ms": 0.15132635703823194
+   }
+  },
+  {
+   "cell": {
+    "engine": "flow_matching_v3_ode_selectable",
+    "train": "H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10",
+    "eval": "H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials",
+    "seed": 6,
+    "geo": "both-hard",
+    "variant": "dpcc-r-tightened"
+   },
+   "n": 20,
+   "wall_s": 17.3891888782382,
+   "panda": {
+    "success": 1.0,
+    "sc": 1.0,
+    "cf": 1.0,
+    "n_viol": 0.0,
+    "n_steps": 61.9
+   },
+   "drone": {
+    "success": 0.25,
+    "sc": 0.25,
+    "cf": 0.25,
+    "n_viol": 0.0,
+    "n_steps": 53.45
+   },
+   "agree_episodes": 5,
+   "ended": {
+    "success": 5,
+    "contact": 15,
+    "exhausted": 0,
+    "cap": 0,
+    "diverged": 0
+   },
+   "plant": {
+    "track_err_mean_m": 0.0494862447518953,
+    "track_err_p95_m": 0.04999354445809322,
+    "gap_a_p95": 0.004999354150198691,
+    "gap_a_mean": 0.004948623823925717,
+    "panda_gap_a_p95": 0.041167900356206676,
+    "contact_episodes": 15,
+    "speed_max_ms": 0.1320105650246794
+   }
+  },
+  {
+   "cell": {
+    "engine": "flow_matching_v3_ode_selectable",
+    "train": "H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10",
+    "eval": "H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials",
+    "seed": 6,
+    "geo": "top-left-hard",
+    "variant": "diffuser"
+   },
+   "n": 20,
+   "wall_s": 15.66848000138998,
+   "panda": {
+    "success": 1.0,
+    "sc": 0.05,
+    "cf": 0.05,
+    "n_viol": 10.75,
+    "n_steps": 67.7
+   },
+   "drone": {
+    "success": 0.25,
+    "sc": 0.0,
+    "cf": 0.0,
+    "n_viol": 11.3,
+    "n_steps": 54.95
+   },
+   "agree_episodes": 5,
+   "ended": {
+    "success": 5,
+    "contact": 15,
+    "exhausted": 0,
+    "cap": 0,
+    "diverged": 0
+   },
+   "plant": {
+    "track_err_mean_m": 0.04322138694248952,
+    "track_err_p95_m": 0.05135926198974977,
+    "gap_a_p95": 0.005135925217407029,
+    "gap_a_mean": 0.004322138135793029,
+    "panda_gap_a_p95": 0.02733230567707904,
+    "contact_episodes": 15,
+    "speed_max_ms": 0.15132635703823194
+   }
+  },
+  {
+   "cell": {
+    "engine": "flow_matching_v3_ode_selectable",
+    "train": "H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10",
+    "eval": "H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials",
+    "seed": 6,
+    "geo": "top-left-hard",
+    "variant": "dpcc-r-tightened"
+   },
+   "n": 20,
+   "wall_s": 13.93288485519588,
+   "panda": {
+    "success": 1.0,
+    "sc": 0.95,
+    "cf": 0.95,
+    "n_viol": 0.35,
+    "n_steps": 78.8
+   },
+   "drone": {
+    "success": 0.2,
+    "sc": 0.2,
+    "cf": 0.2,
+    "n_viol": 0.0,
+    "n_steps": 51.75
+   },
+   "agree_episodes": 4,
+   "ended": {
+    "success": 4,
+    "contact": 15,
+    "exhausted": 0,
+    "cap": 0,
+    "diverged": 1
+   },
+   "plant": {
+    "track_err_mean_m": 0.041993203744902216,
+    "track_err_p95_m": 0.07292090085448702,
+    "gap_a_p95": 0.0072920879082630854,
+    "gap_a_mean": 0.004199319735432609,
+    "panda_gap_a_p95": 0.13523986167288643,
+    "contact_episodes": 15,
+    "speed_max_ms": 0.1875777814964129
+   }
+  },
+  {
+   "cell": {
+    "engine": "flow_matching_v3_ode_selectable",
+    "train": "H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10",
+    "eval": "H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials",
+    "seed": 6,
+    "geo": "top-right-hard",
+    "variant": "diffuser"
+   },
+   "n": 20,
+   "wall_s": 15.707258444279432,
+   "panda": {
+    "success": 1.0,
+    "sc": 0.0,
+    "cf": 0.0,
+    "n_viol": 31.55,
+    "n_steps": 67.7
+   },
+   "drone": {
+    "success": 0.25,
+    "sc": 0.0,
+    "cf": 0.0,
+    "n_viol": 21.2,
+    "n_steps": 54.95
+   },
+   "agree_episodes": 5,
+   "ended": {
+    "success": 5,
+    "contact": 15,
+    "exhausted": 0,
+    "cap": 0,
+    "diverged": 0
+   },
+   "plant": {
+    "track_err_mean_m": 0.04322138694248952,
+    "track_err_p95_m": 0.05135926198974977,
+    "gap_a_p95": 0.005135925217407029,
+    "gap_a_mean": 0.004322138135793029,
+    "panda_gap_a_p95": 0.02733230567707904,
+    "contact_episodes": 15,
+    "speed_max_ms": 0.15132635703823194
+   }
+  },
+  {
+   "cell": {
+    "engine": "flow_matching_v3_ode_selectable",
+    "train": "H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10",
+    "eval": "H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials",
+    "seed": 6,
+    "geo": "top-right-hard",
+    "variant": "dpcc-r-tightened"
+   },
+   "n": 20,
+   "wall_s": 11.218698423355818,
+   "panda": {
+    "success": 0.95,
+    "sc": 0.95,
+    "cf": 0.95,
+    "n_viol": 0.0,
+    "n_steps": 73.15
+   },
+   "drone": {
+    "success": 0.1,
+    "sc": 0.1,
+    "cf": 0.1,
+    "n_viol": 0.0,
+    "n_steps": 44.0
+   },
+   "agree_episodes": 3,
+   "ended": {
+    "success": 2,
+    "contact": 18,
+    "exhausted": 0,
+    "cap": 0,
+    "diverged": 0
+   },
+   "plant": {
+    "track_err_mean_m": 0.04301506173626853,
+    "track_err_p95_m": 0.07515949004059622,
+    "gap_a_p95": 0.007515947397048655,
+    "gap_a_mean": 0.004301505610949776,
+    "panda_gap_a_p95": 0.033816919936553766,
+    "contact_episodes": 18,
+    "speed_max_ms": 0.1466057040035226
+   }
+  }
+ ],
+ "wall_s": 91.5958743467927
+}

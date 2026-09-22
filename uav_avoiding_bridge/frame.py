@@ -10,13 +10,18 @@ World frame     w = (X, Y, Z): the MuJoCo quadrotor scene. Progress along +X lik
     Y = -SCALE * (x_a - ORIGIN_A[0])          # proper rotation by -90 deg: left/right are preserved
     Z =  ALTITUDE                             # the plan has no z; the PID's z-loop holds it
 
-At SCALE = 10 (see the plan, section 2): arena 6.0 x 7.0 m, start (-3.15, -0.25), finish line X = 3.15,
-pillars r = 0.25 / 0.30 m, the planner's one keep-out disk per geometry maps to r = 0.80 m.
+At SCALE = 36 (fix3): arena 21.6 x 25.2 m, start (-11.34, -0.90), finish line X = 11.34, pillars r = 0.90 / 1.08 m,
+the planner's one keep-out disk per geometry maps to r = 2.88 m; the rod radius (0.01) maps onto the drone reach (0.36).
 """
 import os
 
 # ── the knobs (env overrides so a scale / altitude variant needs no code edit) ─────────────────────
-SCALE    = float(os.environ.get('FMPCC_AVOID_UAV_SCALE', '10'))
+# fix3 (2026-09-22, first pilot): 36, not 10. The Panda paths hug the obstacles at the rod's own radius (0.01 units:
+# measured surface clearance 0.009-0.02), so the faithful map sends the ROD RADIUS onto the drone's radial rotor
+# reach: 0.36 m / 0.01 = 36. At 10x the drone (0.72 m across) hit a pillar in 15 of 20 episodes with perfect tracking.
+SCALE    = float(os.environ.get('FMPCC_AVOID_UAV_SCALE', '36'))
+DRONE_REACH_M = 0.36             # radial: rotor ellipsoid r 0.13 at (+-0.14, +-0.18) -> sqrt(.14^2+.18^2)+.13 (0.31 is y-only)
+ROD_RADIUS_A  = 0.01             # panda_rod_invisible.xml rod:geom cylinder radius (avoiding units)
 ALTITUDE = float(os.environ.get('FMPCC_AVOID_UAV_ALT',   '1.0'))
 ORIGIN_A = (0.5, 0.035)          # avoiding point mapped to world (0, 0): field centre line, start/finish midpoint
 

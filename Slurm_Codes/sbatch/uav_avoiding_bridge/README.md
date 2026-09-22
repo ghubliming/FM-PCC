@@ -2,7 +2,9 @@
 
 | script | what | GPU |
 | :-- | :-- | :-- |
-| `turbo.sh` | **Mode T**: replay stored avoiding executions (`obs_all` of every results npz) through the quadrotor plant, rescore, write `<eval>_msguavpv2s10turbo/…`. `MODE=pilot` (default, gate G1) or `MODE=all` (whole corpus). Dry-run unless `GO=1`. | no |
+| `turbo.sh` | **Mode T**: replay stored avoiding executions (`obs_all` of every results npz) through the quadrotor plant, rescore, write `logs/UAV_MIX/uav-pillars/plans/avoiding_bridge/<engine>/<train>/<eval>_msguavpv2s10turbo/…` (fix2). `MODE=pilot` (default, gate G1) or `MODE=all` (whole corpus). Dry-run unless `GO=1`. Writes the full suite per cell (npz, cell png, eval log, world png, sidecar, `FORESIGHT`=3 UAV-style MPC-foresight SVGs). | no |
+
+| `turbo_gif.sh` | `turbo.sh` with a GPU and `GIF=3`: overhead MuJoCo GIFs for the first 3 episodes of every cell (`<cell>/diagnostics/<variant>/rollout_<i>.gif`). Use for smoke runs / visual inspection only. | yes |
 
 Mode L (live closed loop) needs no new script: run any avoiding eval sbatch with
 `FMPCC_AVOIDING_PLANT=uav FMPCC_RUN_MSG=uavpv2s10` in the environment (see `uav_avoiding_bridge/README.md`).

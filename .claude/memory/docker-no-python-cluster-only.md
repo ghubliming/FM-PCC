@@ -14,3 +14,7 @@ A Python interpreter (and other coding interpreters) IS available in this Docker
 **Why:** The container has no conda/FMPCC packages, so anything importing torch/MuJoCo/etc. will fail; but stdlib-only Python (syntax validation, quick debugging) works and is encouraged.
 
 **How to apply:** Freely use Python to debug/validate code (e.g. `py_compile` after edits). Do data analysis in Python only on request. For real training/eval/pipeline validation, write the code and note "run on cluster" — let the user run it. See also [[slurm-sbatch-is-real-entrypoint]] and [[no-auto-commit-no-coauthor]].
+
+
+**2026-09-22:** `python3.14` in the container has numpy, matplotlib, yaml and (pip --user) **mujoco 3.13** — enough to replay
+stored npz episodes through `uav_avoiding_bridge.plant` locally for DEBUGGING (seconds). Still never training/eval/pipeline.

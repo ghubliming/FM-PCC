@@ -6,10 +6,17 @@ sequence, i.e. the setpoint path the planner + projector produced and the Panda 
 setpoint sequence with the drone in the scaled pillars_v2 scene, rescores the DRONE's path with the avoiding
 scorer (scoring.py) and writes a mirrored results tree the existing loaders / DA pick up unchanged:
 
-    <…>/<train>/<eval>/<seed>/results/halfspace_<geo>/<variant>.npz                       (source, read only)
-    <…>/<train>/<eval>_msg<tag>/<seed>/results/halfspace_<geo>/<variant>.npz              (output, same keys)
-                                                             + <variant>_uav_plant.json    (sidecar, plant stats)
-                                                             + <variant>_uav_world.png     (world-frame paths)
+    logs/avoiding-d3il/plans/<engine>/<train>/<eval>/<seed>/results/halfspace_<geo>/<variant>.npz   (source, read only)
+    <out-root>/<engine>/<train>/<eval>_msg<tag>/<seed>/results/halfspace_<geo>/<variant>.npz        (output, same keys)
+                                                                        + <variant>.png              (avoiding-style cell figure)
+                                                                        + eval_<variant>.log         (summary + per-episode table)
+                                                                        + <variant>_uav_plant.json   (sidecar, plant stats)
+                                                                        + <variant>_uav_world.png    (world-frame paths)
+                                                                        + diagnostics/<variant>/rollout_<i>_mpc_foresight.svg
+                                                                        (+ rollout_<i>.gif only with --gif on a GPU node)
+    <out-root> defaults to logs/UAV_MIX/uav-pillars/plans/avoiding_bridge  (fix2: it IS the UAV pillars scene, so the
+    results live with the other UAV-pillars runs; the avoiding-style relative layout below it is kept so the avoiding
+    loaders / batch reporter work when pointed at <out-root>). --in-place restores the beside-the-source layout.
 
 No network, no NLP, no GPU. avg_time is COPIED from the source (planner time; the plant's time is not a metric).
 
@@ -46,7 +53,7 @@ RESCORED = ('n_success', 'n_success_and_constraints', 'n_steps', 'n_violations',
 
 
 # ── discovery ─────────────────────────────────────────────────────────────────────────────────────
-def discover(root, engines, train_glob, eval_glob, seeds, geos, variants, tag):
+def discover(root, engines, train_glob, eval_glob, seeds, geos, variants, tag, out_root=None):
     cells = []
     for npz in sorted(glob.glob(os.path.join(root, '**', 'results', 'halfspace_*', '*.npz'), recursive=True)):
         hv_dir = os.path.dirname(npz)
@@ -77,7 +84,8 @@ def discover(root, engines, train_glob, eval_glob, seeds, geos, variants, tag):
         if variants and variant not in variants:
             continue
         out_eval = f'{ev}-{tag}' if '_msg' in ev else f'{ev}_msg{tag}'
-        out_npz = os.path.join(train_dir, out_eval, str(seed), 'results', f'halfspace_{geo}', f'{variant}.npz')
+        out_train = train_dir if out_root is None else os.path.join(out_root, rel)     # fix2: mirror under out_root
+        out_npz = os.path.join(out_train, out_eval, str(seed), 'results', f'halfspace_{geo}', f'{variant}.npz')
         cells.append({'npz': npz, 'out': out_npz, 'engine': engine, 'train': os.path.basename(train_dir),
                       'eval': ev, 'seed': seed, 'geo': geo, 'variant': variant})
     return cells
@@ -137,8 +145,15 @@ def run_cell(cell, plant, cfg, args):
         if o.ndim != 2 or o.shape[0] == 0:
             per.append(None); new_obs.append(np.zeros((0, 4), np.float32)); continue
         a = np.asarray(act_all[i], float) if act_all is not None and len(act_all) > i else np.zeros((0, 2))
+        plant.gif_on = bool(args.gif and i < args.gif and plant._renderer is not None)
         rows, sc = replay_episode(plant, o[:, :2], a, scorer, grace_steps)
         per.append(sc); new_obs.append(rows)
+        if plant.gif_on:
+            from mix_uav_test.eval_artifacts import save_rollout_gif      # the UAV evals' writer (imageio, no torch)
+            gif_dir = os.path.join(os.path.dirname(cell['out']), 'diagnostics', cell['variant'])
+            gp = save_rollout_gif(gif_dir, i, plant.pop_frames(), fps=args.gif_fps)
+            if gp:
+                print(f'[ turbo ]   gif ep{i}: {gp}')
     plant.close()
     wall = time.perf_counter() - t0
 
@@ -198,14 +213,38 @@ def run_cell(cell, plant, cfg, args):
                   'speed_max_ms': float(max(r['summary']['speed_max_ms'] for r in recs)) if recs else float('nan')},
         'per_episode': per,
     }
+    summ['src_npz'] = cell['npz']
     side = cell['out'][:-4] + '_uav_plant.json'
     plant.save_records(side, extra={'summary': {k: v for k, v in summ.items() if k != 'per_episode'},
                                     'per_episode': per})
+    # ── the standard suite (no GL): <variant>.png, eval_<variant>.log, world png, foresight SVGs ──
+    from uav_avoiding_bridge import artifacts as A
+    out_dir = os.path.dirname(cell['out'])
+    fans_all = src['sampled_trajectories_all'] if 'sampled_trajectories_all' in src.files else None
+    fans_list = [A._fans(fans_all[i]) if fans_all is not None and i < len(fans_all) else [] for i in range(n)]
+    panda_list = [np.asarray(obs_all[i], float) if np.asarray(obs_all[i]).ndim == 2 else np.zeros((0, 4)) for i in range(n)]
+    try:
+        A.write_eval_log(os.path.join(out_dir, f"eval_{cell['variant']}.log"), cell, summ, per, plant.settings())
+    except Exception as exc:                                         # pragma: no cover
+        print(f'[ turbo ] eval log failed: {exc}')
     if not args.no_png:
         try:
+            A.save_cell_png(cell['out'][:-4] + '.png', cell, scorer.geo, new_obs[:n], panda_list, fans_list, per[:n])
             world_png(cell, new_obs[:n], per[:n], plant, scorer.geo, cell['out'][:-4] + '_uav_world.png')
         except Exception as exc:                                     # pragma: no cover
             print(f'[ turbo ] png failed: {exc}')
+    if args.foresight > 0:
+        diag = os.path.join(out_dir, 'diagnostics', cell['variant'])
+        os.makedirs(diag, exist_ok=True)
+        recs_by_ep = {r['episode']: r for r in plant.records}
+        for i in range(min(n, args.foresight)):
+            if per[i] is None:
+                continue
+            try:
+                A.write_foresight_svg(diag, cell, i, new_obs[i], fans_list[i], scorer.geo, plant.scale, per[i],
+                                      recs_by_ep.get(i), stride=args.foresight_stride, altitude=plant.altitude)
+            except Exception as exc:                                 # pragma: no cover
+                print(f'[ turbo ] foresight svg ep{i} failed: {exc}')
     return summ, None
 
 
@@ -221,7 +260,7 @@ def world_png(cell, obs_list, per, plant, geo, path):
     for n_, xa, ya, r in F.OBSTACLES_A:
         X, Y = F.to_world_xy(xa, ya, s)
         ax.add_patch(Circle((X, Y), s * r, color='#d98c40', zorder=3))
-        ax.add_patch(Circle((X, Y), s * r + 0.31, color='#d98c40', alpha=0.15, zorder=2))     # + rotor reach
+        ax.add_patch(Circle((X, Y), s * r + F.DRONE_REACH_M, color='#d98c40', alpha=0.15, zorder=2))     # + rotor reach
     for ob in geo['obstacles']:
         X, Y = F.to_world_xy(*ob['center'], s)
         ax.add_patch(Circle((X, Y), s * ob['radius'], color='b', alpha=0.15, zorder=2))
@@ -262,7 +301,10 @@ def world_png(cell, obs_list, per, plant, geo, path):
 # ── main ──────────────────────────────────────────────────────────────────────────────────────────
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('--root', default=os.path.join(REPO, 'logs', 'avoiding-d3il', 'plans'))
+    ap.add_argument('--root', default=os.path.join(REPO, 'logs', 'avoiding-d3il', 'plans'), help='where the avoiding sources are')
+    ap.add_argument('--out-root', default=os.path.join(REPO, 'logs', 'UAV_MIX', 'uav-pillars', 'plans', 'avoiding_bridge'),
+                    help='fix2: outputs mirror the source layout below this root (the UAV-pillars scene folder)')
+    ap.add_argument('--in-place', action='store_true', help='write beside the sources instead (pre-fix2 layout)')
     ap.add_argument('--engine', action='append', default=[], help='engine folder under plans/ (substring or glob), repeatable')
     ap.add_argument('--train-glob', default=None, help='fnmatch on the TRAIN folder name')
     ap.add_argument('--eval-glob', action='append', default=[], help='fnmatch on the EVAL folder name, repeatable (OR)')
@@ -271,8 +313,9 @@ def main():
     ap.add_argument('--variants', nargs='*', default=[])
     ap.add_argument('--tag', default=f'uavpv2{F.scene_tag()}turbo', help='output eval-folder tag (must contain "uav")')
     ap.add_argument('--replay', choices=('clock', 'settle'), default='clock')
-    ap.add_argument('--hz', type=float, default=5.0)
-    ap.add_argument('--no-ff', action='store_true', help='disable velocity feed-forward (clock mode)')
+    ap.add_argument('--hz', type=float, default=1.0, help='clock mode: setpoints per second (fix3 default 1 at scale 36)')
+    ap.add_argument('--vmax', type=float, default=1.0, help='clock mode: rate limit of the tracked reference [m/s]')
+    ap.add_argument('--ff', action='store_true', help='clock mode: enable velocity feed-forward (unstable above ~0.5 m/s with this PID; off by default since fix3)')
     ap.add_argument('--gain', default='pid_default')
     ap.add_argument('--no-contact-stop', action='store_true', help='do not end the episode on drone-pillar contact')
     ap.add_argument('--grace-s', type=float, default=2.0, help='hold the last setpoint this long after the sequence ends')
@@ -281,18 +324,28 @@ def main():
     ap.add_argument('--force', action='store_true', help='re-run cells whose output npz exists')
     ap.add_argument('--no-png', action='store_true')
     ap.add_argument('--max-cells', type=int, default=0)
+    ap.add_argument('--foresight', type=int, default=3, help='write diagnostics/rollout_<i>_mpc_foresight.svg for the first N episodes per cell (0 = off)')
+    ap.add_argument('--foresight-stride', type=int, default=6, help='draw the stored candidate fan every N steps')
+    ap.add_argument('--gif', type=int, default=0, help='record an overhead MuJoCo GIF for the first N episodes of each cell '
+                    '(needs MUJOCO_GL=egl on a GPU node; writes <cell>/diagnostics/<variant>/rollout_<i>.gif)')
+    ap.add_argument('--gif-fps', type=int, default=10)
+    ap.add_argument('--gif-res', type=int, default=160)
+    ap.add_argument('--gif-cam', type=float, default=8.0, help='camera height above the drone [m]')
+    ap.add_argument('--gif-stride', type=int, default=20, help='physics steps per frame (20 = 5 sim-fps at dt 0.01)')
     args = ap.parse_args()
     if 'uav' not in args.tag.lower():
         sys.exit('--tag must contain "uav" (it keeps the outputs apart from the Panda results)')
 
+    out_root = None if args.in_place else args.out_root
     cells = discover(args.root, args.engine, args.train_glob, args.eval_glob, set(args.seeds), set(args.geos),
-                     set(args.variants), args.tag)
+                     set(args.variants), args.tag, out_root)
     todo = [c for c in cells if args.force or not os.path.exists(c['out'])]
     if args.max_cells:
         todo = todo[:args.max_cells]
-    print(f'[ turbo ] root={args.root}\n[ turbo ] {len(cells)} matching cells, {len(todo)} to run '
+    print(f'[ turbo ] sources={args.root}\n[ turbo ] outputs={out_root or "(in place, beside the sources)"}\n'
+          f'[ turbo ] {len(cells)} matching cells, {len(todo)} to run '
           f'({len(cells) - len(todo)} already have {args.tag} output)  tag={args.tag} replay={args.replay} '
-          f'hz={args.hz:g} ff={not args.no_ff} grace={args.grace_s:g}s limit={args.limit_episodes or "all"}')
+          f'hz={args.hz:g} vmax={args.vmax:g} ff={args.ff} grace={args.grace_s:g}s limit={args.limit_episodes or "all"}')
     print(F.describe())
     for c in todo[:60]:
         print(f"   {c['engine']:38s} {c['eval'][:60]:60s} s{c['seed']} {c['geo']:15s} {c['variant']}")
@@ -302,8 +355,12 @@ def main():
         return
 
     from uav_avoiding_bridge.plant import UavAvoidingPlant
-    plant = UavAvoidingPlant(control_hz=args.hz, feedforward=not args.no_ff, gain=args.gain, replay=args.replay,
-                             terminate_on_contact=not args.no_contact_stop)
+    plant = UavAvoidingPlant(control_hz=args.hz, feedforward=args.ff, gain=args.gain, replay=args.replay,
+                             terminate_on_contact=not args.no_contact_stop, v_max=args.vmax)
+    if args.gif > 0:
+        ok = plant.enable_gif(res=args.gif_res, cam_distance=args.gif_cam, frame_stride=args.gif_stride)
+        print(f'[ turbo ] GIF: first {args.gif} episodes per cell, {args.gif_res}px, cam {args.gif_cam:g} m, '
+              f'stride {args.gif_stride} -> {"on" if ok else "UNAVAILABLE (no GL context)"}')
     cfg = load_projection_cfg()
     summaries, t_all = [], time.perf_counter()
     for j, c in enumerate(todo, 1):
@@ -321,7 +378,7 @@ def main():
               f"gap_a p95 {pl['gap_a_p95']:.4f} (panda {pl['panda_gap_a_p95']:.4f})  contact eps {pl['contact_episodes']}  "
               f"vmax {pl['speed_max_ms']:.2f} m/s", flush=True)
         summaries.append({k: v for k, v in summ.items() if k != 'per_episode'})
-    run_dir = os.path.join(args.root, '_uav_turbo_runs')
+    run_dir = os.path.join(out_root or args.root, '_uav_turbo_runs')
     os.makedirs(run_dir, exist_ok=True)
     stamp = time.strftime('%Y%m%d_%H%M%S')
     with open(os.path.join(run_dir, f'turbo_{args.tag}_{stamp}.json'), 'w') as fh:
