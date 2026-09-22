@@ -304,6 +304,15 @@ def halfspace_body_boundaries(geo_config, variant='', plane='xy'):
     r = _scorer_r_drone(geo_config)
     out = []
     for hs in geo_config.get('halfspace_constraints', []) or []:
+        lean = _fs_hs_lean(hs)
+        if lean is not None and plane == 'xz':
+            # [U19] a leaned x-y entry also has a SIDE-view trace: its cut along y = 0 (route C).
+            (x1, y1), (x2, y2), side, x_active = _fs_wall_xy(hs)
+            lo, hi = (x_active if x_active is not None else sorted((x1, x2)))
+            xs = np.linspace(float(lo), float(hi), 60)
+            z_raw, z_body = _fs_lean_cut_xz(hs, xs, r)
+            out.append((xs, z_raw, z_body, 'below' if lean[0] < 0 else 'above'))
+            continue
         if _fs_hs_plane(hs) != plane:
             continue
         (x1, y1), (x2, y2), side, x_active = _fs_wall_xy(hs)
@@ -313,7 +322,10 @@ def halfspace_body_boundaries(geo_config, variant='', plane='xy'):
         lo, hi = (x_active if x_active is not None else sorted((x1, x2)))
         xs = np.linspace(float(lo), float(hi), 60)
         raw = y1 + s * (xs - x1)
-        off = r * np.hypot(1.0, s)
+        # [U19] a leaned entry: this top-down trace is its cut at z_ref, where the body clears the
+        # leaned plane only at r·√(1+t²) laterally (the drone may descend instead — see the side panel)
+        r_eff = r * float(np.hypot(1.0, lean[0])) if lean is not None else r
+        off = r_eff * np.hypot(1.0, s)
         out.append((xs, raw, raw - off if side == 'below' else raw + off, side))
     return out
 
@@ -335,6 +347,13 @@ def step_violations(P, geo_config, variant=''):
     if 'halfspace' in ct:
         for hs in geo_config.get('halfspace_constraints', []) or []:
             (x1, y1), (x2, y2), side, x_active = _fs_wall_xy(hs)
+            if _fs_hs_lean(hs) is not None:                          # [U19] leaned plane
+                n3, P0 = _fs_hs_normal3(hs)
+                feas3 = (P - P0) @ n3
+                live = np.ones(len(P), dtype=bool) if x_active is None else \
+                    (P[:, 0] >= x_active[0]) & (P[:, 0] <= x_active[1])
+                bad |= live & (feas3 < r)
+                continue
             n = np.hypot(x2 - x1, y2 - y1)
             if n < 1e-9:
                 continue
@@ -388,9 +407,9 @@ def _draw_body_boundaries_xz(ax_xz, geo_config, variant=''):
                  float(np.clip(raw.max(), -1, 4)), float(np.clip(body.min(), -1, 4))]
     if not bnds:
         return [], keep
-    return [_Line2D([0], [0], color='darkorange', lw=2.0, label='halfspace roof/floor (raw, x-z)'),
+    return [_Line2D([0], [0], color='darkorange', lw=2.0, label='halfspace roof/floor, or leaned plane cut at y=0 (raw)'),
             _Line2D([0], [0], color='crimson', ls='--', lw=1.4,
-                    label=f'drone-centre limit (roof ± r_drone {_scorer_r_drone(geo_config):.2f} m ⊥)')], keep
+                    label=f'drone-centre limit (± r_drone {_scorer_r_drone(geo_config):.2f} m ⊥ to the plane)')], keep
 
 
 def plot_overview(out_dir, variant, scene, rollouts, geo_config=None, variant_flags=None):
@@ -683,6 +702,38 @@ def _fs_hs_plane(hs):
     return plane
 
 
+def _fs_hs_lean(hs):
+    """[Gen15 U19] local copy of eval_mix_uav._hs_lean: (t = tan(deg), z_ref) or None.
+    Feasible signed distance s = s_xy + t·(z − z_ref); deg < 0 → descending gains room."""
+    if not isinstance(hs, dict) or hs.get('z_lean') is None:
+        return None
+    lean = hs['z_lean']
+    return float(np.tan(np.radians(float(lean['deg'])))), float(lean['z_ref'])
+
+
+def _fs_hs_normal3(hs):
+    """[Gen15 U19] (unit 3-D normal into the feasible side, a point on the plane) of a leaned entry."""
+    t, z_ref = _fs_hs_lean(hs)
+    triple, _ = _fs_normalize_halfspace(hs)
+    (x1, y1), (x2, y2), side = triple
+    dx, dy = x2 - x1, y2 - y1
+    nrm = float(np.hypot(dx, dy))
+    nx, ny = -dy / nrm, dx / nrm
+    if side != 'above':
+        nx, ny = -nx, -ny
+    return np.array([nx, ny, t]) / float(np.sqrt(1.0 + t * t)), np.array([x1, y1, z_ref], dtype=float)
+
+
+def _fs_lean_cut_xz(hs, xs, margin):
+    """[Gen15 U19] the leaned plane's cut along y = 0 (route C): (z_raw, z_enforced) over `xs`.
+    s_xy(x, 0) + t·(z − z_ref) = 0 → raw;  = margin·√(1+t²) → the drone-centre limit."""
+    t, z_ref = _fs_hs_lean(hs)
+    n3, P0 = _fs_hs_normal3(hs)
+    k = float(np.sqrt(1.0 + t * t))
+    sxy = n3[0] * k * (xs - P0[0]) + n3[1] * k * (0.0 - P0[1])
+    return z_ref - sxy / t, z_ref + (margin * k - sxy) / t
+
+
 def _fs_wall_xy(hs):
     """Resolve a halfspace to (p1, p2, side, x_active), clipped to its live x-range so the
     s_curve per-segment walls are drawn only where they are actually enforced."""
@@ -773,6 +824,18 @@ def draw_projector_geometry(ax_xy, ax_xz, geo_config, variant=''):
         if x_active is not None:
             ax_xy.text(mx, my, f'x∈[{x_active[0]:.1f},{x_active[1]:.1f}]', fontsize=6,
                        color='saddlebrown', ha='center', va='bottom', zorder=7)
+        if _fs_hs_lean(hs) is not None:
+            # [U19] the top-down line is the cut at z_ref; the side axis gets the y=0 cut (raw + enforced)
+            _t, _zr = _fs_hs_lean(hs)
+            ax_xy.text(mx, my, f'cut at z={_zr:.2f}, leaned {np.degrees(np.arctan(_t)):+.0f}°', fontsize=6,
+                       color='saddlebrown', ha='center', va='top', zorder=7)
+            _xs = np.linspace(hx1, hx2, 60)
+            _zraw, _zenf = _fs_lean_cut_xz(hs, _xs, margin)
+            ax_xz.plot(_xs, _zraw, color='darkorange', lw=2.2, zorder=6)
+            ax_xz.plot(_xs, _zenf, color='darkorange', lw=1.2, ls='--', zorder=6)
+            ax_xz.fill_between(_xs, _zraw, _zenf, color='darkorange', alpha=0.10, lw=0, zorder=1)
+            _n_xz += 1
+            continue
         xb_lo, xb_hi = sorted((hx1, hx2))
         ax_xz.axvspan(xb_lo, xb_hi, color='darkorange', alpha=0.08, zorder=1)
     for obs in obs_list:
@@ -786,11 +849,12 @@ def draw_projector_geometry(ax_xy, ax_xz, geo_config, variant=''):
     handles = []
     if show_box:
         handles.append(_Line2D([0], [0], color='steelblue', ls='--', lw=1.4, label='workspace box (enforced)'))
-    if len(hs_list) > _n_xz:
+    _n_lean = sum(1 for hs in hs_list if _fs_hs_lean(hs) is not None)
+    if len(hs_list) > _n_xz - _n_lean:
         handles.append(_Line2D([0], [0], color='darkorange', lw=2.2, label='halfspace wall (enforced)'))
     if _n_xz:
         handles.append(_Line2D([0], [0], color='darkorange', lw=2.2, ls='--',
-                               label='halfspace roof/floor (enforced, side panel)'))
+                               label='halfspace roof/floor or leaned-plane cut at y=0 (side panel)'))
     if obs_list:
         handles.append(_Line2D([0], [0], marker='o', color='w', markerfacecolor='tomato',
                                markersize=9, alpha=0.6, label='obstacle+margin (enforced)'))

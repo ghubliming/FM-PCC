@@ -822,6 +822,10 @@ def _exec_constraint_violations(obs_traj, config):
             triple, x_active = _normalize_halfspace(hs)
             if x_active is not None and not (x_active[0] <= p[0] <= x_active[1]):
                 continue                                    # wall not live at this x
+            if _hs_lean(hs) is not None:                    # [U19] leaned plane: 3-D normal
+                n3, P0 = _hs_normal3(hs)
+                step_pen += max(0.0, r_drone - float(n3 @ (p - P0)))
+                continue
             (x1, y1), (x2, y2), side = triple[0], triple[1], triple[2]
             dx, dy = x2 - x1, y2 - y1
             nrm = np.hypot(dx, dy)
@@ -1127,6 +1131,19 @@ def plot_geo_constraints(geo_name, config, out_dir, is_tightened=False, basename
             ]], alpha=0.30, facecolor='darkorange', edgecolor='saddlebrown', lw=0.8))
             continue
         (hx1, hy1), (hx2, hy2), side, _ = _wall_xy(hs)
+        if _hs_lean(hs) is not None:
+            # [U19] leaned plane: the cut at altitude z is the line shifted by −t·(z − z_ref)
+            # along the feasible 2-D normal (s_xy + t·(z − z_ref) = 0)
+            _t, _zr = _hs_lean(hs); _n3, _ = _hs_normal3(hs)
+            _nxy = _n3[:2] / max(float(np.hypot(*_n3[:2])), 1e-9)
+            def _cut(z):
+                _o = -_t * (z - _zr)
+                return [hx1 + _nxy[0] * _o, hy1 + _nxy[1] * _o], [hx2 + _nxy[0] * _o, hy2 + _nxy[1] * _o]
+            (a1, b1), (a2, b2) = _cut(_hs_zlo); (c1, d1), (c2, d2) = _cut(_hs_zhi)
+            ax3.add_collection3d(_P3C([[
+                [a1, b1, _hs_zlo], [a2, b2, _hs_zlo], [c2, d2, _hs_zhi], [c1, d1, _hs_zhi],
+            ]], alpha=0.30, facecolor='darkorange', edgecolor='saddlebrown', lw=0.8))
+            continue
         ax3.add_collection3d(_P3C([[
             [hx1, hy1, _hs_zlo], [hx2, hy2, _hs_zlo], [hx2, hy2, _hs_zhi], [hx1, hy1, _hs_zhi],
         ]], alpha=0.25, facecolor='darkorange', edgecolor='darkorange', lw=0.8))
@@ -1161,6 +1178,11 @@ def plot_geo_constraints(geo_name, config, out_dir, is_tightened=False, basename
         if x_active is not None:
             ax_xy.text(mx, my, f'x∈[{x_active[0]:.1f},{x_active[1]:.1f}]', fontsize=5,
                        color='saddlebrown', ha='center', va='bottom')
+        if _hs_lean(hs) is not None:                    # [U19] this line is the cut at z_ref only
+            _t, _zr = _hs_lean(hs)
+            ax_xy.text(mx, my, f'cut at z={_zr:.2f}; leaned {np.degrees(np.arctan(_t)):+.0f}° '
+                               f'(centre limit here {margin * np.hypot(1.0, _t):.2f} m)',
+                       fontsize=5, color='saddlebrown', ha='center', va='top')
     for obs in obstacle_list:
         ax_xy.add_patch(_mpa.Circle((float(obs['center'][0]), float(obs['center'][1])),
                                      obs['radius']+margin, lw=1.5, edgecolor='tomato',
@@ -1193,6 +1215,22 @@ def plot_geo_constraints(geo_name, config, out_dir, is_tightened=False, basename
                                      alpha=0.25, linestyle='--'))
     _xz_drawn = False
     for hs in halfspace_list:
+        if _hs_lean(hs) is not None:
+            # [Gen15 U19] leaned plane: its cut along y = 0 (route C). s_xy(x, 0) + t·(z − z_ref) = 0
+            # gives the raw cut; the enforced cut has s3 = margin, i.e. s_xy + t·(z − z_ref) = margin·√(1+t²).
+            _t, _zr = _hs_lean(hs); _n3, _P0 = _hs_normal3(hs)
+            (hx1, hy1), (hx2, hy2), side, x_active = _wall_xy(hs)
+            _xs = np.linspace(hx1, hx2, 60)
+            _sxy = _n3[0] * np.sqrt(1 + _t * _t) * (_xs - _P0[0]) + _n3[1] * np.sqrt(1 + _t * _t) * (0.0 - _P0[1])
+            _zraw = _zr - _sxy / _t
+            _zenf = _zr + (margin * np.hypot(1.0, _t) - _sxy) / _t
+            ax_xz.plot(_xs, _zraw, color='darkorange', lw=2.0, zorder=4,
+                       label=None if _xz_drawn else 'leaned plane, cut at y=0 (raw)')
+            ax_xz.plot(_xs, _zenf, color='crimson', lw=1.4, ls='--', zorder=5,
+                       label=None if _xz_drawn else f'enforced at y=0 (margin {margin:.3f} m ⊥)')
+            ax_xz.fill_between(_xs, _zraw, _zenf, color='crimson', alpha=0.13, lw=0, zorder=1)
+            _xz_drawn = True
+            continue
         if _hs_plane(hs) == 'xz':
             # [Gen15 U19] an x-z entry (roof/floor): the raw line and the ENFORCED line, i.e. the
             # raw line shifted by margin (perpendicular) toward the feasible side, exactly what
@@ -1266,6 +1304,46 @@ def _hs_plane(hs):
     if plane not in ('xy', 'xz'):
         raise ValueError(f"halfspace `plane` must be 'xy' or 'xz', got {plane!r}: {hs}")
     return plane
+
+
+def _hs_lean(hs):
+    """[Gen15 U19] optional `z_lean: {deg, z_ref}` on an x-y halfspace → (t, z_ref) or None.
+
+    The vertical wall of the x-y line is leaned over by `deg` (degrees from vertical) about the
+    line itself at altitude `z_ref`, so the feasible signed distance becomes
+        s(p) = s_xy(x, y) + t · (z − z_ref),   t = tan(deg)
+    deg < 0: descending gains room (the wall leans over the drone, pushing it down as well as
+    sideways — corridor_v3_tilt); deg > 0: climbing gains room. At z = z_ref the cut is exactly
+    the un-leaned line, so a `z_lean` entry is the v2 slide plus one key. The projector row and
+    the scorer use the unit 3-D normal (see _hs_normal3); the body radius clears the leaned
+    plane perpendicularly, so at z_ref the lateral centre limit is r·√(1+t²), not r.
+    """
+    if not isinstance(hs, dict) or hs.get('z_lean') is None:
+        return None
+    if _hs_plane(hs) != 'xy':
+        raise ValueError(f'`z_lean` is only defined for an x-y halfspace: {hs}')
+    lean = hs['z_lean']
+    deg = float(lean['deg']); z_ref = float(lean['z_ref'])
+    if not (-89.0 <= deg <= 89.0) or deg == 0.0:
+        raise ValueError(f'`z_lean.deg` must be in [-89, 89] and non-zero, got {deg}: {hs}')
+    return float(np.tan(np.radians(deg))), z_ref
+
+
+def _hs_normal3(hs):
+    """[Gen15 U19] (n3, P0) of a leaned x-y halfspace: unit normal INTO the feasible side and a
+    point on the plane. Feasible ⇔ n3·(p − P0) ≥ 0; the body clears ⇔ n3·(p − P0) ≥ r_drone."""
+    t, z_ref = _hs_lean(hs)
+    triple, _ = _normalize_halfspace(hs)
+    (x1, y1), (x2, y2), side = triple[0], triple[1], triple[2]
+    dx, dy = x2 - x1, y2 - y1
+    nrm = float(np.hypot(dx, dy))
+    if nrm < 1e-9:
+        raise ValueError(f'degenerate halfspace line: {hs}')
+    nx, ny = -dy / nrm, dx / nrm                      # left normal = the 'above' side
+    if side != 'above':
+        nx, ny = -nx, -ny
+    n3 = np.array([nx, ny, t], dtype=float) / float(np.sqrt(1.0 + t * t))
+    return n3, np.array([x1, y1, z_ref], dtype=float)
 
 
 def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
@@ -1411,6 +1489,16 @@ def setup_dpcc_projector(args, config, obs_normalizer, act_normalizer, variant,
             # feasible) and the perpendicular tightening carry over unchanged. Under `-pdes` the
             # _DIM table already points at p_des, so the binding is inherited. HardFlow consumes
             # this same list (return_constraint_list=True) — nothing to add there.
+            if _hs_lean(hs) is not None:
+                # [Gen15 U19] leaned plane (corridor_v3_tilt): one row on (x, y, z) from the unit
+                # 3-D normal, feasible n3·p ≥ n3·P0 + margin  ⇔  −n3·p ≤ −(n3·P0 + margin).
+                # The margin is perpendicular to the leaned plane (the body radius), the same
+                # convention the 2-D sloped branch uses in its plane.
+                n3, P0 = _hs_normal3(hs)
+                C_row = np.zeros(trajectory_dim)
+                C_row[_DIM['x']], C_row[_DIM['y']], C_row[_DIM['z']] = -n3
+                constraint_list.append(('ineq', (C_row, -(float(n3 @ P0) + margin))))
+                continue
             _hs = {'x': _DIM['x'], 'y': _DIM['z'] if _hs_plane(hs) == 'xz' else _DIM['y']}
             C_row, d = utils.formulate_halfspace_constraints(triple, margin, trajectory_dim, _hs)
             constraint_list.append(('ineq', (C_row, d)))
@@ -1545,10 +1633,11 @@ def _add_virtual_geometry(mujoco, scn, geo_config, z, variant=''):
             continue
         nx, ny = -d[1] / L, d[0] / L                       # left normal = the 'above' side
         feas = np.array([nx, ny]) * (1.0 if side == 'above' else -1.0)
+        _r = r * float(np.hypot(1.0, _hs_lean(hs)[0])) if _hs_lean(hs) is not None else r   # [U19] cut at z_ref
         yaw = float(np.arctan2(d[1], d[0])); c, sn = np.cos(yaw), np.sin(yaw)
         mat = np.array([c, -sn, 0.0, sn, c, 0.0, 0.0, 0.0, 1.0])
         for off, half_w, half_h, dz, rgba in ((0.0, 0.015, 0.30, 0.0, (1.0, 0.55, 0.0, 0.55)),   # the wall
-                                              (r, 0.008, 0.01, 0.35, (0.9, 0.05, 0.1, 0.95))):  # centre limit
+                                              (_r, 0.008, 0.01, 0.35, (0.9, 0.05, 0.1, 0.95))):  # centre limit
             if scn.ngeom >= scn.maxgeom:
                 return
             mid = (pa + pb) / 2.0 + feas * off

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3.14
-"""Gen15 U19 · gate G0 (offline, no GPU) — the corridor_v3_hump constraint, drawn from the yaml.
+"""Gen15 U19 · gate G0 (offline, no GPU) — the corridor_v3_ablation_hump constraint, drawn from the yaml.
 
-    python3.14 logs_in_develop/Gen15/U19/figs/make_g0_hump_overview.py
+    python3.14 logs_in_develop/Gen15/U19/figs/make_g0_ablation_hump_overview.py
 
-Reads `config/uav_projection.yaml` (entries corridor_v3_hump / corridor_v3_hump_lo), no MuJoCo, no
-torch. Writes fig_u19_g0_hump_overview.{png,svg} next to this file and prints the G0 numbers.
+Reads `config/uav_projection.yaml` (entries corridor_v3_ablation_hump / corridor_v3_ablation_hump_lo), no MuJoCo, no
+torch. Writes fig_u19_g0_ablation_hump_overview.{png,svg} next to this file and prints the G0 numbers.
 Colours follow the eval's own constraint_overview convention (steelblue = workspace box,
 darkorange = halfspace, crimson = drone-centre limit, tomato = obstacle).
 """
@@ -30,7 +30,7 @@ ENVELOPE_Z_UB, DIV_SLACK = 1.30, 2.0          # SCENE_FLIGHT_ENVELOPE['corridor'
 
 cfg = yaml.safe_load(open(os.path.join(REPO, 'config/uav_projection.yaml')))
 geo = {g['name']: g for g in cfg['geo_constraint_variants']}
-hump, hump_lo = geo['corridor_v3_hump'], geo['corridor_v3_hump_lo']
+hump, hump_lo = geo['corridor_v3_ablation_hump'], geo['corridor_v3_ablation_hump_lo']
 r_plan = float(hump['planning_inflation']['r_drone'])
 r_score = float(cfg['inflation']['r_drone'])
 tight = float(cfg.get('enlarge_constraints') or 0.0)
@@ -77,7 +77,7 @@ for a in (ax, ay):
         a.spines[sp].set_visible(False)
 
 # — side view (x, z) —
-ax.set_title('corridor_v3_hump — side view (x, z): the constraint the plan must climb over', fontsize=10, loc='left')
+ax.set_title('corridor_v3_ablation_hump — side view (x, z): the constraint the plan must climb over', fontsize=10, loc='left')
 ax.axhspan(FLOWN_LO, FLOWN_HI, color='0.55', alpha=0.18, lw=0, zorder=1)
 ax.text(-2.95, (FLOWN_LO + FLOWN_HI) / 2, f'flown band, v2 slide (no projection)\n{FLOWN_LO:.2f}–{FLOWN_HI:.2f} m',
         fontsize=7, color='0.35', va='center')
@@ -174,7 +174,7 @@ ay.legend(handles=[
 ], fontsize=7, loc='lower right', framealpha=0.95)
 
 g0 = (peak_req > FLOWN_HI) and (slot >= 0.6)
-fig.suptitle(f'Gen15 U19 · gate G0 — corridor_v3_hump (H = {H:.2f} m, slope {s:.3f})   '
+fig.suptitle(f'Gen15 U19 · gate G0 — corridor_v3_ablation_hump (H = {H:.2f} m, slope {s:.3f})   '
              f'enforced peak {peak_req:.3f} m > band top {FLOWN_HI:.2f} m: {"yes" if peak_req > FLOWN_HI else "NO"};   '
              f'slot {slot:.2f} m ≥ 0.6 m: {"yes" if slot >= 0.6 else "NO"}   →   G0 {"PASS" if g0 else "FAIL"}',
              fontsize=10, fontweight='bold', y=0.995)
@@ -186,7 +186,7 @@ fig.text(0.5, 0.005,
          f'{peak_req - FLOWN_HI:.2f}–{peak_req - FLOWN_LO:.2f} m.',
          ha='center', fontsize=7, color='dimgray', style='italic', wrap=True)
 fig.subplots_adjust(left=0.05, right=0.99, top=0.91, bottom=0.14)
-out = os.path.join(HERE, 'fig_u19_g0_hump_overview')
+out = os.path.join(HERE, 'fig_u19_g0_ablation_hump_overview')
 fig.savefig(out + '.png', dpi=150, bbox_inches='tight'); fig.savefig(out + '.svg', bbox_inches='tight')
 plt.close(fig)
 

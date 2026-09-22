@@ -2,11 +2,13 @@
 
 **2026-09-22 · update plan for a coding agent · NO CODE WRITTEN, NOTHING RUN.**
 
-> **STATUS 2026-09-22 (later the same day): BUILT, NOT RUN.** Sites 1–7 of §2 are coded (via a `plane: xz` key, one
-> helper per file instead of a third return value — see the changelog), the two yaml entries exist, the driver is ready in
-> `plan` / `smoke` (= the pilot, gates G1–G3) / `submit` modes, gate **G0 passes** offline ([`figs/`](figs/README.md)).
-> Changelog: [`CHANGELOG_20260922_U19_corridor_v3_hump_coding1.md`](CHANGELOG_20260922_U19_corridor_v3_hump_coding1.md).
-> Next: `bash Slurm_Codes/temp_bash/eval_20260922_u19_corridor_v3_hump.sh smoke` on the cluster.
+> **STATUS 2026-09-22 (later the same day): BUILT, NOT RUN — and the author re-defined v3.** The hump of this plan is
+> **not** the corridor v3; it is kept as the ablation **`corridor_v3_ablation_hump`**. The v3 the author imagined is
+> **`corridor_v3_tilt`**: the v2 slide itself leaned over (−60° about the launch altitude) so one x–y–z plane pushes the
+> drone sideways AND down. Both are coded, both pass gate G0 offline ([`figs/`](figs/README.md)), and the driver's
+> `smoke` mode launches BOTH pilots. Changelog:
+> [`CHANGELOG_20260922_U19_corridor_v3_coding1.md`](CHANGELOG_20260922_U19_corridor_v3_coding1.md).
+> Next: `bash Slurm_Codes/temp_bash/eval_20260922_u19_corridor_v3.sh smoke` on the cluster.
 Author's request (v3.65): *"I didn't see it slide or lean on the z axis, feels just x, y. Maybe test a corridor_v3 with
 some angle on z, run the eval."* Predecessors: U16 (`corridor_v2_slide`, the corridor of the thesis), U11–U14 (the failed
 corridor balls and gate; read [`../U12/CLOSURE_20260912_corridor_obstacle_investigation.md`](../U12/CLOSURE_20260912_corridor_obstacle_investigation.md) once — it says what NOT to repeat).

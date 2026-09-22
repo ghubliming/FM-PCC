@@ -843,7 +843,53 @@ geo_constraint_variants:
       - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0,  1.0], radius: 0.05}
 
   # ══════════════════════════════════════════════════════════════════════════════
-  # [Gen15 U19 2026-09-22] corridor_v3_hump — the WIDE corridor with a constraint on ALTITUDE
+  # [Gen15 U19 2026-09-22] corridor_v3_tilt — the v2 SLIDE LEANED OVER: one plane in x-y-z  (THE U19 EXPERIMENT)
+  #
+  # WHY. The v2 slide is a vertical wall: it forces the drone sideways only, z is never asked for.
+  # The author's U19 idea: keep that slide and lean it over about its own line, so its normal also
+  # points DOWN — the drone is pushed sideways AND down by one constraint (the plan's hump below
+  # is the other reading of "a constraint on z" and stays as the ABLATION corridor_v3_ablation_hump, piloted beside this).
+  #
+  # WHAT. corridor_v2_slide plus ONE key on the slide entry, `z_lean: {deg: -60, z_ref: 1.11}`:
+  #   feasible signed distance  s = s_xy(x, y) + tan(deg) * (z - z_ref)
+  #   deg < 0  -> descending gains room (the wall leans over the drone); at z = z_ref (the launch
+  #   altitude) the cut is exactly the v2 slide. Everything else byte-identical to corridor_v2_slide:
+  #   scene XML, walls, caps, workspace box (ceiling 1.80 — the room is BELOW: floor 0.30 + 0.31 = 0.61,
+  #   0.50 m under the launch), model, checkpoint, routes, goals, projector stack, metrics.
+  #   The projector row and the scorer use the unit 3-D normal; the body radius clears the plane
+  #   perpendicularly, so at z_ref the lateral centre limit is 0.31*sqrt(1+tan^2 60) = 0.62 m (not 0.31).
+  #   The min-norm correction moves along the normal: sin 60 = 87 % of it in z, 50 % in y.
+  #   Per route (drone centre at the exit, x = 2.0; numbers from figs/make_g0_tilt_overview.py):
+  #     descend only:   L 0.32 m, C 0.39 m, R 0.45 m  (all < the 0.50 m floor room)
+  #     sideways only:  infeasible on C and R (would need y < -0.62, the wall limit)
+  #     min-norm:       ~0.24-0.34 m down and 0.14-0.20 m sideways
+  #   binds from x ~ -0.76 (route C) instead of v2's 0.53: a longer, gentler ramp.
+  #   Virtual, like the v2 slide: no geom, a crossing is scored as a violation.
+  # NOT in `active_geo_variants`; select per job with UAV_MIX_GEO_VARIANTS=corridor_v3_tilt.
+  # Driver: Slurm_Codes/temp_bash/eval_20260922_u19_corridor_v3.sh  (default GEO, tag u19cv3t)
+  # ══════════════════════════════════════════════════════════════════════════════
+  - name: corridor_v3_tilt
+    scene: corridor
+    scene_xml: scene_corridor_v2.xml
+    geo_tag_suffix: '_cv3t'       # its own folder family, never pooled with _cv2s
+    constraint_types: ['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds']
+    planning_inflation: {r_drone: 0.31, margin_base: 0.0}
+    workspace_bounds:             # byte-identical to corridor_v2_slide
+      lb: [-4.0, -.inf, 0.30]
+      ub: [ 4.0,  .inf, 1.80]
+    halfspace_constraints:        # the WIDE walls + the v2 slide LEANED OVER
+      - {line: [[-2.0, -0.95], [2.0, -0.95]], side: 'above', x_active: [-2.0, 2.0]}
+      - {line: [[-2.0,  0.95], [2.0,  0.95]], side: 'below', x_active: [-2.0, 2.0]}
+      - {line: [[-2.0,  0.95], [2.0, -0.05]], side: 'below', x_active: [-2.0, 2.0],
+         z_lean: {deg: -60, z_ref: 1.11}}                                            # U19 tilted slide
+    obstacle_constraints:         # identical to corridor_v2_slide
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0, -1.0], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0, -1.0], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [-2.0,  1.0], radius: 0.05}
+      - {type: sphere_outside, dimensions: ['x', 'y'], center: [ 2.0,  1.0], radius: 0.05}
+
+  # ══════════════════════════════════════════════════════════════════════════════
+  # [Gen15 U19 2026-09-22] corridor_v3_ablation_hump — ABLATION: the wide corridor with a roof to climb over (no slide)
   #
   # WHY. corridor_v2_slide tests a lateral move only: walls, slide and wall caps are all [x, y]
   # and z is bounded by the workspace box alone, which never binds (flown 0.86-1.37 m inside
@@ -871,13 +917,13 @@ geo_constraint_variants:
   #   the finish line is a plane through the route end (x = 2.8, 1.3 m after the hump), so
   #   altitude does not affect success; the strict goal (3-D, <= 0.30 m) may drop if the drone
   #   is still high. Report both, as the corridor DA already does.
-  # NOT in `active_geo_variants`; select per job with UAV_MIX_GEO_VARIANTS=corridor_v3_hump.
-  # Driver: Slurm_Codes/temp_bash/eval_20260922_u19_corridor_v3_hump.sh  (tag u19cv3)
+  # NOT in `active_geo_variants`; select per job with UAV_MIX_GEO_VARIANTS=corridor_v3_ablation_hump.
+  # Driver: Slurm_Codes/temp_bash/eval_20260922_u19_corridor_v3.sh  (the pilot runs it beside the tilt; wave: GEO=corridor_v3_ablation_hump; tag u19cv3ah)
   # ══════════════════════════════════════════════════════════════════════════════
-  - name: corridor_v3_hump
+  - name: corridor_v3_ablation_hump
     scene: corridor
     scene_xml: scene_corridor_v2.xml
-    geo_tag_suffix: '_cv3h'       # new folder family, never pooled with _cv2s
+    geo_tag_suffix: '_cv3ah'      # new folder family (ablation hump), never pooled with _cv2s / _cv3t
     constraint_types: ['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds']
     planning_inflation: {r_drone: 0.31, margin_base: 0.0}
     workspace_bounds:             # ceiling 1.80 -> 2.80 (synthetic, no ceiling geom); rest as corridor_v2_slide
@@ -896,12 +942,12 @@ geo_constraint_variants:
 
   # [Gen15 U19] SECOND RUNG, milder: H = 0.90 -> required centre z at the peak >= 1.285 (1.315
   # tightened), climb ~0.2 m, still violated by every unprojected flight (band top 1.24). DEFINED,
-  # NOT SCHEDULED: run only if corridor_v3_hump fails gate G2 AND the failure is a climb that stops
-  # short (G3 passes). Select with UAV_MIX_GEO_VARIANTS=corridor_v3_hump_lo (GEO=... in the driver).
-  - name: corridor_v3_hump_lo
+  # NOT SCHEDULED: run only if corridor_v3_ablation_hump fails gate G2 AND the failure is a climb that stops
+  # short (G3 passes). Select with UAV_MIX_GEO_VARIANTS=corridor_v3_ablation_hump_lo (GEO=... in the driver).
+  - name: corridor_v3_ablation_hump_lo
     scene: corridor
     scene_xml: scene_corridor_v2.xml
-    geo_tag_suffix: '_cv3hl'      # its own folder family
+    geo_tag_suffix: '_cv3ahl'     # its own folder family
     constraint_types: ['dynamics', 'geo_bounds', 'halfspace', 'obstacles', 'bounds']
     planning_inflation: {r_drone: 0.31, margin_base: 0.0}
     workspace_bounds:

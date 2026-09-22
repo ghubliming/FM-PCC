@@ -1,28 +1,37 @@
 #!/usr/bin/env python
-"""Gen15 U19 — gates G1 / G2 / G3 of the corridor_v3_hump pilot, read from the eval npz files.
+"""Gen15 U19 — gates G1 / G2 / G3 of a corridor_v3 pilot, read from the eval npz files.
 
-    python logs_in_develop/Gen15/U19/tools/check_gates_u19.py "<...>/Emf_K3_*_u19smokecv3/6/corridor_cv3h*"  [more globs]
+    python logs_in_develop/Gen15/U19/tools/check_gates_u19.py --geo tilt "<...>/Emf_K3_*_u19smokecv3t/6/corridor_cv3t*"
+    python logs_in_develop/Gen15/U19/tools/check_gates_u19.py --geo hump "<...>/Emf_K3_*_u19smokecv3h/6/corridor_cv3h*"
 
 Each matched folder is one geo folder: `<geo_tag>/<variant>.npz` (eval_artifacts.save_npz). Needs only numpy.
 Plan: logs_in_develop/Gen15/U19/PLAN_20260922_U19_corridor_v3_z_slide.md §3.
 
-  G1  the unprojected arm (`diffuser`) has violating steps on EVERY trial      -> the hump binds
+  G1  the unprojected arm (`diffuser`) has violating steps on EVERY trial      -> the plane binds
   G2  some projected arm: collision_free >= 2/3 of trials AND success >= 2/3   (strict AND relaxed printed)
-  G3  paired executed z, projected - unprojected, same trial index (same route / seed), apex over
-      x in [-0.5, 0.5]: > 0.15 m on EVERY projected flight                      -> the plan CLIMBS
-      (U12 lesson: a violation count that drops because the flight is shorter is not a pass —
-       the per-step rate is printed next to the count for that reason)
+  G3  paired executed z, projected - unprojected, same trial index (same route / seed):
+        --geo tilt   MIN z over x in [0.5, 2.0]  must be < -0.15 m  (the plan DESCENDS under the leaned slide)
+        --geo hump   MAX z over x in [-0.5, 0.5] must be > +0.15 m  (the plan CLIMBS over the roof)
+      on EVERY projected flight. (U12 lesson: a violation count that drops because the flight is
+      shorter is not a pass — the per-step rate is printed next to the count for that reason)
+  --win lo hi / --dz value override the preset (dz sign = required direction).
 
 obs layout per FM step: [p_des(0:3) | p(3:6) | v(6:9)]  -> executed x = col 3, z = col 5.
 """
+import argparse
 import glob
 import os
 import sys
 
 import numpy as np
 
-X_WIN = (-0.5, 0.5)
-G3_MIN_DZ = 0.15
+PRESETS = {                     # geo: (x window, required signed dz, 'max'|'min' statistic)
+    'tilt': ((0.5, 2.0), -0.15, 'min'),
+    'hump': ((-0.5, 0.5), +0.15, 'max'),
+}
+X_WIN = PRESETS['tilt'][0]
+G3_MIN_DZ = PRESETS['tilt'][1]
+STAT = PRESETS['tilt'][2]
 UNPROJECTED = 'diffuser'
 
 
@@ -31,14 +40,22 @@ def _load(path):
     return {k: d[k] for k in d.files}
 
 
-def _apex_z(obs, win=X_WIN):
-    """max executed z over the x window (nan if the flight never entered it)."""
+def _apex_z(obs, win=None):
+    """extreme (STAT) executed z over the x window (nan if the flight never entered it)."""
+    win = X_WIN if win is None else win
     o = np.asarray(obs, dtype=float)
     if o.ndim != 2 or o.shape[0] == 0:
         return float('nan')
     x, z = o[:, 3], o[:, 5]
     m = (x >= win[0]) & (x <= win[1])
-    return float(z[m].max()) if m.any() else float('nan')
+    if not m.any():
+        return float('nan')
+    return float(z[m].max() if STAT == 'max' else z[m].min())
+
+
+def _g3_ok(dz):
+    """signed test: dz must be beyond G3_MIN_DZ in its direction."""
+    return bool(np.isfinite(dz)) and (dz > G3_MIN_DZ if G3_MIN_DZ > 0 else dz < G3_MIN_DZ)
 
 
 def _frac(a):
@@ -91,20 +108,33 @@ def check_folder(folder):
         for i in range(m):
             zp = _apex_z(d['obs_all'][i]); zu = _apex_z(ref['obs_all'][i])
             rows.append((i, zu, zp, zp - zu))
-        ok = [r[3] > G3_MIN_DZ for r in rows if np.isfinite(r[3])]
-        g3 = bool(ok) and all(ok) and len(ok) == m
-        print(f'    G3 {name}: apex z over x∈[{X_WIN[0]},{X_WIN[1]}], projected − unprojected, per trial:')
+        ok = [_g3_ok(r[3]) for r in rows]
+        g3 = bool(ok) and all(ok)
+        print(f'    G3 {name}: {STAT} z over x∈[{X_WIN[0]},{X_WIN[1]}], projected − unprojected, per trial:')
         for i, zu, zp, dz in rows:
-            flag = '  ✓' if (np.isfinite(dz) and dz > G3_MIN_DZ) else '  ✗'
+            flag = '  ✓' if _g3_ok(dz) else '  ✗'
             print(f'         trial {i}: unprojected {zu:.3f}  projected {zp:.3f}  Δz {dz:+.3f} m{flag}')
-        print(f'       -> {"PASS" if g3 else "FAIL (no climb on demand — the U12 finding again)"}  (needs Δz > {G3_MIN_DZ} m on every flight)')
+        _need = f'Δz {">" if G3_MIN_DZ > 0 else "<"} {G3_MIN_DZ:+.2f} m'
+        print(f'       -> {"PASS" if g3 else "FAIL (no z move on demand — the U12 finding again)"}  (needs {_need} on every flight)')
 
 
 def main(argv):
-    if not argv:
-        print(__doc__); sys.exit(1)
+    global X_WIN, G3_MIN_DZ, STAT
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument('globs', nargs='*')
+    ap.add_argument('--geo', choices=sorted(PRESETS), default='tilt')
+    ap.add_argument('--win', nargs=2, type=float, default=None)
+    ap.add_argument('--dz', type=float, default=None)
+    a = ap.parse_args(argv)
+    X_WIN, G3_MIN_DZ, STAT = PRESETS[a.geo]
+    if a.win is not None: X_WIN = tuple(a.win)
+    if a.dz is not None:
+        G3_MIN_DZ = a.dz; STAT = 'max' if a.dz > 0 else 'min'
+    print(f'preset {a.geo}: G3 window x∈{X_WIN}, {STAT} z, required Δz {G3_MIN_DZ:+.2f} m')
+    if not a.globs:
+        ap.print_help(); sys.exit(1)
     folders = []
-    for pat in argv:
+    for pat in a.globs:
         folders += sorted(glob.glob(pat))
     if not folders:
         print('[!] nothing matched', argv); sys.exit(1)
