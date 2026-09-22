@@ -75,8 +75,8 @@ here because `logs/` lives on the cluster only.
 | gate | tilt | ablation hump | how |
 | :-- | :-- | :-- | :-- |
 | **G0** | **PASS** | **PASS** | [`figs/`](figs/README.md) — `fig_u19_g0_tilt_overview`, `fig_u19_g0_ablation_hump_overview` |
-| G1–G3 | not run | not run | `tools/check_gates_u19.py --geo tilt|hump "<geo folder glob>"` reads the pilot's `<variant>.npz` (numpy only). Per-arm table (collision-free, strict/relaxed success, S&C, violating trials, **violations per step** — the U12 artefact guard). G1 on `diffuser`. G2 per projected arm. **G3 is geometry-aware**: tilt = min executed z over x ∈ [0.5, 2.0], projected − unprojected, **< −0.15 m** (descent); hump = max z over x ∈ [−0.5, 0.5] **> +0.15 m** (climb); every flight, same trial index. Self-tested on synthetic npz. |
-| G4 | not run | not run | `submit` after its pilot passes; DA with `DA_UAV_v1` as for U16 |
+| G1–G3 | **G1 PASS · G2 FAIL (0/3 cf, 2–6 cm lag residue at the window end, setpoint clean) · G3 PASS** — [`PILOT_20260922_U19_gates_G1-G3.md`](PILOT_20260922_U19_gates_G1-G3.md) | **G1 PASS · G2 FAIL (same residue at the apex) · G3 PASS** | `tools/check_gates_u19.py --geo tilt|hump "<geo folder glob>"` reads the pilot's `<geo>/<variant>/<variant>.npz` (numpy only). Per-arm table (collision-free, strict/relaxed success, S&C, violating trials, **violations per step** — the U12 artefact guard). G1 on `diffuser`. G2 per projected arm. **G3 is geometry-aware**: tilt = min executed z over x ∈ [0.5, 2.0], projected − unprojected, **< −0.15 m** (descent); hump = max z over x ∈ [−0.5, 0.5] **> +0.15 m** (climb); every flight, same trial index. Self-tested on synthetic npz. |
+| G4 | to submit (author: run as is, no env change) | to submit | `submit` per geometry; DA with `DA_UAV_v1` as for U16 |
 
 ## 6 · To run (cluster)
 

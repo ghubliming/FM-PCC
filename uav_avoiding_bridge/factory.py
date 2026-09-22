@@ -6,8 +6,9 @@
 FMPCC_AVOIDING_PLANT=uav   -> UavAvoidingPlant (quadrotor in the scaled pillars_v2 scene) instead of the Panda.
    Refuses unless FMPCC_RUN_MSG contains 'uav': the results land in the SAME layout as the Panda runs, and only
    the message tag on the eval folder keeps them apart (…_msg<tag>). Without it the Panda npz would be overwritten.
-Knobs (all optional): FMPCC_AVOID_UAV_HZ (5), FMPCC_AVOID_UAV_FF (1), FMPCC_AVOID_UAV_GAIN (pid_default),
-   FMPCC_AVOID_UAV_REPLAY (clock|settle), FMPCC_AVOID_UAV_SCALE / _ALT (read by frame.py).
+Knobs (all optional): FMPCC_AVOID_UAV_HZ (1), FMPCC_AVOID_UAV_FF (0), FMPCC_AVOID_UAV_VMAX (1.0), FMPCC_AVOID_UAV_GAIN
+   (pid_default), FMPCC_AVOID_UAV_REPLAY (clock|settle), FMPCC_AVOID_UAV_SCALE / _ALT (read by frame.py),
+   FMPCC_AVOID_UAV_SIDECAR_DIR (dump the plant's per-episode records there on close).
 """
 import os
 
@@ -29,7 +30,21 @@ def make_avoiding_env(default_cls=None):
         raise RuntimeError('FMPCC_AVOIDING_PLANT=uav needs FMPCC_RUN_MSG containing "uav" (e.g. uavpv2s10): '
                            'the UAV results share the Panda result layout and only the message tag separates them.')
     from uav_avoiding_bridge.plant import UavAvoidingPlant
-    return UavAvoidingPlant(control_hz=float(os.environ.get('FMPCC_AVOID_UAV_HZ', '5')),
-                            feedforward=_truthy(os.environ.get('FMPCC_AVOID_UAV_FF', '1')),
-                            gain=os.environ.get('FMPCC_AVOID_UAV_GAIN', 'pid_default'),
-                            replay=os.environ.get('FMPCC_AVOID_UAV_REPLAY', 'clock'))
+    plant = UavAvoidingPlant(control_hz=float(os.environ.get('FMPCC_AVOID_UAV_HZ', '1')),
+                             feedforward=_truthy(os.environ.get('FMPCC_AVOID_UAV_FF', '0')),
+                             gain=os.environ.get('FMPCC_AVOID_UAV_GAIN', 'pid_default'),
+                             replay=os.environ.get('FMPCC_AVOID_UAV_REPLAY', 'clock'),
+                             v_max=float(os.environ.get('FMPCC_AVOID_UAV_VMAX', '1.0')))
+    side = os.environ.get('FMPCC_AVOID_UAV_SIDECAR_DIR', '')
+    if side:                                   # Mode L: dump the plant sidecar when the eval closes the env
+        os.makedirs(side, exist_ok=True)
+        _close = plant.close
+        def _close_and_dump():
+            _close()
+            try:
+                path = plant.save_records(os.path.join(side, f'uav_plant_records_{tag}.json'))
+                print(f'[ uav-plant ] sidecar -> {path}')
+            except Exception as exc:           # pragma: no cover
+                print(f'[ uav-plant ] sidecar dump failed: {exc}')
+        plant.close = _close_and_dump
+    return plant

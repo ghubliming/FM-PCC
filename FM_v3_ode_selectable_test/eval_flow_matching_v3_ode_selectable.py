@@ -46,7 +46,9 @@ args_cli, remaining_argv = parser.parse_known_args()
 # Pass remaining args to Parser if needed
 sys.argv = [sys.argv[0]] + remaining_argv
 
-with open('config/projection_eval.yaml', 'r') as file:
+# [Gen15 U18 fix5] FMPCC_PROJ_CFG selects the projection yaml (default unchanged) — the same override
+# config/avoiding-d3il.py already documents; lets a live UAV-plant check run a 2-variant yaml without editing this one.
+with open(os.environ.get('FMPCC_PROJ_CFG', 'config/projection_eval.yaml'), 'r') as file:
     config = yaml.safe_load(file)
 
 exps = config['exps']

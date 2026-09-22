@@ -1,0 +1,333 @@
+{
+ "args": {
+  "root": "/data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans",
+  "out_root": "/u/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/avoiding_bridge",
+  "in_place": false,
+  "engine": [
+   "flow_matching_v3_ode_selectable"
+  ],
+  "train_glob": null,
+  "eval_glob": [
+   "*K20*msg20trials"
+  ],
+  "seeds": [
+   6
+  ],
+  "geos": [
+   "both-hard",
+   "top-left-hard",
+   "top-right-hard"
+  ],
+  "variants": [
+   "diffuser",
+   "dpcc-r-tightened"
+  ],
+  "tag": "uavpv2s36turboset",
+  "replay": "settle",
+  "hz": 1.0,
+  "vmax": 1.0,
+  "ff": false,
+  "gain": "pid_default",
+  "no_contact_stop": false,
+  "grace_s": 2.0,
+  "limit_episodes": 0,
+  "dry_run": false,
+  "force": false,
+  "no_png": false,
+  "max_cells": 0,
+  "foresight": 3,
+  "foresight_stride": 6,
+  "gif": 0,
+  "gif_fps": 10,
+  "gif_res": 160,
+  "gif_cam": 8.0,
+  "gif_stride": 20
+ },
+ "settings": {
+  "scale": 36.0,
+  "altitude": 1.0,
+  "control_hz": 1.0,
+  "period_s": 1.0,
+  "physics_dt": 0.01,
+  "feedforward": false,
+  "gain": "pid_default",
+  "replay": "settle",
+  "settle_eps": 0.05,
+  "settle_max_s": 4.0,
+  "v_max": 1.0,
+  "terminate_on_contact": true,
+  "scene_xml": "/u/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/quadrotor/scenes/scene_avoiding_pillars_s36.xml",
+  "origin_a": [
+   0.5,
+   0.035
+  ],
+  "drone_reach_m": 0.36
+ },
+ "cells": [
+  {
+   "cell": {
+    "engine": "flow_matching_v3_ode_selectable",
+    "train": "H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10",
+    "eval": "H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials",
+    "seed": 6,
+    "geo": "both-hard",
+    "variant": "diffuser"
+   },
+   "n": 20,
+   "wall_s": 30.412694968283176,
+   "panda": {
+    "success": 1.0,
+    "sc": 0.05,
+    "cf": 0.05,
+    "n_viol": 12.2,
+    "n_steps": 67.7
+   },
+   "drone": {
+    "success": 1.0,
+    "sc": 0.0,
+    "cf": 0.0,
+    "n_viol": 16.45,
+    "n_steps": 67.6
+   },
+   "agree_episodes": 19,
+   "ended": {
+    "success": 20,
+    "contact": 0,
+    "exhausted": 0,
+    "cap": 0,
+    "diverged": 0
+   },
+   "plant": {
+    "track_err_mean_m": 0.04643419900824875,
+    "track_err_p95_m": 0.04996396469055751,
+    "gap_a_p95": 0.0013877938838349699,
+    "gap_a_mean": 0.0012897169963751853,
+    "panda_gap_a_p95": 0.02733230567707904,
+    "contact_episodes": 0,
+    "speed_max_ms": 0.19586426727791442
+   },
+   "src_npz": "/data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials/6/results/halfspace_both-hard/diffuser.npz"
+  },
+  {
+   "cell": {
+    "engine": "flow_matching_v3_ode_selectable",
+    "train": "H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10",
+    "eval": "H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials",
+    "seed": 6,
+    "geo": "both-hard",
+    "variant": "dpcc-r-tightened"
+   },
+   "n": 20,
+   "wall_s": 31.19690983556211,
+   "panda": {
+    "success": 1.0,
+    "sc": 1.0,
+    "cf": 1.0,
+    "n_viol": 0.0,
+    "n_steps": 61.9
+   },
+   "drone": {
+    "success": 0.85,
+    "sc": 0.85,
+    "cf": 0.85,
+    "n_viol": 0.0,
+    "n_steps": 61.35
+   },
+   "agree_episodes": 17,
+   "ended": {
+    "success": 17,
+    "contact": 0,
+    "exhausted": 3,
+    "cap": 0,
+    "diverged": 0
+   },
+   "plant": {
+    "track_err_mean_m": 0.048720681097979265,
+    "track_err_p95_m": 0.04998353003550399,
+    "gap_a_p95": 0.0013884064232521562,
+    "gap_a_mean": 0.001353267965310766,
+    "panda_gap_a_p95": 0.041167900356206676,
+    "contact_episodes": 0,
+    "speed_max_ms": 0.20076878776250964
+   },
+   "src_npz": "/data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials/6/results/halfspace_both-hard/dpcc-r-tightened.npz"
+  },
+  {
+   "cell": {
+    "engine": "flow_matching_v3_ode_selectable",
+    "train": "H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10",
+    "eval": "H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials",
+    "seed": 6,
+    "geo": "top-left-hard",
+    "variant": "diffuser"
+   },
+   "n": 20,
+   "wall_s": 30.668722059577703,
+   "panda": {
+    "success": 1.0,
+    "sc": 0.05,
+    "cf": 0.05,
+    "n_viol": 10.75,
+    "n_steps": 67.7
+   },
+   "drone": {
+    "success": 1.0,
+    "sc": 0.0,
+    "cf": 0.0,
+    "n_viol": 12.75,
+    "n_steps": 67.6
+   },
+   "agree_episodes": 19,
+   "ended": {
+    "success": 20,
+    "contact": 0,
+    "exhausted": 0,
+    "cap": 0,
+    "diverged": 0
+   },
+   "plant": {
+    "track_err_mean_m": 0.04643419900824875,
+    "track_err_p95_m": 0.04996396469055751,
+    "gap_a_p95": 0.0013877938838349699,
+    "gap_a_mean": 0.0012897169963751853,
+    "panda_gap_a_p95": 0.02733230567707904,
+    "contact_episodes": 0,
+    "speed_max_ms": 0.19586426727791442
+   },
+   "src_npz": "/data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials/6/results/halfspace_top-left-hard/diffuser.npz"
+  },
+  {
+   "cell": {
+    "engine": "flow_matching_v3_ode_selectable",
+    "train": "H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10",
+    "eval": "H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials",
+    "seed": 6,
+    "geo": "top-left-hard",
+    "variant": "dpcc-r-tightened"
+   },
+   "n": 20,
+   "wall_s": 33.3665215279907,
+   "panda": {
+    "success": 1.0,
+    "sc": 0.95,
+    "cf": 0.95,
+    "n_viol": 0.35,
+    "n_steps": 78.8
+   },
+   "drone": {
+    "success": 0.7,
+    "sc": 0.7,
+    "cf": 0.7,
+    "n_viol": 0.0,
+    "n_steps": 74.25
+   },
+   "agree_episodes": 14,
+   "ended": {
+    "success": 14,
+    "contact": 1,
+    "exhausted": 1,
+    "cap": 0,
+    "diverged": 4
+   },
+   "plant": {
+    "track_err_mean_m": 0.04690354611931371,
+    "track_err_p95_m": 0.04997908903490242,
+    "gap_a_p95": 0.0013882578381244368,
+    "gap_a_mean": 0.0013027902185494156,
+    "panda_gap_a_p95": 0.13523986167288643,
+    "contact_episodes": 1,
+    "speed_max_ms": 0.5971298085520315
+   },
+   "src_npz": "/data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials/6/results/halfspace_top-left-hard/dpcc-r-tightened.npz"
+  },
+  {
+   "cell": {
+    "engine": "flow_matching_v3_ode_selectable",
+    "train": "H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10",
+    "eval": "H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials",
+    "seed": 6,
+    "geo": "top-right-hard",
+    "variant": "diffuser"
+   },
+   "n": 20,
+   "wall_s": 30.605691712349653,
+   "panda": {
+    "success": 1.0,
+    "sc": 0.0,
+    "cf": 0.0,
+    "n_viol": 31.55,
+    "n_steps": 67.7
+   },
+   "drone": {
+    "success": 1.0,
+    "sc": 0.0,
+    "cf": 0.0,
+    "n_viol": 32.1,
+    "n_steps": 67.6
+   },
+   "agree_episodes": 20,
+   "ended": {
+    "success": 20,
+    "contact": 0,
+    "exhausted": 0,
+    "cap": 0,
+    "diverged": 0
+   },
+   "plant": {
+    "track_err_mean_m": 0.04643419900824875,
+    "track_err_p95_m": 0.04996396469055751,
+    "gap_a_p95": 0.0013877938838349699,
+    "gap_a_mean": 0.0012897169963751853,
+    "panda_gap_a_p95": 0.02733230567707904,
+    "contact_episodes": 0,
+    "speed_max_ms": 0.19586426727791442
+   },
+   "src_npz": "/data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials/6/results/halfspace_top-right-hard/diffuser.npz"
+  },
+  {
+   "cell": {
+    "engine": "flow_matching_v3_ode_selectable",
+    "train": "H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10",
+    "eval": "H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials",
+    "seed": 6,
+    "geo": "top-right-hard",
+    "variant": "dpcc-r-tightened"
+   },
+   "n": 20,
+   "wall_s": 31.293764485046268,
+   "panda": {
+    "success": 0.95,
+    "sc": 0.95,
+    "cf": 0.95,
+    "n_viol": 0.0,
+    "n_steps": 73.15
+   },
+   "drone": {
+    "success": 0.9,
+    "sc": 0.9,
+    "cf": 0.9,
+    "n_viol": 0.0,
+    "n_steps": 71.65
+   },
+   "agree_episodes": 19,
+   "ended": {
+    "success": 18,
+    "contact": 1,
+    "exhausted": 1,
+    "cap": 0,
+    "diverged": 0
+   },
+   "plant": {
+    "track_err_mean_m": 0.04651613682874241,
+    "track_err_p95_m": 0.049941107669460846,
+    "gap_a_p95": 0.001387223732011808,
+    "gap_a_mean": 0.001292052709793387,
+    "panda_gap_a_p95": 0.033816919936553766,
+    "contact_episodes": 1,
+    "speed_max_ms": 0.21052959286791967
+   },
+   "src_npz": "/data/home/llim/FMPCC/FM-PCC/logs/avoiding-d3il/plans/flow_matching_v3_ode_selectable/H8_Dmodels.diffusion.FlowMatchingODE_a1.5_b1.0_aw10/H8_K20_Meuler_T0.5_Dmodels.diffusion.FlowMatchingODE_msg20trials/6/results/halfspace_top-right-hard/dpcc-r-tightened.npz"
+  }
+ ],
+ "wall_s": 250.05403064005077
+}

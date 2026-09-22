@@ -4,7 +4,7 @@
     python logs_in_develop/Gen15/U19/tools/check_gates_u19.py --geo tilt "<...>/Emf_K3_*_u19smokecv3t/6/corridor_cv3t*"
     python logs_in_develop/Gen15/U19/tools/check_gates_u19.py --geo hump "<...>/Emf_K3_*_u19smokecv3h/6/corridor_cv3h*"
 
-Each matched folder is one geo folder: `<geo_tag>/<variant>.npz` (eval_artifacts.save_npz). Needs only numpy.
+Each matched folder is one geo folder: `<geo_tag>/<variant>/<variant>.npz` (eval_artifacts.save_npz). Needs only numpy.
 Plan: logs_in_develop/Gen15/U19/PLAN_20260922_U19_corridor_v3_z_slide.md §3.
 
   G1  the unprojected arm (`diffuser`) has violating steps on EVERY trial      -> the plane binds
@@ -64,7 +64,8 @@ def _frac(a):
 
 
 def check_folder(folder):
-    files = sorted(glob.glob(os.path.join(folder, '*.npz')))
+    # the eval writes <geo_tag>/<variant>/<variant>.npz; accept a flat <geo_tag>/<variant>.npz too
+    files = sorted(glob.glob(os.path.join(folder, '*', '*.npz'))) or sorted(glob.glob(os.path.join(folder, '*.npz')))
     if not files:
         print(f'[skip] no npz in {folder}')
         return

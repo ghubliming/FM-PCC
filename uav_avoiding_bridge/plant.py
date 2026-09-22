@@ -29,7 +29,7 @@ from uav_avoiding_bridge import frame as F
 from uav_avoiding_bridge.scene import scene_xml_path, build_scene_xml
 
 # divergence thresholds (values copied from mix_uav_test/eval_mix_uav.py Div_Abort; not imported on purpose)
-DIV_ENVELOPE_SLACK_M = 2.0
+DIV_ENVELOPE_SLACK_M = 8.0   # fix4: the Panda paths leave the plotted field (x_a < 0.2) around the keep-out; 2 m aborted them
 DIV_SPEED_MAX_MS = 6.0
 Z_PLACEHOLDER = 0.12          # what robot_state()[2] returns; the loop passes it back untouched and we ignore it
 

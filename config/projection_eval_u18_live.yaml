@@ -1,0 +1,82 @@
+# [Gen15 U18 fix5] LIVE check (Mode L) yaml — config/projection_eval.yaml with three keys changed (seeds, n_trials,
+# projection_variants). Constraints, bounds, dt, threshold: IDENTICAL. Selected via FMPCC_PROJ_CFG by
+# Slurm_Codes/sbatch/uav_avoiding_bridge/live_l1.sh. Never the default of any eval.
+# General
+write_to_file: True
+exps: [
+  'avoiding-d3il',
+  ]
+#seeds: [0, 1, 2, 3, 4]
+seeds: [6]          # U18 L1: seed 6 only (the turbo pilot cell)
+
+avoiding_halfspace_variants: [
+  'top-right-hard',    # /
+  'top-left-hard',    # \
+  'both-hard',    # / and \
+  ]   # 'top-right: /', 'top-left: \'
+n_trials: 20        # U18 L1: 20 episodes, paired trial by trial with the Panda's msg20trials cell
+
+dt: {
+  'avoiding': 1,    # Since a = [delta_x, delta_y] and not [vx, vy]
+}
+observation_indices: {
+  'avoiding': {'x_des': 0, 'y_des': 1, 'x': 2, 'y': 3},
+}
+
+action_indices: {
+  'avoiding': {'vx': 0, 'vy': 1},
+}
+
+# Policy
+diffusion_timestep_threshold: 0.5
+
+# Projection 
+projection_variants: [
+  'diffuser',
+  'dpcc-r-tightened',
+]   # U18 L1: the two variants of the turbo pilot
+projection_cost: 'pos_vel'
+constraint_types: [
+  'halfspace', 
+  'obstacles', 
+  'dynamics',
+  'bounds',
+  ]
+enlarge_constraints: {
+  'avoiding': 0.025,
+}
+halfspace_constraints: {
+  'avoiding-d3il': [
+    # [[0.8, -0.3], [0.3, 0.5], 'below'],   # hard (\ shape)
+    # [[0.2, -0.3], [0.7, 0.5], 'below'],     # hard (/ shape)
+    [[0.8, -0.5], [0.4, 0.5], 'below'],   # hard (\ shape)
+    [[0.2, -0.5], [0.6, 0.5], 'below'],     # hard (/ shape)
+    [[0.8, -0.3], [0.575, 0.5], 'below'],   # easier (\ shape)
+    [[0.2, -0.3], [0.425, 0.5], 'below'],   # easier (/ shape)
+    ],
+}
+obstacle_constraints: {
+  'avoiding-d3il': [
+    # {'type': 'sphere_outside', 'dimensions': ['x', 'y'], 'center': [0.575, 0.08], 'radius': 0.1},  # second row, right obstacle larger
+    {'type': 'sphere_outside', 'dimensions': ['x', 'y'], 'center': [0.4, 0.08], 'radius': 0.06},  # second row, left obstacle larger
+    {'type': 'sphere_outside', 'dimensions': ['x', 'y'], 'center': [0.6, 0.08], 'radius': 0.06},  # second row, right obstacle larger
+    {'type': 'sphere_outside', 'dimensions': ['x', 'y'], 'center': [0.5, -0.1], 'radius': 0.06},  # first row obstacle larger
+    {'type': 'sphere_outside', 'dimensions': ['x', 'y'], 'center': [0.4, 0.08], 'radius': 0.08},  # second row, left obstacle larger
+    {'type': 'sphere_outside', 'dimensions': ['x', 'y'], 'center': [0.6, 0.08], 'radius': 0.08},  # second row, right obstacle larger
+    {'type': 'sphere_outside', 'dimensions': ['x', 'y'], 'center': [0.5, -0.09], 'radius': 0.08},  # first row obstacle larger
+  ]
+}
+bounds: {   # need to be within the limits of the dataset due to the normalization
+  'avoiding-d3il': [
+    {'type': 'lower', 'dimensions': ['vx', 'vy'], 'values': [-0.01, 0]},
+    {'type': 'upper', 'dimensions': ['vx', 'vy'], 'values': [0.01, 0.01]},
+    {'type': 'lower', 'dimensions': ['vx', 'vy'], 'values': [-0.012, 0]},
+    {'type': 'upper', 'dimensions': ['vx', 'vy'], 'values': [0.012, 0.012]},
+  ],
+}
+
+# Plotting
+plot_how_many: 10
+ax_limits: {
+  'avoiding-d3il': [[0.2, 0.8], [-0.3, 0.4]]
+}

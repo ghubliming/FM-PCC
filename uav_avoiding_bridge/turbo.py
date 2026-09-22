@@ -92,7 +92,7 @@ def discover(root, engines, train_glob, eval_glob, seeds, geos, variants, tag, o
 
 
 # ── replay of one episode ─────────────────────────────────────────────────────────────────────────
-def replay_episode(plant, setpoints, actions, scorer, grace_steps):
+def replay_episode(plant, setpoints, actions, scorer, grace_steps, grace_mode='extend'):
     plant.reset()
     obs_reset = plant.obs4().astype(float)          # [start, start]
     rows, acts, success, ended, grace_used = [], [], False, 'exhausted', 0
@@ -103,7 +103,14 @@ def replay_episode(plant, setpoints, actions, scorer, grace_steps):
         if k < n_src:
             sp, a = setpoints[k], (actions[k] if k < len(actions) else np.zeros(2))
         elif grace_used < grace_steps:
-            sp, a = setpoints[-1], np.zeros(2)
+            # fix4: 'extend' continues the LAST COMMANDED INCREMENT (the Panda arm crosses the finish line with the
+            # momentum of its last step; a drone parked on a setpoint 5 mm short never does). 'hold' parks.
+            if grace_mode == 'extend' and n_src >= 2:
+                d_last = np.asarray(setpoints[-1], float) - np.asarray(setpoints[-2], float)
+                sp = np.asarray(setpoints[-1], float) + d_last * (grace_used + 1)
+                a = d_last
+            else:
+                sp, a = setpoints[-1], np.zeros(2)
             grace_used += 1
         else:
             break
@@ -138,6 +145,7 @@ def run_cell(cell, plant, cfg, args):
     scorer = EpisodeScorer(geometry_for(cell['geo'], cfg))
     grace_steps = int(round(args.grace_s * plant.control_hz)) if plant.replay == 'clock' else int(round(args.grace_s))
     plant.records = []
+    plant.episode = -1                      # fix4: sidecar episode ids are per cell (were running across cells)
     per, new_obs = [], []
     t0 = time.perf_counter()
     for i in range(n):
@@ -146,7 +154,7 @@ def run_cell(cell, plant, cfg, args):
             per.append(None); new_obs.append(np.zeros((0, 4), np.float32)); continue
         a = np.asarray(act_all[i], float) if act_all is not None and len(act_all) > i else np.zeros((0, 2))
         plant.gif_on = bool(args.gif and i < args.gif and plant._renderer is not None)
-        rows, sc = replay_episode(plant, o[:, :2], a, scorer, grace_steps)
+        rows, sc = replay_episode(plant, o[:, :2], a, scorer, grace_steps, args.grace_mode)
         per.append(sc); new_obs.append(rows)
         if plant.gif_on:
             from mix_uav_test.eval_artifacts import save_rollout_gif      # the UAV evals' writer (imageio, no torch)
@@ -179,7 +187,7 @@ def run_cell(cell, plant, cfg, args):
             out[f'src_{k}'] = np.asarray(src[k], float)[:n]
     out['avg_time'] = np.asarray(src['avg_time'], float)[:n]          # planner time, copied: the plant is not timed
     out['src_npz'] = cell['npz']
-    out['uav_bridge'] = json.dumps({'mode': 'turbo', 'tag': args.tag, 'grace_s': args.grace_s, 'limit_episodes': args.limit_episodes,
+    out['uav_bridge'] = json.dumps({'mode': 'turbo', 'tag': args.tag, 'grace_s': args.grace_s, 'grace_mode': args.grace_mode, 'limit_episodes': args.limit_episodes,
                                     'settings': plant.settings(), 'wall_s': wall, 'n_replayed': n})
     os.makedirs(os.path.dirname(cell['out']), exist_ok=True)
     np.savez(cell['out'], **out)
@@ -318,7 +326,9 @@ def main():
     ap.add_argument('--ff', action='store_true', help='clock mode: enable velocity feed-forward (unstable above ~0.5 m/s with this PID; off by default since fix3)')
     ap.add_argument('--gain', default='pid_default')
     ap.add_argument('--no-contact-stop', action='store_true', help='do not end the episode on drone-pillar contact')
-    ap.add_argument('--grace-s', type=float, default=2.0, help='hold the last setpoint this long after the sequence ends')
+    ap.add_argument('--grace-s', type=float, default=2.0, help='after the stored sequence ends: keep flying this long (clock: seconds; settle: steps)')
+    ap.add_argument('--grace-mode', choices=('extend', 'hold'), default='extend',
+                    help="extend = continue the last commanded increment (Panda momentum), hold = park on the last setpoint")
     ap.add_argument('--limit-episodes', type=int, default=0, help='replay only the first N episodes of each cell (pilot)')
     ap.add_argument('--dry-run', action='store_true')
     ap.add_argument('--force', action='store_true', help='re-run cells whose output npz exists')
