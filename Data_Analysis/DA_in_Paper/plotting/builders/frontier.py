@@ -231,8 +231,13 @@ def fig_aligning_projected_tradeoff(outdir):
     Random selection and the ten shared contexts are held fixed. A point enters
     the two-axis frontier only when at least nine contexts are violation-free;
     hollow points remain visible but are not described as successful trade-offs.
-    The K=2 endpoint run is projection after sampling (no guiding step).
+
+    v3.66 (author): the figure shows the SIMPLIFIED tab:va-projection-models -- the
+    operating point only, K=20 at threshold 0.2, three models x two projectors (CI-MeanFM
+    has no endpoint cell). The K=2 and K=10 points are no longer drawn; the budget ladder
+    is tab:va-projection and tab:va-threshold. PROJECTED_K lists what is drawn.
     """
+    PROJECTED_K = (20,)
     colours = {'mf': '#1F4E79', 'af': '#8B3F71', 'fm': '#C45B24'}
     c = S.CORPORA['visual_aligning_15_09']
     if not c.available:
@@ -244,7 +249,7 @@ def fig_aligning_projected_tradeoff(outdir):
                               'context_target_xy_y': e['target'][1]}) for e in reference}
     if len(contexts) != 10:
         return None
-    variants = ('dpcc-r', 'hardflow_sls-r', 'hardflow_new-r')
+    variants = ('dpcc-r', 'hardflow_sls-r')
     grouped = {}
     with open(os.path.join(c.path, 'per_rollout_detail.csv')) as fh:
         for r in csv.DictReader(fh):
@@ -254,13 +259,9 @@ def fig_aligning_projected_tradeoff(outdir):
             if context not in contexts:
                 continue
             for cell, (prefix, suffix) in S.ALIGNING_CELLS.items():
-                if cell not in S.ALIGNING_REPORTED or cell[0] == 'diffusion':
+                if cell not in S.ALIGNING_REPORTED or cell[0] == 'diffusion' or cell[1] not in PROJECTED_K:
                     continue
                 if not r['FolderName'].startswith(prefix) or (suffix and not r['FolderName'].endswith(suffix)):
-                    continue
-                if r['variant'] == 'hardflow_new-r' and cell != ('mf', 2):
-                    continue
-                if r['variant'] == 'hardflow_sls-r' and cell == ('mf', 2):
                     continue
                 d, ms, clean = (_f(r.get(k)) for k in
                                 ('context_final_xy_dist', 'avg_time_ms', 'constraint_exec_zero_violation'))
@@ -274,7 +275,7 @@ def fig_aligning_projected_tradeoff(outdir):
         ms = stats.mean([stats.mean(v[1] for v in rows) for rows in by_context.values()])
         clean = sum(stats.median(v[2] for v in rows) == 1 for rows in by_context.values())
         pts.append(dict(engine=eng, K=K, variant=variant, ms=ms, y=distance, clean=clean))
-    if len(pts) < 6:
+    if len(pts) < 5:
         return None
     eligible = [p for p in pts if p['clean'] >= 9]
     front = sorted((p for p in eligible if not any(
@@ -295,7 +296,7 @@ def fig_aligning_projected_tradeoff(outdir):
     # nine of ten contexts free of violations, which is this task's success with
     # constraint satisfaction). An unprojected plan does not depend on the constraint
     # set, so those points are the same on the untightened and the tightened set.
-    before = {K: v for (e, K), v in _aligning_cells(c).items() if e == 'mf' and K in (2, 10, 20)}
+    before = {K: v for (e, K), v in _aligning_cells(c).items() if e == 'mf' and K in PROJECTED_K}
     xlo = min(xlo, min(v['ms'] for v in before.values()) * 0.65) if before else xlo
     f = Fig(760, 430, ml=92, mr=22, mt=26, mb=74, font=FONT)
     f.axes((xlo, xhi), PCT_YLIM, xlog=True)
@@ -330,13 +331,7 @@ def fig_aligning_projected_tradeoff(outdir):
                  filled=p['clean'] >= 9, r=6.5, ew=1.6)
         if id(p) in front_ids:
             f.ring(x, y, r=13)
-            if p['K'] == 2:
-                lx, ly, anchor = x - 16, y - 16, 'end'
-            elif p['K'] == 10:
-                lx, ly, anchor = x + 17, y - 16, 'start'
-            else:   # K=20 per-step: its endpoint twin sits just below-right, so label up-left
-                lx, ly, anchor = x - 16, y - 16, 'end'
-            f.text(lx, ly, p['K'], 11, '#333', anchor=anchor)
+            f.text(x - 16, y - 16, p['K'], 11, '#333', anchor='end')
     h = Fig(760, 62, ml=0, mr=0, mt=0, mb=0, font=FONT)
     x = 20
     for eng in ('mf', 'af', 'fm'):
@@ -358,7 +353,7 @@ def fig_aligning_projected_tradeoff(outdir):
     path = save_grid([f], os.path.join(outdir, 'fig_aligning_projected_tradeoff.svg'),
                      cols=1, gap=8, header=h)
     return path, (f'{c.rel} | {c.protocol} | {ALIGN_GEO}, random selection, '
-                  f'10 shared contexts; {len(pts)} complete cells; '
+                  f'10 shared contexts; {len(pts)} complete cells at K in {PROJECTED_K}; '
                   'frontier requires at least 9/10 violation-free contexts')
 
 

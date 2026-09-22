@@ -59,3 +59,5 @@ states a narrower scope in its first lines**, as `PENDING_20260917_dpcc_protocol
   `logs_in_develop/Gen15/Campaign_20260907_five_missions/CLOSURE_20260910_uav_engine_ladder_final.md`
 - Endpoint projection at low budget: `logs_in_develop/aggregated_hardflow_lowK/DA_20260824_does_HF_pay_when_it_actually_runs.md`
 - v3.65 (2026-09-22): UAV-pillars on hold (flawed, disabled in the draft), R32 on hold; corridor altitude answered from the staged rollouts, no run; R33 = Gen15 U19 `corridor_v3` z-ramp, plan only → `PENDING_20260922_all_lacking_runs.md` §22
+- v3.66 (2026-09-22): **corridor re-run spec** → `PENDING_20260922_corridor_v3_run.md` (R33, grid + Slurm order); ledger §23 (R16 narrowed, R2 sharpened, R34–R36 opened); tightened/untightened recap → `v3/RECAP_20260922_tightened_vs_untightened.md`
+- v3.67 (2026-09-22): **all-tightened** — untightened cells withdrawn; R37 (tightened threshold ladder) and R38 (tightened s-curve projected cells) opened, R34 folded, R33 trimmed to 68 cells → ledger §24

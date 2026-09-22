@@ -40,6 +40,11 @@ export FMPCC="$REPO"
 export D3IL_ROOT="$FMPCC/d3il"
 export PYTHONPATH="$FMPCC:$D3IL_ROOT:$PYTHONPATH"
 export MPLBACKEND="agg"
+# CPU job, nothing is rendered: tell MuJoCo to skip GL entirely. Without it `import mujoco` walks the
+# glfw -> egl -> osmesa fallback chain and dies in PyOpenGL (first pilot, job 26067). The GPU evals keep
+# their MUJOCO_GL=egl; this file is the only CPU MuJoCo entrypoint in the repo.
+export MUJOCO_GL="disable"
+unset PYOPENGL_PLATFORM
 cd "$REPO"
 
 MODE="${MODE:-pilot}"

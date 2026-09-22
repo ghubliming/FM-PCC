@@ -47,6 +47,12 @@ Read in the log, per cell: `panda …` vs `drone …` lines, `agree k/20`, `ende
 contact on a Panda-legal episode, drone `gap_a p95` close to the Panda's. If not: `HZ=3`, `EXTRA="--gain pid_high_gain"`,
 the `settle` tag, then `SCALE=12`.
 
+## Fixes on the cluster log
+
+| job | symptom | fix |
+| :-- | :-- | :-- |
+| 26067 (pilot, first run) | `import mujoco` → `OpenGL/raw/GL/_errors.py: 'NoneType' object has no attribute 'glGetError'` — with `MUJOCO_GL` unset MuJoCo walks glfw → egl → osmesa and PyOpenGL fails on the CPU node | `turbo.sh`: `export MUJOCO_GL=disable`, `unset PYOPENGL_PLATFORM` (physics only, nothing rendered; PNGs are matplotlib) |
+
 ## Not done / next
 
 - Not run anywhere yet (container rule). First run = pilot; expect first-run breakage in the MuJoCo/PID glue, fix on

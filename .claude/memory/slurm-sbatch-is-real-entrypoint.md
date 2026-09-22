@@ -44,3 +44,7 @@ on every future UAV job.** **How to apply:** put `UAV_EVAL_HOURS=24` at the fron
 [[da-requires-csv-never-from-logs]] (a truncated variant becomes a bad DA row).
 
 **NEVER use tqdm / live-updating progress bars in a script an sbatch job invokes.** `Slurm_Codes/submit.sh` redirects stdout+stderr to a log **file**, not a live terminal — tqdm's carriage-return trick to update in place does not collapse in a file, so a per-iteration `pbar.set_postfix(...)` (or similar) dumps every single update as raw text, producing multi-thousand-character unreadable log lines (real incident: HardFlow eval job 23565, `logs_in_develop/Gen13/fix_2/CHANGELOG_Gen13_fix2_pipeline_and_quiet_logs.md`). **How to apply:** any progress reporting inside code that will run under `submit.sh` must either (a) gate the live bar behind `sys.stdout.isatty()` so it only renders in an interactive terminal, or (b) print one compact plain-text line per meaningful unit of work (e.g. per episode/epoch), never per inner-loop step. If the noisy code is pre-existing and off-limits to edit, fork just the reporting wrapper into a new file rather than leaving the noise in place — don't accept "that's just how it logs" as an answer.
+
+**CPU-only MuJoCo jobs (2026-09-22, U18 turbo):** set `MUJOCO_GL=disable` (and unset `PYOPENGL_PLATFORM`);
+with it unset, `import mujoco` falls through glfw→egl→osmesa and PyOpenGL crashes on a node without a GL
+context. GPU eval jobs keep `MUJOCO_GL=egl` + the EGL device pin.

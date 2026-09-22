@@ -49,6 +49,14 @@
 \newif\ifpillarsflawed
 \pillarsflawedtrue
 \newcommand{\flawed}[1]{\textcolor{red}{\textbf{[FLAWED:} #1\textbf{]}}}
+% \outdated{...}  (v3.66) a passage whose DATA is being replaced by a run that has not landed:
+% the structure stays, the numbers are blanked or archived (withheld/20260922_v3.66_archive).
+\newcommand{\outdated}[1]{\textcolor{red}{\textbf{[OUTDATED:} #1\textbf{]}}}
+% deadblock  (v3.67) a block the author has declared DEAD for now: kept in the build, grey
+% under a red banner, untouched inside; may be dropped wholesale before submission.
+% #1 = the banner text. First use: the twenty-episode appendix section.
+\newenvironment{deadblock}[1]{%
+  \par\noindent\flawed{DEAD FOR NOW (author, 2026-09-22): #1}\par\color{black!55}}{\normalcolor}
 \newenvironment{pillarsflawed}{%
   \ifpillarsflawed
     \par\noindent\flawed{UAV-pillars --- this block is temporarily disabled (author, 2026-09-22,

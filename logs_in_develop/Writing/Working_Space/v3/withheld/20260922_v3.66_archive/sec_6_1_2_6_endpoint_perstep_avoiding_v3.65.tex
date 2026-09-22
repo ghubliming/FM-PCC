@@ -1,0 +1,110 @@
+% ARCHIVED at v3.66 (2026-09-22, author's instruction): Chapter 6, subsubsection 6.1.2.6 "Endpoint and Per-Step Projection" (06_results.tex lines 571-677 of v3.65), including Fig 6.5 fig:projector-cost and Table 6.3 tab:hf-ladder
+% Verbatim copy of the v3.65 text, line-for-line, for reference only. NOT built. Do not edit.
+
+\subsubsection{Endpoint and Per-Step Projection}\label{sec:res:avoiding:projectors}
+
+The models above were read twice, unprojected and under the per-step projector. This subsection holds the
+model fixed instead and varies the projector. It is made on one generative model, and that is a limit of
+the data rather than a choice: on this benchmark endpoint projection was run on the two average-velocity
+models and never on instantaneous-velocity matching or on the diffusion baseline. At the budgets this
+section is locked to, only the analytic objective has it over all five training seeds, so the comparison
+below is made there. The cross-model version of it is on D3IL-aligning, where all three flow-based models
+carry both projectors (\autoref{tab:va-projection-models}).
+\guard{No endpoint-projection evaluation of instantaneous-velocity matching or of the diffusion baseline
+exists on D3IL-avoiding, so no statement in this subsection extends to those two models.
+Recorded in \texttt{data\_status/PENDING\_20260922\_all\_lacking\_runs.md}.}
+
+Endpoint projection \parencite{li2025hardflow} and per-step projection were run on the same analytic average-velocity matching
+model, with the same solver and constraints, in one evaluation. Endpoint projection solves more
+programs per control step and still takes about half the time: $0.0745$ against $0.1478$\,s at $\nfe=3$,
+and $0.1304$ against $0.2268$\,s at $\nfe=5$ (\autoref{fig:projector-cost}). Its predicted endpoint is
+close to the feasible set at every step, so the solver needs few iterations.
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=\textwidth]{fig_avoiding_projector_cost}
+  \caption[The cost of the two projection methods]{The time to compute one action
+  (\autoref{sec:setup:metrics:avoiding}) under per-step and under endpoint projection, against the step
+  budget; analytic average-velocity matching (MeanFM), temporal U-Net of $4.0$\,M parameters, activation
+  threshold $1.0$, temporal consistency, tightened constraints, \textbf{four training seeds (7--10)
+  $\times$ three geometries $\times$ two episodes}, 24 episodes per configuration. Both methods are read
+  on the same four seeds, so this is a matched multi-seed comparison and not a single-seed one; seed 6 is
+  the one absent from this evaluation. The shaded budget has a single guiding step; the hollow marker is
+  the endpoint series there.}
+  \label{fig:projector-cost}
+\end{figure}
+
+At $\nfe=3$, endpoint projection reaches a success rate with constraint satisfaction of $1.000$ with no
+violations, in $58.88$ control steps at $0.0745$\,s per step. The \ac{DPCC} baseline reaches $1.000$ in
+$70.13$ steps at $0.5534$\,s per step.
+\dataref{temp/0609/I/batch\_avoiding\_combined\_20260906\_125724, job 25444; DA\_20260906 \S3}
+\provisional{This comparison uses four training seeds --- 7, 8, 9 and 10 --- $\times$ three geometries
+$\times$ two episodes, 24 episodes per configuration; both methods are read on the same four, and seed 6
+is absent from the evaluation despite the run tag naming it. The difference in success with per-step
+projection at the same budget, $1.000$ against $0.917$, is two episodes. The evaluation at five training
+seeds and twenty episodes is pending.}
+
+That result is at $\nfe=3$. The budget at which this task is actually run is lower, and there endpoint
+projection does not execute its own arithmetic at all. With the activation threshold at $0.5$ the
+guiding step count (\autoref{sec:res:constraints:degenerate}) is zero at $\nfe=1$ and at $\nfe=2$: the
+only active step is the terminal one, where the predicted endpoint is the finished sample and the
+method reduces to projection after sampling. This is measured, not inferred --- the evaluation records
+one program solved per plan at both budgets, against three at $\nfe=5$ and five at $\nfe=10$, matching
+the predicted count exactly. A run at $\nfe=2$ with both methods given the same number of candidate
+plans produced bit-identical rollouts, at $2.45$ times the cost.
+
+Across the budgets at which it does run, endpoint projection shows no consistent advantage on this task
+(\autoref{tab:hf-ladder}). Untightened it reaches higher success with constraint satisfaction than all
+three selection rules of per-step projection only at $\nfe=10$; on tightened constraints it does so only
+at $\nfe=1$, where it runs no endpoint-projection arithmetic, and at $\nfe=10$ it is ahead of none of
+them. Its one systematic advantage is control steps, and the mechanism is not the projection: with four
+candidate plans the cumulative-projection-cost rule sometimes selects a stalled plan of 97 control steps,
+and endpoint projection, given one candidate, cannot make that selection.
+
+\begin{table}[htpb]
+  \caption[Endpoint projection across the step budget]{Endpoint projection against per-step projection on
+  obstacle avoidance, across the step budget. Success with constraint satisfaction, counted as how many of
+  the three selection rules of per-step projection endpoint projection is ahead of. Analytic
+  average-velocity matching, activation threshold $0.5$, \textbf{five training seeds (6--10) $\times$
+  three geometries $\times$ two episodes}, so every entry rests on 30 episodes and 15 seed--geometry
+  cells. Guiding steps are the predicted count, confirmed against the recorded number of programs solved
+  per plan. The per-budget success, control-step and time numbers this table reduces to counts are in
+  \autoref{tab:app:hf-ladder-detail}.}
+  \label{tab:hf-ladder}
+  \centering
+  \small
+  \begin{tabularx}{\linewidth}{@{}rrL L@{}}
+    \toprule
+    $\nfe$ & Guiding steps & Untightened & Tightened \\
+    \midrule
+    1  & 0 & ahead of 2 of 3 & ahead of 3 of 3 \\
+    2  & 0 & ahead of 2 of 3 & ahead of 0 of 3, level with 1 \\
+    5  & 2 & ahead of 2 of 3 & ahead of 2 of 3, level with 1 \\
+    10 & 4 & ahead of 3 of 3 & ahead of 0 of 3, level with 2 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\dataref{temp/1108/Revised\_2/batch\_avoiding\_combined\_20260811\_221322; DA\_20260824 \S2--\S4}
+\guard{On this ladder endpoint projection was run with one candidate plan and per-step projection with
+four, so every row in which endpoint projection is ahead understates it and every row in which it is
+behind is confounded. The time columns of that evaluation are unusable for the same reason. The
+time comparison at $\nfe=3$ and $\nfe=5$ quoted at the start of this subsection gave both methods four
+candidate plans.}
+
+The consequence for this task is that endpoint projection is not needed here, and the reason is the
+budget rather than the method. At one network evaluation the two average-velocity models already reach
+$0.967$ and $1.000$ success with constraint satisfaction at about $18$\,ms per control step with the
+per-step projector, and instantaneous-velocity matching reaches $1.000$ at one and at two
+(\autoref{tab:avoiding-dpcc-protocol}); there is no shortfall left for a second projection method to
+close. Endpoint projection needs sampling steps to guide, and at
+one and two evaluations it has none or one (\autoref{sec:method:degenerate},
+\autoref{sec:res:constraints:degenerate}), so at the budget this benchmark is run at it does not execute
+its own arithmetic --- \autoref{tab:hf-ladder} prints those two rows for completeness only, and the
+$\nfe=2$ run returned rollouts identical to per-step projection at $2.45$ times the cost. Making it
+available means raising the budget to five or ten evaluations, and \autoref{fig:projector-cost} shows
+what that costs: per control step the projector, not the network, is the expense on this task. Raising
+the budget therefore gives up precisely the advantage that decides the benchmark, in exchange for a
+method that shows no consistent gain once it does run. Endpoint projection is kept in the thesis, and
+tested where it can act, on D3IL-aligning and the quadrotor scenes, which are run at larger budgets.
+

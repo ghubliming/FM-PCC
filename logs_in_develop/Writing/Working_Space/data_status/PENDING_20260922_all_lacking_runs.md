@@ -32,7 +32,7 @@ items were closed without a run**, because the data already existed and had simp
 | CI-MeanFM $\nfe=2$ on UAV-s-curve | made `tab:uav-scurve` a matched comparison | v3.60 |
 | The activation-threshold evidence ($\eta=0.5$ vs $0.1$ at $\nfe=100$) | new discussion in §6.2.2 | v3.60 |
 
-### Since the census, later on 2026-09-22 (v3.61 → v3.65) — a running addendum, nothing above removed
+### Since the census, later on 2026-09-22 (v3.61 → v3.67) — a running addendum, nothing above removed
 
 | what | where | version |
 | :-- | :-- | :-- |
@@ -46,6 +46,13 @@ items were closed without a run**, because the data already existed and had simp
 | **Every UAV-pillars block of Ch 5/6 is marked FLAWED and temporarily disabled** (author; scene under review, nothing deleted, `\pillarsflawedfalse` restores). R32 stays listed but is **on hold** until the author says what the review changes | §22 | v3.65 |
 | Corridor altitude answered from the staged rollouts — **no run**: constraints are planar, projection moves z as a by-product (new `fig:uav-corridor-altitude`) | §22 | v3.65 |
 | **R33 opened (plan only):** Gen15 U19 `corridor_v3`, a ramp in x–z on the wide corridor — coding + pilot + wave; nothing in the thesis rests on it (`\guard` in §6.3.2) | §22, `Gen15/U19/PLAN_…` | v3.65 |
+| 🔴 **R33 is now THE corridor run:** the author blanked every UAV-corridor cell of Ch 5/6 (v2 results archived) and fixed the new grid — mf/af K1,2,3; FM K1,2,3,5,20; diffusion 20; PCC always at η = 0.5; HF at K ≥ 3; one seed; K20 last. Full spec `PENDING_20260922_corridor_v3_run.md` | §23 | v3.66 |
+| **R16 narrowed again:** Table 6.5 drops K = 1 (author) → three pending cells left (CI-MeanFM 10; FM 2, 10) | §23 | v3.66 |
+| **R2 sharpened:** Table 6.8 is K = 20 only and prints the diffusion per-step tightened cell as *pending (R2)*; endpoint projection is not defined for the diffusion sampler (no velocity field), so that dash is final | §23 | v3.66 |
+| **R34 opened (optional):** endpoint projection at the uncompressed threshold η = 0.5, K = 100, untightened, mf — the last empty cell of Table 6.6 | §23 | v3.66 |
+| **R35 opened:** endpoint projection on CI-MeanFM at K = 20, tightened, r/c/t — the empty block of Table 6.8 | §23 | v3.66 |
+| **R36 opened:** D3IL-avoiding matched-candidate (4 vs 4) endpoint-vs-per-step cells that Table 6.3 lacks: CI-MeanFM and FM at K = 3 (seed 6), MeanFM at K = 10 with four candidates (seed 6), optionally MeanFM K = 3 on seed 6 | §23 | v3.66 |
+| 🔴 **ALL-TIGHTENED (author):** every untightened cell withdrawn from Ch 5/6/appendix. **R37 opened** (tightened threshold ladder, Table 6.6, both projectors), **R38 opened** (tightened s-curve projected cells, Table 6.15 + appendix), **R34 folded into R37**, **R33 trimmed** (untightened corridor arm dropped, 68 cells) | §24 | v3.67 |
 
 ### The open list, by priority
 
@@ -55,9 +62,15 @@ wall-clock: queue time and the 24 h `--time` cap are not in it.
 | ID | Priority | One line | Training? | ~GPU time |
 | :-- | :-- | :-- | :-- | --: |
 | **R23** | ⛔ **ABANDONED 2026-09-22 → FALLBACK to `pillars_hg`** | UAV-pillars at `pillars_xl` — **Gen15 U17 abandoned; the thesis restores the withheld `pillars_hg` section with its caveat** (`Gen15/U17/CLOSURE_20260922_U17_abandoned.md`) (Gen15 U17, Slurm jobs up to 25995, author, 2026-09-22). Coverage, cost and whether anything is still new are filled in by the author when the wave ends; see §16. **No new pillars run is listed until then.** 🔴 **First read 2026-09-21: 10/12 children complete, 2 running, diffusion walled at 2/7 (✅ diffusion arm CLOSED BY DECISION — reported unprojected only, K=20 projection is ~1 GPU-day per variant and the `c` rules exceed 24 h; see §16) — and 53 of 54 finished projected cells read `success = 0.00`. Read [`SLURM_RUNBOOK_20260919_pillars_enlarged.md` §3e](SLURM_RUNBOOK_20260919_pillars_enlarged.md) before scheduling anything on this scene** | no | ~5 GPU-days spent, see §16 |
-| **R2** | 🔴 | D3IL-aligning: the tightened projected diffusion baseline — blocks the four-model pre/post-projection merge | no | ~1.5 h |
+| **R2** | 🔴 | D3IL-aligning: the tightened projected diffusion baseline, per-step r/c/t at K = 20, η = 0.2 — the *pending (R2)* row of Table 6.8 (v3.66); endpoint on diffusion is not defined and not owed | no | ~1.5 h |
+| **R33** | 🔴 **the corridor run** | UAV-corridor v3 (geometry A = U19 hump after coding, or B = v2 slide re-run; author's call): **68 cells / 816 flights** on the fixed grid, tightened only (v3.67), K20 last — `PENDING_20260922_corridor_v3_run.md` | no (U19 coding under A) | ~1.5–2 GPU-days |
+| **R35** | 🟡 | D3IL-aligning: endpoint projection on CI-MeanFM at K = 20, tightened, r/c/t (Table 6.8 block) | no | ~1 h |
+| **R36** | 🟡 | D3IL-avoiding: matched four-candidate endpoint-vs-per-step at K = 3 for CI-MeanFM and FM, and MeanFM at K = 10 with four candidates, seed 6 (Table 6.3 *lacking* cells) | no | ~2 h |
+| **R37** | 🔴 | D3IL-aligning **tightened threshold ladder** (Table 6.6, now blank): MeanFM, random rule, `combined_5-tightened`, `dpcc-r` + `hardflow_sls-r` at (K, η) = (2, 0.5), (10, 0.4), (20, 0.2), (100, 0.1), (100, 0.5); the K20/η0.2 and K10/η0.4 cells already exist tightened (Table 6.7) → **3 new pairs**: K2 η0.5 both, K100 η0.1 both, K100 η0.5 both | no | ~2 h (the η0.5 K100 pair dominates) |
+| **R38** | 🟡 | UAV-s-curve **tightened projected cells**: CI-MeanFM K5, MeanFM K10, FM K20 with `dpcc-t-tightened` + `hardflow_sls{,-r,-c,-t}-tightened`; diffusion K20 `dpcc-t-tightened` (Table 6.15, appendix tables) | no | ~4 h (per-step s-curve cells run 1.4–3.6 s/step) |
+| ~~R34~~ | folded into R37 | endpoint at η = 0.5, K = 100 is now one of R37's pairs | — | — |
 | **R26** | 🟡 | D3IL-avoiding: five-seed diffusion $\nfe=2$ | **4 trainings** | ~11 h (training) + 15 min |
-| **R16** | 🟡 widened at v3.62, **narrowed at v3.63** | D3IL-aligning, the unprojected ladder $\nfe\in\{1,2,10,20,100\}$ for the **three flow-based models**: the **six** cells `tab:va-models` prints as *pending* — MeanFM 1; CI-MeanFM 1, 10; FM 1, 2, 10 (§20). ~~Diffusion at 1, 2, 10~~ struck: the author removed every diffusion row but $\nfe=20$ from Table 6.5 (v3.63, third round) | no | ~2 h (6 evaluations) |
+| **R16** | 🟡 widened at v3.62, narrowed at v3.63, **narrowed again at v3.66 (K = 1 dropped)** | D3IL-aligning, the unprojected ladder $\nfe\in\{2,10,20,100\}$ for the **three flow-based models**: the **three** cells `tab:va-models` prints as *pending* — CI-MeanFM 10; FM 2, 10 (§20, §23). ~~Diffusion at 1, 2, 10~~ struck: the author removed every diffusion row but $\nfe=20$ from Table 6.5 (v3.63, third round) | no | ~2 h (6 evaluations) |
 | **R28** | 🟡 | D3IL-avoiding: FM at $\nfe=5$ (seeds 7–10) and $\nfe=10$ ($T{=}0.5$, five seeds) — **not owed**, nothing claims those cells | no | ~2 h |
 | **R7 / R14** | 🟡 | D3IL-avoiding: candidate-matched endpoint vs per-step projection, 5 seeds × 20 episodes | no | ~6.5 h |
 | **R9** | 🟡 | FM with unit-scale initial noise, all three environments | no | ~3 h |
@@ -860,3 +873,51 @@ coding (three small sites + one XML + one submitter) then a pilot of 2 flights �
 pass, a wave of the v2 paper layout (mf/fm/af at $\nfe\in\{1,3,5\}$, diffusion 20, 4 projected variants, 12 flights;
 ~1 GPU-day, as U16 was). **Nothing in the thesis rests on it**: §6.3.2 carries a `\guard` saying the projector's
 behaviour against an altitude constraint is untested by the corridor.
+
+## 23 · v3.66 — the corridor is re-run on a fixed grid (R33); the alignment tables shrink to the operating point; the avoiding projector comparison is rebuilt on matched cells
+
+**Renewal of this ledger, on the author's instruction (changelog v3.66 item 7).** Nothing above is deleted.
+
+**R33 — UAV-corridor v3 (the run).** Every corridor cell of Chapters 5 and 6 is blank as of v3.66; the v2 text and figures
+are archived (`v3/withheld/20260922_v3.66_archive`). The grid, arms, Slurm order and what the thesis reads from it are in
+**`PENDING_20260922_corridor_v3_run.md`**. In one line: mf/af at K = 1, 2, 3; FM at K = 1, 2, 3, 5, 20; diffusion at 20;
+unprojected first; PCC (DPCC projector, η = 0.5, corridor stack) at every budget; HF at K ≥ 3; one untightened arm per
+model at one budget; one seed; K = 20 cells last, diffusion K = 20 projected very last. Geometry A (U19 hump) needs the
+U19 coding first; geometry B (v2 slide re-run) needs nothing. The author decides which.
+
+**R16 narrowed.** Table 6.5 no longer has K = 1 rows; three unprojected cells remain pending (CI-MeanFM 10; FM 2, 10).
+
+**R2 sharpened.** Table 6.8 is now the operating point only (K = 20, η = 0.2, three flow models × two projectors +
+diffusion). The diffusion per-step tightened cell is the one *pending (R2)* row; its endpoint cell is a dash for good.
+
+**R34 (optional) and R35 (owed).** Table 6.6 now carries endpoint rows on the untightened ladder (recounted from the
+15-09 corpus: K2 191 ms / 0.270 / 3 clean; K10 214 / 0.159 / 2; K20 298 / 0.137 / 4; K100 η0.1 1309 / 0.108 / 6); the
+η = 0.5 endpoint cell at K = 100 was never run (R34). Table 6.8's CI-MeanFM endpoint block was never run (R35).
+
+**R36 (owed).** §6.1.2.6 is rebuilt on the matched four-candidate cells the corpus has: MeanFM K3 (seeds 7–10, job 25444),
+CI-MeanFM K10 and FM K10 (seed 6). Lacking: CI-MeanFM and FM at K3, MeanFM at K10 with four candidates. Everything else
+that section used to cite (the single-candidate ladder, the cost figure) is archived, not owed.
+
+**Tightened / untightened.** Answered without a run: `v3/RECAP_20260922_tightened_vs_untightened.md`. Every projected
+headline is tightened; the untightened set appears only where it is the object of study. One sentence added to Chapter 5.
+
+## 24 · v3.67 — all-tightened: the untightened data are withdrawn, and two tightened re-runs are owed
+
+**Author's decision (2026-09-22, after the v3.66 sanity check):** use the tightened data only, abandon the untightened
+data, say why once in Chapter 5. Done in the draft; consequences for this ledger:
+
+| what was withdrawn | where it stood | replaced by |
+| :-- | :-- | :-- |
+| the untightened threshold ladder (per-step + endpoint rows, K100 η0.5 vs η0.1 cost pair) | Table 6.6, §6.2.2 prose | **R37** — the same five (K, η) pairs on `combined_5-tightened`; three pairs are new, two exist (K10 η0.4, K20 η0.2 in Table 6.7) |
+| the diffusion per-step untightened cell at K20 (2/10 clean, 103 viol., 1877 ms) | prose after Table 6.8 | R2 (unchanged) |
+| the s-curve plain-set projected cells: CI-MeanFM K5 (six variants), diffusion K20 `dpcc-t`, and the appendix per-model records FM K20 / MeanFM K10 | Table 6.15, `tab:app:uav-scurve-aborts`, `tab:app:uav-scurve-variants` | **R38** |
+| the corridor tightening comparison (untightened arm, 0.00 vs 1.00) | archived corridor §6.3.3; one untightened arm per model in the R33 grid | dropped; R33 = 68 cells |
+| the untightened columns of `tab:app:hf-ladder-detail`; the "untightened configurations change by up to 0.35" row of `tab:tiers` | appendix | removed |
+| the pillars plain columns (Table 6.12/6.13) and plain endpoint rows (Table 6.17) | inside the flawed, disabled block | left as they are until the scene is re-evaluated; **re-evaluate tightened only** |
+
+**Unprojected rows** are untouched: the plan does not depend on the set. Where the evaluation records both scorings
+(D3IL-aligning), the chapter already uses the tightened one; on D3IL-avoiding and the quadrotor scenes the unprojected
+S&C/violation columns are scored on the plain boundary and are, if anything, optimistic — stated in Chapter 5.
+
+`v3/RECAP_20260922_tightened_vs_untightened.md` §1–§3 describe the situation *before* this decision and are superseded by
+it; a banner there says so.

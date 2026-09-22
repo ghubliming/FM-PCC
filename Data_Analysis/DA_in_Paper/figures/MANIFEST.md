@@ -6,7 +6,7 @@ Last built **2026-09-22**. Every thesis figure lives in this store; drafts recei
 
 | figure | group | corpus | protocol |
 | :-- | :-- | :-- | :-- |
-| `fig_uav_corridor_altitude` | da | `data/uav_paths.json (extract/uav_paths.py, group corridor_altitude)` | 4 models x 2 arms, 12 flights each; runs Eaf_K3_mpc4_pid_stopgo_T0.5_EPlatest_u17cv2, Ediffusion_K20_mpc4_pid_stopgo_T0.5_u17cv2, Efm_K3_mpc4_pid_stopgo_T0.5_u17cv2, Emf_K3_mpc4_pid_stopgo_T0.5_u17cv2; altitude limits from config/uav_projection.yaml corridor_v2_slide.workspace_bounds z and sources.UAV_CONSTRAINTS r_drone |
+| `fig_aligning_projected_tradeoff` | da | `Data_Analysis/analysis_results_checkpoint/15-09/batch_va2_20260915_100754` | seed 6, ten shared enumerated contexts (paired; raw cells with 30 contexts are restricted) | combined_5-tightened, random selection, 10 shared contexts; 5 complete cells at K in (20,); frontier requires at least 9/10 violation-free contexts |
 
 ## Vendored — copied from where they were produced
 
@@ -26,7 +26,6 @@ Present in the store but not produced by this run (e.g. a matplotlib figure from
 | `fig_aligning_contexts` | `env/fig_aligning_contexts.png`, `env/fig_aligning_contexts.svg` |
 | `fig_aligning_outcomes` | `da/fig_aligning_outcomes.png`, `da/fig_aligning_outcomes.svg` |
 | `fig_aligning_paths` | `da/fig_aligning_paths.png`, `da/fig_aligning_paths.svg` |
-| `fig_aligning_projected_tradeoff` | `da/fig_aligning_projected_tradeoff.png`, `da/fig_aligning_projected_tradeoff.svg` |
 | `fig_aligning_tradeoff` | `da/fig_aligning_tradeoff.png`, `da/fig_aligning_tradeoff.svg` |
 | `fig_avoiding_k_ladder` | `da/fig_avoiding_k_ladder.png`, `da/fig_avoiding_k_ladder.svg` |
 | `fig_avoiding_paths` | `da/fig_avoiding_paths.png`, `da/fig_avoiding_paths.svg` |
@@ -63,6 +62,7 @@ Present in the store but not produced by this run (e.g. a matplotlib figure from
 | `fig_scene_uav_corridor` | `env/fig_scene_uav_corridor.png`, `env/fig_scene_uav_corridor.svg` |
 | `fig_scene_uav_pillars` | `env/fig_scene_uav_pillars.png`, `env/fig_scene_uav_pillars.svg` |
 | `fig_scene_uav_scurve` | `env/fig_scene_uav_scurve.png`, `env/fig_scene_uav_scurve.svg` |
+| `fig_uav_corridor_altitude` | `da/fig_uav_corridor_altitude.png`, `da/fig_uav_corridor_altitude.svg` |
 | `fig_uav_corridor_paths` | `da/fig_uav_corridor_paths.png`, `da/fig_uav_corridor_paths.svg` |
 | `fig_uav_corridor_tradeoff` | `da/fig_uav_corridor_tradeoff.png`, `da/fig_uav_corridor_tradeoff.svg` |
 | `fig_uav_pillars_paths` | `da/fig_uav_pillars_paths.png`, `da/fig_uav_pillars_paths.svg` |

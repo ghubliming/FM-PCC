@@ -141,7 +141,16 @@ end effector across a field of six obstacles to a goal line (\autoref{fig:env-av
 the plan is constrained by halfspaces that the demonstrations never respect, in three geometries --- \emph{top-left-hard}, \emph{top-right-hard} and \emph{both-hard}, defined in \autoref{tab:avoiding-geometries} and drawn in \autoref{fig:constraints-avoiding} --- together with the circular keep-out regions
 of \autoref{sec:method:env:avoiding}. The geometries are those of the \ac{DPCC} configuration \parencite[Sec.~6.1]{romer2025diffusion}, and all three share the workspace $x\in[0.2,0.8]$, $y\in[-0.3,0.4]$, the six obstacles of radius $0.025$ and the goal line at $y=0.35$. Every
 constraint also has a tightened version, shrunk by the margin of $0.025$ that \ac{DPCC} introduces and
-applies to this benchmark \parencite[Sec.~5.3]{romer2025diffusion} (\autoref{sec:method:dpcc}).
+applies to this benchmark \parencite[Sec.~5.3]{romer2025diffusion} (\autoref{sec:method:dpcc}). The same
+holds for every constraint set of this thesis, and one convention is fixed here for every result that
+follows: \textbf{every result of \autoref{ch:results} is on the tightened set.} It is the set \ac{DPCC}
+evaluates on, so it is the set on which the baseline is compared at its own protocol; it is the set on
+which a projected plan satisfies the constraint at all --- on the quadrotor corridor the untightened
+per-step projector satisfied it on no flight while its tightened twin did on every one --- and the plain
+set, being the tightened one without its margin, adds nothing a reader could rank on. Untightened
+evaluations were therefore withdrawn from the chapter (v3.67); where a tightened twin has not been flown
+yet, the cell is printed \emph{pending}. An unprojected plan is the same plan on either set, and its
+violations are scored against the tightened boundary wherever the evaluation records that scoring.
 \srcnote{\texttt{config/projection\_eval.yaml}: \texttt{halfspace\_constraints['avoiding-d3il']},
 \texttt{enlarge\_constraints: \{'avoiding': 0.025\}}; parity with \texttt{aux\_repo/dpcc} checked in
 v2, \autoref{sec:method:env:avoiding}.}
@@ -330,7 +339,9 @@ unstable (\autoref{sec:bg:quadrotor}), and its plan is tracked by the controller
 (\autoref{fig:env-uav}, \autoref{tab:uav-scenes}):
 
 \begin{description}
-  \item[UAV-corridor] --- the entry test. Two parallel walls leave a clear width of $1.90$\,m. In the
+  \item[UAV-corridor] --- \outdated{v3.66: the corridor is being re-evaluated on a new budget grid
+    (R33); the geometry below is corridor v2 and is superseded once the corridor-v3 run lands. Archived:
+    \texttt{withheld/20260922\_v3.66\_archive}.} The entry test. Two parallel walls leave a clear width of $1.90$\,m. In the
     horizontal $x$--$y$ plane, a halfspace boundary slopes by $14^\circ$ from the upper wall at the
     entrance to $0.05$\,m below the centre line at the exit. It requires a lateral route change of
     $0.25$--$0.49$\,m before the exit. Every constraint of the scene, the walls included, is a vertical
@@ -361,7 +372,7 @@ unstable (\autoref{sec:bg:quadrotor}), and its plan is tracked by the controller
     \toprule
     Scene & Constraint & Values \\
     \midrule
-    UAV-corridor
+    UAV-corridor \outdated{v2, R33}
       & two wall halfspaces & inner faces $y=\pm0.95$\,m, active over $x\in[-2,2]$; clear width $1.90$\,m \\
       & sloping halfspace & from $(-2.0,\,0.95)$ to $(2.0,\,-0.05)$, a descent of $14^\circ$ \\
       & wall ends & four disks of radius $0.05$\,m at $x=\pm2$, $y=\pm1$ \\
@@ -560,7 +571,8 @@ generator threads a passage the scene already contains, so nothing in the data h
 projection is then asked to repair a plan that was never broken, which is why that scene can expose a
 limit of the tracking controller but cannot order the projection methods.
 
-UAV-corridor is built the other way, and it is the way the obstacle-avoidance benchmark is built. The
+\outdated{v3.66: corridor v2; superseded by the corridor-v3 run, R33.} UAV-corridor is built the other
+way, and it is the way the obstacle-avoidance benchmark is built. The
 three lanes clear both walls, but every one of them crosses the sloping halfspace, by $0.24$, $0.36$ and $0.47$\,m
 for the left, centre and right lane --- because the halfspace is introduced at test time and did not exist
 when the demonstrations were flown. The scene in which the constraint is new to the data is exactly the
@@ -1164,7 +1176,7 @@ evaluated scenes run.}
     D3IL-aligning & 1
       & 10 contexts $\times$ 1 episode; the diffusion model 3 episodes per context
       & the ten contexts, compared context by context \\
-    UAV-corridor & 1 & 12 flights, four on each of the routes L, C and R & the twelve flights \\
+    UAV-corridor \outdated{v2} & 1 & 12 flights, four on each of the routes L, C and R & the twelve flights \\
     UAV-pillars \flawed{disabled} & 1 & 10 flights & the ten flights \\
     UAV-s-curve & 1 & 10 flights & the ten flights \\
     \bottomrule
@@ -1197,7 +1209,9 @@ initial box and target position, \texttt{DA\_in\_Paper/analysis/va\_results.py}.
 
 \subsubsection{Quadrotor Benchmark}\label{sec:setup:protocol:uav}
 
-The three scenes are evaluated and reported separately, never pooled. UAV-corridor has twelve flights,
+\outdated{v3.66: the UAV-corridor protocol below is the v2 protocol; the corridor-v3 grid (budgets,
+projectors, one seed, run order) is in \texttt{data\_status/PENDING\_20260922\_corridor\_v3\_run.md} and
+replaces it when the run lands.} The three scenes are evaluated and reported separately, never pooled. UAV-corridor has twelve flights,
 four on each of its left, centre and right routes, so each route contributes equally. UAV-corridor constrains the commanded
 position in addition to the measured one and leaves the action unconstrained, so its projection configuration is not
 the one used on the other two scenes. Every flight is tracked by the cascaded geometric controller
