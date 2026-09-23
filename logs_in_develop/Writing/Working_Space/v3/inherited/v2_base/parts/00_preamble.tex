@@ -2,43 +2,18 @@
 %  FM-PCC MASTER'S THESIS -- v2
 %  TUM, School of CIT, Chair I6
 % -----------------------------------------------------------------------------
-%  WHAT THIS FILE IS  (v2 = v1 + the mathematics + citations)
-%  Chapters 1-4 (Introduction, Background, Related Work, Method) are FILLED at
-%  *abstract density*: every section carries a summary that states what it will
-%  argue and in what order, in the thesis's own voice -- not finished prose.
-%  Chapters 5-8 (Setup, Results, Discussion, Conclusion) are left as the bone.
-%  Nothing there is settled and nothing there is written.
-%
-%  STRUCTURE SINCE v2.14 -- one job per chapter, no duplication:
-%    Ch 1  introduction and the six contributions (the guideline)
-%    Ch 2  the concepts behind each contribution -- no equations
-%    Ch 3  the papers per aspect -- no equations
-%    Ch 4  all the mathematics, grouped: formulation, overview, generative models,
-%          plant dynamics, constraint projection, low-level control, environments
-%  Section numbers quoted below this line predate v2.14; the labels are unchanged.
-%
-%  WHAT v2 ADDS OVER v1
-%    1. The three engine formulations are written out as mathematics, in one
-%       notation, with citations:  DPCC's diffusion engine (Sec. 2.2 / 4.1),
-%       flow matching (Sec. 2.3), MeanFlow's average-velocity objective
-%       (Sec. 2.4), and how each is instantiated here (Sec. 4.5).
-%       alpha-Flow carries NO mathematics in v2 -- deliberately deferred.
-%    2. The constrained-sampling problem, the projection NLP, the constraint
-%       tightening and the genuine-step boundary are stated as equations
-%       (Sec. 2.5, 4.2, 4.6, 4.8).
-%    3. A global notation convention (Sec. 4.2, Table 4.1) that resolves the
-%       t / k / tau / u collision flagged in NOTES_tum_formatting_rules.md.
-%    4. biblatex + bibliography.bib. Every equation taken from a paper carries
-%       its source; every equation taken from this repo's code carries a
-%       \srcnote pointing at the file.
-%
-%  SOURCING RULE OBSERVED IN v2
-%  Nothing here is invented. Paper equations are transcribed from the PDFs in
-%  /workspaces/aux_repo/PAPERS/ (re-derived into this thesis's notation, which
-%  is noted where the source's own notation differs). Implementation equations
-%  are transcribed from this repository's code, cited by file and function in a
-%  \srcnote. Where the two disagree, the disagreement is written down, not
-%  smoothed over.
+%  CURRENT SCOPE -- v2.27, 2026-09-23, audit corrections by ChatGPT (Codex)
+%  Owned text: abstract and Chapters 1-4. Chapters 5-8 and appendix material
+%  below are retained placeholders; their live owners are v3 and v4.
+%  Ch 1 introduces the questions and contributions; Ch 2 explains concepts;
+%  Ch 3 positions the work; Ch 4 gives the formulation, system overview,
+%  plant/control models, all three flow objectives, projection and environments.
+%  Transport time is data-at-one. Average velocity uses start and interval inputs.
+%  K denotes sampling steps; endpoint lookahead adds network evaluations.
+%  Experiment settings and outcomes are owned by v3. Detailed noise-scale
+%  discussion and the redundant endpoint configuration table are omitted by
+%  the author's decision. See CHANGELOG.md and the signed v2.27 changelog.
+%  Paper equations carry citations; implementation equations carry srcnotes.
 %
 %  BASIS: derives from DPCC (Diffusion Predictive Control with Constraints,
 %  L4DC 2025), which builds on Diffuser's temporal U-Net and the D3IL
@@ -53,6 +28,15 @@
 %    Data_Analysis/DA_Result_Curated_MD/NOTEBOOK_20260829_key_headlines.md
 %
 %  STRUCTURE DELTA vs. v1 -- see README.md in this folder.
+%
+%  CROSS-DRAFT STATE  (update this line in every pass that reads the inbox)
+%    This file is current against  v3.60  (2026-09-21)  and  v4: not started.
+%    Every cross-draft note addressed to v2 up to that version has been applied
+%    or answered; the ledger is ../cross_draft/INBOX.md, and the machine-readable
+%    copy is CROSS_STATE.json in this folder. Open as of v2.26 (2026-09-23): the
+%    v3.69 row (sec:res:fewstep wording), held for the claims rebuild that the
+%    audit of 2026-09-23 asks for (audit from chatgpt/, section 8). v2 owns Ch 1-4, the abstract, the
+%    preamble, the acronyms and bibliography.bib -- nothing under v3/ or v4/.
 %
 %  BUILD: latexmk -pdf thesis_v2.tex
 %     or: pdflatex thesis_v2.tex ; biber thesis_v2 ; pdflatex x2
@@ -92,6 +76,7 @@
   \usepackage[autostyle]{csquotes}
   \usepackage{amsmath,amssymb,amsthm}
   \usepackage{graphicx}
+  \graphicspath{{figures/}}
   \usepackage{booktabs}
   \usepackage{xcolor}
   \usepackage[printonlyused]{acronym}
@@ -164,7 +149,7 @@
 \newcommand{\vfield}{v}                        % instantaneous velocity field
 \newcommand{\afield}{u}                        % average velocity field
 \newcommand{\ftime}{\tau}                      % transport (generative) time in [0,1]
-\newcommand{\nfe}{K}                           % step budget = number of network evals
+\newcommand{\nfe}{K}                           % sampling-step budget; NFE is counted separately
 
 % Drafting aids. For the submitted build set \submissiontrue: every \srcnote then
 % prints nothing, and every \hole still left raises a LaTeX warning (and stays red)

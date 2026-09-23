@@ -1,5 +1,7 @@
 # SLURM RUNBOOK — 2026-09-22 · the remaining thesis runs, most urgent first
 
+> **23-09 (v3.75): every UAV-s-curve group of this runbook (D, E: R31; G: R15) is struck. The s-curve runs are R44 in [`PENDING_20260923_uav_scurve_R44_raw_first.md`](PENDING_20260923_uav_scurve_R44_raw_first.md).**
+
 Source of scope: [`PENDING_20260922_all_lacking_runs.md`](PENDING_20260922_all_lacking_runs.md) §0 (the
 open list, by priority) and §16–§18. **This runbook supersedes
 [`SLURM_RUNBOOK_20260920_all_lacking_runs.md`](SLURM_RUNBOOK_20260920_all_lacking_runs.md)**, which was never
@@ -225,6 +227,67 @@ A job is not complete because Slurm says `COMPLETED`. For each leaf verify:
 Record job IDs, revision, start/end times and failures in §7. Do not touch `MASTER_TEST_HISTORY.md`
 unless told to.
 
+## 6b · 23-09 · the MUST-NEED wave: R16 + R36 (🗓 scheduled · R36 🔄 updated v3.77)
+
+Author, 23-09: *"prepare tempbash/command for the runs that must need runs as showing in the Pending md,
+and mark them scheduled. optional NO. first clean all the must need runs."* After R2, R37, R26 and R35
+closed, the NOW table's must-need items outside the quadrotor scenes (corridor R33, s-curve R44 and
+pillars R39 live in their own files) are **R16 and R36**. R43 is optional and not included.
+
+**Checked against the corpus first** (R37a lesson): none of the six cells exists. R16 — no FM K2, FM K10
+or CI-MeanFM K10 folder in `batch_va2_20260923_210100`. R36 — no CI-MeanFM K3, FM K3 or MeanFM K10 `B4`
+cell in the TenpK2D avoiding batch; MeanFM K10 exists only as `B1`, as Table 6.3 says.
+
+**Driver:** `Slurm_Codes/temp_bash/pipeline_20260923_must_need.sh` — one self-contained file; it writes its
+`_mn23_*` wrappers, sbatch files and pruned yamls itself. PLAN by default.
+
+```bash
+bash Slurm_Codes/temp_bash/pipeline_20260923_must_need.sh            # PLAN
+bash Slurm_Codes/temp_bash/pipeline_20260923_must_need.sh submit     # all six, serial chain
+ANCHOR=<jobid> bash … submit    # first job waits for <jobid>;  SERIAL=0 for no chain
+```
+
+| job | ledger | table | cell | how it is matched to the printed rows |
+| :-- | :-- | :-- | :-- | :-- |
+| R16a | R16 | 6.5 | D3IL-aligning FM K2, unprojected | `diffuser` on `combined_5`, ten contexts, η 0.5 names the folder (as the other K2 rows), config-default checkpoint as the FM rows, tag `_msgR16` |
+| R16b | R16 | 6.5 | D3IL-aligning FM K10, unprojected | same, η 0.4 (as MeanFM K10) |
+| R16c | R16 | 6.5 | D3IL-aligning CI-MeanFM K10, unprojected | `MIX_AF_ALPHA_END=0.2` → checkpoint `…_afschsigmoid_AFAFend0p2`, `--epoch latest`, as the printed CI-MeanFM rows |
+| R36a 🔄 v3.77 | R36 | 6.3 | D3IL-avoiding CI-MeanFM K3, **seeds 7–10** | `eval_alphaflow_hardflow.sh`, `AF_BONE=unet AF_ALPHA_END=0.2 AF_EPOCH=latest`, `--flow-steps 3`, activation 1.0 (two guiding steps, as MeanFM K3), `HFFM_BATCH=4 FMPCC_MPC_BATCH=4` |
+| R36b 🔄 v3.77 | R36 | 6.3 | D3IL-avoiding FM K3, **seeds 7–10** | `eval_fmv3_hardflow_job.sh`, `HFFM_FLOW_STEPS=3`, activation 1.0, both fans 4 |
+| R36c | R36 | 6.3 | D3IL-avoiding MeanFM K10, four candidates | `eval_meanflow_hardflow.sh`, `MF_FLOW_STEPS=10 MF_BACKBONE=unet MF_HORIZON=8` (job 25444's knobs), activation 0.5 (four guiding steps), both fans 4 |
+
+**🔄 Updated v3.77 (23-09):** R36a and R36b run on **seeds 7–10**, the seeds of the printed MeanFM K3 row of Table 6.3
+(job 25444, which does not contain seed 6), so the K3 block is paired on one seed set; R36c stays at seed 6, the seed of
+the printed K10 rows. The driver pins the lists per pruned yaml (`SEEDS_K3`, default `7, 8, 9, 10`; tested on scratch
+copies: the alphaflow and hardflow copies read `seeds: [7, 8, 9, 10]`, the meanflow copy `seeds: [6]`). Before: every
+job at seed 6. R36 runs three geometries × two episodes per seed, with `dpcc-{r,c,t}-tightened` against
+`hardflow_new-{r,c,t}-tightened` (folders land as `hardflow_sls-*`), tag `_msgR36`. Seeds, episodes and
+variants come from a **pruned copy** of each entrypoint's own yaml, passed as `--config` — the hook all three
+evals document. The copies were parsed and diffed: only `projection_variants` differs from the shared yaml,
+which is never edited.
+
+**Verified before handing over:** syntax of the driver and every generated file; the pruned yamls parse
+and change only the variant list; and a dry run against a stand-in `sbatch` showed every job submitted
+with an explicit `--dependency=afterok:<previous>` and the intended environment: fans 4/4, the activation
+threshold, K, `AF_BONE/AF_ALPHA_END/AF_EPOCH = unet/0.2/latest` on R36a only, and the tag.
+
+**✅ Re-verified 23-09 after the v3.77 edit — ready to submit.** Driver syntax, PLAN run, every generated sbatch
+file and the wrapper pass; the pruned yamls parse and differ from the shared ones only in `projection_variants`
+(and `seeds` for the two K3 copies: `[7, 8, 9, 10]`; MeanFM K10 `[6]`). **Checkpoints exist for every new seed**,
+read from the corpus: CI-MeanFM `…bbunet…ae0.2…` seeds 6–10 (trained by 25879); FM seeds 6–10 under
+`flow_matching_v3_ode_selectable/…aw10`, which is exactly the load path of `plan_fm_v3_hardflow` (config/avoiding-d3il.py,
+"copied from plan_fm_v3_ode_selectable"); MeanFM `…bbunet…dp0.5` seeds 6–10, so R36c's seed 6 loads although job 25444
+did not evaluate it. A dry run against a stand-in `sbatch` submitted all six with an explicit `afterok` chain and the
+intended environment (fans 4/4, activation 1.0/1.0/0.5, K 3/3/10, `AF_* = unet/0.2/latest` on R36a only, tag `R36`).
+
+**Cost:** about 2–5 h in total even fully serial (R36a/b four seeds each since v3.77, ~40 min–2 h per cell). R16 jobs get 6 h; R36 keeps its
+entrypoints' 24 h.
+
+**Identity checks in the logs:** R16 — `[ mn23 ] identity: … n_contexts=10 … tag=_msgR16` (R16c also
+`af_alpha_end=0.2, epoch=latest`). R36 — `[ hardflow ] HFFM_BATCH=4 … FMPCC_MPC_BATCH=4 …
+HFFM_ACT_THRESHOLD=<1.0|0.5>`, `[ eval ] config: …_mn23_R36_<…>.yaml`, a savepath ending `_msgR36`,
+`hf_n_genuine` = 2 at K3 and 4 at K10, and no `[hardflow][BLOCKED]`; R36a/b show four seed blocks (7, 8, 9, 10), R36c seed 6 only.
+
 ## 7 · Submission record
 
 ### 🔴 23-09 · two defects in this wave, and what survives of the driver
@@ -250,7 +313,8 @@ less than the original (5 projected steps per replan instead of 11): ~4–5 h. D
 
 ### 23-09 · the RED wave, submitted as one serial chain
 
-> ✅ **SUBMITTED 23-09.** `26112 → 26113 (R2fix) → 26114 (R37a) → 26115 (R37b)`, every link
+> ✅ **ALL FOUR LINKS COMPLETE 23-09, 18:11 UTC; DA done** on `batch_va2_20260923_210100`: [`DA_20260923_R2fix_R37_aligning.md`](../../../../Data_Analysis/DA_in_Paper/analysis/DA_20260923_R2fix_R37_aligning.md). R2 and R37 are closed.
+> `26112 → 26113 (R2fix) → 26114 (R37a) → 26115 (R37b)`, every link
 > `afterok` on the one before it, all through `submit_after.sh`. Anchor 26112 was `PENDING` at
 > submission. The cluster yaml reads `n_contexts: 10`, so the in-memory injection is a no-op
 > safeguard there.
@@ -288,6 +352,10 @@ Every link is submitted through `Slurm_Codes/submit_after.sh`, never the environ
 | `_msgR37` | the tightened threshold-ladder cells of Table 6.6 |
 
 #### 🔴 R37c does not fit the cluster and is NOT queued
+
+> **Author's decision, 23-09 (v3.70): R37c is struck — "clearly not possible, mark impossible".** Nothing to run.
+> The thesis (§6.2.2, Table 6.6) prints the K10/K20 tightened cells, marks K100 η0.5 *not run* and prices it by the
+> rule of thumb (solves per control step × per-solve cost from the K10/K20 cells); R37a/b stay queued as submitted.
 
 The third pair of the ladder, K = 100 at eta = 0.5, costs far more than the ledger's "~2 h"
 estimate for all of R37. From the ledger's own measurement (§14): 50 guiding steps, **15,218 ms
@@ -348,13 +416,15 @@ the red wave lands so the spec cannot shift under it.
 
 | group | job IDs | revision | state / verification |
 | :-- | :-- | :-- | :-- |
+| R16a / R16b / R16c · R16 | — | — | 🗓 **SCHEDULED 23-09** — driver `pipeline_20260923_must_need.sh` prepared and dry-run verified (§6b); not yet submitted |
+| R36a / R36b / R36c · R36 | — | — | 🔄 **UPDATED v3.77** (was 🗓 scheduled 23-09) — R36a/b at seeds 7–10 (§6b); same driver, chained after R16c by default; not yet submitted |
 | A · R2 | **26051** | 999152f1 | ⚠ **η = 0.5, not the 0.2 Table 6.8 needs** (see above). RUNNING since 07:57 UTC; identity lines correct (`n_contexts 10 -> 10`, `combined_5` + twin, 4 variants, `_msglr22`). **Measured: ~18 min per unprojected item, ~75 min per projected item → ~8 h for the 8 items**, not the ledger's 1.5 h (the 265–450 ms/step figure is per replan, not per rollout wall time). Expected end ~16:00 UTC, inside the 12 h limit |
 | B1 · R26 train ×4 | **26052** s7 · **26053** s8 · **26054** s9 · **26055** s10 | 999152f1 | submitted 2026-09-22, 6 h limit each (the cluster copy predates the 12 h default; 2.2× the measured 2 h 41 m) |
 | B2 · R26 eval | ~~26056~~ → **26112** | 999152f1 | ✅ **COMPLETE 2026-09-23.** 5 seeds × 3 geometries × 2 episodes, 13 variants, no missing seeds. R26 is **data-complete**; preliminary DA in [`DA_20260923_diffusion_K2_five_seeds.md`](../../../../Data_Analysis/DA_in_Paper/analysis/DA_20260923_diffusion_K2_five_seeds.md). 26056 had run unchained and was cancelled (see above); 26112 was re-submitted via `submit_after.sh 26055` |
-| **R2fix · R2** | **26113** | 1e8e707d | ✅ submitted 23-09, `afterok:26112`. Aligning diffusion K20, **η = 0.2**, seed 6, 10 contexts, `combined_5` + tightened twin, `diffuser`+`dpcc-r/c/t`, tag `_msgR2fix`, 12 h limit. Replaces 26051 for Table 6.8 |
-| **R37a · R37** | **26114** | 1e8e707d | ✅ submitted 23-09, `afterok:26113`. MeanFM K2, η = 0.5, per-step `dpcc-r`, tag `_msgR37`, 6 h limit |
-| **R37b · R37** | **26115** | 1e8e707d | ✅ submitted 23-09, `afterok:26114`. MeanFM K100, η = 0.1, `dpcc-r` + `hardflow_new-r`, tag `_msgR37`, 16 h limit |
-| R37c · R37 | — | — | 🔴 NOT queued: ~33.8 h per variant against a 24 h cap. Author decision pending (three options above) |
+| **R2fix · R2** | **26113** | 1e8e707d | ✅ **COMPLETE, verified 23-09** (07:25–12:31 UTC). Log shows `eta 0.2 (source: cli --proj-threshold)`, savepath `H8_K20_T0.2_…_msgR2fix/6`, 10 contexts, 8/8 items incl. the tightened `dpcc-r/c/t`. Needs the V_A DA for numbers |
+| **R37a · R37** | **26114** | 1e8e707d | ✅ **COMPLETE, verified 23-09** (12:31–12:48 UTC). K2, η 0.5, savepath `H8_K2_Meuler_T0.5_…_msgR37/6`, 2/2 items (plain + tightened `dpcc-r`) |
+| **R37b · R37** | **26115** | 1e8e707d | ✅ **COMPLETE, verified 23-09** (12:48–18:11 UTC). K100, η 0.1, savepath `H8_K100_Meuler_T0.1_…_msgR37/6`, 4/4 items (`dpcc-r` + `hardflow_new-r`, plain + tightened). 🟠 the endpoint arm logged a non-converged SLSQP solve (`[hardflow][NLP-FAILURE]` at τ 0.910, both geometries); the total is not in the log or the DA CSV |
+| ~~R37c · R37~~ | — | — | ⛔ **struck by the author, 23-09 (v3.70):** *"clearly not possible, mark impossible"* — ~33.8 h per variant against a 24 h cap; the thesis prices the pair by rule of thumb instead |
 
 🟠 **Queue note, 2026-09-22 13:15 UTC:** the account runs under `QOSMaxCpuPerUserLimit` — two 8-CPU jobs at a time. 26051 (5 h 18 m) and 26053 (s8, 1 h 06 m) were running; 26054/26055/26056 pending on the QOS. Chained on two slots the wave ends ~20:30 UTC. If other runs are more urgent, `scontrol hold 26054 26055 26056` (nothing lost, dependency intact) and `release` later; never cancel s9/s10 alone, that strands B2 as `DependencyNeverSatisfied`.
 | C · R30 | — | — | planned, not submitted |

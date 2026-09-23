@@ -1,10 +1,13 @@
 {
-  "v2_version": "v2.25 — 2026-09-21",
-  "current_against_v3": "v3.60 (2026-09-21)",
+  "v2_version": "v2.27 — 2026-09-23",
+  "current_against_v3": "v3.75 reviewed (2026-09-23); separate v3.73 contact check open",
   "current_against_v4": "not started",
-  "checked_at": "2026-09-21",
+  "checked_at": "2026-09-23",
   "inbox": "../cross_draft/INBOX.md",
-  "note": "Every cross-draft note addressed to v2 up to v3.60 has been applied or answered. The mirror of this file on the v3 side is v3/inherited/SYNC_STATE.json, which records which v2 revision v3 absorbed.",
-  "thesis_v2_sha256_16": "0acf5f0df4499a98",
-  "bibliography_sha256_16": "5c046b2902675a09"
+  "note": "Author authorized the audit TODO revision and closed the numerical-noise discussion without requiring reviewer approval. v3.69 semantic reference resolved. v3.73 sampler correction acknowledged and available pillars result used; the separate contact-termination comparison is left open to preserve the existing scene text. No v3 inheritance sync performed; v3/inherited/SYNC_STATE.json still records v2.26.",
+  "thesis_v2_sha256_16": "1b641a5dcb43ba40",
+  "bibliography_sha256_16": "5c046b2902675a09",
+  "open_inbox_items": [
+    "v3.73: verify the comparison claiming manipulator post contact terminates an episode; outside this audit pass, existing scene text preserved."
+  ]
 }

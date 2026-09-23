@@ -10,9 +10,9 @@ The setting is a dataset of expert trajectories, a conditional model over horizo
 trajectory segments \parencite{janner2022planning,chi2023diffusion}, and receding-horizon
 execution: the model plans a short horizon, the first action is executed, and the model plans again.
 The benchmarks come from \parencite{jia2024towards}, whose demonstrations are multimodal. Planning
-over a horizon is what makes constraint enforcement possible: a single action has nothing to project.
-Multimodality is why the model is generative and not a regressor, and it is also why a truncated
-sampler risks averaging between modes.
+over a horizon permits constraints that link future states and actions. A single action can also be
+projected onto an admissible set. The generative model represents alternative demonstrated plans;
+the effect of a reduced sampling budget is evaluated in \autoref{ch:results}.
 
 \section{Diffusion Models and Diffusion Predictive Control}\label{sec:bg:diffusion}
 
@@ -24,8 +24,8 @@ and diffusion policies \parencite{chi2023diffusion} brought it to visuomotor con
 
 Two properties follow from the construction. The number of denoising steps is tied to the schedule
 the network was trained on, so it is fixed when training ends; fewer steps require a different sampler
-\parencite{song2021denoising} or a distilled model. And each step adds fresh noise, so two plans drawn
-for the same observation differ.
+\parencite{song2021denoising} or a distilled model. The stochastic reverse sampler adds noise at nonterminal steps, so plans drawn
+for the same observation can differ.
 
 \ac{DPCC} \parencite{romer2025diffusion} makes such a planner respect state and action constraints
 that are absent from the demonstrations. Between denoising steps it projects the intermediate
@@ -53,14 +53,11 @@ deterministic function of its initial noise and the observation.
 
 \section{Few-Step Generative Models}\label{sec:bg:fewstep}
 
-Few-step generation is a development inside the transport family of \autoref{sec:bg:fm}, not a
-property of generative models in general. The reason is the structure flow matching gives the
-problem: the model is trained against a chosen interpolation between the prior and the data, and the
-straighter that interpolation is, the fewer integration steps its \ac{ODE} needs. Optimal-transport
-paths \parencite{lipman2023flow} and rectified flow \parencite{liu2023flow} pursue exactly this, and
-the step budget stays a solver argument throughout. Diffusion admits no such handle: its path is the
-noise schedule it was trained with, and a short budget is recovered afterwards, by a different
-sampler \parencite{song2021denoising} or by distillation \parencite{wang2024onedp}.
+Few-step generation is studied in both diffusion and transport models. Diffusion models can use
+accelerated samplers \parencite{song2021denoising} or distillation \parencite{wang2024onedp}.
+For flow matching, the integration budget is an inference argument. The geometry of the learned
+field affects how accurately a small number of steps approximates its flow; optimal-transport paths
+\parencite{lipman2023flow} and rectified flow \parencite{liu2023flow} study this geometry.
 
 A step budget chosen at deployment is still not automatically a good one. Straight per-sample paths
 average into a curved field, and coarse integration steps along a curved field are inaccurate however
@@ -83,8 +80,9 @@ refers to it as \emph{consistency-interpolated average-velocity matching}. Both 
 objectives achieve state-of-the-art one- and two-step image generation
 \parencite{geng2025meanflow,zhang2025alphaflow}.
 
-For diffusion the step budget is therefore fixed at training time, for instantaneous-velocity matching
-it is chosen at deployment, and the two average-velocity objectives make a small budget accurate.
+The DPCC reverse sampler uses its trained schedule, whereas the flow-based samplers choose their
+step budget at deployment. The average-velocity objectives are designed to improve accuracy at
+small budgets; their performance on the control tasks is measured in \autoref{ch:results}.
 
 \section{Constraint Enforcement in Generative Sampling}\label{sec:bg:mpc}
 
@@ -94,8 +92,8 @@ for constraints the demonstrations never contained. Three approaches exist. Guid
 of a constraint cost to the sampler \parencite{carvalho2025motion}, which makes violations less likely
 without excluding them. Projection maps a sample onto the feasible set, after sampling
 \parencite{power2023sampling} or at every step \parencite{christopher2024constrained,romer2025diffusion};
-the projection of \ac{DPCC} includes a model of the dynamics, so the projected plan stays dynamically
-feasible. Optimisation-based methods steer the sampler itself.
+the projection of \ac{DPCC} includes a model of the dynamics, so an exact feasible solution satisfies
+that model. Optimisation-based methods steer the sampler itself.
 
 One such method \parencite{li2025hardflow} steers a flow-matching sampler by treating sampling as an
 optimal control problem. A control input is added to the learned velocity field; its effort is penalised, so
@@ -107,8 +105,8 @@ final sample by its expected value given the current state, which for a flow-mat
 closed form from the state and the learned velocity. And it optimises directly over that predicted
 final sample instead of over the next state, so the constraints act on a plan and not on its image
 through the network. The corrected prediction is then mapped back into the next state of the sampler.
-At the final step the prediction and the state coincide, so the final sample satisfies the constraints
-exactly. An optional terminal cost can further shape the sample, and the optimisation is applied only
+At the final step the prediction and the state coincide, so an exact feasible projection yields a
+constraint-satisfying final sample. An optional terminal cost can further shape the sample, and the optimisation is applied only
 in the later sampling steps, where the prediction of the final sample is accurate.
 
 The two approaches therefore differ in where the constraints act. Per-step projection corrects the
@@ -125,16 +123,24 @@ ResNet-18 encoder \parencite{he2016deep} processes each camera view. The feature
 concatenated with the time embedding of the network and reach its layers as a feature-wise
 conditional bias --- the bias half of feature-wise linear modulation, \ac{FiLM}
 \parencite[Sec.~3]{perez2017film}, whose general form scales and shifts each channel of a layer from
-a conditioning vector. Transformer backbones operate on image patches instead of a
-pooled feature vector \parencite{peebles2022dit}.
+a conditioning vector. Image-generation transformers can operate on image-patch tokens \parencite{peebles2022dit};
+trajectory transformers instead represent a sequence of planned states or actions.
 
 \section{Quadrotor Dynamics and Control}\label{sec:bg:quadrotor}
 
-A manipulator in position control is fully actuated and holds its configuration without effort; a
+A fully actuated manipulator in position control holds its configuration through joint feedback; a
 planned sequence of end-effector positions becomes joint commands through \ac{IK}. A quadrotor is
 different. Its four rotors produce a thrust along one body axis and three moments, so it controls four
 of its six degrees of freedom directly and must tilt in order to translate, and hover is an unstable
-equilibrium that requires continuous feedback. Such an underactuated, open-loop unstable vehicle is
+equilibrium that requires continuous feedback.
+
+A position-controlled arm can hold its last setpoint through the joint controller, although tracking
+error and collisions still depend on the commanded motion. A quadrotor must continuously regulate
+thrust and attitude even to hold a fixed position. Position corrections require tilting and translation,
+and a loss of attitude control can end the flight. This difference in tracking behaviour motivates
+testing the same planning framework on both plants.
+
+Such an underactuated, open-loop unstable vehicle is
 controlled in cascade: an outer loop turns a position error into a desired thrust vector, which fixes a
 desired attitude, and an inner loop tracks that attitude. Geometric controllers formulate the attitude
 error directly on the rotation group and thereby avoid the singularities of local coordinates

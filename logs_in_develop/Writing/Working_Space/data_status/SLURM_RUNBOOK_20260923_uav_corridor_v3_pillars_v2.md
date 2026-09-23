@@ -97,6 +97,10 @@ Read in each log: the eval's `Success rate / Constraints satisfied / … ` block
 Download both trees (`export_to_laptop.sh`) — the DA needs the npz and the sidecars; Figure `fig_uav_pillars_paths` takes
 seed 6, *top-right-hard*, episode 2 of the MeanFM K1 cell.
 
+## 3b · UAV-s-curve — moved (v3.75)
+
+The v3.71 s-curve waves (R42 a/b/c, tags `p23sc` / `p23scmjpc`) are **superseded**; do not submit them. The s-curve runs, with their commands, are R44 in [`PENDING_20260923_uav_scurve_R44_raw_first.md`](PENDING_20260923_uav_scurve_R44_raw_first.md) (tags `p23scgrid`, `p23scproj`, `p23scmjpc`; phase A only until the author decides).
+
 ## 4 · Completion checks
 
 | for | check |
@@ -114,6 +118,8 @@ seed 6, *top-right-hard*, episode 2 of the MeanFM K1 cell.
 | 2026-09-23 | **C1** `diffuser` (both scenes: mf/af K1,2,3, fm K1,2,3,5,20, diffusion K20) | 26079–26102 (24 eval jobs) | queued (`AssocGrpGRES` at submit time) |
 | 2026-09-23 | C2 master | 26103 (`p23_master_C2`, Dependency: afterany C1) | pending |
 | | C2 / C3 / C4 / C5 | (queued by each link in turn — read the `p23_master_*` logs in `Slurm_Codes/logs/<date>/`) | |
-| 2026-09-23 | **R39 pillars v2 live** (`p23uavpv2live`, 5 seeds × 3 geos × 2 ep, `diffuser` + `dpcc-t-tightened`) | 26147 MeanFM K1 · 26148 MeanFM K2 · 26149 CI-MeanFM K1 · 26150 CI-MeanFM K2 | submitted |
+| 2026-09-23 | **C5 restarted at 10 flights** (author): the chain's C5 master 26159 (n = 12) cancelled; `NTRIALS=10 … _master.sh start C5` | master 26160 (`p23_master_C5`) → C5 diffusion K20 `dpcc-t/r/c`, both scenes, **n = 10** | C1–C4 stay at n = 12 (DA reads the first ten; trial i is seeded by its index and routes cycle by index, so the ten are the same flights) |
+| 2026-09-23 | **R39 pillars v2 live** (`p23uavpv2live`, 5 seeds × 3 geos × 2 ep, `diffuser` + `dpcc-t-tightened`) | ~~26147–26150~~ cancelled while pending (U18 fix8: live sidecars overwrote each other) | superseded |
+| 2026-09-23 | **R39 pillars v2 live, resubmitted** on fix8 (same cells, tag `p23uavpv2live`) | **26151** MeanFM K1 · **26152** MeanFM K2 · **26153** CI-MeanFM K1 · **26154** CI-MeanFM K2 | **DONE** 23-09: 240 flights clean; DA `DA_in_Paper/analysis/DA_20260923_pillars_v2_live.md` — air S&C 0.60–0.70 vs table 0.97–1.00, all 51 failures pillar contacts on commanded paths (finding, not bug); v3 notified |
 
 Claude (Fable 5.1, Claude Code) · 2026-09-23 · not run from the container.

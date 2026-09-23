@@ -1,4 +1,9 @@
 \appendix{}
+% One "Appendix" heading over the lettered appendices A, B, C (author, 2026-09-23: "I need the
+% appendix big chapter back"). An unnumbered KOMA part: it adds the heading page, the TOC entry and
+% the PDF bookmark, and leaves A, B, C as chapters, so every \autoref{app:...} still reads
+% "Appendix A/B/C". v4 owns any later restructuring of the appendix (DRAFT_OWNERSHIP.md).
+\addpart{Appendix}
 
 \chapter{Derivations}\label{app:derivations}
 
@@ -505,8 +510,8 @@ cells that are not the same.}
 \end{deadblock}
 \section{UAV-s-curve at the Budgets on Disk}\label{app:uav-scurve-budgets}
 
-\outdated{v3.68: the scene is reported as a controller caveat and its pilot cells are now
-\autoref{tab:uav-scurve}; this section keeps the per-model records for reference and adds no reading.}
+\outdated{v3.75: \autoref{tab:uav-scurve} is the grid at one, two and twenty network evaluations
+(author); the budgets flown before it are kept here for reference and add no reading.}
 
 Before the matched grids of \autoref{sec:res:uav:scurve} were laid out, the scene was evaluated with
 each model at the budget it is strongest at --- instantaneous-velocity matching at $\nfe=20$, analytic
@@ -514,13 +519,14 @@ average-velocity matching at $10$, the consistency-interpolated model at $5$ ---
 at one further budget per model. No two of those budgets coincide, so every row below is a per-model
 record and none is read against another. The unprojected rows are kept as flown. The projected rows were
 flown on the plain constraint set and were withdrawn at v3.67, when the thesis went to the tightened set
-throughout (\autoref{sec:setup:tasks:avoiding}); their tightened twins are R38 of the run ledger, and the
-two tables below keep their structure with those cells \emph{pending}.
+throughout (\autoref{sec:setup:tasks:avoiding}); their tightened twins are not run, because
+the projection is flown on the configuration the grid of \autoref{tab:uav-scurve} selects, and the two
+tables below keep their structure with those cells marked \emph{not run}.
 
 \begin{table}[htpb]
-  \caption[UAV-s-curve: unprojected cells outside the matched grid]{UAV-s-curve, plans executed without
-  projection at the two budgets that are not on the ladder of \autoref{tab:uav-scurve}; columns as
-  there, ten flights per row, one training seed.}
+  \caption[UAV-s-curve: unprojected cells outside the grid]{UAV-s-curve, plans executed without
+  projection at the two budgets that are not in the grid of \autoref{tab:uav-scurve}, ten flights per row,
+  one training seed. \emph{Safe}: no contact and no loss of altitude; the other columns as there.}
   \label{tab:app:uav-scurve-unprojected-extra}
   \centering
   \small
@@ -528,15 +534,16 @@ two tables below keep their structure with those cells \emph{pending}.
     \toprule
     Model & $\nfe$ & Success & Distance [m] & Safe & Aborted & ms/step \\
     \midrule
-    MeanFM & 10 & 0/10 & 2.809 & 0/10 & 10/10 & 88.8 \\
-    FM     & 20 & 6/10 & 1.193 & 6/10 & 4/10  & 170.4 \\
+    MeanFM    & 10 & 0/10 & 2.809 & 0/10 & 10/10 & 88.8 \\
+    CI-MeanFM & 5  & 2/10 & 2.247 & 2/10 & 8/10  & 45.0 \\
     \bottomrule
   \end{tabularx}
 \end{table}
 \dataref{batch\_uav\_20260919\_111701, tag \texttt{u18sc}, variant \texttt{diffuser}. The earlier
 \texttt{u7hg} campaign also holds an unprojected MeanFM $\nfe=10$ cell, of thirteen flights with two
-successes; the switched-wall re-run flew the cell again and the chapter uses the re-run throughout, as
-\autoref{tab:uav-controller} does.}
+successes; the switched-wall re-run flew the cell again and the chapter uses the re-run throughout.
+CI-MeanFM $\nfe=5$: the same batch, tag \texttt{EPlatest\_u18sc}; FM $\nfe=20$ moved into the grid of
+\autoref{tab:uav-scurve} at v3.75.}
 
 \begin{table}[htpb]
   \caption[UAV-s-curve: the re-run with endpoint projection]{UAV-s-curve after the switched-wall
@@ -553,9 +560,9 @@ successes; the switched-wall re-run flew the cell again and the chapter uses the
     \toprule
     Model & $\nfe$ & S\&C & \shortstack{Collision-\\free} & Aborted & \shortstack{Aborted,\\unprojected} \\
     \midrule
-    FM        & 20 & \multicolumn{3}{l}{\emph{pending} (R38)} & 4/10 \\
-    MeanFM    & 10 & \multicolumn{3}{l}{\emph{pending} (R38)} & 10/10 \\
-    CI-MeanFM & 5  & \multicolumn{3}{l}{\emph{pending} (R38)} & 8/10 \\
+    FM        & 20 & \multicolumn{3}{l}{\emph{not run}} & 4/10 \\
+    MeanFM    & 10 & \multicolumn{3}{l}{\emph{not run}} & 10/10 \\
+    CI-MeanFM & 5  & \multicolumn{3}{l}{\emph{not run}} & 8/10 \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -580,13 +587,13 @@ numbers were produced under it too.}
     Model & $\nfe$ & Projection & Aborted & Success & ms/step \\
     \midrule
     FM        & 20 & none              & 4/10  & 6/10 & 170.4 \\
-              &    & per-step and endpoint & \multicolumn{3}{l}{\emph{pending} (R38: flown on the plain set only)} \\
+              &    & per-step and endpoint & \multicolumn{3}{l}{\emph{not run} (flown on the plain set only)} \\
     \midrule
     MeanFM    & 10 & none              & 10/10 & 0/10 & 88.8 \\
-              &    & per-step and endpoint & \multicolumn{3}{l}{\emph{pending} (R38: flown on the plain set only)} \\
+              &    & per-step and endpoint & \multicolumn{3}{l}{\emph{not run} (flown on the plain set only)} \\
     \midrule
     CI-MeanFM & 5  & none              & 8/10  & 2/10 & 45.0 \\
-              &    & per-step and endpoint & \multicolumn{3}{l}{\emph{pending} (R38: flown on the plain set only)} \\
+              &    & per-step and endpoint & \multicolumn{3}{l}{\emph{not run} (flown on the plain set only)} \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -595,7 +602,7 @@ numbers were produced under it too.}
 \texttt{s\_curve|fm|K20}, \texttt{s\_curve|mf|K10|bbunet|dp0.5} and \texttt{s\_curve|af|K5|bbunet};
 variant \texttt{diffuser} (the unprojected rows). The plain-set projected cells of the same tags
 (\texttt{dpcc-t}, \texttt{hardflow\_sls\{,-r,-c,-t\}}) are in the corpus and no longer cited (v3.67).}
-\guard{The abort readings of the withdrawn plain-set cells are not repeated here; the tightened re-run (R38) will carry its own.}
+\guard{The abort readings of the withdrawn plain-set cells are not repeated here, and no tightened re-run of these cells is planned (R38 superseded by R44, v3.75).}
 
 \chapter{Reproducibility}\label{app:repro}
 

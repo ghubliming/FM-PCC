@@ -6,8 +6,10 @@
 - [FM-PCC dev-logs navigation](fmpcc-dev-logs-navigation.md) — MASTER_TEST_HISTORY.md is the index; repo based on aux_repo/dpcc; unfinished project
 - [Changelog after coding tasks](changelog-after-coding-tasks.md) — write changelog MD into logs_in_develop/<gen>/<epoch>; ask for epoch if unknown; concise by default, cover all changes
 - [Slurm_Codes/sbatch is the real cluster entrypoint](slurm-sbatch-is-real-entrypoint.md) — submit via submit.sh; update scripts w/ code changes; never break GPU/EGL isolation; --time = 2x expected (24h cap); never tqdm/live bars in batch logs
+- [temp_bash drivers carry a unique marker](temp-bash-unique-marker.md) — tag = results-folder suffix + Slurm job name + ledger; refuse old tags, skip done/queued cells; model: eval_20260923_p23_scurve_R44.sh
 - [config/ folder convention](config-folder-convention.md) — .py = train+eval setup entries (per-experiment blocks); .yaml = constraint-projection configs (DPCC convention)
 - [Don't self-edit MASTER_TEST_HISTORY.md](dont-self-edit-master-test-history.md) — never touch the master index unless explicitly told; offer, don't add
+- [Never write important_runs.md](never-write-important-runs-md.md) — Slurm_Codes/logs/important_runs/important_runs.md is the author's private note: read-only, never append job ids; use runbooks/changelogs
 - [Archived_Codes = dead code](archived-codes-is-dead-code.md) — Archived_Codes/ & *(legacy/Abandoned/Outdated) folders are dead/wrong; never run/edit/list-as-work; read-only to learn in rare cases
 - ["Good" = Pareto-dominant](pareto-definition-of-good.md) — at equal success+constraints, fewer steps AND lower avg_time; else say "trade-off"/"non-dominated", never "best"
 - [Architecture-matched beat = the strong claim](architecture-matched-beat-is-the-strong-claim.md) — baseline is a UNet; lead with our `unet` row (4.0M), report SiT/DiT wins as confounded secondary; carry backbone+params in every table
@@ -20,6 +22,7 @@
 - [Never write URLs / publish artifacts unless asked](no-unrequested-urls-or-artifacts.md) — deliver repo files + terminal summary; no links by default
 - [Master's thesis writing (TUM I6)](master-thesis-writing-tum.md) — template is read-only; work in Writing/Working_Space, notes in Writing/Auxiliary; papers in aux_repo/PAPERS
 - [Thesis prose style](thesis-prose-style.md) — short abstract; storytelling not justification; no self-talk/jargon; no global "better"; brands only in Related Work (mechanism names); NO p-values/tests in thesis (counts only); MuJoCo=simulator, D3IL=data; caveats as story sections; prove on DPCC then extend; describe only OUR config
+- [Thesis audit rounds: check, then feedback at the end of the audit MD](thesis-audit-rounds-check-then-feedback.md) — ChatGPT audits in <draft>/audit from chatgpt/; verify each finding vs code, append signed verdicts, apply nothing until the author/auditor agree
 - [Thesis draft ownership v2/v3/v4](thesis-draft-ownership.md) — v2=Ch1–4, v3=Ch5–6+appendix+Ch8 draft, v4=Ch7+Ch8 refine; never cross-edit; findings for another draft go to Working_Space/cross_draft/ (INBOX.md)
 - [DA_in_Paper = official thesis data + ALL figures](da-in-paper-official-store.md) — analysis/INDEX.md for numbers; plotting/ + figures/ for every figure; drafts only get copies via export_to_draft.py
 - [Reading papers / no LaTeX here](read-papers-with-python314-pypdf.md) — PDFs open only via `python3.14` + pypdf (Read tool can't); no pdflatex/biber, so .tex is never compiled locally

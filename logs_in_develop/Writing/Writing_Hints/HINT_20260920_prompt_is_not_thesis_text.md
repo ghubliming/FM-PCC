@@ -90,7 +90,21 @@ The same family, all yellow:
 - **Telling the reader what to conclude** — *"which is the argument for the projector rather than
   against the model"*, *"what this shows is that ..."*. Show it; the conclusion section concludes.
 - **Narrating the writing** — *"three things have to be read into that matrix"*, *"one worked example
-  is enough"*.
+  is enough"*, *"Two things follow, and one does not. First, … Second, …"*.
+- **Defending a number just stated** (author, 2026-09-23, v3.70) — *"Neither changes what the baseline of
+  record is, because the baseline of record is the configuration DPCC reports …"*, *"It does mean that the
+  30× figure quoted below is against … and not against …"*. The number was stated, then argued for
+  against a reader who had not objected. State the number, the reference point it is measured against,
+  and stop: *"The baseline of record is the configuration DPCC reports, at twenty steps, and the cost
+  factors below are stated against it; against the two-step configuration the 30× is 12×."*
+- **Attacking the work unprompted** (author, 2026-09-23) — *"not a policy trained to fly; a quadrotor
+  deployed outside simulation would need demonstrations of its own, which this thesis does not have"*,
+  *"Nothing on that scene is evidence about learning to fly from flight data"*. Not a limit of the
+  evidence but a confession nobody asked for. The fact: *"The scene compares the execution of the same
+  plans by two plants."*
+- **Owning a conjecture on the page** — *"That is the author's conjecture, and it is untested, because
+  …"*. If a mechanism is not measured, say what would measure it and stop: *"Whether X projects more
+  cheaply than Y is not measured here; the measurement that would show it is Z."*
 
 A *because* is allowed when the thesis owns the mechanism: it is defined in Chapter 4, or measured and
 reported in the sentence next to it. *"The projector runs on $\lceil \eta K \rceil$ sampling steps,

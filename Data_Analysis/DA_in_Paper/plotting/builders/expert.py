@@ -93,7 +93,7 @@ def _legend(width, items, cols=2):
 # ═══════════════════════════════════════════════════════════════════════════
 #  Quadrotor: the reference path the demonstrations track, per homotopy class
 # ═══════════════════════════════════════════════════════════════════════════
-def _pillars_panel(r, t):
+def _pillars_panel(r, t, w=PANEL_W):
     """[v3.69b] UAV-pillars: the 96 D3IL-avoiding demonstrations mapped into the arena (scale 36,
     X = 36 (y_a - 0.035), Y = -36 (x_a - 0.5)) over the both-hard constraint set of the scene, coloured
     by whether the demonstration satisfies that geometry -- the same test and count (2 of 96) as
@@ -108,8 +108,8 @@ def _pillars_panel(r, t):
     assert sum(ok) == g['demonstrations_satisfying']
     n = len(ok)
     local = dict(scn, title='UAV-pillars, both-hard',
-                 sub=f'{n} D3IL-avoiding demonstrations, mapped · {sum(ok)}/{n} clean')
-    f = _uav_constraint_panel(local, PANEL_W, True, r, t)
+                 sub=f'{n} avoiding demonstrations, mapped · {sum(ok)}/{n} clean')
+    f = _uav_constraint_panel(local, w, True, r, t)
     f.clip_to_box()
     w = lambda xa, ya: (36.0 * (ya - 0.035), -36.0 * (xa - 0.5))
     # violating ones first and faint, the two satisfying ones on top
@@ -122,51 +122,53 @@ def _pillars_panel(r, t):
     return f
 
 
-def _corridor_hump_panel(r, t):
+def _corridor_hump_panel(r, t, w=PANEL_W, xlim=None, zlim=None, equal=False):
     """[v3.69b] UAV-corridor, hump: the roof from the side (x-z, along the corridor) with the band of
     altitudes the demonstrations were flown at, 0.90-1.30 m (tab:uav-demos): every lane passes under
     the roof, which the top view cannot show. Numbers from config/uav_projection.yaml and
-    uav_expert_data_collect/generator.py."""
+    uav_expert_data_collect/generator.py. [v3.70] takes the panel box of fig_constraints_uav."""
     from builders.scenes import _uav_side_panel
-    f = _uav_side_panel('hump', PANEL_W, True, r, t)
+    f = _uav_side_panel('hump', w, True, r, t, xlim=xlim, zlim=zlim, equal=equal)
     f.clip_to_box()
     z0, z1 = 0.90, 1.30
-    x0, x1 = -2.8, 2.8
+    x0, x1 = xlim or (-2.8, 2.8)
     f.polygon([(x0, z0), (x1, z0), (x1, z1), (x0, z1)], VIOLATING, opacity=0.16)
     f.dline([(x0, z0), (x1, z0)], VIOLATING, w=1.6)
     f.dline([(x0, z1), (x1, z1)], VIOLATING, w=1.6)
-    f.text(f.X(x1) - 6, f.Y(z1) - 8, 'demonstrated altitudes 0.90-1.30 m, under the roof', 9.0, VIOLATING, anchor='end')
+    f.text(f.X(x1) - 6, f.Y(z0) + 12, 'demonstrated altitudes 0.90-1.30 m', 9.0, VIOLATING, anchor='end')
     f.end_clip()
     return f
 
 
 def fig_expert_uav(outdir):
-    """The demonstration reference path of each scene against its constraint set."""
+    """The demonstrations of each scene against its constraint set, laid out as the matrix of
+    fig_constraints_uav (v3.70, author 2026-09-23): one column per scene in the order of the chapter,
+    the corridor column carrying the tilt (top view) over the hump (side view), every panel the same
+    box. UAV-pillars: the 96 D3IL-avoiding demonstrations mapped into the arena. UAV-corridor and
+    UAV-s-curve: the reference path of each passage class."""
     D = _load()
     if not D:
         return None
     C = S.UAV_CONSTRAINTS
     r, t = C['r_drone'], C['tightening']
+    W = 470
+    RATIO = 24.0 / 27.0                       # the box of fig_constraints_uav
+    by_name = {b['scene']: b for b in D['uav']}
 
-    drawn = []
-    # v3.69b (author, 23-09): UAV-pillars IS drawn -- its demonstrations are the 96 D3IL-avoiding
-    # demonstrations, mapped into the arena by the same similarity map as its constraint set, so the
-    # panel says on the page that the expert data of this scene is the avoiding data. Coloured by
-    # whether the demonstration satisfies the both-hard geometry (2 of 96), as fig_constraints_avoiding.
-    pil = _pillars_panel(r, t)
-    if pil is not None:
-        drawn.append(pil)
-    blocks = [b for b in D['uav'] if b['scene'] != 'UAV-pillars']
-    for i, block in enumerate(blocks):
+    def padded(scn, title, sub):
+        (x0, x1) = scn['xlim']
+        hy = (x1 - x0) * RATIO / 2
+        return dict(scn, title=title, sub=sub, ylim=(-hy, hy))
+
+    def routes_panel(block, title):
         scn = _scene(block['scene'])
         if not scn:
-            continue
+            return None
         n, clean = block['n_routes'], block['n_clean']
         corridor = block['scene'] == 'UAV-corridor'
-        local = dict(scn, title=block['scene'] + (', tilt' if corridor else ''),
-                     sub=f"{n} route{'s' if n != 1 else ''} · {clean}/{n} clean · top view (x-y)"
-                         + (', z = 1.11 m' if corridor else ''))
-        f = _uav_constraint_panel(local, PANEL_W, True, r, t)
+        local = padded(scn, title, f"{n} route{'s' if n != 1 else ''} · {clean}/{n} clean · top view (x-y)"
+                       + (', z = 1.11 m' if corridor else ''))
+        f = _uav_constraint_panel(local, W, True, r, t)
         f.clip_to_box()
         for route in block['routes']:
             colour = CLEAN if route['clean'] else VIOLATING
@@ -199,25 +201,35 @@ def fig_expert_uav(outdir):
             placed.append(spot)
             _vehicle(f, spot, r, VEHICLE)
         f.end_clip()
-        drawn.append(f)
-        if corridor:
-            drawn.append(_corridor_hump_panel(r, t))
-    if not drawn:
-        return None
+        return f
 
-    width = sum(d.w for d in drawn[:2]) + 8
+    # v3.71 (author, 23-09): UAV-pillars is NOT drawn -- its demonstrations are the 96 D3IL-avoiding
+    # demonstrations (fig_constraints_avoiding), mapped by the same similarity map as its constraint
+    # set; the chapter says so in one sentence instead of replotting them. _pillars_panel stays for
+    # any later use. Layout: the corridor's two panels share the first column (tilt over hump), the
+    # s-curve the second.
+    tilt = routes_panel(by_name['UAV-corridor'], 'UAV-corridor, tilt') if 'UAV-corridor' in by_name else None
+    scurve = routes_panel(by_name['UAV-s-curve'], 'UAV-s-curve') if 'UAV-s-curve' in by_name else None
+    if tilt is None or scurve is None:
+        return None
+    side_x, side_z = (-1.9, 1.9), (-0.1, -0.1 + 3.8 * RATIO)
+    hump = _corridor_hump_panel(r, t, W, xlim=side_x, zlim=side_z, equal=True)
+    blank = lambda: Fig(W, hump.h, ml=0, mr=0, mt=0, mb=0)
+    panels = [tilt, scurve, hump, blank()]
+
+    width = 2 * W + 8
     legend = _legend(width, [
         (CLEAN, '', 'demonstration / reference path satisfies the constraints'),
         (VIOLATING, '', 'demonstration / reference path crosses them'),
-        (None, '', f"the vehicle to scale, for size only: the {r:g} m reach is already "
-                   f"in the surfaces"),
+        (None, '', f"the vehicle to scale, for size only (the {r:g} m reach is in the surfaces)"),
     ], cols=1)
-    path = save_grid(drawn, os.path.join(outdir, 'fig_expert_uav.svg'), cols=2, gap=8,
+    path = save_grid(panels, os.path.join(outdir, 'fig_expert_uav.svg'), cols=2, gap=8,
                      header=legend)
     return path, ('data/expert_paths.json (extract/expert_paths.py) | '
                   'uav_expert_data_collect/trajectories.py reference paths, one per homotopy '
                   'class of generator.py::HOMOTOPY_CLASSES; constraints from '
-                  'sources.UAV_CONSTRAINTS, drawn by scenes._uav_constraint_panel')
+                  'sources.UAV_CONSTRAINTS, drawn by scenes._uav_constraint_panel; '
+                  'UAV-pillars not drawn (v3.71): its demonstrations are the avoiding ones')
 
 
 # ═══════════════════════════════════════════════════════════════════════════

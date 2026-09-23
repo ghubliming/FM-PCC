@@ -488,6 +488,16 @@ CORPORA = {
         'The alignment corpus of record. Cells are selected by FolderName prefix, see '
         'ALIGNING_CELLS: the budget and the activation threshold are both in the prefix, so a '
         'prefix without its T token would pool two different thresholds.'),
+    # v3.77 (author, 23-09): the R2fix / R37 batch. It reproduces every cell of visual_aligning_15_09
+    # that the alignment tables print (analysis/DA_20260923_R2fix_R37_aligning.md sec. 2) and adds the
+    # cells that exist only here -- read through ALIGNING_PROJECTED_EXTRA, never pooled with 15-09.
+    'visual_aligning_23_09': Corpus(
+        'visual_aligning_23_09',
+        'temp/23-09/batch_va2_20260923_210100',
+        'seed 6, the same ten shared contexts as visual_aligning_15_09',
+        'partial',
+        'R2fix (diffusion per-step, eta 0.2, job 26113) and R37 (K2 replicate, K100 eta 0.1). Used only '
+        'for the cells ALIGNING_PROJECTED_EXTRA names.'),
     'uav_19_09': Corpus(
         'uav_19_09',
         'Data_Analysis/analysis_results_checkpoint/19-09-UAV-Pillars-Exclude/batch_uav_20260919_111701',
@@ -945,6 +955,23 @@ ALIGNING_REPORTED = {('mf', 2), ('mf', 10), ('mf', 20), ('mf', 100),
                      ('af', 2), ('af', 20), ('af', 100),
                      ('fm', 20), ('fm', 100),
                      ('diffusion', 20)}
+# v3.77 (author, 23-09: "if just plotting, just fix it"): the two cells of tab:va-projection-models
+# that fig_aligning_projected_tradeoff cannot reach through ALIGNING_CELLS, each with the corpus
+# that holds it.  (engine, K, variant) -> (corpus key, FolderName prefix, FolderName suffix)
+#   diffusion per-step, random rule: R2fix (job 26113, eta 0.2) -- only in the 23-09 batch
+#   CI-MeanFM endpoint, random rule: the untagged EPlatest run of the same checkpoint as
+#       ALIGNING_CELLS[('af', 20)] (whose tagged run has no endpoint arm); Table 6.8 prints its
+#       endpoint block from this run (option (a) of DA_20260923_R2fix_R37_aligning.md sec. 9)
+ALIGNING_PROJECTED_EXTRA = {
+    ('diffusion', 20, 'dpcc-r'): (
+        'visual_aligning_23_09',
+        'H8_K20_T0.2_Dmix_visual_aligning.models.visual_gaussian_diffusion.VisualGaussianDiffusion',
+        '_msgR2fix'),
+    ('af', 20, 'hardflow_sls-r'): (
+        'visual_aligning_15_09',
+        'H8_K20_Meuler_T0.2_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow',
+        '_Eaf_EPlatest'),
+}
 # The untightened set is the only geometry on which all four models were evaluated,
 # and `diffuser` is the unprojected arm -- the model on its own, which is what the
 # generative-model comparison of section 6.2.1 is made on.

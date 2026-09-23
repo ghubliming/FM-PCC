@@ -1,0 +1,185 @@
+\subsection{UAV-s-curve}\label{sec:res:uav:scurve}
+
+UAV-s-curve is reported as a caveat and not as a third benchmark. It was piloted with each model at the
+budget that model is strongest at --- the rows are not a model comparison --- and every pilot fails --- before any question about the constraint can
+be asked of it. A divergence guard ends a flight when the vehicle inverts, and on the plans the models
+generate, executed without projection, it ends four to ten flights of ten (\autoref{tab:uav-scurve});
+success with constraint satisfaction is $0.00$ in every cell the scene has, projected and unprojected
+alike. Because the unprojected plan already fails at the turns at the model's best budget, no smaller
+budget was flown and the projected pilots add nothing to the reading: what fails on this scene is the
+vehicle's attitude in the two sharp turns, and \autoref{sec:res:uav:controller} isolates the cause by
+keeping the plan and changing the tracking controller.
+
+\begin{table}[htpb]
+  \caption[UAV-s-curve: the pilot flights]{UAV-s-curve, the pilot flights: each model at the
+  budget it is strongest at, without projection, brake-to-rest tracking, ten flights per cell, one
+  training seed. \emph{Success}: crosses the finish line; \emph{distance}: mean final distance to the
+  goal point of the route; \emph{safe}: no contact and no loss of altitude; \emph{aborted}: ended by the
+  divergence guard because the vehicle inverted. \baselinemark\ the baseline of record at its own
+  budget.}
+  \label{tab:uav-scurve}
+  \centering
+  \small
+  \begin{tabularx}{\linewidth}{@{}L r r r r r r@{}}
+    \toprule
+    Model & $\nfe$ & Success & Distance [m] & Safe & Aborted & ms/step \\
+    \midrule
+    MeanFM        & 10 & 0/10 & 2.809 & 0/10 & 10/10 & 88.8 \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 5 & 2/10 & 2.247 & 2/10 & 8/10 & 45.0 \\
+    FM            & 20 & 6/10 & 1.193 & 6/10 & 4/10 & 170.4 \\
+    \midrule
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{0/10} & \mainconfig{2.432} & \mainconfig{0/10} & \mainconfig{8/10} & \mainconfig{173.9} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{batch\_uav\_20260919\_111701 (tag \texttt{u18sc}: MeanFM $\nfe=10$, FM $\nfe=20$, CI-MeanFM
+$\nfe=5$) and batch\_uav\_20260915\_100816 (tag \texttt{u7hg}: diffusion), \texttt{per\_rollout\_detail},
+geometry \texttt{s\_curve\_hg}, variant \texttt{diffuser}; \emph{success} = \texttt{success\_relaxed},
+\emph{safe} = \texttt{phys\_safe}, \emph{aborted} = \texttt{divergence\_aborted}. These four cells were
+Tables 6.14 and C.x of v3.67; the lower budgets that were flown (MeanFM 2, CI-MeanFM 1 and 2, FM 2) are in the
+corpus and are no longer printed (author, v3.68). Recounted 2026-09-22.}
+\guard{Instantaneous-velocity matching succeeds on six flights of ten, so the controller's limit is not
+absolute: a plan whose turns it can follow exists. The two average-velocity models and the baseline invert
+on eight to ten flights. Nothing here ranks the models: the budgets differ by row, and what separates the
+rows is how the tracker copes with each model's turn, which \autoref{sec:res:uav:controller} examines on
+one model with the controller changed.}
+\guard{The projected pilots of this scene, flown on the plain constraint set, were withdrawn at v3.67 and
+are not re-run: they are not needed to state the caveat. The one key datum the caveat still lacks is the
+same unprojected plan under the two other velocity-setpoint policies of the tracker, which is R40 of
+\texttt{data\_status/PENDING\_20260923\_uav\_corridor\_v3\_pillars\_v2\_paper\_runs.md}.}
+
+On UAV-s-curve, neither method yields a flight that succeeds within the constraints, so the scene
+does not rank them (\autoref{sec:res:uav:scurve}).
+
+\subsection{Caveat: The Tracking Controller}\label{sec:res:uav:controller}
+
+On the manipulator, inverse kinematics and the joint-space controller lie between a generated plan and
+the executed motion. The quadrotor is underactuated and
+open-loop unstable (\autoref{sec:bg:quadrotor}), and a plan reaches the rotors only through the cascaded
+geometric controller that tracks it. That controller needs a velocity setpoint the plan does not supply,
+and every result in this chapter uses the brake-to-rest policy of \autoref{sec:method:geometric}: the setpoint
+is zero, so the vehicle accelerates towards each new position and brakes to rest at it. The result of a flight is therefore a property of the planner and the controller
+together, and UAV-s-curve, with its two sharp turns, is where the controller becomes the limit.
+
+This is shown by keeping the plan and changing the controller (\autoref{tab:uav-controller}). Analytic
+average-velocity matching at $\nfe=10$, executed without projection, succeeds on none of ten flights
+with the brake-to-rest controller and ends on average $2.81$\,m from the goal point of its route. With
+MuJoCo MPC \parencite{howell2022predictive} as the tracking controller, the same plans end $0.299$, $0.298$
+and $0.294$\,m from that point, and two of the three flights cross the finish line. The brake-to-rest
+failures are not wall collisions: on all ten flights the vehicle stays at altitude until it loses attitude
+control and inverts, between control steps $395$ and $421$, about $12$\,s into the flight. MuJoCo MPC flies
+the same turn. The unprojected plan is flyable; the brake-to-rest controller cannot fly it.
+
+What separates the two is the velocity setpoint and not the gains. Both controllers act on the same
+vehicle with the same nominal gains, which the evaluation fixes and never varies, and the brake-to-rest
+policy is the one that tracks the reference most closely: its mean tracking error, $0.29$ to $0.34$\,m,
+is the smallest of any configuration on this scene, and it is also the only one that never advances along
+the route. A controller that follows a reference tightly while making no progress along it is not failing
+to track; it is failing to move. On a scene whose reference demands sustained forward speed, a setpoint
+of zero velocity at every plan step is what produces both that standstill and the loss of attitude that
+ends the flight.
+
+\begin{table}[htpb]
+  \caption[UAV-s-curve: the same plan under two tracking controllers]{UAV-s-curve, analytic
+  average-velocity matching at $\nfe=10$, the same plans under two tracking controllers.
+  \emph{Cascaded geometric, brake-to-rest} is the controller behind every other result in this chapter;
+  \emph{MuJoCo MPC} (\autoref{sec:method:mjpc}) replaces it here and nowhere else. The last column is
+  the measured elapsed time per executed control step, including planner and controller. \emph{Success}: crosses
+  the finish line; \emph{distance}: mean final distance to the goal point of the route; \emph{safe}: no
+  contact and no loss of altitude. One training seed.}
+  \label{tab:uav-controller}
+  \centering
+  \small
+  \begin{tabularx}{\linewidth}{@{}L L r r r r r@{}}
+    \toprule
+    Projection & Controller & Flights & Success & Distance [m] & Safe & ms/step \\
+    \midrule
+    none                   & cascaded geometric, brake-to-rest & 10 & 0/10 & 2.809 & 0/10 & 94.9 \\
+    none                   & MuJoCo MPC    & 3  & 2/3  & 0.297 & 2/3 & 215.6 \\
+    per-step, best rule    & cascaded geometric, brake-to-rest & 10 & 0/10 & 2.446 & --- & --- \\
+    per-step, random       & MuJoCo MPC    & 3  & 0/3  & 2.571 & --- & 2660.1 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{uav\_results.py, s-curve block; Campaign DA\_20260909\_T5\_mjpc\_vs\_pid\_s\_curve F1--F3, F7;
+Report\_20260909\_MJPC\_vs\_PID\_s\_curve \S5.4: full-step times on the unprojected
+arms and the MuJoCo MPC per-step random arm; the other projected controller cell has no matched
+elapsed-time figure in this report}
+\guard{Three flights with MuJoCo MPC. The gains are held at their nominal values in every evaluation of
+this thesis and were not tuned; the two alternative settings that exist scale the position loop by
+$\pm20\,\%$ and leave the attitude loop and the thrust limit untouched, so neither can be expected to
+address a loss of attitude. What this section supports is that the scene is limited by the choice of
+velocity setpoint, not that no tuning of this controller could fly it.}
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=\linewidth]{fig_uav_scurve_paths}
+  \caption[UAV-s-curve: flown paths under the two tracking controllers]{UAV-s-curve from above, drawn like
+  \autoref{fig:constraints-uav}, with the executed path of every flight of the two unprojected rows of
+  \autoref{tab:uav-controller}: the same plans under the two tracking controllers. Green: success; red:
+  failure; a cross at the end of a path marks a flight that crashed or that the divergence guard ended.}
+  \label{fig:uav-scurve-paths}
+\end{figure}
+\dataref{DA\_in\_Paper/data/uav\_paths.json, extract/uav\_paths.py; runs
+Emf\_K10\_mpc4\_mjpc\_T0.5\_u7hg and its \texttt{pid\_stopgo} sibling}
+
+In that figure a brake-to-rest path stops where the vehicle lost its attitude rather than where it ran
+out of authority to track: all ten flights end at the guard, while MuJoCo MPC records no abort,
+follows the second passage to the goal on two flights of three, and on the third reaches the finish
+line's $x$ with a contact. Neither controller is collision-free
+without projection, which is what the projected rows of \autoref{tab:uav-controller} address.
+
+Changing the controller is not sufficient once projection changes the plan. With per-step projection the
+plan succeeds on none of three flights under MuJoCo MPC and on none of ten under the brake-to-rest
+controller, and no flight succeeds within the constraints. The unprojected experiment isolates a limit of
+the controller; the projected experiment remains a failure of the planner, the projection and the
+controller together. UAV-s-curve therefore supports no ordering of the generative models and no preferred
+projection method, and the ordering on the two other scenes is to be read for the controller with which it
+was measured.
+
+The other reason MuJoCo MPC replaces the controller here and nowhere else is what it costs to run. The
+time reported in every other table of this chapter is measured around the planner and stops there
+(\autoref{sec:setup:metrics:avoiding}), so it prices no controller at all; pricing one means reading the
+elapsed time of the flights themselves and dividing it by the control steps that executed
+(\autoref{tab:uav-controller-cost}). On the unprojected arm, where nothing lies between the plan and the
+controller, a control step takes $94.9$\,ms under the brake-to-rest controller and $215.6$\,ms under
+MuJoCo MPC. The planner's share of that is the same in both, between $88$ and $90$\,ms at $\nfe=10$, so
+the difference belongs to the controller: about $6$\,ms per step for the cascaded geometric law against
+about $126$\,ms for MuJoCo MPC, which solves an optimisation problem at every control step where the
+other evaluates an algebraic law. The controller that flies this scene is about twenty times the price
+of the one that does not, and by itself it costs more per control step than generating the plan --- some
+seven times what the operating point of D3IL-avoiding spends on an entire action
+(\autoref{tab:avoiding-conclusion}).
+
+\begin{table}[htpb]
+  \caption[UAV-s-curve: what each tracking controller costs per control step]{UAV-s-curve, MeanFM at $\nfe=10$
+  without projection: the elapsed time of a flight divided by the control steps it executed, in
+  milliseconds, under the two tracking controllers of \autoref{tab:uav-controller} --- the one quantity
+  in this chapter that contains the controller. \emph{The planner}: the planner time reported elsewhere;
+  \emph{the controller and the simulator step}: the remainder. Ten flights on the left, three on the
+  right, one training seed.}
+  \label{tab:uav-controller-cost}
+  \centering
+  \small
+  \begin{tabularx}{\linewidth}{@{}L r r@{}}
+    \toprule
+    Time per executed control step [ms] & Cascaded geometric, brake-to-rest & MuJoCo MPC \\
+    \midrule
+    The control loop                          & $94.9$ & $215.6$ \\
+    \quad the planner                         & $88.4$ & $89.8$ \\
+    \quad the controller and the simulator step & $6.5$ & $125.8$ \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{Report\_20260909\_MJPC\_vs\_PID\_s\_curve \S5.4--5.5, from the job records of Campaign
+DA\_20260909\_T5\_mjpc\_vs\_pid\_s\_curve; planner time from the same batch as
+\autoref{tab:uav-controller}}
+\guard{This is a decomposition of recorded elapsed times and not a measurement taken around the
+controller call, which the evaluation does not instrument. The remainder row therefore carries the
+simulator step with the controller, and it is only their \emph{difference} that isolates the controller.
+One training seed, ten flights against three.}
+
+What that price buys is a traverse and not a result. Neither controller produces a flight that succeeds
+within the constraints on this scene: MuJoCo MPC turns flights that never arrive into flights
+that arrive while still violating, at about twenty times the cost per control step of the controller
+used everywhere else in this thesis. It is used here to locate the limit, and it is not adopted.

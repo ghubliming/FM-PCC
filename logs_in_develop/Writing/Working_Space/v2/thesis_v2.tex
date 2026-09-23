@@ -2,44 +2,18 @@
 %  FM-PCC MASTER'S THESIS -- v2
 %  TUM, School of CIT, Chair I6
 % -----------------------------------------------------------------------------
-%  WHAT THIS FILE IS  (v2 = v1 + the mathematics + citations)
-%  Chapters 1-4 (Introduction, Background, Related Work, Method) are FILLED at
-%  *abstract density*: every section carries a summary that states what it will
-%  argue and in what order, in the thesis's own voice -- not finished prose.
-%  Chapters 5-8 (Setup, Results, Discussion, Conclusion) are left as the bone.
-%  Nothing there is settled and nothing there is written.
-%
-%  STRUCTURE SINCE v2.14 -- one job per chapter, no duplication:
-%    Ch 1  introduction and the six contributions (the guideline)
-%    Ch 2  the concepts behind each contribution -- no equations
-%    Ch 3  the papers per aspect -- no equations
-%    Ch 4  all the mathematics, grouped: formulation, overview, plant dynamics and
-%          control, generative models, constraint projection, environments
-%          (reordered in v2.24; "Low-Level Control" is no longer a section of its own)
-%  Section numbers quoted below this line predate v2.14; the labels are unchanged.
-%
-%  WHAT v2 ADDS OVER v1
-%    1. The three engine formulations are written out as mathematics, in one
-%       notation, with citations:  DPCC's diffusion engine (Sec. 2.2 / 4.1),
-%       flow matching (Sec. 2.3), MeanFlow's average-velocity objective
-%       (Sec. 2.4), and how each is instantiated here (Sec. 4.5).
-%       alpha-Flow carries NO mathematics in v2 -- deliberately deferred.
-%    2. The constrained-sampling problem, the projection NLP, the constraint
-%       tightening and the genuine-step boundary are stated as equations
-%       (Sec. 2.5, 4.2, 4.6, 4.8).
-%    3. A global notation convention (Sec. 4.2, Table 4.1) that resolves the
-%       t / k / tau / u collision flagged in NOTES_tum_formatting_rules.md.
-%    4. biblatex + bibliography.bib. Every equation taken from a paper carries
-%       its source; every equation taken from this repo's code carries a
-%       \srcnote pointing at the file.
-%
-%  SOURCING RULE OBSERVED IN v2
-%  Nothing here is invented. Paper equations are transcribed from the PDFs in
-%  /workspaces/aux_repo/PAPERS/ (re-derived into this thesis's notation, which
-%  is noted where the source's own notation differs). Implementation equations
-%  are transcribed from this repository's code, cited by file and function in a
-%  \srcnote. Where the two disagree, the disagreement is written down, not
-%  smoothed over.
+%  CURRENT SCOPE -- v2.27, 2026-09-23, audit corrections by ChatGPT (Codex)
+%  Owned text: abstract and Chapters 1-4. Chapters 5-8 and appendix material
+%  below are retained placeholders; their live owners are v3 and v4.
+%  Ch 1 introduces the questions and contributions; Ch 2 explains concepts;
+%  Ch 3 positions the work; Ch 4 gives the formulation, system overview,
+%  plant/control models, all three flow objectives, projection and environments.
+%  Transport time is data-at-one. Average velocity uses start and interval inputs.
+%  K denotes sampling steps; endpoint lookahead adds network evaluations.
+%  Experiment settings and outcomes are owned by v3. Detailed noise-scale
+%  discussion and the redundant endpoint configuration table are omitted by
+%  the author's decision. See CHANGELOG.md and the signed v2.27 changelog.
+%  Paper equations carry citations; implementation equations carry srcnotes.
 %
 %  BASIS: derives from DPCC (Diffusion Predictive Control with Constraints,
 %  L4DC 2025), which builds on Diffuser's temporal U-Net and the D3IL
@@ -59,7 +33,9 @@
 %    This file is current against  v3.60  (2026-09-21)  and  v4: not started.
 %    Every cross-draft note addressed to v2 up to that version has been applied
 %    or answered; the ledger is ../cross_draft/INBOX.md, and the machine-readable
-%    copy is CROSS_STATE.json in this folder. v2 owns Ch 1-4, the abstract, the
+%    copy is CROSS_STATE.json in this folder. Open as of v2.26 (2026-09-23): the
+%    v3.69 row (sec:res:fewstep wording), held for the claims rebuild that the
+%    audit of 2026-09-23 asks for (audit from chatgpt/, section 8). v2 owns Ch 1-4, the abstract, the
 %    preamble, the acronyms and bibliography.bib -- nothing under v3/ or v4/.
 %
 %  BUILD: latexmk -pdf thesis_v2.tex
@@ -173,7 +149,7 @@
 \newcommand{\vfield}{v}                        % instantaneous velocity field
 \newcommand{\afield}{u}                        % average velocity field
 \newcommand{\ftime}{\tau}                      % transport (generative) time in [0,1]
-\newcommand{\nfe}{K}                           % step budget = number of network evals
+\newcommand{\nfe}{K}                           % sampling-step budget; NFE is counted separately
 
 % Drafting aids. For the submitted build set \submissiontrue: every \srcnote then
 % prints nothing, and every \hole still left raises a LaTeX warning (and stays red)
@@ -226,7 +202,7 @@
 % -----------------------------------------------------------------------------
 \ifstandalone
 Diffusion planners capture multimodal demonstrations, and Diffusion Predictive Control with
-Constraints (DPCC) enforces constraints by projecting every denoising iterate onto the feasible set.
+Constraints (DPCC) enforces constraints by projecting denoising iterates onto the feasible set.
 However, their long denoising sequence is fixed during training and repeated at every control step.
 This thesis replaces diffusion with deterministic transport along an ordinary differential equation.
 Three objectives are studied: instantaneous-velocity matching, analytic average-velocity matching and
@@ -235,16 +211,17 @@ the network's own prediction; the integration budget is selected at deployment. 
 obstacle-avoidance benchmark of DPCC, the aim is to preserve success and
 constraint satisfaction while reducing network evaluations, the time to compute one action and the
 control steps required to reach the goal. Constraint enforcement forms a second contribution. DPCC projects the
-current iterate at every sampling step; endpoint projection predicts and projects the final trajectory,
-then guides later sampling steps towards it. The analysis identifies the step budget at which this
-guidance becomes active. After evaluation on the DPCC benchmark, the controller is extended to two
+current iterate; endpoint projection predicts and projects the final trajectory,
+then guides later sampling steps towards it. The analysis identifies when the budget and activation threshold permit guidance. After evaluation on the DPCC benchmark, the controller is extended to two
 more complex settings built for this thesis: vision-conditioned object alignment and control of an
-underactuated, open-loop unstable quadrotor. Simulations show that analytic average-velocity
-matching is as reliable as DPCC with fewer control steps and at a fraction of its
-computational cost; endpoint projection can reduce constraint-enforcement time, and
-vision-conditioned planning can align objects more precisely.
+underactuated, open-loop unstable quadrotor. On obstacle avoidance, instantaneous-velocity and
+consistency-interpolated average-velocity matching reach the reliability of DPCC with fewer control
+steps and less computation. Endpoint projection reduces planning time in the evaluated manipulation
+comparisons, while analytic average-velocity matching improves visual alignment.
 \fi
-\srcnote{Qualitative claims and their evidence: manipulation --- \texttt{HF\_Batch\_Parity/DA\_20260827\_mpc1\_full\_seeds\_state\_avoiding.md} \S10.1; endpoint projection --- \texttt{cross\_draft/to\_v2/FROM\_v3\_20260917\_projection\_cost\_resolved.md}; camera images --- \texttt{Gen14/CLOSURE\_20260907\_Gen14\_V\_A\_engine\_comparison\_final.md} R.1.}
+\srcnote{Qualitative results: current v3.75, \texttt{chapters/06\_results.tex},
+\texttt{sec:res:avoiding:conclusion}, \texttt{tab:avoiding-projectors} and
+\texttt{sec:res:aligning:conclusion}; primary DPCC protocol, not the supplementary extended protocol.}
 
 \microtypesetup{protrusion=false}
 \tableofcontents{}
@@ -298,16 +275,14 @@ built for this thesis. \autoref{ch:setup} describes the evaluation.
 \section{Research Questions}\label{sec:intro:rqs}
 
 \begin{description}
-  \item[RQ1 --- Generative model.] Under an identical backbone, projection, dataset and evaluation
-    code, does flow matching --- a learned velocity field, the transport \ac{ODE} it generates, the
-    step budget that becomes a solver argument, and the average-velocity objectives built on that
-    field --- reach the task success and the constraint satisfaction of the diffusion model it
-    replaces at fewer solver steps and less planning time per control step, and does the number of
-    steps at which it does so order the three objectives?
-  \item[RQ2 --- Constraints.] Given one fixed feasible set and one solver, at a step budget large
-    enough for projection to guide the sampler, does endpoint projection reach the goal with fewer
-    constraint violations, fewer control steps or less computation than the per-step (iterate)
-    projection of \ac{DPCC}, and below which budget does the comparison cease to be well-posed?
+  \item[RQ1 --- Generative model.] With a matched temporal U-Net backbone, dataset and evaluation
+    protocol, can the flow-based models reach the diffusion baseline's task success and constraint
+    satisfaction with fewer sampling steps and less planning time per control step? How do the three
+    objectives compare as the sampling budget changes?
+  \item[RQ2 --- Constraints.] Given one fixed feasible set and one solver, does endpoint projection
+    reach the goal with fewer constraint violations, fewer control steps or less computation than
+    the per-step projection of \ac{DPCC}? For which step budgets and activation thresholds does it
+    guide subsequent sampling, and when does it reduce to projection of the finished sample?
   \item[RQ3 --- Transfer.] Obstacle avoidance is planar, observed as a state, kinematic at the
     planning level, and solvable by a classical planner with a collision constraint. Do the answers
     to RQ1 and RQ2 hold when the observation becomes camera images, when the task requires aligning
@@ -321,23 +296,32 @@ folded into RQ1 (v2.22).}
 
 \section{Contributions}\label{sec:intro:contributions}
 
-This thesis makes six contributions.
+This thesis makes six contributions, in two stages. The first four are made on the obstacle-avoidance
+benchmark of \ac{DPCC} \parencite{romer2025diffusion,jia2024towards}, with its setup unchanged, against
+its diffusion model and its projection: three generative models take the diffusion model's place one
+after another, and a second projection method is set beside the inherited one. The last two take what
+that benchmark establishes --- the generative models and both projection methods, in the
+configurations that hold there --- into two settings built for this thesis: a task observed through
+cameras, and a plant that flies.
 
+\paragraph{On the benchmark of \ac{DPCC}.}
 \begin{enumerate}
   \item \textbf{Flow matching in place of diffusion.} The diffusion model of \ac{DPCC}
     \parencite{romer2025diffusion} is replaced by instantaneous-velocity matching, the flow-matching
     objective \parencite{lipman2023flow,lipman2024guide}, which learns a velocity field and generates a
     trajectory by integrating an ordinary differential equation. Backbone, projection, data and
     evaluation protocol are kept, and the number of network evaluations becomes a choice made at
-    deployment. The comparison is made first on
-    the obstacle-avoidance benchmark of \ac{DPCC}, with its setup unchanged.
-    \hole{Result sentence for this contribution --- from Ch.~6, supplied by v3 as a \texttt{For v2:} line.}
+    deployment.
+    At the primary DPCC protocol, it matches the baseline's success with constraint satisfaction
+    while using fewer control steps and less time per action (\autoref{sec:res:fewstep}).
   \item \textbf{Analytic average-velocity matching.} Analytic average-velocity matching
     \parencite{geng2025meanflow} learns the average velocity over an interval instead of the
     instantaneous velocity, with a regression target constructed analytically through a
     Jacobian--vector product, so that a single network evaluation can cover the whole integration. It
     replaces instantaneous-velocity matching within the same architecture.
-    \hole{Result sentence for this contribution --- from Ch.~6, supplied by v3 as a \texttt{For v2:} line.}
+    At the selected avoiding configuration, it reduces control steps and planning time with a small
+    loss in success with constraint satisfaction relative to the best baseline rule
+    (\autoref{sec:res:fewstep}).
   \item \textbf{Consistency-interpolated average-velocity matching.} Consistency-interpolated
     average-velocity matching \parencite{zhang2025alphaflow} also learns the average velocity, with a
     target interpolated by a consistency step ratio between the instantaneous velocity and a
@@ -345,50 +329,65 @@ This thesis makes six contributions.
     average-velocity objectives achieve state-of-the-art one- and two-step image generation
     \parencite{geng2025meanflow,zhang2025alphaflow}; this thesis evaluates both as planners inside a
     constrained controller.
-    \hole{Result sentence for this contribution --- from Ch.~6, supplied by v3 as a \texttt{For v2:} line.}
+    On the avoiding benchmark it matches the baseline's success with constraint satisfaction
+    while reducing both control steps and planning time (\autoref{sec:res:fewstep}).
   \item \textbf{Endpoint projection against DPCC's per-step projection.} The central contribution of
     DPCC is a model-based projection applied to each denoising step \parencite{romer2025diffusion}.
     Endpoint projection \parencite{li2025hardflow} instead projects the trajectory the sampler is
     predicted to reach and steers the sampler towards it. Both are implemented on the same feasible set
     and solver and compared, together with the step budget below which endpoint projection reduces to
-    projection after sampling. On obstacle avoidance the guiding step count is zero at one and two
-    network evaluations, where endpoint projection reduces to projecting the finished sample; above that
-    budget, neither projection method leads consistently (\autoref{sec:res:constraints:degenerate}).
-    Where it has guiding steps, endpoint projection takes less time per control step than per-step
-    projection in every environment; on UAV-corridor it is also less often collision-free
+    projection after sampling. At the default activation threshold, the smallest budgets provide
+    terminal projection only. With active guidance, the evaluated avoiding comparisons reduce
+    planning time relative to iterate projection; the outcome also depends on the model and budget
     (\autoref{sec:res:constraints}).
-    \srcnote{Result sentences from v3 Ch.~6 (\texttt{cross\_draft/to\_v2/FROM\_v3\_20260915\_result\_sentences.md},
-    worded after \texttt{sec:res:avoiding:projection} and \texttt{tab:hf-ladder} as of v3.16; cost sentence
-    from \texttt{FROM\_v3\_20260917\_projection\_cost\_resolved.md}, v3.18).}
+    \srcnote{v3.75 \texttt{chapters/06\_results.tex}, \texttt{tab:avoiding-projectors} and
+    \texttt{sec:res:constraints:degenerate}. Corridor comparisons remain pending.}
+\end{enumerate}
+
+\paragraph{Beyond it.}
+\begin{enumerate}
+  \setcounter{enumi}{4}
   \item \textbf{A vision-conditioned alignment task.} Once established on the state-based benchmark
     of \ac{DPCC}, all generative models and both projection methods are tested on a more complex
     task built for this thesis from the alignment task of D3IL, in which the robot observes two camera
     views. The generative network is given a visual encoder, and the projection is given the dynamics
     rows and the constraint set of the new task.
-    \hole{Result sentence for this contribution --- from Ch.~6, supplied by v3 as a \texttt{For v2:} line.}
+    In the evaluated training contexts, analytic average-velocity matching moves the object closer
+    to its target than instantaneous-velocity matching and the diffusion baseline
+    (\autoref{sec:res:visual}).
   \item \textbf{A quadrotor benchmark.} The controller is carried to an underactuated, open-loop
-    unstable system: the manipulator with inverse kinematics is replaced by a quadrotor commanded
-    through its rotor thrusts, and the stack is tested from state observations in three environments
-    of increasing difficulty. It is where the constraint mechanism is asked to hold on a plant that
-    cannot stand still: the manipulator absorbs a bad plan by stopping, the quadrotor flies it out
-    (\autoref{sec:bg:quadrotor}). Apart from the vehicle model, everything in this benchmark was
-    built for this thesis.
-    \begin{enumerate}
-      \item The quadrotor model is the Skydio X2 from MuJoCo Menagerie
-        \parencite{todorov2012mujoco,zakka2022menagerie}.
-      \item It is controlled by a cascaded geometric tracking controller \parencite{lee2010geometric},
-        with sampling-based MuJoCo predictive control \parencite{howell2022predictive} as a baseline
-        controller.
-      \item The three environments, their constraint sets and the expert demonstrations are built
-        for this thesis in MuJoCo \parencite{todorov2012mujoco}, inside the environment code of
-        D3IL.
-    \end{enumerate}
-    \hole{Result sentence for this contribution --- from Ch.~6, supplied by v3 as a \texttt{For v2:} line.}
+    unstable plant: the manipulator with inverse kinematics is replaced by the Skydio~X2 quadrotor of
+    MuJoCo Menagerie \parencite{zakka2022menagerie}, commanded through its rotor thrusts by a cascaded
+    geometric tracking controller \parencite{lee2010geometric}, and the stack is tested from state
+    observations in three scenes that ask three different questions. UAV-pillars is the
+    obstacle-avoidance benchmark itself in the air: its field is scaled into an arena of pillars, and
+    the planner of the first four contributions flies there unchanged, so the scene reads what the
+    vehicle adds to a plan the table has already judged. UAV-corridor is the three-dimensional test:
+    its two test-time constraints leave the horizontal plane, and a plan has to descend or climb to
+    satisfy them. UAV-s-curve is the scene of two sharp turns, and it is reported for what those turns
+    do to the tracking controller. This is where the constraint mechanism is asked to hold on a plant
+    that requires continuous stabilisation: an arm can hold a setpoint through joint feedback, while
+    a quadrotor must regulate both position and attitude in flight
+    (\autoref{sec:bg:quadrotor}). The scenes, their constraint sets, the flown demonstrations of the
+    corridor and the s-curve, and the control loop were built for this thesis in MuJoCo
+    \parencite{todorov2012mujoco}, inside the environment code of D3IL; sampling-based MuJoCo
+    predictive control \parencite{howell2022predictive} is the second tracking controller, used in
+    the controller comparison alone.
+    On UAV-pillars, the projected flights satisfy the declared constraints while contacts with
+    pillars outside those constraints still reduce task success (\autoref{sec:res:uav}).
+    \srcnote{v3.75 \texttt{chapters/06\_results.tex},
+    \texttt{sec:res:uav:pillars}, and \texttt{DA\_20260923\_pillars\_v2\_live.md}.}
 \end{enumerate}
 
 \section{Outline}\label{sec:intro:outline}
 
-\hole{Write last. One paragraph, one sentence per chapter.}
+\autoref{ch:background} introduces generative trajectory models, constraint enforcement and the two
+control platforms. \autoref{ch:related} positions the comparison among generative planners and
+constrained control methods. \autoref{ch:method} develops the models, projection procedures and
+execution loops. \autoref{ch:setup} specifies the tasks, training and evaluation protocols.
+\autoref{ch:results} reports the model and projection comparisons and their transfer to visual and
+aerial tasks. \autoref{ch:discussion} interprets the findings and their limits, and
+\autoref{ch:conclusion} concludes with the research questions and future work.
 
 % =============================================================================
 \chapter{Background}\label{ch:background}
@@ -403,9 +402,9 @@ The setting is a dataset of expert trajectories, a conditional model over horizo
 trajectory segments \parencite{janner2022planning,chi2023diffusion}, and receding-horizon
 execution: the model plans a short horizon, the first action is executed, and the model plans again.
 The benchmarks come from \parencite{jia2024towards}, whose demonstrations are multimodal. Planning
-over a horizon is what makes constraint enforcement possible: a single action has nothing to project.
-Multimodality is why the model is generative and not a regressor, and it is also why a truncated
-sampler risks averaging between modes.
+over a horizon permits constraints that link future states and actions. A single action can also be
+projected onto an admissible set. The generative model represents alternative demonstrated plans;
+the effect of a reduced sampling budget is evaluated in \autoref{ch:results}.
 
 \section{Diffusion Models and Diffusion Predictive Control}\label{sec:bg:diffusion}
 
@@ -417,8 +416,8 @@ and diffusion policies \parencite{chi2023diffusion} brought it to visuomotor con
 
 Two properties follow from the construction. The number of denoising steps is tied to the schedule
 the network was trained on, so it is fixed when training ends; fewer steps require a different sampler
-\parencite{song2021denoising} or a distilled model. And each step adds fresh noise, so two plans drawn
-for the same observation differ.
+\parencite{song2021denoising} or a distilled model. The stochastic reverse sampler adds noise at nonterminal steps, so plans drawn
+for the same observation can differ.
 
 \ac{DPCC} \parencite{romer2025diffusion} makes such a planner respect state and action constraints
 that are absent from the demonstrations. Between denoising steps it projects the intermediate
@@ -446,14 +445,11 @@ deterministic function of its initial noise and the observation.
 
 \section{Few-Step Generative Models}\label{sec:bg:fewstep}
 
-Few-step generation is a development inside the transport family of \autoref{sec:bg:fm}, not a
-property of generative models in general. The reason is the structure flow matching gives the
-problem: the model is trained against a chosen interpolation between the prior and the data, and the
-straighter that interpolation is, the fewer integration steps its \ac{ODE} needs. Optimal-transport
-paths \parencite{lipman2023flow} and rectified flow \parencite{liu2023flow} pursue exactly this, and
-the step budget stays a solver argument throughout. Diffusion admits no such handle: its path is the
-noise schedule it was trained with, and a short budget is recovered afterwards, by a different
-sampler \parencite{song2021denoising} or by distillation \parencite{wang2024onedp}.
+Few-step generation is studied in both diffusion and transport models. Diffusion models can use
+accelerated samplers \parencite{song2021denoising} or distillation \parencite{wang2024onedp}.
+For flow matching, the integration budget is an inference argument. The geometry of the learned
+field affects how accurately a small number of steps approximates its flow; optimal-transport paths
+\parencite{lipman2023flow} and rectified flow \parencite{liu2023flow} study this geometry.
 
 A step budget chosen at deployment is still not automatically a good one. Straight per-sample paths
 average into a curved field, and coarse integration steps along a curved field are inaccurate however
@@ -476,8 +472,9 @@ refers to it as \emph{consistency-interpolated average-velocity matching}. Both 
 objectives achieve state-of-the-art one- and two-step image generation
 \parencite{geng2025meanflow,zhang2025alphaflow}.
 
-For diffusion the step budget is therefore fixed at training time, for instantaneous-velocity matching
-it is chosen at deployment, and the two average-velocity objectives make a small budget accurate.
+The DPCC reverse sampler uses its trained schedule, whereas the flow-based samplers choose their
+step budget at deployment. The average-velocity objectives are designed to improve accuracy at
+small budgets; their performance on the control tasks is measured in \autoref{ch:results}.
 
 \section{Constraint Enforcement in Generative Sampling}\label{sec:bg:mpc}
 
@@ -487,8 +484,8 @@ for constraints the demonstrations never contained. Three approaches exist. Guid
 of a constraint cost to the sampler \parencite{carvalho2025motion}, which makes violations less likely
 without excluding them. Projection maps a sample onto the feasible set, after sampling
 \parencite{power2023sampling} or at every step \parencite{christopher2024constrained,romer2025diffusion};
-the projection of \ac{DPCC} includes a model of the dynamics, so the projected plan stays dynamically
-feasible. Optimisation-based methods steer the sampler itself.
+the projection of \ac{DPCC} includes a model of the dynamics, so an exact feasible solution satisfies
+that model. Optimisation-based methods steer the sampler itself.
 
 One such method \parencite{li2025hardflow} steers a flow-matching sampler by treating sampling as an
 optimal control problem. A control input is added to the learned velocity field; its effort is penalised, so
@@ -500,8 +497,8 @@ final sample by its expected value given the current state, which for a flow-mat
 closed form from the state and the learned velocity. And it optimises directly over that predicted
 final sample instead of over the next state, so the constraints act on a plan and not on its image
 through the network. The corrected prediction is then mapped back into the next state of the sampler.
-At the final step the prediction and the state coincide, so the final sample satisfies the constraints
-exactly. An optional terminal cost can further shape the sample, and the optimisation is applied only
+At the final step the prediction and the state coincide, so an exact feasible projection yields a
+constraint-satisfying final sample. An optional terminal cost can further shape the sample, and the optimisation is applied only
 in the later sampling steps, where the prediction of the final sample is accurate.
 
 The two approaches therefore differ in where the constraints act. Per-step projection corrects the
@@ -518,23 +515,22 @@ ResNet-18 encoder \parencite{he2016deep} processes each camera view. The feature
 concatenated with the time embedding of the network and reach its layers as a feature-wise
 conditional bias --- the bias half of feature-wise linear modulation, \ac{FiLM}
 \parencite[Sec.~3]{perez2017film}, whose general form scales and shifts each channel of a layer from
-a conditioning vector. Transformer backbones operate on image patches instead of a
-pooled feature vector \parencite{peebles2022dit}.
+a conditioning vector. Image-generation transformers can operate on image-patch tokens \parencite{peebles2022dit};
+trajectory transformers instead represent a sequence of planned states or actions.
 
 \section{Quadrotor Dynamics and Control}\label{sec:bg:quadrotor}
 
-A manipulator in position control is fully actuated and holds its configuration without effort; a
+A fully actuated manipulator in position control holds its configuration through joint feedback; a
 planned sequence of end-effector positions becomes joint commands through \ac{IK}. A quadrotor is
 different. Its four rotors produce a thrust along one body axis and three moments, so it controls four
 of its six degrees of freedom directly and must tilt in order to translate, and hover is an unstable
 equilibrium that requires continuous feedback.
 
-What separates the two platforms for a controller that plans is what a bad plan costs. A manipulator
-can stop. Holding the last setpoint costs it nothing, the arm stays where it is, and the clearance it
-had it keeps, so a plan that is wrong is absorbed between the planner and the joints. A quadrotor has
-no such state, because staying in place is itself a flight. An error in the commanded position is not
-held but flown out, over metres of travel, and an attitude that is not recovered ends the flight on
-the floor. The planner is the same on both; the margin for error is not.
+A position-controlled arm can hold its last setpoint through the joint controller, although tracking
+error and collisions still depend on the commanded motion. A quadrotor must continuously regulate
+thrust and attitude even to hold a fixed position. Position corrections require tilting and translation,
+and a loss of attitude control can end the flight. This difference in tracking behaviour motivates
+testing the same planning framework on both plants.
 
 Such an underactuated, open-loop unstable vehicle is
 controlled in cascade: an outer loop turns a position error into a desired thrust vector, which fixes a
@@ -630,8 +626,8 @@ data, and solves the resulting program with an interior-point solver
 D3IL provides manipulation tasks with diverse human demonstrations, including vision-based variants
 \parencite{jia2024towards}, and X-IL, from the same group, explores the design space of
 imitation-learning policies \parencite{jia2025xil}. Visuomotor diffusion policies condition the
-denoising network on image features \parencite{chi2023diffusion}, and transformer backbones operate
-on image patches \parencite{peebles2022dit}. Flow-matching policies follow the same path: VITA flows
+denoising network on image features \parencite{chi2023diffusion}. Image-generation transformers use
+patch tokens \parencite{peebles2022dit}, while policy transformers can represent action sequences. Flow-matching policies follow the same path: VITA flows
 directly from visual representations to latent actions \parencite{gao2025vita}, and $\pi_0$ conditions
 a flow model on images and language \parencite{black2024pi0}.
 
@@ -692,14 +688,15 @@ thesis builds on and is measured against.
     This thesis
       & one feasible set, applied to the iterate or to the predicted endpoint
       & receding horizon, horizon $8$, $1$ executed, Euler plant model
-      & temporal U-Net, $4.0$\,M parameters for every generative model \\
+      & matched temporal U-Net backbone; capacity in \autoref{sec:setup:protocol} \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
 Fast generative sampling, hard constraint enforcement, visual conditioning and aerial embodiment have
 each been studied, but in a receding-horizon controller the cost of fast sampling and the cost of
-constraint enforcement interact, and that interaction has not been measured under matched conditions.
+constraint enforcement interact. The comparison here measures that interaction within the same
+planning framework.
 This thesis places instantaneous-velocity matching and the two average-velocity objectives inside the
 constrained controller
 of \ac{DPCC} and compares its per-step projection with endpoint projection \parencite{li2025hardflow}
@@ -756,9 +753,10 @@ block of $8 \times d$ numbers, which the network reads as a length-$8$ signal of
 (\autoref{sec:method:backbone}) and the projection as $8$ horizon blocks
 (\autoref{sec:method:proj}); $d$ is $6$, $9$ and $12$ in the three environments
 (\autoref{tab:embodiments}). The generative model is conditional on a context
-$\vect{c} = (\vect{s}_{t},g)$, imposed by inpainting: the entries of $\vect{x}$ corresponding to
-the current observation are overwritten with their known values after every sampler step, and
-the same entries are zeroed in every training target so that no gradient is spent on them.
+$\vect{c}$ comprising the current observation and any task-specific conditioning. Known current-state entries of
+$\vect{x}$ are imposed by inpainting after each sampler step and masked in the training loss.
+The visual policy additionally conditions on image features; the box and target pose are observed
+through those images rather than supplied as known goal coordinates.
 The feasible set is the intersection of the plan-level constraints with the dynamics rows,
 \begin{equation}\label{eq:method:feasible}
   \mathcal{Z}_{f} = \left\{\vect{x} \;\middle|\;
@@ -785,7 +783,10 @@ Three further collisions arise once the control stack is written down, and the t
 by decoration rather than by renaming, so that each subfield keeps its own idiom. The generative
 velocity field is $\vfield$ and the drone's linear velocity is $\dot{\vect{p}}$ --- never $\vect{v}$.
 The body moment is $\vect{\tau}\sidx{b}$, always bold and always subscripted; an undecorated $\tau$
-is always transport time. And $\matr{J}(\vect{q})$ is the manipulator Jacobian while
+is always transport time. The indexed $\alpha_k$ and $\bar{\alpha}_k$ belong to the diffusion
+schedule; the unindexed $\alpha$ is the consistency step ratio. The symbol $g$ in the task indicator
+denotes a goal, while the scalar $g$ in the quadrotor equations denotes gravitational acceleration.
+And $\matr{J}(\vect{q})$ is the manipulator Jacobian while
 $\matr{J}\sidx{b}$ is the drone's inertia tensor; the two never appear in the same equation.
 
 \begin{table}[htpb]
@@ -802,14 +803,15 @@ $\matr{J}\sidx{b}$ is the drone's inertia tensor; the two never appear in the sa
     $\vect{s}_{t},\vect{a}_{t}$ & state, action & $\mathcal{S}$, $\mathcal{A}$ \\
     $\vect{s}_{t+i|t}$ & prediction for $t+i$ made at $t$ & \\
     $\vect{x}$ & the plan, flattened & $\R^{n}$ \\
-    $\vect{c}$ & conditioning context $(\vect{s}_{t},g)$ & \\
+    $\vect{c}$ & task-specific observation and conditioning & \\
     $\ftime$ & transport time; $0$ prior, $1$ data & $[0,1]$ \\
     $r$ & the second (start-side) transport time & $[0,\ftime]$ \\
     $h$ & interval length $\ftime-r$ & $[0,1]$ \\
     $k$ & sampler step index & $0,\dots,\nfe$ \\
-    $\nfe$ & step budget $=$ network evaluations per plan: denoising steps of the reverse process
+    $\nfe$ & sampling-step budget: denoising steps of the reverse process
       for the diffusion baseline, fixed with its schedule at training; steps of the \ac{ODE} solver
       for the flow-based models, chosen at deployment & $\mathbb{N}$ \\
+    $\mathrm{NFE}$ & network evaluations per candidate plan & $\mathbb{N}$ \\
     $\beta_{k},\bar{\alpha}_{k},\sigma_{k}$ & diffusion schedule quantities & \\
     $\vfield_{\theta}$ & instantaneous velocity network & $\R^{n}$ \\
     $\afield_{\theta}$ & average velocity network & $\R^{n}$ \\
@@ -835,17 +837,52 @@ $\matr{J}\sidx{b}$ is the drone's inertia tensor; the two never appear in the sa
 
 \section{System Overview}\label{sec:method:overview}
 
-At every control step an observation conditions the generative model, the model proposes a plan, a
-projection makes the plan admissible, and the first action is executed. The generative model and the
-projection method are the two parts varied in this thesis. The generative models share the backbone
-and its parameter count, the data, the normalisation, the horizon, the seeds, the projection and the
-evaluation code; their training settings are given with the training protocol in
-\autoref{sec:setup:protocol}. The projection methods share the feasible set, the solver, the activation
-threshold and the number of candidate plans.
-\hole{System-overview figure: observation $\rightarrow$ plan $\rightarrow$ projection
-$\rightarrow$ action, with the two varied parts marked.}
-\hole{Provenance table --- inherited, modified, new, at file granularity --- feeding
-Appendix~\ref{app:repro}.} \srcnote{TARGET \S5.3}
+At each control step, the observation conditions $B$ candidate plans drawn from independent noise.
+The generative sampler advances each candidate, and the selected projection procedure constrains
+its iterates or predicted endpoint. Candidate selection then chooses one plan. Its first position
+increment updates the commanded setpoint, which the low-level controller tracks before the next
+observation is acquired:
+\[
+\begin{gathered}
+\text{observation and initial candidates}
+\;\longrightarrow\;\text{sampling with projection}
+\;\longrightarrow\;\text{candidate selection}\\
+\longrightarrow\;\text{first increment}
+\;\longrightarrow\;\text{setpoint and tracking}
+\;\longrightarrow\;\text{next observation}.
+\end{gathered}
+\]
+The generative objective and projection procedure are the two varied components. The models use
+matched temporal U-Net backbones and the same task data and plan representation. Training settings
+and the evaluated projection thresholds are specified in \autoref{sec:setup:protocol}; architecture
+matching alone does not make the training recipes identical.
+
+\begin{table}[htpb]
+  \caption[Method provenance]{Provenance of the planning and control components.}
+  \label{tab:method-provenance}
+  \centering\small
+  \begin{tabularx}{\linewidth}{lLL}
+    \toprule
+    Component & Inherited basis & Work in this thesis \\
+    \midrule
+    Planning loop & DPCC receding-horizon execution, normalisation, candidate selection and
+      model-based projection \parencite{romer2025diffusion} & Integration of the flow-based samplers \\
+    Generative models & Published instantaneous- and average-velocity objectives
+      \parencite{lipman2023flow,geng2025meanflow,zhang2025alphaflow} & Conditional trajectory models
+      with matched temporal U-Net backbones \\
+    Endpoint projection & Predicted-endpoint control formulation \parencite{li2025hardflow}
+      & Projection on the task's feasible set and analysis of the guiding-step count \\
+    Visual task & D3IL task and demonstrations; visual encoder design
+      \parencite{jia2024towards,chi2023diffusion} & Camera-conditioned models and task constraints \\
+    Aerial tasks & MuJoCo vehicle; geometric and predictive tracking
+      \parencite{zakka2022menagerie,lee2010geometric,howell2022predictive}
+      & Scenes, planar transfer, spatial demonstrations and planning/control integration \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\srcnote{Implementation sources are attached to the component equations below;
+\texttt{diffuser/sampling/policies.py}, \texttt{mix\_visual\_aligning/},
+\texttt{mix\_uav/}, and \texttt{uav\_avoiding\_bridge/}.}
 
 % =============================================================================
 %  PLANT DYNAMICS AND CONTROL
@@ -898,42 +935,28 @@ environment in this thesis.
     two-channel structure in all three environments, and \autoref{sec:method:proj} gives the row form.
 \end{itemize}
 
-\begin{remark}[A stricter alternative to the surrogate]\label{rem:eulermodel}
-\eqref{eq:method:dpcc:euler} models the plant by an integrator: it carries no joint limits, no
-impedance controller and no simulator integration error, and everything it omits is pushed into
-$\gamma$ and absorbed by the tightening \eqref{eq:method:dpcc:tighten}. The alternative is to put the
-\emph{real} kinematics inside the optimisation, and at least one contemporary system does exactly that.
-\parencite{oelerich2026safeflowmpc} pairs a flow-matching planner with an online nonlinear program on
-a seven-degree-of-freedom manipulator, and plans in \emph{joint space}: the generated trajectory is a
-sequence of joint configurations, and the program carries the analytic forward kinematics, the
-Jacobian and per-link collision geometry, solved at every flow-matching step. There is no surrogate
-and no mismatch ball, because the constraint is imposed on the true kinematic chain.
-
-The two designs sit at opposite ends of one trade. Exact kinematics inside the program give
-feasibility on the real chain, and tie the program to one robot and the plan to that robot's joints.
-The surrogate gives an end-effector plan and a projection that transfer unchanged from a planar arm to
-a spatial one to a quadrotor, with feasibility that holds for the model and not for the plant. This
-thesis takes the second end: one projection method, held fixed across two embodiments, is what RQ3 is about.
-$\gamma$ is where the cost is booked.
-\srcnote{Verified against the released code:
-\texttt{aux\_repo/SafeFlowMPC/safe\_flow\_mpc/RobotModel/} carries the \texttt{iiwa.urdf} and
-compiled CasADi functions for the forward kinematics, the Jacobian and ten per-link collision
-positions; \texttt{train\_imitation\_learning.py} generates \texttt{n\_horizon} $\times$ 7 joint
-trajectories. It plans \emph{joint configurations}, not motor torques.}
+\begin{remark}[Scope of the dynamics model]\label{rem:eulermodel}
+The integrator constrains Cartesian plan increments. Joint limits, actuator dynamics and tracking
+errors are represented only through the mismatch term. The same plan representation supports both
+embodiments; executed constraint satisfaction is evaluated on the simulated plant.
 \end{remark}
 
 \subsection{The Quadrotor}\label{sec:method:quadrotor}
 
 The vehicle is the rigid body of \parencite[Eqs.~(2)--(5)]{lee2010geometric}: with mass $m$, body
-inertia $\matr{J}\sidx{b}$, attitude $\matr{R}\in SO(3)$ and body rates $\vect{\omega}$,
+inertia $\matr{J}\sidx{b}$, attitude $\matr{R}\in SO(3)$ and body rates $\vect{\omega}$.
+Expressed in the simulation's $z$-up world frame with thrust along positive body-$z$, its equations are
 \begin{equation}\label{eq:method:dep:plant}
-  m\ddot{\vect{p}} = m g\,\unitvec{3} - T\,\matr{R}\unitvec{3},
+  m\ddot{\vect{p}} = -m g\,\unitvec{3} + T\,\matr{R}\unitvec{3},
   \qquad
   \dot{\matr{R}} = \matr{R}\hat{\vect{\omega}},
   \qquad
   \matr{J}\sidx{b}\dot{\vect{\omega}} + \vect{\omega}\times\matr{J}\sidx{b}\vect{\omega} = \vect{\tau}\sidx{b},
 \end{equation}
-where $\hat{(\cdot)}$ is the hat map.
+where $\hat{(\cdot)}$ is the hat map. The gravity and thrust signs reverse those of the
+source's downward-axis convention.
+\srcnote{\texttt{uav\_env\_test/flight\_controller.py:88--101};
+\texttt{quadrotor\_modified.xml:56--59}, positive body-$z$ actuator gears.}
 
 The four rotor thrusts produce the collective thrust $T$ along the body axis $\matr{R}\unitvec{3}$ and
 the body moment $\vect{\tau}\sidx{b}$. With four inputs for six degrees of freedom the vehicle is
@@ -959,13 +982,13 @@ environments run the same two-line recursion,
     \label{eq:method:dep:obs}
 \end{align}
 where $\vect{o}_{t}$ is the observation the model conditions on at the next step and the bracketed
-velocity block is present only for the aerial platform. Two properties follow.
+velocity block is present for UAV-corridor and UAV-s-curve; UAV-pillars uses the planar
+observation through the map in \autoref{sec:method:env:uav}. Two properties follow.
 
 \begin{itemize}
   \item \textbf{\eqref{eq:method:dep:setpoint} is a free-running integrator driven by the model's own
-    past outputs.} $\vect{p}\sidx{des}$ is not read back from the plant. Plan error therefore
-    accumulates rather than being corrected, which is the structural reason the aerial task is the
-    fragile one and the reason a divergence guard is needed at all.
+    past outputs.} $\vect{p}\sidx{des}$ is not read back from the plant. Past increments accumulate in the commanded setpoint. The next plan can respond to the
+    tracking error because both commanded and measured positions are observed.
   \item \textbf{\eqref{eq:method:dep:obs} feeds the commanded setpoint back alongside the measured
     state}, so the model conditions on its own history. The gap
     $\vect{p}_{\textrm{des},t} - \vect{p}_{t}$ is exactly the tracking error the low-level controller is
@@ -978,13 +1001,15 @@ velocity block is present only for the aerial platform. Two properties follow.
   is the width of the plan variable \eqref{eq:method:plan} and $\vect{o}$ its observation block;
   $t\sidx{s}$ is the Euler sampling time of \eqref{eq:method:dpcc:euler}; ``dynamics rows'' counts the
   channel pairs of \eqref{eq:method:proj:deriv}; the two intervals are simulated time
-  \eqref{eq:method:dep:multirate}. The quantities measured on these loops are defined in
+  \eqref{eq:method:dep:multirate}. UAV-pillars flies the first column: planner, plan, observation and
+  dynamics rows are those of D3IL-avoiding, and only the plant is the quadrotor
+  (\autoref{sec:method:env:uav}). The quantities measured on these loops are defined in
   \autoref{sec:setup:metrics}.}
   \label{tab:embodiments}
   \centering\small
   \begin{tabularx}{\linewidth}{lLLL}
     \toprule
-     & D3IL-avoiding & D3IL-aligning & UAV-corridor, UAV-pillars, UAV-s-curve \\
+     & D3IL-avoiding & D3IL-aligning & UAV-corridor, UAV-s-curve \\
     \midrule
     embodiment      & manipulator, planar   & manipulator, spatial      & quadrotor \\
     observation     & state, $4$-D          & 2 RGB views $+$ $6$-D state & state, $9$-D \\
@@ -1053,12 +1078,12 @@ times per step, so the arm does not exactly reach $\vect{p}\sidx{des}$ within on
 is precisely the $\vect{w}_{t}$ that \eqref{eq:method:dpcc:euler} pushes into the mismatch bound and
 \eqref{eq:method:dpcc:tighten} then absorbs. And the null-space term makes the map from setpoint to
 joint configuration history-dependent, so two identical plans executed from different postures do not
-produce identical joint trajectories, even though they produce the same Cartesian trace.
+produce identical joint trajectories. They request the same Cartesian reference, while the executed
+trace also depends on tracking error.
 
 \subsection{Quadrotor: Cascaded Geometric Tracking Control}\label{sec:method:geometric}
 
-The aerial chain is the same skeleton with two more layers underneath, and it runs on two intervals of
-simulated time: a plan is queried every $n\sidx{dec}$-th physics step, the interval at which the expert
+On UAV-corridor and UAV-s-curve, the aerial chain runs on two intervals of simulated time: a plan is queried every $n\sidx{dec}$-th physics step, the interval at which the expert
 demonstrations were recorded, and the low-level controller runs at every physics step, with the
 setpoint held constant in between,
 \begin{equation}\label{eq:method:dep:multirate}
@@ -1068,7 +1093,7 @@ setpoint held constant in between,
   \;\Rightarrow\; n\sidx{dec} = 3 .
 \end{equation}
 The simulation waits for the planner, so these intervals hold in simulated time for any planning
-time.
+time. UAV-pillars uses the separate control period specified in \autoref{sec:setup:protocol}.
 \srcnote{\texttt{mix\_uav\_test/eval\_mix\_uav.py:1610} (\texttt{decim}) and \texttt{:1728} (physics loop);
 \texttt{uav\_expert\_data\_collect/dataset\_writer.py:31,73} (\texttt{DATASET\_HZ});
 $\Delta t\sidx{phys}$ from \texttt{quadrotor\_modified.xml:4}.}
@@ -1091,14 +1116,14 @@ the required world-frame force
 which is the bracketed term of \parencite[Eq.~(23)]{lee2010geometric}. The gain matrices are
 diagonal, with a stiffer vertical channel.
 
-\paragraph{Attitude extraction.} The rotor disk points along $\vect{F}$ and the remaining degree of
+\paragraph{Attitude extraction.} The desired rotor-disk normal points along $\vect{F}$ and the remaining degree of
 freedom is fixed by the commanded yaw $\psi\sidx{des}$, which pins the free axis left open by
 \parencite[Eqs.~(22)--(23)]{lee2010geometric}:
 \begin{equation}\label{eq:method:dep:att}
-  \vect{b}_{3} = \frac{\vect{F}}{\|\vect{F}\|},\quad
-  \vect{b}_{2} = \frac{\vect{b}_{3}\times\vect{x}\sidx{c}}{\|\vect{b}_{3}\times\vect{x}\sidx{c}\|},\quad
-  \vect{b}_{1} = \vect{b}_{2}\times\vect{b}_{3},\quad
-  \matr{R}\sidx{des} = \begin{bmatrix}\vect{b}_{1} & \vect{b}_{2} & \vect{b}_{3}\end{bmatrix},
+  \vect{b}_{3,\mathrm{des}} = \frac{\vect{F}}{\|\vect{F}\|},\quad
+  \vect{b}_{2,\mathrm{des}} = \frac{\vect{b}_{3,\mathrm{des}}\times\vect{x}\sidx{c}}{\|\vect{b}_{3,\mathrm{des}}\times\vect{x}\sidx{c}\|},\quad
+  \vect{b}_{1,\mathrm{des}} = \vect{b}_{2,\mathrm{des}}\times\vect{b}_{3,\mathrm{des}},\quad
+  \matr{R}\sidx{des} = \begin{bmatrix}\vect{b}_{1,\mathrm{des}} & \vect{b}_{2,\mathrm{des}} & \vect{b}_{3,\mathrm{des}}\end{bmatrix},
 \end{equation}
 with $\vect{x}\sidx{c} = (\cos\psi\sidx{des},\sin\psi\sidx{des},0)\trans$.
 
@@ -1113,14 +1138,14 @@ error on $SO(3)$ of \parencite[Eq.~(21)]{lee2010geometric}, and the moment is it
 \end{equation}
 where $(\cdot)^{\vee}$ is the inverse hat map. The commanded angular velocity is held at zero, so
 $\vect{e}_{\omega} = \vect{\omega}$ and the attitude feed-forward of
-\parencite[Eq.~(20)]{lee2010geometric} vanishes; with it goes the exponential-stability statement of
-\parencite[Prop.~3]{lee2010geometric}, which assumes the full law.
+\parencite[Eq.~(20)]{lee2010geometric} vanishes; the full tracking law assumed by \parencite[Prop.~3]{lee2010geometric} therefore differs from this
+zero-angular-reference implementation.
 
 \paragraph{Allocation.} The collective thrust is the world force projected on the current body-$z$
-axis, floored so the vehicle cannot free-fall during recovery, and the wrench is distributed over the
+axis with a positive lower bound, and the wrench is distributed over the
 four rotors by a fixed geometry matrix:
 \begin{equation}\label{eq:method:dep:alloc}
-  T = \max\!\left(\vect{F}\trans\vect{b}_{3},\;T\sidx{floor}\right),
+  T = \max\!\left(\vect{F}\trans\matr{R}\unitvec{3},\;T\sidx{floor}\right),
   \qquad
   \matr{M}\vect{u} = \begin{bmatrix}T\\ \vect{\tau}\sidx{b}\end{bmatrix},
   \qquad
@@ -1131,7 +1156,8 @@ read from the model file, so \eqref{eq:method:dep:alloc} holds for an arbitrary 
 \parencite[Eq.~(1)]{lee2010geometric}\parencite{mellinger2011minimum}. When
 $\vect{u} = \matr{M}^{-1}[T;\vect{\tau}\sidx{b}]$ leaves the actuator box, the command is rescaled
 thrust-first: the mean is held and the torque component is shrunk by the largest factor that keeps
-every rotor in range, but never below one half. Parameters of record:
+every rotor in range, but never below one half. A final componentwise clipping enforces the actuator
+bounds; it can change both the achieved collective thrust and moment. Parameters of record:
 $\matr{K}\sidx{p} = \operatorname{diag}(4,4,8)$, $\matr{K}\sidx{d} = \operatorname{diag}(3,3,4)$,
 $\matr{K}\sidx{R} = \operatorname{diag}(70,70,4)$, $\matr{K}_{\omega} = \operatorname{diag}(2.5,2.5,1)$,
 $u\sidx{hover} = mg/4$, $u\sidx{max} = \max(2u\sidx{hover},6)$, $u\sidx{min} = 0$,
@@ -1146,31 +1172,27 @@ mapping is in Auxiliary/Naming/TRANSLATION\_20260914\_dev\_jargon\_to\_scientifi
 
 \paragraph{The velocity setpoint is synthesised, not planned.} \eqref{eq:method:dep:outer} needs
 $\dot{\vect{p}}\sidx{des}$, which the plan does not supply --- it supplies displacements. Three
-policies are implemented and the choice is a recorded experimental factor, not an implementation
-detail:
+setpoint constructions are implemented:
 \begin{equation}\label{eq:method:dep:vdes}
   \dot{\vect{p}}\sidx{des} =
   \begin{cases}
-    \dfrac{\Delta\vect{p}_{t}}{n\sidx{dec}\,\Delta t\sidx{phys}} & \text{default --- the increment read as a mean velocity,}\\
-    \vect{0} & \text{stop-and-go --- brake to rest at every plan step,}\\
+    \dfrac{\Delta\vect{p}_{t}}{n\sidx{dec}\,\Delta t\sidx{phys}} & \text{displacement-derived velocity,}\\
+    \vect{0} & \text{zero velocity feed-forward,}\\
     \dfrac{\Delta\vect{p}_{t}}{\|\Delta\vect{p}_{t}\|}\,\bar{v} & \text{constant-speed, with }
       \bar{v} = \overline{\|\Delta\vect{p}\|}\,/\,(n\sidx{dec}\,\Delta t\sidx{phys})\text{ from the dataset.}
   \end{cases}
 \end{equation}
-The third is timing-free by construction and calibrates itself to whatever data it is given; its
-magnitude is the mean of the first policy, so the three differ in \emph{profile}, not in average
-speed. The first reads the increment as a mean velocity over an assumed constant interval between
-plan queries, so the commanded speed moves with the arrival time of the plan.
+The denominator of the displacement-derived policy is the fixed dataset interval, not measured
+inference time. The constant-speed policy uses the dataset's mean displacement magnitude over that
+same interval; the zero-velocity policy has no velocity feed-forward. Their average commanded
+speeds therefore need not agree.
 
-Every quadrotor result reported in this thesis is flown with the second policy, braking to rest at
-every plan step; the other two are implemented and were measured, and are not the configuration of
-record. With $\dot{\vect{p}}\sidx{des} = \vect{0}$ the outer loop of \eqref{eq:method:dep:outer} moves
-the vehicle on its position error alone, so the setpoint of \eqref{eq:method:dep:setpoint} leads the
-vehicle by a standing lag that grows with the commanded speed. \autoref{sec:res:uav} reports what
-that lag costs.
-\srcnote{\texttt{mix\_uav\_test/eval\_mix\_uav.py:1551--1563, 1822--1832}; policy of record and its
-measured lag from Gen11/Epoch8\_UAV\_Mjpc\_thrust\_control/U3\_v\_des\_Patch/PLAN\_pid\_const\_v.md and
-Gen15/Study/STUDY\_20260901\_mf\_unguided\_failure\_uav\_pillars.md \S5.}
+The cascaded geometric controller uses zero velocity feed-forward in the reported aerial evaluations.
+The MuJoCo predictive controller is evaluated separately in the s-curve controller comparison
+(\autoref{sec:res:uav}). With $\dot{\vect{p}}\sidx{des}=\vect{0}$, position error drives the outer
+loop while its velocity feedback damps the motion. Tracking lag is measured on the executed flights.
+\srcnote{\texttt{mix\_uav\_test/eval\_mix\_uav.py:1764--1765,1869--1888};
+\texttt{uav\_avoiding\_bridge/plant.py}; v3.75 \texttt{sec:setup:protocol:uav}.}
 
 \subsection{Sampling-Based Predictive Control}\label{sec:method:mjpc}
 
@@ -1191,15 +1213,13 @@ quadratic norm and at risk-neutral setting ($R = 0$ in
       \Big(\underbrace{\left\|\vect{p}_{i}-\vect{p}\sidx{des}\right\|_{2}^{2}}_{r_{1},\;w_{1}=1}
       + \underbrace{w_{v}\left\|\dot{\vect{p}}_{i}\right\|_{2}^{2}}_{r_{2},\;w_{2}=w_{v}}\Big),
 \end{equation}
-with $\vect{p}\sidx{des}$ passed in as the instruction. The velocity residual is not decoration: it
-plays the role of the geometric cascade's derivative gain, and without it the planner reaches the setpoint at
-full thrust and overshoots --- minimum cumulative position error being achieved by arriving as fast
-as possible.
+where $H\sidx{mjpc}$ counts rollout steps and $\vect{p}\sidx{des}$ is the reference.
+The two terms penalise position error and translational speed.
 
 \emph{The plan and its parameterisation.} The plan is a time-indexed spline over control knots
 $\vect{\theta}$ rather than a raw action sequence \parencite[\S3.3]{howell2022predictive}; the
 zero-order-hold interpolant is used here, with one knot per horizon step, so the spline degenerates
-to the action sequence itself and the parameterisation buys nothing but interface uniformity.
+to a piecewise-constant action sequence.
 
 \emph{The search.} Each call performs a fixed number of iterations of Algorithm~4 of
 \parencite{howell2022predictive}: draw $N-1$ perturbations
@@ -1210,19 +1230,19 @@ its authors present it as an elementary baseline. Between control steps the plan
 and re-sampled, which is the warm-start of
 \parencite[Alg.~1]{howell2022predictive} and the reason a few iterations per step suffice.
 
-\emph{One deliberate departure.} Contacts are disabled in the planner's copy of the model. The
+\emph{Prediction model.} Contacts are disabled in the planner's copy of the model. The
 tracker therefore plans against the vehicle's free-flight dynamics only, and obstacle avoidance
 remains entirely the projection's job. The constraint mechanism stays one identifiable component,
 and exchanging the tracker leaves the way constraints are enforced unchanged.
-Defaults: $N = 16$, $H\sidx{mjpc} = 0.3\,\textrm{s}$ of physics steps, five improvement iterations
+Defaults: $N = 16$, rollout duration $T\sidx{mjpc} = 0.3\,\textrm{s}$, with
+$H\sidx{mjpc}=T\sidx{mjpc}/\Delta t\sidx{phys}$, five improvement iterations
 per call, $\sigma = 0.3$, $w_{v} = 0.1$.
 \srcnote{\texttt{mix\_uav\_test/mjpc\_tracker.py:70--155}, which wraps
 \texttt{mujoco\_mpc.mjx.predictive\_sampling} unmodified.}
 
-\hole{State once, in \autoref{sec:setup:protocol}, which controller produced each reported UAV
-number. The apparatus notes record that every dataset and every reported result to date uses the
-geometric cascade, and that the predictive controller was built and studied but is not the source of a
-reported number --- confirm this against the run ledger before the claim is made in print.}
+The controller comparison in \autoref{sec:res:uav} distinguishes flights tracked by the geometric
+cascade from those tracked by MuJoCo predictive control. The per-scene choices are recorded in
+\autoref{sec:setup:protocol}.
 
 % =============================================================================
 %  GENERATIVE MODELS
@@ -1252,7 +1272,7 @@ the transitions are Gaussian, the marginal is available in closed form,
   \alpha_{k} = 1-\beta_{k}, \quad \bar{\alpha}_{k} = \prod_{i=1}^{k}\alpha_{i},
 \end{equation}
 and the schedule is chosen so that $q(\vect{x}^{\nfe}\mid\vect{x}^{0}) \approx \Normal(\vect{0},\Id{n})$.
-Generation reverses \eqref{eq:bg:ddpm:forward} with a learned Markov chain
+In the standard formulation, generation reverses \eqref{eq:bg:ddpm:forward} with a learned Markov chain
 \begin{equation}\label{eq:bg:ddpm:reverse}
   p_{\theta}\!\left(\vect{x}^{k-1}\mid\vect{x}^{k},k,\vect{c}\right)
   = \Normal\!\left(\vect{\mu}_{\theta}\!\left(\vect{x}^{k},k,\vect{c}\right),\;\sigma_{k}^{2}\Id{n}\right),
@@ -1283,21 +1303,21 @@ the clean sample, and the forward posterior evaluated at that estimate:
 \srcnote{\eqref{eq:bg:ddpm:x0}--\eqref{eq:bg:ddpm:mean} are the two functions
 \texttt{predict\_start\_from\_noise} and \texttt{q\_posterior} in
 \texttt{aux\_repo/dpcc/diffuser/models/diffusion.py:97--117}; they are what the baseline
-actually executes, and \autoref{sec:method:engine} replaces exactly this pair.}
+uses to form its mean, with clean-sample clipping before the posterior evaluation.
+Sampling settings are specified in \autoref{sec:setup:protocol}.}
 
-Three properties are carried forward. First, \emph{$\nfe$ is a training-time constant}: it
-indexes the schedule $\beta_{1:\nfe}$ that \eqref{eq:bg:ddpm:forward} and
-\eqref{eq:bg:ddpm:marginal} are defined by, so a model trained at $\nfe = 20$ has no
-well-defined $2$-step sampler. Reducing $\nfe$ after training requires a different sampler
---- an implicit or distilled one \parencite{song2021denoising} --- and therefore a different
-model, not a different argument. The configuration files show the same asymmetry: the baseline's
-step count is a \emph{training} key, the flow-matching models' an \emph{inference} key. \srcnote{\texttt{config/}:
-\texttt{n\_diffusion\_steps} sits in the training block, \texttt{flow\_steps\_v3} in the plan
-block.}
-Second, the reverse chain is \emph{stochastic}: each step injects fresh noise of scale
-$\sigma_{k}$, so two plans drawn from the same context differ. Third, the whole construction
-is a chain of Gaussians, which is what allows a constraint mechanism to be inserted between
-its steps (\autoref{sec:method:dpcc}).
+In the inherited DPCC sampler, $\nfe$ indexes the trained schedule. Changing that configuration
+requires a separately trained baseline checkpoint; the reduced-budget baseline comparisons in
+\autoref{sec:res:fewstep} use such checkpoints. An accelerated sampler such as DDIM can instead
+reuse a trained diffusion network \parencite{song2021denoising}, but is a different sampling procedure.
+The flow-based models studied here expose the integration budget directly at inference.
+
+The standard reverse chain is stochastic at nonterminal steps; no fresh noise is injected at the
+last step. The evaluated baseline also clips its clean-sample estimate before computing the
+posterior mean. Its initialization and reverse-noise settings are given in
+\autoref{sec:setup:protocol}; \eqref{eq:bg:ddpm:reverse} states the standard background model.
+\srcnote{\texttt{diffuser/models/diffusion.py:134--169}; \texttt{config/} training key
+\texttt{n\_diffusion\_steps}; v3.75 \texttt{sec:res:fewstep}.}
 
 The instance this thesis is measured against uses the cosine schedule of
 \parencite{nichol2021improved} with $\nfe = 20$ and a temporal U-Net denoiser
@@ -1369,7 +1389,7 @@ path \parencite{lipman2023flow,liu2023flow}, with the noise--data coupling drawn
 i.e.\ the special case $\sigma\sidx{min} = 0$ of \parencite[Eq.~(20)--(23)]{lipman2023flow}, read in
 the data-at-one direction. Substituting \eqref{eq:bg:fm:path} into \eqref{eq:bg:fm:cfm} gives
 the objective this work trains:
-\begin{equation}\label{eq:bg:fm:loss}
+\begin{equation}\label{eq:bg:fm:loss}\label{eq:method:engine:fm}
   \mathcal{L}\sidx{FM}(\theta)
   = \E_{\ftime,\;\vect{x}_{1}\sim q,\;\vect{x}_{0}\sim p_{0}}
     \left\|\vfield_{\theta}\!\left((1-\ftime)\vect{x}_{0} + \ftime\vect{x}_{1},\;\ftime,\;\vect{c}\right)
@@ -1387,8 +1407,10 @@ the explicit Euler scheme at a uniform grid $\ftime_{k} = k/\nfe$,
     + \tfrac{1}{\nfe}\,\vfield_{\theta}\!\left(\vect{x}_{\ftime_{k}},\ftime_{k},\vect{c}\right),
   \qquad k = 0,\dots,\nfe-1,
 \end{equation}
-which costs exactly $\nfe$ network evaluations. This count, the \ac{NFE}, is the step budget used
-throughout the thesis. Two consequences follow.
+which costs $\nfe$ network evaluations per candidate for unguided Euler sampling. Here $\nfe$
+denotes sampling steps; endpoint lookahead adds evaluations as described in
+\autoref{sec:method:hardflow}. The initialization distribution used at inference is specified with
+the experiment settings in \autoref{sec:setup:protocol}. Two consequences follow.
 
 \emph{The budget moved.} $\nfe$ appears in \eqref{eq:bg:fm:euler} and nowhere in
 \eqref{eq:bg:fm:loss}. It is a solver argument, chosen after training and changeable per
@@ -1399,24 +1421,14 @@ training objective --- and that is the quantity analytic average-velocity matchi
 (\autoref{sec:method:meanflow}).
 
 \emph{The sampler became deterministic.} \eqref{eq:bg:fm:euler} injects no noise: the plan is
-a function of $\vect{x}_{0}$ and $\vect{c}$ alone. This removes a source of run-to-run variance
-from a controller that replans at every timestep, and it changes what ``the same plan'' means
-when comparing projection methods: two runs started from the same $\vect{x}_{0}$ differ only in the
-projection, so the comparison in \autoref{ch:results} is controlled. The candidate plans of
+a deterministic function of $\vect{x}_{0}$ and $\vect{c}$ for a fixed sampler. Its transport
+therefore adds no further random draws. The candidate plans of
 \autoref{sec:method:selection} therefore differ in $\vect{x}_{0}$, not in sampler noise.
 
 \subsubsection*{Implementation}
 
-Instantaneous-velocity matching trains on exactly this objective. Training draws a data plan $\vect{x}_{1}$, a prior sample $\vect{x}_{0}$ and a transport time
-$\ftime$; forms the interpolant and regresses the velocity, exactly
-\eqref{eq:bg:fm:path}--\eqref{eq:bg:fm:loss}:
-\begin{equation}\label{eq:method:engine:fm}
-  \vect{x}_{\ftime} = (1-\ftime)\vect{x}_{0} + \ftime\vect{x}_{1},
-  \qquad
-  \mathcal{L}(\theta) = \E\left\|
-     \vfield_{\theta}(\vect{x}_{\ftime},\ftime,\vect{c}) - (\vect{x}_{1}-\vect{x}_{0})
-  \right\|_{2}^{2}.
-\end{equation}
+Instantaneous-velocity matching uses the interpolant of \eqref{eq:bg:fm:path} and the regression
+loss of \eqref{eq:bg:fm:loss}, with the known current-state entries masked.
 Sampling is \eqref{eq:bg:fm:euler}. Relative to the baseline this deletes the schedule buffers,
 the noise-to-sample conversion \eqref{eq:bg:ddpm:x0} and the posterior mean
 \eqref{eq:bg:ddpm:mean}, and it deletes the noise injected at every reverse step. The
@@ -1426,7 +1438,7 @@ The transport time is not drawn uniformly, and the three models do not draw it a
 Instantaneous-velocity matching puts its mass towards $\ftime = 0$, the noise end of the path,
 where the interpolant carries least of the data and the field is hardest to fit; the two
 average-velocity objectives draw the pair $(\ftime,r)$ with its mass towards $\ftime = 1$, the data
-end, which is the end their interval is anchored against. The distributions and their parameters
+end. Their sampled pairs define the interval used by the average-velocity target. The distributions and their parameters
 are configuration values and are given with the training protocol in
 \autoref{sec:setup:protocol}.
 \srcnote{\texttt{flow\_matcher\_v3/models/diffusion.py:273--299}
@@ -1440,121 +1452,107 @@ $\operatorname{Beta}(\beta,\alpha)$ on this thesis's data-at-one axis);
 
 \subsubsection*{Average velocity}
 
-The few-step family changes \emph{what the network predicts}. Following
-\parencite[Eq.~(3)]{geng2025meanflow}, define the \emph{average velocity} over an interval
-$[r,\ftime] \subseteq [0,1]$ as the displacement divided by the interval length,
+Following \parencite[Eq.~(3)]{geng2025meanflow}, define the average velocity along the trajectory
+through $\vect{x}_{r}$ over $[r,\ftime]$. Write $h=\ftime-r$ and use the start and interval length
+as the field's time arguments:
 \begin{equation}\label{eq:bg:mf:def}
-  \afield(\vect{x}_{\ftime},r,\ftime)
-  \;\triangleq\; \frac{1}{\ftime-r}\int_{r}^{\ftime}\vfield(\vect{x}_{\varsigma},\varsigma)\,\dd\varsigma ,
+  \afield(\vect{x}_{r},r,h)
+  \;\triangleq\; \frac{1}{h}\int_{r}^{r+h}
+      \vfield(\vect{x}_{\varsigma},\varsigma)\,\dd\varsigma
+  = \frac{\vect{x}_{r+h}-\vect{x}_{r}}{h},\qquad h>0.
 \end{equation}
-in contrast to the instantaneous velocity $\vfield$ of \autoref{sec:method:fm}. The field $\afield$ is
-induced by $\vfield$; it involves no network. It satisfies the boundary condition
-$\lim_{r\to\ftime}\afield = \vfield$, and, by additivity of the integral, the consistency
-relation
-$(\ftime-r)\afield(\vect{x}_{\ftime},r,\ftime) = (s-r)\afield(\vect{x}_{s},r,s)
-+ (\ftime-s)\afield(\vect{x}_{\ftime},s,\ftime)$ for any intermediate $s$
-\parencite[Sec.~4.1]{geng2025meanflow}. The point of \eqref{eq:bg:mf:def} is immediate: if a network
-approximates $\afield$ well, then
+The exact field is induced by $\vfield$, with continuous extension
+$\afield(\vect{x}_{r},r,0)=\vfield(\vect{x}_{r},r)$. Additivity gives, for $r<s<\ftime$,
+\[
+(\ftime-r)\afield(\vect{x}_{r},r,\ftime-r)
+=(s-r)\afield(\vect{x}_{r},r,s-r)
+ +(\ftime-s)\afield(\vect{x}_{s},s,\ftime-s).
+\]
+The exact field traverses the interval in one step. Replacing it by a learned approximation gives
 \begin{equation}\label{eq:bg:mf:onestep}
-  \vect{x}_{1} = \vect{x}_{0} + \afield_{\theta}(\vect{x}_{0},0,1)
+  \hat{\vect{x}}_{1} = \vect{x}_{0}+\afield_{\theta}(\vect{x}_{0},0,1),
 \end{equation}
-traverses the entire path in a single evaluation. No integral is approximated at inference;
-the interval is a network input.
+where $\hat{\vect{x}}_{1}$ approximates the endpoint of the exact flow. The interval is a network
+input; no trajectory integral is evaluated at inference.
 
 \subsubsection*{The average-velocity identity}
 
-\eqref{eq:bg:mf:def} cannot be used as a regression target directly, because forming it
-requires integrating during training. The construction of \parencite[Eqs.~(4)--(6)]{geng2025meanflow}
-removes the
-integral. Write \eqref{eq:bg:mf:def} as
-$(\ftime-r)\,\afield(\vect{x}_{\ftime},r,\ftime) = \int_{r}^{\ftime}\vfield\,\dd\varsigma$ and
-differentiate both sides with respect to $\ftime$ at fixed $r$; the product rule on the left
-and the fundamental theorem of calculus on the right give the \emph{average-velocity identity}
+Differentiate $(\ftime-r)\afield(\vect{x}_{r},r,\ftime-r)
+=\int_{r}^{\ftime}\vfield\,\dd\varsigma$ along the trajectory with respect to $r$, holding
+$\ftime$ fixed. The product rule gives the start-anchored form of
+\parencite[Eqs.~(4)--(6)]{geng2025meanflow},
 \begin{equation}\label{eq:bg:mf:identity}
-  \underbrace{\afield(\vect{x}_{\ftime},r,\ftime)}_{\text{average velocity}}
-  \;=\;
-  \underbrace{\vfield(\vect{x}_{\ftime},\ftime)}_{\text{instantaneous velocity}}
-  \;-\;(\ftime-r)\,
-  \underbrace{\frac{\dd}{\dd\ftime}\afield(\vect{x}_{\ftime},r,\ftime)}_{\text{total time derivative}} .
+  \afield(\vect{x}_{r},r,h)
+  = \vfield(\vect{x}_{r},r)+h\frac{\dd}{\dd r}
+      \afield(\vect{x}_{r},r,\ftime-r),\qquad h=\ftime-r.
 \end{equation}
-The identity is equivalent to the definition \eqref{eq:bg:mf:def} and contains no neural
-network. The total derivative expands, using $\dd\vect{x}_{\ftime}/\dd\ftime = \vfield$ and
-$\dd r/\dd\ftime = 0$, into
+Here $\dd\vect{x}_{r}/\dd r=\vfield$ and $\dd h/\dd r=-1$, so
 \begin{equation}\label{eq:bg:mf:jvp}
-  \frac{\dd}{\dd\ftime}\afield(\vect{x}_{\ftime},r,\ftime)
-  = \vfield(\vect{x}_{\ftime},\ftime)\,\partial_{\vect{x}}\afield + \partial_{\ftime}\afield ,
+  \frac{\dd}{\dd r}\afield(\vect{x}_{r},r,\ftime-r)
+  = (\partial_{\vect{x}}\afield)\,\vfield(\vect{x}_{r},r)
+    +\partial_{r}\afield-\partial_{h}\afield.
 \end{equation}
-which is exactly a \ac{JVP} of $\afield$ with the tangent
-$(\vfield,\,0,\,1)$ --- computable in one forward-mode pass, at a cost comparable to one
-backward pass \parencite[Eqs.~(7)--(8)]{geng2025meanflow}.
+This is a \ac{JVP} with tangent $(\vfield,+1,-1)$ in the inputs $(\vect{x}_{r},r,h)$.
+The plus sign in \eqref{eq:bg:mf:identity} follows from differentiating the lower limit, whereas
+\parencite[Eq.~(6)]{geng2025meanflow} uses an end-anchored field in the opposite time direction.
 
-Parameterising $\afield$ by a network $\afield_{\theta}$ and substituting the conditional
-velocity of \eqref{eq:bg:fm:path} for the marginal one, as in \autoref{sec:method:fm}, yields the
-objective
+The implemented target substitutes the conditional velocity
+$\vect{v}=\vect{x}_{1}-\vect{x}_{0}$ of \eqref{eq:bg:fm:path} and stops its gradient:
 \begin{equation}\label{eq:bg:mf:loss}
+\begin{aligned}
   \mathcal{L}\sidx{avg}(\theta)
-  = \E\left\|\afield_{\theta}(\vect{x}_{\ftime},r,\ftime)
-      - \sg\!\left(\afield\sidx{tgt}\right)\right\|_{2}^{2},
-  \qquad
-  \afield\sidx{tgt} = \vfield_{\ftime} - (\ftime-r)\left(
-     \vfield_{\ftime}\,\partial_{\vect{x}}\afield_{\theta} + \partial_{\ftime}\afield_{\theta}\right),
+    &=\E\left\|\afield_{\theta}(\vect{x}_{r},r,h)
+           -\sg(\afield\sidx{tgt})\right\|_{2}^{2},\\
+  \afield\sidx{tgt}
+    &=\vect{v}+h\big((\partial_{\vect{x}}\afield_{\theta})\vect{v}
+                     +\partial_{r}\afield_{\theta}-\partial_{h}\afield_{\theta}\big).
+\end{aligned}
 \end{equation}
-where $\sg$ is the stop-gradient. The stop-gradient is what keeps the method first-order: the
-\ac{JVP} enters only as a constant target, so no differentiation through it is
-required \parencite[Eqs.~(9)--(11)]{geng2025meanflow}.
+The derivative enters as a fixed regression target, so the parameter update does not differentiate
+through the JVP \parencite[Eqs.~(7)--(11)]{geng2025meanflow}.
+\srcnote{Start/interval convention and conditional-velocity tangent:
+\texttt{flow\_matcher\_v3\_meanflow/models/mf\_diffusion.py:353--473}.}
 
 Three properties of \eqref{eq:bg:mf:loss} are used later in this thesis.
 
 \begin{itemize}
   \item \textbf{It contains instantaneous-velocity matching as the case $r = \ftime$.} The second term of
     $\afield\sidx{tgt}$ carries the factor $(\ftime-r)$, so at $r=\ftime$ the target collapses to
-    $\vfield_{\ftime}$ and \eqref{eq:bg:mf:loss} becomes \eqref{eq:bg:fm:loss}. Analytic
+    $\vect{v}$ and \eqref{eq:bg:mf:loss} becomes \eqref{eq:bg:fm:loss}. Analytic
     average-velocity matching is thus a strict generalisation of instantaneous-velocity matching, and the fraction of training
     samples drawn with $r \neq \ftime$ is a hyperparameter of the objective: at zero it is
     instantaneous-velocity matching
     \parencite[Tab.~1a]{geng2025meanflow}. The same collapse applies, for a different reason, to the
-    consistency-interpolated objective of \autoref{sec:method:alphaflow}, which is how a set of earlier runs
-    was found to be mislabelled.
+    consistency-interpolated objective through its explicit zero-interval branch
+    (\autoref{sec:method:alphaflow}).
   \item \textbf{The interval is a network input, so the budget is chosen at inference.} As in
     \autoref{sec:method:fm}, $\nfe$ appears only in the sampler. Unlike \autoref{sec:method:fm}, small $\nfe$ is
-    no longer paid for in discretisation error, because the field being queried is already the
-    exact average over the step. The budget mechanism of RQ1 is therefore a property of what is
-    learned.
+    supported by learning the average displacement over an interval. The exact average would
+    remove integration error over that interval; the network introduces approximation error.
   \item \textbf{The objective differentiates through the network, which constrains the
     architecture.} Everything inside the closure that \eqref{eq:bg:mf:jvp} differentiates must
-    be forward-mode differentiable. This is not a performance detail: it decides how a visual
-    encoder may be attached (\autoref{sec:method:backbone}).
+    support forward-mode differentiation. Image features enter the differentiated function as
+    fixed conditioning (\autoref{sec:method:backbone}).
 \end{itemize}
 
-Two implementation-level choices from \parencite[Sec.~4.3]{geng2025meanflow} are adopted unchanged and are
-recorded here because they are not cosmetic. The loss is reweighted adaptively,
-$w = (\|\Delta\|_{2}^{2}+c)^{-p}$ applied under a stop-gradient to the squared error $\Delta$,
-which normalises the gradient scale across the very different error magnitudes that $r=\ftime$
-and $r\ll\ftime$ samples produce; and the time pair is drawn from a logit-normal distribution
-rather than uniformly \parencite{esser2024scaling}, with the larger draw assigned to $\ftime$ and the
-smaller to $r$. A
-consequence of the first is that the reported training loss is pinned near its ceiling by
-construction and must never be read as a convergence signal --- the raw squared error is the
-quantity to monitor. \srcnote{Both are implemented in
-\texttt{flow\_matcher\_v3\_meanflow/models/mf\_diffusion.py} (\texttt{\_adaptive},
-\texttt{\_sample\_tau\_pair}); the convergence-signal warning is this work's own, from the
-Gen3v6 fix-2/fix-3 logs.}
+The squared residual $e$ is adaptively reweighted as
+$\varrho(e)=e/\sg((e+c)^{p})$, following \parencite[Sec.~4.3]{geng2025meanflow}.
+For $p=1$, its displayed value is $e/(e+c)$ and approaches a ceiling at large residuals.
+The time pair is drawn from a logit-normal distribution \parencite{esser2024scaling}, with the
+larger draw assigned to $\ftime$ and the smaller to $r$.
+\srcnote{\texttt{flow\_matcher\_v3\_meanflow/models/mf\_diffusion.py},
+\texttt{\_adaptive} and \texttt{\_sample\_tau\_pair}.}
 
 \subsubsection*{Implementation: the start-anchored identity}
 
-The network takes two times. This work anchors the query at the \emph{start} of the interval,
-$(\vect{x}_{r},r,h)$ with $h=\ftime-r$, because that is the point the sampler queries; the
-source \parencite[Eq.~(6)]{geng2025meanflow} anchors at the end and integrates in the opposite time
-direction. Differentiating $(\ftime-r)\afield = \int_{r}^{\ftime}\vfield$ with respect to $r$ at
-fixed $\ftime$, and following the trajectory so that $\dd\vect{x}_{r}/\dd r = \vfield$, gives the
-start-anchored form of \eqref{eq:bg:mf:identity},
+The network inputs $(\vect{x}_{r},r,h)$ use the same start-anchored convention as
+\eqref{eq:bg:mf:def}. Writing the identity in these coordinates gives
 \begin{equation}\label{eq:method:engine:mfid}
-  \afield(\vect{x}_{r},r,\ftime)
-  = \vfield(\vect{x}_{r},r) + h\,\frac{\dd}{\dd r}\afield(\vect{x}_{r},r,\ftime),
-  \qquad h = \ftime - r,
+  \afield=\vfield+h\big((\partial_{\vect{x}}\afield)\vfield
+                            +\partial_r\afield-\partial_h\afield\big).
 \end{equation}
-which is \eqref{eq:bg:mf:identity} under the change of variables, with the sign flip carried by
-$\dd h/\dd r = -1$. The training target and loss are then
+The two-head implementation combines an average-velocity target with an instantaneous-velocity
+loss. The target and loss are
 \begin{align}
   \afield\sidx{tgt}
     &= \sg\!\left[\;\vect{v} + h\,
@@ -1575,17 +1573,14 @@ this implementation:
 
 \begin{itemize}
   \item \textbf{The $\vect{x}$-tangent is the analytic velocity $\vect{x}_{1}-\vect{x}_{0}$, not a
-    predicted one.} Substituting a network-predicted velocity there turns this model into a
-    different one, and the resulting ablation would no longer be controlled.
+    predicted one.} This is the conditional velocity used to construct the training path.
   \item \textbf{$(\ftime,r)$ are two independent draws} on the transport axis, the larger
-    assigned to $\ftime$; drawing $r$ conditionally on $\ftime$ starves the large-$h$ queries,
-    which is precisely where one- and two-step sampling lives.
+    assigned to $\ftime$ and the smaller to $r$.
   \item \textbf{A fraction of samples is drawn with $r = \ftime$}, i.e.\ $h=0$, at which
     \eqref{eq:method:engine:mftgt} reduces to $\afield\sidx{tgt} = \vect{v}$ and the objective
     becomes \eqref{eq:method:engine:fm}. These anchor the field.
-  \item \textbf{The instantaneous head is a full second loss, not a stabiliser}, and it is
-    \emph{discarded at sampling time} --- only $\afield_{\theta}$ is integrated. Mixing the two
-    heads at sampling time produced step-to-step jitter.
+  \item \textbf{The instantaneous head has a separate regression loss.} Sampling uses the
+    average-velocity head; the auxiliary instantaneous head is not integrated.
 \end{itemize}
 \srcnote{\texttt{flow\_matcher\_v3\_meanflow/models/mf\_diffusion.py:353--473}
 (\texttt{\_sample\_tau\_pair}, \texttt{\_adaptive}, \texttt{\_p\_losses\_meanflow}); the sign
@@ -1598,63 +1593,61 @@ interval:
     + \tfrac{1}{\nfe}\,\afield_{\theta}\!\left(\vect{x}_{\ftime_{k}},\;\ftime_{k},\;h{=}\tfrac{1}{\nfe},\;\vect{c}\right),
   \qquad \ftime_{k} = \tfrac{k}{\nfe},
 \end{equation}
-which at $\nfe = 1$ is exactly the one-step form \eqref{eq:bg:mf:onestep}. The transport time is
-never frozen: the network was trained on $\afield_{\theta}(\cdot,\ftime,h)$ and querying it at a
-fixed $\ftime$ turns it into a biased $h$-only function, out of the distribution it was fitted
-on. Where an adaptive solver is used instead of the Euler scheme, the interval passed at each
-sub-stage is the remaining distance to that macro step's declared endpoint, which keeps every
-query inside the $\{\ftime,h\ge 0,\ \ftime+h\le 1\}$ domain the model was trained on.
-\srcnote{\texttt{mf\_diffusion.py:189--300}; the guardrail and the sub-stage interval rule are
-this work's own, from the Gen3v6 U3/U8 audits.}
+which at $\nfe=1$ has the form of \eqref{eq:bg:mf:onestep}. Both the current transport time
+and interval are passed at every step. This is the sampler used without projection and with iterate
+projection; the field queried by endpoint projection is specified in \autoref{sec:method:hardflow}.
+\srcnote{\texttt{flow\_matcher\_v3\_meanflow/models/mf\_diffusion.py:189--300}.}
 
 \subsection{Consistency-Interpolated Average-Velocity Matching}\label{sec:method:alphaflow}
 
-The third objective \parencite{zhang2025alphaflow} also learns the average velocity, but interpolates
-its target by a consistency step ratio $\alpha$ between the instantaneous velocity and a stop-gradient
-prediction of the network itself. With the architecture matched and the ratio annealed to a final value
-$\alpha\sidx{end}>0$, it matches analytic average-velocity matching at low step budgets and
-falls behind it at high budgets in both environments where it was measured, and it is reported as an
-ablation (\autoref{sec:res:fewstep}, \autoref{sec:disc:negative}).
+The third objective \parencite{zhang2025alphaflow} also learns average velocity, using a consistency
+step ratio $\alpha$ to interpolate between the conditional instantaneous velocity and a
+stop-gradient prediction of the network. Its comparison with the other objectives is reported in
+\autoref{sec:res:fewstep} and \autoref{sec:res:visual}.
 
-The target replaces the differentiated term of \eqref{eq:method:engine:mftgt} by the network's own
-average velocity, evaluated after travelling a fraction $\alpha$ of the interval at the analytic
-velocity \parencite[Def.~1, Alg.~1]{zhang2025alphaflow}. In the start-anchored notation of
-\autoref{sec:method:meanflow}, with $\vect{v} = \vect{x}_{1}-\vect{x}_{0}$ and the step
-$\delta = \alpha h$,
+For $h>0$ and $0<\alpha\le1$, set $\delta=\alpha h$ and
+$\vect{v}=\vect{x}_{1}-\vect{x}_{0}$. The start-anchored target is
 \begin{equation}\label{eq:method:engine:aftgt}
   \afield\sidx{tgt}
-  = \alpha\,\vect{v}
-  + (1-\alpha)\,\sg\!\left(\afield_{\theta}\!\left(\vect{x}_{r}+\delta\,\vect{v},\;r+\delta,\;h-\delta\right)\right),
+  =\alpha\vect{v}+(1-\alpha)\sg\!\left(
+    \afield_{\theta}(\vect{x}_{r}+\delta\vect{v},r+\delta,h-\delta)\right).
 \end{equation}
-which is composed into the same reweighted loss \eqref{eq:method:engine:mfloss}. The two endpoints are
-exact: at $\alpha = 1$ the target is $\vect{v}$ and the objective is \eqref{eq:method:engine:fm}, and as
-$\alpha \to 0$ a first-order expansion of the network term returns the analytic target
-\eqref{eq:method:engine:mftgt} \parencite[Thm.~1]{zhang2025alphaflow}. During training $\alpha$ follows
-a sigmoid curriculum from one to $\alpha\sidx{end}$
-\parencite[Alg.~2]{zhang2025alphaflow}, and a fraction of each batch is drawn with $h = 0$, where
-\eqref{eq:method:engine:aftgt} reduces to $\vect{v}$.
-\srcnote{\texttt{flow\_matcher\_v3\_alphaflow/models/af\_diffusion.py:637--720}
-(\texttt{\_p\_losses\_alphaflow}, $\delta = \alpha h$, the network term under \texttt{no\_grad}) and
-\texttt{:440--470} (the sigmoid schedule); upstream
-\texttt{PAPERS/auxiliary\_papers/DGM/AlphaFlow\_src/algos/training.tex}.}
+The implementation explicitly uses $\afield\sidx{tgt}=\vect{v}$ for $h=0$ samples. At
+$\alpha=0$ it selects the analytic JVP target of \eqref{eq:method:engine:mftgt}.
+With $e_u=\|\afield_{\theta}-\afield\sidx{tgt}\|_2^2$ and
+$e_v=\|\vfield_{\theta}-\sg(\vect{v})\|_2^2$, summed over the unmasked plan entries, the loss is
+\begin{equation}\label{eq:method:engine:afloss}
+  \mathcal{L}(\theta)=\E\big[w\sidx{br}\,\varrho(e_u)+\varrho(e_v)\big],
+  \qquad
+  w\sidx{br}=\begin{cases}
+    \alpha & \alpha>0\text{ and }h>0,\\
+    1 & \text{otherwise}.
+  \end{cases}
+\end{equation}
+The branch weight affects the average-velocity loss; the auxiliary instantaneous-head loss has
+unit weight; here $\varrho$ uses $p=1$. During training the ratio follows a sigmoid curriculum from one to
+$\alpha\sidx{end}$ \parencite[Alg.~2]{zhang2025alphaflow}.
 
-Two of its properties matter here. The step ratio appears only in training, and at one
-setting the two targets coincide term for term: a checkpoint trained at that setting is analytic
-average-velocity matching,
-whatever its directory is called, and a set of this work's earlier runs was mislabelled that way. And
-its target is a finite difference closed with the network's own stop-gradient output, so it inherits
-a fraction of that network's error: the objective contracts error at a rate set by $\alpha$ and
-admits self-consistent fields that are wrong. The analytic target of \eqref{eq:method:engine:mftgt}
-has no such term. Both this collapse and the $r=\ftime$ collapse of \autoref{sec:method:meanflow} are
-extreme hyperparameter values that silently change which model is measured, and both are checked by
-assertion.
+At $\alpha=1$, the target is the instantaneous velocity. For a small positive ratio, a first-order
+expansion gives $\afield\sidx{tgt}=\afield_{\theta}
++\alpha(\vect{v}-\afield_{\theta}+hD\afield_{\theta})+O(\alpha^2)$, where $D$ is the derivative
+in direction $(\vect{v},+1,-1)$. The target itself tends to the current network output;
+its residual divided by $\alpha$ tends to the analytic residual. The gradient correspondence in
+\parencite[Thm.~1]{zhang2025alphaflow} concerns the appropriately scaled objective. The exact
+$\alpha=0$ implementation is a separate analytic branch, not direct substitution into
+\eqref{eq:method:engine:aftgt}. Both constructions depend on the learned network: one uses its
+shifted output and the other its directional derivative.
+\srcnote{\texttt{flow\_matcher\_v3\_alphaflow/models/af\_diffusion.py:550--632,725--738}:
+zero-ratio branch, explicit zero-interval target and branch-weighted loss. Primary formulation:
+\texttt{AlphaFlow\_src/section/4-alphaflow.tex}, Definition~1 and Theorem~1;
+\texttt{algos/training.tex}.}
 
 \subsection{A Common Interface}\label{sec:method:interface}
 
 The inherited system is organised around two calls: one that turns an iterate into a proposed
 mean, and one that loops over $\nfe$ steps and applies the constraint mechanism. Every generative model
-in this thesis implements exactly those two calls, and the projection code, the candidate plans,
-the conditioning, the normalisation and the closed loop are shared verbatim. Written as the next iterate $\vect{\mu}^{k}$ that the projection of
+uses this interface for unguided and iterate-projected sampling, with the task
+conditioning, normalisation and candidate selection supplied by the common planning loop. Written as the next iterate $\vect{\mu}^{k}$ that the projection of
 \autoref{sec:method:projection} acts on, the substitution is
 \begin{equation}\label{eq:method:engine:iface}
   \vect{\mu}^{k}
@@ -1671,15 +1664,16 @@ the conditioning, the normalisation and the closed loop are shared verbatim. Wri
     \end{cases}
 \end{equation}
 with $\ftime_{k} = k/\nfe$ and the reverse index of the first line replaced by the forward index
-of the other two. At sampling time, the three lines are the difference between the models.
+of the other two. These lines specify the proposal means; the diffusion sampler also draws reverse
+noise. Endpoint sampling of the two-time models uses the zero-interval query described in
+\autoref{sec:method:hardflow}.
 \srcnote{\texttt{flow\_matcher\_v3/models/diffusion.py:125--158} and
 \texttt{flow\_matcher\_v3\_meanflow/models/mf\_diffusion.py:189--300}, against
 \texttt{aux\_repo/dpcc/diffuser/models/diffusion.py:119--203}.}
 
 \subsection{Backbone and Conditioning}\label{sec:method:backbone}
 
-One temporal U-Net at one parameter count is used by every generative model, including the
-baseline. For the vision-conditioned task, a visual encoder produces a fixed-width latent, and the
+The generative models use matched temporal U-Net backbones, including the diffusion baseline. For the vision-conditioned task, a visual encoder produces a fixed-width latent, and the
 backbone never sees an image.
 
 \subsubsection*{The trajectory backbone}
@@ -1748,7 +1742,9 @@ the visual latent is concatenated:
 \begin{equation}\label{eq:method:backbone:twotime}
   \vect{z} = \big[\,\phi_{\ftime}(\ftime) + \phi_{h}(h)\;;\;\phi\sidx{vis}(\vect{e})\,\big].
 \end{equation}
-This is the only structural change the two-time models make to the backbone.
+The interval embedding and the auxiliary instantaneous-velocity head extend the matched temporal
+U-Net backbone. Reported backbone capacity excludes the image encoders; the model sizes and training
+settings are specified in \autoref{sec:setup:protocol}.
 
 The analytic target \eqref{eq:method:engine:mftgt} differentiates the network with a forward-mode
 \ac{JVP} in $(\vect{x}_{r},r,h)$. The latent $\vect{e}$ depends on none of these inputs, so the encoder
@@ -1779,13 +1775,15 @@ program
   \proj{\mathcal{Z}_{f}}(\vect{x})
     &= \arg\min_{\tilde{\vect{x}}\in\mathcal{Z}} \;\|\vect{x}-\tilde{\vect{x}}\|_{2}^{2}
     \label{eq:bg:mpc:proj} \\
-  \text{s.t.}\quad & \vect{s}_{t'+1|t} = f\!\left(\vect{s}_{t'|t},\vect{a}_{t'|t}\right),
+  \text{s.t.}\quad & \tilde{\vect{s}}_{t'+1|t}
+    = f\!\left(\tilde{\vect{s}}_{t'|t},\tilde{\vect{a}}_{t'|t}\right),
     \qquad \forall t' \in \{t,\dots,t+H-2\},
     \label{eq:bg:mpc:dyn}
 \end{align}
 with projection cost $c_{\mathcal{Z}_{f}}(\vect{x}) = \|\vect{x}-\proj{\mathcal{Z}_{f}}(\vect{x})\|_{2}^{2}$.
-The projection is \emph{goal-independent}: it knows nothing about the task, so it can make a
-plan admissible but cannot make it more successful. Both projection methods therefore
+The states and actions in the constraint belong to the decision variable $\tilde{\vect{x}}$.
+The projection is \emph{goal-independent}: its objective is proximity to the proposed plan.
+It may improve task success by removing a violation, but success is not its objective. Both projection methods therefore
 change the learned plan as little as possible. The projection is
 also a \emph{nonlinear} program whenever the geometric
 constraints are non-convex, as circular keep-out regions make them; the solver used throughout
@@ -1825,7 +1823,10 @@ dynamics block is overwritten with the measured current state, so the projection
 point the plan is anchored at. The returned projection cost is
 $c_{\mathcal{Z}_{f}}(\vect{x}) = \tfrac{1}{2}\|\proj{\mathcal{Z}_{f}}(\vect{x})-\vect{x}\|_{\matr{Q}}^{2}$,
 which is the quantity the cumulative-cost selection rule of \autoref{sec:method:selection} sums.
-Each candidate plan is a separate program.
+Each candidate plan is a separate program. Exact projection yields a feasible point when the set
+is nonempty and the problem is solved. The implementation uses a numerical local solve and can
+return its last iterate on non-convergence, so feasibility of that output is not guaranteed;
+constraint satisfaction is evaluated on the executed trajectories.
 \srcnote{\texttt{aux\_repo/dpcc/diffuser/sampling/projection.py:70--155} and its Gen-local copies;
 the constraint families are \texttt{SafetyConstraints}, \texttt{DynamicConstraints},
 \texttt{ObstacleConstraints} in the same file.}
@@ -1864,24 +1865,25 @@ anchors a commanded and a measured position in three axes
 
 \subsubsection*{The activation schedule}
 
-The projection is not applied at every step. A threshold $\eta\in[0,1]$ selects the portion of
-the transport near the data end at which it runs. In the inherited descending-index sampler that
-is the condition $k \le \eta\nfe$; in this work's ascending-index transport samplers it is
+A threshold $\eta\in[0,1]$ selects sampling steps near the data end. The inherited diffusion code
+uses the zero-based reverse index $i=\nfe-1,\ldots,0$ and activates projection when
+$i\le\eta\nfe$. In the one-based equations of \autoref{sec:method:diffusion}, $i=k-1$.
+Its active count is $\min\{\nfe,\lfloor\eta\nfe\rfloor+1\}$.
+The ascending flow samplers, with $k=0,\ldots,\nfe-1$, use
 \begin{equation}\label{eq:method:proj:gate}
-  k \;\ge\; \left\lfloor (1-\eta)\,\nfe \right\rfloor
-  \qquad\text{or}\qquad k = \nfe-1 ,
+  k\ge\left\lfloor(1-\eta)\nfe\right\rfloor
+  \qquad\text{or}\qquad k=\nfe-1,
 \end{equation}
-the second clause forcing the terminal step so that a plan is never returned unprojected. The
-two forms agree up to the rounding of $\eta\nfe$, and the number of activated steps is
+where the last clause enforces terminal projection. Their active count is
 \begin{equation}\label{eq:method:proj:nact}
-  n\sidx{act}(\nfe,\eta) = \max\!\left\{\nfe - \left\lfloor(1-\eta)\nfe\right\rfloor,\;1\right\}.
+  n\sidx{act}(\nfe,\eta)
+  =\max\!\left\{\nfe-\left\lfloor(1-\eta)\nfe\right\rfloor,1\right\}.
 \end{equation}
-$\eta = 0$ therefore does not mean ``no projection'': it means the single terminal projection,
-i.e.\ project-after-sampling. This is the post-processing baseline of \parencite[Sec.~6.1]{romer2025diffusion},
-and writing it as a special case of \eqref{eq:method:proj:gate} rather than as a separate code
-path is what keeps the two comparable.
-\srcnote{\texttt{flow\_matcher\_v3/models/diffusion.py:174--183} carries the derivation of the
-guarded form and the record of what it changes relative to the earlier unguarded expression.}
+Thus a shared threshold value need not give the same number of projection solves across the two
+samplers. At $\eta=0$, both apply only the terminal projection. Experiment-specific thresholds are
+reported in \autoref{sec:setup:protocol}.
+\srcnote{\texttt{diffuser/models/diffusion.py:175--192};
+\texttt{flow\_matcher\_v3/models/diffusion.py:173--191}.}
 
 \subsection{Per-Step Projection (DPCC)}\label{sec:method:dpcc}
 
@@ -1905,16 +1907,17 @@ is therefore
 \end{equation}
 \parencite[Theorem~1]{romer2025diffusion}. Because \eqref{eq:method:dpcc:thm} projects the
 \emph{mean} and then adds noise, the drawn sample can still leave $\mathcal{Z}_{f}$; the
-algorithm that is actually run therefore reorders the two operations, projecting \emph{after}
-the noise is added:
+projection procedure therefore acts \emph{after} the reverse noise is drawn. With
+$\tilde{\sigma}_k$ denoting its configured sampling standard deviation (zero at the terminal step),
+the update is
 \begin{equation}\label{eq:method:dpcc:step}
   \vect{x}^{k-1}
   = \proj{\mathcal{Z}_{f}}\!\left(
-      \vect{\mu}_{\theta}\!\left(\vect{x}^{k},k,\vect{c}\right) + \sigma_{k}\vect{\epsilon}^{k}
+      \vect{\mu}_{\theta}\!\left(\vect{x}^{k},k,\vect{c}\right) + \tilde{\sigma}_{k}\vect{\epsilon}^{k}
     \right),
   \qquad \vect{\epsilon}^{k}\sim\Normal(\vect{0},\Id{n}),
 \end{equation}
-which gives deterministic constraint satisfaction at the steps where it is applied
+which gives constraint satisfaction under an exact feasible projection
 \parencite[Eq.~16]{romer2025diffusion}. \eqref{eq:method:dpcc:step} is the single equation this
 thesis replaces: \autoref{sec:method:engine} substitutes the generative model that produces
 $\vect{\mu}_{\theta}$, and \autoref{sec:method:hardflow} substitutes the operator applied to it.
@@ -1925,8 +1928,8 @@ This method projects the \emph{current iterate}. Under \eqref{eq:method:proj:gat
 that iterate is still far from the data end of the transport, so
 \eqref{eq:method:proj:obj}--\eqref{eq:method:proj:obs} is posed on an object that is not yet a
 plan: the geometric rows \eqref{eq:method:proj:obs} are being asked about positions that the
-sampler has not finished producing. This is the single structural difference from endpoint
-projection, and \autoref{sec:disc:interpretation} builds on it.
+sampler has not finished producing. Endpoint projection instead constrains a predicted final plan. For average-velocity models, the
+implemented samplers also differ in their field query (\autoref{sec:method:hardflow}).
 
 \subsubsection*{Constraint tightening}
 
@@ -1937,12 +1940,15 @@ constraints by the mismatch ball,
 \begin{equation}\label{eq:method:dpcc:tighten}
   \tilde{\mathcal{S}}_{t+1} = \mathcal{S}_{t+1}\ominus\mathcal{B}_{\gamma},
 \end{equation}
-with $\ominus$ the Minkowski difference and $\mathcal{B}_{\gamma}$ the $\ell_{2}$ ball of radius
-$\gamma$; sampling against $\tilde{\mathcal{Z}}_{f}$ then guarantees that all executed states
-satisfy the original constraints \parencite[Theorem~2]{romer2025diffusion}. The bound $\gamma$ is
-estimated empirically from unconstrained rollouts. \emph{Tightened geometry} in this thesis
-means \eqref{eq:method:dpcc:tighten} applied with a larger $\gamma$ than the baseline's; it is varied
-as an experimental factor.
+where $\mathcal{B}_{\gamma}$ is the Euclidean ball of radius $\gamma$ and $\ominus$ denotes
+set erosion (Pontryagin difference):
+$\mathcal{S}\ominus\mathcal{B}_{\gamma}
+=\{\vect{z}:\vect{z}+\mathcal{B}_{\gamma}\subseteq\mathcal{S}\}$.
+Under the mismatch-bound and feasibility assumptions of
+\parencite[Theorem~2]{romer2025diffusion}, tightening provides the margin needed for the next
+executed state to satisfy the original set. Here $\gamma$ is estimated from unconstrained rollouts.
+Tightening is relative to the original constraints, not relative to the diffusion baseline; the
+configured margins and their use in the comparisons are given in \autoref{sec:setup:protocol}.
 
 \subsection{Endpoint Projection}\label{sec:method:hardflow}
 
@@ -2004,7 +2010,7 @@ Inverting the prediction with one fixed-point step gives the algorithm it runs
 $\ftime_{k+1}\hat{\vect{x}}_{1}^{\star} + (1-\ftime_{k+1})\,\mathcal{W}_{\ftime_{k+1}}(\bar{\vect{x}}_{k+1})$
 written out --- pulls the correction back into the sampler, damped by $\ftime_{k+1}$. At the final step
 $\ftime_{\nfe} = 1$, so the output equals $\hat{\vect{x}}_{1}^{\star}\in\mathcal{Z}_{f}$ and satisfies the
-constraints \parencite[Prop.~1]{li2025hardflow}. The optimisation runs only in the later sampling
+constraints when the terminal projection is feasible \parencite[Prop.~1]{li2025hardflow}. The optimisation runs only in the later sampling
 steps, where the prediction \eqref{eq:method:hf:post} is accurate \parencite{li2025hardflow}.
 \eqref{eq:method:hf:ref}--\eqref{eq:method:hf:pull} are the steps of
 \parencite[Alg.~1]{li2025hardflow}, written in the notation of this thesis.
@@ -2025,7 +2031,7 @@ imposed where the plan already exists.
   goal region, the solid grey curve the path already executed and the dashed grey curve its
   continuation. Columns are every second step of a ten-step solver, and the policy replans, so the
   panels are one planning instance of an episode. Figure reproduced, unaltered, from
-  \parencite[Fig.~11]{li2025hardflow} under the Creative Commons Attribution~4.0 licence; the task,
+  \parencite[p.~22, Fig.~11]{li2025hardflow} under the Creative Commons Attribution~4.0 licence; the task,
   the constraint set and the run are the source's.}
   \label{fig:hardflow-generation}
 \end{figure}
@@ -2042,32 +2048,24 @@ quadratic proximity term whose minimiser does not depend on its weight, so
 \begin{equation}\label{eq:method:hf:ours}
   \hat{\vect{x}}_{1}^{\star} = \proj{\mathcal{Z}_{f}}\!\left(\bar{\vect{x}}_{1}\right),
 \end{equation}
-the projection of \autoref{sec:method:proj} applied to the predicted final sample. Constraints and
-solver are those of iterate projection, and only the point of projection differs; the factor
-$\ftime_{k+1}$ in \eqref{eq:method:hf:pull} damps the early steps. Each guided step evaluates the
-network twice, in \eqref{eq:method:hf:ref} and \eqref{eq:method:hf:pred}.
-\autoref{tab:hardflow-setup} lists the configuration.
+the projection of \autoref{sec:method:proj} applied to the predicted final sample.
+For instantaneous-velocity matching, the field in \eqref{eq:method:hf:ref} and
+\eqref{eq:method:hf:pred} is $\vfield_{\theta}$. For the two average-velocity models, both steps
+query $\afield_{\theta}(\vect{x},\ftime,0)$, the learned zero-interval proxy for instantaneous
+velocity. This differs from the finite-interval query of \eqref{eq:method:engine:mfsample}; the
+comparison therefore concerns the implemented sampling and projection procedures on a fixed
+checkpoint.
 
-\begin{table}[htpb]
-  \caption[Configuration of endpoint projection]{Configuration of endpoint projection in this thesis.}
-  \label{tab:hardflow-setup}
-  \centering
-  \begin{tabular}{ll}
-    \toprule
-    plan length               & $8$ steps \\
-    actions executed per plan & $1$ \\
-    step budget $\nfe$        & $1$--$20$ \\
-    solver                    & SLSQP \parencite{kraft1988software} \\
-    dynamics rows             & Euler, $t\sidx{s}=1$, \eqref{eq:method:dpcc:euler} \\
-    terminal cost $C$         & none \\
-    activation                & second half of the steps, $\eta = 0.5$ \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-\srcnote{\texttt{flow\_matcher\_v3\_meanflow/sampling/hardflow\_projection.py:1--40} (mode
-\texttt{hardflow\_new}, steps \eqref{eq:method:hf:ref}--\eqref{eq:method:hf:pull} with $C\equiv0$);
-\texttt{config/avoiding-d3il.py:318}; per-timestep replanning in
-\texttt{aux\_repo/dpcc/scripts/eval.py:203--241}.}
+Each active nonterminal step adds the lookahead evaluation in \eqref{eq:method:hf:pred} to the
+Euler evaluation. The terminal step skips this lookahead because its coefficient is zero. Hence,
+for each candidate under this Euler sampler,
+\begin{equation}\label{eq:method:hf:nfe}
+  \mathrm{NFE}=\nfe+n\sidx{guide},
+\end{equation}
+where $n\sidx{guide}$ is defined below. The task-specific budgets and activation thresholds are
+specified in \autoref{sec:setup:protocol}.
+\srcnote{\texttt{flow\_matcher\_v3\_meanflow/sampling/hardflow\_projection.py:838--863,955--998}:
+zero-interval field for transport and lookahead; no terminal lookahead.}
 
 \subsection{Steps at Which Projection Guides Sampling}\label{sec:method:degenerate}
 
@@ -2086,16 +2084,16 @@ not guide the sampler. The \emph{guiding step count} is
   \;=\; \max\!\left\{\nfe - \left\lfloor(1-\eta)\nfe\right\rfloor,\;1\right\} - 1 .
 \end{equation}
 It depends on the step budget and the threshold together, so two configurations with the same step
-budget and different thresholds can differ in it. Its value decides what a result can show:
+budget and different thresholds can differ in it. The cases are:
 
 \begin{center}
 \begin{tabularx}{\linewidth}{lLL}
   \toprule
   $n\sidx{guide}$ & what runs & what a result supports \\
   \midrule
-  $0$     & projection of the final sample only        & no statement about endpoint projection \\
-  $1$     & one guided step before the final one       & no attributable effect \\
-  $\ge 2$ & guided steps, each followed by a later step & a statement about the method \\
+  $0$     & projection of the final sample only        & terminal-projection behaviour \\
+  $1$     & one guided step before the final one       & effect of a single guiding step \\
+  $\ge 2$ & several nonterminal guiding steps          & repeated guidance during sampling \\
   \bottomrule
 \end{tabularx}
 \end{center}
@@ -2106,12 +2104,10 @@ sample extrapolates at that step.
 \srcnote{\texttt{flow\_matcher\_v3\_meanflow/sampling/hardflow\_projection.py:584--646}
 (\texttt{hardflow\_step\_budget}, \texttt{hardflow\_regime}); artefact token \texttt{n\_genuine}.}
 
-\subsubsection*{Reporting rule}
-
-Results with $n\sidx{guide} = 0$ are excluded from every statement about endpoint projection; results
-with $n\sidx{guide} = 1$ are marked as carrying no attributable effect; neither is averaged with other
-results. The endpoint-projection results at small step budgets and $\eta = 0.5$ with
-$n\sidx{guide} \le 1$ are listed in \autoref{sec:res:constraints:degenerate}.
+A configuration with no guiding step evaluates terminal projection. One guiding step can already
+change the state queried by the next field evaluation; it is a guided configuration, with evidence
+limited to that single correction. The results identify the step budget and threshold so that these
+cases remain distinguishable (\autoref{sec:res:constraints:degenerate}).
 
 \subsection{Candidate Selection}\label{sec:method:selection}
 
@@ -2126,17 +2122,23 @@ which is the convention the two rules were proposed against.
 
 \subsubsection*{The three selection rules}
 
-Written out, the three rules are
+Let $\vect{o}^{j}_{t:t+H-2|t}$ be the unnormalised observation blocks in candidate $j$.
+The previous selected plan ends at $t+H-2$, so temporal consistency compares only this shared
+segment, excluding the action channels. With one-based candidate indices, the rules are
 \begin{equation}\label{eq:method:sel:rules}
-  i\sidx{rand}(t) \sim \Unif\{1,\dots,B\},
-  \quad
-  i\sidx{tc}(t) = \arg\min_{j}\left\|\vect{x}^{j}_{t:t+H-1|t} - \vect{x}^{i(t-1)}_{t:t+H-1|t-1}\right\|_{2},
-  \quad
-  i\sidx{cc}(t) = \arg\min_{j}\sum_{k} c_{\mathcal{Z}_{f}}\!\left(\tilde{\vect{x}}^{k,j}\right),
+\begin{aligned}
+  i\sidx{rand}(t)&=1,\\
+  i\sidx{tc}(t)&=\arg\min_j\left\|\vect{o}^{j}_{t:t+H-2|t}
+                -\vect{o}^{i(t-1)}_{t:t+H-2|t-1}\right\|_2,\\
+  i\sidx{cc}(t)&=\arg\min_j\sum_k c_{\mathcal{Z}_f}(\tilde{\vect{x}}^{k,j}).
+\end{aligned}
 \end{equation}
-with $\tilde{\vect{x}}$ the pre-projection iterate. With a single candidate, $B=1$, all three rules
-return the same index and are the same computation, so \autoref{ch:results} compares them only for
-$B>1$.
+The random rule takes the first unranked stochastic candidate. At the first control step, temporal
+consistency also falls back to that candidate because no previous plan exists. The quantity
+$\tilde{\vect{x}}$ is the pre-projection proposal used for the projection-cost score. With $B=1$,
+all three rules select the sole candidate.
+\srcnote{\texttt{diffuser/sampling/policies.py:54--76}; candidate zero in the implementation,
+current \texttt{observations[:,:-1,:]} versus previous \texttt{observations[:,1:,:]}.}
 
 % =============================================================================
 %  ENVIRONMENTS
@@ -2160,9 +2162,9 @@ are listed with the experimental setup in \autoref{sec:setup:tasks}.
 Two constraint forms recur. A halfspace, given by a boundary line and the side to be excluded, is the
 linear row
 \begin{equation}\label{eq:method:env:halfspace}
-  \vect{n}\trans\vect{p}_{i} \le d ,
+  \vect{n}\trans\vect{p}_{i} \le d\sidx{obs} ,
 \end{equation}
-with unit normal $\vect{n}$ and offset $d$. A circular keep-out region with centre $\vect{o}$ and radius
+with unit normal $\vect{n}$ and offset $d\sidx{obs}$, distinct from the plan width $d$. A circular keep-out region with centre $\vect{o}$ and radius
 $\rho$ is the quadratic row
 \begin{equation}\label{eq:method:env:disk}
   \left\|\vect{p}_{i}-\vect{o}\right\|_{2}^{2} \ge \rho^{2},
@@ -2248,41 +2250,106 @@ $(x,y)$, plus \texttt{action\_bounds: 'auto'}.}
 
 The vehicle is the Skydio X2 from MuJoCo Menagerie \parencite{zakka2022menagerie}, copied verbatim and
 patched only to spawn level and to drop an unused sensor block and keyframe, and simulated in MuJoCo
-\parencite{todorov2012mujoco}. Everything around the vehicle was built for this thesis: the scenes,
-their constraint sets, the expert demonstrations and the control loop of \autoref{sec:method:deployment}.
-Four static scenes include the vehicle: an empty scene, a corridor between two parallel walls, an
-s-curve of two offset corridor segments, and a field of six cylindrical pillars. Walls and pillars are passive rigid bodies and do not change the dynamics of the
-vehicle. The plan stacks action, commanded position, measured position and measured velocity
-(\autoref{tab:embodiments}), and its six dynamics rows anchor the commanded and the measured position as
-in \eqref{eq:method:dep:varows}.
+\parencite{todorov2012mujoco}. Walls and pillars are passive rigid bodies and do not change the dynamics
+of the vehicle. Three scenes are flown, and they are two constructions rather than three instances of
+one. UAV-corridor and UAV-s-curve plan in three dimensions with a planner trained on flights in those
+scenes. UAV-pillars flies the planner of the obstacle-avoidance benchmark, unchanged, in that
+benchmark's obstacle field scaled up around the vehicle.
 
-The constraint set of each scene combines four families:
+\subsubsection*{UAV-corridor and UAV-s-curve: the spatial plan}
+
+On these two scenes the plan stacks action, commanded position, measured position and measured velocity
+(\autoref{tab:embodiments}, $d = 12$), a plan is queried every third physics step
+\eqref{eq:method:dep:multirate}, and the six dynamics rows anchor the commanded and the measured position
+as in \eqref{eq:method:dep:varows}. The corridor is two parallel walls; the s-curve is two offset corridor
+segments joined by a diagonal passage. The constraint set of each combines four families:
 \begin{itemize}
   \item a workspace box $\vect{p}\sidx{min}\le\vect{p}_{i}\le\vect{p}\sidx{max}$ bounding extent and
     altitude;
-  \item wall halfspaces \eqref{eq:method:env:halfspace} on the corridor and on the s-curve, where each
-    wall applies only over the $x$-interval $[x\sidx{a},x\sidx{b}]$ of its segment,
+  \item wall halfspaces \eqref{eq:method:env:halfspace}, each existing only over the span
+    $[x\sidx{a}^{w},x\sidx{b}^{w}]$ of $x$ that its wall occupies. At every replan the projection receives
+    the walls whose span contains the vehicle's current $x$ --- the measured position, or the commanded one
+    where the geometry is bound to the setpoint --- and applies them to every step of the horizon,
     \begin{equation}\label{eq:method:env:switched}
-      p_{i,x}\in[x\sidx{a},x\sidx{b}] \;\Rightarrow\; \vect{n}\trans\vect{p}_{i} \le d ;
+      \mathcal{W}(x) = \left\{\,w \;\middle|\; x \in [x\sidx{a}^{w},x\sidx{b}^{w}]\,\right\},
+      \qquad
+      \vect{n}_{w}\trans\vect{p}_{i} \le d_{w}
+      \quad \forall\, w \in \mathcal{W}(x_{t}),\ \forall\, i ,
     \end{equation}
-  \item keep-out disks \eqref{eq:method:env:disk} for the pillars, for the free ends of the corridor
-    walls and for the inner corners of the s-curve;
-  \item the action bound.
+    so a wall the horizon will only reach later enters at the replan that reaches it;
+  \item keep-out disks \eqref{eq:method:env:disk} at the free ends of the corridor walls and at the
+    inner corners of the s-curve;
+  \item the action bound, on the s-curve; the corridor leaves the action unconstrained and binds its
+    geometry to the commanded position as well as to the measured one (\autoref{sec:setup:protocol}).
 \end{itemize}
-Walls and disks are inflated by the vehicle's \emph{rotor reach} $r\sidx{b}$ --- the largest distance
-from the centre to a rotor tip along a body axis --- so that a plan drawn for the vehicle's centre
-keeps its body clear. That offset is carried by every surface in every geometry, and it is not the
-tightening \eqref{eq:method:dpcc:tighten}: the two are separate quantities, applied for separate
-reasons, and only the tightening is varied as an experimental factor. The empty scene carries no constraints and serves as the unconstrained reference.
-\srcnote{\texttt{config/uav\_projection.yaml}: \texttt{corridor\_hg}, \texttt{pillars\_hg},
-\texttt{s\_curve\_hg} (\texttt{inflation.r\_drone} and the per-scene \texttt{planning\_inflation}
-that overrides it for the planner, per-segment \texttt{x\_active}); model
+The test-time constraints of the corridor are two further halfspaces, evaluated one at a time as the
+geometries of obstacle avoidance are, and both leave the horizontal plane. The first is a boundary that
+crosses the corridor obliquely and is leaned out of the vertical, so that its normal $\vect{n}$ has a
+component along $z$ and the room it leaves changes with altitude. The second is a roof: two halfspaces
+in the $x$--$z$ plane that rise to a ridge and fall again, each over its own span of $x$, in the form of
+\eqref{eq:method:env:switched}. The demonstrations were flown in the level corridor before either
+boundary existed. The dimensions of every scene and boundary are listed in \autoref{sec:setup:tasks}.
+
+Every wall, plane, roof and disk of these two scenes is moved outward by the vehicle's \emph{rotor
+reach} $r\sidx{b}$ before the projection sees it --- the distance from the centre to the rim of a rotor
+disk along a body axis, with the vehicle at zero yaw and every approach in these scenes lateral --- so
+that a plan for the vehicle's centre is a plan for the vehicle under that assumption. The offset is
+carried in every geometry, and it is not the tightening \eqref{eq:method:dpcc:tighten}: the two are
+separate quantities, and only the tightening is what the tightened variant of a geometry changes.
+\srcnote{\texttt{config/uav\_projection.yaml}: \texttt{corridor\_v3\_tilt} (the sloping halfspace with
+\texttt{z\_lean}), \texttt{corridor\_v3\_ablation\_hump} (two \texttt{plane: xz} halfspaces, each with
+\texttt{x\_active}), \texttt{s\_curve\_hg}; \texttt{planning\_inflation.r\_drone: 0.31} per scene, which
+switches the file-level \texttt{margin\_base} pad off for the planner; \texttt{enlarge\_constraints:
+0.025} for the tightened variants. Wall selection per replan:
+\texttt{mix\_uav\_test/eval\_mix\_uav.py:1482--1485} (\texttt{x\_active} filter) and \texttt{:1826--1837}
+(rebuilt from \texttt{p[0]}, or \texttt{p\_des[0]} for the \texttt{-pdes} stack the corridor uses). Model
 provenance in \texttt{Methodology\_Sources/AUX\_uav\_model\_and\_scenes.md}.}
 
-\subsubsection*{Expert demonstrations}
+\subsubsection*{UAV-pillars: the obstacle-avoidance planner flown}
 
-The demonstrations are generated in two layers: a geometric reference trajectory, and its execution
-by the cascaded geometric tracking controller of \autoref{sec:method:geometric} in the MuJoCo scene.
+This scene changes the plant and nothing else. The obstacle field of \autoref{sec:method:env:avoiding}
+is scaled by a factor $s$, turned by a quarter turn into a horizontal arena, and its six posts are
+extruded into pillars; the three test-time constraint geometries of that benchmark are mapped into the
+arena by the same similarity map. The factor is chosen so that the rod's radius on the table maps onto
+the vehicle's radial rotor reach, and that is how the vehicle's extent enters: no offset is added to the
+mapped surfaces. Writing $(x\sidx{a},y\sidx{a})$ for a point on the table and $(X,Y,Z)$ for a point in
+the arena,
+\begin{equation}\label{eq:method:env:pillarsmap}
+  X = s\,(y\sidx{a}-y_{0}),
+  \qquad
+  Y = -s\,(x\sidx{a}-x_{0}),
+  \qquad
+  Z = z\sidx{fly},
+\end{equation}
+with $(x_{0},y_{0})$ the centre of the field and $z\sidx{fly}$ a fixed flying altitude.
+
+The planner, its plan, its observation, its projection and its constraint rows are those of the table:
+the $d = 6$ layout of \autoref{tab:embodiments}, the planar increment, the four dynamics rows, and the
+halfspaces and keep-out disk of the geometry in the table's own coordinates. The loop of
+\autoref{sec:method:setpoint} runs unchanged, and only the plant behind \eqref{eq:method:dep:setpoint}
+differs. Each commanded position is mapped into the arena by \eqref{eq:method:env:pillarsmap} and handed
+to the cascaded geometric controller of \autoref{sec:method:geometric} as a setpoint; the controller's
+vertical loop holds $z\sidx{fly}$, because the plan carries no altitude, and its reference slides towards
+the setpoint at a bounded speed for one control period, without velocity feed-forward. The vehicle's
+measured position is then mapped back to the table by the inverse of \eqref{eq:method:env:pillarsmap}
+and becomes the measured half of the next observation. A contact with a pillar ends the episode as a
+failure, as the rod's contact with a post does on the table. The scene has no demonstrations of its own:
+its planner is trained on the human demonstrations of D3IL-avoiding, and what the scene measures is the
+difference between two plants executing the same plans.
+\srcnote{\texttt{uav\_avoiding\_bridge/frame.py} (\texttt{SCALE} $36$, \texttt{ORIGIN\_A} $(0.5,\,0.035)$,
+\texttt{ALTITUDE} $1.0$\,m, \texttt{ROD\_RADIUS\_A} $0.01 \to$ \texttt{DRONE\_REACH\_M} $0.36$,
+\texttt{to\_world\_xy} / \texttt{to\_avoiding\_xy}); \texttt{plant.py} (\texttt{UavAvoidingPlant.track}:
+\texttt{control\_hz} $1$, i.e.\ $100$ physics steps of $0.01$\,s per setpoint, reference rate-limited to
+\texttt{v\_max} $1$\,m/s, \texttt{feedforward=False}, contact terminates); \texttt{factory.py}
+(\texttt{FMPCC\_AVOIDING\_PLANT=uav} swaps the plant inside the avoiding evaluation scripts);
+\texttt{scene.py} $\to$ \texttt{scene\_avoiding\_pillars\_s36.xml}. Scene of record since v3.68; the
+earlier pillar scene with its own flown demonstrations is not used.}
+
+\subsubsection*{Expert demonstrations of the corridor and the s-curve}
+
+The demonstrations of these two scenes are generated in two layers: a geometric reference trajectory,
+and its execution by the cascaded geometric tracking controller of \autoref{sec:method:geometric} in the
+MuJoCo scene.
 
 The reference of an episode is built from a chain of waypoints. The waypoints fix on which side of each
 obstacle the path passes; in scenes with several such classes, the classes are cycled across episodes.
@@ -2305,14 +2372,14 @@ so the reference is at rest only at its start and its end. Its velocity and acce
 \end{equation}
 are the feed-forward terms of \eqref{eq:method:dep:outer}; $\vect{p}\sidx{path}''$ vanishes on the segments
 and is the centripetal term on the arcs. The altitude and the duration are drawn at random per
-episode, together with the start and end points in the empty scene, a small lateral offset of the start
-in the centre lane of the corridor, and a small lateral offset of the whole path in the s-curve.
+episode, together with a small lateral offset of the start in the centre lane of the corridor and a
+small lateral offset of the whole path in the s-curve.
 
 The vehicle starts level and at rest, and the controller tracks
-\eqref{eq:method:env:uavref}--\eqref{eq:method:env:uavrefderiv} at the physics step $\Delta t\sidx{phys}$. An episode is discarded if the vehicle is in
-contact with an obstacle for more than a scene-specific fraction of its steps, or if it falls below a
-minimum altitude. The accepted rollouts are recorded at the planning interval, every $n\sidx{dec}$-th
-physics step of \eqref{eq:method:dep:multirate}, as
+\eqref{eq:method:env:uavref}--\eqref{eq:method:env:uavrefderiv} at the physics step $\Delta t\sidx{phys}$.
+An episode is discarded if the vehicle is in contact with an obstacle for more than a scene-specific
+fraction of its steps, or if it falls below a minimum altitude. The accepted rollouts are recorded at the
+planning interval, every $n\sidx{dec}$-th physics step of \eqref{eq:method:dep:multirate}, as
 \begin{equation}\label{eq:method:env:uavdata}
   \vect{o}_{j} = \left(\vect{p}\sidx{des}(t_{j}),\;\vect{p}(t_{j}),\;\dot{\vect{p}}(t_{j})\right),
   \qquad
@@ -2322,17 +2389,19 @@ physics step of \eqref{eq:method:dep:multirate}, as
 \end{equation}
 the form of \eqref{eq:method:dep:setpoint}--\eqref{eq:method:dep:obs}. The action is the increment of
 the reference, not an output of the controller: the generative model learns to plan the reference,
-and at deployment the same controller tracks it.
-\srcnote{Reference: \texttt{uav\_expert\_data\_collect/trajectories.py} (\texttt{pillar\_path},
-\texttt{corridor\_path}, \texttt{s\_curve\_scene\_path}, \texttt{empty\_path}),
-\texttt{uav\_env\_test/trajectories.py:67--90} (\texttt{traverse\_line}) and \texttt{:114--}
-(\texttt{blended\_path}, circular arcs, centripetal term). Execution and rejection:
+and at deployment the same controller tracks it. The corridor's two test-time boundaries did not exist
+when its demonstrations were flown, so, as on the obstacle-avoidance benchmark, the constraints the
+projection enforces are constraints the data does not satisfy.
+\srcnote{Reference: \texttt{uav\_expert\_data\_collect/trajectories.py} (\texttt{corridor\_path},
+\texttt{s\_curve\_scene\_path}), \texttt{uav\_env\_test/trajectories.py:67--90} (\texttt{traverse\_line})
+and \texttt{:114--} (\texttt{blended\_path}, circular arcs, centripetal term). Execution and rejection:
 \texttt{uav\_expert\_data\_collect/generator.py} (\texttt{run\_trial}, \texttt{\_build\_traj\_and\_init},
 \texttt{SCENE\_MAX\_CONTACT\_FRACTION}, \texttt{Z\_FLOOR\_MARGIN}); homotopy cycling in
 \texttt{collect.py}. Recording: \texttt{dataset\_writer.py} (\texttt{\_downsample}, stride 3;
-\texttt{actions = np.diff(targets)}). The per-episode offset on \texttt{targets} is not stated: it is
-added before the difference and cancels in it, and \texttt{obs} is built from the un-offset
-reference. Values of $r\sidx{f}$, thresholds and ranges belong to \autoref{sec:setup:data}.}
+\texttt{actions = np.diff(targets)}). The per-episode offset on \texttt{targets} is added before the
+difference and cancels in it, and \texttt{obs} is built from the un-offset reference. Values of
+$r\sidx{f}$, thresholds and ranges belong to \autoref{sec:setup:data}; the corridor with the sloping
+plane and the roof reuses the level corridor's demonstrations and models (v3.68).}
 
 % =============================================================================
 % CHAPTERS 5-8: BONE ONLY -- DELIBERATELY NOT WRITTEN

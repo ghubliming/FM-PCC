@@ -1,0 +1,17 @@
+
+Each scene is reported on its own. UAV-pillars is evaluated at the protocol of D3IL-avoiding --- five
+training seeds, two episodes per constraint geometry, averaged per geometry and then over the three
+(\autoref{sec:setup:protocol:avoiding}) --- for the configurations \autoref{ch:results} selects there. UAV-corridor is evaluated with ten flights per configuration, spread
+over its left, centre and right routes, on each of its two constraints separately; its projection constrains the commanded position in addition to the measured one and leaves the
+action unconstrained, a configuration the other two scenes do not use. UAV-s-curve is evaluated in pilot
+runs of ten flights per cell, each model at the budget it is strongest at. Every flight is tracked by the
+cascaded geometric controller with the brake-to-rest velocity setpoint of \autoref{sec:method:geometric};
+the controller comparison of \autoref{sec:res:uav:controller} replaces it by MuJoCo MPC and says so.
+\srcnote{Corridor v3 and pillars v2: \texttt{data\_status/PENDING\_20260923\_uav\_corridor\_v3\_pillars\_v2\_paper\_runs.md}
+(grid, arms, tags \texttt{p23cv3t}/\texttt{p23cv3ah}, \texttt{p23pv2turbo}/\texttt{p23pv2live}); the corridor stack is U16's
+(\texttt{-bounds\_free-pdes-tightened}, \texttt{pid\_stopgo}; the driver flies $n=12$ per cell, $4$ per
+route, because \texttt{eval\_mix\_uav.py} cycles the three routes over the trial index; the DA reads the
+first ten, $4/3/3$ per route --- author, 23-09). Pillars v2: five seeds $\times$ two episodes per geometry
+(author, 23-09, second decision; T5 four seeds as its source cell). S-curve pilots:
+\texttt{batch\_uav\_20260919\_111701}, tags \texttt{u18sc}, \texttt{u7hg}; \texttt{pid\_stopgo} sets
+\texttt{v\_des} $=0$ at each setpoint, \texttt{eval\_mix\_uav.py:1598, 1716--1720}.}

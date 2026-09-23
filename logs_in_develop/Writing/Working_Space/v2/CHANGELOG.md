@@ -14,6 +14,63 @@ Format: what changed · why · what it is sourced from · what it left open.
 
 ---
 
+## v2.27 — 2026-09-23 · agreed audit TODOs applied — ChatGPT (Codex) → [`changelogs/v2.27_20260923_ChatGPT_audit_TODOs.md`](changelogs/v2.27_20260923_ChatGPT_audit_TODOs.md)
+
+Corrected the audited claims, sampling counts, average-velocity equations and consistency loss,
+controller conventions, feasibility statements, projection gates and candidate selection. Completed
+the owned outline, overview/provenance and supported contribution sentences using v3.75 evidence.
+Preserved the v2.26 quadrotor-scene section and all material after Chapter 4 unchanged.
+
+The author's three exclusions are respected: no detailed numerical noise-scale discussion, no
+redundant endpoint settings table, and no loss-monitoring advice. Unrelated prose was not reorganized.
+README and cross-state now describe the current draft. The audit records implementation and the
+author's closure of the reviewer gate.
+
+**Checked:** 163 labels, no duplicate labels or unresolved references; all 53 citations/bibliography
+keys resolve and are used; braces/environments balanced; no holes in owned text. **Not compiled.**
+Code, bibliography, figure assets, v3 and Claude files unchanged; no commit.
+
+**For v3:** next authorized sync must carry the corrected `(x_r,r,h)` convention, valid one-guiding-step
+interpretation and separate K/NFE definitions. `tab:hardflow-setup` removed; new labels are
+`eq:method:engine:afloss`, `eq:method:hf:nfe`, `tab:method-provenance`; FM loss label retained as an alias.
+See `cross_draft/to_v3/FROM_v2_20260923_v2.27_ChatGPT_audit_revision.md`. No sync run here.
+The separate v3.73 manipulator post-contact check remains open, outside the audit TODOs.
+
+**Signed:** ChatGPT (Codex), 2026-09-23.
+
+## v2.26 — 2026-09-23 · the ChatGPT audit answered (no audit fix applied); §1.4 in two stages; §4.6.3 rebuilt for the current quadrotor benchmark → [`changelogs/v2.26_20260923_audit_feedback_contributions_two_stages_uav_scenes_rebuilt.md`](changelogs/v2.26_20260923_audit_feedback_contributions_two_stages_uav_scenes_rebuilt.md)
+
+**Date: 2026-09-23.** Three items from the author.
+- **The audit** (`audit from chatgpt/AUDIT_v2.25_against_v3.70_2026-09-23.md`) was checked finding by
+  finding against the code and v3.71, and answered in a signed §8 at its end: 18 confirmed, 3 with a
+  qualification, none rejected. Two corrections to it: v3 is at v3.71, and F12 stops one file short — the
+  **instantaneous-velocity sampler starts from `0.5·randn` while training uses σ = 1**
+  (`flow_matcher_v3/models/diffusion.py:164` vs `:273–297`), a train/sample mismatch in the FM arm and a
+  prior-scale confound against the two average-velocity models. Nothing from the audit was applied
+  except where the two rewrites below cover it (F02, F15, F20 wording).
+- **§1.4** now reads in two stages: *On the benchmark of DPCC* (1–4) and *Beyond it* (5–6, the models and
+  both projection methods carried into the camera task and the quadrotor). Item 6 rewritten for the
+  current benchmark: pillars = the avoiding planner flown, corridor = the three-dimensional test,
+  s-curve = the controller caveat.
+- **§4.6.3** rebuilt as two constructions: corridor/s-curve keep the twelve-channel plan, the flown
+  demonstrations and the four constraint families (the corridor's leaned plane and roof described as
+  forms); UAV-pillars gets the similarity map `eq:method:env:pillarsmap`, the altitude held by the
+  controller, the mapped setpoint and measured position, contact as failure, and "no demonstrations of
+  its own". `eq:method:env:switched` now states the per-replan wall selection the evaluation runs.
+  `tab:embodiments`' third column is "UAV-corridor, UAV-s-curve" with UAV-pillars in the caption.
+
+**For v3:** 🔴 `flow_matcher_v3/models/diffusion.py:164` — FM is sampled from σ = 0.5 and trained at
+σ = 1; MeanFM/CI-MeanFM and the endpoint sampler run at σ = 1. Chapter 5's sampler description and
+Chapter 7 need it; it is not a silent code fix.
+**For v3:** the endpoint sampler queries the average-velocity head at h = 0 (`hardflow_projection.py:838–863`),
+so on MeanFM/CI-MeanFM the endpoint-vs-per-step cells compare two samplers, not two projection points.
+**For v3:** the baseline's per-step gate (`t <= ηK`) fires 11 times at K=20, η=0.5; the flow gate 10 —
+"the projection methods share the threshold" is true of the value, not of the count.
+**For v3:** F17 — the corridor's K=3 endpoint cells have one guiding step; v2's §4.5.4 rule calls that
+"no attributable effect". Author's decision; my recommendation is to relabel v2's row "limited evidence".
+**For v3:** Chapter 5 should print the UAV-pillars control period (1 s = 100 physics steps per setpoint,
+reference ≤ 1 m/s, no feed-forward) now that Chapter 4 refers to it.
+
 ## v2.25 — 2026-09-21 · seven inbox items closed; translation table re-swept; the quadrotor incentive; the endpoint-projection figure → [`changelogs/v2.25_20260921_inbox_translation_uav_incentive_hardflow_figure.md`](changelogs/v2.25_20260921_inbox_translation_uav_incentive_hardflow_figure.md)
 
 **Date: 2026-09-21.** Six items from the author. The → v2 inbox queue is now **empty**.

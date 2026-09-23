@@ -63,9 +63,9 @@ PANELS = {
     # F1 -- fig:uav-scurve-paths, the companion of tab:uav-controller. Unprojected on
     # purpose: the figure is about the CONTROLLER, so the plan must not be filtered.
     'scurve': ('UAV-s-curve', [
-        ('Sampling-based MPC', 'unprojected plan',
+        ('MuJoCo MPC', 'unprojected plan',
          'uav-s_curve', 'mix_uav_mf', MF, 'Emf_K10_mpc4_mjpc_T0.5_u7hg', 'diffuser'),
-        ('Proportional stop-go', 'unprojected plan',
+        ('Cascaded geometric controller', 'unprojected plan',
          'uav-s_curve', 'mix_uav_mf', MF, 'Emf_K10_mpc4_pid_stopgo_T0.5_u7hg', 'diffuser'),
     ]),
     # F2 -- one panel per model, each under the projection that tab:uav-pillars-best

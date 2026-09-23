@@ -83,6 +83,9 @@ altitude; Table 6.16 r/c/t for both projectors at K ≥ 3; §6.3.5 sentence. DA:
 
 ## 2 · R39 — UAV-pillars v2: the Chapter 6 cells evaluated live with the quadrotor (rev 23-09, author: "real eval, no turbo")
 
+> ✅ **LANDED 2026-09-23** — jobs 26151–26154, 240 flights, complete and clean; analysis of record `DA_in_Paper/analysis/DA_20260923_pillars_v2_live.md`; **read into Chapter 6 at v3.72** (`tab:uav-pillars-raw` air columns, `tab:uav-pillars-geo`, `fig:uav-pillars-paths`). Nothing of R39 is still owed.
+
+
 ### 2.1 What Chapter 6 reads, and therefore what is run
 
 UAV-pillars is the replica of D3IL-avoiding in the air (Ch 5 §5.1): the avoiding obstacle field scaled by 36, the three
@@ -142,26 +145,9 @@ Submit: `bash Slurm_Codes/temp_bash/eval_20260923_p23_pillars_live.sh submit` (r
 - P1 turbo T1–T5 (tag `p23pv2turbo`, `turbo.sh MODE=paper|papergif`) — dropped 23-09 (turbo cannot give a planning number).
 - P2 live L1/L2 of the first draft (MeanFM K1 and diffusion K20, seed 6, tag `p23pv2live`) — replaced by §2.3.
 
-## 4 · R40 — UAV-s-curve: the one datum the controller caveat still lacks (added with v3.68)
+## 4 · UAV-s-curve — moved to its own file (v3.75)
 
-The chapter now reports the s-curve as a caveat with its pilot cells only (MeanFM K10, CI-MeanFM K5, FM K20,
-diffusion K20, unprojected: 4–10 of 10 flights inverted). The author expected the unprojected plan to pass the goal
-line; the corpus says it does not under `pid_stopgo`, while the same MeanFM K10 plans under MuJoCo MPC end 0.30 m from
-the goal and cross the line on 2 of 3 flights (Table 6.18). To close the caveat as a *controller* result and not leave
-"maybe a bug" open, one cheap unprojected pilot:
-
-| # | cell | controller / velocity setpoint | flights | tag |
-| :-- | :-- | :-- | --: | :-- |
-| S1 | MeanFM K10 `diffuser` | `pid` ($v_{des} = \Delta p / \Delta t$, the timing-sensitive default) | 10 | `p23sc` |
-| S2 | MeanFM K10 `diffuser` | `pid_const_v` (unit direction × 0.4 m/s) | 10 | `p23sc` |
-| S3 | the **expert reference** of the same routes tracked by `pid_stopgo` (no network: replay the demonstration setpoints) | brake-to-rest | 10 | `p23sc` |
-| S4 (optional) | FM K20 `diffuser` under `pid` and `pid_const_v` | | 20 | `p23sc` |
-
-Reading: if S1/S2 fly the turns, the caveat is the zero velocity setpoint (as the chapter argues); if S3 also inverts,
-the tracker cannot fly *any* setpoint sequence through the turns without feed-forward and the demonstrations only
-succeeded because they carried it; if S1–S3 all invert, something in the eval loop differs from the collection loop and
-that is a bug to find before anything else is claimed. Cost: ~20 min GPU (unprojected only). `UAV_MIX_CONTROLLER` selects
-the tracker; no projection variant, no other K.
+~~R40~~ (struck v3.71) and ~~R42~~ (the v3.71 s-curve rebuild: grid with MeanFM K10 / CI-MeanFM K5, FM K2 selected, projection and MJPC on FM K2) are **superseded** by [`PENDING_20260923_uav_scurve_R44_raw_first.md`](PENDING_20260923_uav_scurve_R44_raw_first.md) (**R44**, author 23-09: grid K ∈ {1, 2, 20}, diffusion K20; raw grid first, projection and controller only after the author reads it). Nothing s-curve is run from this file.
 
 ## 5 · Issues noticed while writing the 23-09 runbook (for the run agent)
 
@@ -182,7 +168,7 @@ the tracker; no projection variant, no other K.
 | :-- | --: | --: |
 | R33 corridor, C1–C4, **both scenes** | ~22 h | — |
 | R33 corridor, C5 diffusion K20, both scenes | ~2 GPU-days (cut to `t` only: ~16 h) | — |
-| R39 pillars v2, four live jobs (MeanFM / CI-MeanFM × K1, K2; gates done 22-09) | ~4–8 h (4 jobs in parallel, < 2 h each) | — |
-| R40 s-curve controller pilot | ~20 min | — |
+| ~~R39 pillars v2~~ ✅ landed 23-09 (26151–26154) | — | — |
+| ~~R40~~ / ~~R42~~ s-curve → **R44**, own file (PENDING_20260923_uav_scurve_R44_raw_first.md) | — | — |
 
 Claude (Fable 5.1, Claude Code) · 2026-09-23 · specification only; nothing submitted, nothing written into the thesis.

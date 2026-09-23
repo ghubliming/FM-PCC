@@ -6,7 +6,7 @@ Last built **2026-09-23**. Every thesis figure lives in this store; drafts recei
 
 | figure | group | corpus | protocol |
 | :-- | :-- | :-- | :-- |
-| `fig_aligning_projected_tradeoff` | da | `Data_Analysis/analysis_results_checkpoint/15-09/batch_va2_20260915_100754` | seed 6, ten shared enumerated contexts (paired; raw cells with 30 contexts are restricted) | combined_5-tightened, random selection, 10 shared contexts; 5 complete cells at K in (20,); frontier requires at least 9/10 violation-free contexts |
+| `fig_aligning_projected_tradeoff` | da | `Data_Analysis/analysis_results_checkpoint/15-09/batch_va2_20260915_100754` | seed 6, ten shared enumerated contexts (paired; raw cells with 30 contexts are restricted) | combined_5-tightened, random selection, 10 shared contexts; 7 complete cells at K in (20,); frontier requires at least 9/10 violation-free contexts |
 
 ## Vendored — copied from where they were produced
 
@@ -67,6 +67,7 @@ Present in the store but not produced by this run (e.g. a matplotlib figure from
 | `fig_uav_corridor_paths` | `da/fig_uav_corridor_paths.png`, `da/fig_uav_corridor_paths.svg` |
 | `fig_uav_corridor_tradeoff` | `da/fig_uav_corridor_tradeoff.png`, `da/fig_uav_corridor_tradeoff.svg` |
 | `fig_uav_pillars_paths` | `da/fig_uav_pillars_paths.png`, `da/fig_uav_pillars_paths.svg` |
+| `fig_uav_pillars_paths_cimf` | `da/fig_uav_pillars_paths_cimf.png`, `da/fig_uav_pillars_paths_cimf.svg` |
 | `fig_uav_scurve_paths` | `da/fig_uav_scurve_paths.png`, `da/fig_uav_scurve_paths.svg` |
 
 ## Planned — specified in a draft, not yet made
@@ -95,5 +96,6 @@ Present in the store but not produced by this run (e.g. a matplotlib figure from
 | `uav` | yes | blocked | seed 6, n = 10 rollouts |
 | `uav_corridor_v2` | yes | partial | seed 6, 12 flights per configuration (4 per route L/C/R) |
 | `visual_aligning_15_09` | yes | partial | seed 6, ten shared enumerated contexts (paired; raw cells with 30 contexts are restricted) |
+| `visual_aligning_23_09` | yes | partial | seed 6, the same ten shared contexts as visual_aligning_15_09 |
 | `uav_19_09` | yes | partial | seed 6, 12 flights per corridor configuration (4 per route L/C/R) |
 | `uav_pillars_diffusion` | yes | partial | seed 6, 10 flights per configuration |

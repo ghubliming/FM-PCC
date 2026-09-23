@@ -1,0 +1,114 @@
+{
+  "config": {
+    "env_absent": [
+      "MF_REPLAN_STEPS",
+      "MF_FLOW_STEPS",
+      "HFFM_FLOW_STEPS",
+      "HFFM_VARIANTS",
+      "DPCC_THRESHOLD",
+      "MIX_FILM_MODE",
+      "MIX_FILM_MODE_MF",
+      "MIX_FILM_MODE_AF",
+      "MIX_FILM_MODE_FM",
+      "MIX_FILM_MODE_DIFFUSION",
+      "FMPCC_BOX_OBS_GUARD",
+      "FMPCC_BOX_OBS_MAX_OVERLAP_M",
+      "FMPCC_BOX_HALF_SIDE_M",
+      "UAV_MIX_FLOW_STEPS",
+      "UAV_MIX_HF_OFF",
+      "UAV_MIX_BONE_AF",
+      "UAV_MIX_AF_ALPHA_END",
+      "UAV_MIX_EPOCH",
+      "MIX_BONE",
+      "MIX_BONE_MF",
+      "MIX_BONE_AF",
+      "MIX_VIS_PRETRAINED",
+      "MIX_VIS_LR_SCALE",
+      "MIX_VIS_COND",
+      "MIX_TRAIN_STEPS",
+      "MIX_PROJ_T",
+      "MIX_AF_ALPHA_SCHED",
+      "MIX_AF_ALPHA_INIT",
+      "MIX_AF_ALPHA_END",
+      "MIX_AF_ALPHA_CLAMP",
+      "MIX_AF_ALPHA_GAMMA",
+      "MIX_EPOCH",
+      "FMPCC_HF_NLP_BACKEND",
+      "TRAIN_SEEDS",
+      "AUTO_RESUME",
+      "FORCE_OVERWRITE"
+    ],
+    "env_set": {
+      "FMPCC_DPCC_THRESHOLD": "0.5",
+      "FMPCC_PROJ_CFG": "config/meanflow_projection_eval_u18_live.yaml",
+      "FMPCC_RUN_MSG": "p23uavpv2live",
+      "HFFM_ACT_THRESHOLD": "0.5",
+      "HFFM_BATCH": "4",
+      "MF_BACKBONE": "unet",
+      "MF_HORIZON": "8"
+    },
+    "git": {
+      "commit": "0df6df71ba8fc989783bf44b69dc14d51320e612",
+      "dirty": true
+    },
+    "resolved": {
+      "batch_size_dpcc_arms": 4,
+      "checkpoint_horizon": 8,
+      "constraint_types": [
+        "halfspace",
+        "obstacles",
+        "dynamics",
+        "bounds"
+      ],
+      "diffusion_epoch": "best",
+      "diffusion_loadpath": "flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5",
+      "dpcc_threshold": 0.5,
+      "eval_use_ema": true,
+      "exp_name": "plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K2_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live",
+      "flow_steps_K": 2,
+      "halfspace_variants": [
+        "top-right-hard",
+        "top-left-hard",
+        "both-hard"
+      ],
+      "hf_act_threshold": 0.5,
+      "hf_batch_size": 4,
+      "hf_candidate_cost": "prox",
+      "horizon": 8,
+      "imf_backbone": "unet",
+      "max_episode_length": 200,
+      "n_trials": 2,
+      "projection_variants": [
+        "diffuser",
+        "dpcc-t-tightened"
+      ],
+      "replan_steps": 1,
+      "seed": 6,
+      "seeds_in_yaml": [
+        6
+      ]
+    },
+    "role": "eval",
+    "yaml": {
+      "digest": "sha256:51e6d5edcdf3993e5c5e6e516117c0077c3ae4e23196b5e1fc864c7e992a4bbd",
+      "path": "config/meanflow_projection_eval_u18_live.yaml"
+    }
+  },
+  "runtime": {
+    "argv": [
+      "FM_v3_meanflow_test/eval_flow_matching_v3_meanflow.py",
+      "--config",
+      "config/meanflow_projection_eval_u18_live.yaml"
+    ],
+    "cwd": "/data/home/llim/FMPCC/FM-PCC",
+    "python": "3.10.20",
+    "slurm": {
+      "CUDA_VISIBLE_DEVICES": "5",
+      "SLURMD_NODENAME": "i6-gpu-1",
+      "SLURM_JOB_ID": "26152",
+      "SLURM_JOB_NAME": "live_p23_pillars"
+    },
+    "written_at": "2026-09-23 14:54:32"
+  },
+  "schema": "fmpcc.run_provenance/1"
+}

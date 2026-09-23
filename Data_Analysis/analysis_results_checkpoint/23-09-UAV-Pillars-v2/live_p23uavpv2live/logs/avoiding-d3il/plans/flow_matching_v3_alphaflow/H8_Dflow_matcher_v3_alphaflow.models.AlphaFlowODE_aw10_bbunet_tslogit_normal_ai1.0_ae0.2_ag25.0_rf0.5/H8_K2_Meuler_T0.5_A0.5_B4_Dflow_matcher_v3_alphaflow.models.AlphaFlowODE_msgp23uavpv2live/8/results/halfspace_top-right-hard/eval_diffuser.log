@@ -1,0 +1,9 @@
+------------------------Running avoiding-d3il - top-right-hard - diffuser (8) - K=2----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 67.00 +- 9.00
+Avg number of constraint violations: 32.00 +- 1.00
+Avg total violation: 10.213 +- 0.436
+Average computation time per step: 0.019
+Tracking error: 0.025

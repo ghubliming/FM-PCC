@@ -13,9 +13,9 @@ seed into the same directory.
 (plant stats: track_err, gap, contact steps, world path). The **npz results are unaffected** — S&C, violations, steps,
 time, and the drone's executed positions (`obs_all`) are written by the eval itself. Contact vs other early ends can be
 told from `obs_all` (final drone position within 0.36 m × … of a pillar surface in the world frame via `frame.py`), so
-no re-run would have been needed for the table. **They were still PENDING (QOSMaxCpuPerUserLimit), so no cancel was
-needed:** Slurm snapshots only the sbatch script at submit, and fix8 touches no sbatch script — `factory.py` is imported
-from the repo when each job starts. A `git pull` before they start is enough; the ids 26147–26150 stay valid. The 26077 check had the pre-fix5 single-name version (last 40 episodes kept).
+no re-run would have been needed for the table. **They were still PENDING (QOSMaxCpuPerUserLimit); the author cancelled
+them and resubmits after `git pull`** — resubmitted as **26151** (MeanFM K1), **26152** (MeanFM K2), **26153** (CI-MeanFM K1), **26154** (CI-MeanFM K2); runbook §5. (A pull alone would also
+have done: Slurm snapshots only the sbatch script, and fix8 is in `factory.py`, imported at job start.) The 26077 check had the pre-fix5 single-name version (last 40 episodes kept).
 
 ## Fix
 

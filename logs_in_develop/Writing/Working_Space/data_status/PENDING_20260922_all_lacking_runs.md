@@ -5,27 +5,31 @@
 > and its runbook [`SLURM_RUNBOOK_20260923_uav_corridor_v3_pillars_v2.md`](SLURM_RUNBOOK_20260923_uav_corridor_v3_pillars_v2.md)
 > (R33 corridor v3 = two scenes, tilt and hump, paper-only variants, tightened only, tags `p23cv3t` / `p23cv3ah`; **R39** pillars v2 =
 > the four Ch 6 cells evaluated live, tag `p23uavpv2live`, no turbo). The rows below are kept for history and are not to be run from here.
+>
+> **23-09 (v3.75): every UAV-s-curve run item of this ledger (R15, R29, R31, R38, R40) is deleted or struck — the only live s-curve list is [`PENDING_20260923_uav_scurve_R44_raw_first.md`](PENDING_20260923_uav_scurve_R44_raw_first.md) (R44: the raw grid first, projection after the author's choice).**
 
-## NOW — what the thesis is lacking as of 2026-09-23 (v3.68d). Read this table only; everything below is history.
+## NOW — what the thesis is lacking as of 2026-09-23 (checked against the draft at v3.76). Read this table only; everything below is history.
+
+> **Checked 23-09 (v3.76) against every *pending* / *lacking* cell and `\hole` of Ch 5, Ch 6 and the appendix.** The draft's open data cells are exactly **R16** (Table 6.5, three rows), **R36** (Table 6.3, three cells), **R33** (UAV-corridor, every cell; ready 24-09) and **R44** (UAV-s-curve; phase A submitted, jobs 26167–26176). Nothing else in the draft waits on a run; the two appendix holes (total compute, job ids and git revisions) are D8/D9, log analysis without GPU. **The scheduled R16 and R36 specs match the tables** (runbook §6b): R16a–c are exactly Table 6.5's pending rows, on the checkpoints and folder keys of the printed rows; R36a–c are Table 6.3's lacking cells at the rows' own threshold (1.0 at K3, 0.5 at K10), four candidates on both sides, DPCC protocol, tightened. **v3.77:** R36's two K3 cells are moved to seeds 7–10, the printed MeanFM K3 row's seeds, so the K3 block of Table 6.3 is paired on one seed set (R36 🔄 updated; no new run needed). Fig 6.4's two missing points were a plotting fix, done without a run. **Non-run items still open:** the diffusion K2 point in Fig 6.2 `fig:avoiding-tradeoff` (store scripts not promoted) and the two hollow points missing from Fig 6.4 `fig:aligning-projected-tradeoff` (v3.76; the store builder reads CI-MeanFM from the tagged run and skips diffusion) — both DA figure tasks.
 
 | ID | where it shows in the draft | run | GPU |
 | :-- | :-- | :-- | --: |
-| **R39** 🔴 | Ch 6 §6.3.1 UAV-pillars — every *air* cell *pending* | the four Ch 6 cells (MeanFM, CI-MeanFM × K1, K2; `diffuser` + `dpcc-t-tightened`) **evaluated live with the quadrotor, no turbo** (author, 23-09 final), 5 seeds × 2 episodes × 3 geometries, tag `p23uavpv2live` — **23-09 file §2**, submit `eval_20260923_p23_pillars_live.sh` | ~4 GPU jobs, < 2 h each |
+| ~~**R39**~~ ✅ | Ch 6 §6.3.1 UAV-pillars — **landed 23-09 and read into the draft at v3.72** (jobs 26151–26154, 240 flights; `DA_20260923_pillars_v2_live.md`) | — | — |
 | **R33** 🔴 | Ch 6 §6.3.2 UAV-corridor — every cell *pending*, tilt + hump blocks | corridor v3, two scenes, 68 cells each, K20 last — **23-09 file** | ~2 GPU-days |
 | | ↳ **author, 23-09 (v3.69):** the thesis reads **ten flights per cell** (Table 5.10). The driver flies `NTRIALS=12` (U16's 4 per route; `eval_mix_uav.py` cycles routes over the trial index) — the DA takes the **first ten** of each cell, 4/3/3 per route. No resubmission. | | |
-| **R2** 🔴 | Table 6.8 diffusion per-step row *pending* | D3IL-aligning diffusion K20, `combined_5-tightened`, `dpcc-r/c/t`, ten contexts | ~1.5 h |
-| **R37** 🔴 | Table 6.6 all rows *pending* | tightened threshold ladder: MeanFM random rule — per-step K2 η0.5; per-step + endpoint at K100 η0.1 and K100 η0.5 (K10/K20 exist) | ~2 h |
-| **R16** 🟡 | Table 6.5 three rows *pending* | unprojected CI-MeanFM K10; FM K2, K10 | ~1 h |
-| **R35** 🟡 | Table 6.8 CI-MeanFM endpoint block *pending* | `hardflow_new-r/c/t` on CI-MeanFM K20 T0.2 tightened | ~1 h |
-| **R36** 🟡 | Table 6.3 *lacking* cells | avoiding 4-candidate matched: CI-MeanFM + FM at K3, MeanFM K10 (seed 6) | ~2 h |
+| ~~**R2**~~ ✅ | Table 6.8 diffusion per-step row | ✅ **DONE 23-09** — job 26113 (R2fix, η 0.2, tag `_msgR2fix`); 26051's η 0.5 cells are not used. Numbers and reading notes in [`DA_20260923_R2fix_R37_aligning.md`](../../../../Data_Analysis/DA_in_Paper/analysis/DA_20260923_R2fix_R37_aligning.md) §3, §6 **In the draft at v3.76.** | — |
+| ~~**R37**~~ ✅ | Table 6.6 K2 and K100 η0.1 rows | ✅ **DONE 23-09** — K100 η0.1 from job 26115 (R37b); **K2 from Table 6.7's existing cell** (the 15-09 corpus already had it; R37a, job 26114, is a replicate, not the source). K100 η0.5 stays struck. Numbers in [`DA_20260923_R2fix_R37_aligning.md`](../../../../Data_Analysis/DA_in_Paper/analysis/DA_20260923_R2fix_R37_aligning.md) §4 **In the draft at v3.76.** | — |
+| **R16** 🗓 | Table 6.5 three rows *pending* | 🗓 **SCHEDULED 23-09** — FM K2, FM K10, CI-MeanFM K10 unprojected (checked absent from the corpus); driver `Slurm_Codes/temp_bash/pipeline_20260923_must_need.sh`, jobs R16a–c, tag `_msgR16`; runbook §6b | ~30 min |
+| ~~**R35**~~ ✅ | Table 6.8 CI-MeanFM endpoint block | ✅ **NO RUN NEEDED (23-09)** — the cells exist: untagged `…VisualAlphaFlow_…_Eaf_EPlatest`, same checkpoint (`AFAFend0p2`, latest) as the printed per-step rows, `hardflow_sls-r/c/t` tightened, ten contexts. The §23 census looked only at `_msgafon02_s6`. Numbers and the two ways to print them in [`DA_20260923_R2fix_R37_aligning.md`](../../../../Data_Analysis/DA_in_Paper/analysis/DA_20260923_R2fix_R37_aligning.md) §9 **In the draft at v3.76** (option (a): printed per-step block kept, endpoint block from the untagged run, disclosed in the dataref). | — |
+| **R36** 🔄 | Table 6.3 *lacking* cells | 🔄 **UPDATED v3.77** (was 🗓 scheduled 23-09): CI-MeanFM K3 and FM K3 now on **seeds 7–10**, the seeds of the printed MeanFM K3 row (job 25444), so the K3 block is paired on one seed set; MeanFM K10 four candidates stays at seed 6, as the printed K10 rows. Activation 1.0 at K3, 0.5 at K10; both projectors under r/c/t tightened; same driver (`SEEDS_K3`), jobs R36a–c, tag `_msgR36`; runbook §6b | ~1.5–4 h |
 | ~~**R41**~~ ⛔ | ~~the full step-budget grid~~ — **§6.1.2 Step Budget dropped by the author (23-09: Table 6.2 already says it); `tab:k-ladder` archived, nothing to run** | D3IL-avoiding at DPCC's protocol (5 seeds × 3 geometries × 2 episodes, `diffuser` + `dpcc-r/c/t` tightened, 4 candidates, η 0.5): **MeanFM K20; CI-MeanFM (α0.2) K5, K10, K20; FM K5, K10** — evaluations of the existing checkpoints. Optional: **diffusion K5** = five trainings (the job-25965 pattern) + one evaluation | ~3 h eval; +~11 h if diffusion K5 |
 | ~~**R42**~~ ✅ | Tables 6.2 / 6.5 / A.2 — the diffusion $\nfe=2$ ms/step cells: **explained, not re-run** (23-09, §29 addendum) — real, reproducible, the first-step projection | **Re-time** the projected diffusion K2 cells (`dpcc-r/c/t-tightened`, 5 seeds × 3 geos × 2 eps, checkpoints of 26052–26055 + 25965) on a **quiet node**, ideally in the same job as one flow reference cell (FM K2 `dpcc-c-tightened`) so the two arms are timed under the same load. Diagnosis in §29 | ~20 min |
 | **R43** ⚪ optional | §6.1.2.6 caveat — the author's conjecture that flow intermediates project more cheaply than diffusion intermediates at the same step | D3IL-avoiding K2, five seeds, DPCC protocol: (a) FM and MeanFM K2 with the projection window opened to **both** steps (η = 1.0, `dpcc-c-tightened`); (b) diffusion K2 with the gate **excluding** t = 1 (threshold < 0.5, e.g. `FMPCC_DPCC_THRESHOLD=0.4`). Read ms/step against Table 6.2 | ~30 min |
-| **R40** 🟡 | §6.3.3 s-curve guard (the caveat's missing datum) | MeanFM K10 unprojected under `pid` and `pid_const_v`; expert reference under `pid_stopgo` — **23-09 file §4** | ~20 min |
+| **R44** 🔴 | Ch 6 §6.3.3 UAV-s-curve — Table 6.14 four cells *pending (R44a)*; Tables 6.15 and 6.16 *pending* until the author picks the configuration | **the s-curve file** [`PENDING_20260923_uav_scurve_R44_raw_first.md`](PENDING_20260923_uav_scurve_R44_raw_first.md): A raw grid now (MeanFM, CI-MeanFM, FM at K 1/2/20, diffusion K20); B projection and C MuJoCo MPC only after the author reads A | ~1–2 h (A) |
 | ~~**R26**~~ ✅ | Tables 6.1/6.2 diffusion K2 row — **filled in the draft, v3.69** (Figs 6.3/6.4 still without the point: store scripts not promoted) | ✅ **DONE 2026-09-23** — jobs 26052–26055 + 26112, 5 seeds × 3 geos × 2 eps, complete. Numbers in [`DA_20260923_diffusion_K2_five_seeds.md`](../../../../Data_Analysis/DA_in_Paper/analysis/DA_20260923_diffusion_K2_five_seeds.md) | — |
 
 **Struck / no longer used** (kept below for history): R23 (pillars_xl, abandoned), R30, R32 (corridor v2 / pillars_hg
-twins), R31 (s-curve K ladder), R34 (folded into R37), R38 (s-curve projected, optional), R7/R14 (replaced by R36),
+twins), R31 (s-curve K ladder), R34 (folded into R37), R38 (s-curve projected — deleted, v3.75), R40 (s-curve controller pilots — struck v3.71), R7/R14 (replaced by R36),
 R9 (unit-scale noise — nothing claims it), R15 (MJPC ten flights — the caveat is a demo), R17 (repeat runs),
 R27 (endpoint on diffusion is not defined), R28 (not owed). The corridor-v2 and pillars_hg corpora are archived.
 
@@ -98,8 +102,8 @@ wall-clock: queue time and the 24 h `--time` cap are not in it.
 | **R39** | 🔴 **23-09 file §2** | UAV-pillars v2 (Gen15 U18): the four Ch 6 cells evaluated live (Mode L) at the table's protocol; turbo T1–T5 and the first-draft live cells dropped (author, 23-09); tag `p23uavpv2live` | no | 4 GPU jobs |
 | **R35** | 🟡 | D3IL-aligning: endpoint projection on CI-MeanFM at K = 20, tightened, r/c/t (Table 6.8 block) | no | ~1 h |
 | **R36** | 🟡 | D3IL-avoiding: matched four-candidate endpoint-vs-per-step at K = 3 for CI-MeanFM and FM, and MeanFM at K = 10 with four candidates, seed 6 (Table 6.3 *lacking* cells) | no | ~2 h |
-| **R37** | 🔴 | D3IL-aligning **tightened threshold ladder** (Table 6.6, now blank): MeanFM, random rule, `combined_5-tightened`: per-step at K2 η0.5 (no endpoint there — no guiding step), per-step + endpoint at K100 η0.1 and K100 η0.5; the K10/η0.4 and K20/η0.2 cells exist tightened (Table 6.7) | no | ~2 h (the η0.5 K100 pair dominates) |
-| ~~R38~~ | ⚪ optional (v3.68) | tightened s-curve projected cells — not needed for the caveat; run only with spare capacity | no | ~4 h |
+| **R37** | 🔴 | D3IL-aligning **tightened threshold ladder** (Table 6.6): MeanFM, random rule, `combined_5-tightened`: **R37a** per-step at K2 η0.5 (no endpoint there — no guiding step), **R37b** per-step + endpoint at K100 η0.1 — both submitted 23-09 (26114/26115). The K10/η0.4 and K20/η0.2 cells exist tightened (Table 6.7) and are printed. ~~**R37c** K100 η0.5~~ **struck by the author 23-09** ("clearly not possible"): ~17 h per item / 33.8 h with the plain twin; §6.2.2 prices it by rule of thumb from the K10/K20 per-solve costs | no | ~6 h (R37a + R37b) |
+| ~~R38~~ | ⛔ deleted (v3.75) | s-curve projected cells → projection is flown only on the configuration the raw grid selects: **R44b** in [`PENDING_20260923_uav_scurve_R44_raw_first.md`](PENDING_20260923_uav_scurve_R44_raw_first.md) | — | — |
 | ~~R34~~ | folded into R37 | endpoint at η = 0.5, K = 100 is now one of R37's pairs | — | — |
 | **R26** | 🟡 | D3IL-avoiding: five-seed diffusion $\nfe=2$ | **4 trainings** | ~11 h (training) + 15 min |
 | **R16** | 🟡 widened at v3.62, narrowed at v3.63, **narrowed again at v3.66 (K = 1 dropped)** | D3IL-aligning, the unprojected ladder $\nfe\in\{2,10,20,100\}$ for the **three flow-based models**: the **three** cells `tab:va-models` prints as *pending* — CI-MeanFM 10; FM 2, 10 (§20, §23). ~~Diffusion at 1, 2, 10~~ struck: the author removed every diffusion row but $\nfe=20$ from Table 6.5 (v3.63, third round) | no | ~2 h (6 evaluations) |
@@ -109,7 +113,7 @@ wall-clock: queue time and the 24 h `--time` cap are not in it.
 | ~~R15~~ | ⛔ the caveat is a demo — struck 23-09 | UAV-s-curve: MuJoCo MPC at ten flights instead of three | no | 30 min unprojected / ~6.5 h projected |
 | ~~R30~~ | ⛔ superseded (23-09) | corridor-v2 diffusion twin — the v2 corpus is archived (v3.66); the corridor is R33 in the 23-09 file | — | — |
 | ~~R32~~ | ⛔ superseded (23-09) | `pillars_hg` K = 1 rows — the pillars scene is flawed/disabled (v3.65) and is replaced by pillars v2, **R39** in the 23-09 file | — | — |
-| ~~R31~~ | ⛔ struck (v3.68) | the s-curve K ladder is no longer printed; the scene is a controller caveat with its pilot cells (Table 6.14). Any further s-curve run is R40 in the 23-09 file | — | — |
+| ~~R31~~ | ⛔ struck (v3.68) | the s-curve K ladder is no longer printed; the scene is a controller caveat with its pilot cells (Table 6.14). Every s-curve run is R44 in [`PENDING_20260923_uav_scurve_R44_raw_first.md`](PENDING_20260923_uav_scurve_R44_raw_first.md) (v3.75) | — | — |
 | ~~**R29**~~ | ⬜ **superseded by R31** (v3.61) | UAV-s-curve: matched-budget switched-wall re-run — the matched grid of R31 contains it | — | — |
 | D10c | 🟡 | Box-pose logging, then re-evaluation of MeanFM $\nfe=20$ | no | ~1 h + a logging change |
 | D11 | 🟢 | Matched full executed-step timing on D3IL-avoiding, for a total-time frontier | no | ~3 h + instrumentation |
@@ -164,7 +168,7 @@ which the pillars runbook's own measurements do not support. It is withdrawn, no
 | **R7** | 🟡 | D3IL-avoiding: candidate-matched endpoint versus per-step projection, five seeds $\times$ twenty episodes | no | replaces the provisional four-seed, two-episode result |
 | **R14** | 🟡 | D3IL-avoiding: repeat the endpoint budget ladder with the same candidate count for both projectors | no | removes the confound from `tab:hf-ladder` |
 | **R9** | 🟡 | re-evaluate FM with unit-scale initial noise in D3IL-avoiding, D3IL-aligning and UAV-corridor | no | tests the known prior-scale flaw; alignment and UAV conclusions may move |
-| **R15** | 🟡 | UAV-s-curve: MuJoCo MPC for ten flights instead of three | no | strengthens `tab:uav-controller` |
+| ~~R15~~ | ⛔ deleted (v3.75) | UAV-s-curve MuJoCo MPC → **R44c** in [`PENDING_20260923_uav_scurve_R44_raw_first.md`](PENDING_20260923_uav_scurve_R44_raw_first.md) (ten flights, on the selected configuration) | no | — |
 
 **R25 exact scope.** Evaluate seeds 6--10, three geometries, twenty episodes per seed and geometry,
 tightened constraints, four candidates, rules $r$, $c$ and $t$, at $\nfe=1,2$. No training is needed.
@@ -1069,3 +1073,8 @@ The author read Table 6.2 and rejected the diffusion $\nfe=2$ projected time (19
 - **Thesis:** numbers stand in Tables 6.2 / 6.5 / A.2; §6.1.1 carries the explanation paragraph; the cost factor against
   the cheapest diffusion configuration is 12×, stated without a bound. R42 struck.
 
+
+**§27, second addendum (23-09) — R2 and R37 are closed.** Jobs 26113 (R2fix), 26114 (R37a) and 26115 (R37b)
+completed and verified; DA in [`DA_20260923_R2fix_R37_aligning.md`](../../../../Data_Analysis/DA_in_Paper/analysis/DA_20260923_R2fix_R37_aligning.md). **Ledger error recorded there (§6.5):** §24 listed the $\nfe=2$ tightened
+per-step pair as new, but Table 6.7 already printed it, so Table 6.6's $\nfe=2$ row takes that cell and R37a stands
+as a replicate — the first measurement of run-to-run variation on alignment (one context, 3 cm, 0.5 % in time).

@@ -1,0 +1,27 @@
+
+All results use one training seed (\autoref{sec:setup:protocol:uav}). Every generative model is a temporal U-Net with $3.96$--$3.97$\,M
+parameters, trained with the same optimiser settings (\autoref{tab:train}), and every flight is tracked by
+the cascaded geometric controller with brake-to-rest setpoints unless stated otherwise. The diffusion model
+is trained at $\nfe=20$ and is compared at the budget it was trained with.
+
+\emph{Brake-to-rest} is the third of three velocity-setpoint policies the tracker accepts, and it is the
+only one of them that a learned planner can supply honestly. The tracker wants a position setpoint, a
+velocity feedforward and an acceleration feedforward; the demonstrations were flown with all three, taken
+as analytic derivatives of the reference curve. A planner emits none of them --- it emits one position
+increment per control step --- so the velocity feedforward has to be manufactured, and the two ways of
+manufacturing it each inject an error the planner cannot control. Dividing the increment by the planning
+interval makes the commanded speed a function of how long inference happened to take, so latency jitter
+is fed straight into the tracker. Fixing the speed at a constant magnitude in the direction of the
+increment removes the jitter but discards the magnitude the planner asked for, commanding the same speed
+whether the plan moved $2$\,cm or $20$. Brake-to-rest sets the velocity feedforward to zero, which makes
+the tracker a pure position regulator: the only quantity that reaches the vehicle is the setpoint the
+planner produced. It is the conservative choice, and it is the one under which every number in this
+section was measured. \autoref{sec:res:uav:controller} is where that choice is tested rather than assumed.
+\srcnote{\texttt{mix\_uav\_test/eval\_mix\_uav.py:1591--1594} lists the four tracker options:
+\texttt{pid} ($v\sidx{des} = a/\Delta t\sidx{fm}$, E7 legacy, timing-sensitive), \texttt{pid\_stopgo}
+($v\sidx{des} = 0$, U2, used here), \texttt{pid\_const\_v} ($v\sidx{des} = \mathrm{unit}(a)\cdot 0.4$, U3)
+and \texttt{mjpc}. The comparison of the three and the expert-versus-evaluation feedforward mismatch is
+\texttt{logs\_in\_develop/Gen11/Epoch8\_UAV\_Mjpc\_thrust\_control/DESIGN\_obs\_action\_loop.md} \S3.4--3.5,
+whose own table marks \texttt{pid} \enquote{No --- \texttt{dt\_fm} jitter} and \texttt{pid\_const\_v}
+\enquote{No --- magnitude is wrong}. The $0.4$\,m/s default is the expert dataset's average speed.}
+

@@ -34,6 +34,12 @@ via `Slurm_Codes/temp_bash/eval_20260923_p23_pillars_live.sh` → `sbatch/uav_av
 Turbo (`turbo.sh MODE=paper`) is not read by the thesis. L1 check (26077) showed live = Panda within 0.05.
 
 **Sidecars (fix8, 23-09):** one file per env close, named `…_<start>_p<pid>_<nn>.json` with argv/env context; R39 jobs
-26147–26150 were still pending → `git pull` before start was enough (sbatch scripts are snapshotted, Python is not).
+26147–26150 were cancelled while pending and resubmitted after the pull (new ids in the 23-09 runbook §5).
+
+**RESULT (23-09, jobs 26151–26154, DA of record `DA_20260923_pillars_v2_live.md`):** before projection the air = the
+table; after projection declared constraints hold in every finished flight, but S&C 0.60–0.70 vs 0.97–1.00 — all 51
+failures are pillar contacts (50/51 on the commanded path itself; the pillars are NOT in the declared constraint set;
+loss concentrated on both-hard, third-row pillars). Framing: "declared-constraint satisfaction transfers exactly,
+physical safety does not follow" — the physical-safety case beside corridor's repair case; not a bug, not a re-ordering.
 
 Related: [[u17-pillars-xl-floor-result]], [[slurm-sbatch-is-real-entrypoint]], [[da-requires-csv-never-from-logs]]

@@ -38,6 +38,9 @@ does [contain uav]" was wrong. The new driver uses `p23uavpv2live`.
 
 ## 4 · Submitted (by the author, 23-09)
 
+> **U18 note (23-09):** these four were cancelled while pending and resubmitted after U18 fix8 (sidecar overwrite) as
+> **26151** MeanFM K1 · **26152** MeanFM K2 · **26153** CI-MeanFM K1 · **26154** CI-MeanFM K2 — see `CHANGELOG_20260923_U18_fix8_sidecar_overwrite.md`.
+
 | job | cell |
 | :-- | :-- |
 | 26147 | MeanFM K1 |

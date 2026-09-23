@@ -247,9 +247,15 @@ def fig_aligning_projected_tradeoff(outdir):
     operating point only, K=20 at threshold 0.2, three models x two projectors (CI-MeanFM
     has no endpoint cell). The K=2 and K=10 points are no longer drawn; the budget ladder
     is tab:va-projection and tab:va-threshold. PROJECTED_K lists what is drawn.
+
+    v3.77 (author, 23-09): the table is complete, so the figure draws it -- the diffusion
+    baseline's per-step cell and CI-MeanFM's endpoint cell come in through
+    sources.ALIGNING_PROJECTED_EXTRA (each from the corpus that holds it). Both keep fewer
+    than nine contexts violation-free, so both are hollow and the frontier does not move.
     """
     PROJECTED_K = (20,)
-    colours = {'mf': '#1F4E79', 'af': '#8B3F71', 'fm': '#C45B24'}
+    colours = {'mf': '#1F4E79', 'af': '#8B3F71', 'fm': '#C45B24',
+               'diffusion': S.ENGINE_COLOUR_DISTINCT['diffusion']}   # the baseline stays near-black
     c = S.CORPORA['visual_aligning_15_09']
     if not c.available:
         return None
@@ -278,6 +284,26 @@ def fig_aligning_projected_tradeoff(outdir):
                                 ('context_final_xy_dist', 'avg_time_ms', 'constraint_exec_zero_violation'))
                 if None not in (d, ms, clean):
                     grouped.setdefault((*cell, r['variant']), {}).setdefault(context, []).append((d, ms, clean))
+    # v3.77: the cells ALIGNING_CELLS cannot reach, read from the corpus that holds each one,
+    # on the same geometry, variant filter and ten contexts as everything above.
+    for (eng, K, variant), (ckey, prefix, suffix) in S.ALIGNING_PROJECTED_EXTRA.items():
+        cx = S.CORPORA[ckey]
+        if K not in PROJECTED_K or not cx.available:
+            continue
+        with open(os.path.join(cx.path, 'per_rollout_detail.csv')) as fh:
+            for r in csv.DictReader(fh):
+                fn = r['FolderName']
+                if r['geo'] != ALIGN_GEO or r['variant'] != variant:
+                    continue
+                if not fn.startswith(prefix) or not fn.endswith(suffix):
+                    continue
+                context = _context_key(r)
+                if context not in contexts:
+                    continue
+                d, ms, clean = (_f(r.get(k)) for k in
+                                ('context_final_xy_dist', 'avg_time_ms', 'constraint_exec_zero_violation'))
+                if None not in (d, ms, clean):
+                    grouped.setdefault((eng, K, variant), {}).setdefault(context, []).append((d, ms, clean))
     pts = []
     for (eng, K, variant), by_context in grouped.items():
         if set(by_context) != contexts:
@@ -324,8 +350,10 @@ def fig_aligning_projected_tradeoff(outdir):
         f.s.append(f'<circle cx="{bx:.1f}" cy="{by:.1f}" r="6.5" fill="none" stroke="#9a9a9a" '
                    'stroke-width="1.6" stroke-dasharray="2,2"/>')
         f.text(bx - 10, by - 10, K, 11, '#9a9a9a', anchor='end')
-    # under the line, centred: hollow points sit ON the line at both ends of the axis
-    f.text((f.L + f.R) / 2, y0 + 17, 'box not moved', 11, '#777', anchor='middle', bold=True)
+    # v3.77: above the line at the left end. Under the line (v3.6x) the label sat on the bottom
+    # frame, which struck it through; the left end is empty near the line (the cheapest
+    # projected point is ~266 ms, the axis starts below the unprojected ring at ~190 ms).
+    f.text(f.L + 8, y0 - 9, 'box not moved', 11, '#777', anchor='start', bold=True)
     if len(front) > 1:
         staircase = []
         for i, p in enumerate(front):
@@ -348,10 +376,10 @@ def fig_aligning_projected_tradeoff(outdir):
             f.text(x - 16, y - 16, p['K'], 11, '#333', anchor='end')
     h = Fig(760, 62, ml=0, mr=0, mt=0, mb=0, font=FONT)
     x = 20
-    for eng in ('mf', 'af', 'fm'):
+    for eng in ('mf', 'af', 'fm', 'diffusion'):
         h.marker(x, 18, 'o', colours[eng], r=6.5)
         h.text(x + 14, 22, S.ENGINE_LABEL[eng], 11, '#111')
-        x += 118
+        x += 36 + 11.5 * len(S.ENGINE_LABEL[eng])     # v3.77: spaced by label length, four entries
     for kind, name in (('o', 'per-step'), ('s', 'endpoint')):
         h.marker(x, 18, kind, '#777', r=6.5)
         h.text(x + 14, 22, name, 11, '#111')

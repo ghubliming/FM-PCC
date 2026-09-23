@@ -120,7 +120,7 @@ def _legend(width, colour_by_pass=False, failures=False):
         items.append(('line', '#5d6d7e', '2,7', 'no success (dotted, hollow end)'))
     items.append(('mark', START, '', 'launch pose · flight end'))
     if failures:
-        items.append(('x', '#5d6d7e', '', 'crashed or lost control'))
+        items.append(('x', '#5d6d7e', '', 'crashed or lost control (pillars: pillar contact)'))
     if len(items) > 4:
         h = Fig(width, 150, ml=0, mr=0, mt=0, mb=0, font=FONT_CONSTRAINT)
     row_y, col_x, size = (30, 76, 122), (16, width // 2 + 16), 18
@@ -151,7 +151,11 @@ def _build(key, filename, cols, outdir, colour_by_pass=False):
     C = S.UAV_CONSTRAINTS
     r, t = C['r_drone'], C['tightening']
 
-    drawn = [_panel(scn, p, i % cols == 0, r, t, colour_by_pass) for i, p in enumerate(panels)]
+    # [U18, 2026-09-23] UAV-pillars panels each name their avoiding geometry: the constraint set drawn under a
+    # panel is that geometry's (sources.UAV_PILLARS_GEOMETRIES), not the figure-level scene.
+    G = getattr(S, 'UAV_PILLARS_GEOMETRIES', {}) or {}
+    drawn = [_panel(G.get(p.get('geometry')) or scn, p, i % cols == 0, r, t, colour_by_pass)
+             for i, p in enumerate(panels)]
     width = max(sum(d.w for d in drawn[i:i + cols]) + 8 * (min(cols, len(drawn) - i) - 1)
                 for i in range(0, len(drawn), cols))
     failures = any(_failed(e) for q in panels for e in q['episodes'])
@@ -159,7 +163,8 @@ def _build(key, filename, cols, outdir, colour_by_pass=False):
                      header=_legend(width, colour_by_pass, failures))
     flights = sum(p['n'] for p in panels)
     srcs = ', '.join(sorted({p['tag'] for p in panels}))
-    return path, (f"data/uav_paths.json (extract/uav_paths.py) | {len(panels)} cells, "
+    ext = 'extract/pillars_v2_paths.py' if key.startswith('pillars') else 'extract/uav_paths.py'
+    return path, (f"data/uav_paths.json ({ext}) | {len(panels)} cells, "
                   f"{flights} flights; runs {srcs}; scene and constraints from "
                   f"sources.UAV_CONSTRAINTS, drawn by scenes._uav_constraint_panel")
 
@@ -170,8 +175,15 @@ def fig_uav_scurve_paths(outdir):
 
 
 def fig_uav_pillars_paths(outdir):
-    """The pillars flown by each model under its best projection (tab:uav-pillars-best)."""
-    return _build('pillars', 'fig_uav_pillars_paths.svg', 2, outdir)
+    """[U18] UAV-pillars flown live by MeanFM at nfe 1: rows = before / after projection (dpcc-t-tightened),
+    columns = the three avoiding geometries; ten flights per panel (5 seeds x 2 episodes). A cross marks a
+    pillar contact (the plant ends the flight there). Data: extract/pillars_v2_paths.py."""
+    return _build('pillars', 'fig_uav_pillars_paths.svg', 3, outdir)
+
+
+def fig_uav_pillars_paths_cimf(outdir):
+    """[U18] The same figure for CI-MeanFM (alpha_end 0.2) at nfe 1."""
+    return _build('pillars_cimf', 'fig_uav_pillars_paths_cimf.svg', 3, outdir)
 
 
 def fig_uav_corridor_paths(outdir):
@@ -182,5 +194,6 @@ def fig_uav_corridor_paths(outdir):
 ALL = [
     ('fig_uav_scurve_paths', 'da', fig_uav_scurve_paths),
     ('fig_uav_pillars_paths', 'da', fig_uav_pillars_paths),
+    ('fig_uav_pillars_paths_cimf', 'da', fig_uav_pillars_paths_cimf),
     ('fig_uav_corridor_paths', 'da', fig_uav_corridor_paths),
 ]

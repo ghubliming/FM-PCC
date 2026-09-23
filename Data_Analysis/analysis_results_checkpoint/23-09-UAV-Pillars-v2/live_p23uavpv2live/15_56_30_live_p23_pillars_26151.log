@@ -1,0 +1,669 @@
+/bin/bash: /u/home/llim/miniconda3/lib/libtinfo.so.6: no version information available (required by /bin/bash)
+================================================================================
+JOB START: Wed Sep 23 14:51:03 UTC 2026   NAME: live_p23_pillars   ID: 26151   NODE: i6-gpu-1
+GIT REV:   0df6df71
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+NVIDIA RTX A5000, 24564 MiB
+================================================================================
+wrote /data/home/llim/FMPCC/FM-PCC/d3il/environments/d3il/models/mj/robot/quadrotor/scenes/scene_avoiding_pillars_s36.xml
+scale 36  altitude 1 m  origin_a (0.5, 0.035)
+field X [-12.06, 13.14]  Y [-10.80, 10.80]  start (-11.34, -0.90)  finish X = 11.34
+  l1_obs         a=(0.500,-0.100) r=0.030  ->  w=(-4.86,-0.00) r=1.080
+  l2_top_obs     a=(0.425,0.080) r=0.025  ->  w=(+1.62,+2.70) r=0.900
+  l2_bottom_obs  a=(0.575,0.080) r=0.025  ->  w=(+1.62,-2.70) r=0.900
+  l3_top_obs     a=(0.350,0.260) r=0.025  ->  w=(+8.10,+5.40) r=0.900
+  l3_mid_obs     a=(0.500,0.260) r=0.025  ->  w=(+8.10,-0.00) r=0.900
+  l3_bottom_obs  a=(0.650,0.260) r=0.025  ->  w=(+8.10,-5.40) r=0.900
+[ R39 ] engine=mf K=[1] seeds=[6 7 8 9 10] tag=p23uavpv2live plant=uav scale=36 hz=1 ff=0 vmax=1.0 replay=clock
+--------------------------------------------------------------------------------
+[ R39 ] MeanFM K=1 backbone=unet cfg=config/meanflow_projection_eval_u18_live.yaml seeds=[6 7 8 9 10] (one call per seed)
+pybullet build time: Nov 28 2023 23:45:17
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=1  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+[ eval ] config: config/meanflow_projection_eval_u18_live.yaml
+[ eval ] resolved  cfg=config/meanflow_projection_eval_u18_live.yaml  dpcc_threshold=0.5  hf_act_threshold=0.5  hf_batch=4  hf_candidate_cost=prox
+[ eval ] replan_steps=1 (per-step replanning (historic default))  |  mpc fan: arms A/B=4, arm C=4
+[ eval ] Overriding seeds from config to: [6]
+[ config/avoiding-d3il ] custom_msg="p23uavpv2live" -> results dirs end in "_msgp23uavpv2live"
+[ eval ] Overriding flow_steps_v3 / flow_steps (K) from config to: 1
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/6
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/6
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=1.256e-07)
+[ utils/training ] Restored loss history from checkpoint at step 99000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 1 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/6)
+[ provenance ] wrote logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/6/run_provenance.json
+[ uav-plant ] scene=scene_avoiding_pillars_s36.xml scale=36 alt=1 control 1 Hz -> 100 physics steps of 0.01 s per setpoint (period 1.000 s), replay=clock, feedforward=False, v_max=1 m/s, gain=pid_default, contact terminates=True
+------------------------Running avoiding-d3il - top-right-hard - diffuser (6) - K=1----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 61.50 +- 2.50
+Avg number of constraint violations: 17.00 +- 17.00
+Avg total violation: 5.548 +- 5.535
+Average computation time per step: 0.012
+Tracking error: 0.036
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t-tightened (6) - K=1----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.50 +- 4.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.017
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=1  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+[ uav-plant ] sidecar -> /u/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/avoiding_bridge/_live/p23uavpv2live/mf_K1/uav_plant_records_p23uavpv2live_20260923_145107_p2884072_01.json
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/6
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=1.256e-07)
+[ utils/training ] Restored loss history from checkpoint at step 99000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 1 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/6)
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/6/run_provenance.json
+[ uav-plant ] scene=scene_avoiding_pillars_s36.xml scale=36 alt=1 control 1 Hz -> 100 physics steps of 0.01 s per setpoint (period 1.000 s), replay=clock, feedforward=False, v_max=1 m/s, gain=pid_default, contact terminates=True
+------------------------Running avoiding-d3il - top-left-hard - diffuser (6) - K=1----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 61.50 +- 2.50
+Avg number of constraint violations: 23.50 +- 11.50
+Avg total violation: 6.469 +- 6.133
+Average computation time per step: 0.010
+Tracking error: 0.036
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t-tightened (6) - K=1----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 61.50 +- 4.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.020
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=1  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+[ uav-plant ] sidecar -> /u/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/avoiding_bridge/_live/p23uavpv2live/mf_K1/uav_plant_records_p23uavpv2live_20260923_145107_p2884072_02.json
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/6
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=1.256e-07)
+[ utils/training ] Restored loss history from checkpoint at step 99000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 1 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/6)
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/6/run_provenance.json
+[ uav-plant ] scene=scene_avoiding_pillars_s36.xml scale=36 alt=1 control 1 Hz -> 100 physics steps of 0.01 s per setpoint (period 1.000 s), replay=clock, feedforward=False, v_max=1 m/s, gain=pid_default, contact terminates=True
+------------------------Running avoiding-d3il - both-hard - diffuser (6) - K=1----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 61.50 +- 2.50
+Avg number of constraint violations: 19.50 +- 1.50
+Avg total violation: 4.049 +- 0.154
+Average computation time per step: 0.010
+Tracking error: 0.036
+------------------------Running avoiding-d3il - both-hard - dpcc-t-tightened (6) - K=1----------------------------
+Success rate: 0.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 0.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.019
+[ uav-plant ] sidecar -> /u/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/avoiding_bridge/_live/p23uavpv2live/mf_K1/uav_plant_records_p23uavpv2live_20260923_145107_p2884072_03.json
+pybullet build time: Nov 28 2023 23:45:17
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=1  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+[ eval ] config: config/meanflow_projection_eval_u18_live.yaml
+[ eval ] resolved  cfg=config/meanflow_projection_eval_u18_live.yaml  dpcc_threshold=0.5  hf_act_threshold=0.5  hf_batch=4  hf_candidate_cost=prox
+[ eval ] replan_steps=1 (per-step replanning (historic default))  |  mpc fan: arms A/B=4, arm C=4
+[ eval ] Overriding seeds from config to: [7]
+[ config/avoiding-d3il ] custom_msg="p23uavpv2live" -> results dirs end in "_msgp23uavpv2live"
+[ eval ] Overriding flow_steps_v3 / flow_steps (K) from config to: 1
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/7
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/7
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=5.028e-07)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 1 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/7)
+[ provenance ] wrote logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/7/run_provenance.json
+[ uav-plant ] scene=scene_avoiding_pillars_s36.xml scale=36 alt=1 control 1 Hz -> 100 physics steps of 0.01 s per setpoint (period 1.000 s), replay=clock, feedforward=False, v_max=1 m/s, gain=pid_default, contact terminates=True
+------------------------Running avoiding-d3il - top-right-hard - diffuser (7) - K=1----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 60.50 +- 2.50
+Avg number of constraint violations: 16.50 +- 16.50
+Avg total violation: 5.562 +- 5.551
+Average computation time per step: 0.012
+Tracking error: 0.034
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t-tightened (7) - K=1----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 58.50 +- 1.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.018
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=1  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+[ uav-plant ] sidecar -> /u/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/avoiding_bridge/_live/p23uavpv2live/mf_K1/uav_plant_records_p23uavpv2live_20260923_145149_p2884162_01.json
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/7
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=5.028e-07)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 1 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/7)
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/7/run_provenance.json
+[ uav-plant ] scene=scene_avoiding_pillars_s36.xml scale=36 alt=1 control 1 Hz -> 100 physics steps of 0.01 s per setpoint (period 1.000 s), replay=clock, feedforward=False, v_max=1 m/s, gain=pid_default, contact terminates=True
+------------------------Running avoiding-d3il - top-left-hard - diffuser (7) - K=1----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 60.50 +- 2.50
+Avg number of constraint violations: 24.00 +- 11.00
+Avg total violation: 6.795 +- 6.524
+Average computation time per step: 0.010
+Tracking error: 0.034
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t-tightened (7) - K=1----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 58.50 +- 1.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.019
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=1  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+[ uav-plant ] sidecar -> /u/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/avoiding_bridge/_live/p23uavpv2live/mf_K1/uav_plant_records_p23uavpv2live_20260923_145149_p2884162_02.json
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/7
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=5.028e-07)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 1 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/7)
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/7/run_provenance.json
+[ uav-plant ] scene=scene_avoiding_pillars_s36.xml scale=36 alt=1 control 1 Hz -> 100 physics steps of 0.01 s per setpoint (period 1.000 s), replay=clock, feedforward=False, v_max=1 m/s, gain=pid_default, contact terminates=True
+------------------------Running avoiding-d3il - both-hard - diffuser (7) - K=1----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 60.50 +- 2.50
+Avg number of constraint violations: 21.00 +- 2.00
+Avg total violation: 4.283 +- 0.610
+Average computation time per step: 0.010
+Tracking error: 0.034
+------------------------Running avoiding-d3il - both-hard - dpcc-t-tightened (7) - K=1----------------------------
+Success rate: 0.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 0.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.018
+[ uav-plant ] sidecar -> /u/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/avoiding_bridge/_live/p23uavpv2live/mf_K1/uav_plant_records_p23uavpv2live_20260923_145149_p2884162_03.json
+pybullet build time: Nov 28 2023 23:45:17
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=1  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+[ eval ] config: config/meanflow_projection_eval_u18_live.yaml
+[ eval ] resolved  cfg=config/meanflow_projection_eval_u18_live.yaml  dpcc_threshold=0.5  hf_act_threshold=0.5  hf_batch=4  hf_candidate_cost=prox
+[ eval ] replan_steps=1 (per-step replanning (historic default))  |  mpc fan: arms A/B=4, arm C=4
+[ eval ] Overriding seeds from config to: [8]
+[ config/avoiding-d3il ] custom_msg="p23uavpv2live" -> results dirs end in "_msgp23uavpv2live"
+[ eval ] Overriding flow_steps_v3 / flow_steps (K) from config to: 1
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/8
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/8
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=1.256e-07)
+[ utils/training ] Restored loss history from checkpoint at step 99000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 1 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/8)
+[ provenance ] wrote logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/8/run_provenance.json
+[ uav-plant ] scene=scene_avoiding_pillars_s36.xml scale=36 alt=1 control 1 Hz -> 100 physics steps of 0.01 s per setpoint (period 1.000 s), replay=clock, feedforward=False, v_max=1 m/s, gain=pid_default, contact terminates=True
+------------------------Running avoiding-d3il - top-right-hard - diffuser (8) - K=1----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 68.50 +- 8.50
+Avg number of constraint violations: 34.50 +- 1.50
+Avg total violation: 11.050 +- 0.427
+Average computation time per step: 0.011
+Tracking error: 0.037
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t-tightened (8) - K=1----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 60.00 +- 3.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.018
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=1  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+[ uav-plant ] sidecar -> /u/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/avoiding_bridge/_live/p23uavpv2live/mf_K1/uav_plant_records_p23uavpv2live_20260923_145230_p2884247_01.json
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/8
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=1.256e-07)
+[ utils/training ] Restored loss history from checkpoint at step 99000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 1 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/8)
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/8/run_provenance.json
+[ uav-plant ] scene=scene_avoiding_pillars_s36.xml scale=36 alt=1 control 1 Hz -> 100 physics steps of 0.01 s per setpoint (period 1.000 s), replay=clock, feedforward=False, v_max=1 m/s, gain=pid_default, contact terminates=True
+------------------------Running avoiding-d3il - top-left-hard - diffuser (8) - K=1----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 68.50 +- 8.50
+Avg number of constraint violations: 11.50 +- 0.50
+Avg total violation: 0.259 +- 0.049
+Average computation time per step: 0.010
+Tracking error: 0.037
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t-tightened (8) - K=1----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 62.50 +- 2.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.018
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=1  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+[ uav-plant ] sidecar -> /u/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/avoiding_bridge/_live/p23uavpv2live/mf_K1/uav_plant_records_p23uavpv2live_20260923_145230_p2884247_02.json
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/8
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=1.256e-07)
+[ utils/training ] Restored loss history from checkpoint at step 99000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 1 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/8)
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/8/run_provenance.json
+[ uav-plant ] scene=scene_avoiding_pillars_s36.xml scale=36 alt=1 control 1 Hz -> 100 physics steps of 0.01 s per setpoint (period 1.000 s), replay=clock, feedforward=False, v_max=1 m/s, gain=pid_default, contact terminates=True
+------------------------Running avoiding-d3il - both-hard - diffuser (8) - K=1----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 68.50 +- 8.50
+Avg number of constraint violations: 14.50 +- 0.50
+Avg total violation: 3.541 +- 0.207
+Average computation time per step: 0.010
+Tracking error: 0.037
+------------------------Running avoiding-d3il - both-hard - dpcc-t-tightened (8) - K=1----------------------------
+Success rate: 0.5
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 59.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.017
+[ uav-plant ] sidecar -> /u/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/avoiding_bridge/_live/p23uavpv2live/mf_K1/uav_plant_records_p23uavpv2live_20260923_145230_p2884247_03.json
+pybullet build time: Nov 28 2023 23:45:17
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=1  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+[ eval ] config: config/meanflow_projection_eval_u18_live.yaml
+[ eval ] resolved  cfg=config/meanflow_projection_eval_u18_live.yaml  dpcc_threshold=0.5  hf_act_threshold=0.5  hf_batch=4  hf_candidate_cost=prox
+[ eval ] replan_steps=1 (per-step replanning (historic default))  |  mpc fan: arms A/B=4, arm C=4
+[ eval ] Overriding seeds from config to: [9]
+[ config/avoiding-d3il ] custom_msg="p23uavpv2live" -> results dirs end in "_msgp23uavpv2live"
+[ eval ] Overriding flow_steps_v3 / flow_steps (K) from config to: 1
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/9
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/9
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=5.028e-07)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 1 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/9)
+[ provenance ] wrote logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/9/run_provenance.json
+[ uav-plant ] scene=scene_avoiding_pillars_s36.xml scale=36 alt=1 control 1 Hz -> 100 physics steps of 0.01 s per setpoint (period 1.000 s), replay=clock, feedforward=False, v_max=1 m/s, gain=pid_default, contact terminates=True
+------------------------Running avoiding-d3il - top-right-hard - diffuser (9) - K=1----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 61.50 +- 2.50
+Avg number of constraint violations: 7.50 +- 4.50
+Avg total violation: 0.174 +- 0.147
+Average computation time per step: 0.012
+Tracking error: 0.037
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t-tightened (9) - K=1----------------------------
+Success rate: 1.0
+Constraints satisfied: 1.0
+Success rate (goal and constraints): 1.0
+Avg number of steps: 63.50 +- 2.50
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.018
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=1  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+[ uav-plant ] sidecar -> /u/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/avoiding_bridge/_live/p23uavpv2live/mf_K1/uav_plant_records_p23uavpv2live_20260923_145312_p2884331_01.json
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/9
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=5.028e-07)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 1 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/9)
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/9/run_provenance.json
+[ uav-plant ] scene=scene_avoiding_pillars_s36.xml scale=36 alt=1 control 1 Hz -> 100 physics steps of 0.01 s per setpoint (period 1.000 s), replay=clock, feedforward=False, v_max=1 m/s, gain=pid_default, contact terminates=True
+------------------------Running avoiding-d3il - top-left-hard - diffuser (9) - K=1----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 61.50 +- 2.50
+Avg number of constraint violations: 35.50 +- 0.50
+Avg total violation: 11.602 +- 1.243
+Average computation time per step: 0.010
+Tracking error: 0.037
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t-tightened (9) - K=1----------------------------
+Success rate: 0.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 0.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.017
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=1  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+[ uav-plant ] sidecar -> /u/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/avoiding_bridge/_live/p23uavpv2live/mf_K1/uav_plant_records_p23uavpv2live_20260923_145312_p2884331_02.json
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/9
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=5.028e-07)
+[ utils/training ] Restored loss history from checkpoint at step 98000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 1 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/9)
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/9/run_provenance.json
+[ uav-plant ] scene=scene_avoiding_pillars_s36.xml scale=36 alt=1 control 1 Hz -> 100 physics steps of 0.01 s per setpoint (period 1.000 s), replay=clock, feedforward=False, v_max=1 m/s, gain=pid_default, contact terminates=True
+------------------------Running avoiding-d3il - both-hard - diffuser (9) - K=1----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 61.50 +- 2.50
+Avg number of constraint violations: 17.00 +- 3.00
+Avg total violation: 3.804 +- 0.975
+Average computation time per step: 0.010
+Tracking error: 0.037
+------------------------Running avoiding-d3il - both-hard - dpcc-t-tightened (9) - K=1----------------------------
+Success rate: 0.5
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 66.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.017
+[ uav-plant ] sidecar -> /u/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/avoiding_bridge/_live/p23uavpv2live/mf_K1/uav_plant_records_p23uavpv2live_20260923_145312_p2884331_03.json
+pybullet build time: Nov 28 2023 23:45:17
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=1  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+[ eval ] config: config/meanflow_projection_eval_u18_live.yaml
+[ eval ] resolved  cfg=config/meanflow_projection_eval_u18_live.yaml  dpcc_threshold=0.5  hf_act_threshold=0.5  hf_batch=4  hf_candidate_cost=prox
+[ eval ] replan_steps=1 (per-step replanning (historic default))  |  mpc fan: arms A/B=4, arm C=4
+[ eval ] Overriding seeds from config to: [10]
+[ config/avoiding-d3il ] custom_msg="p23uavpv2live" -> results dirs end in "_msgp23uavpv2live"
+[ eval ] Overriding flow_steps_v3 / flow_steps (K) from config to: 1
+[ utils/setup ] Made savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/10
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/10
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=2.009e-06)
+[ utils/training ] Restored loss history from checkpoint at step 96000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 1 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/10)
+[ provenance ] wrote logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/10/run_provenance.json
+[ uav-plant ] scene=scene_avoiding_pillars_s36.xml scale=36 alt=1 control 1 Hz -> 100 physics steps of 0.01 s per setpoint (period 1.000 s), replay=clock, feedforward=False, v_max=1 m/s, gain=pid_default, contact terminates=True
+------------------------Running avoiding-d3il - top-right-hard - diffuser (10) - K=1----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 61.50 +- 0.50
+Avg number of constraint violations: 22.00 +- 13.00
+Avg total violation: 6.828 +- 6.630
+Average computation time per step: 0.012
+Tracking error: 0.038
+------------------------Running avoiding-d3il - top-right-hard - dpcc-t-tightened (10) - K=1----------------------------
+Success rate: 0.5
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 60.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.018
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=1  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+[ uav-plant ] sidecar -> /u/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/avoiding_bridge/_live/p23uavpv2live/mf_K1/uav_plant_records_p23uavpv2live_20260923_145351_p2884419_01.json
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/10
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=2.009e-06)
+[ utils/training ] Restored loss history from checkpoint at step 96000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 1 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/10)
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/10/run_provenance.json
+[ uav-plant ] scene=scene_avoiding_pillars_s36.xml scale=36 alt=1 control 1 Hz -> 100 physics steps of 0.01 s per setpoint (period 1.000 s), replay=clock, feedforward=False, v_max=1 m/s, gain=pid_default, contact terminates=True
+------------------------Running avoiding-d3il - top-left-hard - diffuser (10) - K=1----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 61.50 +- 0.50
+Avg number of constraint violations: 18.00 +- 18.00
+Avg total violation: 5.366 +- 5.352
+Average computation time per step: 0.010
+Tracking error: 0.038
+------------------------Running avoiding-d3il - top-left-hard - dpcc-t-tightened (10) - K=1----------------------------
+Success rate: 0.5
+Constraints satisfied: 0.5
+Success rate (goal and constraints): 0.5
+Avg number of steps: 62.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.018
+[ config->pkl ] INFO  flow_steps_v3: train=10 -> eval=1  (sampling knob; applied)
+
+[INFO] Instantiating Diffusion Model from:
+       -> /u/home/llim/FMPCC/FM-PCC/flow_matcher_v3_meanflow/models/mf_diffusion.py
+
+[ uav-plant ] sidecar -> /u/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/avoiding_bridge/_live/p23uavpv2live/mf_K1/uav_plant_records_p23uavpv2live_20260923_145351_p2884419_02.json
+
+[ eval loading ] Intercepting load from logs/avoiding-d3il/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/10
+
+[ datasets/buffer ] Fields:
+    observations: (96, 150, 4)
+    actions: (96, 150, 2)
+    rewards: (96, 150, 1)
+    terminals: (96, 150, 1)
+    normed_observations: (96, 150, 4)
+    normed_actions: (96, 150, 2)
+[ MFTrajectoryModel ] backbone=unet  unet_width(freq_dim)=32  params=4.0M
+[ utils/training ] Restored optimizer + LR schedule (lr=2.009e-06)
+[ utils/training ] Restored loss history from checkpoint at step 96000
+[ eval ] weight source: EMA (official)
+[ eval ] matched K (flow_steps) = 1 for every arm (savepath: logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/10)
+[ provenance ] unchanged, kept logs/avoiding-d3il/plans/flow_matching_v3_meanflow/H8_Dflow_matcher_v3_meanflow.models.MeanFlowODE_aw10_objmeanflow_bbunet_tslogit_normal_dp0.5/H8_K1_Meuler_T0.5_A0.5_B4_Dflow_matcher_v3_meanflow.models.MeanFlowODE_msgp23uavpv2live/10/run_provenance.json
+[ uav-plant ] scene=scene_avoiding_pillars_s36.xml scale=36 alt=1 control 1 Hz -> 100 physics steps of 0.01 s per setpoint (period 1.000 s), replay=clock, feedforward=False, v_max=1 m/s, gain=pid_default, contact terminates=True
+------------------------Running avoiding-d3il - both-hard - diffuser (10) - K=1----------------------------
+Success rate: 1.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 61.50 +- 0.50
+Avg number of constraint violations: 16.50 +- 3.50
+Avg total violation: 3.882 +- 1.331
+Average computation time per step: 0.010
+Tracking error: 0.038
+------------------------Running avoiding-d3il - both-hard - dpcc-t-tightened (10) - K=1----------------------------
+Success rate: 0.0
+Constraints satisfied: 0.0
+Success rate (goal and constraints): 0.0
+Avg number of steps: 0.00 +- 0.00
+Avg number of constraint violations: 0.00 +- 0.00
+Avg total violation: 0.000 +- 0.000
+Average computation time per step: 0.018
+[ uav-plant ] sidecar -> /u/home/llim/FMPCC/FM-PCC/logs/UAV_MIX/uav-pillars/plans/avoiding_bridge/_live/p23uavpv2live/mf_K1/uav_plant_records_p23uavpv2live_20260923_145351_p2884419_03.json
+[ R39 ] done
+================================================================================
+JOB END:   Wed Sep 23 14:54:27 UTC 2026
+================================================================================

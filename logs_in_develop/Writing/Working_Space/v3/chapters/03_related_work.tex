@@ -81,8 +81,8 @@ data, and solves the resulting program with an interior-point solver
 D3IL provides manipulation tasks with diverse human demonstrations, including vision-based variants
 \parencite{jia2024towards}, and X-IL, from the same group, explores the design space of
 imitation-learning policies \parencite{jia2025xil}. Visuomotor diffusion policies condition the
-denoising network on image features \parencite{chi2023diffusion}, and transformer backbones operate
-on image patches \parencite{peebles2022dit}. Flow-matching policies follow the same path: VITA flows
+denoising network on image features \parencite{chi2023diffusion}. Image-generation transformers use
+patch tokens \parencite{peebles2022dit}, while policy transformers can represent action sequences. Flow-matching policies follow the same path: VITA flows
 directly from visual representations to latent actions \parencite{gao2025vita}, and $\pi_0$ conditions
 a flow model on images and language \parencite{black2024pi0}.
 
@@ -143,14 +143,15 @@ thesis builds on and is measured against.
     This thesis
       & one feasible set, applied to the iterate or to the predicted endpoint
       & receding horizon, horizon $8$, $1$ executed, Euler plant model
-      & temporal U-Net, $4.0$\,M parameters for every generative model \\
+      & matched temporal U-Net backbone; capacity in \autoref{sec:setup:protocol} \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
 Fast generative sampling, hard constraint enforcement, visual conditioning and aerial embodiment have
 each been studied, but in a receding-horizon controller the cost of fast sampling and the cost of
-constraint enforcement interact, and that interaction has not been measured under matched conditions.
+constraint enforcement interact. The comparison here measures that interaction within the same
+planning framework.
 This thesis places instantaneous-velocity matching and the two average-velocity objectives inside the
 constrained controller
 of \ac{DPCC} and compares its per-step projection with endpoint projection \parencite{li2025hardflow}

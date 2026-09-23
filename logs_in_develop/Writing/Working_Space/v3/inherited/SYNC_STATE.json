@@ -1,6 +1,6 @@
 {
   "bibliography_sha256_16": "5c046b2902675a09",
-  "synced_at": "2026-09-18",
-  "thesis_v2_sha256_16": "86109869528d8b0e",
-  "v2_version": "v2.24 \u2014 2026-09-18 \u00b7 Chapter 4 reorganised; RQ1 names its axes; network capacity in Table 3.1 \u2192 [`changelogs/v2.24_20260918_ch4_reorganised_rq1_axes_and_capacity.md`](changelogs/v2.24_20260918_ch4_reorganised_rq1_axes_and_capacity.md)"
+  "synced_at": "2026-09-23",
+  "thesis_v2_sha256_16": "1b641a5dcb43ba40",
+  "v2_version": "v2.27 \u2014 2026-09-23 \u00b7 agreed audit TODOs applied \u2014 ChatGPT (Codex) \u2192 [`changelogs/v2.27_20260923_ChatGPT_audit_TODOs.md`](changelogs/v2.27_20260923_ChatGPT_audit_TODOs.md)"
 }

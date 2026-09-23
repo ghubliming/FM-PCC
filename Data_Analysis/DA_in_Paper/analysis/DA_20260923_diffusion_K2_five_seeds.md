@@ -1,7 +1,8 @@
 # DA — 2026-09-23 · the diffusion baseline at $\nfe=2$, five seeds (R26 closes)
 
-**Preliminary.** Numbers are final and reproduce the corpus of record on every overlapping cell; what is
-still open is one cost observation (§6) that the chapter should not lean on until it is explained.
+**Preliminary.** Numbers are final and reproduce the corpus of record on every overlapping cell. The one
+cost observation this DA flagged (§6) was explained on 23-09 in §29 of the ledger (R42): the $\nfe=2$
+time is real, and it sits in the projection at t = 1.
 
 **Ledger item:** R26, 🟡 in the NOW table of
 [`PENDING_20260922_all_lacking_runs.md`](../../../logs_in_develop/Writing/Working_Space/data_status/PENDING_20260922_all_lacking_runs.md).
@@ -109,6 +110,15 @@ steps, so FM against the baseline is a **trade-off on steps and a win on time**,
 MeanFM does not reach 1.000 at this budget and is not in the comparison.
 
 ## 6 · 🟠 One open observation — the diffusion arm's projector cost is not on the flow arms' scale
+
+> ✅ **RESOLVED 23-09 — see §29 of the ledger (R42, closed without a run).** The K2 time is real and
+> reproducible: job 25966 (19-09, seed 6) measured 226 / 225 / 276 ms and job 26112 (22-09, five seeds)
+> 211 / 191 / 226 ms, three days apart, so node load is ruled out. `post_processing-tightened` of the same
+> cell — the final step only — costs 28.1 ms, which puts ≈185 ms on the projection at **t = 1**, a state one
+> denoising step from pure noise. No larger budget hands the projector such a state, and SLSQP's cost is set
+> by how infeasible the warm start is, not by the solve count. The numbers below stand; the recommendation
+> that closes this section is superseded. The thesis now states the explanation and a 12× cost factor
+> against the cheapest diffusion configuration.
 
 Subtracting the unprojected cost from the projected ($c$ rule) gives what the projector adds per control
 step:

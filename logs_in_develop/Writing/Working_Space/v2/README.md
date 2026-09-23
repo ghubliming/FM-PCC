@@ -3,7 +3,7 @@
 > 🚦 **Draft ownership:** v2 writes **Ch 1–4**, abstract, preamble, acronyms, `bibliography.bib` — nothing under `v3/` or `v4/`, and not v2's own Ch 5–8 placeholders. Rules: [`../DRAFT_OWNERSHIP.md`](../DRAFT_OWNERSHIP.md).
 
 **Created:** 2026-09-08 · **File:** [`thesis_v2.tex`](thesis_v2.tex) · **Bibliography:** [`bibliography.bib`](bibliography.bib)
-**Change history:** [`CHANGELOG.md`](CHANGELOG.md) — *every pass gets an entry there; this README describes the current state only*
+**Change history:** [`CHANGELOG.md`](CHANGELOG.md) — *every pass gets an entry there; current summary below; historical notes are explicitly marked*
 **Built from:** [`../v1/thesis_v1.tex`](../v1/thesis_v1.tex) (copied, then extended — v1 is untouched)
 **Governed by:** [`../TARGET_20260905_thesis_claim_ladder.md`](../TARGET_20260905_thesis_claim_ladder.md)
 **Apparatus source:** [`../../Auxiliary/Methodology_Sources/`](../../Auxiliary/Methodology_Sources/README.md)
@@ -14,12 +14,24 @@
 
 ## What v2 is
 
-v1 fixed the argument and its order. **v2 writes down the mathematics that argument stands on,
-and attaches the citations.** Nothing about the claim ladder, the RQ set or the chapter
-structure moved. Chapters 5–8 are still bone, for the same reason as in v1 — the run queue has
-not closed.
+**Current revision: v2.27 (2026-09-23), audit corrections by ChatGPT (Codex).**
+V2 owns the abstract and Chapters 1–4. All three flow objectives are formulated in Chapter 4,
+including the consistency-interpolated loss and its branches. The average-velocity field uses
+start time and interval length; K counts sampling steps, separately from NFE.
 
-Scope, across the three passes so far (see `CHANGELOG.md`):
+The abstract and contribution statements use the available v3.75 results. The outline, inline
+system schematic and component-provenance table are complete; there are no `\hole` calls in
+the owned abstract/Chapters 1–4. The bibliography remains at 53 entries. The v2.26 quadrotor-scene
+section is preserved unchanged. Detailed noise-scale discussion, the redundant numerical endpoint
+configuration table and loss-monitoring advice are excluded as agreed with the author.
+
+See [the signed v2.27 changelog](changelogs/v2.27_20260923_ChatGPT_audit_TODOs.md) for the finding-by-finding
+record and validation. V3 currently inherits v2.26; this pass does not sync or edit v3.
+
+### Historical revision notes
+
+The entries and early-draft inventory below describe their own versions, not current TODOs.
+The current summary above and the latest changelog take precedence.
 
 - **v2.0** — the engine mathematics: **DPCC's diffusion engine → flow matching → MeanFlow.**
   α-Flow carries **no mathematics**; it is named, cited and demoted to an ablation, and its
@@ -66,6 +78,7 @@ Scope, across the three passes so far (see `CHANGELOG.md`):
 - **v2.23** (2026-09-17) — MuJoCo named as the simulator (D3IL supplies task files, demonstrations, cameras); the Franka Emika Panda and its rod end effector named; `\ac{IK}` confirmed available for v3; see `changelogs/v2.23_20260917_mujoco_simulator_and_robot_naming.md`.
 - **v2.24** (2026-09-18) — Chapter 4 reordered to overview → plant dynamics incl. control → generative models → projection → environments (`Low-Level Control` merged, both labels kept); RQ1 names its comparison axes; capacity column in `tab:related-loops` ($4.0$ M, sources report none); §4.3.1 "deliberately crude" rewritten as fact; `tab:embodiments` short forms expanded; MuJoCo introduced in §2.5 and the brake-to-rest setpoint policy stated (v3.31, v3.32); see `changelogs/v2.24_20260918_ch4_reorganised_rq1_axes_and_capacity.md`.
 - **v2.25** (2026-09-21) — the → v2 inbox queue emptied: rotor reach not "vehicle radius" and not the tightening (v3.60), the plan holds $H$ transitions with $n=Hd$ and the dynamics-row ranges to match (v3.58), the action bound defined once in the §4.6 intro (v3.51), "wall-clock" gone (v3.48), the action weight no longer claimed as shared (v3.43), the alignment box pose stated as unobserved and the constraint set corrected to the evaluated geometry (v3.36), v3.46 needing no edit. Translation table re-swept (*projector*, *genuine*, defensive meta-prose). §2.7 says what an open-loop unstable platform costs a planner. **First figure in v2**: HardFlow's Fig. 11 in §4.5.3, CC BY 4.0, so `figures/` and `\graphicspath` are new. Table 4.1 stays in the main text per the formatting rules. `CROSS_STATE.json` records that v2 is current against **v3.60**; see `changelogs/v2.25_20260921_inbox_translation_uav_incentive_hardflow_figure.md`.
+- **v2.26** (2026-09-23) — the ChatGPT audit (`audit from chatgpt/`) checked against code and v3.71 and answered in its §8 (18 confirmed, 3 qualified, none rejected; F12 widened: the FM sampler's prior is `0.5·randn` against σ = 1 training); §1.4 regrouped into *On the benchmark of DPCC* (1–4) and *Beyond it* (5–6) with item 6 rewritten for the current quadrotor benchmark; §4.6.3 rebuilt as two constructions (corridor/s-curve with the twelve-channel plan and flown demonstrations; UAV-pillars = the avoiding planner flown through the similarity map `eq:method:env:pillarsmap`); `eq:method:env:switched` restated as the per-replan wall selection; see `changelogs/v2.26_20260923_audit_feedback_contributions_two_stages_uav_scenes_rebuilt.md`.
 - **v2.6** — the **compute environment**: the cluster, node, CPU/GPU and software stack every number
   was produced on, plus the two caveats that follow from the machine. First prose written into
   Chapter 5 — a deliberate, scoped exception to the bone rule (see below).
@@ -114,14 +127,15 @@ which is the stronger of the two and holds even on an idle node.
   function, because for an implementation claim the code *is* the source.
 
 Where paper and code disagree, the disagreement is written down rather than smoothed over —
-see Remark 4.1 (`\label{rem:prior}`).
+the implemented method is stated precisely and experiment settings are left to Chapter 5.
+There is no current prior-scale remark in v2, following the author’s scope decision.
 
 ### Equation provenance
 
 | thesis equation | what it is | source |
 |---|---|---|
 | `eq:bg:ddpm:forward` … `eq:bg:ddpm:loss` | DDPM forward process, closed-form marginal, reverse chain, ε-loss | DPCC §4 (pp. 3–4); originally [ho2020denoising] |
-| `eq:bg:ddpm:x0`, `eq:bg:ddpm:mean` | clean-sample estimate and posterior mean **as executed** | `aux_repo/dpcc/diffuser/models/diffusion.py:97–117` |
+| `eq:bg:ddpm:x0`, `eq:bg:ddpm:mean` | standard clean-sample estimate and posterior mean; implementation clips the estimate | `aux_repo/dpcc/diffuser/models/diffusion.py:97–117` |
 | `eq:bg:fm:ode` … `eq:bg:fm:cfm` | flow, continuity equation, marginal field, FM and CFM losses, Thm 1 / Thm 2 | Lipman et al. §3 (FM.pdf pp. 3–4); cross-read against HardFlow's Background (`PAPERS/Recommand_Paper/HF/main.tex:203–262`) |
 | `eq:bg:fm:path` | linear (OT displacement) path, σ_min = 0 | Lipman et al. Eq. (20)–(21), read data-at-one |
 | `eq:bg:fm:euler`, `eq:bg:fm:loss` | what this repo trains and integrates | `flow_matcher_v3/models/diffusion.py:125–158, 273–299` |
@@ -177,9 +191,10 @@ would be wrong.
 
 ---
 
-## Conformance with `Template_DONT_CHANGE/`
+## Historical template-conformance record
 
-Checked file by file against `main.tex`, `settings.tex` and `chapters/01_introduction.tex`, and
+The counts below belong to the original conformance pass; current mechanical results are in the
+v2.27 changelog. Checked file by file against `main.tex`, `settings.tex` and `chapters/01_introduction.tex`, and
 brought into line where the template has a stated convention.
 
 **Now conformant:**
@@ -232,19 +247,17 @@ brought into line where the template has a stated convention.
 2. **`τ` is data-at-one, and the two families count in opposite directions.** The diffusion index
    counts *down* to the data, the transport index counts *up*. This is stated once and used
    consistently; it is also why `eq:method:engine:iface` needs the remark about the reverse index.
-3. **The prior-scale discrepancy is written into the thesis** (Remark 4.1). The inherited sampler
-   starts from N(0, ¼I) and injects half the posterior std; naive FM inherits the ½ prior at
-   sampling while training on σ=1; MeanFlow uses σ=1 at both ends. This is a real cross-arm
-   difference, it has already caused one measurable defect (Gen3v6 `fix_4`), and it now carries a
-   `\hole` demanding that `sec:setup:protocol` state whether the reported FM numbers were re-run
-   at matched scale. **Do not claim prior-matching until that is checked.**
+3. **Experimental sampling scales belong in Chapter 5.** V2 distinguishes the standard
+   background construction from the evaluated sampler without adding the detailed noise-scale
+   discussion. The audit preserves its code evidence separately.
 4. **The MeanFlow identity is derived in the start-anchored form**, not copied. The source anchors
    at the interval's end and runs time the other way; the sampler here queries the start. The
    derivation, the tangents `(v, +1, −1)` and the sign check are all in `sec:method:engine`.
 5. **`eq:method:proj:gate` presents η = 0 as a special case, not a separate baseline.** That is
    what makes "post-processing" and "per-step projection" comparable rather than two code paths.
-6. **α-Flow is cited but not formalised.** One paragraph in `sec:bg:fewstep`, one in
-   `sec:method:engine`, both saying explicitly that the mathematics is deferred.
+6. **The consistency-interpolated objective is formalised.** `sec:method:alphaflow` includes
+   the target, explicit zero-interval override, zero-ratio analytic branch and branch-weighted
+   loss. The numerical-target limit is distinguished from the scaled-gradient correspondence.
 7. **One label was added to the bone**: `sec:res:constraints:degenerate` (a subsection of Results),
    because `sec:method:degenerate` referenced it in v1 and the reference dangled. No prose was
    written there.
@@ -270,40 +283,15 @@ template changes nothing.
 
 ---
 
-## Open items before v3
+## Remaining work outside this audit revision
 
-Carried from v1, still open:
-
-- [ ] **Author, supervisor, advisor, submission date** — still `TODO` in the metadata block.
-- [ ] **German title** needs confirming (`\getTitleGer`).
-- [ ] **Outline section** (`sec:intro:outline`) is a `\hole` — write it last.
-- [ ] **Abstract headline numbers** — blocked on the run queue, not on writing.
-- [ ] **The system-overview figure** (`sec:method:overview`) is referenced throughout and does not
-      exist. Highest-value figure in the thesis; draw it early.
-- [ ] Chapters 5–8 stay closed until the run queue clears.
-
-New in v2:
-
-- [ ] **Compile it.** Nothing here has seen a LaTeX run.
-- [ ] **Decide on the starred subsections** (conformance item 5 above) — numbered and in the ToC,
-      or left out of it. One `sed` either way.
-- [ ] **Verify the 15 `NO LOCAL COPY` bib entries** against publisher records. The 10 with a
-      `file` field are already verified against the PDF itself.
-- [ ] **Confirm which controller produced each reported UAV number** (`\hole` at the end of
-      `sec:method:deployment`). The apparatus notes say the cascade; the run ledger must agree
-      before it is claimed in print.
-- [ ] **`ω_des = 0`** in the attitude loop is a modelling choice, currently named only in Method.
-      It belongs in `sec:disc:threats`.
-- [ ] **Resolve the prior-scale `\hole`** in Remark 4.1 — this one can change a claim.
-- [ ] **α-Flow mathematics**, if the ablation write-up needs it. Currently deferred by design.
-- [ ] **Write `NOTES_notation_decisions.md`** from Table 4.1, so the convention lives in
-      `Auxiliary/` and not only inside the draft.
-- [ ] **Provenance table** in `sec:method:dpcc` is still promised, not written; it feeds
-      `app:repro` and TARGET §5.3.
-- [ ] **Total compute is a `\hole`** in `app:repro` — batch-log arithmetic gives order 10³
-      GPU-hours, but it is a floor over 285 of 777 jobs. Re-derive with `sacct` before printing a
-      figure.
-- [ ] **cuDNN version, and whether the conda env drifted after 2026-04-29.** One CPU-only `srun`
-      (§5.3 of `AUX_compute_environment.md`). Until then `app:repro` claims only that the stack was
-      *verified at the outset*.
-- [ ] The `\hole`/`\srcnote` macros must be removed before submission (both still in use).
+- Author, supervisor, advisor, submission date and German-title confirmation remain author inputs.
+- Compile and inspect PDF layout in a TeX environment; only source checks have run here.
+- V3 owns experimental settings/results, its pending corridor and s-curve comparisons, and the next
+  authorized inheritance sync. V4 owns discussion and final conclusion refinement.
+- The original Chapter 5–8/appendix placeholders are unchanged, including their compute-accounting
+  hole. They are not v2 writing TODOs.
+- The additional v3.73 question about post-contact termination on the *manipulator* remains open.
+  It is outside the agreed audit corrections; the existing scene section was preserved as requested.
+- Source-note visibility and final metadata/layout checks remain part of submission preparation.
+  Optional figure-format advice is not a prerequisite for closing this audit pass.
