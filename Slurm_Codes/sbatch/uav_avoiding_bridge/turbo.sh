@@ -12,7 +12,7 @@
 #      ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_avoiding_bridge/turbo.sh            # PLAN ONLY (dry-run)
 #      GO=1 ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_avoiding_bridge/turbo.sh       # run the PILOT (gate G1)
 #      GO=1 MODE=all ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_avoiding_bridge/turbo.sh   # the whole corpus
-#      GO=1 MODE=paper ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_avoiding_bridge/turbo.sh # P1 paper set (10 cells, tag p23pv2turbo)
+#      GO=1 MODE=paper ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_avoiding_bridge/turbo.sh # P1 paper set (10 cells, tag p23pv2turbo, ONE seed: 6; T5 7)
 #  Knobs (env): MODE=pilot|all|paper|papergif  REPLAYS="clock settle"  HZ=1  VMAX=1.0  GRACE_S=2  SCALE=36  LIMIT=0 (episodes/cell)
 #               GIF=N (overhead MuJoCo GIF for the first N episodes per cell; GPU needed -> submit turbo_gif.sh)
 #               EXTRA="…" appended to every turbo.py call (e.g. --force, --no-png, --max-cells 5)
@@ -90,14 +90,17 @@ case "$MODE" in
     SELECT=() ;;
   *) echo "MODE must be pilot|all|paper|papergif"; exit 2 ;;
 esac
-P23_COMMON=(--seeds 6 7 8 9 10 --geos top-left-hard top-right-hard both-hard)
+# [23-09, author] pillars v2 paper set = ONE seed, tightened only, turbo (Mode T) only; no live P2.
+# T1–T4 sources hold seeds 6–10 -> seed 6. T5's source (msghfmink) holds 7–10 only (no seed 6) -> its first seed, 7.
+P23_SEEDS="${P23_SEEDS:-6}"; P23_T5_SEEDS="${P23_T5_SEEDS:-7}"
+P23_COMMON=(--seeds $P23_SEEDS --geos top-left-hard top-right-hard both-hard)
 P23_CALLS=(
   "T1|--engine flow_matching_v3_meanflow --train-glob *bbunet* --eval-glob H8_K1_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE --variants diffuser dpcc-t-tightened"
   "T2|--engine flow_matching_v3_alphaflow --train-glob *bbunet*ae0.2* --eval-glob *K1_*msgdpccproto --variants diffuser dpcc-t-tightened"
   "T3|--engine flow_matching_v3_ode_selectable --eval-glob H8_K1_*msgdpccproto --variants diffuser dpcc-t-tightened"
   "T4|--engine diffusion --eval-glob H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5 --variants diffuser dpcc-c-tightened"
 )
-P23_T5="--engine flow_matching_v3_meanflow --train-glob *bbunet* --eval-glob H8_K3_*A1_B4*msghfmink* --seeds 7 8 9 10 --geos top-left-hard top-right-hard both-hard --variants dpcc-t-tightened hardflow_sls-t-tightened"
+P23_T5="--engine flow_matching_v3_meanflow --train-glob *bbunet* --eval-glob H8_K3_*A1_B4*msghfmink* --seeds $P23_T5_SEEDS --geos top-left-hard top-right-hard both-hard --variants dpcc-t-tightened hardflow_sls-t-tightened"
 
 DRY=(--dry-run); [ "$GO" = "1" ] && DRY=()
 echo "[ u18 ] out_root=$OUT_ROOT"

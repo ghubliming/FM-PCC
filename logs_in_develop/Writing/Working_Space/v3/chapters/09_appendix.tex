@@ -110,8 +110,7 @@ on five, so it has no row here either.
 \begin{table}[htpb]
   \caption[D3IL-avoiding without projection, every budget]{\autoref{tab:avoiding-raw-models} at every
   budget evaluated under the protocol; columns, protocol and marks as there. What this table adds are the
-  intermediate budgets, which exist for analytic average-velocity matching and the baseline only. The
-  diffusion $\nfe=2$ five-seed cell is pending.}
+  intermediate budgets, which exist for analytic average-velocity matching and the baseline only.}
   \label{tab:app:avoiding-raw-full}
   \centering
   \footnotesize
@@ -132,7 +131,7 @@ on five, so it has no row here either.
     FM        & 20 & $1.000 \pm 0.000$ & $0.133 \pm 0.075$ & $16.5 \pm 2.1$ & $70.2 \pm 6.3$ & $183.5 \pm 0.7$ \\
     \midrule
     Diffusion & 1  & $0.933 \pm 0.149$ & $0.000 \pm 0.000$ & $19.0 \pm 2.9$ & $68.3 \pm 16.1$ & $9.4 \pm 0.1$ \\
-    Diffusion & 2  & \multicolumn{5}{l}{\emph{pending: five-seed evaluation}} \\
+    Diffusion & 2  & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $20.4 \pm 2.4$ & $61.7 \pm 8.3$ & $18.3 \pm 0.1$ \\
     Diffusion & 10 & $0.967 \pm 0.075$ & $0.067 \pm 0.149$ & $19.1 \pm 2.7$ & $72.8 \pm 8.1$ & $88.8 \pm 0.3$ \\
     \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$0.967 \pm 0.075$} & \mainconfig{$0.100 \pm 0.091$} & \mainconfig{$17.9 \pm 2.5$} & \mainconfig{$67.8 \pm 16.8$} & \mainconfig{$179.3 \pm 1.2$}  \\
     \bottomrule
@@ -143,7 +142,7 @@ on five, so it has no row here either.
   \caption[D3IL-avoiding at the protocol of DPCC, every budget]{\autoref{tab:avoiding-dpcc-protocol} at
   every budget evaluated under the protocol of \ac{DPCC}; columns, rules, protocol and marks as there.
   What this table adds are the intermediate budgets, which exist for analytic average-velocity matching
-  and the baseline only; diffusion at $\nfe=2$ is pending across five seeds.}
+  and the baseline only.}
   \label{tab:app:avoiding-dpcc-full}
   \centering
   \footnotesize
@@ -184,7 +183,9 @@ on five, so it has no row here either.
     Diffusion  & 1 & $r$ & $0.600 \pm 0.303$ & $67.7 \pm 10.1$ & $33.9 \pm 8.6$ \\
                      &    & $c$ & $0.667 \pm 0.391$ & $72.1 \pm 17.6$ & $33.3 \pm 14.5$ \\
                      &    & $t$ & $0.600 \pm 0.190$ & $73.5 \pm 14.1$ & $33.3 \pm 13.2$ \\
-    Diffusion  & 2 & \multicolumn{4}{l}{\emph{pending: five-seed evaluation}} \\
+    Diffusion  & 2 & \textbf{$r$} & \textbf{$1.000 \pm 0.000$} & \textbf{$65.1 \pm 1.4$} & \textbf{$191.1 \pm 26.5$} \\
+                     &    & \textbf{$c$} & \textbf{$1.000 \pm 0.000$} & \textbf{$61.2 \pm 1.2$} & \textbf{$211.4 \pm 18.8$} \\
+                     &    & $t$ & $0.933 \pm 0.091$ & $60.9 \pm 1.5$ & $225.9 \pm 48.5$ \\
     Diffusion  & 10 & $r$ & $0.900 \pm 0.091$ & $75.1 \pm 7.3$ & $327.2 \pm 35.4$ \\
                      &    & $c$ & $1.000 \pm 0.000$ & $70.3 \pm 11.5$ & $309.8 \pm 11.2$ \\
                      &    & \textbf{$t$} & \textbf{$1.000 \pm 0.000$} & \textbf{$68.7 \pm 7.0$} & \textbf{$321.7 \pm 14.4$} \\
@@ -198,6 +199,88 @@ on five, so it has no row here either.
 \dataref{analysis\_results\_checkpoint/19-09-UAV-Pillars-Exclude/batch\_avoiding\_combined\_20260919\_132703;
 the $\nfe=5$ and $10$ rows recounted at v3.60 (census in
 \texttt{data\_status/PENDING\_20260922\_all\_lacking\_runs.md} \S13); every other row is the chapter's.}
+
+\section{D3IL-avoiding: Executed Paths under Per-Step Projection}\label{app:avoiding-paths}
+
+\autoref{fig:avoiding-paths} shows the executed end-effector path of episode 2 for each of the two
+average-velocity models at $\nfe=1$ and $\nfe=2$. The four paths share an initial pose, training
+seed and constraint geometry. All eight episodes across the four cells reach the goal without a
+violating control step; the figure draws one matched episode per cell. Each displayed path bends
+around the keep-out disk and crosses the goal line. The unprojected plans for these model--budget
+cells are shown in \autoref{fig:raw-plans}; their constraint violations are reported in
+\autoref{tab:avoiding-raw-models}.
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=\linewidth]{fig_avoiding_paths}
+  \caption[D3IL-avoiding: the executed paths under per-step projection]{D3IL-avoiding, the executed
+  end-effector path of episode 2 in each model--budget cell. Left to right: MeanFM at $\nfe=1$ and
+  $2$, then CI-MeanFM at $\nfe=1$ and $2$. The blue square marks the common start; the green circle
+  marks where each episode ended beyond the goal line. Green paths have no violating control step.
+  Per-step projection with temporal consistency, tightened \emph{top-right-hard} constraints and
+  one training seed; both evaluated episodes reached the goal without a violation in every cell.
+  Shading shows the excluded halfspace and keep-out disk; the dashed line and circle are the
+  tightened boundaries, as in \autoref{fig:constraints-avoiding}. The view is $x$--$y$ only.}
+  \label{fig:avoiding-paths}
+\end{figure}
+\dataref{DA\_in\_Paper/data/exec\_paths.json, extract/exec\_paths.py; the four
+\texttt{dpcc-t-tightened.npz} artefacts at $\nfe=1$ and $\nfe=2$, seed 6, first two episodes,
+of which episode 2 is drawn in every panel ---
+episode $i$ of a run is fixed by $i$ (\texttt{scripts/eval.py:297--299}), so these are the two the
+protocol of \ac{DPCC} runs ---
+\texttt{halfspace\_top-right-hard}; \texttt{obs\_all[:,\,2:4]} is the executed end-effector position
+(\texttt{config/projection\_eval.yaml}). The constraint set is drawn from the same scene file as
+\autoref{fig:constraints-avoiding}.}
+\guard{One training seed and one geometry. The protocol runs these two episodes for each of five
+training seeds on each of three geometries (\autoref{tab:protocol}); only one seed's rollout artefacts
+are on disk, so this figure draws two of the thirty episodes a row of
+\autoref{tab:avoiding-dpcc-protocol} is averaged over, and the counts beside the panels are not that
+row's rates.}
+
+\FloatBarrier
+
+\section{D3IL-aligning: Executed Paths under Each Projection Method}\label{app:aligning-paths}
+
+\autoref{fig:aligning-paths} shows nine of the ten evaluated contexts under each projection setting;
+the tenth, context~7, is the one no configuration moves (\autoref{sec:res:aligning:projection}) and its
+logged path has no extent. Without projection eight of the nine paths enter the keep-out region
+or cross the tightened boundary; under per-step projection one still does, and under endpoint projection
+none. Over all ten contexts the unprojected setting has two violation-free paths, per-step projection
+nine and endpoint projection ten (\autoref{tab:va-projection}), and the panel counts agree with those
+once the unmoved context is added back. The projected paths are visibly longer than their unprojected
+counterparts.
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=\linewidth]{fig_aligning_paths}
+  \caption[Alignment: the executed end-effector paths under each projection method]{D3IL-aligning, the
+  executed end-effector path in nine of the ten contexts under the three projection settings of
+  \autoref{tab:va-projection}, over the constraint set of \autoref{tab:aligning-constraints};
+  analytic average-velocity matching at $\nfe=20$, random selection, tightened constraints, one training seed. Context~7, whose path has no extent because the arm never moves, is left out of every panel;
+  the full ten-context counts are in \autoref{tab:va-projection}. Only the $x$-$y$ position is plotted;
+  height $z$ is omitted.
+  Green: no violating control step in that context; red: at least one. The filled square is the
+  end effector at the start, common to every context, and a dot marks where a context ended. The small
+  marks are the nine box start poses (filled) and their targets (hollow), as in
+  \autoref{fig:aligning-contexts}. Shaded: the region excluded for the planned position; dashed: the
+  tightened boundary. Panel counts refer only to the paths shown.}
+  \label{fig:aligning-paths}
+\end{figure}
+\dataref{DA\_in\_Paper/data/exec\_paths.json, extract/exec\_paths.py; the three
+\texttt{<variant>\_train\_set.npz} artefacts at \texttt{combined\_5-tightened}, seed 6;
+\texttt{obs\_all[:,\,:,\,3:5]} is the executed end-effector position and
+\texttt{constraint\_exec\_zero\_violation} the colour; the nine drawn paths are episode positions
+0--7 and 9 of each cell (context~7 of the prose is position 8, id 6, in the JSON)}
+\guard{\textbf{This draws the end effector, not the box.} The constraint set of this task applies to
+the planned end-effector position, so the drawn quantity is the one the projector acts on --- but the
+quadrotor figures draw the constrained \emph{body}, and the equivalent here would be the box. The
+evaluation does not log a box pose: \texttt{eval\_mix\_visual\_aligning.py} writes a six-dimensional
+\texttt{obs\_all} that is the commanded and the measured end-effector position, and the box enters the
+record only as the distances of \autoref{tab:va-projection}. Drawing the box would need an
+evaluation re-run with that pose recorded, which is
+\texttt{data\_status/PENDING\_20260922\_all\_lacking\_runs.md}, D10c.}
+
+\FloatBarrier
 
 \begin{deadblock}{this twenty-episode section is not maintained and will be dropped if time runs short; it
 is to be rechecked and rebuilt before anything is read from it. Nothing inside was edited at v3.67.}
@@ -345,7 +428,7 @@ $\nfe=20$ under the three rules, the largest gap between them being eleven episo
     MeanFM, CI-MeanFM, FM, Diffusion & 1, 2 & complete & complete \\
     \midrule
     \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20}
-      & \mainconfig{\emph{both-hard}: seed 6 only under $r$ and $c$, absent under $t$}
+      & \mainconfig{\emph{both-hard}: one seed only under $r$ and $c$, absent under $t$}
       & \mainconfig{\emph{both-hard} absent} \\
     MeanFM & 20 & \emph{both-hard} absent; \emph{top-left-hard} 2 of 5 seeds & \emph{both-hard} absent; \emph{top-left-hard} 3 of 5 seeds \\
     FM & 20 & \emph{both-hard} 3 of 5 seeds under $r$ and $c$, 2 of 5 under $t$ & \emph{both-hard} 2 of 5 seeds \\
@@ -399,10 +482,10 @@ evaluations two of the three take longer per action than the diffusion baseline 
     MeanFM    & 2  & $t$ & $0.990 \pm 0.022$ & $61.7 \pm 2.6$  & $27.3 \pm 0.5$  & 5 seeds, 2 geometries; no \emph{both-hard} at $\nfe=20$, \emph{top-left-hard} 2 of 5 seeds \\
     MeanFM    & 20 & $t$ & $0.955 \pm 0.065$ & $63.5 \pm 10.0$ & $1003.9 \pm 43.9$ & \\
     \midrule
-    CI-MeanFM & 2  & $t$ & $1.000$ & $59.7$ & $28.6$  & training seed 6, 3 geometries \\
+    CI-MeanFM & 2  & $t$ & $1.000$ & $59.7$ & $28.6$  & one training seed, 3 geometries \\
     CI-MeanFM & 20 & $t$ & $0.950$ & $62.4$ & $1018.3$ & \\
     \midrule
-    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$c$} & \mainconfig{$0.983 \pm 0.025$} & \mainconfig{$69.0 \pm 11.5$} & \mainconfig{$563.5 \pm 29.6$} & \mainconfig{5 seeds, 3 geometries; \emph{both-hard} seed 6 only}  \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$c$} & \mainconfig{$0.983 \pm 0.025$} & \mainconfig{$69.0 \pm 11.5$} & \mainconfig{$563.5 \pm 29.6$} & \mainconfig{5 seeds, 3 geometries; \emph{both-hard} one seed only}  \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -437,7 +520,7 @@ two tables below keep their structure with those cells \emph{pending}.
 \begin{table}[htpb]
   \caption[UAV-s-curve: unprojected cells outside the matched grid]{UAV-s-curve, plans executed without
   projection at the two budgets that are not on the ladder of \autoref{tab:uav-scurve}; columns as
-  there, ten flights per row, training seed 6.}
+  there, ten flights per row, one training seed.}
   \label{tab:app:uav-scurve-unprojected-extra}
   \centering
   \small
@@ -458,7 +541,7 @@ successes; the switched-wall re-run flew the cell again and the chapter uses the
 \begin{table}[htpb]
   \caption[UAV-s-curve: the re-run with endpoint projection]{UAV-s-curve after the switched-wall
   correction, \textbf{each model at a different budget} --- the one it is strongest at --- six projection
-  variants per model, ten flights per variant, training seed 6. \textbf{The three rows are therefore not a
+  variants per model, ten flights per variant, one training seed. \textbf{The three rows are therefore not a
   model comparison} and are not read as one: every cell is $0.00$ on both outcome columns, and what the
   table reports is the abort mode they share. \emph{Aborted}: flights ended early by the divergence guard because the
   vehicle inverted. The last column counts the same aborts on the unprojected plan alone, where no
@@ -483,7 +566,7 @@ numbers were produced under it too.}
 
 \begin{table}[htpb]
   \caption[UAV-s-curve: the projection variants behind the zeros]{UAV-s-curve, the six projection
-  variants of \autoref{tab:app:uav-scurve-aborts} printed individually, ten flights each, training seed 6.
+  variants of \autoref{tab:app:uav-scurve-aborts} printed individually, ten flights each, one training seed.
   Success with constraint satisfaction is $0.00$ in every cell and is omitted. \emph{None}: flown
   unprojected. \emph{Endpoint, single}: the single-candidate form, without a selection rule.
   \emph{Aborted}: ended early by the divergence guard. \emph{Success}: crossed the finish line, within the
@@ -673,11 +756,11 @@ of UAV-pillars as well, which are excluded from the analysis and reported nowher
     \midrule
     D3IL-avoiding, all protocol tables & \texttt{batch\_avoiding\_combined\_20260919} & 5 seeds; 2 and 20 episodes per geometry \\
     D3IL-avoiding, generative models & \texttt{batch\_avoiding\_combined\_20260825} & 5 seeds $\times$ 20 episodes \\
-    D3IL-avoiding, CI-MeanFM & \texttt{batch\_avoiding\_combined\_20260903} & seed 6, 20 episodes \\
+    D3IL-avoiding, CI-MeanFM & \texttt{batch\_avoiding\_combined\_20260903} & one seed, 20 episodes \\
     D3IL-avoiding, projection methods & \texttt{batch\_avoiding\_combined\_20260906} & 4 seeds $\times$ 3 geometries $\times$ 2 episodes \\
-    D3IL-aligning & \texttt{batch\_va2\_20260915} & seed 6, 10 paired contexts \\
-    UAV-corridor and UAV-s-curve & \texttt{batch\_uav\_20260919} & seed 6, 12 flights (4 per route) and 10 flights \\
-    UAV-corridor, earlier reference & \texttt{batch\_uav\_20260914} & seed 6, 12 flights (4 per route) \\
+    D3IL-aligning & \texttt{batch\_va2\_20260915} & one seed, 10 paired contexts \\
+    UAV-corridor and UAV-s-curve & \texttt{batch\_uav\_20260919} & one seed, 12 flights (4 per route) and 10 flights \\
+    UAV-corridor, earlier reference & \texttt{batch\_uav\_20260914} & one seed, 12 flights (4 per route) \\
     \bottomrule
   \end{tabularx}
 \end{table}

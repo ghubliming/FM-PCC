@@ -101,11 +101,14 @@ def _uav_scene(scene_file, cam, path_pts=None, start=None):
     return sc
 
 
+# v3.69 (author, 2026-09-23): the three orthographic views stand under MuJoCo renders that look
+# along +x from behind the start; they used to look back from the finish (camera at +x, +y), which
+# read as a left-right mirror of the render above them. Same obliqueness, camera moved 180 deg.
 def fig_scene_uav_corridor(outdir):
     """Corridor v2: the scene the corridor results are flown in (U16, 2026-09-13)."""
     sc = _uav_scene(
         'scene_corridor_v2.xml',
-        dict(azimuth=58, elevation=34))
+        dict(azimuth=196, elevation=34))
     if sc is None:
         return None
     path = sc.save(os.path.join(outdir, 'fig_scene_uav_corridor.svg'))
@@ -116,7 +119,7 @@ def fig_scene_uav_pillars(outdir):
     """Pillars v2 (v3.68b): the D3IL-avoiding field at scale 36, extruded into pillars (Gen15 U18)."""
     sc = _uav_scene(
         'scene_avoiding_pillars_s36.xml',
-        dict(azimuth=54, elevation=30))
+        dict(azimuth=204, elevation=30))
     if sc is None:
         return None
     path = sc.save(os.path.join(outdir, 'fig_scene_uav_pillars.svg'))
@@ -126,7 +129,7 @@ def fig_scene_uav_pillars(outdir):
 def fig_scene_uav_scurve(outdir):
     sc = _uav_scene(
         'scene_s_curve.xml',
-        dict(azimuth=52, elevation=40))
+        dict(azimuth=196, elevation=40))
     if sc is None:
         return None
     path = sc.save(os.path.join(outdir, 'fig_scene_uav_scurve.svg'))
@@ -272,8 +275,18 @@ def _uav_constraint_panel(scn, w, first, r_drone, tight):
         f.dline([(x, m * x + b + d) for x in xs], '#34495e', w=1.4, dash='7,5')
     for dk in scn['disks']:
         cx, cy = dk['c']
+        if dk.get('physical'):
+            # v3.69: a physical obstacle that is NOT a constraint (the pillars of UAV-pillars, whose
+            # constraint set is the avoiding one): the solid body, no inflation ring, no tightening.
+            f.circle(cx, cy, dk['r'], fill='#c0392b', opacity=0.9, stroke='#7b241c', w=1.0)
+            continue
         f.circle(cx, cy, dk['r'] + r_drone, fill='#5d6d7e', opacity=0.18, stroke='#34495e', w=1.2)
         f.circle(cx, cy, dk['r'] + r_drone + tight, stroke='#34495e', w=1.4, dash='7,5')
+        if dk.get('keepout'):
+            # v3.69: a keep-out disk, the constraint of the avoiding geometry mapped into the arena:
+            # translucent, so the pillar it covers stays visible inside it.
+            f.circle(cx, cy, dk['r'], fill='#c0392b', opacity=0.28, stroke='#7b241c', w=1.4)
+            continue
         # A disk whose ENFORCED radius differs from the physical obstacle (UAV-pillars at
         # `pillars_xl`) is drawn as both: the enforced keep-out in red, and the pillar the
         # simulator contains as a solid core inside it. Anything else would tell the reader the
@@ -288,7 +301,7 @@ def _uav_constraint_panel(scn, w, first, r_drone, tight):
     return f
 
 
-def _uav_side_panel(kind, w, first, r_drone, tight):
+def _uav_side_panel(kind, w, first, r_drone, tight, xlim=None, zlim=None, equal=False):
     """[v3.68d] UAV-corridor from the side (x-z), route C: the two constraints that leave the
     horizontal plane. `kind` = 'tilt' (the v2 slide leaned -60 deg about z_ref = 1.11: the body
     clears when s_xy(x,0) - tan(60)(z - z_ref) >= r, i.e. below a ceiling that descends along x)
@@ -297,14 +310,18 @@ def _uav_side_panel(kind, w, first, r_drone, tight):
     (corridor_v3_tilt: z_lean deg -60 z_ref 1.11, ub_z 1.80; corridor_v3_ablation_hump: ub_z 2.80).
     """
     fs = FONT_CONSTRAINT
-    (x0, x1) = (-2.8, 2.8)
-    (z0, z1) = (0.2, 1.9) if kind == 'tilt' else (0.2, 2.95)
+    (x0, x1) = xlim or (-2.8, 2.8)
+    (z0, z1) = zlim or ((0.2, 1.9) if kind == 'tilt' else (0.2, 2.95))
     ml, mr, mt, mb = int(42 * fs), int(10 * fs), int(46 * fs), int(46 * fs)
-    f = Fig(w, 300, ml=ml, mr=mr, mt=mt, mb=mb, font=fs)
+    # v3.69: `equal` gives the panel the same equal-aspect box as _uav_constraint_panel, so the
+    # side view sits in the constraint matrix at the size of the top views.
+    ph = int(round((w - ml - mr) * (z1 - z0) / (x1 - x0) + mt + mb)) if equal else 300
+    f = Fig(w, ph, ml=ml, mr=mr, mt=mt, mb=mb, font=fs)
     f.axes((x0, x1), (z0, z1))
     title = 'UAV-corridor, tilt' if kind == 'tilt' else 'UAV-corridor, hump'
-    sub = 'side view along route C (y = 0)'
-    f.frame([-2, -1, 0, 1, 2], [0.5, 1.0, 1.5] + ([2.0, 2.5] if kind == 'hump' else []),
+    sub = 'side view along the corridor (y = 0)'
+    zt = [v / 2 for v in range(int(math.ceil(z0 * 2)), int(math.floor(z1 * 2)) + 1) if v > 0]
+    f.frame([v for v in (-2, -1, 0, 1, 2) if x0 < v < x1], zt,
             'x [m]', 'z [m]' if first else '', title, sub,
             xfmt=lambda v: f'{v:g}', yfmt=lambda v: f'{v:.1f}')
     f.clip_to_box()
@@ -341,7 +358,7 @@ def _uav_side_panel(kind, w, first, r_drone, tight):
         f.dline([(x, roof(x)) for x in span], '#34495e', w=2.6)
         f.dline([(x, lift(x, 0.0)) for x in span], '#34495e', w=1.2)
         f.dline([(x, lift(x, tight)) for x in span], '#34495e', w=1.4, dash='7,5')
-        f.text(f.X(0.0), f.Y(0.42), 'the roof: excluded below', 9.0, '#34495e', anchor='middle')
+        f.text(f.X(0.0), f.Y(max(0.42, z0 + 0.2)), 'the roof: excluded below', 9.0, '#34495e', anchor='middle')
     # the launch altitude and the flown band of the level corridor, for scale
     f.dline([(x0, 1.11), (x1, 1.11)], '#2471a3', w=1.2, dash='1,3')
     f.text(f.X(x0) + 6, f.Y(1.11) + 12 if kind == 'tilt' else f.Y(1.11) - 5, 'launch altitude 1.11 m', 9.0, '#2471a3')
@@ -350,25 +367,48 @@ def _uav_side_panel(kind, w, first, r_drone, tight):
 
 
 def fig_constraints_uav(outdir):
-    """The three aerial constraint sets, from above, as the projection sees them."""
+    """[v3.69, author 2026-09-23] The quadrotor constraint sets as a matrix: one column per scene in
+    the order of the chapter (pillars, corridor, s-curve), one panel per constraint set, every panel
+    the same size. UAV-pillars: the three avoiding geometries mapped into the arena. UAV-corridor:
+    the tilt (top view at the launch altitude, where the leaned plane cuts the corridor) and the hump
+    (side view, the roof). UAV-s-curve: its one set. Top views share one aspect ratio (RATIO) so the
+    equal-aspect panels come out the same height; the side view is given the same box."""
     from svg.fmpcc_svg import save_grid
     C = getattr(S, 'UAV_CONSTRAINTS', None)
-    if not C:
+    G = getattr(S, 'UAV_PILLARS_GEOMETRIES', None)
+    if not C or not G:
         return None
     r, t = C['r_drone'], C['tightening']
-    panels = [_uav_constraint_panel(scn, 470, i == 0, r, t) for i, scn in enumerate(C['scenes'])]
-    # v3.68d: the corridor's two constraints leave the plane of the top view; a second row
-    # shows each from the side along route C.
-    panels += [_uav_side_panel('tilt', 470, True, r, t), _uav_side_panel('hump', 470, False, r, t)]
-    width = sum(p.w for p in panels[:3]) + 2 * 8
-    h = Fig(width, 104, ml=0, mr=0, mt=0, mb=0, font=FONT_CONSTRAINT)
-    x = 16
-    items = [('wall', 'the obstacle: wall, slide, plane or roof'),
+    W = 470
+    RATIO = 24.0 / 27.0                       # pillars: x 27 m by y 24 m; every top view is padded to it
+    by_name = {scn['name']: scn for scn in C['scenes']}
+
+    def padded(scn, title, sub):
+        (x0, x1) = scn['xlim']
+        hy = (x1 - x0) * RATIO / 2
+        return dict(scn, title=title, sub=sub, ylim=(-hy, hy))
+
+    pillars = [_uav_constraint_panel(dict(G[n], sub=n), W, True, r, t)
+               for n in ('top-left-hard', 'top-right-hard', 'both-hard')]
+    tilt = _uav_constraint_panel(padded(by_name['UAV-corridor'], 'UAV-corridor, tilt',
+                                        'top view at the launch altitude, 1.11 m'), W, True, r, t)
+    hump = _uav_side_panel('hump', W, True, r, t, xlim=(-1.9, 1.9), zlim=(-0.1, -0.1 + 3.8 * RATIO),
+                           equal=True)
+    scurve = _uav_constraint_panel(padded(by_name['UAV-s-curve'], 'UAV-s-curve', 'top view'), W, True, r, t)
+    blank = lambda: Fig(W, pillars[0].h, ml=0, mr=0, mt=0, mb=0)
+    panels = [pillars[0], tilt, scurve,
+              pillars[1], hump, blank(),
+              pillars[2], blank(), blank()]
+    width = 3 * W + 2 * 8
+    h = Fig(width, 122, ml=0, mr=0, mt=0, mb=0, font=FONT_CONSTRAINT)
+    items = [('wall', 'the constraint boundary: wall, plane or roof'),
              ('band', f'excluded: inflated by the vehicle radius {r:g} m'),
-             ('area', 'excluded: beyond the obstacle'),
-             ('dash', f'tightened by a further {t:g} m')]
-    # two rows of two: at this text size a single row runs off the figure
-    row_y, col_x, size = (30, 76), (16, width // 2 + 16), 18
+             ('area', 'excluded: beyond the boundary'),
+             ('dash', 'tightened boundary'),
+             ('keep', 'keep-out disk (a constraint)'),
+             ('pill', 'obstacle: wall end, corner or pillar')]
+    # three rows of two: at this text size three columns run off the figure
+    row_y, col_x, size = (26, 64, 102), (16, width // 2 + 16), 16
     for i, (kind, lab) in enumerate(items):
         x, y = col_x[i % 2], row_y[i // 2]
         if kind == 'wall':
@@ -379,14 +419,18 @@ def fig_constraints_uav(outdir):
         elif kind == 'band':
             h.s.append(f'<rect x="{x - 11}" y="{y - 11}" width="22" height="22" fill="#5d6d7e" '
                        f'fill-opacity="0.24" stroke="#34495e"/>')
-        else:
+        elif kind == 'dash':
             h.poly([(x - 14, y), (x + 14, y)], '#34495e', dash='9,6', w=3)
+        elif kind == 'keep':
+            h.s.append(f'<circle cx="{x}" cy="{y}" r="11" fill="#c0392b" fill-opacity="0.28" stroke="#7b241c"/>')
+        else:
+            h.s.append(f'<circle cx="{x}" cy="{y}" r="9" fill="#c0392b" fill-opacity="0.9" stroke="#7b241c"/>')
         h.text(x + 26, y + 7, lab, size, '#111')
     path = save_grid(panels, os.path.join(outdir, 'fig_constraints_uav.svg'), cols=3, gap=8, header=h)
-    return path, ('config/uav_projection.yaml :: corridor_v3_tilt (cut at z_ref), s_curve_hg; '
-                  'UAV-pillars = data/avoiding_scene.json both-hard mapped by uav_avoiding_bridge/frame.py at scale 36 '
-                  f'| transcribed in sources.UAV_CONSTRAINTS; inflation r_drone {r:g} m, tightening {t:g} m '
-                  '(pillars: 0 / 0.90 m)')
+    return path, ('config/uav_projection.yaml :: corridor_v3_tilt (cut at z_ref), corridor_v3_ablation_hump '
+                  '(side view), s_curve_hg; UAV-pillars = data/avoiding_scene.json, the three geometries mapped '
+                  'by uav_avoiding_bridge/frame.py at scale 36 | transcribed in sources.UAV_CONSTRAINTS / '
+                  f'UAV_PILLARS_GEOMETRIES; inflation r_drone {r:g} m, tightening {t:g} m (pillars: 0 / 0.90 m)')
 
 
 # ═══════════════════════════════════════════════════════════════════════════

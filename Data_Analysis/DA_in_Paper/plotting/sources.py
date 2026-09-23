@@ -107,18 +107,19 @@ UAV_SCENE_DIR = 'd3il/environments/d3il/models/mj/robot/quadrotor/scenes'
 # Every boundary is inflated by the vehicle radius before it reaches the solver
 # (planning_inflation.r_drone), and a tightened variant shrinks it by
 # enlarge_constraints on top of that.
-def _pillars_v2_scene():
-    """[v3.68b, 2026-09-23] UAV-pillars = the D3IL-avoiding field flown by the quadrotor (Gen15 U18).
+def _pillars_v2_scene(name='both-hard'):
+    """[v3.68b, 2026-09-23; v3.69: one scene per avoiding geometry] UAV-pillars = the D3IL-avoiding
+    field flown by the quadrotor (Gen15 U18).
 
-    The constraint set is the avoiding `both-hard` geometry (the two halfspaces and the keep-out
-    disk of data/avoiding_scene.json, i.e. config/projection_eval.yaml) mapped into the arena by
-    the similarity map of uav_avoiding_bridge/frame.py at SCALE 36:
+    The constraint set is the avoiding geometry `name` (its halfspace(s) and keep-out disk from
+    data/avoiding_scene.json, i.e. config/projection_eval.yaml) mapped into the arena by the
+    similarity map of uav_avoiding_bridge/frame.py at SCALE 36:
         X =  36 * (y_a - 0.035),   Y = -36 * (x_a - 0.5)
-    The six physical pillars are the avoiding obstacles under the same map (r 0.025/0.03 -> 0.90/1.08 m).
-    The map sends the rod radius (0.01) onto the drone's reach (0.36), so the planner's constraint
-    set is used as it is: no further inflation is drawn (`r_drone` 0 for this scene), and the
-    tightening is the avoiding one, 0.025 -> 0.90 m. top-left-hard and top-right-hard are subsets
-    (one halfspace + the disk each), as in fig_constraints_avoiding.
+    The six physical pillars are the avoiding obstacles under the same map (r 0.025/0.03 -> 0.90/1.08 m);
+    they are drawn as what they are -- solid obstacles, not constraints -- and the keep-out disk of the
+    geometry is drawn as the constraint it is, over the pillar it covers. The map sends the rod radius
+    (0.01) onto the drone's reach (0.36), so the planner's constraint set is used as it is: no further
+    inflation is drawn (`r_drone` 0 for this scene), and the tightening is the avoiding one, 0.025 -> 0.90 m.
     """
     import json as _json
     if not os.path.isfile(AVOIDING_SCENE):
@@ -126,7 +127,7 @@ def _pillars_v2_scene():
     sc = _json.load(open(AVOIDING_SCENE))
     S_ = 36.0
     w = lambda xa, ya: (S_ * (ya - 0.035), -S_ * (xa - 0.5))
-    g = sc['geometries']['both-hard']
+    g = sc['geometries'][name]
     hs = []
     for h in g['halfspaces']:
         (ax_, ay), (bx, by) = h['p0'], h['p1']
@@ -142,16 +143,13 @@ def _pillars_v2_scene():
             P0, P1 = P1, P0
         hs.append({'p0': P0, 'p1': P1, 'side': side, 'x_active': (-12.06, 13.14)})
     dk = g['disk']
-    C = w(*dk['center'])
-    disks = [{'c': C, 'r': S_ * dk['radius'], 'r_phys': S_ * 0.03 if abs(dk['center'][1] + 0.1) < 0.02 else S_ * 0.025}]
+    disks = [{'c': w(*dk['center']), 'r': S_ * dk['radius'], 'keepout': True}]
     for (xa, ya) in sc['obstacles']['centers']:
-        if abs(xa - dk['center'][0]) < 1e-6 and abs(ya - dk['center'][1]) < 0.02:
-            continue           # the keep-out sits on this pillar; drawn above
         r = 0.03 if abs(ya + 0.1) < 1e-6 else sc['obstacles']['radius']
-        disks.append({'c': w(xa, ya), 'r': S_ * r})
-    return {'name': 'UAV-pillars', 'title': 'UAV-pillars',
-            'sub': 'the avoiding field at scale 36, both-hard',
-            'xlim': (-13.0, 14.0), 'ylim': (-11.5, 11.5),
+        disks.append({'c': w(xa, ya), 'r': S_ * r, 'physical': True})
+    return {'name': 'UAV-pillars', 'title': 'UAV-pillars', 'geometry': name,
+            'sub': f'{name}, mapped at scale 36',
+            'xlim': (-13.0, 14.0), 'ylim': (-12.0, 12.0),
             'r_drone': 0.0, 'tightening': S_ * sc['tightening'],
             'halfspaces': hs, 'disks': disks}
 
@@ -183,10 +181,13 @@ UAV_CONSTRAINTS = {
          'disks': [{'c': (-0.5, -0.3), 'r': 0.05}, {'c': (0.5, 0.3), 'r': 0.05}]},
     ],
 }
-# v3.68b: scene order of the chapters -- pillars first
+# v3.68b: scene order of the chapters -- pillars first (the both-hard set stands for the scene where
+# one panel is drawn); v3.69: all three geometries, for the constraint matrix of fig_constraints_uav.
 _pv2 = _pillars_v2_scene()
 if _pv2:
     UAV_CONSTRAINTS['scenes'].insert(0, _pv2)
+UAV_PILLARS_GEOMETRIES = ({n: _pillars_v2_scene(n) for n in ('top-left-hard', 'top-right-hard', 'both-hard')}
+                          if _pv2 else {})
 
 # The two D3IL manipulation scenes are built in Python, not XML, so their
 # primitives are transcribed here WITH the symbol they come from. MuJoCo cylinder

@@ -1,0 +1,46 @@
+\subsubsection{Step Budget}\label{sec:res:fewstep}
+
+The flow-based models keep their success with constraint satisfaction as the step budget falls to a
+single network evaluation, while the diffusion baseline does not reach it at a small budget at all
+(\autoref{fig:k-ladder}). The baseline reaches $0.667$ at $\nfe=1$ and $1.000$ at $\nfe=10$ and
+$\nfe=20$. Over the same range the flow-based models never leave the top of the axis: both
+average-velocity models read $1.000$ or $0.967$ at one and two evaluations, analytic average-velocity
+matching holds $0.933$ out to ten, and instantaneous-velocity matching reads $1.000$ at one, two and
+twenty.
+
+The two curves are not read the same way, and the difference is the point. Each diffusion point is its own
+model: the number of denoising steps is fixed when the noise schedule is discretised during training, so
+the budgets of that curve are three separately trained checkpoints, one per step count, and moving along
+it costs a training run. The flow-based curve is one checkpoint per model, read at every budget, because
+there the step count is the number of steps the ODE solver takes at inference. For a flow-based model the
+budget is therefore a dial that can be turned after training, and for the diffusion baseline it is a
+property of the checkpoint --- the same asymmetry \autoref{fig:raw-plans} shows, where the two diffusion
+panels are two separately trained models and each flow-based row is one model read twice. The cost of
+that asymmetry is a training run: the $\nfe=2$ panel of that figure required one, and the single-seed
+evaluation it produced puts the baseline at about $225$\,ms per control step at two denoising steps,
+against instantaneous-velocity matching's $17.3$\,ms at one. Cutting the budget from twenty to two
+leaves the baseline at thirteen times the cost.
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=\textwidth]{fig_avoiding_k_ladder}
+  \caption[Success against step budget]{Success with constraint satisfaction against the step budget,
+  averaged over the three geometries; the protocol of \ac{DPCC}, five training seeds $\times$ two
+  episodes per geometry, temporal U-Net of $4.0$\,M parameters. Each model is drawn at the selection
+  rule it is operated with: temporal consistency for the two average-velocity models, cumulative
+  projection cost for instantaneous-velocity matching and for the baseline. Each is drawn at the budgets
+  it was evaluated at, and every point carries all five seeds and all three geometries.
+  Consistency-interpolated average-velocity matching lies on instantaneous-velocity matching at both of
+  its budgets, so it is dashed and drawn with the smaller marker. Legend: MeanFM, CI-MeanFM, FM and the
+  diffusion model of \ac{DPCC}. CI-MeanFM and FM are both at $1.000$ at both of their budgets, so their lines coincide; they are drawn
+  displaced by $\pm0.006$ on the outcome axis so that both are visible. The displacement is a drawing
+  offset and not a difference in the data.}
+  \label{fig:k-ladder}
+\end{figure}
+
+All four series are the same sample --- five training seeds, two episodes, three geometries --- so the
+figure is one comparison and not several. What separates the baseline's curve from the other three is
+what a point on it costs to produce: its three budgets are three separately trained checkpoints, and the
+flow-based curves are one checkpoint per model read at each budget. $\nfe$ is an inference-time
+accuracy--cost dial for the flow-based ODEs and a training decision for the diffusion baseline, which a
+later choice cannot undo.

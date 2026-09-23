@@ -10,15 +10,17 @@
 
 | ID | where it shows in the draft | run | GPU |
 | :-- | :-- | :-- | --: |
-| **R39** 🔴 | Ch 6 §6.3.1 UAV-pillars — every cell *pending* | pillars v2 representative set (pilot + 5 replay cells + 2 live cells) — **23-09 file** | < 1 h |
+| **R39** 🔴 | Ch 6 §6.3.1 UAV-pillars — every cell *pending* | pillars v2 representative set (pilot + 5 replay cells T1–T5, one seed; **no live run**, author 23-09) — **23-09 file** | < 1 h |
 | **R33** 🔴 | Ch 6 §6.3.2 UAV-corridor — every cell *pending*, tilt + hump blocks | corridor v3, two scenes, 68 cells each, K20 last — **23-09 file** | ~2 GPU-days |
+| | ↳ **author, 23-09 (v3.69):** the thesis reads **ten flights per cell** (Table 5.10). The driver flies `NTRIALS=12` (U16's 4 per route; `eval_mix_uav.py` cycles routes over the trial index) — the DA takes the **first ten** of each cell, 4/3/3 per route. No resubmission. | | |
 | **R2** 🔴 | Table 6.8 diffusion per-step row *pending* | D3IL-aligning diffusion K20, `combined_5-tightened`, `dpcc-r/c/t`, ten contexts | ~1.5 h |
 | **R37** 🔴 | Table 6.6 all rows *pending* | tightened threshold ladder: MeanFM random rule — per-step K2 η0.5; per-step + endpoint at K100 η0.1 and K100 η0.5 (K10/K20 exist) | ~2 h |
 | **R16** 🟡 | Table 6.5 three rows *pending* | unprojected CI-MeanFM K10; FM K2, K10 | ~1 h |
 | **R35** 🟡 | Table 6.8 CI-MeanFM endpoint block *pending* | `hardflow_new-r/c/t` on CI-MeanFM K20 T0.2 tightened | ~1 h |
 | **R36** 🟡 | Table 6.3 *lacking* cells | avoiding 4-candidate matched: CI-MeanFM + FM at K3, MeanFM K10 (seed 6) | ~2 h |
+| **R41** 🟡 | Table 6.5 (`tab:k-ladder`, v3.69) — the full step-budget grid, 8 cells *pending* | D3IL-avoiding at DPCC's protocol (5 seeds × 3 geometries × 2 episodes, `diffuser` + `dpcc-r/c/t` tightened, 4 candidates, η 0.5): **MeanFM K20; CI-MeanFM (α0.2) K5, K10, K20; FM K5, K10** — evaluations of the existing checkpoints. Optional: **diffusion K5** = five trainings (the job-25965 pattern) + one evaluation | ~3 h eval; +~11 h if diffusion K5 |
 | **R40** 🟡 | §6.3.3 s-curve guard (the caveat's missing datum) | MeanFM K10 unprojected under `pid` and `pid_const_v`; expert reference under `pid_stopgo` — **23-09 file §4** | ~20 min |
-| **R26** 🟡 | Tables 6.1/6.2 diffusion K2 row (seed 6 only) | four diffusion K2 trainings (seeds 7–10) + eval | ~11 h |
+| ~~**R26**~~ ✅ | Tables 6.1/6.2 diffusion K2 row — **filled in the draft, v3.69** (Figs 6.3/6.4 still without the point: store scripts not promoted) | ✅ **DONE 2026-09-23** — jobs 26052–26055 + 26112, 5 seeds × 3 geos × 2 eps, complete. Numbers in [`DA_20260923_diffusion_K2_five_seeds.md`](../../../../Data_Analysis/DA_in_Paper/analysis/DA_20260923_diffusion_K2_five_seeds.md) | — |
 
 **Struck / no longer used** (kept below for history): R23 (pillars_xl, abandoned), R30, R32 (corridor v2 / pillars_hg
 twins), R31 (s-curve K ladder), R34 (folded into R37), R38 (s-curve projected, optional), R7/R14 (replaced by R36),
@@ -993,3 +995,32 @@ drop the pair, because §14 already carries the eta0.5-vs-eta0.1 cost evidence t
 self-contained driver that generates its own `_rw23_*` job files):
 26112 → R2fix → R37a → R37b. **Queued for later, unchanged in scope:** R16, R35 (part 2, one
 aligning script), R36 (part 3). R33, R39 and R40 stay in the 23-09 file.
+
+**23-09 addendum to §27 — R26 is closed.** Jobs 26052–26055 (trainings, seeds 7–10) and 26112
+(evaluation, seeds 6–10) delivered a complete 5 seeds × 3 geometries × 2 episodes cell, all thirteen
+variants, no missing seeds. Preliminary DA:
+[`DA_20260923_diffusion_K2_five_seeds.md`](../../../../Data_Analysis/DA_in_Paper/analysis/DA_20260923_diffusion_K2_five_seeds.md).
+Two things for the draft beyond the two table rows: (1) the baseline's **best** projected configuration
+is $\nfe=2$, not $\nfe=20$ — it Pareto-dominates the Target (S&C 1.000, 61.2 steps, 211.4 ms against
+1.000, 70.1, 553.4), so cost claims against DPCC must name this row; (2) 🟠 the diffusion arm's projector
+overhead at $\nfe=2$ (193 ms) is not on the flow arms' scale (8 ms) although the generation costs match
+within 3% — flagged, **not** to be attributed to the projector as a general property until the two
+projection schedules are compared in code. The seed-6-only `_msgplanpanel63` folder must never be pooled
+with `_msgdpccproto`.
+
+## 28 · v3.69 (23-09) — the step-budget figure is withdrawn; the full grid is a table with R41 open
+
+The author withdrew `fig_avoiding_k_ladder` (each model drawn on its own ragged set of budgets — MeanFM {1,2,5,10},
+CI-MeanFM {1,2}, FM {1,2,20}, diffusion {1,2,10,20} — is not an accurate figure). §6.1.2.5 now prints the full grid
+$\nfe\in\{1,2,5,10,20\}$ × four models at the operated rule as `tab:k-ladder`, with the eight missing cells *pending*:
+
+| cell | what exists | what to run |
+| :-- | :-- | :-- |
+| MeanFM K20 | — | eval, 5 seeds, `diffuser` + `dpcc-r/c/t` tightened |
+| CI-MeanFM α0.2 K5 / K10 / K20 | — (K20 exists only in the quarantined 20-episode campaign) | eval, 5 seeds, same variants |
+| FM K5 / K10 | K5 on one seed only under the protocol | eval, 5 seeds, same variants |
+| diffusion K5 | — (K is fixed at training) | **optional**: 5 trainings + eval, as R26 was run |
+
+All cells at the DPCC protocol (2 episodes per geometry, tag namespace `_msgdpccproto`, never pooled with the 20-episode
+campaign). Reads into `tab:k-ladder` and `tab:app:avoiding-dpcc-full`. R39's live cells (Mode L) are struck in the
+NOW table (author, 23-09: turbo only).

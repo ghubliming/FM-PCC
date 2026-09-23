@@ -312,6 +312,11 @@ The driver refuses it unless `WAVE="… R37c" ALLOW_OVERCAP=1`. Three ways out, 
 
 ### 🟡 Queued for the next parts, not submitted now
 
+**R41 (v3.69, 23-09) — the step-budget grid, evaluation only.** Same driver pattern as the 17-09 protocol wave
+(`_msgdpccproto`, `diffuser` + `dpcc-r/c/t` tightened, mpc4, T0.5, 2 episodes per geometry, seeds 6–10): MeanFM K20;
+CI-MeanFM α0.2 K5, K10, K20; FM K5, K10. ~3 GPU-hours. Diffusion K5 (five trainings) only if the author asks. Ledger §28.
+
+
 Marked here so they are not lost. One part at a time, as agreed.
 
 | next | ID | what | ~GPU | entrypoint |
@@ -345,7 +350,7 @@ the red wave lands so the spec cannot shift under it.
 | :-- | :-- | :-- | :-- |
 | A · R2 | **26051** | 999152f1 | ⚠ **η = 0.5, not the 0.2 Table 6.8 needs** (see above). RUNNING since 07:57 UTC; identity lines correct (`n_contexts 10 -> 10`, `combined_5` + twin, 4 variants, `_msglr22`). **Measured: ~18 min per unprojected item, ~75 min per projected item → ~8 h for the 8 items**, not the ledger's 1.5 h (the 265–450 ms/step figure is per replan, not per rollout wall time). Expected end ~16:00 UTC, inside the 12 h limit |
 | B1 · R26 train ×4 | **26052** s7 · **26053** s8 · **26054** s9 · **26055** s10 | 999152f1 | submitted 2026-09-22, 6 h limit each (the cluster copy predates the 12 h default; 2.2× the measured 2 h 41 m) |
-| B2 · R26 eval | ~~26056~~ → **26112** | 999152f1 | 26056 ran unchained and was cancelled (see above). **26112** re-submitted via `submit_after.sh 26055`, dependency verified |
+| B2 · R26 eval | ~~26056~~ → **26112** | 999152f1 | ✅ **COMPLETE 2026-09-23.** 5 seeds × 3 geometries × 2 episodes, 13 variants, no missing seeds. R26 is **data-complete**; preliminary DA in [`DA_20260923_diffusion_K2_five_seeds.md`](../../../../Data_Analysis/DA_in_Paper/analysis/DA_20260923_diffusion_K2_five_seeds.md). 26056 had run unchained and was cancelled (see above); 26112 was re-submitted via `submit_after.sh 26055` |
 | **R2fix · R2** | **26113** | 1e8e707d | ✅ submitted 23-09, `afterok:26112`. Aligning diffusion K20, **η = 0.2**, seed 6, 10 contexts, `combined_5` + tightened twin, `diffuser`+`dpcc-r/c/t`, tag `_msgR2fix`, 12 h limit. Replaces 26051 for Table 6.8 |
 | **R37a · R37** | **26114** | 1e8e707d | ✅ submitted 23-09, `afterok:26113`. MeanFM K2, η = 0.5, per-step `dpcc-r`, tag `_msgR37`, 6 h limit |
 | **R37b · R37** | **26115** | 1e8e707d | ✅ submitted 23-09, `afterok:26114`. MeanFM K100, η = 0.1, `dpcc-r` + `hardflow_new-r`, tag `_msgR37`, 16 h limit |
