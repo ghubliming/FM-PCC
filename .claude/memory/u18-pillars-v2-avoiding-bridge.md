@@ -33,4 +33,7 @@ via `Slurm_Codes/temp_bash/eval_20260923_p23_pillars_live.sh` → `sbatch/uav_av
 `p23uavpv2live`. **The run tag must contain `uav`** (factory refuses) — `live_p2_*.sh` default `p23pv2live` is broken/superseded.
 Turbo (`turbo.sh MODE=paper`) is not read by the thesis. L1 check (26077) showed live = Panda within 0.05.
 
+**Sidecars (fix8, 23-09):** one file per env close, named `…_<start>_p<pid>_<nn>.json` with argv/env context; R39 jobs
+26147–26150 were still pending → `git pull` before start was enough (sbatch scripts are snapshotted, Python is not).
+
 Related: [[u17-pillars-xl-floor-result]], [[slurm-sbatch-is-real-entrypoint]], [[da-requires-csv-never-from-logs]]

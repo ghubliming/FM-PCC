@@ -114,5 +114,6 @@ seed 6, *top-right-hard*, episode 2 of the MeanFM K1 cell.
 | 2026-09-23 | **C1** `diffuser` (both scenes: mf/af K1,2,3, fm K1,2,3,5,20, diffusion K20) | 26079–26102 (24 eval jobs) | queued (`AssocGrpGRES` at submit time) |
 | 2026-09-23 | C2 master | 26103 (`p23_master_C2`, Dependency: afterany C1) | pending |
 | | C2 / C3 / C4 / C5 | (queued by each link in turn — read the `p23_master_*` logs in `Slurm_Codes/logs/<date>/`) | |
+| 2026-09-23 | **R39 pillars v2 live** (`p23uavpv2live`, 5 seeds × 3 geos × 2 ep, `diffuser` + `dpcc-t-tightened`) | 26147 MeanFM K1 · 26148 MeanFM K2 · 26149 CI-MeanFM K1 · 26150 CI-MeanFM K2 | submitted |
 
 Claude (Fable 5.1, Claude Code) · 2026-09-23 · not run from the container.

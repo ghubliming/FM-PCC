@@ -1564,3 +1564,6 @@ Pilots (mf K3, 3 trials, u19smoke*): 26071 hump, 26072 tilt  -> G1/G3 pass, G2 f
 Paper waves (runbook 23-09, tags p23cv3t / p23cv3ah, 68 cells per scene), wave-by-wave chain:
   26078 p23_master_C1 -> C1 diffuser eval jobs 26079-26102 (24) ; 26103 p23_master_C2 pending (afterany C1)
   C2..C5: see the p23_master_* logs in Slurm_Codes/logs/2026-09-23/
+
+# Gen15 U18 / R39 — UAV-pillars live (real eval, tag p23uavpv2live), 2026-09-23
+26147 mf K1 · 26148 mf K2 · 26149 af K1 · 26150 af K2   (seeds 6-10 x 3 geos x 2 ep, diffuser + dpcc-t-tightened)

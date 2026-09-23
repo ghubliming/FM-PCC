@@ -15,6 +15,9 @@
 #  Results: logs/avoiding-d3il/plans/diffusion/H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5_msgp23pv2live/6/results/halfspace_<geo>/
 # ──────────────────────────────────────────────────────────────────────────────────────────────
 set -eo pipefail
+# ⛔ SUPERSEDED 2026-09-23 (author: R39 = live_p23_pillars.sh, tag p23uavpv2live). Default TAG p23pv2live lacks
+# "uav", so the plant factory refuses it; and the MeanFM K1 cell would collide with R39. Kept for the record only.
+echo "[ u18 ] SUPERSEDED: use Slurm_Codes/sbatch/uav_avoiding_bridge/live_p23_pillars.sh"; exit 3
 CURRENT_LOG=$(scontrol show job $SLURM_JOB_ID | grep -oP 'StdOut=\K\S+')
 if [ -n "$CURRENT_LOG" ]; then ln -snf "$CURRENT_LOG" Slurm_Codes/logs/latest.log; fi
 echo "================================================================================"
