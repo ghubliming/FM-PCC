@@ -22,9 +22,9 @@ run from the container. Group C (R30) and the s-curve corridor-style notes of th
 >    folders as `hardflow_sls-…`; §1's `HF_*` names are the folder names. **C3 composition:** the eval refuses a job with
 >    HardFlow variants and no `dpcc-*` row, so the HF jobs carry `dpcc-t` and C2 runs `dpcc-t` only at K = 1, 2 (§2's
 >    C2/C3/C4 rows are re-cut accordingly; same 68 cells, each once). Diffusion K20 `diffuser` is in C1 as written.
-> 5. **Pillars v2 (author, 23-09): one seed, tightened only, turbo mode only.** `turbo.sh MODE=paper` now flies seed 6
->    (`P23_SEEDS`); T5's source has seeds 7–10 only, so T5 flies seed 7 (`P23_T5_SEEDS`). **P2 (live) is dropped**; the
->    22-09 live gate check (26077) stays the evidence. Corridor already runs seed 6 only (`SEEDS=6` default in the driver).
+> 5. **Pillars v2 (author, 23-09): 5 seeds × 2 trials, tightened only, turbo mode only.** `turbo.sh MODE=paper` flies
+>    seeds 6–10 (`P23_SEEDS`), T5 seeds 7–10 (`P23_T5_SEEDS`; its source has no seed 6). **P2 (live) is dropped**; the
+>    22-09 live gate check (26077) stays the evidence. Corridor runs seed 6 only (`SEEDS=6` default in the driver).
 
 ## 0 · Before the first job
 
@@ -85,15 +85,15 @@ GO=1 MODE=paper ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_avoiding_bridge/t
 ```
 
 What `MODE=paper` selects (exact folder names from the 19-09 batch CSV `Full_Path`; tag `p23pv2turbo`, `clock` replay,
-**one seed: 6** × 3 geometries × 2 episodes = 6 episodes per cell unless stated; source seeds checked in that CSV):
+**5 seeds × 2 trials**: seeds 6–10 × 3 geometries × 2 episodes = 30 episodes per cell unless stated; source seeds checked in that CSV):
 
 | # | `--engine` | `--train-glob` / `--eval-glob` | variants | seeds |
 | :-- | :-- | :-- | :-- | :-- |
-| T1 | `flow_matching_v3_meanflow` | `*bbunet*` / `H8_K1_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE` | `diffuser`, `dpcc-t-tightened` | **6** |
-| T2 | `flow_matching_v3_alphaflow` | `*bbunet*ae0.2*` / `*K1_*msgdpccproto` | same | **6** |
-| T3 | `flow_matching_v3_ode_selectable` | — / `H8_K1_*msgdpccproto` | same | **6** |
-| T4 | `diffusion` | — / `H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5` | `diffuser`, `dpcc-c-tightened` | **6** |
-| T5 | `flow_matching_v3_meanflow` | `*bbunet*` / `H8_K3_*A1_B4*msghfmink*` | `dpcc-t-tightened`, `hardflow_sls-t-tightened` | **7** (source has no 6) |
+| T1 | `flow_matching_v3_meanflow` | `*bbunet*` / `H8_K1_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE` | `diffuser`, `dpcc-t-tightened` | 6–10 |
+| T2 | `flow_matching_v3_alphaflow` | `*bbunet*ae0.2*` / `*K1_*msgdpccproto` | same | 6–10 |
+| T3 | `flow_matching_v3_ode_selectable` | — / `H8_K1_*msgdpccproto` | same | 6–10 |
+| T4 | `diffusion` | — / `H8_K20_Dmodels.GaussianDiffusion_aw10_thres0.5` | `diffuser`, `dpcc-c-tightened` | 6–10 |
+| T5 | `flow_matching_v3_meanflow` | `*bbunet*` / `H8_K3_*A1_B4*msghfmink*` | `dpcc-t-tightened`, `hardflow_sls-t-tightened` | 7–10 (source has no 6) |
 
 Outputs: `logs/UAV_MIX/uav-pillars/plans/avoiding_bridge/<engine>/<train>/<eval>_msgp23pv2turbo/<seed>/results/halfspace_<geo>/`
 (`<eval>-p23pv2turbo` where the source already carries a `_msg` tag) — per cell npz, cell png, `eval_<variant>.log`,
@@ -114,7 +114,7 @@ Read in the P2 logs: the eval's own `Success rate / Constraints satisfied / … 
 | for | check |
 | :-- | :-- |
 | corridor | **68 result folders per scene**: `…_p23cv3t/6/corridor_cv3t_…/` and `…_p23cv3ah/6/corridor_cv3ah_…/`; `projection_health.n_tripped_trials = 0`; `divergence.n_aborted_trials` reported per cell; DA_UAV_v1 batch runs **per tag** (`p23cv3t`, then `p23cv3ah`), never pooled; `data_quality.csv` clean |
-| pillars v2 | ten `p23pv2turbo` cells, **seed 6 only (T5: seed 7)**, each with `agree` line, npz, png, eval log, sidecar, 3 SVGs; T1/T4 with 2 GIFs. If P1a ran earlier with seeds 6–10, the DA reads seed 6 (T5: 7) only. No live runs |
+| pillars v2 | ten `p23pv2turbo` cells, seeds 6–10 × 2 trials (T5: 7–10), each with `agree` line, npz, png, eval log, sidecar, 3 SVGs; T1/T4 with 2 GIFs. No live runs |
 | both | download with `Slurm_Codes/download_remote_logs/export_to_laptop.sh` into `temp/2309/`; nothing pooled with older tags |
 
 ## 5 · Submission record (fill in)

@@ -12,7 +12,7 @@
 #      ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_avoiding_bridge/turbo.sh            # PLAN ONLY (dry-run)
 #      GO=1 ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_avoiding_bridge/turbo.sh       # run the PILOT (gate G1)
 #      GO=1 MODE=all ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_avoiding_bridge/turbo.sh   # the whole corpus
-#      GO=1 MODE=paper ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_avoiding_bridge/turbo.sh # P1 paper set (10 cells, tag p23pv2turbo, ONE seed: 6; T5 7)
+#      GO=1 MODE=paper ./Slurm_Codes/submit.sh Slurm_Codes/sbatch/uav_avoiding_bridge/turbo.sh # P1 paper set (10 cells, tag p23pv2turbo, 5 seeds x 2 trials; T5 seeds 7-10)
 #  Knobs (env): MODE=pilot|all|paper|papergif  REPLAYS="clock settle"  HZ=1  VMAX=1.0  GRACE_S=2  SCALE=36  LIMIT=0 (episodes/cell)
 #               GIF=N (overhead MuJoCo GIF for the first N episodes per cell; GPU needed -> submit turbo_gif.sh)
 #               EXTRA="…" appended to every turbo.py call (e.g. --force, --no-png, --max-cells 5)
@@ -90,9 +90,9 @@ case "$MODE" in
     SELECT=() ;;
   *) echo "MODE must be pilot|all|paper|papergif"; exit 2 ;;
 esac
-# [23-09, author] pillars v2 paper set = ONE seed, tightened only, turbo (Mode T) only; no live P2.
-# T1–T4 sources hold seeds 6–10 -> seed 6. T5's source (msghfmink) holds 7–10 only (no seed 6) -> its first seed, 7.
-P23_SEEDS="${P23_SEEDS:-6}"; P23_T5_SEEDS="${P23_T5_SEEDS:-7}"
+# [23-09, author] pillars v2 paper set = the DPCC protocol as stored: 5 seeds x 2 trials per geometry, tightened only,
+# turbo (Mode T) only; no live P2. T5's source (msghfmink) holds seeds 7–10 only (no seed 6).
+P23_SEEDS="${P23_SEEDS:-6 7 8 9 10}"; P23_T5_SEEDS="${P23_T5_SEEDS:-7 8 9 10}"
 P23_COMMON=(--seeds $P23_SEEDS --geos top-left-hard top-right-hard both-hard)
 P23_CALLS=(
   "T1|--engine flow_matching_v3_meanflow --train-glob *bbunet* --eval-glob H8_K1_Meuler_T0.5_A0.5_B1_Dflow_matcher_v3_meanflow.models.MeanFlowODE --variants diffuser dpcc-t-tightened"

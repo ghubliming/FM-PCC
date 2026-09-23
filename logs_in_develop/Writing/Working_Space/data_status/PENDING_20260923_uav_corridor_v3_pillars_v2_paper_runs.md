@@ -11,9 +11,9 @@ pillars items (R32) are superseded by this file and say so there. Companion runb
    alone, `gradient`, `post_processing`, `dt*`, `hardflow_new` (the thesis uses `hardflow_sls`), no untightened twin,
    no MuJoCo-MPC controller, no ablation of any kind. Every `UAV_MIX_VARIANTS` list below is exhaustive.
 2. **Tightened only.** Every projected variant carries `-tightened` (v3.67 convention, Chapter 5 §5.2.1).
-3. **One seed (6) everywhere.** Corridor: twelve flights (4 per route). **Pillars v2 (author, 23-09): one seed, tightened
-   only, turbo (Mode T) only** — seed 6 × 3 geometries × 2 episodes = 6 episodes per cell; T5's source has no seed 6
-   (it holds 7–10), so T5 uses seed 7. No live (Mode L) run.
+3. **Corridor: one seed (6), twelve flights (4 per route). Pillars v2 (author, 23-09): 5 seeds × 2 trials (the DPCC
+   protocol the stored avoiding episodes have), tightened only, turbo (Mode T) only** — seeds 6–10 × 3 geometries ×
+   2 episodes = 30 episodes per cell; T5's source has seeds 7–10 only (24 episodes). No live (Mode L) run.
 4. **A special run message on everything**, so the folders say "paper, 23-09": corridor eval tags **`p23cv3t`** /
    **`p23cv3ah`** (`FMPCC_UAV_EVAL_TAG`), pillars-v2 tag **`p23pv2turbo`** (Mode T). ~~`p23pv2live`~~ (Mode L) is not run.
    Never pool with `u17cv2`, `u7hg`, `uavpv2s10*`.
@@ -107,8 +107,8 @@ live check.
 
 ### 2.3 P1 — Mode T, the representative replay (CPU, minutes) · tag `p23pv2turbo`
 
-Filtered with `--engine / --train-glob / --eval-glob / --seeds / --geos / --variants` to exactly these cells, **one seed**
-(author, 23-09): **seed 6 × 3 geometries × 2 episodes = 6 episodes per cell** unless stated. Projected variants are
+Filtered with `--engine / --train-glob / --eval-glob / --seeds / --geos / --variants` to exactly these cells, **5 seeds ×
+2 trials** (author, 23-09): **seeds 6–10 × 3 geometries × 2 episodes = 30 episodes per cell** unless stated. Projected variants are
 tightened only; `diffuser` is the unprojected reference of the same cell (before / after projection).
 
 | # | model | $\nfe$ | variants (both replayed) | why |
@@ -117,9 +117,9 @@ tightened only; `diffuser` is the unprojected reference of the same cell (before
 | T2 | CI-MeanFM α0.2 | 1 | `diffuser`, `dpcc-t-tightened` | the second supported combination |
 | T3 | FM | 1 | `diffuser`, `dpcc-t-tightened` | the third flow model, so all four models appear once |
 | T4 | Diffusion (DPCC) | 20 | `diffuser`, `dpcc-c-tightened` | the baseline at its own budget and best rule |
-| T5 | MeanFM | 3 | `dpcc-t-tightened`, `hardflow_sls-t-tightened` (**seed 7**, 6 episodes — the source has no seed 6) | the matched endpoint-vs-per-step cell of §6.1.2.6 — shows an endpoint-projected plan is flyable too |
+| T5 | MeanFM | 3 | `dpcc-t-tightened`, `hardflow_sls-t-tightened` (seeds 7–10, 24 episodes — the source has no seed 6) | the matched endpoint-vs-per-step cell of §6.1.2.6 — shows an endpoint-projected plan is flyable too |
 
-Ten cells, 60 episodes, **a few minutes CPU**. `clock` replay only (`settle` only if G1 needed it). `--gif 2` on the GPU
+Ten cells, ≈ 280 episodes, **< 15 min CPU**. `clock` replay only (`settle` only if G1 needed it). `--gif 2` on the GPU
 variant of the driver for T1 and T4 (two episodes each) — the only pictures the thesis needs.
 
 ### 2.4 P2 — Mode L, the live closed-loop check · **DROPPED (author, 23-09: pillars run in turbo mode only)**
@@ -184,7 +184,7 @@ the tracker; no projection variant, no other K.
 | :-- | --: | --: |
 | R33 corridor, C1–C4, **both scenes** | ~22 h | — |
 | R33 corridor, C5 diffusion K20, both scenes | ~2 GPU-days (cut to `t` only: ~16 h) | — |
-| R39 pillars v2, P1 (turbo, one seed; G1 done 22-09) | — | minutes |
+| R39 pillars v2, P1 (turbo, 5 seeds × 2 trials; G1 done 22-09) | — | < 15 min |
 | ~~R39 pillars v2, P2 live~~ — dropped (author, 23-09) | — | — |
 | R40 s-curve controller pilot | ~20 min | — |
 
