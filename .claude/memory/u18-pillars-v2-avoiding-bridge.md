@@ -27,8 +27,10 @@ attitude loop) → ff OFF, rate-limited reference 1 m/s, 1 Hz; settle mode is th
 - Nothing in `mix_uav*` / `uav_projection.yaml` changed; old `pillars_hg` stays the section of record until G2
   passes; do not notify v3 before that.
 
-**Paper runs (PENDING_20260923 §2, R39):** tracked drivers only — `turbo.sh MODE=paper|papergif` (T1–T5, tag
-`p23pv2turbo`), `live_p2_meanflow.sh` / `live_p2_dpcc.sh` (tag `p23pv2live`), yamls `*_u18_live*.yaml`. L1 check
-(job 26077) showed live = Panda within 0.05; both modes validated. Never pool `p23pv2*` with `uavpv2s10*`/`s36*`.
+**Paper runs (PENDING_20260923 §2, R39) — author 23-09 FINAL: real eval only, no turbo.** The thesis reads the four
+Ch 6 cells (MeanFM, CI-MeanFM α0.2 × K1, K2; `diffuser` + `dpcc-t-tightened`) evaluated LIVE, seeds 6–10 × 3 geos × 2 ep,
+via `Slurm_Codes/temp_bash/eval_20260923_p23_pillars_live.sh` → `sbatch/uav_avoiding_bridge/live_p23_pillars.sh`, tag
+`p23uavpv2live`. **The run tag must contain `uav`** (factory refuses) — `live_p2_*.sh` default `p23pv2live` is broken/superseded.
+Turbo (`turbo.sh MODE=paper`) is not read by the thesis. L1 check (26077) showed live = Panda within 0.05.
 
 Related: [[u17-pillars-xl-floor-result]], [[slurm-sbatch-is-real-entrypoint]], [[da-requires-csv-never-from-logs]]

@@ -319,7 +319,7 @@ def _uav_side_panel(kind, w, first, r_drone, tight, xlim=None, zlim=None, equal=
     f = Fig(w, ph, ml=ml, mr=mr, mt=mt, mb=mb, font=fs)
     f.axes((x0, x1), (z0, z1))
     title = 'UAV-corridor, tilt' if kind == 'tilt' else 'UAV-corridor, hump'
-    sub = 'side view along the corridor (y = 0)'
+    sub = 'side view (x-z) along the corridor, y = 0'
     zt = [v / 2 for v in range(int(math.ceil(z0 * 2)), int(math.floor(z1 * 2)) + 1) if v > 0]
     f.frame([v for v in (-2, -1, 0, 1, 2) if x0 < v < x1], zt,
             'x [m]', 'z [m]' if first else '', title, sub,
@@ -388,17 +388,21 @@ def fig_constraints_uav(outdir):
         hy = (x1 - x0) * RATIO / 2
         return dict(scn, title=title, sub=sub, ylim=(-hy, hy))
 
-    pillars = [_uav_constraint_panel(dict(G[n], sub=n), W, True, r, t)
+    pillars = [_uav_constraint_panel(dict(G[n], sub=n + ' · top view (x-y)'), W, True, r, t)
                for n in ('top-left-hard', 'top-right-hard', 'both-hard')]
+    # v3.69b (author): the corridor column carries the tilt twice -- from above, where the leaned
+    # plane cuts the launch altitude, and from the side, where the lean itself is -- and the hump
+    # from the side; every subtitle names the plane it is drawn in.
     tilt = _uav_constraint_panel(padded(by_name['UAV-corridor'], 'UAV-corridor, tilt',
-                                        'top view at the launch altitude, 1.11 m'), W, True, r, t)
-    hump = _uav_side_panel('hump', W, True, r, t, xlim=(-1.9, 1.9), zlim=(-0.1, -0.1 + 3.8 * RATIO),
-                           equal=True)
-    scurve = _uav_constraint_panel(padded(by_name['UAV-s-curve'], 'UAV-s-curve', 'top view'), W, True, r, t)
+                                        'top view (x-y) at the launch altitude, 1.11 m'), W, True, r, t)
+    side_x, side_z = (-1.9, 1.9), (-0.1, -0.1 + 3.8 * RATIO)
+    tilt_side = _uav_side_panel('tilt', W, True, r, t, xlim=side_x, zlim=side_z, equal=True)
+    hump = _uav_side_panel('hump', W, True, r, t, xlim=side_x, zlim=side_z, equal=True)
+    scurve = _uav_constraint_panel(padded(by_name['UAV-s-curve'], 'UAV-s-curve', 'top view (x-y)'), W, True, r, t)
     blank = lambda: Fig(W, pillars[0].h, ml=0, mr=0, mt=0, mb=0)
     panels = [pillars[0], tilt, scurve,
-              pillars[1], hump, blank(),
-              pillars[2], blank(), blank()]
+              pillars[1], tilt_side, blank(),
+              pillars[2], hump, blank()]
     width = 3 * W + 2 * 8
     h = Fig(width, 122, ml=0, mr=0, mt=0, mb=0, font=FONT_CONSTRAINT)
     items = [('wall', 'the constraint boundary: wall, plane or roof'),

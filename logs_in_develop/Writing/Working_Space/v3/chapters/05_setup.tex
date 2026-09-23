@@ -370,15 +370,16 @@ unstable (\autoref{sec:bg:quadrotor}), and its plan is tracked by the controller
 (\autoref{fig:env-uav}, \autoref{tab:uav-scenes}):
 
 \begin{description}
-  \item[UAV-pillars] --- the cross-embodiment test. The obstacle field of D3IL-avoiding
-    (\autoref{sec:setup:tasks:avoiding}) is scaled by $36$, so that the rod's radius becomes the vehicle's
+  \item[UAV-pillars] --- the replica of D3IL-avoiding in the air. The obstacle field of
+    \autoref{sec:setup:tasks:avoiding} is scaled by $36$, so that the rod's radius becomes the vehicle's
     rotor reach, and its six obstacles are extruded into pillars; the three test-time constraint
     geometries of that benchmark are mapped into the arena at the same scale. The planner is the one
-    trained on the avoiding demonstrations and is not retrained: the quadrotor executes the plans it
-    produces, so the scene asks whether a plan the projector has repaired on the table is flyable by a
-    vehicle, with a plant's tracking error between the plan and the path. It is a scene on which the
-    constraint is new to the data, which is what gives the projector something to do;
-    \autoref{sec:res:uav:pillars} reads it on those terms.
+    trained on the avoiding demonstrations and is not retrained: the quadrotor flies the plans it
+    produces. The scene exists to test the vehicle and its controller, not the planner --- it takes the
+    configurations that already solve the task on the table, flies them, and reads the flown outcome
+    beside the table outcome of the same configuration, before and after projection
+    (\autoref{sec:res:uav:pillars}). Agreement says the quadrotor and its tracking controller carry a
+    projected plan as the manipulator does; a difference is a result about the plant.
   \item[UAV-corridor] --- the three-dimensional test. Two parallel walls leave a clear width of
     $1.90$\,m, and the scene carries two test-time constraints, evaluated separately, as the geometries
     of D3IL-avoiding are. The first, \emph{tilt}, is a halfspace boundary that slopes by $14^\circ$
@@ -485,10 +486,11 @@ demonstrations) and the abandoned \texttt{pillars\_xl}/\texttt{xxl} are no longe
 \autoref{fig:constraints-uav} draws the constraint sets, one column per scene and one panel per set. On
 UAV-pillars the three geometries of D3IL-avoiding are mapped into the arena, halfspaces and keep-out disk
 at scale $36$, and the six pillars are drawn as the physical obstacles they are. On UAV-corridor the tilt
-is drawn from above at the launch altitude, where the leaned plane cuts the corridor, and the hump from
-the side, where the roof is; the walls hold under both. UAV-s-curve has one set. A wall constrains only
-the span of $x$ over which it exists, which is why the halfspace it excludes stops short of the panel
-edge.
+is drawn twice --- from above ($x$--$y$) at the launch altitude, where the leaned plane cuts the corridor,
+and from the side ($x$--$z$) along the corridor, where the lean itself is --- and the hump from the side,
+where the roof is; the walls hold under both. UAV-s-curve has one set. Every panel names the plane it is
+drawn in. A wall constrains only the span of $x$ over which it exists, which is why the halfspace it
+excludes stops short of the panel edge.
 
 \begin{figure}[!htbp]
   \centering
@@ -501,9 +503,11 @@ edge.
   (\autoref{tab:avoiding-geometries}) mapped into the arena at scale $36$, the keep-out disk translucent
   over the pillar it covers and the six pillars solid; the scale already carries the vehicle's extent, so
   no rotor-reach band is added, and the tightening is the mapped $0.90$\,m. Middle column, UAV-corridor:
-  the tilt seen from above at the launch altitude of $1.11$\,m, along the line where the leaned plane cuts
-  the corridor, and the hump seen from the side along the corridor, the roof with the workspace ceiling
-  above it; the walls hold under both. Right column, UAV-s-curve: its single set, seen from above.}
+  the tilt seen from above ($x$--$y$) at the launch altitude of $1.11$\,m, along the line where the leaned
+  plane cuts the corridor, then the same tilt seen from the side ($x$--$z$, along the corridor at $y=0$),
+  where the plane descends along $x$ and everything above it is excluded, then the hump from the same side
+  view, the roof with the workspace ceiling above it; the walls hold under all three. Right column,
+  UAV-s-curve: its single set, seen from above.}
   \label{fig:constraints-uav}
 \end{figure}
 
@@ -576,9 +580,10 @@ Two of the three scenes have quadrotor demonstrations, and one has none. On UAV-
 the one trained on the demonstrations of D3IL-avoiding (\autoref{sec:setup:data:avoiding}) --- human
 teleoperation of a manipulator, recorded on the table --- and it is not retrained: the scene is that
 obstacle field scaled into an arena, and the quadrotor executes the plans the planner produces there
-(\autoref{sec:setup:tasks:uav}). What the scene therefore tests is the execution of a projected plan by a
-different plant, and not a policy trained to fly; a quadrotor deployed outside simulation would need
-demonstrations of its own, which this thesis does not have.
+(\autoref{sec:setup:tasks:uav}). What the scene therefore tests is the execution of a plan by a
+different plant --- the quadrotor and its controller against the manipulator, on the same plans --- and
+not a policy trained to fly; a quadrotor deployed outside simulation would need demonstrations of its own,
+which this thesis does not have.
 \guard{On UAV-pillars the demonstrations are the manipulator's. Nothing on that scene is evidence about
 learning to fly from flight data; it is evidence about whether a plan repaired by the projector survives
 execution by a vehicle with tracking error.}
@@ -651,7 +656,7 @@ UAV-pillars is the second kind by construction, and more sharply than the corrid
 the three test-time geometries of D3IL-avoiding, which $0$, $1$ and $2$ of the $96$ demonstrations satisfy
 (\autoref{sec:setup:tasks:avoiding}), so on that scene the projector has the same repair to do as on the
 table, and the vehicle adds only what a plant adds --- tracking error between the plan and the path.
-\autoref{sec:res:uav:pillars} reads it on those terms.
+\autoref{sec:res:uav:pillars} reads it on those terms, on the configurations that win on the table.
 
 That figure draws the references the generator laid out rather than the flights that tracked them, which
 is the conservative choice: a constraint crossed by the reference is crossed by construction rather than
@@ -669,18 +674,19 @@ to go, not a vehicle too large for the gap.
 \begin{figure}[htpb]
   \centering
   \includegraphics[width=\linewidth]{fig_expert_uav}
-  \caption[The demonstrated routes against the quadrotor constraints]{The reference path of every
-  demonstrated route, over the constraint set of \autoref{fig:constraints-uav}: every surface already
-  inflated by the $0.31$\,m rotor reach, the tightened boundary dashed. One path per passage class of
-  \autoref{tab:uav-demos}, for the two scenes that have them. Green: the drawn path satisfies the constraints; red: the drawn path crosses
-  them. The violation is read off the path line alone, because the vehicle's extent is already inside the
-  inflated boundary; the grey silhouette on each route is the vehicle to scale at its tightest moment
-  (\autoref{fig:platforms}), shown so the gaps can be judged against the aircraft and not as a second
-  test. UAV-pillars is absent because it has no quadrotor demonstrations: its demonstrations are the
-  avoiding ones of \autoref{fig:constraints-avoiding}. On UAV-s-curve the single route clears the walls; on
-  UAV-corridor every lane crosses the tilt at the launch altitude, where its cut is the drawn slide, and
-  every lane passes under the hump, which the plan view cannot show. Drawn are the references the
-  demonstrations track and not the flights themselves.}
+  \caption[The demonstrations against the quadrotor constraints]{The demonstrations of each scene over
+  its constraint set (\autoref{fig:constraints-uav}): every surface already inflated by the $0.31$\,m rotor
+  reach, the tightened boundary dashed. Green: the drawn path satisfies the constraints; red: it crosses
+  them. UAV-pillars: the $96$ demonstrations of D3IL-avoiding (\autoref{fig:constraints-avoiding}), which
+  are this scene's demonstrations, mapped into the arena at scale $36$ over the \emph{both-hard} set, $2$
+  of $96$ satisfying it, as on the table. UAV-corridor, tilt: the reference path of each of the three
+  lanes of \autoref{tab:uav-demos}, seen from above at the launch altitude, every lane crossing the slide;
+  UAV-corridor, hump: the roof from the side, with the band of altitudes the demonstrations were flown
+  at, $0.90$--$1.30$\,m, every lane passing under the inflated roof. UAV-s-curve: its single route,
+  clearing the walls. On the two quadrotor-demonstrated scenes the violation is read off the path line
+  alone, because the vehicle's extent is already inside the inflated boundary; the grey silhouette on a
+  route is the vehicle to scale at its tightest moment (\autoref{fig:platforms}), for size and not as a
+  second test. Drawn are the references the demonstrations track and not the flights themselves.}
   \label{fig:expert-uav}
 \end{figure}
 \dataref{DA\_in\_Paper/data/expert\_paths.json, extract/expert\_paths.py; reference paths from
@@ -966,8 +972,8 @@ through a gate, and it advances to the next position whenever the vehicle comes 
 returning to the first after the last. The gates do not appear in the objective; passing through them is
 a consequence of where the goal positions are placed.
 
-The controller is Predictive Sampling, the sampling-based predictive controller of MuJoCo MPC, and the
-simulator itself is its model. At each planning instant it perturbs its current control sequence into 32
+The controller is Predictive Sampling, the sampling-based predictive controller of MuJoCo MPC
+(\autoref{sec:method:mjpc}), and the simulator itself is its model. At each planning instant it perturbs its current control sequence into 32
 candidate sequences of the four rotor thrusts, each parameterised by five spline points, rolls every
 candidate forward in MuJoCo over a horizon of $0.5$\,s at a time step of $0.01$\,s, and keeps the
 cheapest. The cost of a rollout sums four quadratic terms over the horizon: the distance of the vehicle
@@ -1233,9 +1239,9 @@ evaluated scenes run.}
       & $5\times2 = 10$ per geometry
       & the three constraint geometries \\
     D3IL-aligning & 1
-      & 10 contexts $\times$ 1 episode; the diffusion model 3 episodes per context
+      & 10 contexts $\times$ 1 episode
       & the ten contexts, compared context by context \\
-    UAV-pillars & 1 & 2 episodes per geometry & the three constraint geometries, as on D3IL-avoiding \\
+    UAV-pillars & 5 & $5\times2 = 10$ per geometry & the three constraint geometries, as on D3IL-avoiding \\
     UAV-corridor & 1 & 10 flights, spread over the routes L, C and R & the ten flights \\
     UAV-s-curve & 1 & 10 flights per pilot cell & the ten flights \\
     \bottomrule
@@ -1268,9 +1274,9 @@ initial box and target position, \texttt{DA\_in\_Paper/analysis/va\_results.py}.
 
 \subsubsection{Quadrotor Benchmark}\label{sec:setup:protocol:uav}
 
-Each scene is reported on its own. UAV-pillars is evaluated with one training seed and two episodes per
-constraint geometry, averaged over the three geometries as on D3IL-avoiding, for the configurations
-\autoref{ch:results} selects there. UAV-corridor is evaluated with ten flights per configuration, spread
+Each scene is reported on its own. UAV-pillars is evaluated at the protocol of D3IL-avoiding --- five
+training seeds, two episodes per constraint geometry, averaged per geometry and then over the three
+(\autoref{sec:setup:protocol:avoiding}) --- for the configurations \autoref{ch:results} selects there. UAV-corridor is evaluated with ten flights per configuration, spread
 over its left, centre and right routes, on each of its two constraints separately, over a budget grid
 that puts every model at one to three network evaluations and instantaneous-velocity matching up to
 twenty; its projection constrains the commanded position in addition to the measured one and leaves the
@@ -1282,7 +1288,8 @@ the controller comparison of \autoref{sec:res:uav:controller} replaces it by MuJ
 (grid, arms, tags \texttt{p23cv3t}/\texttt{p23cv3ah}, \texttt{p23pv2turbo}/\texttt{p23pv2live}); the corridor stack is U16's
 (\texttt{-bounds\_free-pdes-tightened}, \texttt{pid\_stopgo}; the driver flies $n=12$ per cell, $4$ per
 route, because \texttt{eval\_mix\_uav.py} cycles the three routes over the trial index; the DA reads the
-first ten, $4/3/3$ per route --- author, 23-09). Pillars v2: one seed, 6 episodes per cell (T1--T5). S-curve pilots:
+first ten, $4/3/3$ per route --- author, 23-09). Pillars v2: five seeds $\times$ two episodes per geometry
+(author, 23-09, second decision; T5 four seeds as its source cell). S-curve pilots:
 \texttt{batch\_uav\_20260919\_111701}, tags \texttt{u18sc}, \texttt{u7hg}; \texttt{pid\_stopgo} sets
 \texttt{v\_des} $=0$ at each setpoint, \texttt{eval\_mix\_uav.py:1598, 1716--1720}.}
 

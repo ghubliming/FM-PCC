@@ -11,11 +11,10 @@ pillars items (R32) are superseded by this file and say so there. Companion runb
    alone, `gradient`, `post_processing`, `dt*`, `hardflow_new` (the thesis uses `hardflow_sls`), no untightened twin,
    no MuJoCo-MPC controller, no ablation of any kind. Every `UAV_MIX_VARIANTS` list below is exhaustive.
 2. **Tightened only.** Every projected variant carries `-tightened` (v3.67 convention, Chapter 5 §5.2.1).
-3. **Corridor: one seed (6), twelve flights (4 per route). Pillars v2 (author, 23-09): 5 seeds × 2 trials (the DPCC
-   protocol the stored avoiding episodes have), tightened only, turbo (Mode T) only** — seeds 6–10 × 3 geometries ×
-   2 episodes = 30 episodes per cell; T5's source has seeds 7–10 only (24 episodes). No live (Mode L) run.
+3. **Corridor: one seed (6), twelve flights (4 per route). Pillars v2 (author, 23-09, final): the four Chapter 6 cells
+   evaluated live (real eval, no turbo) at the table's protocol, 5 seeds × 2 episodes × 3 geometries, tightened only** (§2).
 4. **A special run message on everything**, so the folders say "paper, 23-09": corridor eval tags **`p23cv3t`** /
-   **`p23cv3ah`** (`FMPCC_UAV_EVAL_TAG`), pillars-v2 tag **`p23pv2turbo`** (Mode T). ~~`p23pv2live`~~ (Mode L) is not run.
+   **`p23cv3ah`** (`FMPCC_UAV_EVAL_TAG`), pillars-v2 tag **`p23uavpv2live`** (live; must contain `uav`). ~~`p23pv2turbo`~~, ~~`p23pv2live`~~ are not run.
    Never pool with `u17cv2`, `u7hg`, `uavpv2s10*`.
 5. **Order = fast first, K = 20 last**, diffusion K = 20 projected very last, so it cannot jam the queue.
 6. **Time to the deadline is short.** If a wave has to be cut, cut from the bottom of each table below.
@@ -82,67 +81,66 @@ altitude; Table 6.16 r/c/t for both projectors at K ≥ 3; §6.3.5 sentence. DA:
 `_cv3` tag parses, `discovery.py` l.117); figure store extracts from the rollouts (`uav_paths.py` groups `corridor`,
 `corridor_altitude`).
 
-## 2 · R39 — UAV-pillars v2: the avoiding planner flown by the quadrotor (Gen15 U18)
+## 2 · R39 — UAV-pillars v2: the Chapter 6 cells evaluated live with the quadrotor (rev 23-09, author: "real eval, no turbo")
 
-### 2.1 What is being proved, and therefore what is run
+### 2.1 What Chapter 6 reads, and therefore what is run
 
-The claim the thesis makes on this scene is small and must be made with a small, defensible set of runs: *the plans the
-avoiding planner produces under projection are flyable by the quadrotor in a scene that is the avoiding obstacle field
-with pillars, and the closed loop behaves the same when the drone is in it.* Two run modes exist in `uav_avoiding_bridge/`
-(Mode T replays the stored avoiding executions through the drone plant on CPU; Mode L runs the planner live with the
-drone as the plant). **The thesis text will say only that the avoiding planner was evaluated again in an avoiding-like
-quadrotor scene with pillars — the mechanism (replay) is not described there.** This file may say it; Chapter 6 may not.
+UAV-pillars is the replica of D3IL-avoiding in the air (Ch 5 §5.1): the avoiding obstacle field scaled by 36, the three
+test-time geometries mapped into it, the avoiding planner not retrained. The scene tests the **vehicle and its tracking
+controller**, not the planner: the configurations that win on the table are flown and their flown outcome is set beside
+their table outcome, before and after projection. Agreement or a stated difference are both valid results.
 
-So: not the full avoiding grid. The **representative set** = the configurations Chapter 6 already selects on
-D3IL-avoiding (Table 6.4 and the projector table), each *before* and *after* projection, at the DPCC protocol, plus one
-live check.
+Chapter 6 (v3.69, `sec:res:uav:pillars`) reads exactly:
 
-### 2.2 Gates first (U18 plan §4; unchanged)
-
-| gate | what | pass |
+| Ch 6 item | cells | from R39 |
 | :-- | :-- | :-- |
-| G0 | `scene.py` XML compiles; frame round-trip is the identity | assert |
-| G1 | `turbo.sh` pilot (`MODE=pilot`: FM K20 `msg20trials`, seed 6, 3 geometries, `diffuser` + `dpcc-r-tightened`, 20 episodes, `clock` replay) | ≥ 95 % of episodes reproduce the Panda's (success, collision-free); no contact on a Panda-legal episode; gap p95 within the training range. Else `HZ=3`, `EXTRA="--gain pid_high_gain"`, `settle`, then `SCALE` up |
-| G3 | the gap check from the pilot log | p95 inside the normaliser's range |
+| `tab:uav-pillars-raw`, *air* columns (S&C, violating steps, steps, contact) | MeanFM K1, MeanFM K2, CI-MeanFM α_end 0.2 K1, CI-MeanFM K2 — the *table* columns are the existing avoiding cells (Tables 6.1/6.2, 19-09 corpus) | `diffuser` + `dpcc-t-tightened`, seeds 6–10 × 3 geometries × 2 episodes |
+| `fig:uav-pillars-paths` | one configuration picked from the appendix `fig:avoiding-paths` (MeanFM K1 = its first panel, the selected configuration; seed 6, *top-right-hard*, episode 2): the arm's executed path beside the quadrotor's flown path, unprojected grey + projected colour | the same live runs (seed 6 flights + plant sidecar world paths); no extra run |
+| conclusion line `sec:res:uav:conclusion` | the four cells | the same |
 
-### 2.3 P1 — Mode T, the representative replay (CPU, minutes) · tag `p23pv2turbo`
+**Real evaluation only (Mode L).** The planner runs in the loop with the quadrotor as the plant: at every control step it
+plans from the vehicle's state, and the vehicle flies the commanded setpoint. The turbo replay (Mode T) is **dropped**: it
+re-flies the manipulator's stored setpoints open loop, so it measures the plant on the Panda's plans but the planner and
+projector never see the vehicle — it cannot produce a new planning number. No turbo cell is read by the thesis.
 
-Filtered with `--engine / --train-glob / --eval-glob / --seeds / --geos / --variants` to exactly these cells, **5 seeds ×
-2 trials** (author, 23-09): **seeds 6–10 × 3 geometries × 2 episodes = 30 episodes per cell** unless stated. Projected variants are
-tightened only; `diffuser` is the unprojected reference of the same cell (before / after projection).
+### 2.2 Gates — done (22-09)
 
-| # | model | $\nfe$ | variants (both replayed) | why |
-| :-- | :-- | --: | :-- | :-- |
-| T1 | MeanFM | 1 | `diffuser`, `dpcc-t-tightened` | the selected configuration of D3IL-avoiding (Table 6.4) |
-| T2 | CI-MeanFM α0.2 | 1 | `diffuser`, `dpcc-t-tightened` | the second supported combination |
-| T3 | FM | 1 | `diffuser`, `dpcc-t-tightened` | the third flow model, so all four models appear once |
-| T4 | Diffusion (DPCC) | 20 | `diffuser`, `dpcc-c-tightened` | the baseline at its own budget and best rule |
-| T5 | MeanFM | 3 | `dpcc-t-tightened`, `hardflow_sls-t-tightened` (seeds 7–10, 24 episodes — the source has no seed 6) | the matched endpoint-vs-per-step cell of §6.1.2.6 — shows an endpoint-projected plan is flyable too |
+G0 (scene compiles, frame round-trip) and the live check (job 26077, FM K20, 20 episodes: live within 0.05 of the Panda on
+every cell, 0 contacts, 0 divergence; `Gen15/U18/L1_20260922_live_vs_turbo_result.md`) passed. Plant settings as validated
+there: scale 36, clock replay 1 Hz, feed-forward off, v_max 1.0 m/s. Nothing to re-gate.
 
-Ten cells, ≈ 280 episodes, **< 15 min CPU**. `clock` replay only (`settle` only if G1 needed it). `--gif 2` on the GPU
-variant of the driver for T1 and T4 (two episodes each) — the only pictures the thesis needs.
+### 2.3 The runs — four GPU jobs, tag `p23uavpv2live`
 
-### 2.4 P2 — Mode L, the live closed-loop check · **DROPPED (author, 23-09: pillars run in turbo mode only)**
+| # | model | $\nfe$ | source cell of the table (19-09 corpus) | variants | protocol |
+| :-- | :-- | --: | :-- | :-- | :-- |
+| L1 | MeanFM | 1 | `flow_matching_v3_meanflow/…objmeanflow_bbunet…/H8_K1_Meuler_T0.5_A0.5_B1_…MeanFlowODE` | `diffuser`, `dpcc-t-tightened` | seeds 6–10 × 3 geometries × 2 episodes = 30 per variant |
+| L2 | MeanFM | 2 | same train, `H8_K2_…_A0.5_B1_…MeanFlowODE` | same | same |
+| L3 | CI-MeanFM α_end 0.2 | 1 | `flow_matching_v3_alphaflow/…bbunet…ae0.2…/H8_K1_…AlphaFlowODE_msgdpccproto` (`AF_EPOCH=latest`) | same | same |
+| L4 | CI-MeanFM α_end 0.2 | 2 | same train, `H8_K2_…_msgdpccproto` | same | same |
 
-The live gate check of 22-09 (job 26077, `Gen15/U18/L1_20260922_live_vs_turbo_result.md`: live within 0.05 of the Panda on
-every cell, 0 contacts) stays the evidence that the replay stands in for the live loop. The table below is kept for the
-record only; do not submit it.
+Four candidate plans (`FMPCC_MPC_BATCH=4`), per-step projection threshold 0.5, tightened margin 0.025 — the table cells'
+settings; configs `config/meanflow_projection_eval_u18_live.yaml` and `config/alphaflow_projection_eval_u18_live.yaml`
+(the shared eval yamls with only `projection_variants` reduced to the two above). 240 flights in total; each job < 2 h GPU.
 
-| # | model | $\nfe$ | variants | protocol |
-| :-- | :-- | --: | :-- | :-- |
-| L1 | MeanFM | 1 | `diffuser`, `dpcc-t-tightened` | seed 6, 3 geometries, 2 episodes (12 flights) |
-| L2 | Diffusion | 20 | `dpcc-c-tightened` | seed 6, 3 geometries, 2 episodes (6 flights) |
+🔴 **Tag must contain `uav`** (`uav_avoiding_bridge/factory.py` refuses otherwise, because the live results share the
+Panda result layout). The earlier live drivers `live_p2_*.sh` default to `p23pv2live`, which does **not** contain it —
+they would stop at the plant switch; they are superseded by this section and are not used.
 
-Pass = L1/L2 agree with T1/T4 within the Panda cell's seed spread on (success, collision-free, violating steps). If they
-do not, the disagreement is the result to report and no further live cells are run without the author.
+Submit: `bash Slurm_Codes/temp_bash/eval_20260923_p23_pillars_live.sh submit` (runbook §3).
 
-### 2.5 What the thesis reads
+### 2.4 What the DA produces
 
-One table: for T1–T5, the Panda's S&C / violating steps / steps beside the drone's, before and after projection, plus
-the plant columns (tracking error, contacts); one world-frame path figure over the physical pillars; one sentence that
-the live check agrees (the 22-09 gate check, job 26077 — no new live run). Written into the pillars slot of Chapter 6 after the flawed block is lifted — **without the
-replay mechanism**. DA script `DA_in_Paper/analysis/pillars_v2_grid.py` (to write once the data exist; template in
-U18 plan §6).
+- Table: per cell and variant, S&C / violating steps / steps averaged per geometry then over the three (as Table 6.2),
+  plus contact count from the plant sidecars; the *table* columns stay the 19-09 cells. Never pooled with `uavpv2s*` /
+  `p23pv2turbo` / the Panda runs (the `_msgp23uavpv2live` folders are separate by construction).
+- Figure: `fig_uav_pillars_paths` — the picked panel (MeanFM K1, seed 6, *top-right-hard*, episode 2): arm path from the
+  existing `diffuser.npz` / `dpcc-t-tightened.npz` (`extract/exec_paths.py`), quadrotor path from the live npz `obs_all`
+  of the same seed / geometry / episode (world frame via `uav_avoiding_bridge/frame.py`), unprojected grey, projected colour.
+
+### 2.5 Superseded (kept for the record, not run)
+
+- P1 turbo T1–T5 (tag `p23pv2turbo`, `turbo.sh MODE=paper|papergif`) — dropped 23-09 (turbo cannot give a planning number).
+- P2 live L1/L2 of the first draft (MeanFM K1 and diffusion K20, seed 6, tag `p23pv2live`) — replaced by §2.3.
 
 ## 4 · R40 — UAV-s-curve: the one datum the controller caveat still lacks (added with v3.68)
 
@@ -184,8 +182,7 @@ the tracker; no projection variant, no other K.
 | :-- | --: | --: |
 | R33 corridor, C1–C4, **both scenes** | ~22 h | — |
 | R33 corridor, C5 diffusion K20, both scenes | ~2 GPU-days (cut to `t` only: ~16 h) | — |
-| R39 pillars v2, P1 (turbo, 5 seeds × 2 trials; G1 done 22-09) | — | < 15 min |
-| ~~R39 pillars v2, P2 live~~ — dropped (author, 23-09) | — | — |
+| R39 pillars v2, four live jobs (MeanFM / CI-MeanFM × K1, K2; gates done 22-09) | ~4–8 h (4 jobs in parallel, < 2 h each) | — |
 | R40 s-curve controller pilot | ~20 min | — |
 
 Claude (Fable 5.1, Claude Code) · 2026-09-23 · specification only; nothing submitted, nothing written into the thesis.

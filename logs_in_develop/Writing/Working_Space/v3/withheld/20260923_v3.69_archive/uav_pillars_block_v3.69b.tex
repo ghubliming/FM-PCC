@@ -1,0 +1,133 @@
+\subsection{UAV-pillars}\label{sec:res:uav:pillars}
+
+\subsubsection{Generative Models}\label{sec:res:uav:models}
+On this scene the planner is the one of \autoref{sec:res:state}, and the plans it generates are the plans
+of D3IL-avoiding: the scene changes what executes them. What this part therefore reads, before projection,
+is the same unprojected plan twice --- once as the manipulator executed it on the table, which is the
+\emph{no projection} row of \autoref{tab:avoiding-raw-models}, and once as the quadrotor flies it in the
+arena --- so that the difference between the two columns is the vehicle and nothing else. The
+configurations are the ones \autoref{sec:res:avoiding:conclusion} selects: each flow-based model at
+$\nfe=1$ and the diffusion baseline at its own budget.
+
+\begin{table}[htpb]
+  \caption[UAV-pillars: the avoiding plans before projection, on the table and in the air]{UAV-pillars,
+  \textbf{before projection}: the unprojected plans of D3IL-avoiding at the protocol of \ac{DPCC} ---
+  five training seeds $\times$ two episodes per geometry, averaged over the three geometries --- executed
+  by the manipulator (\emph{table}, the cells of \autoref{tab:avoiding-raw-models}) and flown by the
+  quadrotor in the arena (\emph{air}). S\&C: success with constraint satisfaction; \emph{viol.}:
+  violating control steps per episode; \emph{contact}: flights on which the vehicle touched a pillar.
+  \emph{Pending}: R39. \baselinemark\ the diffusion model of \ac{DPCC}.}
+  \label{tab:uav-pillars-raw}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabularx}{\linewidth}{@{}L r rrr rrrr@{}}
+    \toprule
+    & & \multicolumn{3}{c}{table} & \multicolumn{4}{c}{air} \\
+    \cmidrule(lr){3-5}\cmidrule(l){6-9}
+    Model & $\nfe$ & S\&C & viol. & steps & S\&C & viol. & steps & contact \\
+    \midrule
+    MeanFM    & 1  & \multicolumn{7}{l}{\emph{pending}} \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & \multicolumn{7}{l}{\emph{pending}} \\
+    FM        & 1  & \multicolumn{7}{l}{\emph{pending}} \\
+    \midrule
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \multicolumn{7}{l}{\mainconfig{\emph{pending}}} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{R39, cells T1--T4 (\texttt{PENDING\_20260923\_…} \S2.3), variant \texttt{diffuser}; the table
+columns repeat \autoref{tab:avoiding-raw-models}; the air columns come from the drone-path rescoring of the
+same episodes (\texttt{uav\_avoiding\_bridge}, tag \texttt{p23pv2turbo}) and the plant sidecar. The
+mechanism is a drafting note and is not described in the running text (author).}
+
+\hole{Reading, before projection: whether the vehicle changes the outcome of an unprojected plan at all ---
+the table and air columns should agree within the seed spread on S\&C and violating steps, with contact
+telling where a violating plan becomes a collision in the air.}
+
+\FloatBarrier
+\subsubsection{Projection}\label{sec:res:uav:pillars:projected}
+\hole{Result sentence, after projection: whether the plans the per-step projector repairs on the table
+remain repaired in the air --- the same selected configurations as \autoref{tab:avoiding-conclusion},
+flown --- and what the vehicle adds: tracking error, contacts, and whether the ordering of the models
+survives execution.}
+
+\begin{table}[htpb]
+  \caption[UAV-pillars: the avoiding plans after projection, on the table and in the air]{UAV-pillars,
+  \textbf{after projection}: the selected configurations of D3IL-avoiding (\autoref{tab:avoiding-conclusion})
+  at the protocol of \ac{DPCC}, five training seeds $\times$ two episodes per geometry, executed by the
+  manipulator (\emph{table}) and flown by the quadrotor (\emph{air}); columns as in \autoref{tab:uav-pillars-raw}; tightened constraints. Per-step projection
+  under the rule each model is selected with. \emph{Pending}: R39. \selectedmark\ the selected
+  configuration of D3IL-avoiding; \baselinemark\ the diffusion model of \ac{DPCC}.}
+  \label{tab:uav-pillars}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabularx}{\linewidth}{@{}L r c rrr rrrr@{}}
+    \toprule
+    & & & \multicolumn{3}{c}{table} & \multicolumn{4}{c}{air} \\
+    \cmidrule(lr){4-6}\cmidrule(l){7-10}
+    Model & $\nfe$ & Rule & S\&C & viol. & steps & S\&C & viol. & steps & contact \\
+    \midrule
+    \mainconfig{\selectedmark\ MeanFM} & \mainconfig{1} & \mainconfig{$t$} & \multicolumn{7}{l}{\mainconfig{\emph{pending}}} \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & $t$ & \multicolumn{7}{l}{\emph{pending}} \\
+    FM        & 1  & $t$ & \multicolumn{7}{l}{\emph{pending}} \\
+    \midrule
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$c$} & \multicolumn{7}{l}{\mainconfig{\emph{pending}}} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{R39, cells T1--T4, variants \texttt{dpcc-t-tightened} (\texttt{dpcc-c-tightened} for the
+baseline); table columns from \autoref{tab:avoiding-dpcc-protocol}; air columns from the drone-path
+rescoring, tag \texttt{p23pv2turbo}; five seeds $\times$ 3 geometries $\times$ 2 episodes per cell (author,
+23-09, second decision; the 23-09 pending file carries it). The live check (Mode
+L) is dropped; the 22-09 gate check (job 26077) stands as the evidence and is not mentioned in the text.}
+
+\hole{Paths paragraph: what the flown paths of \autoref{fig:uav-pillars-paths} show --- where a plan that
+was clean on the table violates in the air, and whether the projected plan keeps the vehicle out of the
+keep-out region at the pillars.}
+
+\begin{figure}[htpb]
+  \centering
+  \todofigure[0.34\textwidth]{\texttt{fig\_uav\_pillars\_paths}, pillars v2: the arena from above with the
+  physical pillars and the mapped keep-out, the flown paths of the selected MeanFM configuration and of the
+  diffusion baseline, unprojected and projected, one panel each; colour = constraint, end mark = success,
+  cross = contact. Source: the world-frame paths of R39 (\texttt{uav\_avoiding\_bridge/overview\_plot.py::draw\_world}
+  or the figure store's \texttt{paths.py} on a new group).}
+  \caption[UAV-pillars: flown paths of the selected configurations]{UAV-pillars seen from above with the
+  executed path of every flight, the selected configuration and the baseline, without and with per-step
+  projection. Pending R39.}
+  \label{fig:uav-pillars-paths}
+\end{figure}
+
+\FloatBarrier
+\subsubsection{Projection Methods}\label{sec:res:uav:pillars:projection}
+
+\hole{Pillars result sentence, per-step against endpoint: whether the endpoint-projected plan of
+\autoref{tab:avoiding-projectors} is as flyable as the per-step one, read on the one matched cell that
+exists on D3IL-avoiding.}
+
+\begin{table}[htpb]
+  \caption[UAV-pillars: the two projection methods in the air]{UAV-pillars, the matched cell of
+  \autoref{tab:avoiding-projectors} --- analytic average-velocity matching at $\nfe=3$, four candidate
+  plans, tightened, four training seeds, two episodes per geometry --- under per-step and under endpoint
+  projection, on the table and in the air; columns as in \autoref{tab:uav-pillars-raw}. \emph{Pending}: R39, cell T5.}
+  \label{tab:uav-pillars-endpoint}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabularx}{\linewidth}{@{}L r L rrr rrrr@{}}
+    \toprule
+    & & & \multicolumn{3}{c}{table} & \multicolumn{4}{c}{air} \\
+    \cmidrule(lr){4-6}\cmidrule(l){7-10}
+    Model & $\nfe$ & Projection & S\&C & viol. & steps & S\&C & viol. & steps & contact \\
+    \midrule
+    MeanFM & 3 & per-step, $t$ & \multicolumn{7}{l}{\emph{pending}} \\
+           &   & endpoint, $t$ & \multicolumn{7}{l}{\emph{pending}} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{R39, cell T5: \texttt{dpcc-t-tightened} and \texttt{hardflow\_sls-t-tightened} of
+\texttt{H8\_K3\_…\_msghfmink\_A1\_mfunet\_s6}, seeds 7--10; table columns from
+\autoref{tab:avoiding-projectors}.}
+
+\FloatBarrier

@@ -333,7 +333,9 @@ def fig_aligning_projected_tradeoff(outdir):
             if i + 1 < len(front):
                 staircase.append((f.X(front[i + 1]['ms']), f.Y(p['y'])))
         f.poly(staircase, '#34495e', dash='6,4', w=1.6)
-    _dirarrow(f, -1, -1, x0=f.L + 14 * FONT + 38 * FONT, y0=f.T + 14 * FONT + 37 * FONT)
+    # v3.69 (author): the key sat on the unprojected MeanFM ring at the top left; the left half of
+    # the panel below 80 % is empty, so it goes there.
+    _dirarrow(f, -1, -1, x0=f.L + 14 * FONT + 38 * FONT, y0=f.T + 0.58 * (f.B - f.T))
     pos = _dodge(f, pts, gap=19)
     front_ids = {id(p) for p in front}
     for p in pts:

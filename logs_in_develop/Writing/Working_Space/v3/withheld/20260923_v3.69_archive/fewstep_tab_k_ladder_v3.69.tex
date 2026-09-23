@@ -1,0 +1,66 @@
+\subsubsection{Step Budget}\label{sec:res:fewstep}
+
+The flow-based models keep their success with constraint satisfaction as the step budget falls to a
+single network evaluation, while the diffusion baseline does not reach it at one evaluation
+(\autoref{tab:k-ladder}). The baseline reaches $0.667$ at $\nfe=1$ and $1.000$ at $\nfe=2$, $10$ and
+$20$. Over the same range the flow-based models never leave the top of the column: both average-velocity
+models read $1.000$ or $0.967$ at one and two evaluations, analytic average-velocity matching holds
+$0.933$ out to ten, and instantaneous-velocity matching reads $1.000$ at one, two and twenty.
+
+\begin{table}[htpb]
+  \caption[Success against step budget]{D3IL-avoiding, every model at every step budget of the grid
+  $\nfe\in\{1,2,5,10,20\}$ under the per-step projector of \ac{DPCC}, each at the selection rule it is
+  operated with: temporal consistency for the two average-velocity models, cumulative projection cost
+  for instantaneous-velocity matching and for the baseline. The protocol of \ac{DPCC}: five training
+  seeds $\times$ two episodes per geometry, averaged over the three geometries, tightened constraints,
+  temporal U-Net of $4.0$\,M parameters; columns as in \autoref{tab:avoiding-dpcc-protocol}, mean $\pm$
+  the standard deviation over the seeds. The other two rules of every cell are in
+  \autoref{tab:app:avoiding-dpcc-full}. \emph{Pending}: cells not yet evaluated (R41); the diffusion
+  baseline at $\nfe=5$ is a separately trained checkpoint. \selectedmark\ the operating point,
+  \baselinemark\ the baseline of record.}
+  \label{tab:k-ladder}
+  \centering
+  \footnotesize
+  \begin{tabularx}{\linewidth}{@{}L c rrrrr@{}}
+    \toprule
+    Model (rule) & Column & $\nfe=1$ & $\nfe=2$ & $\nfe=5$ & $\nfe=10$ & $\nfe=20$ \\
+    \midrule
+    \selectedmark\ MeanFM ($t$) & S\&C & $0.967 \pm 0.075$ & $0.967 \pm 0.075$ & $0.933 \pm 0.149$ & $0.933 \pm 0.149$ & \emph{pending} \\
+                & Steps   & $58.6 \pm 2.2$ & $59.4 \pm 2.0$ & $60.6 \pm 2.4$ & $63.6 \pm 1.9$ & \emph{pending} \\
+                & ms/step & $18.3 \pm 0.2$ & $27.7 \pm 0.5$ & $223.8 \pm 14.5$ & $402.3 \pm 29.0$ & \emph{pending} \\
+    \midrule
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ ($t$) & S\&C & $1.000 \pm 0.000$ & $1.000 \pm 0.000$ & \emph{pending} & \emph{pending} & \emph{pending} \\
+                & Steps   & $59.2 \pm 1.2$ & $60.1 \pm 3.4$ & \emph{pending} & \emph{pending} & \emph{pending} \\
+                & ms/step & $18.1 \pm 0.2$ & $27.0 \pm 0.2$ & \emph{pending} & \emph{pending} & \emph{pending} \\
+    \midrule
+    FM ($c$)    & S\&C & $1.000 \pm 0.000$ & $1.000 \pm 0.000$ & \emph{pending} & \emph{pending} & $1.000 \pm 0.000$ \\
+                & Steps   & $67.0 \pm 0.8$ & $67.0 \pm 3.8$ & \emph{pending} & \emph{pending} & $63.2 \pm 1.5$ \\
+                & ms/step & $17.3 \pm 0.1$ & $25.5 \pm 0.2$ & \emph{pending} & \emph{pending} & $476.7 \pm 26.0$ \\
+    \midrule
+    \baselinemark\ Diffusion ($c$) & S\&C & $0.667 \pm 0.391$ & $1.000 \pm 0.000$ & \emph{pending} & $1.000 \pm 0.000$ & $1.000 \pm 0.000$ \\
+                & Steps   & $72.1 \pm 17.6$ & $61.2 \pm 1.2$ & \emph{pending} & $70.3 \pm 11.5$ & $70.1 \pm 8.2$ \\
+                & ms/step & $33.3 \pm 14.5$ & $211.4 \pm 18.8$ & \emph{pending} & $309.8 \pm 11.2$ & $553.4 \pm 28.0$ \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{Every printed cell is a row of \autoref{tab:app:avoiding-dpcc-full} (19-09 corpus; diffusion
+$\nfe=2$ from \texttt{batch\_avoiding\_combined\_20260923\_110010}). The pending cells are R41 in
+\texttt{data\_status/PENDING\_20260922\_all\_lacking\_runs.md}: MeanFM $\nfe=20$, CI-MeanFM $\nfe=5,10,20$
+and FM $\nfe=5,10$ are evaluations of the existing checkpoints; diffusion $\nfe=5$ needs five trainings.
+The earlier figure of this subsection (\texttt{fig\_avoiding\_k\_ladder}, drawn on ragged budgets) is
+withdrawn: \texttt{withheld/20260923\_v3.69\_archive} (author, 23-09).}
+
+The two halves of the table are not read the same way, and the difference is the point. Each diffusion
+cell is its own model: the number of denoising steps is fixed when the noise schedule is discretised
+during training, so the budgets of that row are separately trained checkpoints, one per step count, and
+moving along it costs a training run. A flow-based row is one checkpoint per model, read at every
+budget, because there the step count is the number of steps the ODE solver takes at inference. For a
+flow-based model the budget is therefore a dial that can be turned after training, and for the diffusion
+baseline it is a property of the checkpoint --- the same asymmetry \autoref{fig:raw-plans} shows, where
+the two diffusion panels are two separately trained models and each flow-based row is one model read
+twice. The cost of that asymmetry is a training run per budget, and what it buys is visible in the last
+row: at two denoising steps the baseline holds $1.000$ at $211.4$\,ms per control step, against
+instantaneous-velocity matching's $17.3$\,ms at one evaluation. Cutting the baseline's budget from twenty
+to two leaves it at twelve times the cost, most of it in the projection of its first denoising step
+(\autoref{sec:res:avoiding:caveat:noise}).
+

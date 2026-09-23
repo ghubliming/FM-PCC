@@ -3,14 +3,14 @@
 > **23-09 (v3.67+):** every UAV-**corridor** and UAV-**pillars** run item of this ledger (R30, R32, R33 and the 22-09
 > corridor spec) is **superseded by [`PENDING_20260923_uav_corridor_v3_pillars_v2_paper_runs.md`](PENDING_20260923_uav_corridor_v3_pillars_v2_paper_runs.md)**
 > and its runbook [`SLURM_RUNBOOK_20260923_uav_corridor_v3_pillars_v2.md`](SLURM_RUNBOOK_20260923_uav_corridor_v3_pillars_v2.md)
-> (R33 corridor v3 = tilt + hump, paper-only variants, tightened only, tag `p23cv3`; **R39** pillars v2 representative set,
-> tags `p23pv2turbo` / `p23pv2live`). The rows below are kept for history and are not to be run from here.
+> (R33 corridor v3 = two scenes, tilt and hump, paper-only variants, tightened only, tags `p23cv3t` / `p23cv3ah`; **R39** pillars v2 =
+> the four Ch 6 cells evaluated live, tag `p23uavpv2live`, no turbo). The rows below are kept for history and are not to be run from here.
 
 ## NOW — what the thesis is lacking as of 2026-09-23 (v3.68d). Read this table only; everything below is history.
 
 | ID | where it shows in the draft | run | GPU |
 | :-- | :-- | :-- | --: |
-| **R39** 🔴 | Ch 6 §6.3.1 UAV-pillars — every cell *pending* | pillars v2 representative set (pilot + 5 replay cells T1–T5, one seed; **no live run**, author 23-09) — **23-09 file** | < 1 h |
+| **R39** 🔴 | Ch 6 §6.3.1 UAV-pillars — every *air* cell *pending* | the four Ch 6 cells (MeanFM, CI-MeanFM × K1, K2; `diffuser` + `dpcc-t-tightened`) **evaluated live with the quadrotor, no turbo** (author, 23-09 final), 5 seeds × 2 episodes × 3 geometries, tag `p23uavpv2live` — **23-09 file §2**, submit `eval_20260923_p23_pillars_live.sh` | ~4 GPU jobs, < 2 h each |
 | **R33** 🔴 | Ch 6 §6.3.2 UAV-corridor — every cell *pending*, tilt + hump blocks | corridor v3, two scenes, 68 cells each, K20 last — **23-09 file** | ~2 GPU-days |
 | | ↳ **author, 23-09 (v3.69):** the thesis reads **ten flights per cell** (Table 5.10). The driver flies `NTRIALS=12` (U16's 4 per route; `eval_mix_uav.py` cycles routes over the trial index) — the DA takes the **first ten** of each cell, 4/3/3 per route. No resubmission. | | |
 | **R2** 🔴 | Table 6.8 diffusion per-step row *pending* | D3IL-aligning diffusion K20, `combined_5-tightened`, `dpcc-r/c/t`, ten contexts | ~1.5 h |
@@ -18,7 +18,9 @@
 | **R16** 🟡 | Table 6.5 three rows *pending* | unprojected CI-MeanFM K10; FM K2, K10 | ~1 h |
 | **R35** 🟡 | Table 6.8 CI-MeanFM endpoint block *pending* | `hardflow_new-r/c/t` on CI-MeanFM K20 T0.2 tightened | ~1 h |
 | **R36** 🟡 | Table 6.3 *lacking* cells | avoiding 4-candidate matched: CI-MeanFM + FM at K3, MeanFM K10 (seed 6) | ~2 h |
-| **R41** 🟡 | Table 6.5 (`tab:k-ladder`, v3.69) — the full step-budget grid, 8 cells *pending* | D3IL-avoiding at DPCC's protocol (5 seeds × 3 geometries × 2 episodes, `diffuser` + `dpcc-r/c/t` tightened, 4 candidates, η 0.5): **MeanFM K20; CI-MeanFM (α0.2) K5, K10, K20; FM K5, K10** — evaluations of the existing checkpoints. Optional: **diffusion K5** = five trainings (the job-25965 pattern) + one evaluation | ~3 h eval; +~11 h if diffusion K5 |
+| ~~**R41**~~ ⛔ | ~~the full step-budget grid~~ — **§6.1.2 Step Budget dropped by the author (23-09: Table 6.2 already says it); `tab:k-ladder` archived, nothing to run** | D3IL-avoiding at DPCC's protocol (5 seeds × 3 geometries × 2 episodes, `diffuser` + `dpcc-r/c/t` tightened, 4 candidates, η 0.5): **MeanFM K20; CI-MeanFM (α0.2) K5, K10, K20; FM K5, K10** — evaluations of the existing checkpoints. Optional: **diffusion K5** = five trainings (the job-25965 pattern) + one evaluation | ~3 h eval; +~11 h if diffusion K5 |
+| ~~**R42**~~ ✅ | Tables 6.2 / 6.5 / A.2 — the diffusion $\nfe=2$ ms/step cells: **explained, not re-run** (23-09, §29 addendum) — real, reproducible, the first-step projection | **Re-time** the projected diffusion K2 cells (`dpcc-r/c/t-tightened`, 5 seeds × 3 geos × 2 eps, checkpoints of 26052–26055 + 25965) on a **quiet node**, ideally in the same job as one flow reference cell (FM K2 `dpcc-c-tightened`) so the two arms are timed under the same load. Diagnosis in §29 | ~20 min |
+| **R43** ⚪ optional | §6.1.2.6 caveat — the author's conjecture that flow intermediates project more cheaply than diffusion intermediates at the same step | D3IL-avoiding K2, five seeds, DPCC protocol: (a) FM and MeanFM K2 with the projection window opened to **both** steps (η = 1.0, `dpcc-c-tightened`); (b) diffusion K2 with the gate **excluding** t = 1 (threshold < 0.5, e.g. `FMPCC_DPCC_THRESHOLD=0.4`). Read ms/step against Table 6.2 | ~30 min |
 | **R40** 🟡 | §6.3.3 s-curve guard (the caveat's missing datum) | MeanFM K10 unprojected under `pid` and `pid_const_v`; expert reference under `pid_stopgo` — **23-09 file §4** | ~20 min |
 | ~~**R26**~~ ✅ | Tables 6.1/6.2 diffusion K2 row — **filled in the draft, v3.69** (Figs 6.3/6.4 still without the point: store scripts not promoted) | ✅ **DONE 2026-09-23** — jobs 26052–26055 + 26112, 5 seeds × 3 geos × 2 eps, complete. Numbers in [`DA_20260923_diffusion_K2_five_seeds.md`](../../../../Data_Analysis/DA_in_Paper/analysis/DA_20260923_diffusion_K2_five_seeds.md) | — |
 
@@ -93,7 +95,7 @@ wall-clock: queue time and the 24 h `--time` cap are not in it.
 | ~~R23~~ | ⛔ abandoned; and `pillars_hg` itself superseded by pillars v2 (R39) | UAV-pillars at `pillars_xl` — **Gen15 U17 abandoned; the thesis restores the withheld `pillars_hg` section with its caveat** (`Gen15/U17/CLOSURE_20260922_U17_abandoned.md`) (Gen15 U17, Slurm jobs up to 25995, author, 2026-09-22). Coverage, cost and whether anything is still new are filled in by the author when the wave ends; see §16. **No new pillars run is listed until then.** 🔴 **First read 2026-09-21: 10/12 children complete, 2 running, diffusion walled at 2/7 (✅ diffusion arm CLOSED BY DECISION — reported unprojected only, K=20 projection is ~1 GPU-day per variant and the `c` rules exceed 24 h; see §16) — and 53 of 54 finished projected cells read `success = 0.00`. Read [`SLURM_RUNBOOK_20260919_pillars_enlarged.md` §3e](SLURM_RUNBOOK_20260919_pillars_enlarged.md) before scheduling anything on this scene** | no | ~5 GPU-days spent, see §16 |
 | **R2** | 🔴 | D3IL-aligning: the tightened projected diffusion baseline, per-step r/c/t at K = 20, η = 0.2 — the *pending (R2)* row of Table 6.8 (v3.66); endpoint on diffusion is not defined and not owed | no | ~1.5 h |
 | **R33** | 🔴 **23-09 file** | UAV-corridor v3 = **two scenes, tilt and hump** (author, 23-09), 68 cells each, paper-only variants, tags `p23cv3t` / `p23cv3ah` — spec and runbook in `PENDING_20260923_uav_corridor_v3_pillars_v2_paper_runs.md` | no (U19 coding first) | ~1.5–2 GPU-days |
-| **R39** | 🔴 **new, 23-09 file** | UAV-pillars v2 (Gen15 U18): the **representative** set — G1 pilot, five replay cells (T1–T5), two live cells (L1, L2); tags `p23pv2turbo` / `p23pv2live` | no | < 30 min CPU + ~40 min GPU |
+| **R39** | 🔴 **23-09 file §2** | UAV-pillars v2 (Gen15 U18): the four Ch 6 cells evaluated live (Mode L) at the table's protocol; turbo T1–T5 and the first-draft live cells dropped (author, 23-09); tag `p23uavpv2live` | no | 4 GPU jobs |
 | **R35** | 🟡 | D3IL-aligning: endpoint projection on CI-MeanFM at K = 20, tightened, r/c/t (Table 6.8 block) | no | ~1 h |
 | **R36** | 🟡 | D3IL-avoiding: matched four-candidate endpoint-vs-per-step at K = 3 for CI-MeanFM and FM, and MeanFM at K = 10 with four candidates, seed 6 (Table 6.3 *lacking* cells) | no | ~2 h |
 | **R37** | 🔴 | D3IL-aligning **tightened threshold ladder** (Table 6.6, now blank): MeanFM, random rule, `combined_5-tightened`: per-step at K2 η0.5 (no endpoint there — no guiding step), per-step + endpoint at K100 η0.1 and K100 η0.5; the K10/η0.4 and K20/η0.2 cells exist tightened (Table 6.7) | no | ~2 h (the η0.5 K100 pair dominates) |
@@ -1024,3 +1026,46 @@ $\nfe\in\{1,2,5,10,20\}$ × four models at the operated rule as `tab:k-ladder`, 
 All cells at the DPCC protocol (2 episodes per geometry, tag namespace `_msgdpccproto`, never pooled with the 20-episode
 campaign). Reads into `tab:k-ladder` and `tab:app:avoiding-dpcc-full`. R39's live cells (Mode L) are struck in the
 NOW table (author, 23-09: turbo only).
+
+## 29 · 23-09 — the diffusion K2 time per action is not trusted (author): R42
+
+The author read Table 6.2 and rejected the diffusion $\nfe=2$ projected time (191–226 ms) against the $\nfe=1$ row
+(33 ms): twice the denoising steps, six times the time. What the 23-09 batch says (checked here, `candidates_multidimensional_raw.csv`):
+
+| cell (dpcc-c-tightened) | unprojected ms | projected ms | projector adds | projections per plan (T 0.5 gate `t <= T·K`) | ms per projection |
+| :-- | --: | --: | --: | --: | --: |
+| diffusion K1 | 9.4 | 33.3 | 24 | 1 | 24 |
+| **diffusion K2** | 18.3 | **211.4** | **193** | 2 | **96** |
+| diffusion K10 | 88.8 | 309.8 | 221 | 6 | 37 |
+| diffusion K20 | 179.3 | 553.4 | 374 | 11 | 34 |
+| FM K1 / K2 | 9.0 / 17.8 | 17.3 / 25.5 | 8 / 8 | 1 / 1 | 8 |
+
+- The value is **identical on all five seeds** (0.2 s each), so it is not one bad seed.
+- The **generation half doubles as expected** (9.4 → 18.3 ms); the **projection half is ~3× per solve** against every other
+  diffusion budget. Generation runs on the GPU, projection on the CPU. All five seeds ran in **one job (26112)**; the flow
+  cells of the same batch were **not** re-run (they reproduce the 19-09 numbers to the digit). A CPU-contended node during
+  job 26112 would produce exactly this signature. The DPCC evaluation records no `nlp_solves` for diffusion cells, so
+  QP iteration counts cannot be read from the corpus.
+- **Thesis (v3.69c):** S&C and steps of the K2 rows stay (they are outcomes, not timings); the three ms cells are printed
+  *pending (R42)* in Tables 6.2, 6.5 and A.2; §6.1.1 quotes the K10 row (18×) for the cheapest-diffusion cost claim again.
+- **Run (R42):** re-time the three projected K2 cells with one flow reference cell in the same job, on a quiet node. If
+  the re-timing lands near 2 × 24 + 18 ≈ 70 ms, the 23-09 number was load; if it stays near 200 ms, the K2 checkpoint's
+  first-step projection (on near-pure noise) is genuinely expensive and the chapter says so.
+
+**§29 addendum (23-09, second look — the K2 time is real; R42 closed without a run).** Checked against
+`temp/23-09/2026-09-22/22_54_09__lr22_B2_r26_avoid_eval_K2_5seeds_26112.log`, the 19-09 single-seed job 25966 and the code:
+
+- `diffusion_timestep_threshold (from YAML) = 0.5` is in the log; fan `arm=4`. Not a threshold error.
+- Gate `t <= threshold · n_timesteps` (`diffuser/models/diffusion.py:186`): at K=2 → t = 1 and t = 0 both projected.
+- **Reproducible across jobs and days:** 25966 (19-09, seed 6): dpcc-c/r/t-tightened 226 / 225 / 276 ms; 26112 (22-09, five
+  seeds): 211 / 191 / 226 ms. Node load is ruled out (two jobs, three days apart, same numbers).
+- **Where the time sits:** `post_processing-tightened` of the same cell — the *final* step only, same four candidates —
+  costs 28.1 ms (generation 18.3 + ≈10 ms of projection). So the remaining ≈185 ms is the projection at **t = 1**, a state
+  one denoising step from N(0, I). No larger budget hands the projector such a state (the gated steps start mid-schedule).
+  The solver is scipy SLSQP with `maxiter 1000` (`diffuser/sampling/projection.py:142`); its cost is iteration-bound and
+  rises steeply with how infeasible the warm start is. Consistent with K10/K20, where post-processing (one solve) costs
+  as much as the full per-step schedule (6 or 11 solves): on the diffusion arm the projector's cost is set by solve
+  difficulty, not by solve count.
+- **Thesis:** numbers stand in Tables 6.2 / 6.5 / A.2; §6.1.1 carries the explanation paragraph; the cost factor against
+  the cheapest diffusion configuration is 12×, stated without a bound. R42 struck.
+
