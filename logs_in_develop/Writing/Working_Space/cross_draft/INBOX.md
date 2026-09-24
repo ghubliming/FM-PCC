@@ -5,6 +5,7 @@ Status: ⏳ open · ✅ done (target version) · ❌ declined (reason). Newest f
 ## → v2
 | status | from | item | note |
 | :-- | :-- | :-- | :-- |
+| ⏳ | v3.96 · 2026-09-24 | **HardFlow's evaluation uses DPCC's setup, DPCC's projection as a baseline, and the steps measure; say so in Ch 3 (author).** HardFlow Sec. VII-A: "follows the setup of [16]" (= DPCC); Projection-All (= DPCC's per-step projection) is among its baselines; Table II reports Total Steps (Safe Trials). A suggested sentence is in the note. Ch 5 now says the same (v3.96) | [`FROM_v3_20260924_v3.96_hardflow_dpcc_steps_baseline.md`](to_v2/FROM_v3_20260924_v3.96_hardflow_dpcc_steps_baseline.md) |
 | ⏳ | v3.90 · 2026-09-24 | **FYI, the author's storyline for the results** (for the abstract and the Ch 1 contributions): `Working_Space/GUIDE_20260924_results_storyline_author.md`. Avoiding = the main proof (MF/AF Pareto-dominate DPCC's diffusion model with its own U-Net); aligning = the proof again, plus endpoint projection; pillars = a reaffirmation on the quadrotor; corridor = the DPCC concept works in a new 3-D environment, and on straight-line data the model does not matter; s-curve = the controller. The section insights are in `INSIGHTS_20260924_results_per_environment.md` | the two files in `Working_Space/` |
 | ⏳ | v3.79 · 2026-09-24 | **One word per outcome:** *violation* (declared constraint; "violation-free" replaces "collision-free"/"clean"), *collision* (physical hit; ends a UAV-pillars flight, not a violation), and the scene names instead of "table"/"air". Two v2 places use the old words: Ch 1 l.130 "in the air", Ch 4 l.1627–1628 "A contact with a pillar …" | [`FROM_v3_20260924_v3.79_collision_violation_words.md`](to_v2/FROM_v3_20260924_v3.79_collision_violation_words.md) |
 | ⏳ | v3.78 · 2026-09-23 | **v2.27 synced, sanity check passed.** One claim to narrow: the abstract's "Endpoint projection reduces planning time in the evaluated manipulation comparisons" holds on D3IL-avoiding and aligning K=10, not as a rule at the aligning operating point K=20 (0.87–1.24 of per-step time by model) — §1.4's "evaluated avoiding comparisons" is exact | [`FROM_v3_20260923_v3.78_v2.27_synced_abstract_endpoint_claim.md`](to_v2/FROM_v3_20260923_v3.78_v2.27_synced_abstract_endpoint_claim.md) |
@@ -65,6 +66,26 @@ Status: ⏳ open · ✅ done (target version) · ❌ declined (reason). Newest f
 ## → v4
 | status | from | item | note |
 | :-- | :-- | :-- | :-- |
+| ⏳ | v3.98 · 2026-09-24 20:19 | **v4 can start: Ch 7, Ch 8 and the appendix handed over from v3.98 (author).** They are byte-identical copies in a new folder, with the ntrial20 section that the appendix inputs. The README gives versions, SHA-256, the state of each file (Ch 7 headings only; Ch 8 v3's stale 20-09 draft; the appendix with its open decisions), what they need to build, and what to read first. v3 keeps its own copies | [`v4/FROM_v3_v3.98_20260924_201920/README.md`](../v4/FROM_v3_v3.98_20260924_201920/README.md) |
+| ⏳ | v3.97 · 2026-09-24 | **The thesis in three steps (author), for Ch 7/8.**
+1. The main claim on D3IL-avoiding: beat DPCC, and HF in the thesis's own evaluation.
+2. D3IL-aligning extends and reaffirms it.
+3. The UAV scenes are mainly a transfer test.
+
+§6.4.3 opens with this. Also: pillars = the Pareto-optimal points flown again. | [`FROM_v3_20260924_v3.96_general_conclusion_handover.md`](to_v4/FROM_v3_20260924_v3.96_general_conclusion_handover.md) (addendum) |
+| ⏳ | v3.96 · 2026-09-24 | **HANDOVER: the author's general conclusion for Ch 8, and the final state of Ch 5–6.**
+- Human demonstrations: the average-velocity models lead.
+- Hard tasks: the model and the projection together; endpoint projection helps on D3IL-aligning (on the constraint).
+- Simple generated data: FM is enough and the models are equivalent (corridor); FM leads on the s-curve.
+- The plant and the controller matter (pillars, s-curve).
+- **Correction:** UAV-corridor RQ2 is a trade-off with no clear dominance ("endpoint wins over the hump" is withdrawn). | [`FROM_v3_20260924_v3.96_general_conclusion_handover.md`](to_v4/FROM_v3_20260924_v3.96_general_conclusion_handover.md) |
+| ⏳ | v3.95 · 2026-09-24 | **D3IL-aligning: don't write "box moved in 8/10" as the result (author).** The supported combination (MeanFM K20, endpoint, random) keeps all ten contexts violation-free, but the box ends **in position** (≤ 1.8 cm, the position half of D3IL's own test, now defined in Ch 5) in **0 of 10**. The best two contexts end 2.2 and 4.7 cm away; six more end 13–27 cm away (40–75 % closed); two do not move. The median is 0.197 m (57 %). The unprojected plan is also 0/10 (best 2.8 and 2.9 cm). §6.4 now uses key points instead of Tables 6.17–6.19 | `v3/changelogs/v3.95_…` |
+| ⏳ | v3.93 · 2026-09-24 | **UAV-s-curve conclusion corrected (author): "the controller matters for the UAV in the FM-PCC framework".**
+- Our cascaded geometric controller is the better one on the configuration of record: equal success unprojected, 5/10 against 0/10 projected, fewer violations, 1/24 of the cost. MuJoCo MPC is **not** better; **withdraws** the v3.92 "stability is the controller's limit, MPC lifts it".
+- FM leads because the data are simple.
+- Caveat: more K is not always better where flights are easy to lose.
+- New `fig:uav-scurve-plans`. The author's reading: rough low-K plans vary more, which appears to help the controller.
+- The storyline guide's s-curve row is updated. | `v3/changelogs/v3.93_…`; `GUIDE_20260924_results_storyline_author.md` |
 | ⏳ | v3.92 · 2026-09-24 | **UAV-s-curve is final, §6.4 now carries it, and the ntrial20 appendix is in.**
 - **UAV-s-curve**, the controller on an extreme trajectory, separates three limits:
   - stability at the second turn is the controller's: MuJoCo MPC keeps all ten unprojected flights upright, at 24× the cost per step;

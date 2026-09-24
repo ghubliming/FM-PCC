@@ -21,6 +21,81 @@ is sourced from · what it left open.
 
 ---
 
+## v3.98a — 2026-09-24 20:19 · Ch 7, Ch 8 and the appendix handed to v4 (a copy)
+
+- At the author's request, `07_discussion.tex`, `08_conclusion.tex`, `09_appendix.tex` and `app_ntrial20_feasible.tex`
+  are copied byte-identical into the new folder `v4/FROM_v3_v3.98_20260924_201920/chapters/`.
+- The folder's README records the v3 version (v3.98), the time, the SHA-256 prefixes, each file's state, what the files
+  need in order to build, what to read first, and the open decisions.
+- v3's files are unchanged. Nothing else under `v4/` was touched: an author-requested exception to
+  `DRAFT_OWNERSHIP.md`.
+- An INBOX row for v4 was added.
+
+## v3.98 — 2026-09-24 · Sub-conclusions and §6.4 checked; the D3IL-avoiding "beat HF" sentence; corridor "carries over"; guide rows; bundle → [`changelogs/v3.98_20260924_subconclusions_checked_avoiding_hf_corridor_wording_bundle.md`](changelogs/v3.98_20260924_subconclusions_checked_avoiding_hf_corridor_wording_bundle.md)
+
+- Checked all five sub-conclusions and §6.4 against the three steps, the general conclusion, the corridor trade-off and
+  the pillars retest. Two small fixes:
+  - §6.1.4: no endpoint-projection configuration improves on the K1 per-step operating point;
+  - §6.3.2.4: "carries over".
+- Three storyline-guide rows updated.
+- Bundle `thesis_v3_20260924_201628_new` / `_full_clean`, both byte-faithful.
+
+## v3.97 — 2026-09-24 · UAV-pillars: why the K1/K2 average-velocity cells are retested → [`changelogs/v3.97_20260924_pillars_retest_purpose_pareto_points.md`](changelogs/v3.97_20260924_pillars_retest_purpose_pareto_points.md)
+
+- The pillars opening, conclusion and §6.4 key point now say it: the Pareto-optimal operating points of D3IL-avoiding
+  are flown again on the quadrotor to test what else happens with the plant. The declared constraints hold; the outcome
+  departs from the table where the plant and its controller differ.
+- The not-flown guard is re-worded as the reason for the scope.
+- No FM/diffusion pillars run (author).
+- check.py passes; not compiled; no bundle; nothing committed.
+
+## v3.96 — 2026-09-24 · §6.4 academic; UAV-corridor RQ2 a trade-off; the general conclusion recalibrated; HardFlow's DPCC baseline in Ch 5; a sanity pass → [`changelogs/v3.96_20260924_6.4_academic_corridor_tradeoff_general_conclusion_hardflow_baseline.md`](changelogs/v3.96_20260924_6.4_academic_corridor_tradeoff_general_conclusion_hardflow_baseline.md)
+
+- §6.4 headings and wording are academic ("something new" and "beats" are gone).
+- UAV-corridor endpoint against per-step is a trade-off with no clear dominance, in §6.3.2.3, §6.3.2.4 and §6.4.2.
+- §6.4.3 carries the author's general conclusion, held to the data.
+- Ch 5 says HardFlow follows DPCC's setup, with DPCC's projection as a baseline and the steps measure (a note to v2 for
+  Ch 3).
+- Sanity pass on Ch 5–6.
+- v4 handover note.
+- Bundle `thesis_v3_20260924_200226_new` / `_full_clean`, both byte-faithful.
+
+## v3.95 — 2026-09-24 · §6.4: the text tables become key points; D3IL-aligning by "in position" and distance → [`changelogs/v3.95_20260924_6.4_tables_to_key_points_aligning_in_position.md`](changelogs/v3.95_20260924_6.4_tables_to_key_points_aligning_in_position.md)
+
+- Tables 6.17–6.19 are replaced by highlighted `description` key points (per environment) and a numbered list of the
+  three cross-cutting findings.
+- D3IL-aligning: 0/10 in position (the 1.8 cm position half of D3IL's test, now defined in Ch 5); the best contexts end
+  2.2 and 4.7 cm away (2.8 and 2.9 unprojected); the per-context distances are given. The fact also stands in the §6.2
+  conclusion.
+- New `analysis/aligning_in_position.py`.
+- Bundle `thesis_v3_20260924_171952_new` and `thesis_v3_20260924_171953_full_clean`, both byte-faithful.
+- Not compiled; nothing committed.
+
+## v3.94 — 2026-09-24 · Bundle method: two variants (annotated `_new`, clean `_full_clean`); `--verify` folds nested `\input` → [`changelogs/v3.94_20260924_bundle_two_variants_clean_full_verify_nested.md`](changelogs/v3.94_20260924_bundle_two_variants_clean_full_verify_nested.md)
+
+- One `make_bundle.py` run builds both variants:
+  - annotated `_new`: new sections, every note visible;
+  - clean `_full_clean`: the whole thesis with no drafting mark; `\guard`/`\provisional` print as plain text, dead
+    blocks plain.
+- `--clean-notes`/`--no-notes` are withdrawn; `--annotated-only`/`--clean-only` are added.
+- `--verify` folds nested `\input` blocks, so the appendix (with `app_ntrial20_feasible.tex`) verifies.
+- Built `thesis_v3_20260924_164521_new` and `thesis_v3_20260924_164522_full_clean`, both byte-faithful.
+- Not compiled; nothing committed.
+
+## v3.93 — 2026-09-24 · UAV-s-curve: the controller matters and ours is the better one; the plans figure; distances ± sd; Table 6.14 at its carried rule → [`changelogs/v3.93_20260924_scurve_controller_matters_plans_figure_distance_sd_rules_appendix.md`](changelogs/v3.93_20260924_scurve_controller_matters_plans_figure_distance_sd_rules_appendix.md)
+
+- The controller conclusions are corrected (author): the controller matters in FM-PCC on the UAV. Our cascaded
+  geometric controller is the better one: equal success unprojected, 5/10 against 0/10 projected, fewer violations, 1/24
+  of the cost. MPC is not better and not adopted.
+- FM leads because the data are simple. Caveat: more K is not always better where flights are easy to lose.
+- New `fig:uav-scurve-plans` (FM K1/K2/K20, MeanFM K1/K2; the plan at every 20th step), built in the store from local
+  npz, with the author's reading: rougher low-K plans vary more, which appears to help the controller.
+- Distances ± sd in the s-curve tables (`analysis/scurve_goal_dist_sd.py`).
+- Table 6.14 shows the carried rule (random); all three rules are in the new `app:uav-scurve-rules`.
+- check.py passes; not compiled; nothing committed.
+- Bundle `thesis_v3_20260924_163546_new.zip` (+ `163547_new_clean`, `163547_new_nonotes`). The hand check with the nested
+  ntrial20 block folded back is byte-faithful in all three.
+
 ## v3.92 — 2026-09-24 · UAV-s-curve final (R44 complete), §6.4 with the s-curve, the ntrial20 appendix added as it is, final data check → [`changelogs/v3.92_20260924_scurve_final_6.4_scurve_ntrial20_appendix_final_data_check.md`](changelogs/v3.92_20260924_scurve_final_6.4_scurve_ntrial20_appendix_final_data_check.md)
 
 - UAV-s-curve is final:

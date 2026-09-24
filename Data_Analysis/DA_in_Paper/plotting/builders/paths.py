@@ -197,8 +197,84 @@ def fig_uav_corridor_paths(outdir):
     return _build('corridor', 'fig_uav_corridor_paths.svg', 3, outdir)
 
 
+# ------------------------------------------------------------------ the plans themselves (v3.93, author)
+# Author, 2026-09-24: "add the raw MPC traj smooth fig like Figure 6.1 so we can see how is quality ... just FM K1 vs
+# 2 vs 20 vs mf 1,2 is enough"; then "just some of the mpc traj to show the quality is enough". Drawn as
+# fig:raw-plans is, but sampled: one flight per panel, the plan of every twentieth control step, all four candidates, each as the measured planar position of its eight waypoints, green at the waypoint it
+# is anchored at; the executed path is not drawn. Data: extract/scurve_r44_plans.py -> data/uav_scurve_plans.json.
+PLAN = '#34495e'
+PLAN_LIGHT = '#7f8c9a'
+ANCHOR = '#1e8449'
+PLANS_W = 520
+PLANS_WINDOW = {'xlim': (-2.0, 2.0), 'ylim': (-1.3, 1.35)}     # the crossover, where the two turns are
+
+
+def _plans_panel(scn, panel, first, r_drone, tight):
+    k = panel['k']
+    budget = f"K = {k}"
+    if panel['aborted']:
+        end = 'lost control (inverted)'
+    elif panel['success']:
+        end = 'success'
+    else:
+        end = 'no success'
+    local = dict(scn, title=f"{panel['label']} · {budget}",
+                 sub=f"one flight · {end} · cell {panel['cell_success']}/{panel['cell_n']} success", **PLANS_WINDOW)
+    f = _uav_constraint_panel(local, PLANS_W, first, r_drone, tight)
+    f.clip_to_box()
+    # A sample of the plans (every twentieth control step, extract/scurve_r44_plans.py), opaque strokes: the preview
+    # rasteriser composites every semi-transparent element as a layer.
+    for plan in panel['plans']:
+        for cand in plan:
+            f.dline(cand, PLAN, w=1.3)
+    for plan in panel['plans']:
+        ax, ay = plan[0][0]
+        f.circle(ax, ay, 0.02, fill=ANCHOR)
+    ex, ey = panel['end']
+    if panel['aborted'] or not panel['safe']:
+        _xmark(f, f.X(ex), f.Y(ey), VIOLATING)
+    f.end_clip()
+    return f
+
+
+def _plans_legend(width):
+    # one row per item: side by side the labels ran into each other at this font size
+    h = Fig(width, 150, ml=0, mr=0, mt=0, mb=0, font=FONT_CONSTRAINT)
+    items = [('line', 'a plan: four candidates of eight waypoints', 16, 30),
+             ('dot', 'the waypoint it is anchored at', 16, 76),
+             ('x', 'the flight lost control (inverted)', 16, 122)]
+    for kind, lab, x, y in items:
+        if kind == 'line':
+            h.poly([(x - 14, y), (x + 14, y)], PLAN, w=2.4)
+        elif kind == 'dot':
+            h.marker(x, y, 'o', ANCHOR, filled=True, r=4.2, ew=1.0)
+        else:
+            _xmark(h, x, y, VIOLATING)
+        h.text(x + 26, y + 7, lab, 18, '#111')
+    return h
+
+
+def fig_uav_scurve_plans(outdir):
+    """The plans FM (nfe 1, 2, 20) and MeanFM (nfe 1, 2) emit on UAV-s-curve, unprojected, one flight each (trial 0),
+    drawn like fig:raw-plans -- extract/scurve_r44_plans.py."""
+    path_json = os.path.join(os.path.dirname(S.UAV_PATHS), 'uav_scurve_plans.json')
+    if not os.path.isfile(path_json):
+        return None
+    D = json.load(open(path_json))
+    scn = _scene('UAV-s-curve')
+    C = S.UAV_CONSTRAINTS
+    drawn = [_plans_panel(scn, p, i % 2 == 0, C['r_drone'], C['tightening']) for i, p in enumerate(D['panels'])]
+    width = drawn[0].w * 2 + 8
+    path = save_grid(drawn, os.path.join(outdir, 'fig_uav_scurve_plans.svg'), cols=2, gap=8,
+                     header=_plans_legend(width))
+    return path, (f"data/uav_scurve_plans.json (extract/scurve_r44_plans.py) | {len(D['panels'])} panels, flight "
+                  f"{D['flight']}, the plan of every {D['every']}th control step; runs p23scgrid (R44a); scene and "
+                  f"constraints from sources.UAV_CONSTRAINTS, drawn by scenes._uav_constraint_panel")
+
+
 ALL = [
     ('fig_uav_scurve_paths', 'da', fig_uav_scurve_paths),
+    ('fig_uav_scurve_plans', 'da', fig_uav_scurve_plans),
     ('fig_uav_pillars_paths', 'da', fig_uav_pillars_paths),
     ('fig_uav_pillars_paths_cimf', 'da', fig_uav_pillars_paths_cimf),
     ('fig_uav_corridor_paths', 'da', fig_uav_corridor_paths),

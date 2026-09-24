@@ -1,0 +1,27 @@
+% ARCHIVED at v3.97 (2026-09-24) -- author: "reclaim why we do the retest the K1/2 in UAV-pillars: they are the
+% results of the Pareto optimal from d3il-avoiding, so we run it again on the UAV and test what else will happen".
+% Verbatim, not part of the build.
+
+% ----
+not retrained (\autoref{sec:setup:tasks:uav}). What is read here is therefore not a new benchmark but a
+check of the vehicle and its tracking controller: the configurations that win on D3IL-avoiding --- the two
+average-velocity models at one and two network evaluations, the operating points of
+\autoref{tab:avoiding-conclusion} --- are flown, before and after per-step projection, and their flown
+outcome is set beside their table outcome at the same protocol, five training seeds $\times$ two episodes
+per geometry, averaged over the three geometries.
+
+% ----
+UAV-pillars reaffirms D3IL-avoiding on the quadrotor. Its demonstrations, planner, projection and constraint
+rows are those of D3IL-avoiding, and only the plant that executes each commanded position is replaced
+(\autoref{sec:method:env:uav}).
+
+% ----
+What the quadrotor and its controller change against the manipulator is twofold.
+
+% ----
+\guard{The diffusion baseline and instantaneous-velocity matching were not flown on this scene; the dominance
+over the baseline is a result of D3IL-avoiding.}
+
+% ----
+  \item[UAV-pillars: transfer of the D3IL-avoiding result to the quadrotor.] The declared constraints transfer exactly
+    and the two average-velocity models keep their order.

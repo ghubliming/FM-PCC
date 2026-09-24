@@ -702,9 +702,13 @@ episodes), and the number of control steps on which a constraint is violated (st
 
 The first of those is a headline number in both works this chapter measures against, and not a
 quantity introduced here: \ac{DPCC} reports the control steps an episode takes beside its success
-rates \parencite[Sec.~6.1]{romer2025diffusion}, and the endpoint-projection work reports, on this same
-D3IL task, the average number of steps the manipulator takes to reach the target on its constraint-satisfying
-episodes as one of its three columns \parencite[Sec.~VII-A]{li2025hardflow}. A plan that arrives in
+rates \parencite[Sec.~6.1]{romer2025diffusion}, and the endpoint-projection work, which follows the setup of
+\ac{DPCC} on this same D3IL task and counts projection after every sampling step, the projection of \ac{DPCC},
+among its baselines, reports the average number of steps the manipulator takes to reach the target on its
+constraint-satisfying episodes as one of its three columns, beside the safety rate and the computation time
+\parencite[Sec.~VII-A, Table~II]{li2025hardflow}. This thesis compares the two projection methods in the same
+way: endpoint projection against the per-step projection of \ac{DPCC} as the baseline, with the control steps
+among the measures. A plan that arrives in
 fewer control steps is a plan that completes the task sooner, which is why it is reported next to
 success rather than folded into it.
 
@@ -716,6 +720,12 @@ candidate plans, projecting them onto the constraint set, and selecting one. The
 used in all three environments, and
 \autoref{sec:setup:protocol:compute} gives the machine every configuration was measured on.
 
+\srcnote{v3.96 (author: \enquote{ensuring the HF uses steps in DPCC as baseline is said \ldots\ in the Ch 5 avoiding
+metrics}): \texttt{aux\_repo/PAPERS/Recommand\_Paper/HardFlow\_Pub.pdf}, Sec.~VII-A: \enquote{This task follows the
+setup of [16] and uses the D3IL benchmark}, [16] = R\"omer et al., DPCC; baselines Projection-All [15], [16]
+(projection after every sampling step) and Projection-Late; Table~II columns Safety Rate, Total Steps (Safe Trials),
+Computation Time.}
+
 \subsection{Vision-Conditioned Alignment}\label{sec:setup:metrics:aligning}
 
 Each episode is scored by
@@ -726,6 +736,9 @@ Each episode is scored by
     $0.4530$\,m: $100\,\%$ is a box brought onto its target and $0\,\%$ one that was not moved towards it
     at all;
   \item whether the box was moved at all (a count of contexts);
+  \item whether the box ends in position: within $0.018$\,m of its target in the table plane, the position
+    tolerance of the task's own success test (a count of contexts); the orientation half of that test is not
+    used, for the reason given below;
   \item the number of control steps on which a constraint is violated (steps per episode);
   \item the time to compute one action (milliseconds), as in \autoref{sec:setup:metrics:avoiding}.
 \end{itemize}
@@ -733,7 +746,9 @@ When generative models are compared, the distance is measured on plans executed 
 that it reflects the generative model alone; when projection methods are compared, it is measured with
 projection.
 \srcnote{\texttt{per\_rollout\_detail.csv}: \texttt{context\_final\_xy\_dist}, \texttt{frozen},
-\texttt{n\_violations}, \texttt{avg\_time\_ms}. The recorded box angle is not used: the evaluation writes
+\texttt{n\_violations}, \texttt{avg\_time\_ms}. In position: \texttt{context\_final\_xy\_dist} $\le 0.018$\,m, the
+\texttt{pos\_min\_dist} of D3IL's success test (\texttt{gym\_aligning/envs/aligning.py:198}; its
+\texttt{rot\_min\_dist} $=0.048$ is the orientation half; v3.95). The recorded box angle is not used: the evaluation writes
 \texttt{context\_final\_box\_angle\_deg} under an inconsistent convention across runs, so no orientation
 metric is defined here or reported in \autoref{ch:results}.}
 

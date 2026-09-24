@@ -6237,3 +6237,48 @@ Comprehensive data analysis of the MPC candidate fan ($B=4$ vs $B=1$) on `avoidi
 5. **Trajectory Extraction and Visualization Tools**:
    - Built `Data_Analysis/DA_in_Paper/plotting/extract/pillars_v2_paths.py` exporting executed quadrotor rollouts into `data/uav_paths.json`.
    - Updated `builders/paths.py`, producing `fig_uav_pillars_paths.png` (MeanFM $K=1$) and `fig_uav_pillars_paths_cimf.png` (CI-MeanFM $K=1$) highlighting pre- and post-projection paths with pillar contact coordinates.
+
+
+***
+
+## Gen15 U19 Corridor v3 Wave Execution & Finish-Line Patch (R33, R45a), UAV S-Curve Full Ladder & Controller Forensics (R44), Aligning & Avoiding Completion (R16, R36) (September 24, 2026)
+
+**Keywords**: Gen15, U19, corridor_v3_tilt, corridor_v3_ablation_hump, R33, clear line finish patch, SCENE_CLEAR_LINE_X, R45a, UAV S-curve, R44a raw grid, R44b projection, R44c MuJoCo MPC, corner cutting forensics, wall-end line patch, D3IL-aligning, R16, D3IL-avoiding, R36, ntrial20 extended feasibility, jobs 26163-26166, 26167-26176, 26181-26186, 26195, 26196, 26204, commit 541ef4aa.
+
+1. **Gen15 U19 Corridor v3 Full Wave Execution & Native Finish-Line Patch (R33, R45a)** (`DA_20260924_corridor_v3.md`, `DA_20260924_corridor_v3_R45a_clear_line.md`, `CHANGELOG_20260924_U19_corridor_finish_line_coding2.md`, jobs 26163–26166, commit `541ef4aa`):
+   - **Full Wave Execution (68 cells per scene, 1,620 flights total)**: Evaluated both 3D geometries under the standard protocol (seed 6, first 10 flights per cell, cycling routes L/C/R, jobs 26163–26166, tags `p23cv3t` and `p23cv3ah`).
+     - *Tilt (`corridor_v3_tilt`)*: Under the original goal-plane rule ($x \approx 2.8$ m), all 68 cells scored $S\&C = 0/10$. Projected flow models crossed 100% and successfully descended (median $0.12$–$0.37$ m below unprojected twins), but left a shallow residue of 1.4–11 violating steps (depth $1.0$–$2.2$ cm at $K=20$, $8.8$–$11.9$ cm at $K \le 2$) at the window exit ($x \in [1.75, 2.0]$) where the plane terminates while the commanded setpoint was already 0.5–0.6 m ahead in unconstrained space.
+     - *Hump (`corridor_v3_ablation_hump`)*: Only two configurations achieved non-zero S&C: FM $K=20$ endpoint (single rule: 8/10 S&C at 291.0 ms/step) and Diffusion $K=20$ per-step ($t$ rule: 6/10 at 625.9 ms/step). Low-budget per-step flow models ($K \le 2$) stalled on the roof slope before the apex (0/180 flights crossed).
+   - **Corridor Clear-Line Finish Rule Patch ($x' = 2.0$ m, R45a)**:
+     - Diagnosed that the nominal goal plane ($x \approx 2.8$ m) lies 0.8 m into free space beyond the corridor walls and obstacles ($x=2.0$ m). Diffusion per-step flights ran out of their 396-step budget between $x=2.0$ and $2.8$ m while actively making forward progress (1.8–20.0 mm/step) in safe, contact-free flight.
+     - Implemented `SCENE_CLEAR_LINE_X = {'corridor': 2.0}` in `mix_uav_test/eval_mix_uav.py`, latching success when vehicle center reaches $x \ge 2.0$ m.
+     - Re-scoring under $x'=2.0$ m: Diffusion per-step S&C on Tilt increases from 0/10 to **8/10** ($c$ rule, 666.3 ms); on Hump from 3–6/10 to **10/10** ($r$ rule, 654.2 ms). On Hump, FM $K=20$ endpoint single (8/10, 291.0 ms) and Diffusion per-step $r$ (10/10, 654.2 ms) establish a genuine Pareto trade-off between speed and constraint satisfaction.
+
+2. **UAV S-Curve Complete Ladder, Projection & Controller Dynamics (R44a, R44b, R44c)** (`DA_20260924_scurve_R44a_raw_grid.md`, `DA_20260924_scurve_R44bc_projection_controller.md`, `CHANGELOG_20260924_U19_scurve_finish_line_coding3.md`, jobs 26167–26176, 26195, 26196, 26204, commit `541ef4aa`):
+   - **Phase A (Raw Generative Grid, Table 6.14, Jobs 26167–26176)**:
+     - Filled all pending raw cells under tag `p23scgrid`: MeanFM $K=1$ (3/10 cross, 9.2 ms) and $K=20$ (0/10 cross, 176.4 ms); CI-MeanFM $K=20$ (1/10 cross, 180.4 ms); FM $K=1$ (9/10 cross, 8.9 ms).
+     - Across all flow models, crossing success degrades monotonically with higher NFE due to trajectory curvature accumulation triggering attitude inversions: FM crosses 9/10 ($K=1$) $\to$ 7/10 ($K=2$) $\to$ 6/10 ($K=20$); CI-MeanFM 6/10 $\to$ 1/10 $\to$ 1/10; MeanFM 3/10 $\to$ 0/10 $\to$ 0/10. Diffusion $K=20$ achieves 0/10 (8/10 aborted).
+     - Confirmed selection of **FM at $K=1$** as the primary S-curve evaluation candidate (9/10 crossings, 8.9 ms/step).
+   - **Phase B (Projection on FM $K=1$, Table 6.15, Job 26195)**:
+     - Evaluating per-step projection under tag `p23scproj` dropped crossings from 9/10 to 5/10 across all rules (random, cumulative cost, temporal consistency) with 0/10 S&C, while per-step latency increased from 8.9 ms to 136–164 ms.
+   - **Phase C (Tracking Controller Comparison: Cascaded Geometric vs. MuJoCo MPC, Table 6.16, Jobs 26196, 26204)**:
+     - *Unprojected Plans*: MuJoCo MPC eliminates vehicle inversion entirely (0/10 aborts vs 1/10 for cascaded geometric) and delivers all 10 flights to within 0.3 m of the goal point (mean distance 0.297 m vs 0.571 m).
+     - *Projected Plans*: MuJoCo MPC fails completely (0/10 success, 7/10 inverting against outer walls at 15.7–20.7 s, 3/10 exceeding contact thresholds), while cascaded geometric completes 5/10.
+   - **Corner-Cutting Forensics & Finish Line Alignment**:
+     - Disproved earlier hypothesis attributing failures to lateral tracking lag: the cascaded geometric controller tracks within ~1 cm of the commanded path.
+     - Root cause: **the generated plan itself cuts the second inside corner of the crossover** by 8–19 cm on every flight (crossing $y=0$ at $x=0.21$–$0.27$ m, whereas training demonstrations crossed at $x=0$). Because DPCC S-curve projection bound measured drone state rather than commanded setpoint (`-pdes`), projection failed to push the setpoint outside the corner keep-out.
+     - Implemented native wall-end finish line for S-curve at $x=3.0$ m via `SCENE_CLEAR_LINE_X['s_curve'] = 3.0` in `eval_mix_uav.py`.
+     - Rebuilt `fig_uav_scurve_paths.png` (2×2 layout across unprojected/projected and both controllers).
+
+3. **D3IL Visual Aligning (R16) & Avoiding (R36) Final Resolution** (`DA_20260924_R16_R36_must_need.md`, jobs 26181–26186, commit `541ef4aa`):
+   - Executed chain `pipeline_20260923_must_need.sh` resolving remaining non-UAV gaps:
+   - **Visual Aligning Table 6.5 (R16, Jobs 26181–26183)**:
+     - Filled FM $K=2$ (median 0.4257 m, 6% closed, 32.5 ms), FM $K=10$ (0.4224 m, 7%, 145.1 ms), and CI-MeanFM $K=10$ (0.4247 m, 6%, 98.5 ms).
+     - Proved MeanFM decisively outperforms other models across the entire budget ladder (e.g. at $K=10$, MeanFM closes 74% distance vs 6–7% for FM/CI-MeanFM at matched or lower cost).
+   - **D3IL Avoiding Table 6.3 (R36, Jobs 26184–26186)**:
+     - Filled CI-MeanFM $K=3$ (per-step $t$: 0.958 S&C, 60.0 steps, 146 ms; endpoint $t$: 1.000 S&C, 60.0 steps, 76.1 ms).
+     - Filled FM $K=3$ (per-step $t$: 1.000 S&C, 61.2 steps, 64.1 ms; endpoint $t$: 1.000 S&C, 60.8 steps, 71.5 ms).
+     - Filled MeanFM $K=10$ (per-step $t$: 1.000 S&C, 64.2 steps, 362 ms; endpoint $t$: 1.000 S&C, 60.6 steps, 175 ms).
+
+4. **Extended Protocol Feasibility Validation (`ntrial20`)** (`ntrial20_da.py`, `app_ntrial20_feasible.tex`):
+   - Formalized appendix analysis over 20-episode extended rollouts across D3IL tasks, demonstrating that ranking, speedup factors, and constraint satisfaction rates observed under the 5-seed DPCC protocol reproduce faithfully in larger sample evaluations.

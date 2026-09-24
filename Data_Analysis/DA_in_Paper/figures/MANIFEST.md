@@ -6,7 +6,7 @@ Last built **2026-09-24**. Every thesis figure lives in this store; drafts recei
 
 | figure | group | corpus | protocol |
 | :-- | :-- | :-- | :-- |
-| `fig_uav_corridor_tradeoff` | da | `data/corridor_v3_frontier.json (extract/corridor_v3_frontier.py)` | corridor v3 after projection, first 10 flights per cell, success at x' = 2.0 m; (a,b) pareto_front on violating steps and ms, band 0.05 on success; (c,d) pareto_front on steps and ms within each violation group (gap > 2.0 violating steps): tilt: I 9.8-10.4, II 4.4-7.6, III 0.8-2.1; hump: I 8.0-8.3, II 3.9-5.6, III 0.0-1.8 |
+| `fig_uav_scurve_plans` | da | `data/uav_scurve_plans.json (extract/scurve_r44_plans.py)` | 5 panels, flight 0, the plan of every 20th control step; runs p23scgrid (R44a); scene and constraints from sources.UAV_CONSTRAINTS, drawn by scenes._uav_constraint_panel |
 
 ## Vendored — copied from where they were produced
 
@@ -67,6 +67,7 @@ Present in the store but not produced by this run (e.g. a matplotlib figure from
 | `fig_uav_corridor_altitude` | `da/fig_uav_corridor_altitude.png`, `da/fig_uav_corridor_altitude.svg` |
 | `fig_uav_corridor_paths` | `da/fig_uav_corridor_paths.png`, `da/fig_uav_corridor_paths.svg` |
 | `fig_uav_corridor_side` | `da/fig_uav_corridor_side.png`, `da/fig_uav_corridor_side.svg` |
+| `fig_uav_corridor_tradeoff` | `da/fig_uav_corridor_tradeoff.png`, `da/fig_uav_corridor_tradeoff.svg` |
 | `fig_uav_pillars_paths` | `da/fig_uav_pillars_paths.png`, `da/fig_uav_pillars_paths.svg` |
 | `fig_uav_pillars_paths_cimf` | `da/fig_uav_pillars_paths_cimf.png`, `da/fig_uav_pillars_paths_cimf.svg` |
 | `fig_uav_scurve_paths` | `da/fig_uav_scurve_paths.png`, `da/fig_uav_scurve_paths.svg` |

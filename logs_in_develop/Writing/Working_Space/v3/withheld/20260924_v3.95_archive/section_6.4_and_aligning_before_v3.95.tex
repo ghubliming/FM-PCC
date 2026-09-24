@@ -1,0 +1,153 @@
+% ARCHIVED at v3.95 (2026-09-24) -- the 6.4 tables 6.17-6.19 (text-heavy) replaced by key points (author).
+% Verbatim, not part of the build.
+
+%% ---- 6.4.1-6.4.3 with Tables 6.17-6.19 (v3.93) ----
+\subsection{Generative Models}\label{sec:res:summary:models}
+
+The results fall into the lines the study was built on (\autoref{tab:summary-models}). D3IL-avoiding carries
+the central result: the average-velocity models Pareto-dominate the diffusion model of \ac{DPCC} on its own
+benchmark and with its own temporal U-Net. D3IL-aligning repeats it on camera observations and an alignment
+through contact. On the quadrotor, UAV-pillars reaffirms D3IL-avoiding when its plans are flown and shows
+what the change of plant costs, and UAV-corridor shows that the concept of \ac{DPCC} works in a new,
+three-dimensional environment and that on straight-line demonstrations the generative model does not matter.
+UAV-s-curve takes the plans onto a route of sharp turns, where the controller that flies them matters as much as
+the model that makes them.
+
+\begin{table}[htpb]
+  \caption[Generative models across environments]{The conclusion of each environment on the generative models,
+  as found in Sections~\ref{sec:res:state}--\ref{sec:res:uav}. Temporal U-Net of 3.96--4.0\,M parameters
+  throughout; D3IL-aligning on training-set contexts.}
+  \label{tab:summary-models}
+  \centering
+  \small
+  \begin{tabularx}{\linewidth}{@{}p{2.2cm} L@{}}
+    \toprule
+    Environment & Conclusion \\
+    \midrule
+    D3IL-avoiding & the central result, Pareto dominance over the baseline: CI-MeanFM at $\nfe=1$ holds S\&C
+                    $1.000$ in $59.2$ control steps at $18.1$\,ms, against the baseline's $1.000$ in $70.1$ at
+                    $553.4$\,ms; MeanFM trades one episode in thirty ($0.967$, $58.6$ steps, $18.3$\,ms); FM at
+                    $\nfe=1$ dominates the baseline too ($1.000$, $67.0$ steps, $17.3$\,ms); against the baseline
+                    retrained at two steps ($1.000$, $61.2$ steps, $211.4$\,ms) the saving is twelvefold \\
+    D3IL-aligning & the result repeated on camera observations and contact, every non-dominated configuration
+                    MeanFM: under per-step projection it
+                    dominates the baseline's best projected row, nine violation-free contexts against four,
+                    $0.179$ against $0.462$\,m, $266$ against $809$\,ms; unprojected at $\nfe=20$ it closes
+                    $84\,\%$ of the distance, against $14$, $10$ and $-2\,\%$ for CI-MeanFM, FM and the baseline \\
+    UAV-pillars   & D3IL-avoiding reaffirmed on the quadrotor: the declared constraints transfer exactly and the
+                    two average-velocity models keep their order; the vehicle tracks more closely than the arm,
+                    and collisions with pillars outside the constraint sets end a third of the flights (S\&C
+                    $0.600$--$0.700$) \\
+    UAV-corridor  & new: the concept of \ac{DPCC} works in three dimensions, the violating steps of a flight
+                    falling from $29$--$99$ to $0$--$10$; on straight-line demonstrations the three objectives
+                    cannot be told apart and the budget decides; against the baseline a trade-off, $1/24$ and
+                    $1/9$ of its time for more violating steps \\
+    UAV-s-curve   & the controller matters: the cascaded geometric controller succeeds as often as MuJoCo MPC
+                    without projection and on $5/10$ against $0/10$ with it, at a twenty-fourth of the cost; FM
+                    at $\nfe=1$ leads on this single, simple route, and more evaluations are not always better
+                    where a flight is easy to lose \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{Projection Methods}\label{sec:res:constraints}
+
+Endpoint projection beats the per-step projection of \ac{DPCC} where the task is run at a budget that gives
+it steps to guide, and has nothing to win where one or two evaluations solve the task
+(\autoref{tab:summary-projection}). On D3IL-aligning, at twenty evaluations, it keeps all ten contexts free
+of violations. On UAV-corridor it overtakes the per-step projector over the hump at twenty evaluations with a
+single candidate, and under the tilt it leaves fewer violating steps only at more time. On D3IL-avoiding it
+is level or ahead at three and ten evaluations, but the task is solved at one, where it has no guiding step,
+and UAV-pillars flies that operating point under per-step projection. On UAV-s-curve, at one evaluation, only
+per-step projection runs, and it costs crossings without removing the violations the plans carry.
+
+\begin{table}[htpb]
+  \caption[Projection methods across environments]{Endpoint against per-step projection per environment, as
+  found in Sections~\ref{sec:res:state}--\ref{sec:res:uav}. \emph{Budget}: the network evaluations at which
+  the environment is operated or its projectors compared.}
+  \label{tab:summary-projection}
+  \centering
+  \small
+  \begin{tabularx}{\linewidth}{@{}p{2.2cm} r L@{}}
+    \toprule
+    Environment & Budget & Endpoint against per-step projection \\
+    \midrule
+    D3IL-avoiding & $1$      & no guiding step at the operating budget; at $3$ and $10$, with matched candidates,
+                               level or ahead on the constraint and cheaper on every model except FM at $3$ \\
+    D3IL-aligning & $20$     & ahead: all ten contexts free of violations and the box moved in eight, at the time
+                               per control step of per-step projection; more contexts violation-free in seven of
+                               nine comparisons \\
+    UAV-pillars   & $1$, $2$ & per-step projection only, at the D3IL-avoiding operating points: as there, it turns
+                               plans that violate the declared constraints into plans that violate none \\
+    UAV-corridor  & $1$--$20$ & ahead only over the hump at $20$ with one candidate, $0.2$ against $1.8$ violating
+                               steps at $291$ against $355$\,ms; under the tilt at $20$ fewer violating steps at
+                               more time; at $3$ and $5$ as many or more \\
+    UAV-s-curve   & $1$      & per-step projection only, endpoint projection having no guiding step: it binds the
+                               measured position, leaves the corner cut of the plans in place and costs four of the
+                               nine crossings, at $126$--$155$\,ms of projection per step \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{Conclusion}\label{sec:res:summary:conclusion}
+
+Read across the environments, the thesis rests on the two D3IL tasks. On D3IL-avoiding the average-velocity
+models Pareto-dominate the diffusion model of \ac{DPCC}, with its own temporal U-Net, in fewer control steps
+at a thirtieth of its time per action; on D3IL-aligning analytic average-velocity matching does so again,
+closer to the target at a third of the time, and endpoint projection is the better projector on the
+constraint there. The
+quadrotor scenes carry the result to a new plant. UAV-pillars reaffirms D3IL-avoiding when its plans are
+flown, and shows that a collision with an obstacle the constraints leave out ends a quadrotor's flight.
+UAV-corridor shows that the concept of \ac{DPCC} works in a three-dimensional environment against constraints
+no demonstration satisfies, and that on demonstrations as simple as straight lines the generative model does
+not matter and the budget does. For the second research question the budget decides: endpoint projection
+beats the per-step projection of \ac{DPCC} at twenty evaluations, on D3IL-aligning and over the hump of
+UAV-corridor, and has nothing to guide where one or two evaluations solve the task. UAV-s-curve adds the controller: in
+this framework the same plans succeed or fail by the controller that flies them, the cascaded geometric
+controller used throughout the thesis is the better of the two on the configuration of record, and constraint
+satisfaction is the plan's, since every learned plan cuts a corner its demonstrations clear.
+
+Three findings cut across the environments. The price of a projection is set by what the projector is
+handed: a plan close to the feasible set is cheap to repair, which is why the flow-based models at one
+evaluation and endpoint projection's predicted endpoint are cheap, and the two-step diffusion baseline,
+handed a plan one step from noise, is not. A task saturated at one evaluation hides what a task that rewards
+more evaluations exposes: the self-referential target of the consistency-interpolated model, invisible on
+D3IL-avoiding, stops it improving on D3IL-aligning. And the demonstrations bound what a model can show: on
+the straight lanes of UAV-corridor the objectives do not differ, and the plans stay within the altitudes the
+demonstrations cover, which is where per-step projection at the smallest budgets falls short.
+\autoref{tab:summary-combinations} collects the combination each environment supports.
+
+\begin{table}[htpb]
+  \caption[Selected model--projection combinations]{The supported combination per environment.}
+  \label{tab:summary-combinations}
+  \centering
+  \small
+  \begin{tabularx}{\linewidth}{@{}p{2.2cm} L L@{}}
+    \toprule
+    Environment & Combination & Result \\
+    \midrule
+    D3IL-avoiding
+      & MeanFM or CI-MeanFM, $\nfe=1$, per-step projection, temporal consistency
+      & S\&C $0.967$ and $1.000$ in $58.6$ and $59.2$ control steps at $18.3$ and $18.1$\,ms per step, against the
+        baseline's $1.000$ in $70.1$ at $553.4$\,ms; five seeds, the protocol of \ac{DPCC} \\
+    D3IL-aligning
+      & MeanFM, $\nfe=20$, endpoint projection, random selection
+      & $10/10$ contexts free of violations, box moved in $8/10$ \\
+    UAV-pillars
+      & the D3IL-avoiding configurations: MeanFM or CI-MeanFM, $\nfe=1$ or $2$, per-step projection, temporal
+        consistency
+      & no violating step; S\&C $0.600$ to $0.700$, every failure a collision with a pillar outside the
+        constraint sets \\
+    UAV-corridor
+      & any flow-based objective, the budget chosen for the trade
+      & violating steps per flight from $10.2$ at $27.4$\,ms ($\nfe=1$, per-step) to $1.4$ at $416.9$\,ms
+        ($\nfe=20$, endpoint) under the tilt, from $8.0$ at $71.9$\,ms ($\nfe=3$, endpoint) to $0.2$ at
+        $291.0$\,ms ($\nfe=20$, endpoint, one candidate) over the hump; every flight reaches the end \\
+    UAV-s-curve
+      & FM, $\nfe=1$, without projection, the cascaded geometric controller
+      & nine of ten flights cross, none free of violations; MuJoCo MPC crosses as often without projection and on
+        none with it, at twenty-four times the controller's cost per step \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+

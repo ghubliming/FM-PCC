@@ -1,0 +1,64 @@
+% ARCHIVED at v3.93 (2026-09-24) from chapters/06_results.tex -- the author's s-curve corrections (controller
+% conclusions, simple data, the budget caveat, the plans figure, distances +- sd, Table 6.14 at its carried rule).
+% Verbatim, not part of the build.
+
+% ---- Table 6.14 rule rows ----
+    none      & ---                   & 9/10 & $23.0 \pm 5.4$ & 0.571 & 1/10 & 8.9 \\
+    \addlinespace[3pt]
+    per-step  & random                & 5/10 & $71.3 \pm 66.6$ & 0.572 & 3/10 & 157.1 \\
+    per-step  & cumulative cost       & 5/10 & $74.7 \pm 95.9$ & 1.007 & 3/10 & 163.8 \\
+    per-step  & temporal consistency  & 5/10 & $37.2 \pm 19.6$ & 0.817 & 5/10 & 135.9 \\
+
+% ---- caveat: "becomes a limit" ----
+property of the planner and the controller together, and UAV-s-curve, with its two sharp turns, is where
+the controller becomes a limit.
+
+% ---- caveat: unprojected comparison ----
+under each controller. On the unprojected plans MuJoCo MPC removes the one inversion and brings every flight
+within $0.3$\,m of the goal point, a mean distance of $0.297$ against $0.571$\,m; nine flights of ten succeed
+under both controllers, the tenth under MuJoCo MPC being scored unsafe for contact. The instability at the
+second turn is therefore the controller's limit. The violations are not: MuJoCo MPC follows the commanded path
+less closely, $5$\,cm on average and up to $29$\,cm, the plans generated from its states cut the corner deeper,
+and the violating steps rise from $23.0$ to $41.5$ per flight.
+
+% ---- caveat: projected comparison opening ----
+Changing the controller is not the whole answer once projection changes the plan. Under per-step projection
+the cascaded geometric controller brings five of ten flights across the finish line, and MuJoCo MPC none: seven
+
+% ---- caveat closing ----
+MuJoCo MPC is used here to locate the limit, and it is not adopted: it keeps the unprojected flights upright
+through the second turn and loses every projected one, violates more under both, and costs about twenty-four
+times as much per control step as the controller used everywhere else in this thesis.
+
+% ---- s-curve conclusion (v3.92) ----
+UAV-s-curve takes the tracking controller onto an extreme trajectory, and three limits separate on it. The
+first is the controller's: stability at the second turn. Most flights of the average-velocity models and of
+the baseline invert there under the cascaded geometric controller, just past the crossover, $11.6$ to
+$15.9$\,s into the flight, and on the selected plans MuJoCo MPC keeps every flight upright and brings every one
+within $0.3$\,m of the goal point, at about twenty-four times the cascaded law's cost per control step ---
+twelve times the cost of generating the plan, and some seven times what the operating point of D3IL-avoiding
+spends on an entire action. The second is that this rescue depends on the plan: under per-step projection the
+same controller loses every flight, seven of them inverted against the outer wall of the second straight,
+where the cascaded geometric controller still brings five of ten across. The third limit is the plan's: every
+commanded path cuts the second inside corner of the crossover, crossing the gap about $0.2$\,m later than the
+demonstrations do and passing $8$ to $19$\,cm inside the corner's keep-out, and the cascaded geometric
+controller follows it to within about a centimetre, so that no flight of any configuration, under either
+controller, is free of violations. Neither remedy removes that cut as configured: MuJoCo MPC follows the
+command less closely and violates more, and per-step projection, which binds the plan's measured positions as
+\ac{DPCC} does rather than the commanded one, leaves the cut in place and costs four of the nine crossings.
+
+The demonstrations are simple here too, one route of straight segments joined by arcs
+(\autoref{tab:uav-demos}), and on them the average-velocity objectives are not ahead at the budget they are
+built for: at one evaluation instantaneous-velocity matching crosses the finish line on nine flights of ten,
+the consistency-interpolated model on six and analytic average-velocity matching on three, and for every
+flow-based model the crossings fall as the budget grows. Since almost every flight lost is lost to
+inversion, this order is read for the controller, not for the models alone.
+\guard{Instantaneous-velocity matching is sampled from initial noise of half its training scale
+(\autoref{sec:setup:protocol:avoiding}); that bears on its order against the average-velocity models, not on
+the controller comparison, which flies the same plans under both controllers.}
+
+% ---- 6.4.3 s-curve sentence ----
+UAV-s-curve adds the controller: on
+a route of sharp turns stability is the tracking controller's limit, which MuJoCo MPC lifts on the unprojected
+plans at twenty-four times the cost and loses again under projection, and constraint satisfaction is the
+plan's, since every learned plan cuts a corner its demonstrations clear.

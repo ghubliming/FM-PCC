@@ -1,0 +1,86 @@
+% ARCHIVED at v3.96 (2026-09-24) -- author: 6.4 not academic ("something new"), the corridor projectors a trade-off,
+% the general conclusion recalibrated, the HardFlow/DPCC steps baseline in Ch 5. Verbatim, not part of the build.
+
+% ---- Ch5 steps paragraph ----
+rates \parencite[Sec.~6.1]{romer2025diffusion}, and the endpoint-projection work reports, on this same
+D3IL task, the average number of steps the manipulator takes to reach the target on its constraint-satisfying
+episodes as one of its three columns \parencite[Sec.~VII-A]{li2025hardflow}. A plan that arrives in
+
+% ---- \subsection{Vision-Conditioned Alignment}\label{sec:setup:me ----
+\subsection{Vision-Conditioned Alignment}\label{sec:setup:metrics:aligning}
+
+% ---- D3IL-avoiding is where this thesis makes its central claim,  ----
+D3IL-avoiding is where this thesis makes its central claim, and the claim holds: the average-velocity models
+
+% ---- projection, to overtake the per-step projector of \ac{DPCC}  ----
+projection, to overtake the per-step projector of \ac{DPCC} at a lower cost, is met over the hump at twenty
+evaluations with a single candidate, $0.2$ against $1.8$ violating steps per flight at $291$ against
+$355$\,ms per action; with four candidates
+
+% ---- corridor conclusion RQ2 paragraph ----
+Endpoint projection beats the per-step projection of \ac{DPCC} in one place: over the hump at twenty
+evaluations with a single candidate, where it leaves fewer violating steps at less time per action, $0.2$
+against $1.8$ at $291$ against $355$\,ms, on flights about thirty control steps longer. Under the tilt it
+does not: its fewest violating steps, $1.4$ against $2.1$, cost $417$ against $360$\,ms, a trade-off. At
+three and five evaluations it is as cheap or cheaper but leaves as many violating steps or more, and at one
+and two it has no guiding step.
+
+% ---- and with one another, and whether endpoint projection beats  ----
+and with one another, and whether endpoint projection beats the per-step projection of \ac{DPCC}.
+
+% ---- The results fall into the lines the study was built on. On t ----
+The results fall into the lines the study was built on. On the two D3IL tasks
+
+% ----   \item[D3IL-avoiding: the central result.] ----
+  \item[D3IL-avoiding: the central result.]
+
+% ----   \item[D3IL-aligning: the result again.] ----
+  \item[D3IL-aligning: the result again.]
+
+% ----   \item[UAV-pillars: D3IL-avoiding reaffirmed on the quadrot ----
+  \item[UAV-pillars: D3IL-avoiding reaffirmed on the quadrotor.]
+
+% ----   \item[UAV-corridor: something new.] The concept of \ac{DPC ----
+  \item[UAV-corridor: something new.] The concept of \ac{DPCC} works in three dimensions: the violating steps
+
+% ----   \item[UAV-s-curve: the controller matters.] ----
+  \item[UAV-s-curve: the controller matters.]
+
+% ---- Endpoint projection beats the per-step projection of \ac{DPC ----
+Endpoint projection beats the per-step projection of \ac{DPCC} where the task is run at a budget that gives
+it steps to guide, and has nothing to win where one or two evaluations solve the task.
+
+% ----   \item[D3IL-avoiding, operated at one evaluation.] ----
+  \item[D3IL-avoiding, operated at one evaluation.]
+
+% ----   \item[D3IL-aligning, at twenty.] ----
+  \item[D3IL-aligning, at twenty.]
+
+% ----   \item[UAV-pillars, at one and two.] ----
+  \item[UAV-pillars, at one and two.]
+
+% ----   \item[UAV-s-curve, at one.] ----
+  \item[UAV-s-curve, at one.]
+
+% ---- 6.4.2 corridor item ----
+  \item[UAV-corridor, from one to twenty.] Endpoint projection wins only over the hump at twenty evaluations
+    with one candidate, $0.2$ against $1.8$ violating steps at $291$ against $355$\,ms; under the tilt at
+    twenty it leaves fewer violating steps at more time, and at three and five as many or more.
+
+% ---- 6.4.3 reading paragraph (v3.95) ----
+Read across the environments, the thesis rests on the two D3IL tasks. On D3IL-avoiding the average-velocity
+models Pareto-dominate the diffusion model of \ac{DPCC}, with its own temporal U-Net, in fewer control steps
+at a thirtieth of its time per action; on D3IL-aligning analytic average-velocity matching does so again,
+closer to the target at a third of the time, and endpoint projection is the better projector on the
+constraint there. The quadrotor scenes carry the result to a new plant. UAV-pillars reaffirms D3IL-avoiding
+when its plans are flown, and shows that a collision with an obstacle the constraints leave out ends a
+quadrotor's flight. UAV-corridor shows that the concept of \ac{DPCC} works in a three-dimensional environment
+against constraints no demonstration satisfies, and that on demonstrations as simple as straight lines the
+generative model does not matter and the budget does. UAV-s-curve adds the controller: in this framework the
+same plans succeed or fail by the controller that flies them, and the cascaded geometric controller used
+throughout the thesis is the better of the two. For the second research question the budget decides:
+endpoint projection beats the per-step projection of \ac{DPCC} at twenty evaluations, on D3IL-aligning and
+over the hump of UAV-corridor, and has nothing to guide where one or two evaluations solve the task.
+
+% ---- % v3.95 (author): the three text tables become key points. ----
+% v3.95 (author): the three text tables become key points.

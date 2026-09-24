@@ -5,16 +5,31 @@ wrong for uploading. **This folder holds the flattened build**, and a tool that 
 mechanically, so the flat file is never edited by hand and cannot drift from the split one.
 
 ```bash
-python3 bundle/make_bundle.py                 # NEW sections only -- v2 chapters collapsed
-python3 bundle/make_bundle.py --full          # the complete document
-python3 bundle/make_bundle.py --clean-notes   # hide [src: ...] notes in the review copy
+python3 bundle/make_bundle.py                 # BOTH variants: _new (annotated) and _full_clean (no notes)
+python3 bundle/make_bundle.py --annotated-only  # just _new
+python3 bundle/make_bundle.py --clean-only      # just _full_clean
+python3 bundle/make_bundle.py --full          # the annotated variant as the complete document (_full)
 python3 bundle/make_bundle.py --svg-package   # same, but render the SVG figures directly
 python3 bundle/make_bundle.py --verify        # prove the newest bundle matches the tree
 python3 bundle/make_bundle.py --list
 python3 bundle/make_bundle.py --prune 5       # keep only the 5 newest
 ```
 
-## Default: new sections only
+## The two variants (v3.94, author, 2026-09-24)
+
+> "no more 3 versions but one default _new and one clean, which is no notes at all, just the thesis itself, so I
+> can check the compiled PDF's alignment and format."
+
+| variant | file | what it is |
+| :-- | :-- | :-- |
+| **annotated** (default) | `thesis_v3_<stamp>_new.{tex,zip}` | New sections only (v2 chapters collapsed), and every drafting mark is visible: `\srcnote`, `\dataref`, `\guard`, `\hole`, `\provisional`, `\outdated`, `\flawed`, dead blocks. **The working copy.** |
+| **clean** | `thesis_v3_<stamp>_full_clean.{tex,zip}` | **The whole thesis, no notes, for checking layout.** v2 chapters are included, because a collapsed chapter prints a grey v2 box, which is itself a note. `\srcnote`, `\dataref`, `\hole`, `\outdated` and `\flawed` print nothing. `\guard` and `\provisional` print their text as plain running text, because it is thesis prose. A dead block prints its content without its banner or grey. `\todofigure` keeps its space. It does **not** show what is missing; the annotated build does. |
+
+One `python3 bundle/make_bundle.py` builds both. The earlier `--clean-notes` and `--no-notes` levels are withdrawn.
+`--verify` now folds a nested `\input` back to its line, so a chapter that `\input`s another file (the appendix and
+`app_ntrial20_feasible.tex`) verifies like any other.
+
+## The annotated variant: new sections only
 
 v3 inherits Chapters 1–4 from v2 and normally never edits them, so by default the bundle **does not
 re-typeset them**. Each unchanged v2 chapter is collapsed to its numbered `\chapter`/`\section`
@@ -40,9 +55,9 @@ supervisor, and before submission. `--full` and `--svg-package` combine.
 Each run writes a timestamped pair into `output/`, named `thesis_v3_<stamp>_new` or `_full`, and appends a row to [`BUNDLE_LOG.md`](BUNDLE_LOG.md):
 
 ```
-output/thesis_v3_<YYYYMMDD_HHMMSS>_new.tex        new sections only (default)
-output/thesis_v3_<YYYYMMDD_HHMMSS>_new_clean.tex  new sections, source notes hidden
-output/thesis_v3_<YYYYMMDD_HHMMSS>_full.tex       the complete document (--full)
+output/thesis_v3_<YYYYMMDD_HHMMSS>_new.tex         annotated, new sections only (default)
+output/thesis_v3_<YYYYMMDD_HHMMSS>_full_clean.tex  clean, the whole thesis, no notes (default)
+output/thesis_v3_<YYYYMMDD_HHMMSS>_full.tex        annotated, the complete document (--full --annotated-only)
 output/thesis_v3_<...>.zip                        that .tex + both .bib files + figures/
 ```
 
@@ -56,10 +71,9 @@ carrying `\documentclass` as the main document. Set the compiler to **pdfLaTeX**
 tool to **Biber** — the draft uses `biblatex` with `backend=biber`, inherited verbatim from the TUM
 template's `settings.tex`.
 
-The normal bundle is annotated and shows `[src: ...]` notes. `--clean-notes` creates a second bundle
-with the supported `\submissiontrue` switch already active. In Overleaf, the equivalent manual switch
-is to place `\submissiontrue` after the preamble inputs and before `\begin{document}`. This hides only
-`\srcnote`; unresolved `\hole` text remains visible and warns so missing content cannot be concealed.
+The annotated bundle shows every note. The clean bundle carries its switch, `CLEAN_SWITCH` in `make_bundle.py`, just
+before `\begin{document}`: `\submissiontrue` plus `\renewcommand`s for v3's own marks. Upload the clean zip to check
+how the thesis itself sets. Upload the annotated zip to review the work with its evidence and its gaps.
 
 ### Figures — two modes, and which to use
 
