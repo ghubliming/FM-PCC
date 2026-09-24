@@ -6198,3 +6198,42 @@ Comprehensive data analysis of the MPC candidate fan ($B=4$ vs $B=1$) on `avoidi
    - **Unified Slurm Paper Drivers**: Implemented production Slurm drivers:
      - U18 `turbo.sh` with `MODE=paper` (T1–T5) and `MODE=papergif`, plus live drivers `live_p2_meanflow.sh` and `live_p2_dpcc.sh`.
      - U19 chained controller `eval_20260923_p23_corridor_v3_master.sh` running sequential wave dependencies (C1–C5, 68 cells/scene) across `p23cv3t` and `p23cv3ah`.
+
+
+***
+
+## Gen15 U18 Live Quadrotor Bridge Execution (R39), Diffusion K=2 Five-Seed Resolution (R26), Aligning Landings & S-Curve Ledger (September 23, 2026)
+
+**Keywords**: Gen15, U18, live quadrotor execution, R39, MeanFM, CI-MeanFM, physical safety vs declared constraints, pillar contact forensics, rotor reach, sidecar overwrite fix, factory.py, Diffusion K=2 5-seed completion, R26, Pareto dominance, projector warm start latency, D3IL-aligning, R2, R37, R35, S-curve raw grid R44, jobs 26151-26154, 26112, 26113, 26115, 26167-26176, commits c4f91be8, 9039aaae, 6a8cc26f, 0df6df71, 5092e056.
+
+1. **Gen15 U18 Live Quadrotor Avoiding Bridge Execution & Safety vs Constraint Decoupling (R39)** (`CHANGELOG_20260923_U18_fix7_p23_live_real_eval.md`, `CHANGELOG_20260923_U18_fix8_sidecar_overwrite.md`, `CHANGELOG_20260923_U18_fix9_live_result_DA.md`, `DA_20260923_pillars_v2_live.md`, `FROM_DA_20260923_pillars_v2_live_result.md`, jobs 26151–26154, commits `6a8cc26f`, `0df6df71`, `5092e056`):
+   - **Live Closed-Loop Evaluation Pipeline**: Discarded open-loop turbo replay in favor of genuine live vehicle evaluation (Mode L), wherein the planner receives true quadrotor plant observations at every step. Wired dedicated evaluation driver `live_p23_pillars.sh` and config `config/alphaflow_projection_eval_u18_live.yaml` targeting the four core thesis comparison cells: MeanFM and CI-MeanFM ($\alpha_{end}=0.2$, U-Net) at $K=1$ and $K=2$ under `diffuser` and `dpcc-t-tightened` across seeds 6–10 × 3 geometries × 2 episodes (30 flights per cell, 240 flights total).
+   - **Plant Lifecycle & Sidecar Overwrite Bugfix (`factory.py`)**: Identified that avoiding evaluation scripts re-instantiate an environment per geometry × seed; because the sidecar counter in `uav_avoiding_bridge/factory.py` reset inside the closure, successive `env.close()` invocations wrote identical filenames `uav_plant_records_<tag>_01.json`, overwriting earlier runs. Refactored `factory.py` to use a process-wide counter generating distinct filenames `uav_plant_records_<tag>_<process-start>_p<pid>_<nn>.json` containing full execution provenance (PID, argv, seed, Slurm job ID). Guarded obsolete scripts (`live_p2_meanflow.sh`, `live_p2_dpcc.sh`) that lacked the mandatory `uav` tag token.
+   - **Empirical Findings & Constraint vs Safety Decoupling**:
+     - *Unprojected Parity*: Unprojected quadrotor rollouts matched Franka Panda results closely: S&C 0.03–0.10 air vs 0.03 table; violating steps 18.1–19.9 air vs 15.5–15.7 table; steps to finish 59.7–62.8 air vs 60.5–63.4 table; planner cost ~10 ms ($K=1$) and ~19 ms ($K=2$).
+     - *Exact Constraint Preservation*: Across all 78 projected flights that reached the finish line, **zero violating steps against declared constraints** (halfspaces and keep-out disk) were recorded.
+     - *Embodiment Collision Failure*: Despite flawless constraint satisfaction, projected S&C dropped from 0.97–1.00 on the table to 0.60–0.70 in the air (MeanFM K1: 0.60 air / 0.40 contact; MeanFM K2: 0.67 air / 0.33 contact; CI-MeanFM K1: 0.63 air / 0.37 contact; CI-MeanFM K2: 0.70 air / 0.30 contact). All 51 failures were physical collisions with pillar geoms (zero divergence, zero step-cap aborts).
+   - **Geometric Forensics**: In 50 of 51 failed flights, the planner's *commanded setpoint path* passed within the quadrotor's rotor reach ($0.36$ m world = $0.010$ avoiding units) of the physical pillar surface (median clearance 0.0076 units). The physical pillars were never part of the declared constraint set (which specifies only halfspaces and one keep-out disk). While the Franka Panda demonstrations skimmed pillars at the rod's $0.010$ radius without penalty, the quadrotor's physical footprint resulted in collisions. Established key conclusion: *projection guarantees constraint satisfaction under cross-embodiment transfer, but physical safety decouples when unmodeled obstacles are grazed by demonstrated behaviors*.
+
+2. **Diffusion Baseline $K=2$ Five-Seed Protocol Resolution (R26)** (`Data_Analysis/DA_in_Paper/analysis/DA_20260923_diffusion_K2_five_seeds.md`, jobs 26052–26055, 26112, commit `c4f91be8`):
+   - **Full Five-Seed Evaluation**: Completed evaluation of Diffusion $K=2$ (`GaussianDiffusion`, `aw10`) across 5 seeds × 3 geometries × 2 episodes under DPCC's exact protocol, resolving pending item R26.
+   - **Quantitative Results & Baseline Pareto Dominance**:
+     - Unprojected: $1.000 \pm 0.000$ success, $0.000 \pm 0.000$ S&C, $20.4 \pm 2.4$ violating steps, $61.7 \pm 8.3$ control steps, $18.3 \pm 0.1$ ms/step.
+     - Projected ($c$ rule): **$1.000 \pm 0.000$ S&C**, $0.0 \pm 0.0$ violating steps, **$61.2 \pm 1.2$ steps**, **$211.4 \pm 18.8$ ms/step**.
+     - Compared to the published DPCC Target ($K=20$, $c$ rule: 1.000 S&C, 70.1 steps, 553.4 ms/step), Diffusion $K=2$ achieves identical 1.000 S&C with fewer steps and **2.6× faster per-step execution**, establishing that the baseline's optimal operating point is $K=2$ rather than $K=20$.
+   - **Architecture-Matched Comparison (U-Net at $K=2$)**:
+     - FM ($K=2$, $c$: 1.000 S&C, 67.0 steps, 25.5 ms/step; **8.3× faster**) and CI-MeanFM ($K=2$, $t$: 1.000 S&C, 60.1 steps, 27.0 ms/step; **7.8× faster**) maintain decisive Pareto advantages over Diffusion $K=2$.
+   - **Projector Latency Asymmetry Forensics (R42)**: Unprojected generation costs are nearly identical at $K=2$ (Diffusion 18.3 ms vs FM 17.8 ms), yet the projector adds 193.1 ms to Diffusion vs only 7.7 ms to FM. Confirmed that projecting at $t=1$ in 2-step diffusion presents SLSQP with a state only one step from pure Gaussian noise, requiring heavy optimization effort from an infeasible warm start, whereas flow trajectories remain smooth and near-feasible.
+
+3. **D3IL Visual Aligning Pending Rows Landing (R2, R37, R35)** (`FROM_DA_20260923_aligning_R2_R37_R35_ready.md`, jobs 26113, 26115, commit `5092e056`):
+   - **Diffusion Per-Step ($K=20, \eta=0.2$, R2, Job 26113)**: Resolved Table 6.8 pending row (rule $r$: 4/10 clean, 14.8 violating steps, 809.2 ms/step). MeanFM $r$ Pareto-dominates the baseline. Observed that while projection removes halfspace and obstacle violations on diffusion, action-bound violations escalate (64 unprojected $\to$ 145–408).
+   - **Threshold Table Additions (R37, Job 26115)**: Added $\nfe=100, \eta=0.1$ row (per-step 1112.0 ms, 8/10 clean; endpoint 1107.0 ms, 8/10 clean) and confirmed $\nfe=2$ row (46.2 ms, 8/10 clean).
+   - **CI-MeanFM Endpoint Confirmation (R35)**: Confirmed CI-MeanFM endpoint block from existing corpus, demonstrating endpoint projection keeps more contexts clean in 7 of 9 model comparisons.
+
+4. **UAV S-Curve Generative Grid Re-Structuring (R44)** (`PENDING_20260923_uav_scurve_R44_raw_first.md`, `SLURM_RUNBOOK_20260923_uav_scurve_R44.md`, jobs 26167–26176, commit `5092e056`):
+   - Restructured UAV S-curve evaluation into three staged phases: Phase A (raw generative grid at $K \in \{1, 2, 20\}$ across MeanFM, CI-MeanFM, FM, and Diffusion $K=20$), followed by Phase B (projection on selected models) and Phase C (MJPC tracking).
+   - Submitted Phase A across all ten cells (jobs 26167–26176) under tag `p23scgrid` to establish baseline unprojected flyability.
+
+5. **Trajectory Extraction and Visualization Tools**:
+   - Built `Data_Analysis/DA_in_Paper/plotting/extract/pillars_v2_paths.py` exporting executed quadrotor rollouts into `data/uav_paths.json`.
+   - Updated `builders/paths.py`, producing `fig_uav_pillars_paths.png` (MeanFM $K=1$) and `fig_uav_pillars_paths_cimf.png` (CI-MeanFM $K=1$) highlighting pre- and post-projection paths with pillar contact coordinates.

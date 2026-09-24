@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: 1c56946d-b40c-4293-9648-70342972edfd
-  modified: 2026-09-14T15:19:19.442Z
+  modified: 2026-09-24T10:10:19.117Z
 ---
 
 The thesis drafts in `logs_in_develop/Writing/Working_Space/` are worked on by **separate chats**, and each owns fixed chapters (set by the author 2026-09-14):
@@ -17,5 +17,7 @@ The thesis drafts in `logs_in_develop/Writing/Working_Space/` are worked on by *
 **Why:** parallel chats editing the same chapters produce merge conflicts and silently overwrite each other's work; v3 already inherits Ch 1–4 from v2 through a one-way sync tool.
 
 **How to apply:** at the start of any Writing/v2, v3 or v4 task, read `Working_Space/DRAFT_OWNERSHIP.md`. If a request would touch another draft's file, stop and say so, and log the needed change as a `For v3:` / `For v2:` line in your own draft's CHANGELOG instead. Related: [[master-thesis-writing-tum]], [[thesis-prose-style]].
+
+**The endings are v4's (author, 2026-09-24):** v3's job is Ch 5 and Ch 6. When Ch 6 results change, v3's copy of Ch 7/8 going stale is expected. Hand the new facts to v4 through its inbox, and don't raise the stale endings with the author as an open decision.
 
 **Cross-draft findings (since 2026-09-16):** never edit another draft — write `Working_Space/cross_draft/to_<v2|v3|v4>/FROM_<src>_<date>_<topic>.md` and a line in `cross_draft/INBOX.md`; read your INBOX section at session start. The target draft closes items (✅ + its version).

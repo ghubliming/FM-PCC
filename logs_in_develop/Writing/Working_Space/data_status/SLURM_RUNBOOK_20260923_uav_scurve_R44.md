@@ -164,6 +164,15 @@ second variant is left partial (n < 10; `status` flags it). The re-run is `FORCE
 `status` also checks the endpoint rows: no `[hardflow][BLOCKED]` and no `DEGENERATE` (at K = 20 and A = 0.5 there are nine
 guiding steps).
 
+**For the pick FM nfe 1 (the pitch in spec §2a):**
+- `PHASE=B SC_ENGINE=fm SC_K=1 … submit` → one job, B1 (`diffuser,dpcc-r-tightened,dpcc-c-tightened,dpcc-t-tightened`),
+  about 1 h.
+- Submit C0 at the same time: `PHASE=C SC_ENGINE=fm SC_K=1 SC_RULE=dpcc-t-tightened CELLS=C0 … submit`. The gate needs a
+  valid `SC_RULE`, but C0 does not use it.
+- After B1, C1 with the winning rule: `… SC_RULE=<rule> CELLS=C1 … submit`.
+- For FM nfe 20 instead, skip B0 (`CELLS="Br Bc Bt"`): it would re-fly A9, and the evaluation is deterministic.
+- One download at the end: `bash Slurm_Codes/temp_bash/fetch_20260924_R44_scurve.sh` (every R44 tag, md5 manifest).
+
 ## 5 · Phase C — the same plans under MuJoCo MPC (Table 6.16 `tab:uav-controller`) — AFTER PHASE B
 
 ```bash
@@ -179,9 +188,11 @@ The cascaded-geometric rows of Table 6.16 are the matching A and B cells.
 
 | date | phase / cells | job ids | outcome |
 | :-- | :-- | :-- | :-- |
-| 2026-09-23 21:26 | **A · all ten cells** (`p23scgrid`), `bash … submit` on the cluster at git `0df6df71` (code dirs identical to the checked tree); pre-flight passed, four checkpoints `[ ok ]`, marker fresh (0 folders) | **26167** A1 mf K1 · **26168** A2 mf K2 · **26169** A4 af K1 · **26170** A5 af K2 · **26171** A7 fm K1 · **26172** A8 fm K2 · **26173** A3 mf K20 · **26174** A6 af K20 · **26175** A9 fm K20 · **26176** A10 diffusion K20 | submitted; logs `Slurm_Codes/logs/2026-09-23/21_26_50_p23scgrid_<cell>_<e>_K<k>_<id>.log`, ledger `…/2026-09-23/R44_p23scgrid_jobids.tsv` |
-| | A · DA_UAV_v1 batch on `p23scgrid` (optional) | | |
-| | B · (engine, K named by the author) | | |
-| | C · (rule from B) | | |
+| 2026-09-23 21:26 | **A · all ten cells** (`p23scgrid`), `bash … submit` on the cluster at git `0df6df71` (code dirs identical to the checked tree); pre-flight passed, four checkpoints `[ ok ]`, marker fresh (0 folders) | **26167** A1 mf K1 · **26168** A2 mf K2 · **26169** A4 af K1 · **26170** A5 af K2 · **26171** A7 fm K1 · **26172** A8 fm K2 · **26173** A3 mf K20 · **26174** A6 af K20 · **26175** A9 fm K20 · **26176** A10 diffusion K20 | ✅ **done 23-09 22:29 UTC**; every `status` check passes on all ten logs; checkpoints as expected (95000 / 100000 / 91000 / 91000); DA `DA_in_Paper/analysis/DA_20260924_scurve_R44a_raw_grid.md` from `batch_uav_20260924_081422` (the six old cells reproduce flight for flight); **selection FM nfe 1 (9/10)** |
+| 2026-09-24 | A · DA_UAV_v1 batch | the author's full auto-scan `batch_uav_20260924_081422` (covers all ten cells) | ✅ used for the DA |
+| 2026-09-24 11:27 | **B · FM nfe 1, per-step only** (author's pick = spec §2a option ii), tag `p23scproj`, git `5092e056` (no code change since Phase A) | **26195** B1 (`diffuser,dpcc-r-tightened,dpcc-c-tightened,dpcc-t-tightened`) | ✅ done 24-09 14:12 UTC (log checks pass: tag, K1, four variants, `pid_stopgo`, checkpoint step 91000; HF arm dropped at K1 as expected); data via `fetch_20260924_R44_scurve.sh` |
+| 2026-09-24 11:27 | **C0 · FM nfe 1 unprojected under MuJoCo MPC**, tag `p23scmjpc` (submitted beside B1; C0 does not use `SC_RULE`) | **26196** C0 (`diffuser`, `UAV_MIX_CONTROLLER=mjpc`) | ✅ done 24-09 14:13 UTC (log checks pass: tag, K1, `diffuser`, controller `mjpc` → env `FMPCC_mjx`, checkpoint step 91000); data via the fetch |
+| 2026-09-24 | **fetch** `fetch_20260924_R44_scurve.sh` → `temp/23-09-FULL/S_CURVE-P2/R44_scurve_20260924_161747` (621 files, md5 ✅) | — | DA `DA_in_Paper/analysis/DA_20260924_scurve_R44bc_projection_controller.md`; B1: per-step 5/10 under every rule; C0: 9/10, 0 inverted; **C1 rule = `dpcc-r-tightened`** (tie at 5/10 → fewer aborted → fewer violating steps) |
+| 2026-09-24 16:35 | **C1** · FM nfe 1, per-step `dpcc-r-tightened`, MuJoCo MPC, tag `p23scmjpc` (the MPC half of the 10-vs-10 on the best projected setup; its cascaded half is B1 random) | **26204** | ✅ done 24-09 15:23 UTC (48 min); fetched `R44_scurve_20260924_173135` (83 files, md5 ✅, merged); per-step random under MPC 0/10, 7 inverted. **R44 COMPLETE** — DA `DA_20260924_scurve_R44bc_projection_controller.md`, Fig. 6.9 rebuilt |
 
 Claude (Opus 5.5, Claude Code) · 2026-09-23 · driver written and dry-run in a sandbox; nothing submitted.

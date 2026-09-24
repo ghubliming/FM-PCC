@@ -289,6 +289,46 @@ evaluation re-run with that pose recorded, which is
 
 \begin{deadblock}{this twenty-episode section is not maintained and will be dropped if time runs short; it
 is to be rechecked and rebuilt before anything is read from it. Nothing inside was edited at v3.67.}
+\section{UAV-corridor: The Flights along the Corridor}\label{app:uav-corridor-side}
+
+\autoref{fig:uav-corridor-side} draws the flights of instantaneous-velocity matching at one and twenty network
+evaluations along the corridor, without projection and under per-step projection, against both test-time
+constraints; \autoref{sec:res:uav:projected} reads them.
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=\linewidth]{fig_uav_corridor_side}
+  \caption[UAV-corridor: the flights along the corridor]{UAV-corridor along the corridor,
+  instantaneous-velocity matching, ten flights per series, one training seed: without projection at
+  $\nfe=1$ (grey) and under per-step projection with cumulative-cost selection at $\nfe=1$ and $\nfe=20$
+  (blue). (a, b) Tilt: the margin of the flown position to the leaned plane, less the rotor reach, over
+  the plane's span of $x$; a control step below the dashed line violates. (c, d) Hump: altitude over $x$,
+  the roof shaded, the violation boundary dashed, the highest planned altitude dotted; a circle ends a
+  flight short of the finish line.}
+  \label{fig:uav-corridor-side}
+\end{figure}
+\dataref{Store figure \texttt{DA\_in\_Paper/figures/da/fig\_uav\_corridor\_side} (builder
+\texttt{builders/altitude.py::fig\_uav\_corridor\_side}; extract \texttt{extract/corridor\_v3\_side.py}
+$\to$ \texttt{data/corridor\_v3\_side.json}), cells read through \texttt{analysis/corridor\_v3\_grid.py}:
+FM, \texttt{diffuser} at $\nfe=1$ and \texttt{dpcc-c-bounds\_free-pdes-tightened} at 1 and 20, the first
+ten flights; $c$ is FM's best per-step rule at both budgets and both constraints (\autoref{tab:uav-corridor}).
+Margin $=\mathbf{n}\cdot(\mathbf{p}-\mathbf{p}_0)-0.31$ with the evaluation's own \texttt{\_hs\_normal3};
+hump boundary $=$ roof $+\,0.31\sqrt{1+s^2}$, $s=1.10/1.5$; highest planned altitude $1.2992$\,m, the
+largest planned $z$ of the drawn cells. Violating-step positions of all $560$ projected tilt flights,
+$4115$ steps: $1.709\le x\le 2.000$, $99\,\%$ at $x\ge 1.75$ (the DA's $[1.75,2.00]$ is its 5--95\,\%
+range). Commanded position at the first violating step, $530$ projected flow-based flights: $x=2.27$--$2.52$
+(median $2.38$), $0.49$--$0.61$\,m ahead (median $0.55$); clear of the constraint at $4014$ of $4014$
+violating steps. Span check at the commanded position under \texttt{-pdes}:
+\texttt{eval\_mix\_uav.py:1830--1833} (\texttt{\_gate\_x = p\_des[0]}) and \texttt{:1483--1484}. Hump
+stops: per flight $x=-0.174$ to $-0.006$, $z=1.38$ to $1.51$\,m, every flight on the $396$-step cap; the six
+others are MeanFM and CI-MeanFM at $\nfe=2$ under $t$, three each, wall violations with no collision
+(\texttt{phys\_contact\_frac} $0$), ending $0.95$--$1.79$\,m from the goal. Plan bound: every stored plan
+$z\in[0.9008,1.2992]$\,m (DA \S4.2, \texttt{LimitsNormalizer.unnormalize}); a third cause the DA names ---
+the correction is the smallest in normalised coordinates --- is not stated in the text. Moved to the appendix at v3.84 (author: \enquote{move Fig 6.5 and 6.7 into Appendix B \ldots\ same traj demo}). Replaces the
+three placeholders \texttt{fig:uav-corridor-tradeoff}, \texttt{-paths}, \texttt{-altitude} (v3.80).}
+
+\FloatBarrier
+
 \section{Twenty-Episode Evaluation on D3IL-avoiding}\label{app:avoiding-twenty-episode}
 
 The extended evaluation uses twenty episodes per training seed and geometry, one hundred per geometry.
@@ -508,6 +548,219 @@ cells that are not the same.}
 
 
 \end{deadblock}
+\section{UAV-corridor under Every Selection Rule}\label{app:uav-corridor-rules}
+
+\autoref{tab:uav-corridor} prints each model at each budget at its best selection rule under each projection
+method: the rule with the most successes, then the fewest violating steps, then the least time. The four
+tables below print every rule, per constraint and projection method. Success is reaching the end of the
+corridor within the episode limit, and the constraint is read as violating control steps per flight
+(\autoref{sec:setup:metrics:uav}).
+\dataref{R33 at the end of the corridor (R45a): \texttt{DA\_in\_Paper/data/corridor\_v3\_frontier.json},
+\texttt{plotting/extract/corridor\_v3\_frontier.py}, on the batch and npz of \autoref{tab:uav-corridor-raw};
+counts equal \texttt{DA\_20260924\_corridor\_v3.md} \S3.3 and \texttt{DA\_20260924\_corridor\_v3\_R45a\_clear\_line.md}
+\S2; v3.83, author: \enquote{if you need to save space to just show the best selection rule then need to put
+the full table in the appendix}; v3.84: S\&C and the near-satisfaction share dropped (author).}
+
+\begin{table}[htpb]
+  \caption[UAV-corridor, tilt, per-step projection, every rule]{UAV-corridor, \emph{tilt}, per-step projection of \ac{DPCC} under each selection rule ($r$ random, $c$ cumulative projection cost, $t$ temporal consistency; four candidate plans), every budget of the grid; tightened constraints, activation threshold $0.5$, ten flights per cell, one training seed. Columns as in \autoref{tab:uav-corridor}, each mean $\pm$ the sample standard deviation over the flights. At the route's goal point the baseline's success is $0.200$, $0.000$ and $0.300$. \baselinemark\ the diffusion model of \ac{DPCC}.}
+  \label{tab:app:uav-corridor-tilt-ps}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabularx}{\linewidth}{@{}L r c rrrr@{}}
+    \toprule
+    Model & $\nfe$ & Rule & Success & \shortstack{Violating\\steps} & Steps & ms/step \\
+    \midrule
+    MeanFM & 1 & $r$ & $1.000 \pm 0.000$ & $10.4 \pm 1.1$ & $260.2 \pm 4.9$ & $28.5 \pm 0.8$ \\
+    MeanFM & 1 & $c$ & $1.000 \pm 0.000$ & $10.2 \pm 1.1$ & $253.2 \pm 4.4$ & $27.4 \pm 0.5$ \\
+    MeanFM & 1 & $t$ & $1.000 \pm 0.000$ & $10.3 \pm 1.1$ & $249.2 \pm 5.0$ & $28.7 \pm 1.0$ \\
+    \addlinespace[2pt]
+    MeanFM & 2 & $r$ & $1.000 \pm 0.000$ & $11.0 \pm 1.2$ & $262.1 \pm 4.4$ & $37.6 \pm 0.9$ \\
+    MeanFM & 2 & $c$ & $1.000 \pm 0.000$ & $10.3 \pm 0.9$ & $253.9 \pm 4.2$ & $36.4 \pm 0.8$ \\
+    MeanFM & 2 & $t$ & $1.000 \pm 0.000$ & $10.6 \pm 0.8$ & $255.6 \pm 5.1$ & $37.6 \pm 1.0$ \\
+    \addlinespace[2pt]
+    MeanFM & 3 & $r$ & $1.000 \pm 0.000$ & $7.5 \pm 0.8$ & $257.1 \pm 2.7$ & $94.3 \pm 1.5$ \\
+    MeanFM & 3 & $c$ & $1.000 \pm 0.000$ & $6.6 \pm 0.8$ & $256.4 \pm 2.9$ & $93.6 \pm 1.1$ \\
+    MeanFM & 3 & $t$ & $1.000 \pm 0.000$ & $7.2 \pm 1.2$ & $261.4 \pm 1.8$ & $93.4 \pm 1.3$ \\
+    \addlinespace[2pt]
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & $r$ & $1.000 \pm 0.000$ & $10.5 \pm 1.2$ & $259.2 \pm 3.5$ & $29.4 \pm 0.8$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & $c$ & $1.000 \pm 0.000$ & $10.3 \pm 0.9$ & $252.0 \pm 3.7$ & $27.9 \pm 0.5$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & $t$ & $1.000 \pm 0.000$ & $10.3 \pm 1.3$ & $247.2 \pm 3.0$ & $29.0 \pm 0.8$ \\
+    \addlinespace[2pt]
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2 & $r$ & $1.000 \pm 0.000$ & $10.5 \pm 1.4$ & $258.7 \pm 4.4$ & $37.6 \pm 0.9$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2 & $c$ & $1.000 \pm 0.000$ & $10.4 \pm 0.7$ & $251.9 \pm 2.4$ & $36.1 \pm 0.3$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2 & $t$ & $1.000 \pm 0.000$ & $10.6 \pm 1.4$ & $253.6 \pm 4.6$ & $37.3 \pm 0.7$ \\
+    \addlinespace[2pt]
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & $r$ & $1.000 \pm 0.000$ & $6.6 \pm 1.0$ & $255.3 \pm 3.7$ & $93.6 \pm 1.8$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & $c$ & $1.000 \pm 0.000$ & $5.0 \pm 0.8$ & $254.0 \pm 1.8$ & $93.4 \pm 1.2$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & $t$ & $1.000 \pm 0.000$ & $7.0 \pm 1.2$ & $258.0 \pm 2.4$ & $93.0 \pm 1.2$ \\
+    \addlinespace[2pt]
+    FM & 1 & $r$ & $1.000 \pm 0.000$ & $10.2 \pm 0.8$ & $257.9 \pm 9.6$ & $28.1 \pm 2.0$ \\
+    FM & 1 & $c$ & $1.000 \pm 0.000$ & $10.2 \pm 1.5$ & $259.8 \pm 9.2$ & $27.6 \pm 1.5$ \\
+    FM & 1 & $t$ & $1.000 \pm 0.000$ & $10.9 \pm 1.0$ & $256.9 \pm 21.3$ & $27.5 \pm 1.2$ \\
+    \addlinespace[2pt]
+    FM & 2 & $r$ & $1.000 \pm 0.000$ & $10.4 \pm 1.1$ & $257.2 \pm 8.4$ & $34.8 \pm 1.1$ \\
+    FM & 2 & $c$ & $1.000 \pm 0.000$ & $9.8 \pm 1.4$ & $253.9 \pm 9.4$ & $34.7 \pm 0.5$ \\
+    FM & 2 & $t$ & $1.000 \pm 0.000$ & $11.1 \pm 0.9$ & $246.6 \pm 12.3$ & $34.6 \pm 0.4$ \\
+    \addlinespace[2pt]
+    FM & 3 & $r$ & $1.000 \pm 0.000$ & $6.7 \pm 1.5$ & $247.1 \pm 3.2$ & $78.8 \pm 3.2$ \\
+    FM & 3 & $c$ & $1.000 \pm 0.000$ & $5.8 \pm 1.5$ & $247.2 \pm 3.4$ & $79.2 \pm 3.2$ \\
+    FM & 3 & $t$ & $1.000 \pm 0.000$ & $6.7 \pm 1.2$ & $241.1 \pm 2.3$ & $78.9 \pm 2.9$ \\
+    \addlinespace[2pt]
+    FM & 5 & $r$ & $1.000 \pm 0.000$ & $5.4 \pm 1.4$ & $248.1 \pm 2.0$ & $117.8 \pm 2.5$ \\
+    FM & 5 & $c$ & $1.000 \pm 0.000$ & $4.4 \pm 1.5$ & $247.6 \pm 2.0$ & $116.9 \pm 2.4$ \\
+    FM & 5 & $t$ & $1.000 \pm 0.000$ & $5.3 \pm 1.3$ & $242.7 \pm 1.3$ & $116.8 \pm 2.8$ \\
+    \addlinespace[2pt]
+    FM & 20 & $r$ & $1.000 \pm 0.000$ & $3.0 \pm 0.9$ & $253.3 \pm 3.7$ & $360.0 \pm 1.1$ \\
+    FM & 20 & $c$ & $1.000 \pm 0.000$ & $2.1 \pm 0.7$ & $252.6 \pm 2.7$ & $360.4 \pm 1.5$ \\
+    FM & 20 & $t$ & $1.000 \pm 0.000$ & $3.2 \pm 0.8$ & $247.7 \pm 4.4$ & $358.4 \pm 1.3$ \\
+    \addlinespace[2pt]
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$r$} & \mainconfig{$1.000 \pm 0.000$} & \mainconfig{$3.2 \pm 3.3$} & \mainconfig{$267.7 \pm 37.7$} & \mainconfig{$679.7 \pm 30.9$} \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$c$} & \mainconfig{$1.000 \pm 0.000$} & \mainconfig{$0.8 \pm 1.8$} & \mainconfig{$290.3 \pm 15.5$} & \mainconfig{$666.3 \pm 16.7$} \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$t$} & \mainconfig{$1.000 \pm 0.000$} & \mainconfig{$6.1 \pm 4.6$} & \mainconfig{$257.2 \pm 45.7$} & \mainconfig{$650.6 \pm 24.2$} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\begin{table}[htpb]
+  \caption[UAV-corridor, tilt, endpoint projection, every rule]{UAV-corridor, \emph{tilt}, endpoint projection with one candidate plan (\emph{single}) and under the three rules over four, at the budgets at which it has a guiding step; tightened constraints, activation threshold $0.5$, ten flights per cell, one training seed. Columns as in \autoref{tab:uav-corridor}, each mean $\pm$ the sample standard deviation over the flights.}
+  \label{tab:app:uav-corridor-tilt-ep}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabularx}{\linewidth}{@{}L r c rrrr@{}}
+    \toprule
+    Model & $\nfe$ & Rule & Success & \shortstack{Violating\\steps} & Steps & ms/step \\
+    \midrule
+    MeanFM & 3 & single & $1.000 \pm 0.000$ & $9.2 \pm 1.4$ & $256.6 \pm 4.7$ & $46.2 \pm 0.6$ \\
+    MeanFM & 3 & $r$ & $1.000 \pm 0.000$ & $8.5 \pm 0.8$ & $257.3 \pm 5.3$ & $73.9 \pm 0.5$ \\
+    MeanFM & 3 & $c$ & $1.000 \pm 0.000$ & $7.6 \pm 1.3$ & $255.2 \pm 4.5$ & $73.5 \pm 0.8$ \\
+    MeanFM & 3 & $t$ & $1.000 \pm 0.000$ & $9.0 \pm 1.2$ & $261.6 \pm 5.1$ & $72.5 \pm 0.2$ \\
+    \addlinespace[2pt]
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & single & $1.000 \pm 0.000$ & $8.8 \pm 0.8$ & $254.4 \pm 5.0$ & $46.2 \pm 0.4$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & $r$ & $1.000 \pm 0.000$ & $9.0 \pm 0.9$ & $254.6 \pm 4.4$ & $73.2 \pm 0.6$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & $c$ & $1.000 \pm 0.000$ & $7.1 \pm 1.0$ & $253.2 \pm 3.5$ & $72.7 \pm 0.5$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & $t$ & $1.000 \pm 0.000$ & $8.7 \pm 1.5$ & $259.2 \pm 3.9$ & $72.8 \pm 0.2$ \\
+    \addlinespace[2pt]
+    FM & 3 & single & $1.000 \pm 0.000$ & $8.0 \pm 1.6$ & $254.8 \pm 3.2$ & $43.8 \pm 0.2$ \\
+    FM & 3 & $r$ & $1.000 \pm 0.000$ & $8.2 \pm 1.5$ & $256.6 \pm 1.6$ & $71.4 \pm 0.5$ \\
+    FM & 3 & $c$ & $1.000 \pm 0.000$ & $6.9 \pm 1.8$ & $257.8 \pm 3.3$ & $71.6 \pm 0.6$ \\
+    FM & 3 & $t$ & $1.000 \pm 0.000$ & $8.2 \pm 1.4$ & $248.2 \pm 5.2$ & $71.4 \pm 0.9$ \\
+    \addlinespace[2pt]
+    FM & 5 & single & $1.000 \pm 0.000$ & $6.0 \pm 1.7$ & $255.6 \pm 4.2$ & $73.6 \pm 0.2$ \\
+    FM & 5 & $r$ & $1.000 \pm 0.000$ & $6.0 \pm 1.4$ & $257.4 \pm 3.9$ & $113.0 \pm 0.7$ \\
+    FM & 5 & $c$ & $1.000 \pm 0.000$ & $4.9 \pm 1.9$ & $256.6 \pm 2.9$ & $115.2 \pm 1.4$ \\
+    FM & 5 & $t$ & $1.000 \pm 0.000$ & $6.3 \pm 1.3$ & $250.3 \pm 5.3$ & $115.2 \pm 0.3$ \\
+    \addlinespace[2pt]
+    FM & 20 & single & $1.000 \pm 0.000$ & $2.3 \pm 0.5$ & $269.9 \pm 10.5$ & $288.9 \pm 1.4$ \\
+    FM & 20 & $r$ & $1.000 \pm 0.000$ & $2.3 \pm 0.9$ & $269.3 \pm 10.7$ & $416.8 \pm 1.4$ \\
+    FM & 20 & $c$ & $1.000 \pm 0.000$ & $1.4 \pm 0.7$ & $269.8 \pm 10.5$ & $416.9 \pm 0.8$ \\
+    FM & 20 & $t$ & $1.000 \pm 0.000$ & $2.5 \pm 0.7$ & $260.5 \pm 10.6$ & $417.2 \pm 0.6$ \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\begin{table}[htpb]
+  \caption[UAV-corridor, hump, per-step projection, every rule]{UAV-corridor, \emph{hump}, per-step projection of \ac{DPCC} under each selection rule ($r$ random, $c$ cumulative projection cost, $t$ temporal consistency; four candidate plans), every budget of the grid; tightened constraints, activation threshold $0.5$, ten flights per cell, one training seed. Columns as in \autoref{tab:uav-corridor}, each mean $\pm$ the sample standard deviation over the flights. \emph{---}: no flight reaches the end of the corridor. At the route's goal point the baseline's success is $0.300$, $0.300$ and $0.700$. \baselinemark\ the diffusion model of \ac{DPCC}.}
+  \label{tab:app:uav-corridor-hump-ps}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabularx}{\linewidth}{@{}L r c rrrr@{}}
+    \toprule
+    Model & $\nfe$ & Rule & Success & \shortstack{Violating\\steps} & Steps & ms/step \\
+    \midrule
+    MeanFM & 1 & $r$ & $0.000 \pm 0.000$ & $0.0 \pm 0.0$ & --- & $26.5 \pm 0.2$ \\
+    MeanFM & 1 & $c$ & $0.000 \pm 0.000$ & $0.0 \pm 0.0$ & --- & $26.4 \pm 0.0$ \\
+    MeanFM & 1 & $t$ & $0.000 \pm 0.000$ & $0.0 \pm 0.0$ & --- & $26.6 \pm 0.2$ \\
+    \addlinespace[2pt]
+    MeanFM & 2 & $r$ & $0.000 \pm 0.000$ & $0.0 \pm 0.0$ & --- & $35.0 \pm 0.4$ \\
+    MeanFM & 2 & $c$ & $0.000 \pm 0.000$ & $0.0 \pm 0.0$ & --- & $35.2 \pm 0.3$ \\
+    MeanFM & 2 & $t$ & $0.100 \pm 0.316$ & $17.9 \pm 30.0$ & $387.0$ & $42.3 \pm 10.9$ \\
+    \addlinespace[2pt]
+    MeanFM & 3 & $r$ & $1.000 \pm 0.000$ & $5.9 \pm 0.7$ & $288.5 \pm 3.7$ & $88.9 \pm 1.8$ \\
+    MeanFM & 3 & $c$ & $1.000 \pm 0.000$ & $4.9 \pm 0.9$ & $286.3 \pm 4.3$ & $91.1 \pm 1.8$ \\
+    MeanFM & 3 & $t$ & $1.000 \pm 0.000$ & $6.2 \pm 0.6$ & $288.0 \pm 4.6$ & $89.8 \pm 1.9$ \\
+    \addlinespace[2pt]
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & $r$ & $0.000 \pm 0.000$ & $0.0 \pm 0.0$ & --- & $26.7 \pm 0.3$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & $c$ & $0.000 \pm 0.000$ & $0.0 \pm 0.0$ & --- & $26.7 \pm 0.3$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & $t$ & $0.000 \pm 0.000$ & $0.0 \pm 0.0$ & --- & $26.6 \pm 0.3$ \\
+    \addlinespace[2pt]
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2 & $r$ & $0.000 \pm 0.000$ & $0.0 \pm 0.0$ & --- & $35.4 \pm 0.2$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2 & $c$ & $0.000 \pm 0.000$ & $0.0 \pm 0.0$ & --- & $35.6 \pm 0.3$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2 & $t$ & $0.200 \pm 0.422$ & $19.8 \pm 32.1$ & $388.0 \pm 2.8$ & $43.0 \pm 12.2$ \\
+    \addlinespace[2pt]
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & $r$ & $1.000 \pm 0.000$ & $5.0 \pm 1.1$ & $287.1 \pm 4.1$ & $89.6 \pm 1.7$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & $c$ & $1.000 \pm 0.000$ & $4.6 \pm 0.8$ & $282.7 \pm 3.6$ & $89.2 \pm 1.9$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & $t$ & $1.000 \pm 0.000$ & $6.5 \pm 0.5$ & $285.8 \pm 2.9$ & $89.2 \pm 2.0$ \\
+    \addlinespace[2pt]
+    FM & 1 & $r$ & $0.000 \pm 0.000$ & $0.0 \pm 0.0$ & --- & $26.3 \pm 0.4$ \\
+    FM & 1 & $c$ & $0.000 \pm 0.000$ & $0.0 \pm 0.0$ & --- & $26.2 \pm 0.2$ \\
+    FM & 1 & $t$ & $0.000 \pm 0.000$ & $0.0 \pm 0.0$ & --- & $26.3 \pm 0.3$ \\
+    \addlinespace[2pt]
+    FM & 2 & $r$ & $0.000 \pm 0.000$ & $0.0 \pm 0.0$ & --- & $34.5 \pm 0.4$ \\
+    FM & 2 & $c$ & $0.000 \pm 0.000$ & $0.0 \pm 0.0$ & --- & $34.6 \pm 0.0$ \\
+    FM & 2 & $t$ & $0.000 \pm 0.000$ & $0.0 \pm 0.0$ & --- & $34.7 \pm 0.4$ \\
+    \addlinespace[2pt]
+    FM & 3 & $r$ & $1.000 \pm 0.000$ & $5.9 \pm 0.3$ & $278.7 \pm 6.1$ & $76.8 \pm 2.7$ \\
+    FM & 3 & $c$ & $1.000 \pm 0.000$ & $5.6 \pm 0.5$ & $277.0 \pm 7.3$ & $77.1 \pm 2.7$ \\
+    FM & 3 & $t$ & $1.000 \pm 0.000$ & $5.8 \pm 0.4$ & $269.5 \pm 4.0$ & $77.2 \pm 2.5$ \\
+    \addlinespace[2pt]
+    FM & 5 & $r$ & $1.000 \pm 0.000$ & $4.2 \pm 0.4$ & $279.1 \pm 4.6$ & $113.2 \pm 2.8$ \\
+    FM & 5 & $c$ & $1.000 \pm 0.000$ & $3.9 \pm 0.7$ & $277.8 \pm 7.0$ & $114.1 \pm 2.3$ \\
+    FM & 5 & $t$ & $1.000 \pm 0.000$ & $4.3 \pm 0.5$ & $269.7 \pm 3.5$ & $112.1 \pm 2.3$ \\
+    \addlinespace[2pt]
+    FM & 20 & $r$ & $1.000 \pm 0.000$ & $2.2 \pm 0.8$ & $286.4 \pm 3.5$ & $354.3 \pm 2.6$ \\
+    FM & 20 & $c$ & $1.000 \pm 0.000$ & $1.8 \pm 0.4$ & $285.1 \pm 5.6$ & $355.2 \pm 2.2$ \\
+    FM & 20 & $t$ & $1.000 \pm 0.000$ & $2.2 \pm 0.4$ & $277.2 \pm 2.3$ & $356.3 \pm 2.7$ \\
+    \addlinespace[2pt]
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$r$} & \mainconfig{$1.000 \pm 0.000$} & \mainconfig{$0.0 \pm 0.0$} & \mainconfig{$320.8 \pm 53.6$} & \mainconfig{$654.2 \pm 89.7$} \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$c$} & \mainconfig{$0.900 \pm 0.316$} & \mainconfig{$0.0 \pm 0.0$} & \mainconfig{$345.8 \pm 22.8$} & \mainconfig{$623.1 \pm 87.8$} \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$t$} & \mainconfig{$1.000 \pm 0.000$} & \mainconfig{$0.4 \pm 1.3$} & \mainconfig{$308.8 \pm 47.4$} & \mainconfig{$625.9 \pm 75.0$} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\begin{table}[htpb]
+  \caption[UAV-corridor, hump, endpoint projection, every rule]{UAV-corridor, \emph{hump}, endpoint projection with one candidate plan (\emph{single}) and under the three rules over four, at the budgets at which it has a guiding step; tightened constraints, activation threshold $0.5$, ten flights per cell, one training seed. Columns as in \autoref{tab:uav-corridor}, each mean $\pm$ the sample standard deviation over the flights.}
+  \label{tab:app:uav-corridor-hump-ep}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabularx}{\linewidth}{@{}L r c rrrr@{}}
+    \toprule
+    Model & $\nfe$ & Rule & Success & \shortstack{Violating\\steps} & Steps & ms/step \\
+    \midrule
+    MeanFM & 3 & single & $1.000 \pm 0.000$ & $10.1 \pm 2.1$ & $301.3 \pm 4.6$ & $45.9 \pm 0.2$ \\
+    MeanFM & 3 & $r$ & $1.000 \pm 0.000$ & $8.6 \pm 2.5$ & $303.0 \pm 3.9$ & $72.4 \pm 0.6$ \\
+    MeanFM & 3 & $c$ & $1.000 \pm 0.000$ & $8.0 \pm 1.5$ & $287.7 \pm 4.9$ & $72.1 \pm 0.3$ \\
+    MeanFM & 3 & $t$ & $1.000 \pm 0.000$ & $10.0 \pm 0.8$ & $291.3 \pm 6.5$ & $72.2 \pm 0.3$ \\
+    \addlinespace[2pt]
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & single & $1.000 \pm 0.000$ & $10.4 \pm 1.8$ & $298.0 \pm 4.1$ & $45.6 \pm 0.2$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & $r$ & $1.000 \pm 0.000$ & $9.8 \pm 1.9$ & $298.0 \pm 6.6$ & $72.3 \pm 0.7$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & $c$ & $1.000 \pm 0.000$ & $8.0 \pm 1.2$ & $284.6 \pm 2.8$ & $71.9 \pm 0.6$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & $t$ & $1.000 \pm 0.000$ & $10.1 \pm 1.2$ & $288.8 \pm 5.9$ & $72.9 \pm 0.7$ \\
+    \addlinespace[2pt]
+    FM & 3 & single & $1.000 \pm 0.000$ & $10.1 \pm 1.4$ & $310.3 \pm 7.7$ & $44.2 \pm 0.5$ \\
+    FM & 3 & $r$ & $1.000 \pm 0.000$ & $9.3 \pm 1.3$ & $310.2 \pm 6.8$ & $72.1 \pm 0.8$ \\
+    FM & 3 & $c$ & $1.000 \pm 0.000$ & $8.3 \pm 1.1$ & $299.3 \pm 4.7$ & $71.9 \pm 1.0$ \\
+    FM & 3 & $t$ & $1.000 \pm 0.000$ & $9.8 \pm 0.8$ & $288.8 \pm 6.0$ & $71.9 \pm 1.2$ \\
+    \addlinespace[2pt]
+    FM & 5 & single & $1.000 \pm 0.000$ & $4.9 \pm 0.6$ & $297.4 \pm 4.1$ & $72.9 \pm 0.3$ \\
+    FM & 5 & $r$ & $1.000 \pm 0.000$ & $4.8 \pm 0.6$ & $296.7 \pm 3.7$ & $112.2 \pm 0.5$ \\
+    FM & 5 & $c$ & $1.000 \pm 0.000$ & $3.9 \pm 0.3$ & $292.8 \pm 3.7$ & $112.4 \pm 0.6$ \\
+    FM & 5 & $t$ & $1.000 \pm 0.000$ & $5.6 \pm 0.5$ & $283.6 \pm 4.3$ & $112.4 \pm 0.7$ \\
+    \addlinespace[2pt]
+    FM & 20 & single & $1.000 \pm 0.000$ & $0.2 \pm 0.4$ & $316.2 \pm 6.3$ & $291.0 \pm 0.8$ \\
+    FM & 20 & $r$ & $1.000 \pm 0.000$ & $0.5 \pm 0.7$ & $317.3 \pm 7.2$ & $422.3 \pm 1.2$ \\
+    FM & 20 & $c$ & $1.000 \pm 0.000$ & $0.4 \pm 0.5$ & $311.4 \pm 4.9$ & $424.6 \pm 2.5$ \\
+    FM & 20 & $t$ & $1.000 \pm 0.000$ & $0.7 \pm 0.7$ & $301.8 \pm 4.8$ & $422.3 \pm 0.9$ \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\FloatBarrier
+
 \section{UAV-s-curve at the Budgets on Disk}\label{app:uav-scurve-budgets}
 
 \outdated{v3.75: \autoref{tab:uav-scurve} is the grid at one, two and twenty network evaluations
@@ -526,7 +779,7 @@ tables below keep their structure with those cells marked \emph{not run}.
 \begin{table}[htpb]
   \caption[UAV-s-curve: unprojected cells outside the grid]{UAV-s-curve, plans executed without
   projection at the two budgets that are not in the grid of \autoref{tab:uav-scurve}, ten flights per row,
-  one training seed. \emph{Safe}: no contact and no loss of altitude; the other columns as there.}
+  one training seed. \emph{Safe}: no collision and no loss of altitude; the other columns as there.}
   \label{tab:app:uav-scurve-unprojected-extra}
   \centering
   \small
@@ -558,7 +811,7 @@ CI-MeanFM $\nfe=5$: the same batch, tag \texttt{EPlatest\_u18sc}; FM $\nfe=20$ m
   \small
   \begin{tabularx}{\linewidth}{@{}L r rr r r@{}}
     \toprule
-    Model & $\nfe$ & S\&C & \shortstack{Collision-\\free} & Aborted & \shortstack{Aborted,\\unprojected} \\
+    Model & $\nfe$ & S\&C & \shortstack{Violation-\\free} & Aborted & \shortstack{Aborted,\\unprojected} \\
     \midrule
     FM        & 20 & \multicolumn{3}{l}{\emph{not run}} & 4/10 \\
     MeanFM    & 10 & \multicolumn{3}{l}{\emph{not run}} & 10/10 \\
@@ -603,6 +856,13 @@ numbers were produced under it too.}
 variant \texttt{diffuser} (the unprojected rows). The plain-set projected cells of the same tags
 (\texttt{dpcc-t}, \texttt{hardflow\_sls\{,-r,-c,-t\}}) are in the corpus and no longer cited (v3.67).}
 \guard{The abort readings of the withdrawn plain-set cells are not repeated here, and no tightened re-run of these cells is planned (R38 superseded by R44, v3.75).}
+
+% v3.92 (author, 2026-09-24: "the ntrial 20 appendix is curated by another agent, use as it is ... dont change anything,
+% use it. put it end of the Appendix"): Working_Space/ntrial20_appendix_20260924/app_ntrial20_feasible.tex, copied
+% byte-identical to chapters/app_ntrial20_feasible.tex and placed where its header asks, as the last section of
+% Appendix B before Reproducibility. It is meant to replace the dead block app:avoiding-twenty-episode above, which
+% stays (and the three references to it with it) until the author drops it.
+\input{chapters/app_ntrial20_feasible}
 
 \chapter{Reproducibility}\label{app:repro}
 
@@ -746,11 +1006,11 @@ Two tokens name something other than what the thesis means by the word. \texttt{
 \section*{Corpora of record}
 
 \autoref{tab:corpora} lists the evaluation batches every number in \autoref{ch:results} was computed
-from, with the protocol that produced each. The figure scripts read these directories directly. The two
-batches of 2026-09-19 are the corpora of record: they supersede their predecessors and reproduce every
-number those had already produced, so what they add are rows and not revisions. They carry the evaluations
-of UAV-pillars as well, which are excluded from the analysis and reported nowhere
-(\autoref{sec:res:uav}).
+from, with the protocol that produced each. The figure scripts read these directories directly. A later
+batch adds rows to an earlier one and reproduces every number the earlier one had already produced, so
+what it adds are rows and not revisions. The 2026-09-19 batches also carry evaluations of an earlier
+UAV-pillars scene, which are not used; UAV-pillars is reported from its own corpus
+(\autoref{sec:res:uav:pillars}).
 
 \begin{table}[htpb]
   \caption[Corpora of record]{The evaluation batches behind the results, and their protocols.}
@@ -765,9 +1025,13 @@ of UAV-pillars as well, which are excluded from the analysis and reported nowher
     D3IL-avoiding, generative models & \texttt{batch\_avoiding\_combined\_20260825} & 5 seeds $\times$ 20 episodes \\
     D3IL-avoiding, CI-MeanFM & \texttt{batch\_avoiding\_combined\_20260903} & one seed, 20 episodes \\
     D3IL-avoiding, projection methods & \texttt{batch\_avoiding\_combined\_20260906} & 4 seeds $\times$ 3 geometries $\times$ 2 episodes \\
+    D3IL-avoiding, added cells & \texttt{batch\_avoiding\_combined\_20260923}, \texttt{\_20260924} & as the table they fill \\
     D3IL-aligning & \texttt{batch\_va2\_20260915} & one seed, 10 paired contexts \\
-    UAV-corridor and UAV-s-curve & \texttt{batch\_uav\_20260919} & one seed, 12 flights (4 per route) and 10 flights \\
-    UAV-corridor, earlier reference & \texttt{batch\_uav\_20260914} & one seed, 12 flights (4 per route) \\
+    D3IL-aligning, added cells & \texttt{batch\_va2\_20260923}, \texttt{\_20260924} & one seed, 10 paired contexts \\
+    UAV-pillars & \texttt{live\_p23uavpv2live} & 5 seeds $\times$ 3 geometries $\times$ 2 episodes \\
+    UAV-corridor and UAV-s-curve & \texttt{batch\_uav\_20260924} & one seed; 10 flights per cell (the corridor's spread over its three routes) \\
+    UAV-s-curve, budgets 5 and 10 (\autoref{app:uav-scurve-budgets}) & \texttt{batch\_uav\_20260919} & one seed, 10 flights \\
+    UAV-s-curve, controller pilot & job records of 2026-09-09; planner time \texttt{batch\_uav\_20260915} & one seed \\
     \bottomrule
   \end{tabularx}
 \end{table}

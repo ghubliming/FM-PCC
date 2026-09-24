@@ -1,0 +1,125 @@
+% ARCHIVED at v3.92 (2026-09-24) from chapters/05_setup.tex and 06_results.tex -- author: "final parts are done and
+% processed by the DA agent, use the finalize the scurve of thesis". Verbatim, not part of the build.
+
+% ---- Ch5 fig:env-uav caption ----
+  green line at the far end is the finish line, at the end of the walls on UAV-corridor and UAV-s-curve
+  (UAV-s-curve is scored $0.2$\,m further on, at its goal point). The test-time constraints of UAV-corridor
+
+% ---- Ch5 success item ----
+UAV-s-curve, the tolerances with which the demonstrations of each scene were accepted. On UAV-corridor
+    the finish line is the end of the corridor, $x=2.0$\,m, where the walls and both test-time constraints
+    end; a flight is scored the moment it passes it and flies on as before. The line through the route's
+    goal point, $0.8$\,m further on, is not used for that scene:
+
+% ---- Ch5 finish-line srcnote ----
+\srcnote{Success at the end of the corridor: \texttt{eval\_mix\_uav.py} \texttt{SCENE\_CLEAR\_LINE\_X =
+    \{'corridor': 2.0\}} (author's go-ahead, 24-09; tested after each control step's physics, like the old
+    latch; no new early stop; the goal-plane rule kept as \texttt{success.relaxed\_goal\_line};
+    \texttt{logs\_in\_develop/Gen15/U19/CHANGELOG\_20260924\_U19\_corridor\_finish\_line\_coding2.md}).
+
+% ---- Ch5 R44 status srcnote ----
+chose per-step projection only there (option (ii), v3.80): projection R44b (job 26195) and controller
+R44c (C0 job 26196, C1 after R44b) of \texttt{data\_status/PENDING\_20260923\_uav\_scurve\_R44\_raw\_first.md}
+are pending.
+
+% ---- 6.3 intro pending sentence ----
+Each scene closes on its own conclusion.
+Cells printed \emph{pending} are runs that have not landed (the last cell of R44c in
+\texttt{data\_status/PENDING\_20260923\_uav\_scurve\_R44\_raw\_first.md}; R44b and the first R44c cell landed at
+v3.91, the corridor runs, R33, at v3.80).
+
+% ---- caveat: pilot paragraph, pilot figure, pending comparison ----
+The pilot flights that opened the question are drawn in \autoref{fig:uav-scurve-paths}: the plans of
+analytic average-velocity matching at $\nfe=10$, executed without projection, under each controller.
+Under the cascaded geometric controller none of ten flights crosses the finish line. Each stays at
+altitude until it loses attitude control and inverts, between control steps $395$ and $421$, about
+$12$\,s into the flight, and ends on average $2.81$\,m from the goal point of its route. Under MuJoCo
+MPC the same plans end $0.299$, $0.298$ and $0.294$\,m from that point; two of the three flights cross
+the finish line, and the third reaches the finish line's $x$ with a collision. Those are three flights
+against ten, and they are the pilot. Both controllers act on the same vehicle with the same nominal
+gains, which no evaluation of this thesis varies; the cascaded geometric flights keep $0.29$ to $0.34$\,m
+behind their commanded position, the lead of that position along the path rather than a sideways error, and
+none of them advances past the second turn.
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=\linewidth]{fig_uav_scurve_paths}
+  \caption[UAV-s-curve: the pilot flights under the two tracking controllers]{UAV-s-curve from above,
+  drawn like \autoref{fig:constraints-uav}: the unprojected plans of MeanFM at $\nfe=10$ under MuJoCo
+  MPC (three flights) and under the cascaded geometric controller (ten flights). Green: success; red:
+  no success; a cross at the end of a path marks a flight that collided or that the divergence guard
+  ended. \outdated{three flights against ten: the two panels are not comparable. The figure is replaced by
+  the ten-flight cells of \autoref{tab:uav-controller} once they land (R44c).}}
+  \label{fig:uav-scurve-paths}
+\end{figure}
+\outdated{\autoref{fig:uav-scurve-paths} compares three MuJoCo-MPC flights with ten cascaded-geometric
+flights of an earlier configuration (MeanFM, $\nfe=10$); it is kept only until the ten-flight controller
+comparison on FM at $\nfe=1$ lands (R44c, \autoref{tab:uav-controller}), and no conclusion rests on it.}
+\dataref{DA\_in\_Paper/data/uav\_paths.json, plotting/extract/uav\_paths.py; runs
+Emf\_K10\_mpc4\_mjpc\_T0.5\_u7hg (three flights, two crossing) and Emf\_K10\_mpc4\_pid\_stopgo\_T0.5\_u7hg
+(ten flights, all ten aborted \texttt{inverted}). Panel titles renamed at v3.71 (\enquote{Proportional
+stop-go} was a run-tag name).}
+
+The comparison of record is made on instantaneous-velocity matching at one evaluation, the configuration of
+\autoref{tab:uav-scurve-projection}, at ten flights per cell (\autoref{tab:uav-controller}): its plans,
+unprojected and under per-step projection with random selection, under each controller. On the unprojected
+plans MuJoCo MPC removes the one inversion and brings every flight within $0.3$\,m of the goal point, a mean
+distance of $0.297$ against $0.571$\,m; nine flights of ten succeed under both controllers, the tenth under
+MuJoCo MPC being scored unsafe for contact. It does not remove the violations: it follows the commanded path
+less closely, $5$\,cm on average and up to $29$\,cm, the plans it is given, generated from its own states, cut
+the corner deeper, and the violating steps rise from $23.0$ to $41.5$ per flight. The instability at the second
+turn is therefore the controller's limit, and the violations are the plan's. Under the cascaded geometric
+controller the projected plans cross on five flights of ten; the same plans under MuJoCo MPC are pending.
+
+% ---- caveat: projected pilot paragraph ----
+Changing the controller is not the whole answer once projection changes the plan. In the pilot, the
+per-step-projected plans of MeanFM at $\nfe=10$ on the plain constraint set cross the finish line on
+none of three flights under MuJoCo MPC and on none of ten under the cascaded geometric controller, and
+no flight is free of violations under either. The unprojected pilot isolates a limit of the
+controller; the projected one is a failure of the planner, the projection and the controller together.
+
+% ---- caveat closing sentence ----
+MuJoCo MPC is used here to locate the limit, and it is not adopted: on the selected plans it removes the
+inversion and brings every flight within $0.3$\,m of the goal point while violating more, and in the pilot it
+turns flights that never arrive into flights that arrive, at about twenty-four times the cost per control
+step of the controller used everywhere else in this thesis.
+
+% ---- s-curve conclusion (provisional, v3.91) ----
+\provisional{Written on \autoref{tab:uav-scurve}, \autoref{tab:uav-scurve-projection} and three of the four cells
+of \autoref{tab:uav-controller}. The last cell, the projected plans under MuJoCo MPC (R44c), and the rebuilt
+\autoref{fig:uav-scurve-paths} are pending, and this conclusion is completed when they land.}
+
+\provisional{UAV-s-curve takes the tracking controller onto an extreme trajectory, and it separates two limits.
+The first is the controller's: stability at the second turn. Most flights of the average-velocity models and of
+the baseline invert there under the cascaded geometric controller, just past the crossover, $11.6$ to $15.9$\,s
+into the flight, and on the selected plans MuJoCo MPC removes the inversion and brings every flight within
+$0.3$\,m of the goal point, at about twenty-four times the cascaded law's cost per control step --- twelve times
+the cost of generating the plan, and some seven times what the operating point of D3IL-avoiding spends on an
+entire action. The second limit is the plan's: every commanded path cuts the second inside corner of the
+crossover, $8$ to $19$\,cm inside its keep-out, where the demonstrated route clears it by $0.121$\,m, and the
+cascaded geometric controller follows it to within about a centimetre, so no flight is free of violations.
+Neither remedy removes that cut as configured: MuJoCo MPC follows the command less closely and violates more,
+and per-step projection, which binds the plan's measured positions as \ac{DPCC} does rather than the commanded
+one, leaves the cut in place and crosses on five flights of ten instead of nine.}
+
+\provisional{The demonstrations are simple here too, one route of straight segments joined by arcs
+(\autoref{tab:uav-demos}), and on them the average-velocity objectives are not ahead at the budget they are
+built for: at one evaluation instantaneous-velocity matching crosses the finish line on nine flights of ten,
+the consistency-interpolated model on six and analytic average-velocity matching on three, and for every
+flow-based model the crossings fall as the budget grows. Since almost every flight lost is lost to
+inversion, this order is read for the controller, not for the models alone.}
+\guard{Instantaneous-velocity matching is sampled from initial noise of half its training scale
+(\autoref{sec:setup:protocol:avoiding}); that bears on its order against the average-velocity models, not on
+the controller comparison, which flies the same plans under both controllers.}
+\dataref{v3.91: R44b and C0 (\texttt{DA\_20260924\_scurve\_R44bc\_projection\_controller.md}), the verdict of its summary and \S3--\S6, \S8.3; C1 and the
+rebuilt figure pending (\S8). v3.90 (author, \texttt{GUIDE\_20260924\_results\_storyline\_author.md}: \enquote{in the
+s\_curve we deep discuss the controller in extreme trajs}); v3.87 (author: \enquote{claim under simple data case it
+is not so as we expected \ldots\ prefill part, mark as danger sign is ok}). \autoref{tab:uav-scurve} (R44a);
+inversions: $54$ of the $57$ flow-based flights lost, $48$ of them at $x$ $0.2$--$1.2$\,m; the corner cut and the
+cross-track: the note to \autoref{tab:uav-scurve}; cost: \autoref{tab:uav-controller-cost} ($125.4$ against
+$5.2$\,ms; planner $10.4$\,ms; $125.4/18.1 = 6.9$).}
+
+% ---- 6.4 hole ----
+
+\hole{UAV-s-curve joins this section when the last cell of its controller comparison (R44c) and its rebuilt
+figure land; until then it is left out of the tables below.}

@@ -83,7 +83,7 @@ def _frontier(pts, better):
     return front
 
 
-def _scatter(f, pts, front, label_key='K'):
+def _scatter(f, pts, front, label_key='K', avoid=()):
     """Points, rings on the non-dominated ones, and a budget label beside each.
 
     The label sits below the marker for the diffusion baseline and above it for every
@@ -92,11 +92,28 @@ def _scatter(f, pts, front, label_key='K'):
     of the two on the closed-share axis (v3.62) -- do not overprint."""
     fx = {id(p) for p in front}
     pos = _dodge(f, pts)
+    # v3.80: the label goes to the first of four sides that is clear of every marker and of the labels
+    # already placed (the complete tab:va-models ladder put two labels on neighbouring markers).
+    marks = [pos[id(q)] for q in pts]
+    placed = list(avoid)          # boxes already on the page (x0, y0, x1, y1)
+
+    def clear(box):
+        x0, y0, x1, y1 = box
+        if any(x0 - 8 <= mx <= x1 + 8 and y0 - 8 <= my <= y1 + 8 for mx, my in marks):
+            return False
+        return all(x1 < a0 or a1 < x0 or y1 < b0 or b1 < y0 for a0, b0, a1, b1 in placed)
+
     for p in pts:
         x, y = pos[id(p)]
         f.marker(x, y, 'o', S.ENGINE_COLOUR_DISTINCT[p['engine']], filled=id(p) in fx, r=6.5, ew=1.6)
-        dy = 19 if p['engine'] == 'diffusion' else -11
-        f.text(x + 17, y + dy, p[label_key], 11, '#111' if id(p) in fx else '#777')
+        lab = str(p[label_key])
+        w, h = 7.0 * len(lab), 11.0
+        up, down = (x + 17, y - 11), (x + 17, y + 19)
+        cands = [down, up] if p['engine'] == 'diffusion' else [up, down]
+        cands += [(x - 17 - w, c[1]) for c in cands]
+        tx, ty = next(((cx, cy) for cx, cy in cands if clear((cx, cy - h, cx + w, cy))), cands[0])
+        placed.append((tx, ty - h, tx + w, ty))
+        f.text(tx, ty, p[label_key], 11, '#111' if id(p) in fx else '#777')
     for p in front:
         f.ring(*pos[id(p)], r=13)
 
@@ -157,6 +174,17 @@ def _aligning_cells(corpus):
                 fn = r['FolderName']
                 if fn.startswith(prefix) and (suffix is None or fn.endswith(suffix)):
                     rows[key].append(r)
+    # v3.80: the rows only another corpus holds (sources.ALIGNING_UNPROJECTED_EXTRA), same filter
+    for key, (ckey, prefix, suffix) in getattr(S, 'ALIGNING_UNPROJECTED_EXTRA', {}).items():
+        cx = S.CORPORA[ckey]
+        if key in rows and rows[key] or not cx.available:
+            continue
+        rows[key] = []
+        with open(os.path.join(cx.path, 'per_rollout_detail.csv')) as fh:
+            for r in csv.DictReader(fh):
+                fn = r['FolderName']
+                if r['geo'] == geo and r['variant'] == variant and fn.startswith(prefix) and fn.endswith(suffix):
+                    rows[key].append(r)
     # MeanFM at K=20 is the ten-context protocol cell named in Chapter 5. Some raw
     # cells contain a thirty-context superset; reduce every plotted cell to these same
     # ten before comparing them. This keeps the figure paired with Tables 6.9--6.11.
@@ -216,7 +244,13 @@ def fig_aligning_tradeoff(outdir):
     y0 = f.Y(0.0)
     f.s.append(f'<line x1="{f.L}" y1="{y0:.1f}" x2="{f.R}" y2="{y0:.1f}" stroke="#c0392b" '
                f'stroke-width="1.4" stroke-dasharray="6,4"/>')
-    f.text(f.L + 8, y0 - 9, 'box not moved', 11, '#c0392b', anchor='start', bold=True)
+    # v3.80: the label sits in the widest empty stretch of the 0 % line (points near it in pixels)
+    near = sorted(f.X(p['ms']) for p in pts if abs(f.Y(p['y']) - y0) < 40)
+    edges = [f.L] + near + [f.R]
+    ga, gb = max(zip(edges, edges[1:]), key=lambda ab: ab[1] - ab[0])
+    lx = ga + 14 if gb - ga > 160 else f.L + 8
+    f.text(lx, y0 - 9, 'box not moved', 11, '#c0392b', anchor='start', bold=True)
+    zero_label = (lx, y0 - 22, lx + 140, y0 - 6)     # handed to _scatter so no budget label lands on it
     if len(front) > 1:
         st = []
         for i, q in enumerate(front):
@@ -229,7 +263,7 @@ def fig_aligning_tradeoff(outdir):
     # the axis, better is up-left; the top-left corner is empty, and it is the corner
     # the arrow points INTO.
     _dirarrow(f, -1, -1, x0=f.L + 14 * FONT + 38 * FONT, y0=f.T + 14 * FONT + 37 * FONT)
-    _scatter(f, pts, front)
+    _scatter(f, pts, front, avoid=[zero_label])
     hdr = _legend_strip(760, [e for e in MODEL_ORDER if any(k[0] == e for k in cells)])
     from svg.fmpcc_svg import save_grid
     path = save_grid([f], os.path.join(outdir, 'fig_aligning_tradeoff.svg'), cols=1, gap=8, header=hdr)
@@ -363,7 +397,10 @@ def fig_aligning_projected_tradeoff(outdir):
         f.poly(staircase, '#34495e', dash='6,4', w=1.6)
     # v3.69 (author): the key sat on the unprojected MeanFM ring at the top left; the left half of
     # the panel below 80 % is empty, so it goes there.
-    _dirarrow(f, -1, -1, x0=f.L + 14 * FONT + 38 * FONT, y0=f.T + 0.58 * (f.B - f.T))
+    # v3.79 (author, reading Fig 6.4): the key goes to the RIGHT of the panel -- the right half above
+    # the hollow band is empty since v3.77 widened the axis to the diffusion cell, and the left half
+    # holds the unprojected ring and the frontier.
+    _dirarrow(f, -1, -1, x0=f.R - 14 * FONT - 38 * FONT, y0=f.T + 0.42 * (f.B - f.T))
     pos = _dodge(f, pts, gap=19)
     front_ids = {id(p) for p in front}
     for p in pts:
@@ -433,7 +470,8 @@ def _corridor_cells(corpus):
 RULE_MARK = {'r': '^', 'c': 'o', 't': 's'}
 
 
-def fig_uav_corridor_tradeoff(outdir):
+def _fig_uav_corridor_tradeoff_v2(outdir):
+    """ARCHIVED (v3.83): the corridor v2 frontier on the 19-09 corpus. Superseded by fig_uav_corridor_tradeoff below."""
     c = S.CORPORA['uav_19_09']
     if not c.available:
         return None
@@ -518,6 +556,268 @@ def fig_uav_corridor_tradeoff(outdir):
     path = save_grid([f], os.path.join(outdir, 'fig_uav_corridor_tradeoff.svg'), cols=1, gap=8, header=hdr)
     return path, f'{c.rel} | {c.protocol} | tag {S.UAV_CORRIDOR["tag"]}, dpcc-{{r,c,t}}{S.UAV_CORRIDOR["suffix"]}'
 
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  UAV-corridor v3 (v3.83): control steps to the finish line against time per action,
+#  before and after projection -- the frontier of D3IL-avoiding (fig_avoiding_tradeoff),
+#  on this scene
+# ═══════════════════════════════════════════════════════════════════════════
+# Author (v3.83): "I need the pareto for pre and post projection", in the convention of the
+# avoiding section. So the rule is sources.pareto_front, unchanged: a point is eligible when
+# its quality is within 0.05 of the best in its panel, and eligible points then compete on
+# two costs, control steps and time per action. Quality before projection is the strict
+# S&C (0 for every configuration, so every point competes); after projection it is the
+# near-satisfaction rate, the corridor's frontier bar (Ch 5, >= 95 % violation-free steps).
+# The strict reading after projection leaves the baseline alone in both panels; the chapter
+# says that in words. One point per model x budget x projector, at its best rule for the bar.
+# Steps = control steps to the finish line (x = 2.0 m), mean over the flights that reach it;
+# per-step projection at K <= 2 over the hump never reaches it and has no point.
+CORRIDOR_PROJ_MARK = {'none': 'o', 'per-step': 'o', 'endpoint': 's'}
+
+
+def _corridor_v3_panel(pts, title, xr, yr, ylab, xlab, sc_labels):
+    f = Fig(560, 440, ml=86, mr=18, mt=44, mb=70 if xlab else 40, font=FONT)
+    f.axes(xr, yr, xlog=True)
+    yt = [t for t in range(0, 400, 10) if yr[0] <= t <= yr[1]]
+    f.frame(dec_ticks(*xr), yt, 'time per action [ms] (log)' if xlab else '',
+            'control steps to the finish line' if ylab else '', title, '', xfmt=fmt_num, yfmt=lambda v: f'{v:.0f}')
+    _, front = S.pareto_front(pts, x='ms', y='y', quality='q', band=0.05)
+    if len(front) > 1:
+        st = []
+        for i, q in enumerate(front):
+            st.append((f.X(q['ms']), f.Y(q['y'])))
+            if i + 1 < len(front):
+                st.append((f.X(front[i + 1]['ms']), f.Y(q['y'])))
+        f.poly(st, '#222', dash='6,4', w=1.6)
+    pos = _dodge(f, pts, gap=12.0)
+    marks = [pos[id(q)] for q in pts]
+    placed = []
+
+    def clear(box):
+        x0, y0, x1, y1 = box
+        if any(x0 - 7 <= mx <= x1 + 7 and y0 - 7 <= my <= y1 + 7 for mx, my in marks):
+            return False
+        # 5 px between two labels, so that two budget labels never read as one number ("3" "3" -> "33")
+        return all(x1 + 5 < a0 or a1 + 5 < x0 or y1 + 3 < b0 or b1 + 3 < y0 for a0, b0, a1, b1 in placed)
+
+    fx = {id(p) for p in front}
+    for p in pts:
+        x, y = pos[id(p)]
+        f.marker(x, y, CORRIDOR_PROJ_MARK[p['proj']], S.ENGINE_COLOUR_DISTINCT[p['engine']],
+                 filled=p['eligible'], r=6.5, ew=1.6)
+        lab = str(p['K'])
+        w, h = 7.0 * len(lab), 11.0
+        cands = [(x + 12, y - 9), (x + 12, y + 18), (x - 12 - w, y - 9), (x - 12 - w, y + 18)]
+        tx, ty = next(((cx, cy) for cx, cy in cands if clear((cx, cy - h, cx + w, cy))), cands[0])
+        placed.append((tx, ty - h, tx + w, ty))
+        f.text(tx, ty, lab, 11, '#111' if p['eligible'] else '#999')
+        if sc_labels and p['sc'] > 0:
+            lab2 = f"S&C {p['sc']:.1f}"
+            w2 = 7.2 * len(lab2)
+            c2 = [(x - w2 / 2, y + 30), (x - w2 / 2, y - 22), (x + 14, y + 30), (x - 14 - w2, y + 30)]
+            sx, sy = next(((cx, cy) for cx, cy in c2 if clear((cx, cy - h, cx + w2, cy))), c2[0])
+            placed.append((sx, sy - h, sx + w2, sy))
+            f.text(sx, sy, lab2, 10.5, '#111', bold=True)
+    for q in front:
+        f.ring(*pos[id(q)], r=13)
+    return f
+
+
+def _corridor_v3_legend(width):
+    h = Fig(width, 46, ml=0, mr=0, mt=0, mb=0, font=FONT)
+    x = 18
+    for eng in MODEL_ORDER:
+        h.marker(x, 23, 'o', S.ENGINE_COLOUR_DISTINCT[eng], r=6.5)
+        h.text(x + 13, 27, S.ENGINE_LABEL[eng], 11, '#111')
+        x += 30 + len(S.ENGINE_LABEL[eng]) * 10.0
+    x += 8
+    for mk, lab in (('o', 'per-step'), ('s', 'endpoint')):
+        h.marker(x, 23, mk, '#777', r=6.5)
+        h.text(x + 13, 27, lab, 11, '#111')
+        x += 26 + len(lab) * 9.0
+    h.marker(x, 23, 'o', '#777', filled=False, r=6.5)
+    h.text(x + 13, 27, 'not eligible', 11, '#111')
+    x += 26 + 12 * 9.0
+    col = '#34495e'
+    h.s.append(f'<rect x="{x - 4}" y="5" width="34" height="36" rx="3" fill="#fff" stroke="{col}" stroke-width="1.2"/>')
+    cx, cy, L = x + 13, 23, 9
+    h.s.append(f'<line x1="{cx + L}" y1="{cy - L}" x2="{cx - L}" y2="{cy + L}" stroke="{col}" '
+               'stroke-width="2.2" stroke-linecap="round"/>')
+    for hx, hy in ((cx - L + 8, cy + L), (cx - L, cy + L - 8)):
+        h.s.append(f'<line x1="{cx - L}" y1="{cy + L}" x2="{hx}" y2="{hy}" stroke="{col}" '
+                   'stroke-width="2.2" stroke-linecap="round"/>')
+    h.text(x + 38, 27, 'better', 11, col, bold=True)
+    return h
+
+
+VIOL_GAP = 2.0          # v3.85: a new violation group starts where the sorted violating steps jump by more than this
+GROUP_BAND = '#eef2f7'
+GROUP_BAND_ALT = '#dde5ef'
+GROUP_TXT = '#5d6d7e'
+ROMAN = ('I', 'II', 'III', 'IV', 'V')
+
+
+def _violation_groups(pts):
+    """Eligible points grouped where their sorted violating steps jump by more than VIOL_GAP; I = the most."""
+    el = sorted((p for p in pts if p['eligible']), key=lambda p: p['y'])
+    groups, cur = [], []
+    for p in el:
+        if cur and p['y'] - cur[-1]['y'] > VIOL_GAP:
+            groups.append(cur)
+            cur = []
+        cur.append(p)
+    if cur:
+        groups.append(cur)
+    groups = groups[::-1]                       # I = the group with the most violating steps
+    for gi, g in enumerate(groups):
+        for p in g:
+            p['group'] = gi
+    return groups
+
+
+def _label_points(f, pts, pos, grey=lambda p: not p['eligible']):
+    marks = [pos[id(q)] for q in pts]
+    placed = []
+
+    def clear(box):
+        x0, y0, x1, y1 = box
+        if any(x0 - 7 <= mx <= x1 + 7 and y0 - 7 <= my <= y1 + 7 for mx, my in marks):
+            return False
+        return all(x1 + 5 < a0 or a1 + 5 < x0 or y1 + 3 < b0 or b1 + 3 < y0 for a0, b0, a1, b1 in placed)
+
+    for p in pts:
+        x, y = pos[id(p)]
+        txt = str(p['K'])
+        w, h = 7.0 * len(txt), 11.0
+        cands = [(x + 12, y - 9), (x + 12, y + 18), (x - 12 - w, y - 9), (x - 12 - w, y + 18),
+                 (x - w / 2, y - 14), (x - w / 2, y + 24)]
+        tx, ty = next(((cx, cy) for cx, cy in cands if clear((cx, cy - h, cx + w, cy))), cands[0])
+        placed.append((tx, ty - h, tx + w, ty))
+        f.text(tx, ty, txt, 11, '#999' if grey(p) else '#111')
+
+
+def _staircase(f, front, xk, yk, pos=None):
+    if len(front) > 1:
+        st = []
+        for i, q in enumerate(front):
+            st.append((f.X(q[xk]), f.Y(q[yk])))
+            if i + 1 < len(front):
+                st.append((f.X(front[i + 1][xk]), f.Y(q[yk])))
+        f.poly(st, '#222', dash='6,4', w=1.6)
+
+
+def fig_uav_corridor_tradeoff(outdir):
+    """v3.85 (author): UAV-corridor after projection, 2 x 2.
+    (a, b) violating control steps per flight against the time to compute one action -- the frontier of v3.84 --
+           with the violation groups shaded: configurations whose sorted violating steps lie within VIOL_GAP of
+           one another form a group (the clusters the author read off the v3.84 figure).
+    (c, d) control steps to the finish line against time, D3IL-avoiding's frontier, drawn once per violation group:
+           within a group the configurations violate about equally and compete on steps and time only.
+    Eligible = success within 0.05 of the best (every flight reaches the end of the corridor); hollow points of (a, b)
+    have no place in (c, d). One point per model x budget x projector at its best rule (best_viol)."""
+    import json
+    if not os.path.isfile(S.CORRIDOR_V3_FRONTIER):
+        return None
+    with open(S.CORRIDOR_V3_FRONTIER) as fh:
+        D = json.load(fh)
+    C = {(r['geo'], r['engine'], r['K'], r['variant']): r for r in D['cells']}
+    data = []
+    for geo in ('tilt', 'hump'):
+        pts = []
+        for k in D['best_viol']:
+            if k[0] != geo:
+                continue
+            r = C[tuple(k)]
+            pts.append(dict(engine=r['engine'], K=r['K'], proj=r['projector'], q=r['success'][0], ms=r['ms'][0],
+                            y=r['viol'][0], steps=r['steps'][0], group=None))
+        S.pareto_front(pts, x='ms', y='y', quality='q', band=0.05)      # sets p['eligible']
+        data.append((geo, pts, _violation_groups(pts)))
+    xr = (min(p['ms'] for _, P, _ in data for p in P) * 0.7, max(p['ms'] for _, P, _ in data for p in P) * 1.6)
+    top, bot = [], []
+    for (geo, pts, groups), lab in zip(data, ('tilt', 'hump')):
+        # ---- (a, b): violating steps against time, groups as horizontal bands
+        yr = (-0.6, math.ceil(max(p['y'] for p in pts) + 1.0))
+        f = Fig(560, 430, ml=86, mr=18, mt=44, mb=70, font=FONT)
+        f.axes(xr, yr, xlog=True)
+        yt = [t for t in range(0, 40, 2) if yr[0] <= t <= yr[1]]
+        f.frame(dec_ticks(*xr), yt, 'time per action [ms] (log)', 'violating steps per flight' if geo == 'tilt' else '',
+                f"({'a' if geo == 'tilt' else 'b'}) {lab}: violating steps", '', xfmt=fmt_num, yfmt=lambda v: f'{v:.0f}')
+        f.clip_to_box()
+        for gi, g in enumerate(groups):
+            lo, hi = min(p['y'] for p in g) - 0.45, max(p['y'] for p in g) + 0.45
+            f.s.append(f'<rect x="{f.L:.1f}" y="{f.Y(hi):.1f}" width="{f.R - f.L:.1f}" height="{f.Y(lo) - f.Y(hi):.1f}" '
+                       f'fill="{GROUP_BAND if gi % 2 == 0 else GROUP_BAND_ALT}"/>')
+            f.text(f.R - 8, f.Y(hi) + 15, ROMAN[gi], 11, GROUP_TXT, anchor='end', bold=True)
+        f.end_clip()
+        _, front = S.pareto_front(pts, x='ms', y='y', quality='q', band=0.05)
+        _staircase(f, front, 'ms', 'y')
+        pos = _dodge(f, pts, gap=12.0)
+        for p in pts:
+            x, y = pos[id(p)]
+            f.marker(x, y, CORRIDOR_PROJ_MARK[p['proj']], S.ENGINE_COLOUR_DISTINCT[p['engine']],
+                     filled=p['eligible'], r=6.5, ew=1.6)
+        _label_points(f, pts, pos)
+        for q in front:
+            f.ring(*pos[id(q)], r=13)
+        top.append(f)
+        # ---- (c, d): steps to the finish line against time, one frontier per violation group
+        gp = [p for p in pts if p['eligible']]
+        ylo = math.floor(min(p['steps'] for p in gp) / 10) * 10 - 5
+        yhi = math.ceil(max(p['steps'] for p in gp) / 10) * 10 + 5
+        g2 = Fig(560, 430, ml=86, mr=18, mt=44, mb=70, font=FONT)
+        g2.axes(xr, (ylo, yhi), xlog=True)
+        g2.frame(dec_ticks(*xr), [t for t in range(0, 400, 10) if ylo <= t <= yhi], 'time per action [ms] (log)',
+                 'control steps to the finish line' if geo == 'tilt' else '',
+                 f"({'c' if geo == 'tilt' else 'd'}) {lab}: steps within each group", '', xfmt=fmt_num,
+                 yfmt=lambda v: f'{v:.0f}')
+        g2.clip_to_box()
+        # bands in time order; where two would overlap (hump: group I ends at 72.1 ms, II starts at 77.1) they
+        # meet at the geometric mean between the two groups, so every band and its numeral stay visible
+        spans = sorted(((min(p['ms'] for p in g), max(p['ms'] for p in g), gi) for gi, g in enumerate(groups)))
+        edges = []
+        for k, (lo_, hi_, gi) in enumerate(spans):
+            x0, x1 = lo_ * 0.92, hi_ * 1.08
+            if k > 0:
+                x0 = max(x0, math.sqrt(spans[k - 1][1] * lo_))
+            if k + 1 < len(spans):
+                x1 = min(x1, math.sqrt(hi_ * spans[k + 1][0]))
+            edges.append((x0, x1, gi))
+        for k, (x0, x1, gi) in enumerate(edges):
+            # neighbouring bands alternate two shades and keep a 3 px gap, so two adjacent groups read as two
+            g2.vspan(g2.X(x0) + 1.5, g2.X(x1) - 1.5, GROUP_BAND if k % 2 == 0 else GROUP_BAND_ALT)
+            g2.text((g2.X(x0) + g2.X(x1)) / 2, g2.T + 16, ROMAN[gi], 11, GROUP_TXT, anchor='middle', bold=True)
+        g2.end_clip()
+        rings = []
+        for g in groups:
+            for p in g:
+                p['one'] = 1.0
+            _, fr = S.pareto_front(g, x='ms', y='steps', quality='one', band=0.05)
+            _staircase(g2, fr, 'ms', 'steps')
+            rings += fr
+        for p in gp:
+            p['_y'] = p['y']
+            p['y'] = p['steps']                       # _dodge reads 'y'
+        pos2 = _dodge(g2, gp, gap=12.0)
+        for p in gp:
+            x, y = pos2[id(p)]
+            g2.marker(x, y, CORRIDOR_PROJ_MARK[p['proj']], S.ENGINE_COLOUR_DISTINCT[p['engine']], filled=True, r=6.5, ew=1.6)
+        _label_points(g2, gp, pos2, grey=lambda p: False)
+        for q in rings:
+            g2.ring(*pos2[id(q)], r=13)
+        for p in gp:
+            p['y'] = p['_y']
+        bot.append(g2)
+    from svg.fmpcc_svg import save_grid
+    width = 2 * 560 + 10
+    path = save_grid(top + bot, os.path.join(outdir, 'fig_uav_corridor_tradeoff.svg'), cols=2, gap=10,
+                     header=_corridor_v3_legend(width))
+    m = D['meta']
+    gtxt = '; '.join(f"{geo}: " + ', '.join(f"{ROMAN[i]} {min(p['y'] for p in g):.1f}-{max(p['y'] for p in g):.1f}"
+                                          for i, g in enumerate(groups)) for geo, _, groups in data)
+    return path, (f"data/corridor_v3_frontier.json (extract/corridor_v3_frontier.py) | corridor v3 after projection, first "
+                  f"{m['n_read']} flights per cell, success at x' = {m['x_clear']} m; (a,b) pareto_front on violating steps "
+                  f"and ms, band 0.05 on success; (c,d) pareto_front on steps and ms within each violation group (gap > "
+                  f"{VIOL_GAP} violating steps): {gtxt}")
 
 
 

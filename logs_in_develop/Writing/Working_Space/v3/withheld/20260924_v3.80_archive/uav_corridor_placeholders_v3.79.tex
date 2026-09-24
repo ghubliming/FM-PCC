@@ -1,0 +1,260 @@
+% ARCHIVED v3.80 (2026-09-24): the UAV-corridor block of chapters/06_results.tex as it stood at v3.79 (placeholders pending R33).
+% Replaced by the filled block from DA_20260924_corridor_v3.md. Lines 1534-1791 of 06_results.tex before the edit.
+\subsection{UAV-corridor}\label{sec:res:uav:corridor}
+
+\subsubsection{Generative Models}\label{sec:res:uav:corridor:raw}
+The two constraints are read one at a time, as the avoiding geometries are: every table of this scene has a
+\emph{tilt} block and a \emph{hump} block, and nothing is averaged across them.
+\hole{Result sentence, before projection: which models cross the finish line unprojected and how many
+flights violate each constraint. Read from \autoref{tab:uav-corridor-raw} once the run lands.
+The v3.65 reading on the v2 corpus was: every model succeeds on every flight and none is violation-free,
+so the scene is a repair case.} The cells that reach the finish line here are the cells whose projected
+rows in \autoref{sec:res:uav:corridor} are read; a cost frontier is drawn for this arm only if the models
+do not all cross the line, because a frontier over points that share one outcome is a ranking by price
+(\autoref{sec:res:aligning:budget}).
+
+\begin{table}[htpb]
+  \caption[UAV-corridor: the generative models before projection]{UAV-corridor with the test-time
+  constraints, \textbf{before projection}: the plan flown as generated, ten flights per row, spread over
+  the three routes, one training seed, one block per constraint (\emph{tilt}, \emph{hump}). The grid is: the two average-velocity models at
+  $\nfe\in\{1,2,3\}$, instantaneous-velocity matching at $\nfe\in\{1,2,3,5,20\}$, the diffusion baseline
+  at its trained budget, printed last. \emph{Success}: crosses the finish line. \emph{Violation-free}: no
+  violating control step. \emph{S\&C}: success on a violation-free flight. \emph{Violating steps} and
+  \emph{ms/step}: mean $\pm$ the sample standard deviation over the flights
+  (\autoref{sec:setup:metrics:spread}). \emph{Pending}: run not yet landed (R33). \baselinemark\ the
+  diffusion model of \ac{DPCC}.}
+  \label{tab:uav-corridor-raw}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabularx}{\linewidth}{@{}L r rrr rr@{}}
+    \toprule
+    Model & $\nfe$ & Success & \shortstack{Violation-\\free} & S\&C & \shortstack{Violating\\steps} & ms/step \\
+    \midrule
+    \multicolumn{7}{@{}l}{\emph{tilt}}\\
+    MeanFM & 1 & \multicolumn{5}{l}{\emph{pending}} \\
+    MeanFM & 2 & \multicolumn{5}{l}{\emph{pending}} \\
+    MeanFM & 3 & \multicolumn{5}{l}{\emph{pending}} \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & \multicolumn{5}{l}{\emph{pending}} \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2 & \multicolumn{5}{l}{\emph{pending}} \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & \multicolumn{5}{l}{\emph{pending}} \\
+    FM & 1 & \multicolumn{5}{l}{\emph{pending}} \\
+    FM & 2 & \multicolumn{5}{l}{\emph{pending}} \\
+    FM & 3 & \multicolumn{5}{l}{\emph{pending}} \\
+    FM & 5 & \multicolumn{5}{l}{\emph{pending}} \\
+    FM & 20 & \multicolumn{5}{l}{\emph{pending}} \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \multicolumn{5}{l}{\mainconfig{\emph{pending}}} \\
+    \midrule
+    \multicolumn{7}{@{}l}{\emph{hump}}\\
+    MeanFM & 1 & \multicolumn{5}{l}{\emph{pending}} \\
+    MeanFM & 2 & \multicolumn{5}{l}{\emph{pending}} \\
+    MeanFM & 3 & \multicolumn{5}{l}{\emph{pending}} \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & \multicolumn{5}{l}{\emph{pending}} \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2 & \multicolumn{5}{l}{\emph{pending}} \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & \multicolumn{5}{l}{\emph{pending}} \\
+    FM & 1 & \multicolumn{5}{l}{\emph{pending}} \\
+    FM & 2 & \multicolumn{5}{l}{\emph{pending}} \\
+    FM & 3 & \multicolumn{5}{l}{\emph{pending}} \\
+    FM & 5 & \multicolumn{5}{l}{\emph{pending}} \\
+    FM & 20 & \multicolumn{5}{l}{\emph{pending}} \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \multicolumn{5}{l}{\mainconfig{\emph{pending}}} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{corridor runs, R33 (\texttt{PENDING\_20260923\_uav\_corridor\_v3\_pillars\_v2\_paper\_runs.md}), geometries \texttt{corridor\_v3\_tilt} and \texttt{corridor\_v3\_ablation\_hump}, variant
+\texttt{diffuser}: \texttt{success\_relaxed}, \texttt{collision\_free\_completed},
+\texttt{n\_success\_relaxed\_and\_constraints}, \texttt{n\_violations}, \texttt{avg\_time\_ms}. The v2
+corpus this table was computed from until v3.65 is archived.}
+
+\FloatBarrier
+
+\FloatBarrier
+\subsubsection{Projection}\label{sec:res:uav:projected}
+\hole{Result sentence, after projection: which models succeed violation-free at which budget under the
+per-step projector of \ac{DPCC} at activation threshold $0.5$, and where endpoint projection, which has a
+guiding step from $\nfe=3$, stands beside it (\autoref{tab:uav-corridor}). Read the two projectors
+together and pick the best configuration of each model by the table and the frontier.} The budgets are
+read as one ladder across the scene: the per-step projector is active at every budget, endpoint projection
+at $\nfe\ge 3$, where it has a guiding step (\autoref{sec:res:constraints:degenerate}), so at $\nfe=1$ and
+$\nfe=2$ the table carries per-step rows only.
+
+\begin{table}[htpb]
+  \caption[UAV-corridor: the generative models after projection]{UAV-corridor with its two test-time
+  constraints, one block each, \textbf{after projection}: each model at each budget of the grid under the per-step
+  projector of \ac{DPCC} (activation threshold $0.5$, tightened constraints) and, from $\nfe=3$, under
+  endpoint projection, each at its best selection rule of \autoref{tab:uav-corridor-projection}; ten
+  flights per cell, one training seed. \emph{S\&C}: success on a violation-free flight; \emph{ms/step}:
+  the time to compute one action. \emph{---}: endpoint projection has no guiding step at that budget.
+  \emph{Pending}: run not yet landed (R33). \baselinemark\ the diffusion model of \ac{DPCC}.}
+  \label{tab:uav-corridor}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabularx}{\linewidth}{@{}L r rrr rrr@{}}
+    \toprule
+    & & \multicolumn{3}{c}{per-step projection} & \multicolumn{3}{c}{endpoint projection} \\
+    \cmidrule(lr){3-5}\cmidrule(l){6-8}
+    Model & $\nfe$ & S\&C & rule & ms/step & S\&C & rule & ms/step \\
+    \midrule
+    \multicolumn{8}{@{}l}{\emph{tilt}}\\
+    MeanFM & 1 & \multicolumn{3}{l}{\emph{pending}} & --- & --- & --- \\
+    MeanFM & 2 & \multicolumn{3}{l}{\emph{pending}} & --- & --- & --- \\
+    MeanFM & 3 & \multicolumn{3}{l}{\emph{pending}} & \multicolumn{3}{l}{\emph{pending}} \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & \multicolumn{3}{l}{\emph{pending}} & --- & --- & --- \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2 & \multicolumn{3}{l}{\emph{pending}} & --- & --- & --- \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & \multicolumn{3}{l}{\emph{pending}} & \multicolumn{3}{l}{\emph{pending}} \\
+    FM & 1 & \multicolumn{3}{l}{\emph{pending}} & --- & --- & --- \\
+    FM & 2 & \multicolumn{3}{l}{\emph{pending}} & --- & --- & --- \\
+    FM & 3 & \multicolumn{3}{l}{\emph{pending}} & \multicolumn{3}{l}{\emph{pending}} \\
+    FM & 5 & \multicolumn{3}{l}{\emph{pending}} & \multicolumn{3}{l}{\emph{pending}} \\
+    FM & 20 & \multicolumn{3}{l}{\emph{pending}} & \multicolumn{3}{l}{\emph{pending}} \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \multicolumn{3}{l}{\mainconfig{\emph{pending}}} & --- & --- & --- \\
+    \midrule
+    \multicolumn{8}{@{}l}{\emph{hump}}\\
+    MeanFM & 1 & \multicolumn{3}{l}{\emph{pending}} & --- & --- & --- \\
+    MeanFM & 2 & \multicolumn{3}{l}{\emph{pending}} & --- & --- & --- \\
+    MeanFM & 3 & \multicolumn{3}{l}{\emph{pending}} & \multicolumn{3}{l}{\emph{pending}} \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & \multicolumn{3}{l}{\emph{pending}} & --- & --- & --- \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2 & \multicolumn{3}{l}{\emph{pending}} & --- & --- & --- \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & \multicolumn{3}{l}{\emph{pending}} & \multicolumn{3}{l}{\emph{pending}} \\
+    FM & 1 & \multicolumn{3}{l}{\emph{pending}} & --- & --- & --- \\
+    FM & 2 & \multicolumn{3}{l}{\emph{pending}} & --- & --- & --- \\
+    FM & 3 & \multicolumn{3}{l}{\emph{pending}} & \multicolumn{3}{l}{\emph{pending}} \\
+    FM & 5 & \multicolumn{3}{l}{\emph{pending}} & \multicolumn{3}{l}{\emph{pending}} \\
+    FM & 20 & \multicolumn{3}{l}{\emph{pending}} & \multicolumn{3}{l}{\emph{pending}} \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \multicolumn{3}{l}{\mainconfig{\emph{pending}}} & --- & --- & --- \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{corridor runs, R33, both geometries; per-step = \texttt{dpcc-\{r,c,t\}} at $\eta=0.5$, endpoint =
+\texttt{hardflow\_sls\{,-r,-c,-t\}}, both on the corridor's projection stack
+(\autoref{sec:setup:protocol:uav}); the best rule per cell is the one \autoref{tab:uav-corridor-projection}
+prints highest. The unprojected twins are \autoref{tab:uav-corridor-raw}.}
+
+\hole{Budget paragraph: at which budget each model stops violating the halfspace, whether that is the same
+budget at which it stops reaching the finish line, and what the diffusion baseline does at its one budget.
+Then the frontier reading of \autoref{fig:uav-corridor-tradeoff}: which configurations are on it, the
+cheapest one, and whether its shape is a step or a slope.} The frontier is drawn as before: success with
+constraint satisfaction against the time one action costs, logarithmic in the number of successful flights,
+a configuration with no successful flight not eligible, costs within one per cent treated as one; both
+projectors are drawn on it, per-step as circles and endpoint as squares, so that the choice of projector is
+read off the same picture as the choice of budget.
+
+\begin{figure}[htpb]
+  \centering
+  \todofigure[0.34\textwidth]{\texttt{fig\_uav\_corridor\_tradeoff}, one panel per constraint (tilt, hump): success with
+  constraint satisfaction (log axis in successful flights of ten, floor for zero) against the time to
+  compute one action, every cell of \autoref{tab:uav-corridor-projection} under both projectors, one
+  training seed; rings and staircase on the frontier; builder
+  \texttt{DA\_in\_Paper/plotting/builders/frontier.py::fig\_uav\_corridor\_tradeoff} extended to the
+  endpoint cells. Until R33 lands the builder draws the v2 corpus, which is archived and not this figure.}
+  \caption[UAV-corridor: outcome against cost]{UAV-corridor, success with constraint satisfaction against
+  the time to compute one action, both projectors, every budget of the grid, one training seed; drawn as
+  in \autoref{fig:avoiding-tradeoff}. Pending R33.}
+  \label{fig:uav-corridor-tradeoff}
+\end{figure}
+
+\hole{Paths paragraph: what the flown paths of \autoref{fig:uav-corridor-paths} show --- the budget at
+which a model stops crossing the halfspace against the budget at which it stops reaching the end of the
+corridor, and where the diffusion baseline sits on that trade.}
+
+\begin{figure}[htpb]
+  \centering
+  \todofigure[0.34\textwidth]{\texttt{fig\_uav\_corridor\_paths}, one row per constraint (tilt, hump): the scene from above with
+  the ten flown paths per cell, one row per model across its budgets and one panel per projector at the
+  best rule; colour = constraint, stroke and end mark = success, cross = collided or lost control; extract
+  \texttt{plotting/extract/uav\_paths.py} (group \texttt{corridor}) on the staged rollouts of R33.}
+  \caption[UAV-corridor: flown paths per model and budget]{UAV-corridor seen from above with the executed
+  path of each flight, per model, budget and projector. Pending R33.}
+  \label{fig:uav-corridor-paths}
+\end{figure}
+
+\paragraph{Altitude.} Both constraints of this scene act on altitude, and that is what they are for: under
+the tilt the room is below the launch altitude, so a projected flight has to descend as it moves sideways;
+under the hump it has to climb. \autoref{fig:uav-corridor-altitude} shows the flights from the side so that
+this is seen rather than assumed. \hole{Altitude numbers per constraint: the flown band, the paired
+difference between the projected and the unprojected flight, and where along $x$ it occurs. In the pilots
+the projected flights descended $0.15$--$0.29$\,m under the tilt and climbed $0.30$--$0.40$\,m over the hump,
+where on the level corridor of the earlier evaluation the projection moved altitude only as a by-product
+of the lateral correction.}
+
+\begin{figure}[htpb]
+  \centering
+  \todofigure[0.30\textwidth]{\texttt{fig\_uav\_corridor\_altitude}, one row per constraint (tilt: the descent under the leaned plane; hump: the climb): altitude $z$ over $x$
+  for every flight, one panel per model, grey unprojected and blue projected, the inflated box limits
+  dashed; builder \texttt{plotting/builders/altitude.py} on the R33 rollouts (group
+  \texttt{corridor\_altitude}).}
+  \caption[UAV-corridor: flown altitude, without and with projection]{UAV-corridor seen from the side: the
+  altitude of every flight over its position along the corridor, without and with projection, one panel
+  per model. Pending R33.}
+  \label{fig:uav-corridor-altitude}
+\end{figure}
+
+UAV-pillars is not drawn as a frontier: its result is the difference between a plan's outcome on
+D3IL-avoiding and the outcome of the same plan flown, which is a comparison and not a trade-off
+(\autoref{sec:res:uav:models}). UAV-s-curve has data, but every
+configuration it has --- projected and unprojected, at every budget flown --- scores $0.00$ success with
+constraint satisfaction (\autoref{tab:uav-scurve}). A cost frontier
+over points that all share one outcome is a ranking of failures by price, so what that scene gets instead
+is the abort count printed beside each of its rows.
+
+\FloatBarrier
+
+\FloatBarrier
+
+\FloatBarrier
+\subsubsection{Projection Methods}\label{sec:res:uav:projection}
+\hole{Corridor result sentence, per-step against endpoint: which projector is the method on this scene,
+under which rule and at which budget, read from \autoref{tab:uav-corridor-projection}; whether endpoint
+projection clears the bar this thesis set for it --- overtaking the per-step projector of \ac{DPCC} at a
+lower projection cost --- and whether either projector changes with the budget.}
+
+\begin{table}[htpb]
+  \caption[UAV-corridor: the two projection methods under every selection rule]{UAV-corridor, success with
+  constraint satisfaction --- success on a violation-free flight --- for both projection methods under
+  every selection rule, one block per constraint (\emph{tilt}, \emph{hump}), at the budgets at which
+  endpoint projection has a guiding step; ten flights
+  per cell, tightened constraints, activation threshold $0.5$, one training seed. Per-step: $r$ random,
+  $c$ cumulative projection cost, $t$ temporal consistency, four candidate plans. Endpoint:
+  \emph{single} one candidate, then the three rules over four. The diffusion baseline has per-step rows
+  only. \emph{Pending}: R33.}
+  \label{tab:uav-corridor-projection}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{5pt}
+  \begin{tabularx}{\linewidth}{@{}L r rrr rrrr@{}}
+    \toprule
+    & & \multicolumn{3}{c}{Per-step} & \multicolumn{4}{c}{Endpoint} \\
+    \cmidrule(lr){3-5}\cmidrule(l){6-9}
+    Model & $\nfe$ & $r$ & $c$ & $t$ & single & $r$ & $c$ & $t$ \\
+    \midrule
+    \multicolumn{9}{@{}l}{\emph{tilt}}\\
+    MeanFM & 3 & \multicolumn{7}{l}{\emph{pending}} \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & \multicolumn{7}{l}{\emph{pending}} \\
+    FM & 3 & \multicolumn{7}{l}{\emph{pending}} \\
+       & 5 & \multicolumn{7}{l}{\emph{pending}} \\
+       & 20 & \multicolumn{7}{l}{\emph{pending}} \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \multicolumn{3}{l}{\mainconfig{\emph{pending}}} & --- & --- & --- & --- \\
+    \midrule
+    \multicolumn{9}{@{}l}{\emph{hump}}\\
+    MeanFM & 3 & \multicolumn{7}{l}{\emph{pending}} \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & \multicolumn{7}{l}{\emph{pending}} \\
+    FM & 3 & \multicolumn{7}{l}{\emph{pending}} \\
+       & 5 & \multicolumn{7}{l}{\emph{pending}} \\
+       & 20 & \multicolumn{7}{l}{\emph{pending}} \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \multicolumn{3}{l}{\mainconfig{\emph{pending}}} & --- & --- & --- & --- \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{corridor runs, R33, both geometries: variants \texttt{dpcc-\{r,c,t\}} and \texttt{hardflow\_sls\{,-r,-c,-t\}}
+on the corridor projection stack; \texttt{n\_success\_relaxed\_and\_constraints}.}
+\guard{Endpoint projection has no row at $\nfe=1$ or $\nfe=2$ on this scene and will not get one: at the
+activation threshold of $0.5$ the only active sampling step there is the terminal one, so there is no
+guiding step for the method to act on (\autoref{sec:res:constraints:degenerate}). That is a property of
+the method at those budgets, not a pending evaluation. The baseline's dashes are the opposite case:
+endpoint projection has never been run on the diffusion model on any scene.}
+
+The projection configuration of this scene differs from that of the other quadrotor scene
+(\autoref{sec:setup:protocol:uav}), so the scenes are not pooled.
+
+\FloatBarrier

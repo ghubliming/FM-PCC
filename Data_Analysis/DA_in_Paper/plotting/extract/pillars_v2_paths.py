@@ -41,7 +41,7 @@ FIGS = {   # key -> (engine folder substring, K, figure title, model label)
     'pillars': ('flow_matching_v3_meanflow', 1, 'UAV-pillars', 'MeanFM, nfe 1'),
     'pillars_cimf': ('flow_matching_v3_alphaflow', 1, 'UAV-pillars', 'CI-MeanFM, nfe 1'),
 }
-VARIANTS = (('diffuser', 'before projection'), ('dpcc-t-tightened', 'projected'))
+VARIANTS = (('diffuser', 'unprojected'), ('dpcc-t-tightened', 'projected'))   # v3.79: as the s-curve panels
 
 
 def cell_files(engine, K, geo, variant):
@@ -69,7 +69,8 @@ def panel(engine, K, geo, variant, sub, label):
                         'homotopy': None, 'homotopy_flown': None, 'min_z': round(F.ALTITUDE, NDP),
                         'aborted': False, 'safe': not contact, 'reason': 'contact' if contact else None})
     rel = os.path.relpath(os.path.dirname(files[0]), REPO) if files else ''
-    return {'title': f'{label}', 'sub': f'{geo} · {sub}', 'variant': variant, 'tag': 'p23uavpv2live',
+    # v3.79: the geometry is the panel title and the arm the subtitle; the model is the figure's (caption)
+    return {'title': f'{geo}', 'sub': f'{sub}', 'variant': variant, 'tag': 'p23uavpv2live',
             'source': rel, 'geometry': geo, 'n': len(eps), 'passed': sum(e['passed'] for e in eps),
             'clean': sum(e['clean'] for e in eps), 'contact': sum(not e['safe'] for e in eps), 'episodes': eps}
 

@@ -1,0 +1,109 @@
+% ARCHIVED at v3.88 (2026-09-24) from chapters/06_results.tex -- author: "6.4 Comparison across Environments at least could show all the things besides the scurve now". The v3.60 lock text and the pre-reconciliation section (corridor rows from the withdrawn v2 corpus, no UAV-pillars rows).
+% Kept verbatim for rollback; not part of the build.
+
+% =============================================================================
+% =============================================================================
+% 🔒 DO NOT EDIT (author, 2026-09-21 / v3.60)
+%
+% This section summarises 6.1, 6.2 and 6.3. It is the LAST thing to be written,
+% because every number in it is a restatement of a number from those three, and
+% a summary written over sections that are still moving has to be rewritten each
+% time one of them moves.
+%
+% Leave it exactly as it stands until 6.1, 6.2 and 6.3 have each been verified
+% against the corpus and locked by the author. Then reconcile this section with
+% them in one pass. Do not "fix" a cell here on its own -- if a number here
+% disagrees with its source section, the source section is what to check.
+% =============================================================================
+\section{Comparison across Environments}\label{sec:res:summary}
+% =============================================================================
+
+This section recaps the preceding ones and adds no new result.
+
+\subsection{Generative Models}\label{sec:res:summary:models}
+
+\autoref{tab:summary-models} names, per environment, the generative model that comes out best and the
+measure that decides it. Analytic average-velocity matching is best, or shares first place, in each of the
+three environments that yield a result.
+
+\begin{table}[htpb]
+  \caption[Generative models across environments]{The best generative model per environment, as found in
+  Sections~\ref{sec:res:state}--\ref{sec:res:uav}. Temporal U-Net, 3.96--4.0\,M parameters, throughout.}
+  \label{tab:summary-models}
+  \centering
+  \small
+  \begin{tabularx}{\linewidth}{@{}p{2.3cm} L p{2.6cm} L@{}}
+    \toprule
+    Environment & Deciding measure & Best & The others \\
+    \midrule
+    D3IL-avoiding & control steps and time at equal success & MeanFM, CI-MeanFM & FM, then Diffusion \\
+    D3IL-aligning & final distance of the box & MeanFM & CI-MeanFM, FM and Diffusion level \\
+    UAV-corridor  & success on a collision-free flight & MeanFM, CI-MeanFM ($12/12$) & FM succeeds but not collision-free; Diffusion collision-free but never succeeds \\
+    UAV-s-curve   & --- & none & limited by the tracking controller \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{Projection Methods}\label{sec:res:constraints}
+
+\autoref{tab:summary-projection} names the projection method each environment selects. Per-step
+projection is selected where the budget is too small for endpoint projection to act and on UAV-corridor;
+endpoint projection is selected on D3IL-aligning, the task run at a budget that gives it
+guiding steps.
+
+\begin{table}[htpb]
+  \caption[Projection methods across environments]{The selected projection method per environment, as
+  found in Sections~\ref{sec:res:state}--\ref{sec:res:uav}.}
+  \label{tab:summary-projection}
+  \centering
+  \small
+  \begin{tabularx}{\linewidth}{@{}p{2.3cm} r p{2.3cm} L@{}}
+    \toprule
+    Environment & $\nfe$ & Selected & Reason \\
+    \midrule
+    D3IL-avoiding & 1  & per-step & no guiding step for endpoint projection \\
+    D3IL-aligning & 20 & endpoint & all ten contexts free of violations \\
+    UAV-corridor  & 3  & per-step & endpoint projection succeeds collision-free on at most 7 of 12 \\
+    UAV-s-curve   & ---& none     & no flight succeeds within the constraints \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{Conclusion}\label{sec:res:summary:conclusion}
+
+% v3.68d (author, 2026-09-23): this paragraph is the one addition made under the 🔒 lock, at the
+% author's explicit request for a sub-conclusion beside the table.
+Read across the environments, the generative models order the same way where the task separates them at
+all. On D3IL-avoiding they do not separate on the outcome --- CI-MeanFM $\approx$ MeanFM $\approx$ FM
+$\approx$ diffusion --- and separate on the price by a factor of thirty in favour of the flow-based models.
+On D3IL-aligning they separate on the outcome, MeanFM $\gg$ CI-MeanFM $>$ FM $\approx$ diffusion. On the
+quadrotor scenes the reading is pending the runs of \autoref{sec:res:uav:conclusion}. The projector orders
+the other way round by task: per-step projection at a small budget where the task is solved at one or two
+evaluations, endpoint projection at the large budget the alignment task needs.
+\autoref{tab:summary-combinations} collects the selected combination of each environment.
+
+\begin{table}[htpb]
+  \caption[Selected model--projection combinations]{The selected combination per environment.}
+  \label{tab:summary-combinations}
+  \centering
+  \small
+  \begin{tabularx}{\linewidth}{@{}p{2.3cm} L L@{}}
+    \toprule
+    Environment & Combination & Result \\
+    \midrule
+    D3IL-avoiding
+      & MeanFM or CI-MeanFM, $\nfe=1$, per-step projection, temporal consistency
+      & S\&C $0.967$ and $1.000$ at $18.3$ and $18.1$\,ms per step; five seeds, the protocol of \ac{DPCC} \\
+    D3IL-aligning
+      & MeanFM, $\nfe=20$, endpoint projection, random selection
+      & $10/10$ contexts free of violations, box moved in $8/10$ \\
+    UAV-corridor
+      & MeanFM, $\nfe=3$, per-step projection, temporal consistency
+      & success, collision-free, in $12/12$ flights \\
+    UAV-s-curve
+      & none
+      & limited by the tracking controller \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+

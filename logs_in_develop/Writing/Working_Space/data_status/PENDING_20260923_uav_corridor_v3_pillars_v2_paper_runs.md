@@ -1,5 +1,12 @@
 # PENDING RUNS 23-09 — UAV-corridor v3 and UAV-pillars v2: the minimal, paper-only runs (R33, R39)
 
+> **✅ BOTH DONE.** R39 (pillars v2) landed 23-09 and is in the draft at v3.72. **R33 (corridor v3) landed 24-09** — all
+> 62 jobs, 136 cells, batch `temp/23-09-FULL/24-09-1000/batch_uav_20260924_081422`, flown paths in
+> `temp/23-09-Corridor-TEMP/plans`; analysis [`DA_20260924_corridor_v3.md`](../../../../Data_Analysis/DA_in_Paper/analysis/DA_20260924_corridor_v3.md)
+> — and is **in the draft at v3.80** (Ch 6 §6.3.2 complete: Tables 6.11, 6.12, 6.14 and the new 6.13 `tab:uav-corridor-altitude`,
+> `fig:uav-corridor-side`). Nothing in this file is pending; the DA's options B–D (§4.3 there) would be new runs and
+> are the author's call. The file is kept for history.
+
 **2026-09-23 · for the run agent · scope: the two quadrotor scenes only.** Everything else stays in
 `PENDING_20260922_all_lacking_runs.md`. The corridor items of that ledger (R30, the 22-09 corridor spec) and the
 pillars items (R32) are superseded by this file and say so there. Companion runbook:

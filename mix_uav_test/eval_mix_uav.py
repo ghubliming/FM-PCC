@@ -51,6 +51,9 @@ SUCCESS_RELAXED (U7): episodes never terminate early on goal-reach — they alwa
   line, regardless of what happens afterward. `success_relaxed = crossed_line AND safe`
   (goal-path scenes); `success ⇒ success_relaxed` always. See
   logs_in_develop/Gen11/Epoch8_UAV_Mjpc_thrust_control/U7_Succes_realaxed/.
+  Corridor (Gen15 U19 / R45a, 2026-09-24): the finish line is the END OF THE CORRIDOR, x = 2.0 m
+  (`SCENE_CLEAR_LINE_X`); the goal-plane rule is kept as `success.relaxed_goal_line`.
+  S-curve (R44, 2026-09-24, author): likewise the END OF THE WALLS, x = 3.0 m (the goal point lies 0.2 m further).
 
 No torch/MuJoCo in the Docker dev env — this is cluster-only; here it is syntax-checked.
 """
@@ -176,6 +179,22 @@ SCENES = ['empty', 'corridor', 's_curve', 'pillars']
 # success is stable/safe flight only (Fix2_metrics scene-aware refinement).
 GOAL_PATH_SCENES = {'corridor', 's_curve', 'pillars'}
 GOAL_RADIUS = 0.30                   # m — secondary goal-reach tolerance (constrained scenes)
+# Gen15 U19 / R45a (author, 2026-09-24): the corridor's FINISH LINE is the END OF THE CORRIDOR, x = 2.0 m. Both wall
+# boxes end there (scene_corridor.xml, scene_corridor_v2.xml: pos x 0, half-size 2.0) and so does every corridor
+# constraint in config/uav_projection.yaml (halfspace x_active <= 2.0, wall-end caps at x = 2.0). The goal plane
+# (x ~ 2.8) lies 0.8 m past the last constraint, in free space; on corridor v3 the projected diffusion baseline flies
+# slowly and ran out of the 396 steps between the two while still advancing (DA_20260924_corridor_v3_R45a_clear_line).
+# `crossed_line` of a corridor flight ALSO latches when its centre reaches x >= this line, tested after physics like
+# the goal-plane latch. Only the flag moves: the episode still ends at the goal sphere or the budget (no new early
+# stop), so flights and violation counts are unchanged. The goal-plane rule is kept: goal.crossed_goal_line,
+# success.relaxed_goal_line(_and_constraints).
+# R44 (author, 2026-09-24): the s-curve gets the same rule -- its finish line is the END OF THE WALLS, x = 3.0 m, as
+# thesis Ch 5 draws it (fig:env-uav). Both second-segment walls end there (scene_s_curve.xml seg2_wall_neg/_pos: pos
+# x 1.75, half-size 1.25 -> x in [0.5, 3.0]) and so does every s-curve constraint (s_curve, s_curve_hg: halfspace
+# x_active [0.5, 3.0]); the route's goal point (3.2, 0.8) lies 0.2 m further on (trajectories.s_curve_scene_path).
+# x >= 3.0 is reached only at the route's end (the first segment ends at x = -0.5). Same mechanics as the corridor:
+# only the flag moves, no new early stop; the goal-plane / goal-sphere rule stays as success.relaxed_goal_line.
+SCENE_CLEAR_LINE_X = {'corridor': 2.0, 's_curve': 3.0}
 
 # U_13: FIXED per-scene episode budget (steps), replacing the per-trial RANDOM
 # n_fm = round(dur * DATASET_HZ). The old random `dur` (generator._build_traj_and_init,
@@ -1742,6 +1761,8 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     _line_norm = np.linalg.norm(_line_dir_xy)
     line_dir_xy = _line_dir_xy / _line_norm if _line_norm > 1e-9 else np.array([1.0, 0.0])
     crossed_line = False
+    crossed_goal_line = False                        # U19/R45a: the goal-plane latch alone (the original rule)
+    clear_line_x = SCENE_CLEAR_LINE_X.get(scene)     # U19/R45a + R44: corridor → 2.0, s_curve → 3.0 (end of the walls); else None
 
     data.qpos[:3] = init_pos
     data.qpos[3:7] = [1.0, 0.0, 0.0, 0.0]
@@ -1909,7 +1930,10 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
             # other step), not just true for the common/typical-approach case.
             _side = float(np.dot(data.qpos[:2] - goal[:2], line_dir_xy))
             _dist_now = float(np.linalg.norm(data.qpos[:3] - goal))
-            crossed_line = crossed_line or (_side >= 0.0) or (_dist_now < goal_radius)
+            crossed_goal_line = crossed_goal_line or (_side >= 0.0) or (_dist_now < goal_radius)
+            # U19/R45a + R44: corridor / s_curve → also the end of the walls. Other scenes: crossed_line == crossed_goal_line.
+            crossed_line = (crossed_line or crossed_goal_line
+                            or (clear_line_x is not None and float(data.qpos[0]) >= clear_line_x))
             # U_13: strict goal-reach latch (within goal_radius of the actual goal) — the
             # early-stop trigger for goal-path scenes. Same qpos/goal/threshold the final
             # `goal_reached` uses, so it is exactly "reached the goal at some step".
@@ -2025,8 +2049,10 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     # success_relaxed still holds by construction.
     if scene in GOAL_PATH_SCENES:
         success_relaxed = bool(crossed_line and safe)
+        success_relaxed_goal_line = bool(crossed_goal_line and safe)   # U19/R45a: the goal-plane rule, side by side
     else:                                                  # empty: no fixed goal to cross
         success_relaxed = success
+        success_relaxed_goal_line = success
 
     # Constraint-aware metrics (FMv3ODE schema). E9: computed from the FLOWN path against the
     # scene's RAW spatial geometry ⊕ r_drone (physical collision truth). Dynamics-only /
@@ -2034,6 +2060,7 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
     collision_free, n_violations, total_violations = _exec_constraint_violations(obs_traj, geo_config or {})
     success_and_constraints = bool(success and collision_free)
     success_and_constraints_relaxed = bool(success_relaxed and collision_free)
+    success_and_constraints_relaxed_goal_line = bool(success_relaxed_goal_line and collision_free)
 
     # ── persist the real-time behaviour log + capture its timing summary ──
     behaviour = {
@@ -2081,6 +2108,8 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
             'reached': goal_reached,
             'dist': goal_dist,
             'crossed_line': crossed_line,
+            'crossed_goal_line': crossed_goal_line,     # U19/R45a: the goal-plane latch alone
+            'clear_line_x': clear_line_x,               # U19/R45a + R44: 2.0 corridor, 3.0 s_curve (None elsewhere); absent = older file
         },
         # 2x2 matrix: {strict, relaxed} goal-reach x {with, without} Axis-B compliance.
         'success': {
@@ -2088,6 +2117,9 @@ def rollout_one(model, scene, homotopy, trial_seed, policy, horizon,
             'relaxed': success_relaxed,
             'strict_and_constraints': success_and_constraints,
             'relaxed_and_constraints': success_and_constraints_relaxed,
+            # U19/R45a: the same two flags under the goal-plane rule (corridor differs; other scenes equal)
+            'relaxed_goal_line': success_relaxed_goal_line,
+            'relaxed_goal_line_and_constraints': success_and_constraints_relaxed_goal_line,
         },
         'timing': {
             'fm_ms_mean': float(np.mean(fm_ms)) if fm_ms else float('nan'),   # PURE inference (proj subtracted)
@@ -2474,6 +2506,9 @@ def _run_variant(scene, variant, model_fm, dataset, parsed, horizon, config, arg
             'relaxed_rate': float(np.mean([r['success']['relaxed'] for r in rollouts])),        # U7: crossed finish line
             'strict_and_constraints_rate': float(np.mean([r['success']['strict_and_constraints'] for r in rollouts])),
             'relaxed_and_constraints_rate': float(np.mean([r['success']['relaxed_and_constraints'] for r in rollouts])),
+            # U19/R45a: the goal-plane rule beside it (differs from the two above only for corridor)
+            'relaxed_goal_line_rate': float(np.mean([r['success']['relaxed_goal_line'] for r in rollouts])),
+            'relaxed_goal_line_and_constraints_rate': float(np.mean([r['success']['relaxed_goal_line_and_constraints'] for r in rollouts])),
         },
         'timing': {
             'fm_ms_mean': float(np.mean([r['timing']['fm_ms_mean'] for r in rollouts])),

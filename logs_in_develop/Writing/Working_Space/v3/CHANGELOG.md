@@ -21,6 +21,152 @@ is sourced from · what it left open.
 
 ---
 
+## v3.92 — 2026-09-24 · UAV-s-curve final (R44 complete), §6.4 with the s-curve, the ntrial20 appendix added as it is, final data check → [`changelogs/v3.92_20260924_scurve_final_6.4_scurve_ntrial20_appendix_final_data_check.md`](changelogs/v3.92_20260924_scurve_final_6.4_scurve_ntrial20_appendix_final_data_check.md)
+
+- UAV-s-curve is final:
+  - Table 6.16 is complete (per-step under MPC: 0/10, 7 inverted);
+  - Fig 6.9 is rebuilt on FM K1 (2×2) and exported, and the pilot text and `\outdated` are retired;
+  - the conclusion gives the three limits (stability = the controller; the rescue depends on the plan; the corner cut
+    = the plan, 0.2 m late);
+  - the finish line is at the end of the walls in Ch 5 (0 of 160 flights change).
+- §6.4 carries UAV-s-curve in all three tables and the conclusion, for the author's review.
+- `app_ntrial20_feasible.tex` is in, byte-identical, as the last section of Appendix B.
+- Final data check: no Ch 6 data missing, so no new PENDING file.
+- check.py passes; not compiled; nothing committed.
+- Bundle `thesis_v3_20260924_155404_new.zip` (+ `155405_new_clean`, `155405_new_nonotes`). `--verify` flags only
+  `09_appendix.tex`, because it does not fold nested `\input`s; a hand check with the nested block folded back is
+  byte-faithful in all three.
+
+## v3.91 — 2026-09-24 · UAV-s-curve: R44b and C0 written, the violation mechanism corrected; C1 and the figure left pending → [`changelogs/v3.91_20260924_scurve_R44b_C0_written_mechanism_corrected.md`](changelogs/v3.91_20260924_scurve_R44b_C0_written_mechanism_corrected.md)
+
+- Table 6.15 is complete (per-step on FM K1: 5/10 under every rule, 126–155 ms of projection).
+- Table 6.16 has three of four rows (MPC unprojected 9/10, 0 inversions, 41.5 violating steps; per-step cascaded
+  5/10).
+- Table 6.17 is on FM K1, ten flights against ten (125.4 against 5.2 ms, ×24).
+- The mechanism is corrected (DA §6): the plans cut the crossover's second inside corner, 8–19 cm inside its keep-out;
+  the 0.30 m "tracking error" is the setpoint's lead.
+- The provisional conclusion now separates the two limits: stability is the controller's, the corner cut is the plan's.
+- C1, Fig 6.9 and the final conclusion stay pending, as asked.
+- check.py passes; not compiled; no bundle; nothing committed.
+
+## v3.90 — 2026-09-24 · The author's storyline written down; every sub-conclusion and §6.4 rewritten to it, with the insights of each section → [`changelogs/v3.90_20260924_storyline_guide_insights_all_conclusions.md`](changelogs/v3.90_20260924_storyline_guide_insights_all_conclusions.md)
+
+- `Working_Space/GUIDE_20260924_results_storyline_author.md`, the author's principle:
+  - avoiding = the main proof (MF/AF Pareto-dominate DPCC);
+  - aligning = the proof again, plus HardFlow;
+  - pillars = a reaffirmation, plus the plant and controller;
+  - corridor = new: DPCC works in 3-D, and the expert-data issue;
+  - s-curve = the controller on extreme trajectories.
+- `Working_Space/INSIGHTS_20260924_results_per_environment.md`: 27 section insights, with sources and where each is
+  used.
+- The §6.1.4, §6.2.4, §6.3.1.3, §6.3.2.4 and §6.3.3.4 conclusions and §6.4 now lead with that storyline and carry the
+  insights, for example:
+  - the K2 baseline: 12×, not 30×, because of what its projector is handed;
+  - CI-MeanFM's stop-gradient target;
+  - the corridor hand-over;
+  - the MuJoCo MPC price.
+- §6.4.3 gains three cross-cutting findings.
+- check.py passes; not compiled; no bundle; nothing committed.
+
+## v3.89 — 2026-09-24 · §6.3.4 removed (every scene has its own conclusion); §6.4 rows state each section's conclusion; D3IL stated as Pareto dominance → [`changelogs/v3.89_20260924_uav_conclusion_removed_6.4_rows_state_section_conclusions_pareto.md`](changelogs/v3.89_20260924_uav_conclusion_removed_6.4_rows_state_section_conclusions_pareto.md)
+
+- §6.3.4 (the quadrotor-level conclusion) is archived. Each UAV scene keeps its own Conclusion, and the §6.3 intro
+  points to them.
+- `tab:summary-models` now has one *Conclusion* column, each row stating its section's conclusion:
+  - D3IL-avoiding and D3IL-aligning: Pareto dominance over the baseline;
+  - UAV-pillars: its own conclusion (the declared constraints transfer exactly; undeclared-pillar collisions cost
+    the flights), not "not flown";
+  - UAV-corridor: a trade-off.
+- The §6.4.3 conclusion is rewritten. The v3.68d "CI-MeanFM ≈ FM ≈ MeanFM ≈ diffusion" sentence is withdrawn: it
+  contradicted §6.1's Pareto dominance.
+- check.py passes; not compiled; no bundle; nothing committed.
+
+## v3.88 — 2026-09-24 · Table 6.13 archived; corridor conclusion cut to its two answers; controller caveat moved into UAV-s-curve; §6.4 reconciled (all but UAV-s-curve) → [`changelogs/v3.88_20260924_altitude_table_archived_corridor_conclusion_short_caveat_moved_6.4_reconciled.md`](changelogs/v3.88_20260924_altitude_table_archived_corridor_conclusion_short_caveat_moved_6.4_reconciled.md)
+
+- `tab:uav-corridor-altitude` and its paragraph are archived. One sentence (540/560 descend, 560/560 climb) stays.
+- The corridor conclusion is now two paragraphs.
+  - **RQ1:** the model does not matter and the budget does, because the demonstrations are straight lines. The flow
+    models reach the end at 1/24 and 1/9 of the baseline's time and leave more violating steps.
+  - **RQ2:** endpoint projection beats the per-step projector of DPCC only over the hump at K20 with one candidate (0.2
+    against 1.8 violating steps at 291 against 355 ms). Under the tilt it is a trade-off; at K3–5 per-step is ahead on
+    violations.
+- The tracking-controller caveat is §6.3.3.3, inside UAV-s-curve. The s-curve conclusion follows it, and the quadrotor
+  conclusion becomes §6.3.4.
+- §6.4 is rebuilt from §6.1–6.3 at the author's request (UAV-s-curve left out behind a `\hole`):
+  - new model and projection tables, each against the baseline or per-step and between the objectives or budgets;
+  - UAV-pillars added, UAV-corridor from R33/R45a;
+  - the v3.60 text is archived, and the 🔒 banner rule is kept.
+- check.py passes; not compiled; nothing committed. Bundle `thesis_v3_20260924_135256_new.zip` (+ `135257_new_clean`, `135257_new_nonotes`), all verified byte-faithful.
+
+## v3.87 — 2026-09-24 · Key conclusion: on simple demonstrations the model does not matter; s-curve conclusion prefilled (provisional); UAV-pillars: cause and outcome of the collisions → [`changelogs/v3.87_20260924_simple_data_key_conclusion_scurve_prefill_pillars_collision.md`](changelogs/v3.87_20260924_simple_data_key_conclusion_scurve_prefill_pillars_collision.md)
+
+- **UAV-corridor, key conclusion.** `sec:res:uav:corridor:conclusion` now leads its second paragraph with the author's
+  key finding: the generative model does not matter, because the demonstrations are straight lines (Ch 5
+  `tab:uav-demos` / `fig:expert-uav`: three lanes, one altitude per episode).
+  - Before projection the four models' flights cannot be told apart.
+  - After projection the three flow objectives agree on violating steps to within 1.6 at a shared budget and method,
+    and on steps to the line to within 15.
+  - The budget and the projection method order the configurations.
+  - One sentence gives the mechanism, from Ch 2 `sec:bg:fewstep`, with a `\guard`.
+  - Mirrored in §6.3.5 (corridor paragraph, "The benchmark"). "Endpoint … more violating steps" is corrected to
+    "as many or more".
+- **UAV-s-curve.** New `sec:res:uav:scurve:conclusion`, wrapped entirely in `\provisional` (R44b/R44c pending). A
+  single-route scene: at K1 the average-velocity objectives are behind FM (3 and 6 crossings of 10 against 9), not
+  ahead. The order may be the controller's. One `\provisional` sentence in §6.3.5.
+- **UAV-pillars.** After `tab:uav-pillars-geo`, two parts:
+  - **cause:** the pillars are undeclared, and the plans skim them within the reach (50/51 commanded paths);
+  - **outcome:** a collision is catastrophic for a quadrotor, unlike for the manipulator, and ends the flight.
+  The pillars conclusion now says: same demonstrations, planner and projection, only the plant replaced, and the
+  result differs for these two quadrotor-own reasons. No claim is made about D3IL-avoiding collisions (author).
+- check.py passes; not compiled; nothing committed. Bundle `thesis_v3_20260924_133557_new.zip` (+ `133601_new_clean`, `133601_new_nonotes`), all verified byte-faithful.
+
+## v3.86 — 2026-09-24 · A Conclusion subsection for UAV-corridor → [`changelogs/v3.86_20260924_corridor_conclusion.md`](changelogs/v3.86_20260924_corridor_conclusion.md)
+
+- New `sec:res:uav:corridor:conclusion` at the end of §6.3.2, in the form of the UAV-pillars conclusion: projection makes the vehicle fly the altitude change and removes most violating steps, a residue stays where the constraint ends, the budget trades time for it, per-step at K ≤ 2 stalls over the hump, the baseline is the slowest; the price of D3IL-avoiding carries over, the removal of every violation does not, the scene does not rank the flow models. §6.3.5 points to it. `check.py` passes; no bundle.
+
+## v3.85 — 2026-09-24 · Corridor: steps Pareto within violation groups, the budget trade stated; UAV-pillars paths back in the main text → [`changelogs/v3.85_20260924_corridor_steps_within_violation_groups_pillars_fig_back.md`](changelogs/v3.85_20260924_corridor_steps_within_violation_groups_pillars_fig_back.md)
+
+- `fig:uav-pillars-paths` back in Ch 6 (Fig 6.5); the corridor side view stays in Appendix B (B.3).
+- `fig:uav-corridor-tradeoff` (Fig 6.6) is 2×2: violating steps vs time with violation groups I–III (gap > 2 violating steps), and D3IL-avoiding's steps-vs-time frontier within each group. Text states the budget trade (more evaluations → fewer violating steps, more time) and the within-group result (average-velocity models fewest steps at the smallest budgets; FM at K3/K20; baseline dominated). Ch 5 metric extended. → v4 note. `check.py` passes. **Bundle (sixteenth round):** `bundle/output/thesis_v3_20260924_130644_new.zip` + `…130644_new_clean.zip` + `…130645_new_nonotes.zip`, byte-faithful. Not compiled.
+
+## v3.84 — 2026-09-24 · Finish lines in Fig 5.x; UAV-corridor and UAV-s-curve read on violating steps; Fig 6.6 after projection only; warnings and moves → [`changelogs/v3.84_20260924_finish_lines_violating_steps_metric_fig_moves.md`](changelogs/v3.84_20260924_finish_lines_violating_steps_metric_fig_moves.md)
+
+- Ch 5 `fig:env-uav`: green finish lines at the end of the walls (corridor x = 2.0, s-curve x = 3.0; pillars' line green too); caption notes the s-curve is scored 0.2 m further on.
+- Ch 5 metrics: violating steps per flight replace S&C on UAV-corridor and UAV-s-curve; the near-satisfaction bar is withdrawn. Ch 6 corridor rebuilt on violating steps (tables, appendix, text, §6.3.5); the frontier (now Fig 6.5) is violating steps vs time after projection only — a budget staircase, no model ahead at every budget. S-curve tables print violating steps instead of S&C.
+- Fig 6.6 (s-curve pilot, 3 vs 10 flights) carries a visible `\outdated` warning; the UAV-pillars paths and corridor side-view figures moved to Appendix B (B.4, B.5). → v4 note. `check.py` passes. **Bundle (fifteenth round):** `bundle/output/thesis_v3_20260924_125313_new.zip` + `…125314_new_clean.zip` + `…125314_new_nonotes.zip`, byte-faithful. Not compiled.
+
+## v3.83 — 2026-09-24 · UAV-corridor rebuilt in the format of D3IL-avoiding: rates, violating steps, before/after Pareto, every rule in the appendix → [`changelogs/v3.83_20260924_corridor_avoiding_format_tables_pareto_appendix.md`](changelogs/v3.83_20260924_corridor_avoiding_format_tables_pareto_appendix.md)
+
+- Tables 6.11/6.12 in the columns of Table 6.1 (rates ± spread over the flights, violating steps, steps to the finish line); Table 6.12 = best rule per projector; the per-rule table moved to a new appendix section (four full tables with a Near column).
+- New `fig:uav-corridor-tradeoff` (store): steps vs time before/after projection with the avoiding band rule (S&C before, near-satisfaction after). **At the cheapest budget the average-velocity models dominate FM** (tilt K1 MeanFM 253 vs 260 steps; hump K3 endpoint CI-MeanFM 285 vs 299, equal time); the tilt margin is within FM's spread and needs the 95 % bar. v3.82's "FM is enough" withdrawn; strict S&C: the baseline alone. → v4 note. `check.py` passes. **Bundle (fourteenth round):** `bundle/output/thesis_v3_20260924_123356_new.zip` + `…123356_new_clean.zip` + `…123357_new_nonotes.zip`, byte-faithful. Not compiled.
+
+## v3.82 — 2026-09-24 · UAV-corridor at the end of the corridor (R45a), the near-satisfaction frontier, "FM is enough"; bundle → [`changelogs/v3.82_20260924_corridor_end_of_corridor_line_near_satisfaction_bundle.md`](changelogs/v3.82_20260924_corridor_end_of_corridor_line_near_satisfaction_bundle.md)
+
+- **Ch 5:** the corridor's finish line is the end of the corridor (x = 2.0 m; the evaluator now scores it), with the reason (episode limit from the level corridor); new near-satisfaction bullet (≥ 95 % violation-free steps, corridor frontier only, declared as set after the strict reading).
+- **Ch 6 §6.3.2/§6.3.5:** baseline rows re-read (Table 6.12 tilt 8/10 c, hump 10/10 r; Table 6.14 tilt 3/8/3, hump 10/9/9), goal-point counts beside; tilt = only the baseline succeeds violation-free; hump = trade-off (FM K20 endpoint 8/10 at 291 ms vs baseline 10/10 at 654 ms); near-satisfaction frontier = the cheapest configuration (flows 1/24 and 1/9 of the baseline's time); **the three flow models tie in every reading → "on UAV-corridor instantaneous-velocity matching is enough"**. Every flow number unchanged.
+- **QA:** MeanFM/CI-MeanFM cannot be made to dominate FM (0.90/0.95/0.97 bars, violating steps, time); the s-curve has no budget problem (62/100 aborts, 2 capped flights are floor crashes, successes cross at step 590–635 of 871).
+- → v4 note (supersedes the v3.80 corridor facts); ledgers; `check.py` passes. **Bundle (thirteenth round):** `bundle/output/thesis_v3_20260924_115255_new.zip` + `…115256_new_clean.zip` + `…115257_new_nonotes.zip`, byte-faithful, 48/48 figures. Not compiled.
+
+## v3.81 — 2026-09-24 · QA: Table 6.9 layout, Table 6.8's diffusion row; corridor step-cap evidence → [`changelogs/v3.81_20260924_qa_table69_layout_table68_diffusion_row_corridor_cap_evidence.md`](changelogs/v3.81_20260924_qa_table69_layout_table68_diffusion_row_corridor_cap_evidence.md)
+
+- **Table 6.9** no longer overflows: two rows per configuration (D3IL-avoiding / UAV-pillars) instead of eight side-by-side ± columns; numbers unchanged. **Table 6.8**: the empty diffusion endpoint row is explained (no velocity field; the evaluation refuses it by design) — not a missing run.
+- **R45 spec written** (`data_status/PENDING_20260924_uav_corridor_step_cap_R45.md`): DA with the finish line at the end of the corridor (x = 2.0 m, author) — preview baseline S&C tilt 3/8/3, hump 9/9/9, flows unchanged; resume impossible (state not stored, shared random stream), optional re-fly of the six baseline cells at 792 steps; budget 792 for later runs.
+- **Corridor step cap (evidence, no edit):** all 222 unsuccessful corridor flights end on the 396-step cap; the baseline's 42 are still moving and would mostly cross with +25 % steps (hump S&C → 9–10/10), the flows' 180 are stalled. Author to decide. Table numbers in the v3.80 records corrected (s-curve = 6.15–6.17). `check.py` passes; no bundle.
+
+## v3.80 — 2026-09-24 · UAV-corridor complete (R33), R16 + R36 filled, UAV-s-curve phase A (R44a); bundle → [`changelogs/v3.80_20260924_corridor_R33_aligning_R16_avoiding_R36_scurve_R44a_bundle.md`](changelogs/v3.80_20260924_corridor_R33_aligning_R16_avoiding_R36_scurve_R44a_bundle.md)
+
+- **§6.3.2 UAV-corridor complete** from `batch_uav_20260924_081422` (every cell recomputed from the CSV, equal to `DA_20260924_corridor_v3.md`): Tables 6.11, 6.12, 6.14 filled, new Table 6.13 `tab:uav-corridor-altitude`, new store figure `fig:uav-corridor-side` (tilt margin + hump altitude along the corridor) replacing the three placeholder figures, frontier stated in the text, every corridor hole written. Tilt: no violation-free success anywhere (hand-over residue at the plane's end, commanded position already past it); hump: FM K20 endpoint single 8/10 at 291 ms dominates (baseline per-step t 6/10 at 626 ms); per-step at K ≤ 2 stops before the apex. §6.3 intro, §6.3.5 corridor paragraph and *The benchmark* updated.
+- **R16** (Table 6.5, CI-MeanFM K100 unmoved 0→1), **R36** (Table 6.3, twenty-episode CI-MeanFM K10 cell disclosed), **Fig 6.3** (R16 points, label placement) and **R44a** (Table 6.15 complete, FM K1 selected, per-step only; Tables 6.16/6.17 pending R44b/c) — earlier in the same pass.
+- Ch 5: controlled-flight success clause, s-curve protocol per-step only, apex 1.49 → 1.48 m; appendix `tab:corpora` brought up to date; two captions trimmed. Five DA wordings narrowed (signed addendum in the DA). Ledgers, INBOX, → v4 note (🔴 Ch 8 contradicts the corridor in four places; §6.4 🔒 likewise). `check.py` passes.
+- **Bundle (twelfth round):** `bundle/output/thesis_v3_20260924_100632_new.zip` + `…100639_new_clean.zip` + `…100640_new_nonotes.zip`, byte-faithful, 48/48 figures, supersedes `20260923_205418`. Not compiled.
+
+## v3.79 — 2026-09-24 · UAV-pillars in the thesis's own words, a conclusion for §6.3.1, Fig 6.4's arrow to the right → [`changelogs/v3.79_20260924_pillars_words_conclusion_fig64_arrow.md`](changelogs/v3.79_20260924_pillars_words_conclusion_fig64_arrow.md)
+
+- **One word per outcome:** *violation* (declared constraint — "violation-free" replaces "collision-free" and "clean"), *collision* (the vehicle hits an obstacle; on UAV-pillars it ends the flight and is not a success, not a violation), **D3IL-avoiding / UAV-pillars** instead of "table / air" — Ch 5, Ch 6, appendix, Figs 6.5 and 6.9. Table 6.9 now has Table 6.1's columns on both sides (the "contact" column became UAV-pillars Success); Table 6.10's redundant count dropped; §6.3.1.1 retitled.
+- **§6.3.1.3 Conclusion (new):** the plant swap carries the declared constraints exactly and why (v2's scene construction, the similarity map, tracking inside the tightening margin), not freedom from collision; the D3IL-avoiding model/projection relationship holds where tested, the baseline was not flown.
+- **Fig 6.4:** the "better" key moved to the right. Notes to v2 (two old words in Ch 1/4) and v4. `check.py` passes.
+- **Bundle (eleventh round):** `bundle/output/thesis_v3_20260923_205418_new.zip` + `…205418_new_clean.zip` + `…205419_new_nonotes.zip`, byte-faithful, supersedes `201232`. Not compiled.
+
 ## v3.78 — 2026-09-23 · v2.27 synced (sanity check); step-budget wording aligned; bundle → [`changelogs/v3.78_20260923_v2.27_sync_sanity_check_bundle.md`](changelogs/v3.78_20260923_v2.27_sync_sanity_check_bundle.md)
 
 - **Inherited half at v2.27** (six files fast-forwarded, no conflict; `check.py` passes; no reference to the removed `tab:hardflow-setup`). The v2.27 note checked item by item: one guiding step as valid guidance is already v3's rule (audit item 4 settled); the K/NFE separation aligned in `tab:eval` and Ch 5's step-budget paragraph, and four "evaluations" in the Table 6.6 reading → "budgets"; everything else already consistent. One abstract claim (endpoint "reduces planning time in the evaluated manipulation comparisons") sent to v2 to narrow.

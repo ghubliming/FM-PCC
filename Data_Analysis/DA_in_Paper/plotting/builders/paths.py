@@ -66,7 +66,7 @@ def _panel(scn, panel, first, r_drone, tight, colour_by_pass=False):
     # shared with fig_constraints_uav.
     # Kept short on purpose: at FONT_CONSTRAINT a longer subtitle runs off the panel.
     local = dict(scn, title=panel['title'],
-                 sub=f"{panel['sub']} · {passed}/{n} success · {clean}/{n} clean")
+                 sub=f"{panel['sub']} · {passed}/{n} success · {clean}/{n} violation-free")  # v3.79: one word
     f = _uav_constraint_panel(local, PANEL_W, first, r_drone, tight)
 
     f.clip_to_box()
@@ -112,15 +112,17 @@ def _xmark(f, x, y, colour, r=6.0, w=2.4):
                    f'y2="{y - dy * r:.1f}" stroke="{colour}" stroke-width="{w:.1f}" stroke-linecap="round"/>')
 
 
-def _legend(width, colour_by_pass=False, failures=False):
+def _legend(width, colour_by_pass=False, failures=False, failure_label='collided or lost control'):
+    # v3.79 (author: "keep the words the same across the thesis"): violation = crossing a declared
+    # constraint (violation-free, violating steps, S&C); collision = the vehicle hitting an obstacle.
     h = Fig(width, 104, ml=0, mr=0, mt=0, mb=0, font=FONT_CONSTRAINT)
-    items = [('line', CLEAN, '', 'success: crossed the finish line' if colour_by_pass else 'collision-free flight'),
-             ('line', VIOLATING, '', 'no success' if colour_by_pass else 'entered an obstacle')]
+    items = [('line', CLEAN, '', 'success: crossed the finish line' if colour_by_pass else 'violation-free flight'),
+             ('line', VIOLATING, '', 'no success' if colour_by_pass else 'violated a constraint')]
     if not colour_by_pass:
         items.append(('line', '#5d6d7e', '2,7', 'no success (dotted, hollow end)'))
     items.append(('mark', START, '', 'launch pose · flight end'))
     if failures:
-        items.append(('x', '#5d6d7e', '', 'crashed or lost control (pillars: pillar contact)'))
+        items.append(('x', '#5d6d7e', '', failure_label))
     if len(items) > 4:
         h = Fig(width, 150, ml=0, mr=0, mt=0, mb=0, font=FONT_CONSTRAINT)
     row_y, col_x, size = (30, 76, 122), (16, width // 2 + 16), 18
@@ -160,17 +162,21 @@ def _build(key, filename, cols, outdir, colour_by_pass=False):
                 for i in range(0, len(drawn), cols))
     failures = any(_failed(e) for q in panels for e in q['episodes'])
     path = save_grid(drawn, os.path.join(outdir, filename), cols=cols, gap=8,
-                     header=_legend(width, colour_by_pass, failures))
+                     header=_legend(width, colour_by_pass, failures,
+                                    'collision with a pillar: the flight ends' if key.startswith('pillars')
+                                    else 'collided or lost control'))
     flights = sum(p['n'] for p in panels)
     srcs = ', '.join(sorted({p['tag'] for p in panels}))
-    ext = 'extract/pillars_v2_paths.py' if key.startswith('pillars') else 'extract/uav_paths.py'
+    ext = ('extract/scurve_r44_paths.py' if key == 'scurve'            # R44, 2026-09-24: FM nfe 1, both controllers
+           else 'extract/pillars_v2_paths.py' if key.startswith('pillars') else 'extract/uav_paths.py')
     return path, (f"data/uav_paths.json ({ext}) | {len(panels)} cells, "
                   f"{flights} flights; runs {srcs}; scene and constraints from "
                   f"sources.UAV_CONSTRAINTS, drawn by scenes._uav_constraint_panel")
 
 
 def fig_uav_scurve_paths(outdir):
-    """The s-curve flown under both controllers, unprojected (companion of tab:uav-controller)."""
+    """The s-curve under both controllers (companion of tab:uav-controller): FM, nfe 1, ten flights per panel, the
+    unprojected plans (top) and the per-step projected ones (random rule, bottom) -- R44, extract/scurve_r44_paths.py."""
     return _build('scurve', 'fig_uav_scurve_paths.svg', 2, outdir, colour_by_pass=True)
 
 

@@ -58,6 +58,11 @@ AVOIDING_SCENE = os.path.join(REPO, 'Data_Analysis', 'DA_in_Paper', 'data', 'avo
 # The run folder and variant of every panel are declared in extract/uav_paths.py::PANELS.
 UAV_PATHS = os.path.join(REPO, 'Data_Analysis', 'DA_in_Paper', 'data', 'uav_paths.json')
 UAV_PATHS_DROP = os.path.join(REPO, 'temp', '18-09-2026')
+# v3.80: UAV-corridor (corridor v3, R33) from the side -- the flights of fig_uav_corridor_side, written by
+# extract/corridor_v3_side.py from the npz under temp/23-09-Corridor-TEMP/plans through analysis/corridor_v3_grid.py.
+CORRIDOR_V3_SIDE = os.path.join(REPO, 'Data_Analysis', 'DA_in_Paper', 'data', 'corridor_v3_side.json')
+# v3.83: the corridor's tables and its before/after frontier (extract/corridor_v3_frontier.py).
+CORRIDOR_V3_FRONTIER = os.path.join(REPO, 'Data_Analysis', 'DA_in_Paper', 'data', 'corridor_v3_frontier.json')
 
 
 class Corpus:
@@ -498,6 +503,15 @@ CORPORA = {
         'partial',
         'R2fix (diffusion per-step, eta 0.2, job 26113) and R37 (K2 replicate, K100 eta 0.1). Used only '
         'for the cells ALIGNING_PROJECTED_EXTRA names.'),
+    # v3.80 (author, 24-09: "finish the results section"): the R16 batch. It reproduces every row of
+    # tab:va-models it shares with visual_aligning_15_09 (analysis/DA_20260924_R16_R36_must_need.md sec. 2)
+    # and adds FM K2, FM K10 and CI-MeanFM K10 -- read through ALIGNING_UNPROJECTED_EXTRA only.
+    'visual_aligning_24_09': Corpus(
+        'visual_aligning_24_09',
+        'temp/23-09-FULL/24-09-1000/batch_va2_20260924_081426',
+        'seed 6, the same ten shared contexts as visual_aligning_15_09',
+        'partial',
+        'R16 (jobs 26181-26183, tag _msgR16). Used only for the cells ALIGNING_UNPROJECTED_EXTRA names.'),
     'uav_19_09': Corpus(
         'uav_19_09',
         'Data_Analysis/analysis_results_checkpoint/19-09-UAV-Pillars-Exclude/batch_uav_20260919_111701',
@@ -952,9 +966,19 @@ ALIGNING_CELLS = {
 # v3.63 (author): the diffusion baseline is compared at its trained budget only; its K=100
 # cell stays in ALIGNING_CELLS for the record and is not drawn, matching tab:va-models.
 ALIGNING_REPORTED = {('mf', 2), ('mf', 10), ('mf', 20), ('mf', 100),
-                     ('af', 2), ('af', 20), ('af', 100),
-                     ('fm', 20), ('fm', 100),
+                     ('af', 2), ('af', 10), ('af', 20), ('af', 100),
+                     ('fm', 2), ('fm', 10), ('fm', 20), ('fm', 100),
                      ('diffusion', 20)}
+# v3.80: the three rows of tab:va-models that only the R16 batch holds; fig_aligning_tradeoff reads them from
+# that corpus with the same geometry, variant and ten contexts.  (engine, K) -> (corpus, prefix, suffix)
+ALIGNING_UNPROJECTED_EXTRA = {
+    ('fm', 2):  ('visual_aligning_24_09',
+                 'H8_K2_Meuler_T0.5_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching', '_msgR16'),
+    ('fm', 10): ('visual_aligning_24_09',
+                 'H8_K10_Meuler_T0.4_Dmix_visual_aligning.models.visual_fm_diffusion.VisualFlowMatching', '_msgR16'),
+    ('af', 10): ('visual_aligning_24_09',
+                 'H8_K10_Meuler_T0.4_Dmix_visual_aligning.models.visual_af_diffusion.VisualAlphaFlow', '_msgR16'),
+}
 # v3.77 (author, 23-09: "if just plotting, just fix it"): the two cells of tab:va-projection-models
 # that fig_aligning_projected_tradeoff cannot reach through ALIGNING_CELLS, each with the corpus
 # that holds it.  (engine, K, variant) -> (corpus key, FolderName prefix, FolderName suffix)

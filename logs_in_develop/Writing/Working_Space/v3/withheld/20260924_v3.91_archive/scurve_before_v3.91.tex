@@ -1,0 +1,119 @@
+% ARCHIVED at v3.91 (2026-09-24) from chapters/06_results.tex -- author: "the rest some parts of s_curve data + DA
+% are ready, write them ... only write the now ready parts". Replaced by R44b + C0 (DA_20260924_scurve_R44bc_...).
+% Verbatim, not part of the build.
+
+% ---- reading after Table 6.14 (R44a mechanism) ----
+flight, at control steps $386$ to $530$; the flights that cross reach the line at step $590$ to $635$. Every
+flight that crosses violates the constraints on the way: the flow-based models' flights follow their plans with a
+mean tracking error of $0.30$ to $0.33$\,m, the baseline's with $0.56$\,m, while the demonstrated route
+clears the constraint boundaries by $0.121$\,m.
+\dataref{\texttt{DA\_20260924\_scurve\_R44a\_raw\_grid.md}: inversion times and steps, crossing steps, tracking
+errors (flow $0.30$--$0.33$\,m, baseline $0.558$\,m) and the route's clearance ($0.121$\,m, the evaluation's own
+feasibility check). Three flights of the grid crossed after touching the floor and are not successes (MeanFM
+$\nfe=2$; CI-MeanFM $\nfe=2$ twice), \autoref{sec:setup:metrics:uav}.}
+
+% ---- Table 6.15 note and hole ----
+\dataref{Unprojected row: \autoref{tab:uav-scurve} (\texttt{p23scgrid}). Per-step rows: R44b of
+\texttt{data\_status/PENDING\_20260923\_uav\_scurve\_R44\_raw\_first.md}, the author's option (ii) on 24-09 ---
+FM at $\nfe=1$, per-step only --- job 26195 (tag \texttt{p23scproj}, \texttt{dpcc-\{r,c,t\}-tightened}). The v3.71 table printed FM at $\nfe=2$ from \texttt{u7hg}
+(\texttt{dpcc-r/c/t-tightened}: $3$, $5$, $5$ of ten crossing, $164.9$ / $144.0$ / $143.4$\,ms/step); at
+$\nfe=2$ endpoint projection has no guiding step and the evaluation does not run it, so that table could
+not compare the two methods.}
+
+\hole{Reading, once R44b lands: whether per-step projection keeps the nine crossings of the unprojected plan
+and how many of its violating steps it removes, per selection rule, and at what time per control step.}
+
+% ---- pilot tracking-error sentence ----
+gains, which no evaluation of this thesis varies; the tracking error of the cascaded geometric flights,
+$0.29$ to $0.34$\,m, is the smallest of any configuration on this scene, and none of them advances past
+the second turn.
+
+% ---- comparison-of-record paragraph ----
+unprojected and under the per-step rule that crosses the finish line most often, under each controller.
+Under the cascaded geometric controller the unprojected plans cross on nine flights and succeed within the
+constraints on none; the other three cells are pending.
+
+% ---- Table 6.16 dataref ----
+\dataref{Cascaded geometric rows: FM $\nfe=1$ of \autoref{tab:uav-scurve} (\texttt{p23scgrid}) and of
+\autoref{tab:uav-scurve-projection} (R44b, job 26195). MuJoCo MPC rows: R44c of
+\texttt{data\_status/PENDING\_20260923\_uav\_scurve\_R44\_raw\_first.md}, \texttt{UAV\_MIX\_CONTROLLER=mjpc},
+ten flights: C0 unprojected (job 26196), C1 on the per-step rule R44b selects. The v3.71 table printed FM at $\nfe=2$ (cascaded geometric rows filled, MuJoCo
+MPC pending); withdrawn with the selection at v3.75. The v3.70 table printed the MeanFM $\nfe=10$ pilot
+(ten flights against three, plain-boundary per-step rows) from Campaign
+DA\_20260909\_T5\_mjpc\_vs\_pid\_s\_curve; those numbers are now in the text and the figure only.}
+
+% ---- controller guard ----
+\guard{Three flights with MuJoCo MPC in the pilot. The gains are held at their nominal values in every
+evaluation of this thesis and were not tuned; the two alternative settings that exist scale the
+position loop by $\pm20\,\%$ and leave the attitude loop and the thrust limit untouched. What the pilot
+supports is that the scene is limited by the controller, not that no tuning of this controller could fly
+it; the ten-flight comparison on the selected model is what the section will rest on.}
+
+% ---- cost paragraph (pilot) ----
+(\autoref{tab:uav-controller-cost}). On the unprojected pilot, where nothing lies between the plan and
+the controller, a control step takes $94.9$\,ms under the cascaded geometric controller and $215.6$\,ms
+under MuJoCo MPC. The planner's share of that is the same in both, between $88$ and $90$\,ms at
+$\nfe=10$, so the difference belongs to the controller: about $6$\,ms per step for the cascaded geometric
+law against about $126$\,ms for MuJoCo MPC, which solves an optimisation problem at every control step
+where the other evaluates an algebraic law. The controller that flies this scene is about twenty times
+the price of the one that does not, and by itself it costs more per control step than generating the
+plan --- some seven times what the operating point of D3IL-avoiding spends on an entire action
+(\autoref{tab:avoiding-conclusion}).
+
+% ---- Table 6.17 (pilot cost) ----
+  \caption[UAV-s-curve: what each tracking controller costs per control step]{UAV-s-curve, the pilot
+  (MeanFM at $\nfe=10$ without projection): the elapsed time of a flight divided by the control steps
+  it executed, in milliseconds, under the two tracking controllers --- the one quantity in this chapter
+  that contains the controller. \emph{The planner}: the planner time reported elsewhere; \emph{the
+  controller and the simulator step}: the remainder. Ten flights on the left, three on the right, one
+  training seed.}
+  \label{tab:uav-controller-cost}
+  \centering
+  \small
+  \begin{tabularx}{\linewidth}{@{}L r r@{}}
+    \toprule
+    Time per executed control step [ms] & Cascaded geometric & MuJoCo MPC \\
+    \midrule
+    The control loop                          & $94.9$ & $215.6$ \\
+    \quad the planner                         & $88.4$ & $89.8$ \\
+    \quad the controller and the simulator step & $6.5$ & $125.8$ \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{Report\_20260909\_MJPC\_vs\_PID\_s\_curve \S5.4--5.5, from the job records of Campaign
+DA\_20260909\_T5\_mjpc\_vs\_pid\_s\_curve; planner time from batch\_uav\_20260915\_100816 (MeanFM
+$\nfe=10$, \texttt{diffuser}, \texttt{pid\_stopgo} $88.4$ / \texttt{mjpc} $89.8$)}
+
+% ---- closing sentence of the caveat ----
+MuJoCo MPC is used here to locate the limit, and it is not adopted: in the pilot it turns flights that
+never arrive into flights that arrive while still violating, at about twenty times the cost per control
+step of the controller used everywhere else in this thesis.
+
+% ---- s-curve conclusion (v3.90) ----
+\provisional{Prefilled on the unprojected grid of \autoref{tab:uav-scurve} and the pilot of
+\autoref{sec:res:uav:controller}. The projected cells (R44b) and the ten-flight controller comparison (R44c)
+are pending, and this conclusion is rewritten when they land.}
+
+\provisional{UAV-s-curve is where the tracking controller becomes the limit. On a route of two sharp turns
+most flights end inverted under the cascaded geometric controller, $11.6$ to $15.9$\,s into the flight --- all
+ten of analytic average-velocity matching at twenty evaluations and eight of ten of the baseline --- and the
+flow-based flights follow their plans with a mean tracking error of $0.30$ to $0.33$\,m, more than twice the
+$0.121$\,m by which the route clears the constraints, so that no flight is free of violations. The pilot places
+the limit in the controller: plans that invert under the cascaded geometric controller arrive under MuJoCo
+MPC, still violating, and the controller that flies the scene costs about $126$\,ms per control step against
+$6$\,ms for the cascaded law --- more than generating the plan, and some seven times what the operating point
+of D3IL-avoiding spends on an entire action.}
+
+\provisional{The demonstrations are simple here too, one route of straight segments joined by arcs
+(\autoref{tab:uav-demos}), and on them the average-velocity objectives are not ahead at the budget they are
+built for: at one evaluation instantaneous-velocity matching crosses the finish line on nine flights of ten,
+the consistency-interpolated model on six and analytic average-velocity matching on three, and for every
+flow-based model the crossings fall as the budget grows. Since almost every flight lost is lost to
+inversion, this order is read for the controller, not for the models alone.}
+\dataref{v3.90 (author, \texttt{GUIDE\_20260924\_results\_storyline\_author.md}: \enquote{in the s\_curve we deep discuss the controller in extreme
+trajs}); v3.87 (author: \enquote{claim under simple data case it is not so as we expected \ldots\ prefill part,
+mark as danger sign is ok}). \autoref{tab:uav-scurve} (R44a); inversion times, tracking errors and the route's
+clearance: \texttt{DA\_20260924\_scurve\_R44a\_raw\_grid.md}; lost flights of the flow-based models $57$, inverted
+$54$ (the other three crossed after touching the floor). Pilot and cost: \autoref{fig:uav-scurve-paths},
+\autoref{tab:uav-controller-cost} ($125.8$ against $6.5$\,ms per control step for the controller and simulator
+step).}

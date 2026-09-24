@@ -1,0 +1,72 @@
+% ARCHIVED at v3.88 (2026-09-24) from chapters/06_results.tex -- author: "6.3.2.4 Conclusion, too long, is the model no diff? only K matters? ... did the HF beat the PCC? that is the RQ, plz answer clearly". Replaced by a two-paragraph conclusion answering RQ1 and RQ2.
+% Kept verbatim for rollback; not part of the build.
+
+\subsubsection{Conclusion}\label{sec:res:uav:corridor:conclusion}
+
+UAV-corridor asks whether the projector repairs a plan against a constraint that leaves the horizontal plane
+and that no demonstration satisfies. It does so for what the constraint is about. Projected, the vehicle
+descends under the leaned plane on $540$ of $560$ flights, by a median of $0.12$ to $0.37$\,m, and climbs
+over the roof on all $560$, by $0.27$ to $0.39$\,m, where the unprojected plans fly level through both; and
+the violating steps of a flight fall from $74.5$ to $99.4$ under the tilt and $28.6$ to $36.6$ over the hump
+to $1.4$ to $10.4$ and $0.2$ to $8.3$ for the flow-based models. It does not remove every violation. What
+remains lies where the constraint ends: under the tilt in the last $0.3$\,m of the leaned plane, where the
+commanded position has already left the plane's span and the plan is released from it while the vehicle,
+half a metre behind, is still inside; over the hump at its apex. The budget is the trade that shrinks this
+residue --- every step up in network evaluations buys fewer violating steps with more time per action --- and
+at twenty evaluations it is down to one or two steps per flight under the tilt and a fifth of one over the
+hump. At the other end of the ladder, per-step projection at one and two evaluations cannot carry a plan over
+the hump: the plans stay within the altitude range of the demonstrations while the apex asks for $1.48$\,m,
+and the flights stop short of it. The diffusion baseline leaves the fewest violating steps, $0.8$ and $0.0$,
+and is the slowest planner of the scene, at $654$ to $666$\,ms per action and $290$ and $321$ control steps to
+the end of the corridor, against $247$ to $316$ for the flow-based configurations.
+
+The central finding of the scene concerns the models: the generative model does not matter on it, and the
+reason lies in its demonstrations. They are straight lines: each runs along the corridor from $x=-2.8$ to
+$2.8$\,m on one of three lanes, $y\in\{-0.12,0,0.12\}$\,m, at an altitude drawn once per episode from
+$[0.90,1.30]$\,m (\autoref{tab:uav-demos}, \autoref{fig:expert-uav}), so that from any observed position the demonstrations
+continue along a single path. Before projection the flights of the four models cannot be told apart: every
+flight reaches the end of the corridor, in $242$ to $251$ control steps on average, and the violating steps
+of any two models lie within about one standard deviation of the flights. After projection the three
+flow-based objectives, wherever their flights reach the end of the corridor, leave the same violating steps
+at a shared budget and projection method to within $1.6$ per flight, at most two standard deviations of the
+flights, while under the tilt the budget takes them from about ten at one evaluation to one or two at
+twenty; in control steps to the finish line they differ by at most fifteen of about $250$ to $300$, and no
+objective is the fastest at every budget. What orders the flow-based configurations of UAV-corridor is the
+budget and the projection method, not the objective. This is the case the average-velocity objectives are
+not built for: they correct the curvature that arises where the straight per-sample paths of many different
+continuations are averaged into one field (\autoref{sec:bg:fewstep}), and where the demonstrations continue
+along a single path there is little to average, so that at one evaluation instantaneous-velocity matching
+already arrives where they do.
+\guard{One training seed per model. The curvature of the learned fields is not measured; what the scene
+measures is the tie.}
+
+The one model that still differs after projection is the diffusion baseline, and against it the relationship
+D3IL-avoiding established between the models and the projection holds in part
+(\autoref{sec:res:avoiding:conclusion}). What carries over is the price: the flow-based models reach the end
+of the corridor on every flight at a small fraction of the baseline's time per action, a twenty-fourth under
+the tilt and a ninth over the hump at their cheapest, and at equal violation they reach it in fewer control
+steps than the baseline in the group that contains it. What does not carry over is the removal of every
+violation: on D3IL-avoiding the flow-based models at one and two evaluations succeed within the constraints
+on almost every episode, while here their flights keep a residue of violating steps at every budget, and the
+baseline leaves the fewest. Between the projection methods the budget decides: at three and five
+evaluations endpoint projection is as cheap or cheaper and leaves as many violating steps or more, and at
+twenty it leaves fewer and shallower ones under both constraints; over the hump with a single candidate it
+overtakes the per-step projector at a lower cost, $0.2$ against $1.8$ violating steps per flight at $291$
+against $355$\,ms, the bar this thesis set for it.
+\dataref{v3.86 (author: \enquote{where is the conclusion in the UAV-corridor section?}); v3.87 (author:
+\enquote{in the expert data very simple case the Model NOT matter, this is KEY CONCLUSION, our expert data for
+corridor just a line, quote the chap5}). Demonstrations: \autoref{tab:uav-demos} (\texttt{trajectories.py}:
+\texttt{corridor\_path}, \texttt{CORRIDOR\_CHANNELS}; \texttt{generator.py}: \texttt{\_build\_traj\_and\_init}).
+The tie, MeanFM / CI-MeanFM / FM: unprojected violating steps tilt $74.5$--$99.4$ (sd $25.6$--$34.8$), hump
+$28.6$--$36.6$ (sd $6.8$--$8.9$), all four models; projected, the cells that reach the end of the corridor:
+tilt per-step $\nfe=1$ $10.2/10.3/10.2$, $\nfe=2$ $10.3/10.4/9.8$, $\nfe=3$ $6.6/5.0/5.8$ (the $1.6$; sd $0.8$),
+endpoint $\nfe=3$ $7.6/7.1/6.9$; hump per-step $\nfe=3$ $4.9/4.6/5.6$, endpoint $\nfe=3$ $8.0/8.0/8.3$; the
+largest gap in steps, hump endpoint $\nfe=3$, $284.6$ against $299.3$. The rest are the facts of
+\autoref{sec:res:uav:corridor:raw}--\autoref{sec:res:uav:projection}, nothing new: altitude and the hand-over
+(\texttt{DA\_20260924\_corridor\_v3.md} \S3.6, \S4.1, re-verified at v3.80: commanded position $0.49$--$0.61$\,m
+ahead at the first violating step, clear of the constraint at $4014/4014$ violating steps), the stop at
+$\nfe\le2$ (\S4.2), the end-of-corridor line (R45a), the tables and the frontier
+(\texttt{data/corridor\_v3\_frontier.json}). Price: $666.3/27.4 = 24$ (tilt, MeanFM $\nfe=1$), $654.2/71.9 = 9.1$
+(hump, CI-MeanFM $\nfe=3$ endpoint). D3IL-avoiding: \autoref{tab:avoiding-dpcc-protocol} (flow models at
+$\nfe=1,2$, S\&C $0.90$--$1.00$). v3.87: over the hump at $\nfe=5$ endpoint and per-step projection leave the
+same $3.9$, hence \enquote{as many or more}.}

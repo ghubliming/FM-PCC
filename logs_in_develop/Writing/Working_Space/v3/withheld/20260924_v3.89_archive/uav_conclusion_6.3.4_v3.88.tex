@@ -1,0 +1,60 @@
+% ARCHIVED at v3.89 (2026-09-24) from chapters/06_results.tex -- author: "dont need this -> 6.3.4. Conclusion, each uav scene has own conclusion section". Per-scene paragraphs (pillars, corridor, s-curve) and "The benchmark"; every scene keeps its own Conclusion.
+% Kept verbatim for rollback; not part of the build.
+
+\subsection{Conclusion}\label{sec:res:uav:conclusion}
+
+Each scene closes on its own line, and the benchmark on the three together.
+
+\paragraph{UAV-pillars.} The declared constraints transfer from D3IL-avoiding exactly: the same $0.033$
+success with constraint satisfaction before projection, no violating step after it, the same control steps
+and time per action, on all four configurations, and the two average-velocity models keep their order.
+Freedom from collision with the pillars outside the constraint sets does not transfer: the plans pass
+those pillars within the vehicle's reach, and a collision, catastrophic for a quadrotor, ends the flight. A
+third of the projected flights end so, and success with constraint satisfaction reads $0.60$ to $0.70$ on
+UAV-pillars against $0.97$ to $1.00$ on D3IL-avoiding (\autoref{sec:res:uav:pillars:conclusion}).
+
+\paragraph{UAV-corridor.} The generative model does not matter on this scene, whose demonstrations are
+straight lines (\autoref{tab:uav-demos}); the budget does, and it trades time per action for violating
+steps, from about ten per flight at $27$\,ms under the tilt and eight at $72$\,ms over the hump to one or two
+at twenty evaluations. Projection removes most violating steps, from $28.6$ to $99.4$ per flight to $0.2$ to
+$10.4$, and not all of them; the baseline leaves the fewest, $0.0$ to $0.8$, at $654$ to $666$\,ms per
+action, twenty-four and nine times the cheapest flow-based configuration. Endpoint projection beats the
+per-step projection of \ac{DPCC} only over the hump at twenty evaluations with a single candidate, $0.2$
+against $1.8$ violating steps at $291$ against $355$\,ms (\autoref{sec:res:uav:corridor:conclusion}).
+\dataref{v3.84 (author): the scene is read on violating steps (Ch 5 \texttt{sec:setup:metrics:uav}); S\&C,
+the near-satisfaction bar and the steps--time frontier of v3.83 are dropped, and with them the v3.83 claim
+that MeanFM/CI-MeanFM dominate FM in steps at the cheapest budget. On violating steps and time: tilt $\nfe=1$
+MeanFM $10.2$ at $27.4$\,ms and FM $10.2$ at $27.6$; $\nfe=3$ per-step CI-MeanFM $5.0$ ($93.4$\,ms) and FM $5.8$
+($79.2$); hump $\nfe=3$ per-step CI-MeanFM $4.6$ ($89.2$) and FM $5.6$ ($77.1$), endpoint $8.0$ and $8.3$ at
+$71.9$\,ms each; spreads $0.5$--$1.8$. \texttt{data/corridor\_v3\_frontier.json}. The hole's expected shape
+(average-velocity models ahead on the constraint; every flow model ahead of the baseline on the goal) is not in
+the data. v3.87 (author): the scene's key reading is the tie between the models, on demonstrations that are
+straight lines. v3.88 (author): shortened with the scene's conclusion, and the answer to the
+projection question added.}
+
+\paragraph{UAV-s-curve.} No flight of any configuration is free of violations. Without projection
+instantaneous-velocity matching at one evaluation crosses the finish line on nine flights of ten, the most
+of any configuration, and for every flow-based model the crossings fall and the inversions rise with the
+budget; the baseline crosses on none. The limit the scene shows depends on the model: most flights of the
+two average-velocity models and of the baseline end inverted under the cascaded geometric controller,
+whereas the selected configuration crosses, with $17$ to $37$ violating steps per flight. Its per-step projection and the
+controller comparison on it are pending; the pilot on analytic average-velocity matching at ten evaluations
+arrives under MuJoCo MPC where it inverts under the cascaded geometric controller
+(\autoref{sec:res:uav:controller}).
+\provisional{Its demonstrations are one route (\autoref{tab:uav-demos}), and on it, as on the straight lanes
+of UAV-corridor, the average-velocity objectives are not ahead at one evaluation; here they are behind, and
+the order may belong to the controller as much as to the models (\autoref{sec:res:uav:scurve:conclusion}).}
+
+\paragraph{The benchmark.} What the quadrotor benchmark supports is therefore this. On UAV-pillars the
+declared constraints a plan satisfies on D3IL-avoiding it satisfies when flown, and freedom from collision
+with the obstacles D3IL-avoiding never scored does not follow from them, which on a quadrotor costs the
+flight. On UAV-corridor the vehicle makes the altitude change that a constraint outside the horizontal plane
+asks for --- it descends under the tilt on $540$ of $560$ projected flights and climbs over the hump on all
+$560$ --- and the flow-based planners do so at a small fraction of the baseline's time per action but leave a
+few shallow violations where the constraints end, which the slower baseline avoids on most of its flights;
+on demonstrations as simple as its straight lanes it does not matter which flow objective generates the
+plan, and endpoint projection overtakes the per-step projector only over the hump, at twenty evaluations.
+UAV-s-curve contributes the caveat that every quadrotor result of this chapter is read for the controller
+with which it was measured.
+
+

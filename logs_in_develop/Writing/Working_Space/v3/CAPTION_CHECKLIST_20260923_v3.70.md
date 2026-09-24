@@ -62,3 +62,43 @@ New or rewritten captions, all under the threshold: `tab:uav-scurve` 75, `tab:ua
 ## Addendum v3.77 (2026-09-23)
 
 `fig:aligning-projected-tradeoff` 79 words (all seven cells drawn; "diffusion" in the colour list).
+
+## Addendum v3.79 (2026-09-24)
+
+`tab:uav-pillars-raw` 84, `tab:uav-pillars-geo` 32, `fig:uav-pillars-paths` 69 words.
+
+## Addendum v3.80 (2026-09-24) — corridor filled, two trims
+
+`tab:uav-corridor-raw` 87, `tab:uav-corridor` 96 (now defines the best rule), `tab:uav-corridor-projection` 79,
+`tab:uav-corridor-altitude` 69 (new), `fig:uav-corridor-side` 89 (new); `tab:va-models` 84; trimmed:
+`tab:avoiding-projectors` 102 → 96 (one rule sentence merged), `fig:aligning-tradeoff` 105 → 99 (rings/staircase clause
+shortened). `tab:uav-scurve` 80, `tab:uav-scurve-projection` 52, `tab:uav-controller` 74.
+
+## Addendum v3.81 (2026-09-24)
+
+`tab:uav-pillars-raw` 87 (two rows per configuration), `tab:va-projection-models` 91 (the diffusion sentence now gives
+the reason).
+
+## Addendum v3.82 (2026-09-24)
+
+`tab:uav-corridor` 100 (rewritten: goal-point counts added, wording shortened), `tab:uav-corridor-projection` 96.
+
+## Addendum v3.83 (2026-09-24) — corridor rebuilt
+
+`tab:uav-corridor-raw` 78, `tab:uav-corridor` 89, `fig:uav-corridor-tradeoff` 97 (new), appendix
+`tab:app:uav-corridor-tilt-ps` 82, `-tilt-ep` 63, `-hump-ps` 95, `-hump-ep` 63. `tab:uav-corridor-projection` removed.
+
+## Addendum v3.84 (2026-09-24)
+
+`fig:env-uav` 95 (finish lines; trimmed from 115), `tab:uav-corridor-raw` 90, `tab:uav-corridor` 83,
+`fig:uav-corridor-tradeoff` 79 (after projection only), `tab:uav-scurve` 92, `tab:uav-scurve-projection` 52,
+`tab:uav-controller` 74; `fig:uav-scurve-paths` gains an `\outdated` clause.
+
+## Addendum v3.85 (2026-09-24)
+
+`fig:uav-corridor-tradeoff` 99 (2×2, groups I–III), `fig:uav-pillars-paths` 69 (back in Ch 6).
+
+## Addendum v3.88 (2026-09-24)
+
+`tab:uav-corridor-altitude` archived (author). The §6.4 tables were rebuilt: `tab:summary-models` 40,
+`tab:summary-projection` 36, `tab:summary-combinations` 11.

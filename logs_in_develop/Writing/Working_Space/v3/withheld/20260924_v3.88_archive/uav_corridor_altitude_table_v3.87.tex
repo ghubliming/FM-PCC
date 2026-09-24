@@ -1,0 +1,41 @@
+% ARCHIVED at v3.88 (2026-09-24) from chapters/06_results.tex -- author: "Table 6.13: I see no reason to put it here. archive it, it tells reader nth". The paragraph existed to present the table and goes with it; its one headline fact (540/560 descend, 560/560 climb) stays in the text, at the end of the hump paths paragraph.
+% Kept verbatim for rollback; not part of the build.
+
+\paragraph{Altitude.} Both constraints of this scene act on altitude, and that is what they are for: under
+the tilt the room is below the launch altitude, so a projected flight has to descend as it moves sideways;
+under the hump it has to climb. Unprojected, every model flies level, between $0.83$ and $1.27$\,m where
+the constraints act. Projected, the lowest altitude under the tilt drops on $540$ of the $560$ projected
+flights, by a median of $0.12$ to $0.37$\,m per configuration, and the highest altitude over the hump
+rises on all $560$, by a median of $0.27$ to $0.39$\,m and on single flights by up to $0.60$\,m
+(\autoref{tab:uav-corridor-altitude}). Under the tilt the descent deepens with the budget, from $0.12$ to
+$0.19$\,m for the two average-velocity models at one and two evaluations to $0.21$ to $0.26$\,m at three,
+and from $0.19$ to $0.25$\,m for instantaneous-velocity matching at one and two to $0.35$ to $0.37$\,m at
+twenty; the climb over the hump does not.
+
+\begin{table}[htpb]
+  \caption[UAV-corridor: the altitude change under projection]{UAV-corridor, the altitude change that
+  projection makes: under the tilt the lowest altitude over $0.5\le x\le 2.0$\,m, over the hump the
+  highest over $-0.5\le x\le 0.5$\,m, each the projected flight minus the unprojected flight of the same
+  trial, as the median over a cell's ten flights. The range runs over the model's projected cells: every
+  budget, projection method and selection rule. One training seed. \baselinemark\ the diffusion model of
+  \ac{DPCC}.}
+  \label{tab:uav-corridor-altitude}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{5pt}
+  \begin{tabularx}{\linewidth}{@{}L l rr@{}}
+    \toprule
+    Model & $\nfe$ & \shortstack{tilt: lowest altitude,\\median change (m)} & \shortstack{hump: highest altitude,\\median change (m)} \\
+    \midrule
+    MeanFM & 1, 2, 3 & $-0.26$ to $-0.13$ & $+0.33$ to $+0.39$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1, 2, 3 & $-0.26$ to $-0.12$ & $+0.33$ to $+0.39$ \\
+    FM & 1, 2, 3, 5, 20 & $-0.37$ to $-0.19$ & $+0.27$ to $+0.36$ \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$-0.30$ to $-0.22$} & \mainconfig{$+0.32$ to $+0.34$} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{DA \S3.6 and Appendix B (median per cell and rule), recomputed from the npz at v3.80 with
+\texttt{corridor\_v3\_grid.altitude}; flights paired by trial index. $540$ of $560$ tilt flights descend
+(the $20$ that do not: MeanFM $8$, CI-MeanFM $10$, FM $2$, each within $+0.11$\,m); $560$ of $560$ hump
+flights climb. The unprojected band is the range of the same window extremes. The v3.65 pilots
+($-0.15$ to $-0.29$, $+0.30$ to $+0.40$) lie inside these ranges.}

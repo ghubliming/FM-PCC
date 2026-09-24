@@ -227,7 +227,7 @@ A job is not complete because Slurm says `COMPLETED`. For each leaf verify:
 Record job IDs, revision, start/end times and failures in §7. Do not touch `MASTER_TEST_HISTORY.md`
 unless told to.
 
-## 6b · 23-09 · the MUST-NEED wave: R16 + R36 (🗓 scheduled · R36 🔄 updated v3.77)
+## 6b · 23-09 · the MUST-NEED wave: R16 + R36 (✅ complete 24-09: jobs 26181–26186; DA [`DA_20260924_R16_R36_must_need.md`](../../../../Data_Analysis/DA_in_Paper/analysis/DA_20260924_R16_R36_must_need.md))
 
 Author, 23-09: *"prepare tempbash/command for the runs that must need runs as showing in the Pending md,
 and mark them scheduled. optional NO. first clean all the must need runs."* After R2, R37, R26 and R35
@@ -416,8 +416,8 @@ the red wave lands so the spec cannot shift under it.
 
 | group | job IDs | revision | state / verification |
 | :-- | :-- | :-- | :-- |
-| R16a / R16b / R16c · R16 | — | — | 🗓 **SCHEDULED 23-09** — driver `pipeline_20260923_must_need.sh` prepared and dry-run verified (§6b); not yet submitted |
-| R36a / R36b / R36c · R36 | — | — | 🔄 **UPDATED v3.77** (was 🗓 scheduled 23-09) — R36a/b at seeds 7–10 (§6b); same driver, chained after R16c by default; not yet submitted |
+| R16a / R16b / R16c · R16 | **26181** · **26182** · **26183** | 5092e056 | ✅ **COMPLETE 24-09, verified** (logs + DA), serial chain: 26181 (FM K2, no dependency) → 26182 (FM K10, `afterok:26181`) → 26183 (CI-MeanFM K10, `afterok:26182`); seed 6, tag `_msgR16`; Slurm names `_mn23_R16a_fm_K2`, `_mn23_R16b_fm_K10`, `_mn23_R16c_af_K10` |
+| R36a / R36b / R36c · R36 | **26184** · **26185** · **26186** | 5092e056 | ✅ **COMPLETE 24-09, verified** (logs + DA; FM data under `K3_thres1_mpc4_n2_msgR36`, its parent folder is misnamed K10 by the evaluator), continuing the chain: 26184 (CI-MeanFM K3, seeds 7–10, `afterok:26183`) → 26185 (FM K3, seeds 7–10, `afterok:26184`) → 26186 (MeanFM K10, seed 6, `afterok:26185`); tag `_msgR36`; Slurm names are the entrypoints' own: `eval_alphaflow_hardflow`, `eval_fmv3_hardflow_job`, `eval_meanflow_hardflow` |
 | A · R2 | **26051** | 999152f1 | ⚠ **η = 0.5, not the 0.2 Table 6.8 needs** (see above). RUNNING since 07:57 UTC; identity lines correct (`n_contexts 10 -> 10`, `combined_5` + twin, 4 variants, `_msglr22`). **Measured: ~18 min per unprojected item, ~75 min per projected item → ~8 h for the 8 items**, not the ledger's 1.5 h (the 265–450 ms/step figure is per replan, not per rollout wall time). Expected end ~16:00 UTC, inside the 12 h limit |
 | B1 · R26 train ×4 | **26052** s7 · **26053** s8 · **26054** s9 · **26055** s10 | 999152f1 | submitted 2026-09-22, 6 h limit each (the cluster copy predates the 12 h default; 2.2× the measured 2 h 41 m) |
 | B2 · R26 eval | ~~26056~~ → **26112** | 999152f1 | ✅ **COMPLETE 2026-09-23.** 5 seeds × 3 geometries × 2 episodes, 13 variants, no missing seeds. R26 is **data-complete**; preliminary DA in [`DA_20260923_diffusion_K2_five_seeds.md`](../../../../Data_Analysis/DA_in_Paper/analysis/DA_20260923_diffusion_K2_five_seeds.md). 26056 had run unchained and was cancelled (see above); 26112 was re-submitted via `submit_after.sh 26055` |

@@ -63,7 +63,7 @@ def _mjcf_geoms(scene_file):
     return out
 
 
-def _uav_scene(scene_file, cam, path_pts=None, start=None):
+def _uav_scene(scene_file, cam, path_pts=None, start=None, finish=None):
     # Figure 5.4 pairs this view with a MuJoCo render that carries the real reference path and
     # the vehicle (prep/render_mujoco_scenes.py), so the builders pass no path here: an
     # illustrative straight line through the pillars contradicted the weaving path above it.
@@ -87,12 +87,21 @@ def _uav_scene(scene_file, cam, path_pts=None, start=None):
            top=18, bottom=18)
     sc.ground(x0, x1, y0, y1, FLOOR, step=1.0)
     for t, _name, pos, size in geoms:
-        if t == 'box':
+        if t == 'box' and _name == 'finish_line':
+            # v3.84 (author): every scene's finish line in the colour of D3IL-avoiding's goal line
+            sc.box(pos, size, GOAL, opacity=0.95)
+        elif t == 'box':
             # Translucent on purpose: at any angle that shows the corridor is a
             # corridor, the near wall stands between the reader and the flight path.
             sc.box(pos, size, WALL, opacity=0.5)
         else:
             sc.cylinder(pos, size[0], size[1], PILLAR)
+    if finish:
+        # v3.84 (author, 24-09): "mark the endline of the corridor and the s_curve ... direct put end of the
+        # wall for both". Neither scene file has a finish-line geom; the line is drawn across the corridor at
+        # the end of its walls, on the floor, as thick as the one of UAV-pillars.
+        fx, fy0, fy1 = finish
+        sc.box((fx, (fy0 + fy1) / 2, 0.01), (0.03, (fy1 - fy0) / 2, 0.005), GOAL, opacity=0.95)
     if path_pts:
         sc.path(path_pts, PATH, w=2.4, dash='7,5')
     if start:
@@ -108,7 +117,8 @@ def fig_scene_uav_corridor(outdir):
     """Corridor v2: the scene the corridor results are flown in (U16, 2026-09-13)."""
     sc = _uav_scene(
         'scene_corridor_v2.xml',
-        dict(azimuth=196, elevation=34))
+        dict(azimuth=196, elevation=34),
+        finish=(2.0, -0.95, 0.95))       # the end of the walls (x in [-2, 2]); the corridor is scored there (R45a)
     if sc is None:
         return None
     path = sc.save(os.path.join(outdir, 'fig_scene_uav_corridor.svg'))
@@ -129,7 +139,8 @@ def fig_scene_uav_pillars(outdir):
 def fig_scene_uav_scurve(outdir):
     sc = _uav_scene(
         'scene_s_curve.xml',
-        dict(azimuth=196, elevation=40))
+        dict(azimuth=196, elevation=40),
+        finish=(3.0, 0.35, 1.25))        # the end of the second segment's walls (x in [0.5, 3]); author, v3.84
     if sc is None:
         return None
     path = sc.save(os.path.join(outdir, 'fig_scene_uav_scurve.svg'))

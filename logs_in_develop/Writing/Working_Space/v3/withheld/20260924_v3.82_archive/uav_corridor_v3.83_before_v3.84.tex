@@ -1,0 +1,377 @@
+% ARCHIVED v3.84: the corridor block at v3.83 (S&C columns, steps-time frontier before/after with the near bar).
+\subsection{UAV-corridor}\label{sec:res:uav:corridor}
+
+The two constraints are read one at a time, as the avoiding geometries are: every table of this scene has a
+\emph{tilt} block and a \emph{hump} block, and nothing is averaged across them. A flight succeeds when it
+reaches the end of the corridor, the scene's finish line (\autoref{sec:setup:metrics:uav}), and every rate
+is the mean over the ten flights of a cell with the sample standard deviation over them, as on the
+single-seed tables of D3IL-avoiding.
+
+\subsubsection{Generative Models}\label{sec:res:uav:corridor:raw}
+Without projection every model reaches the end of the corridor on every flight at every budget, and none
+does so without violating the constraint (\autoref{tab:uav-corridor-raw}): a flight violates the tilt on
+$74.5$ to $99.4$ control steps on average and the hump on $28.6$ to $36.6$. The plans follow the level
+lanes of the demonstrations, which were flown before either boundary existed
+(\autoref{sec:setup:data:uav}), so the two blocks are the same flights read against two constraints: they
+share their steps, their time per action differs by at most $1.5$\,ms between the two runs, and they differ
+in what they violate. The flow-based models lie within
+one standard deviation of one another in violating steps; the diffusion baseline has the most under the
+tilt and the fewest over the hump. The flights take $242$ to $251$ control steps to the end of the
+corridor, and one action costs $9.1$ to $9.4$\,ms at one evaluation, $170.8$ to $172.3$\,ms at twenty and
+about $178$\,ms for the baseline.
+
+\begin{table}[htpb]
+  \caption[UAV-corridor: the generative models before projection]{UAV-corridor with the test-time
+  constraints, \textbf{before projection}: the plan flown as generated, ten flights per row spread over the
+  three routes, one training seed, one block per constraint. The grid: the two average-velocity models at
+  $\nfe\in\{1,2,3\}$, instantaneous-velocity matching at $\nfe\in\{1,2,3,5,20\}$, the diffusion baseline at
+  its trained budget. Columns as in \autoref{tab:avoiding-raw-models}, each mean $\pm$ the sample standard
+  deviation over the flights; \emph{Success}: reaches the end of the corridor
+  (\autoref{sec:setup:metrics:uav}); \emph{Steps}: control steps to it. \baselinemark\ the diffusion model
+  of \ac{DPCC}.}
+  \label{tab:uav-corridor-raw}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabularx}{\linewidth}{@{}L r rrrrr@{}}
+    \toprule
+    Model & $\nfe$ & Success & S\&C & \shortstack{Violating\\steps} & Steps & ms/step \\
+    \midrule
+    \multicolumn{7}{@{}l}{\emph{tilt}}\\
+    MeanFM & 1 & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $91.3 \pm 34.8$ & $246.4 \pm 7.0$ & $9.4 \pm 0.4$ \\
+    MeanFM & 2 & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $92.9 \pm 30.2$ & $247.3 \pm 4.8$ & $18.1 \pm 0.4$ \\
+    MeanFM & 3 & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $92.0 \pm 30.4$ & $246.5 \pm 5.0$ & $27.0 \pm 0.4$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $90.0 \pm 32.6$ & $242.4 \pm 4.3$ & $9.3 \pm 0.4$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2 & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $93.8 \pm 30.0$ & $246.2 \pm 5.5$ & $18.4 \pm 0.4$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $93.1 \pm 30.1$ & $245.4 \pm 4.9$ & $27.3 \pm 0.4$ \\
+    FM & 1 & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $74.5 \pm 25.6$ & $250.9 \pm 5.2$ & $9.1 \pm 0.4$ \\
+    FM & 2 & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $83.9 \pm 28.4$ & $251.2 \pm 2.9$ & $17.7 \pm 0.4$ \\
+    FM & 3 & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $87.0 \pm 28.3$ & $251.4 \pm 2.7$ & $25.9 \pm 0.5$ \\
+    FM & 5 & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $89.9 \pm 28.4$ & $249.7 \pm 2.5$ & $43.4 \pm 0.4$ \\
+    FM & 20 & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $94.7 \pm 27.0$ & $249.5 \pm 2.9$ & $170.8 \pm 0.4$ \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$1.000 \pm 0.000$} & \mainconfig{$0.000 \pm 0.000$} & \mainconfig{$99.4 \pm 27.0$} & \mainconfig{$242.4 \pm 4.2$} & \mainconfig{$178.1 \pm 0.8$} \\
+    \midrule
+    \multicolumn{7}{@{}l}{\emph{hump}}\\
+    MeanFM & 1 & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $36.0 \pm 8.9$ & $246.4 \pm 7.0$ & $9.4 \pm 0.4$ \\
+    MeanFM & 2 & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $35.6 \pm 8.1$ & $247.3 \pm 4.8$ & $18.2 \pm 0.4$ \\
+    MeanFM & 3 & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $35.7 \pm 7.8$ & $246.5 \pm 5.0$ & $27.2 \pm 0.4$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $36.6 \pm 8.4$ & $242.4 \pm 4.3$ & $9.3 \pm 0.4$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2 & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $35.6 \pm 7.9$ & $246.2 \pm 5.5$ & $18.0 \pm 0.4$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $35.6 \pm 7.6$ & $245.4 \pm 4.9$ & $27.1 \pm 0.4$ \\
+    FM & 1 & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $34.7 \pm 6.8$ & $250.9 \pm 5.2$ & $9.1 \pm 0.4$ \\
+    FM & 2 & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $32.6 \pm 7.8$ & $251.2 \pm 2.9$ & $17.5 \pm 0.3$ \\
+    FM & 3 & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $32.6 \pm 8.0$ & $251.4 \pm 2.7$ & $26.3 \pm 0.4$ \\
+    FM & 5 & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $32.0 \pm 7.9$ & $249.7 \pm 2.5$ & $43.6 \pm 0.4$ \\
+    FM & 20 & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $31.3 \pm 7.6$ & $249.5 \pm 2.9$ & $172.3 \pm 2.6$ \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$1.000 \pm 0.000$} & \mainconfig{$0.000 \pm 0.000$} & \mainconfig{$28.6 \pm 7.7$} & \mainconfig{$242.4 \pm 4.2$} & \mainconfig{$178.2 \pm 2.7$} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{R33 (\texttt{PENDING\_20260923\_uav\_corridor\_v3\_pillars\_v2\_paper\_runs.md}), landed 24-09:
+\texttt{temp/23-09-FULL/24-09-1000/batch\_uav\_20260924\_081422/per\_rollout\_detail.csv} and the flown paths
+in \texttt{temp/23-09-Corridor-TEMP/plans}, tags \texttt{p23cv3t} (tilt) and \texttt{p23cv3ah} (hump),
+CI-MeanFM \texttt{EPlatest\_p23cv3\{t,ah\}}; variant \texttt{diffuser}; the first ten flights of each cell.
+v3.83 (author: \enquote{the avoiding in chap6 result is clearly using the 0--1 and the 0.9X $\pm$ range}):
+rates over the ten flights with their sample standard deviation, the columns of Table 6.1, success at the
+end of the corridor (R45a), steps to it read from the npz on the start-of-step positions. Store:
+\texttt{DA\_in\_Paper/data/corridor\_v3\_frontier.json} (\texttt{plotting/extract/corridor\_v3\_frontier.py});
+the counts equal \texttt{DA\_20260924\_corridor\_v3.md} \S3.1 and the R45a DA.}
+
+Before projection the cost frontier is drawn over all of them: none satisfies the constraints, so every
+configuration is within the band of the best and competes on the two costs of
+\autoref{sec:res:avoiding:pareto}, control steps and time per action (\autoref{fig:uav-corridor-tradeoff},
+top). Two points are on it. Instantaneous-velocity matching at one evaluation is the cheapest, $250.9$
+control steps at $9.1$\,ms, and consistency-interpolated average-velocity matching at one evaluation the
+shortest, $242.4$ steps at $9.3$\,ms; it dominates analytic average-velocity matching at the same budget,
+which needs $246.4$ steps at $9.4$\,ms. The diffusion baseline flies the corridor in as few steps as the
+consistency-interpolated model, at nineteen times its time per action.
+
+\FloatBarrier
+\subsubsection{Projection}\label{sec:res:uav:projected}
+After projection every flow-based configuration still reaches the end of the corridor on every flight,
+except per-step projection at one and two evaluations over the hump, whose flights stop short of the apex
+(\autoref{tab:uav-corridor}). Projection buys most of the constraint on this scene, not all of it. The
+violating steps of a flight fall from $74.5$ to $99.4$ under the tilt and from
+$28.6$ to $36.6$ over the hump to $1.4$ to $10.4$ and $0.2$ to $8.3$, so that in every flow-based row of
+the table that reaches the end every flight is free of violations on at least $95\,\%$ of its control
+steps; but few are free of them on all. Strictly counted, the only flow-based configuration with violation-free successes is
+instantaneous-velocity matching at twenty evaluations under endpoint projection over the hump, $0.800$ of
+its flights at $291$\,ms per action. The diffusion baseline, under per-step projection, is violation-free
+on most of its flights: $0.800$ under the tilt at $666$\,ms and $1.000$ over the hump at $654$\,ms, each at
+its best rule. At the route's goal point, the line these flights were first scored at, the baseline reads
+$0.000$ under the tilt and at most $0.600$ over the hump, and every flow-based value is the same
+(\autoref{sec:setup:metrics:uav}): $41$ of its $60$ projected flights had passed the end of the corridor and
+were still flying towards the goal when the episode limit ended them. The budgets are read as one ladder
+across the scene: the per-step projector is active at every budget, endpoint projection at $\nfe\ge 3$,
+where it has a guiding step (\autoref{sec:res:constraints:degenerate}), so at $\nfe=1$ and $\nfe=2$ the
+table carries per-step rows only.
+
+\begin{table}[htpb]
+  \caption[UAV-corridor: the generative models after projection]{UAV-corridor \textbf{after projection}:
+  each model at each budget under the per-step projector of \ac{DPCC} and, from $\nfe=3$, under endpoint
+  projection, at its best selection rule (most S\&C, then fewest violating steps, then least time; every
+  rule in \autoref{app:uav-corridor-rules}); tightened constraints, activation threshold $0.5$, ten flights
+  per cell, one training seed. Columns as in \autoref{tab:uav-corridor-raw}; \emph{---}: no flight reaches
+  the end of the corridor. At the route's goal point the baseline's S\&C is $0.000$ (tilt) and $0.600$
+  under $t$ (hump); every other value is unchanged. \baselinemark\ the diffusion model of \ac{DPCC}.}
+  \label{tab:uav-corridor}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabularx}{\linewidth}{@{}L r c rrrrr@{}}
+    \toprule
+    Model & $\nfe$ & Rule & Success & S\&C & \shortstack{Violating\\steps} & Steps & ms/step \\
+    \midrule
+    \multicolumn{8}{@{}l}{\emph{tilt, per-step projection}}\\
+    MeanFM & 1 & $c$ & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $10.2 \pm 1.1$ & $253.2 \pm 4.4$ & $27.4 \pm 0.5$ \\
+    MeanFM & 2 & $c$ & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $10.3 \pm 0.9$ & $253.9 \pm 4.2$ & $36.4 \pm 0.8$ \\
+    MeanFM & 3 & $c$ & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $6.6 \pm 0.8$ & $256.4 \pm 2.9$ & $93.6 \pm 1.1$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & $c$ & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $10.3 \pm 0.9$ & $252.0 \pm 3.7$ & $27.9 \pm 0.5$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2 & $c$ & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $10.4 \pm 0.7$ & $251.9 \pm 2.4$ & $36.1 \pm 0.3$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & $c$ & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $5.0 \pm 0.8$ & $254.0 \pm 1.8$ & $93.4 \pm 1.2$ \\
+    FM & 1 & $c$ & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $10.2 \pm 1.5$ & $259.8 \pm 9.2$ & $27.6 \pm 1.5$ \\
+    FM & 2 & $c$ & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $9.8 \pm 1.4$ & $253.9 \pm 9.4$ & $34.7 \pm 0.5$ \\
+    FM & 3 & $c$ & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $5.8 \pm 1.5$ & $247.2 \pm 3.4$ & $79.2 \pm 3.2$ \\
+    FM & 5 & $c$ & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $4.4 \pm 1.5$ & $247.6 \pm 2.0$ & $116.9 \pm 2.4$ \\
+    FM & 20 & $c$ & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $2.1 \pm 0.7$ & $252.6 \pm 2.7$ & $360.4 \pm 1.5$ \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$c$} & \mainconfig{$1.000 \pm 0.000$} & \mainconfig{$0.800 \pm 0.422$} & \mainconfig{$0.8 \pm 1.8$} & \mainconfig{$290.3 \pm 15.5$} & \mainconfig{$666.3 \pm 16.7$} \\
+    \addlinespace[3pt]
+    \multicolumn{8}{@{}l}{\emph{tilt, endpoint projection}}\\
+    MeanFM & 3 & $c$ & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $7.6 \pm 1.3$ & $255.2 \pm 4.5$ & $73.5 \pm 0.8$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & $c$ & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $7.1 \pm 1.0$ & $253.2 \pm 3.5$ & $72.7 \pm 0.5$ \\
+    FM & 3 & $c$ & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $6.9 \pm 1.8$ & $257.8 \pm 3.3$ & $71.6 \pm 0.6$ \\
+    FM & 5 & $c$ & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $4.9 \pm 1.9$ & $256.6 \pm 2.9$ & $115.2 \pm 1.4$ \\
+    FM & 20 & $c$ & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $1.4 \pm 0.7$ & $269.8 \pm 10.5$ & $416.9 \pm 0.8$ \\
+    \midrule
+    \multicolumn{8}{@{}l}{\emph{hump, per-step projection}}\\
+    MeanFM & 1 & $c$ & $0.000 \pm 0.000$ & $0.000 \pm 0.000$ & $0.0 \pm 0.0$ & --- & $26.4 \pm 0.0$ \\
+    MeanFM & 2 & $r$ & $0.000 \pm 0.000$ & $0.000 \pm 0.000$ & $0.0 \pm 0.0$ & --- & $35.0 \pm 0.4$ \\
+    MeanFM & 3 & $c$ & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $4.9 \pm 0.9$ & $286.3 \pm 4.3$ & $91.1 \pm 1.8$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & $t$ & $0.000 \pm 0.000$ & $0.000 \pm 0.000$ & $0.0 \pm 0.0$ & --- & $26.6 \pm 0.3$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2 & $r$ & $0.000 \pm 0.000$ & $0.000 \pm 0.000$ & $0.0 \pm 0.0$ & --- & $35.4 \pm 0.2$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & $c$ & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $4.6 \pm 0.8$ & $282.7 \pm 3.6$ & $89.2 \pm 1.9$ \\
+    FM & 1 & $c$ & $0.000 \pm 0.000$ & $0.000 \pm 0.000$ & $0.0 \pm 0.0$ & --- & $26.2 \pm 0.2$ \\
+    FM & 2 & $r$ & $0.000 \pm 0.000$ & $0.000 \pm 0.000$ & $0.0 \pm 0.0$ & --- & $34.5 \pm 0.4$ \\
+    FM & 3 & $c$ & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $5.6 \pm 0.5$ & $277.0 \pm 7.3$ & $77.1 \pm 2.7$ \\
+    FM & 5 & $c$ & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $3.9 \pm 0.7$ & $277.8 \pm 7.0$ & $114.1 \pm 2.3$ \\
+    FM & 20 & $c$ & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $1.8 \pm 0.4$ & $285.1 \pm 5.6$ & $355.2 \pm 2.2$ \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$r$} & \mainconfig{$1.000 \pm 0.000$} & \mainconfig{$1.000 \pm 0.000$} & \mainconfig{$0.0 \pm 0.0$} & \mainconfig{$320.8 \pm 53.6$} & \mainconfig{$654.2 \pm 89.7$} \\
+    \addlinespace[3pt]
+    \multicolumn{8}{@{}l}{\emph{hump, endpoint projection}}\\
+    MeanFM & 3 & $c$ & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $8.0 \pm 1.5$ & $287.7 \pm 4.9$ & $72.1 \pm 0.3$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & $c$ & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $8.0 \pm 1.2$ & $284.6 \pm 2.8$ & $71.9 \pm 0.6$ \\
+    FM & 3 & $c$ & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $8.3 \pm 1.1$ & $299.3 \pm 4.7$ & $71.9 \pm 1.0$ \\
+    FM & 5 & $c$ & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $3.9 \pm 0.3$ & $292.8 \pm 3.7$ & $112.4 \pm 0.6$ \\
+    FM & 20 & single & $1.000 \pm 0.000$ & $0.800 \pm 0.422$ & $0.2 \pm 0.4$ & $316.2 \pm 6.3$ & $291.0 \pm 0.8$ \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{R33, the batch, npz and tags of \autoref{tab:uav-corridor-raw}; per-step = \texttt{dpcc-\{r,c,t\}}
+at $\eta=0.5$, endpoint = \texttt{hardflow\_sls\{,-r,-c,-t\}}, both with the corridor's stack
+\texttt{-bounds\_free-pdes-tightened} (\autoref{sec:setup:protocol:uav}). Success and S\&C at the end of the
+corridor, read as the evaluation latches (R45a, \texttt{DA\_20260924\_corridor\_v3\_R45a\_clear\_line.md} \S2;
+on recorded start positions only, hump $r$ would read $0.900$ and the best rule be $c$, DA \S3). The best
+rule is the same under the near-satisfaction bar for every configuration. Store:
+\texttt{data/corridor\_v3\_frontier.json}.}
+
+The budget makes the violations fewer and shallower and does not remove them. Wherever the flights reach
+the end of the corridor, the violating steps per flight fall with the budget, under both constraints and
+both projection methods. Under the tilt they fall from $9.8$ to $11.1$ at one and two evaluations to $2.1$
+to $3.2$ at twenty under per-step projection and to $1.4$ to $2.5$ under endpoint projection, and the
+deepest of them from $8.8$ to $11.9$\,cm to $1.3$ to $2.2$ and $1.0$ to $1.3$\,cm. Over the hump they fall
+from $4.6$ to $6.5$ under per-step and $8.0$ to $10.4$ under endpoint projection at three evaluations to
+$1.8$ to $2.2$ and $0.2$ to $0.7$ at twenty. The budget at which a flight stops reaching the finish line lies
+at the other end of the ladder: under per-step projection at one and two evaluations $177$ of the $180$
+flow-based flights over the hump stop short of the apex, and the other three reach the end of the corridor
+only after drifting across the boundary of its wall. The baseline, at its one budget, is the slowest
+planner on the scene: its projected flights need $290$ (tilt) and $321$ (hump) control steps to the end of
+the corridor, against $247$ to $270$ and $277$ to $316$ for the flow-based ones, and $623$ to $680$\,ms
+per action, the highest price of the scene.
+
+The frontier after projection is drawn at the corridor's near-satisfaction bar
+(\autoref{fig:uav-corridor-tradeoff}, bottom): a configuration is in the band when its share of flights that
+reach the end of the corridor with at least $95\,\%$ of their control steps free of violations is within
+$0.05$ of the best, which every configuration that reaches the end does, and the band then competes on
+control steps and time as on D3IL-avoiding. The frontier belongs to the flow-based models, and its cheap end
+to the average-velocity objectives. Under the tilt it runs from analytic average-velocity matching at one
+evaluation, $253.2$ steps at $27.4$\,ms, through consistency-interpolated average-velocity matching at one
+and two evaluations to instantaneous-velocity matching at three evaluations under per-step projection, the
+fewest steps, $247.2$, at $79.2$\,ms. Over the hump it is two points: consistency-interpolated
+average-velocity matching at three evaluations under endpoint projection, $284.6$ steps at $71.9$\,ms, and
+instantaneous-velocity matching at three under per-step projection, $277.0$ at $77.1$\,ms. At the cheapest
+budget, then, an average-velocity model dominates instantaneous-velocity matching: under the tilt at one
+evaluation it reaches the end in fewer steps at no more time, $253.2$ against $259.8$ at $27.4$ against
+$27.6$\,ms, and over the hump at three evaluations with endpoint projection, $284.6$ against $299.3$ at the
+same $71.9$\,ms. Under the tilt the margin is smaller than the spread of instantaneous-velocity matching
+over its flights, $\pm9.2$ steps; over the hump it is three times the larger of the two spreads. The
+baseline is dominated in both panels, with more steps at nine to twenty-four times the time. Two readings
+bound this. At the strict count the band holds the baseline alone in both panels: it has the highest share of
+violation-free successes, and nothing else comes within $0.05$ of it. At a bar of $97\,\%$ the one- and
+two-evaluation cells under the tilt fall out of the band and the tilt's frontier is instantaneous-velocity
+matching at three evaluations under per-step projection alone, while over the hump it is unchanged; a bar
+below about $87\,\%$ would count unprojected flights over the hump as near-satisfying.
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=\linewidth]{fig_uav_corridor_tradeoff}
+  \caption[UAV-corridor: steps against cost, before and after projection]{UAV-corridor, control steps to the
+  end of the corridor against the time to compute one action, before (a, b) and after (c, d) projection:
+  one point per model, budget and projection method at its best rule; colour the model, circles per-step
+  projection or none, squares endpoint projection, the number its budget. Rings and the dashed staircase
+  mark the non-dominated points of the band, S\&C within $0.05$ of the best before projection, the
+  near-satisfaction rate after (\autoref{sec:setup:metrics:uav}); bold labels give strict S\&C above zero.
+  (a) and (b) are the same flights. Ten flights per point, one training seed.}
+  \label{fig:uav-corridor-tradeoff}
+\end{figure}
+\dataref{Store figure \texttt{DA\_in\_Paper/figures/da/fig\_uav\_corridor\_tradeoff}
+(\texttt{builders/frontier.py::fig\_uav\_corridor\_tradeoff}, v3.83, replacing the archived v2 builder) on
+\texttt{data/corridor\_v3\_frontier.json}; frontier rule \texttt{sources.pareto\_front} (band $0.05$), the
+avoiding figure's. Near-satisfaction bar and its sensitivity: \texttt{DA\_20260924\_corridor\_v3\_R45a\_clear\_line.md}
+Appendix C ($0.90$ gives the same frontier; the floor, unprojected flights $\approx66\,\%$ tilt and $87\,\%$
+hump violation-free). At $97\,\%$ (same rule): tilt MeanFM/CI-MeanFM $\nfe=1$ $1/10$, FM $\nfe=1$ $2/10$,
+$\nfe=2$ $0$--$2/10$, every $\nfe=3$ per-step cell $10/10$; hump CI-MeanFM and FM $\nfe=3$ endpoint $10/10$,
+MeanFM $8/10$. The author asked (24-09) whether MeanFM or CI-MeanFM can be shown to dominate FM: in time
+per action alone they tie (DA App.~C); in the frontier of D3IL-avoiding, steps and time at equal
+satisfaction, they do at the cheapest budget, as stated. Steps: first start-of-step position past $x=2.0$.
+Points coincident on the page are nudged apart horizontally by a few pixels; the data are not.}
+
+Where the violating steps lie is seen in the flights themselves (\autoref{fig:uav-corridor-side}), drawn
+for instantaneous-velocity matching, the one flow-based model flown at twenty evaluations, without
+projection and under per-step projection at one and at twenty evaluations. Under the tilt the unprojected
+flights stay level, so their margin to the leaned plane shrinks steadily along the corridor, to as much
+as $0.37$\,m inside the plane at its end. The projected flights move sideways and down until they hold a few
+centimetres clear of the plane, and every one of them cuts into it in the last $0.3$\,m of the plane's
+span: every violating step of every projected flight, on every model, budget and projection method, lies
+between $x=1.71$ and $2.00$\,m. At the first violating step of each projected flow-based flight the
+commanded position is already past the end of the plane, at $x=2.27$ to $2.52$\,m and $0.49$ to
+$0.61$\,m ahead of the vehicle, and at every violating step the commanded position itself is clear of the
+constraint. The plane is enforced over its span of $x$, and on this scene the span is checked at the
+commanded position: once that position has left the span, the plan is released from the plane and
+returns toward its route, and the vehicle, half a metre behind, follows it into the plane. The violating
+steps under the tilt are thus the vehicle catching up with a plan that has already left the constraint,
+which is why the budget makes them shallower without removing them. The baseline's projected flights leave
+the corridor further to the side of their routes --- a median of $0.37$\,m, against $0.19$\,m for the
+flow-based flights --- and stay there, and three to eight of ten of them fly the scene without a
+violation.
+
+Over the hump the unprojected flights stay level and pass through the roof. Under per-step projection at one
+evaluation every flight climbs along the boundary and stops $0.12$ to $0.13$\,m short of the apex, at
+$1.42$ to $1.43$\,m, where it stays until its $396$ control steps run out. At one and two evaluations
+all three flow-based models stop this way, on $174$ of their $180$ flights, $0.01$ to $0.17$\,m short of
+the apex; the other six clear the apex and then drift sideways across the boundary of the corridor wall.
+Two properties of the setup meet at the apex. The plans never rise above $1.30$\,m, the top of the
+altitude range of the demonstrations (dotted in \autoref{fig:uav-corridor-side}), while the apex asks for
+$1.48$\,m. And each face of the roof, like the tilt, is enforced over its span of $x$ checked at the
+commanded position, so while that position is short of the apex the rising face binds the whole plan,
+including its part beyond the apex, where the face keeps rising. Both hold at every budget. At one and
+two evaluations the corrected plan settles short of the apex; from three on it does not, and at twenty
+the flights cross the apex grazing the boundary by about a centimetre and descend toward their route
+altitude before the line.
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=\linewidth]{fig_uav_corridor_side}
+  \caption[UAV-corridor: the flights along the corridor]{UAV-corridor along the corridor,
+  instantaneous-velocity matching, ten flights per series, one training seed: without projection at
+  $\nfe=1$ (grey) and under per-step projection with cumulative-cost selection at $\nfe=1$ and $\nfe=20$
+  (blue). (a, b) Tilt: the margin of the flown position to the leaned plane, less the rotor reach, over
+  the plane's span of $x$; a control step below the dashed line violates. (c, d) Hump: altitude over $x$,
+  the roof shaded, the violation boundary dashed, the highest planned altitude dotted; a circle ends a
+  flight short of the finish line.}
+  \label{fig:uav-corridor-side}
+\end{figure}
+\dataref{Store figure \texttt{DA\_in\_Paper/figures/da/fig\_uav\_corridor\_side} (builder
+\texttt{builders/altitude.py::fig\_uav\_corridor\_side}; extract \texttt{extract/corridor\_v3\_side.py}
+$\to$ \texttt{data/corridor\_v3\_side.json}), cells read through \texttt{analysis/corridor\_v3\_grid.py}:
+FM, \texttt{diffuser} at $\nfe=1$ and \texttt{dpcc-c-bounds\_free-pdes-tightened} at 1 and 20, the first
+ten flights; $c$ is FM's best per-step rule at both budgets and both constraints (\autoref{tab:uav-corridor}).
+Margin $=\mathbf{n}\cdot(\mathbf{p}-\mathbf{p}_0)-0.31$ with the evaluation's own \texttt{\_hs\_normal3};
+hump boundary $=$ roof $+\,0.31\sqrt{1+s^2}$, $s=1.10/1.5$; highest planned altitude $1.2992$\,m, the
+largest planned $z$ of the drawn cells. Violating-step positions of all $560$ projected tilt flights,
+$4115$ steps: $1.709\le x\le 2.000$, $99\,\%$ at $x\ge 1.75$ (the DA's $[1.75,2.00]$ is its 5--95\,\%
+range). Commanded position at the first violating step, $530$ projected flow-based flights: $x=2.27$--$2.52$
+(median $2.38$), $0.49$--$0.61$\,m ahead (median $0.55$); clear of the constraint at $4014$ of $4014$
+violating steps. Span check at the commanded position under \texttt{-pdes}:
+\texttt{eval\_mix\_uav.py:1830--1833} (\texttt{\_gate\_x = p\_des[0]}) and \texttt{:1483--1484}. Hump
+stops: per flight $x=-0.174$ to $-0.006$, $z=1.38$ to $1.51$\,m, every flight on the $396$-step cap; the six
+others are MeanFM and CI-MeanFM at $\nfe=2$ under $t$, three each, wall violations with no collision
+(\texttt{phys\_contact\_frac} $0$), ending $0.95$--$1.79$\,m from the goal. Plan bound: every stored plan
+$z\in[0.9008,1.2992]$\,m (DA \S4.2, \texttt{LimitsNormalizer.unnormalize}); a third cause the DA names ---
+the correction is the smallest in normalised coordinates --- is not stated in the text. Replaces the
+three placeholders \texttt{fig:uav-corridor-tradeoff}, \texttt{-paths}, \texttt{-altitude} (v3.80).}
+
+\paragraph{Altitude.} Both constraints of this scene act on altitude, and that is what they are for: under
+the tilt the room is below the launch altitude, so a projected flight has to descend as it moves sideways;
+under the hump it has to climb. Unprojected, every model flies level, between $0.83$ and $1.27$\,m where
+the constraints act. Projected, the lowest altitude under the tilt drops on $540$ of the $560$ projected
+flights, by a median of $0.12$ to $0.37$\,m per configuration, and the highest altitude over the hump
+rises on all $560$, by a median of $0.27$ to $0.39$\,m and on single flights by up to $0.60$\,m
+(\autoref{tab:uav-corridor-altitude}). Under the tilt the descent deepens with the budget, from $0.12$ to
+$0.19$\,m for the two average-velocity models at one and two evaluations to $0.21$ to $0.26$\,m at three,
+and from $0.19$ to $0.25$\,m for instantaneous-velocity matching at one and two to $0.35$ to $0.37$\,m at
+twenty; the climb over the hump does not.
+
+\begin{table}[htpb]
+  \caption[UAV-corridor: the altitude change under projection]{UAV-corridor, the altitude change that
+  projection makes: under the tilt the lowest altitude over $0.5\le x\le 2.0$\,m, over the hump the
+  highest over $-0.5\le x\le 0.5$\,m, each the projected flight minus the unprojected flight of the same
+  trial, as the median over a cell's ten flights. The range runs over the model's projected cells: every
+  budget, projection method and selection rule. One training seed. \baselinemark\ the diffusion model of
+  \ac{DPCC}.}
+  \label{tab:uav-corridor-altitude}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{5pt}
+  \begin{tabularx}{\linewidth}{@{}L l rr@{}}
+    \toprule
+    Model & $\nfe$ & \shortstack{tilt: lowest altitude,\\median change (m)} & \shortstack{hump: highest altitude,\\median change (m)} \\
+    \midrule
+    MeanFM & 1, 2, 3 & $-0.26$ to $-0.13$ & $+0.33$ to $+0.39$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1, 2, 3 & $-0.26$ to $-0.12$ & $+0.33$ to $+0.39$ \\
+    FM & 1, 2, 3, 5, 20 & $-0.37$ to $-0.19$ & $+0.27$ to $+0.36$ \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$-0.30$ to $-0.22$} & \mainconfig{$+0.32$ to $+0.34$} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{DA \S3.6 and Appendix B (median per cell and rule), recomputed from the npz at v3.80 with
+\texttt{corridor\_v3\_grid.altitude}; flights paired by trial index. $540$ of $560$ tilt flights descend
+(the $20$ that do not: MeanFM $8$, CI-MeanFM $10$, FM $2$, each within $+0.11$\,m); $560$ of $560$ hump
+flights climb. The unprojected band is the range of the same window extremes. The v3.65 pilots
+($-0.15$ to $-0.29$, $+0.30$ to $+0.40$) lie inside these ranges.}
+
+UAV-pillars is not drawn as a cost frontier: its result is the difference between a plan's outcome on
+D3IL-avoiding and the outcome of the same plan flown, which is a comparison and not a trade-off
+(\autoref{sec:res:uav:models}). UAV-s-curve has data, but no configuration flown on it succeeds with
+constraint satisfaction (\autoref{tab:uav-scurve}); a cost frontier over points that all share one outcome
+is a ranking of failures by price, so that scene gets the abort count printed beside each of its rows
+instead.
+
+\FloatBarrier
+\subsubsection{Projection Methods}\label{sec:res:uav:projection}
+Per-step and endpoint projection separate on this scene only at twenty evaluations
+(\autoref{tab:uav-corridor}; every selection rule in \autoref{app:uav-corridor-rules}). At three and five evaluations the two are level, at no
+violation-free success under either constraint; endpoint projection is as cheap or cheaper, $44$ to
+$74$\,ms per action against $77$ to $94$ at three evaluations and $73$ to $115$ against $112$ to $118$ at
+five, and it leaves more violating steps: at three evaluations about two more per flight under the tilt
+($6.9$ to $9.2$ against $5.0$ to $7.5$) and about four more over the hump ($8.0$ to $10.4$ against $4.6$
+to $6.5$), at five about one more. At twenty evaluations endpoint projection leaves fewer and shallower
+violating steps than per-step projection under the tilt, $1.4$ to $2.5$ per flight and at most
+$1.3$\,cm deep against $2.1$ to $3.2$ and $2.2$\,cm, and
+over the hump it is the only flow-based configuration that succeeds violation-free, on four to eight
+flights of ten depending on the rule, where per-step projection succeeds on none. The bar this thesis set
+for endpoint projection, to overtake the per-step projector of \ac{DPCC} at a lower cost, is met on one
+constraint at one budget: over the hump at twenty evaluations with a single candidate, eight
+violation-free successes against none, at $291$ against $355$\,ms per action. With four candidates it
+still overtakes the per-step projector there, at a higher cost ($422$ to $425$\,ms).
+
+\guard{Endpoint projection has no row at $\nfe=1$ or $\nfe=2$ on this scene and will not get one: at the
+activation threshold of $0.5$ the only active sampling step there is the terminal one, so there is no
+guiding step for the method to act on (\autoref{sec:res:constraints:degenerate}). That is a property of
+the method at those budgets, not a pending evaluation. The baseline has no endpoint rows for another
+reason: endpoint projection adds its control to a velocity field (\autoref{sec:method:hardflow}), which
+the diffusion model does not have.}
+
+The projection configuration of this scene differs from that of the other quadrotor scene
+(\autoref{sec:setup:protocol:uav}), so the scenes are not pooled.
+
+\FloatBarrier
