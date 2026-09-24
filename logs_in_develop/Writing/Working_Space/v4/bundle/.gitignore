@@ -1,0 +1,9 @@
+# Ignore all generated flat thesis tex files, zips, staging, and output directory
+output/
+out/
+*.tex
+*.zip
+bibliography*.bib
+figures/
+__pycache__/
+*.pyc

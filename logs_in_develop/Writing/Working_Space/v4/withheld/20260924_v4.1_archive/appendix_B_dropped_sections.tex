@@ -1,0 +1,94 @@
+% =============================================================================
+%  ARCHIVED at v4.1 (author, 2026-09-24, point 11): sections of Appendix B "Extended Results"
+%  that are not among the five the author keeps. Taken verbatim from chapters/09_appendix.tex
+%  (the v4.1a state is 09_appendix_v4.1a_before_B_trim.tex beside this file); the data records
+%  they \input are in app_long/ in this folder. Not built.
+% =============================================================================
+
+% ---- was B.1 D3IL-avoiding at Every Evaluated Budget and B.2 Endpoint Projection with One Candidate Plan ----
+\section{D3IL-avoiding at Every Evaluated Budget}\label{app:avoiding-budgets}
+\longdata{two tables, every budget under the protocol of DPCC; the paragraph below stays, the tables
+move to the web link}
+
+Analytic average-velocity matching and the diffusion baseline were also evaluated under the protocol
+of \ac{DPCC} at $\nfe = 5$ and $10$, on the same five training seeds $\times$ three geometries $\times$
+two episodes. Without projection their success with constraint satisfaction stays between $0.000$ and
+$0.167$ with $14.2$ to $19.1$ violating steps per episode; under per-step projection analytic
+average-velocity matching reads $0.833$ to $0.933$ at $210$ to $402$\,ms per control step, and the
+baseline at ten denoising steps $1.000$ in $68.7$ control steps at $321.7$\,ms under temporal
+consistency. Neither budget lies on the cost frontier of \autoref{sec:res:avoiding:pareto}.
+\ifappendixfull
+\input{chapters/app_long/avoiding_budgets}
+\else
+\label{tab:app:avoiding-raw-full}\label{tab:app:avoiding-dpcc-full}
+\fi
+
+\section{Endpoint Projection with One Candidate Plan on D3IL-avoiding}\label{app:avoiding-endpoint-ladder}
+\longdata{one table, the single-candidate ladder archived at v3.66; the paragraph below stays, the
+table moves to the web link}
+
+Analytic average-velocity matching under endpoint projection with one candidate plan, at activation
+threshold $0.5$ and temporal consistency, on five training seeds $\times$ three geometries $\times$ two
+episodes, reads $1.000$, $0.933$, $0.933$ and $0.833$ success with constraint satisfaction in $63.8$ to
+$66.6$ control steps at $\nfe = 1$, $2$, $5$ and $10$, beside per-step projection with four candidate
+plans at the same budgets. It is not priced on the same work as \autoref{tab:avoiding-projectors},
+which gives both methods four candidates.
+\ifappendixfull
+\input{chapters/app_long/avoiding_endpoint_ladder}
+\else
+\label{tab:app:hf-ladder-detail}
+\fi
+
+
+% ---- was B.7 UAV-s-curve under Every Selection Rule and B.8 UAV-s-curve at the Budgets on Disk ----
+\section{UAV-s-curve under Every Selection Rule}\label{app:uav-scurve-rules}
+
+\autoref{tab:uav-scurve-projection} prints per-step projection on UAV-s-curve at the rule carried into the
+controller comparison of \autoref{tab:uav-controller}; \autoref{tab:app:uav-scurve-rules} prints all three. The
+three rules cross the finish line on five flights of ten each. The tie is broken by aborted flights first,
+because on this scene a flight that aborts stops counting its violating steps, and then by violating steps:
+random selection and cumulative projection cost abort on three flights, temporal consistency on five, and
+random selection violates on fewer steps than cumulative projection cost, $71.3$ against $74.7$. Temporal
+consistency, the rule the flow-based models are operated with on D3IL-avoiding (\autoref{sec:res:ablations}),
+has the fewest violating steps here, $37.2$, because more of its flights end early.
+
+\begin{table}[htpb]
+  \caption[UAV-s-curve: per-step projection under every selection rule]{UAV-s-curve, FM at $\nfe=1$ under
+  per-step projection with each selection rule, the cascaded geometric controller, ten flights per row, one
+  training seed; columns as in \autoref{tab:uav-scurve}. \selectedmark\ the rule carried into
+  \autoref{tab:uav-scurve-projection} and \autoref{tab:uav-controller}.}
+  \label{tab:app:uav-scurve-rules}
+  \centering
+  \small
+  \begin{tabularx}{\linewidth}{@{}L r r r r r@{}}
+    \toprule
+    Selection rule & Success & \shortstack{Violating\\steps} & Distance [m] & Aborted & ms/step \\
+    \midrule
+    \mainconfig{\selectedmark\ random} & \mainconfig{5/10} & \mainconfig{$71.3 \pm 66.6$} & \mainconfig{$0.572 \pm 0.345$} & \mainconfig{3/10} & \mainconfig{157.1} \\
+    cumulative cost       & 5/10 & $74.7 \pm 95.9$ & $1.007 \pm 0.969$ & 3/10 & 163.8 \\
+    temporal consistency  & 5/10 & $37.2 \pm 19.6$ & $0.817 \pm 0.950$ & 5/10 & 135.9 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{R44b, job 26195, tag \texttt{p23scproj}, \texttt{dpcc-\{r,c,t\}-tightened};
+\texttt{DA\_20260924\_scurve\_R44bc\_projection\_controller.md} \S2--\S3 (the tie-break is the order of
+\texttt{data\_status/PENDING\_20260923\_uav\_scurve\_R44\_raw\_first.md} \S4); distances \texttt{analysis/scurve\_goal\_dist\_sd.py}.
+v3.93 (author: \enquote{why they are back??? Temporal consistency. Table 6.14 we use the -t?}): moved from the main
+table, as for UAV-corridor (\autoref{app:uav-corridor-rules}).}
+
+\section{UAV-s-curve at the Budgets on Disk}\label{app:uav-scurve-budgets}
+\longdata{three tables of cells flown before the grid of \autoref{tab:uav-scurve}; the paragraph below
+stays, the tables move to the web link}
+
+Before the grid of \autoref{tab:uav-scurve} was laid out, analytic average-velocity matching was flown
+at $\nfe = 10$ and the consistency-interpolated model at $\nfe = 5$ without projection, ten flights
+each: none and two of ten crossings, ten and eight flights aborted, $88.8$ and $45.0$\,ms per control
+step. Their projected cells were flown on the plain constraint set and are withdrawn; every projected
+result of UAV-s-curve in \autoref{ch:results} is on the tightened set.
+\ifappendixfull
+\input{chapters/app_long/uav_scurve_budgets}
+\else
+\label{tab:app:uav-scurve-unprojected-extra}\label{tab:app:uav-scurve-aborts}\label{tab:app:uav-scurve-variants}
+\fi
+
+\FloatBarrier

@@ -1,0 +1,118 @@
+\chapter{Discussion}\label{ch:discussion}
+
+What the results of \autoref{ch:results} do not cover is stated here: the limits of the framework
+(\autoref{sec:disc:limitations}), what a deployment has to add to it (\autoref{sec:disc:practice}),
+and the work that follows from where the results stop (\autoref{sec:disc:future}).
+
+\section{Limitations}\label{sec:disc:limitations}
+
+\paragraph{The plan is a sequence of positions.} The generative model plans position increments and
+never an actuator command; everything below the increment is the plant's controller
+(\autoref{sec:method:setpoint}). The projection's dynamics model is a first-order integrator over the
+commanded quantity, so feasibility is a statement about that model and its mismatch bound, which the
+tightening absorbs, and not about the plant. On the manipulator this holds, because the end effector
+tracks its setpoint within the margin; on the quadrotor whether a plan can be flown is the
+controller's, which is what UAV-s-curve shows.
+
+\paragraph{A constraint is what is declared.} The projector holds a plan inside the declared geometry,
+halfspaces and keep-out regions, and protects nothing else. On UAV-pillars five of the six pillars are
+in no constraint set and a third of the flights end on them. Whether a scene is safe follows from its
+constraint set and not from the projection; the remedy is a constraint per obstacle, or a margin beyond
+the rotor reach, and it is a decision of scene design. The span over which a wall or a plane acts is
+checked at the commanded position, half a metre ahead of the vehicle on the corridor, which leaves the
+hand-over residue at the end of every plane.
+
+\paragraph{Endpoint projection is defined on a velocity field.} It adds its control to the field of a
+flow-based sampler and has no counterpart for the diffusion model, whose reverse chain has none
+(\autoref{sec:method:hardflow}). The comparison of the two projection methods is therefore made within
+the flow-based family, and the diffusion baseline is read under per-step projection alone.
+
+\paragraph{Plan quality is read through violating steps and the drawn plans.} The plans are scored by
+success, constraint satisfaction, control steps and time, and inspected as drawn (\autoref{fig:raw-plans},
+\autoref{fig:uav-scurve-plans}). No curvature, jerk or path-length measure is taken over the stored
+plans, so the ribbon of the average-velocity models against the scribble of the one-step baseline, and
+the rough low-budget plans that cross the s-curve most often, are read from the drawings and the counts
+beside them.
+
+\paragraph{Scope of the transfer.} The vision-conditioned task adds camera observations and contact to
+the manipulator in one step; the state-observed form of the alignment task was not run, so what
+D3IL-aligning shows is that the result survives a harder, differently observed task, and not the step
+from state to vision alone. The quadrotor is observed through its state, at one altitude on UAV-pillars,
+where the plan carries no altitude, and within the $0.90$ to $1.30$\,m of the demonstrations elsewhere.
+D3IL-aligning, UAV-corridor and UAV-s-curve are evaluated on one training seed, D3IL-avoiding and
+UAV-pillars on five (\autoref{tab:protocol}). No loop of this thesis was run in real time, and no environment is a physical system.
+
+\section{Towards Deployment}\label{sec:disc:practice}
+
+Three properties of the framework carry into practice as it stands. The constraints enter only at
+sampling time, through the projection; nothing about them reaches training, so a new restriction is a
+change of the constraint set and not a training run, and the feasible set can be replaced between two
+replans, as the switched walls of the quadrotor scenes are (\autoref{sec:method:env:uav}). The step
+budget is a deployment choice: the same checkpoint of a flow-based model is read at one evaluation on
+D3IL-avoiding and at twenty on D3IL-aligning, where a diffusion model needs one checkpoint per budget.
+And the plan is a sequence of positions that a tracking controller follows, which is what let one
+planner fly the quadrotor unchanged.
+
+Two quantities bound that use. A plan is held inside the declared geometry only, so the constraint set
+has to name every obstacle that matters, with a margin that covers the vehicle's extent, and the
+channel it leaves has to be flyable by the controller: on the corridor the commanded position runs
+$0.49$ to $0.61$\,m ahead of the vehicle, on the s-curve about $0.3$\,m, and the vehicle follows the
+commanded path to within about a centimetre sideways. And the time to compute one action, $18$\,ms at
+the operating point of D3IL-avoiding and $266$ to $275$\,ms on D3IL-aligning on the node of record,
+prices the planner alone; the execution adds its own, $5$\,ms per control step for the cascaded
+geometric controller and $125$\,ms for MuJoCo MPC on the s-curve, and the manipulator's inverse
+kinematics and joint controller were not timed. No loop of this thesis was run in real time;
+the simulation waits for the planner (\autoref{sec:method:geometric}).
+
+What a deployment can leave out is the candidate machinery of \ac{DPCC}. With a single candidate plan
+the three selection rules select the same plan, and success and control steps are identical in all
+fifteen seed--geometry cells of every model on D3IL-avoiding; with four candidates the generation time
+changes by at most six per cent, because the four are one batched network evaluation, and the
+projection time grows by a factor of $3.2$ to $4.9$, because the four programs are solved one after
+another on the CPU. On UAV-corridor endpoint projection with one candidate costs $291$\,ms per action
+against $422$ to $425$\,ms with four, and leaves $0.2$ violating steps against $0.4$ to $0.7$. Where
+four candidates are kept, the rule matters by model: instantaneous-velocity matching holds $1.000$
+under all three rules, while the two average-velocity models are operated with temporal consistency,
+since cumulative projection cost, the rule of \ac{DPCC}, occasionally selects a plan that stalls and
+costs them control steps, $72.4$ and $97.2$ against $58.6$ and $59.4$ for analytic average-velocity
+matching at one and two evaluations. Solving the four programs in parallel would take that model at
+one evaluation from $18.1$ to about $11.7$\,ms per control step, a prediction from two measured points.
+
+\section{Future Work}\label{sec:disc:future}
+
+\begin{description}
+  \item[Demonstrations for the quadrotor.] The demonstrations of UAV-corridor and UAV-s-curve are
+    generated, one path forward from every position, and the s-curve's plans cut the corner that the
+    demonstrated route clears. Human demonstrations of the quadrotor scenes, from a pilot in the loop
+    of a simulator or from flight logs, would give the average-velocity objectives the multimodal data
+    on which they separate and the s-curve a route its plans do not cut; NVIDIA Isaac Sim, a simulator
+    with a rendered scene and a pilot interface, is the way to record them without a vehicle.
+  \item[The controller.] On the s-curve the projector binds the measured position while the
+    corridor's binds the commanded one; the projector that binds both was not flown there. A plan that
+    carries a velocity setpoint, or a controller that reads the next positions of the plan as
+    feed-forward, would close the lead between the commanded and the flown position from which the
+    hand-over residue and the corner cut come.
+  \item[Real-time execution.] The execution stack has to be timed and the loop run without waiting for
+    the planner: the planner at one evaluation, the projector solved in parallel over the candidates,
+    or with a single candidate where the rule selects the same plan, and the controller at its own rate.
+  \item[Constraints from perception.] The projector consumes a short list of primitives with metric
+    extent, halfspaces, keep-out disks and spheres and a workspace box, each in the planner's frame and
+    each with its feasible side. A perception front-end that emits that list from depth or range
+    sensing, and a map that keeps it beyond the field of view, is what a deployment outside the
+    simulator needs; the uncertainty of the detector belongs in the inflation margin the projector
+    already carries. The first experiment needs no detector: perturb the geometry the projector
+    receives, by an offset, a radius error, a missing or a spurious primitive, and record where success
+    with constraint satisfaction breaks.
+  \item[Re-tasking at deployment.] Because the constraints never enter training, the same checkpoint
+    can be asked to satisfy a new set: a closed passage, a keep-out volume, a tighter clearance. What
+    has to be measured is the envelope, the slack a new set may leave before the projector pulls the
+    plan off the data and success collapses rather than degrades, and the transfer of one checkpoint to
+    a geometry its demonstrations never contained.
+  \item[The alignment target.] The optional terminal cost of endpoint projection
+    (\autoref{sec:method:hardflow}), zero in this thesis, is where the target of D3IL-aligning could
+    enter the projection; constraint satisfaction would then stop costing completion.
+  \item[The sampler of instantaneous-velocity matching.] Sampling it from the scale it was trained at
+    needs no retraining and would settle its order against the average-velocity models on
+    D3IL-aligning and the quadrotor scenes.
+  \item[Seeds.] More training seeds on D3IL-aligning and the quadrotor scenes.
+\end{description}

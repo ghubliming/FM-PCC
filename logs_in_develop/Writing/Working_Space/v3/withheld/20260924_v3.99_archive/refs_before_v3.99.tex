@@ -1,0 +1,71 @@
+% v3.99 archive -- the passages of Ch 5/6 as they stood before the v4.0/v4.1 cross notes were applied
+% (2026-09-24). Each block: the tag, then the old text verbatim. Not built.
+
+% ---- Ch5 l.53-54 (platforms paragraph): X2 figure pointer [v4.1]
+the X2 dimensions used
+in projection are drawn in \autoref{fig:platform-x2-dimensions} in \autoref{app:repro}.
+
+% ---- Ch5 l.78-79 (Fig 5.1 caption): X2 figure pointer [v4.1]
+  drawn in \autoref{fig:platform-x2-dimensions}, in \autoref{app:repro}.}
+
+% ---- Ch5 l.917-922 (DPCC reproduction): twenty-episode sentence, now false [v4.0 item 1]
+reports on (\autoref{sec:setup:protocol:avoiding}). A longer evaluation of the same configuration, at
+twenty episodes per seed, exists and is \emph{not} used here or in \autoref{ch:results}: it did not
+complete, finishing the \emph{both-hard} geometry for one training seed rather than five, so its numbers
+rest on a different and smaller set of cells than the row above. It is kept for the record in
+\autoref{app:avoiding-twenty-episode}.
+
+% ---- Ch5 l.1091-1092 (compute environment): timing-reading pointer [v4.0 item 2]
+The measurements of \autoref{sec:setup:metrics} were taken on this machine; how its properties bear
+on reading them is given in \autoref{app:repro}.
+
+% ---- Ch5 l.1337-1338 (avoiding protocol): twenty-episode pointer [v4.0 item 1]
+The separate twenty-episode evaluation is reported in
+\autoref{app:avoiding-twenty-episode}.
+
+% ---- Ch6 l.106-107 (Table 6.1 caption): archived tab:app:avoiding-raw-full [v4.1]
+column: the evaluation records one unprojected arm per cell. The budgets $\nfe=5$ and $10$ are in
+  \autoref{tab:app:avoiding-raw-full}. \baselinemark\ the baseline of record at its own budget.}
+
+% ---- Ch6 l.132-134 (Table 6.1 dataref): provenance of the in-text intermediate budgets [v4.1]
+DA\_in\_Paper/analysis/avoiding\_unprojected\_and\_budget20.py}
+
+% ---- Ch6 l.143-145 (unprojected reading): archived tab:app:avoiding-raw-full [v4.1]
+not work that number down: the intermediate budgets in \autoref{tab:app:avoiding-raw-full} hold it
+between $14.2$ and $19.1$, and the best and the worst of those counts are both a ten-evaluation row.
+
+% ---- Ch6 l.335 (baseline at ten steps): archived tab:app:avoiding-dpcc-full [v4.1]
+in $68.7$ control steps at $321.7$\,ms (\autoref{tab:app:avoiding-dpcc-full}). The baseline of record is
+
+% ---- Ch6 l.366-367 (Table 6.2 caption): archived tab:app:avoiding-dpcc-full [v4.1]
+each mean $\pm$ standard deviation over the seeds. The budgets
+  between two and twenty are in \autoref{tab:app:avoiding-dpcc-full}. \selectedmark\ the operating
+
+% ---- Ch6 l.412-413 (Table 6.2 dataref): provenance of the in-text diffusion K10 cell [v4.1]
+DA\_in\_Paper/analysis/avoiding\_rules\_by\_protocol.py; DA\_20260919 \S1. The twelve
+
+% ---- Ch6 l.688-689 (LaTeX comment only): dropped label named in a comment [v4.0 item 1]
+% seed--geometry combination -- and now lives entirely in app:avoiding-twenty-episode, with the
+% census in tab:coverage-k20.
+
+% ---- Ch6 l.758-761 (avoiding: what the appendix carries): archived app:avoiding-budgets + twenty-episode pointer [v4.0 item 1, v4.1]
+models at their operated budgets (\autoref{app:avoiding-paths}), every evaluated budget under every
+selection rule (\autoref{app:avoiding-budgets}), and the evaluation at twenty episodes per seed
+(\autoref{app:avoiding-twenty-episode}).
+
+% ---- Ch6 l.2057-2058 (Table 6.13 dataref): archived app:uav-scurve-budgets [v4.1]
+(MeanFM $10$, CI-MeanFM $5$) are in \autoref{app:uav-scurve-budgets}.}
+
+% ---- Ch6 l.2141-2142 (Table 6.14 caption, tab:uav-scurve-projection): archived app:uav-scurve-rules [v4.1]
+five flights each, and random selection aborts least and violates least of the rules that abort least; every
+  rule in \autoref{app:uav-scurve-rules}. Endpoint projection has no guiding step at $\nfe=1$.}
+
+% ---- Ch6 l.2158-2159 (Table 6.14 dataref): archived app:uav-scurve-rules [v4.1]
+Per-step row (random; the three rules in
+\autoref{app:uav-scurve-rules}, moved there at v3.93 as for UAV-corridor, author:
+
+% ---- Ch6 l.2172-2174 (s-curve projection reading): archived app:uav-scurve-rules, fact kept as text [v4.1]
+Per-step projection does not keep the nine crossings. Under every selection rule (\autoref{app:uav-scurve-rules})
+the selected configuration
+crosses on five flights of ten,
+

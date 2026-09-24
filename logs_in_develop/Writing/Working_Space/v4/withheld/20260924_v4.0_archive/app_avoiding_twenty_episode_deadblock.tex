@@ -1,0 +1,221 @@
+\begin{deadblock}{this twenty-episode section is not maintained and will be dropped if time runs short; it
+is to be rechecked and rebuilt before anything is read from it. Nothing inside was edited at v3.67.}
+\section{Twenty-Episode Evaluation on D3IL-avoiding}\label{app:avoiding-twenty-episode}
+
+The extended evaluation uses twenty episodes per training seed and geometry, one hundred per geometry.
+Coverage at $\nfe=20$ is listed in \autoref{tab:coverage-k20}.
+
+\paragraph{The baseline reproduction at this protocol.}
+\autoref{tab:target} reproduces \ac{DPCC} at the protocol \ac{DPCC} itself reports on, and that is the
+reproduction the thesis uses. The same configuration was also run at twenty episodes per seed.
+\autoref{tab:target-twenty} keeps that result here rather than beside the published one, because it is not
+a like-for-like reproduction: it finished the \emph{both-hard} geometry for one training seed rather than
+five (\autoref{tab:coverage-k20}), so the three geometries it averages are not equally covered. It is
+recorded and it is not relied on --- no claim in \autoref{ch:results} or
+\autoref{sec:setup:baselines:avoiding} rests on it.
+
+\begin{table}[htpb]
+  \caption[The DPCC baseline at twenty episodes per seed]{The \ac{DPCC} baseline at twenty episodes per
+  seed, beside the published result and the reproduction at the protocol of \ac{DPCC} that
+  \autoref{tab:target} reports. Metrics as in \autoref{sec:setup:metrics:avoiding}; S\&C denotes success
+  with constraint satisfaction, time is seconds per control step, and the spread on the reproduced rows is
+  the standard deviation over episodes, pooled over the training seeds within a geometry and then averaged
+  over the geometries. $^{\dagger}$ \textbf{The twenty-episode row does not rest on the coverage the other
+  two do} and is printed for the record.}
+  \label{tab:target-twenty}
+  \centering
+  \small
+  \begin{tabularx}{\linewidth}{@{}L c c c c c@{}}
+    \toprule
+    Source and protocol & Steps & Success & S\&C & \shortstack{Violating\\steps} & s/step \\
+    \midrule
+    Published \parencite[Table~1]{romer2025diffusion}
+      & $69.0\pm12.9$ & $1.00$ & $0.98$ & $0.0\pm0.3$ & --- \\
+    Reproduced, protocol of \ac{DPCC}
+      & $70.1\pm9.0$ & $1.000$ & $1.000$ & $0.0\pm0.0$ & $0.553$ \\
+    Reproduced, 20 episodes per seed$^{\dagger}$
+      & $69.0\pm12.0$ & $0.997$ & $0.983$ & $0.03\pm0.17$ & $0.563$ \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\dataref{Twenty-episode row: temp/2508/batch\_avoiding\_combined\_20260825\_143212. Protocol-of-\ac{DPCC}
+row: analysis\_results\_checkpoint/19-09-UAV-Pillars-Exclude/batch\_avoiding\_combined\_20260919\_132703.
+Both: diffusion $\nfe=20$, cumulative projection cost, tightened; mean per geometry, then across the three
+geometries.}
+
+What the larger sample buys is resolution. At ten episodes per geometry a success rate resolves to
+$0.1$, so a rate of $1.00$ there is not evidence of a rate of $1.00$: the baseline's perfect rates fall
+to $0.95$ and $0.92$ at one hundred episodes, while its tightened configurations move by at most $0.08$
+(\autoref{tab:tiers}).
+
+\begin{table}[htpb]
+  \caption[Effect of the number of episodes]{The baseline at ten and at one hundred episodes per
+  geometry: same configurations, same code.}
+  \label{tab:tiers}
+  \centering
+  \begin{tabularx}{\linewidth}{@{}L cc@{}}
+    \toprule
+    Success with constraint satisfaction & 10 episodes & 100 episodes \\
+    \midrule
+    Cumulative projection cost, tightened, top-right-hard & 1.00 & 0.95 \\
+    Temporal consistency, tightened, top-right-hard       & 1.00 & 0.92 \\
+    Tightened configurations                              & \multicolumn{2}{c}{change by at most 0.08} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\dataref{DA\_20260819 --- baseline at 10 against 100 episodes per geometry}
+
+At that resolution the selection rule separates the models more than the objective does
+(\autoref{tab:state-headline}).
+
+Analytic average-velocity matching is the model most sensitive to it. With temporal consistency it reaches
+$0.993$ at one network evaluation, in $61.0$ control steps; with cumulative projection cost, the rule
+\ac{DPCC} itself selects, the same model falls to $0.943$ and $72.0$ steps, and at two evaluations that rule
+picks plans that stall, $98.0$ steps. Instantaneous-velocity matching is indifferent: every rule puts it
+between $0.990$ and $1.000$ at one and two evaluations. The diffusion baseline does best with cumulative
+projection cost, $0.983$ in $69.0$ steps.
+
+Temporal consistency is therefore used for the flow-based operating points on this task. Under the
+per-step projector the models differ, at their own best rule, by less than the gap in what one action
+costs to compute.
+
+The ordering is the one the protocol of \ac{DPCC} gives
+(\autoref{tab:avoiding-dpcc-protocol}), and the two budgets do not change places: instantaneous-velocity
+matching reads $0.997$, $0.997$ and $0.990$ at $\nfe=1$ against $0.960$, $0.970$ and $0.987$ at
+$\nfe=20$ under the three rules, the largest gap between them being eleven episodes in three hundred.
+
+\begin{table}[htpb]
+  \caption[The generative models under every selection rule]{D3IL-avoiding at twenty episodes per seed:
+  five training seeds $\times$ twenty episodes per geometry. Metrics, rules, marks and set-up as in
+  \autoref{tab:avoiding-dpcc-protocol}; mean $\pm$ the sample standard deviation over the five seeds
+  (\autoref{sec:setup:metrics:spread}). This protocol reaches the two budgets the flow-based models are
+  operated at and the baseline's own budget of twenty; CI-MeanFM has it for one training seed and is
+  reported as a single-seed matched-budget comparison in \autoref{tab:avoiding-budget20}.
+  $^{\dagger}$ \textbf{The $\nfe=20$ rows do not rest on the full five seeds $\times$ three geometries
+  the other rows do} --- the guard below counts what each of them covers. Their point estimate is the
+  geometry-mean over the seeds present and their spread is over those seeds.}
+  \label{tab:state-headline}
+  \centering
+  \footnotesize
+  \begin{tabularx}{\linewidth}{@{}L r c rrr@{}}
+    \toprule
+    Model & $\nfe$ & Rule & S\&C & Steps & ms/step \\
+    \midrule
+    MeanFM     & 1 & $r$ & $0.930 \pm 0.032$ & $64.7 \pm 1.8$ & $18.4 \pm 0.1$ \\
+                     &    & $c$ & $0.943 \pm 0.040$ & $72.0 \pm 4.1$ & $18.0 \pm 0.4$ \\
+                     &    & \mainconfig{\selectedmark\ $t$} & \mainconfig{$0.993 \pm 0.015$} & \mainconfig{$61.0 \pm 1.0$} & \mainconfig{$18.1 \pm 0.3$}  \\
+    MeanFM     & 2 & $r$ & $0.933 \pm 0.041$ & $65.9 \pm 1.4$ & $27.3 \pm 0.2$ \\
+                     &    & $c$ & $0.927 \pm 0.030$ & $98.0 \pm 10.4$ & $26.8 \pm 0.4$ \\
+                     &    & $t$ & $0.993 \pm 0.009$ & $60.4 \pm 0.9$ & $27.1 \pm 0.3$ \\
+    \midrule
+    FM         & 1 & $r$ & $0.997 \pm 0.007$ & $68.3 \pm 0.9$ & $19.4 \pm 0.6$ \\
+                     &    & \textbf{$c$} & \textbf{$0.997 \pm 0.007$} & \textbf{$67.5 \pm 1.2$} & \textbf{$18.9 \pm 0.2$} \\
+                     &    & $t$ & $0.990 \pm 0.022$ & $67.1 \pm 1.6$ & $20.1 \pm 1.9$ \\
+    FM         & 2 & $r$ & $0.997 \pm 0.007$ & $68.0 \pm 1.6$ & $27.6 \pm 0.5$ \\
+                     &    & $c$ & $1.000 \pm 0.000$ & $68.4 \pm 3.0$ & $27.3 \pm 0.3$ \\
+                     &    & $t$ & $0.983 \pm 0.020$ & $64.9 \pm 1.9$ & $27.9 \pm 0.5$ \\
+    FM         & 20$^{\dagger}$ & $r$ & $0.960 \pm 0.070$ & $72.8 \pm 5.4$ & $496.5 \pm 74.8$ \\
+                     &    & $c$ & $0.970 \pm 0.076$ & $65.6 \pm 4.3$ & $476.6 \pm 39.9$ \\
+                     &    & $t$ & $0.987 \pm 0.032$ & $67.3 \pm 3.3$ & $465.8 \pm 36.0$ \\
+    \midrule
+    Diffusion  & 20$^{\dagger}$ & $r$ & $0.967 \pm 0.025$ & $73.9 \pm 8.7$ & $580.7 \pm 18.0$ \\
+                     &    & \mainconfig{\baselinemark\ $c$} & \mainconfig{$0.983 \pm 0.025$} & \mainconfig{$69.0 \pm 11.5$} & \mainconfig{$563.5 \pm 29.6$}  \\
+                     &    & $t$ & $0.960 \pm 0.045$ & $82.8 \pm 14.7$ & $564.3 \pm 29.5$ \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{analysis\_results\_checkpoint/19-09-UAV-Pillars-Exclude/batch\_avoiding\_combined\_20260919\_132703; DA\_in\_Paper/analysis/avoiding\_rules\_by\_protocol.py; agrees with DA\_20260827 \S10.1}
+\begin{table}[htpb]
+  \caption[What the twenty-episode evaluation covers]{What each cell of the twenty-episode evaluation
+  rests on, counted from the corpus of record. A cell is complete at five training seeds on each of the
+  three geometries; the entries below name every geometry that is short and the seeds it has. At
+  $\nfe\in\{1,2\}$ every cell of every model is complete, and at $\nfe=20$ none is. These are also the
+  slowest cells of the campaign, at half a second and more per control step against under thirty
+  milliseconds.}
+  \label{tab:coverage-k20}
+  \centering
+  \footnotesize
+  \begin{tabularx}{\linewidth}{@{}l r L L@{}}
+    \toprule
+    Model & $\nfe$ & Projected arms ($r$, $c$, $t$) & Unprojected arm \\
+    \midrule
+    MeanFM, CI-MeanFM, FM, Diffusion & 1, 2 & complete & complete \\
+    \midrule
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20}
+      & \mainconfig{\emph{both-hard}: one seed only under $r$ and $c$, absent under $t$}
+      & \mainconfig{\emph{both-hard} absent} \\
+    MeanFM & 20 & \emph{both-hard} absent; \emph{top-left-hard} 2 of 5 seeds & \emph{both-hard} absent; \emph{top-left-hard} 3 of 5 seeds \\
+    FM & 20 & \emph{both-hard} 3 of 5 seeds under $r$ and $c$, 2 of 5 under $t$ & \emph{both-hard} 2 of 5 seeds \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{seed-and-geometry census of
+analysis\_results\_checkpoint/19-09-UAV-Pillars-Exclude/batch\_avoiding\_combined\_20260919\_132703;
+DA\_in\_Paper/analysis/avoiding\_unprojected\_and\_budget20.py, block C}
+\guard{The baseline row of \autoref{tab:state-headline} is therefore five seeds on two geometries plus
+one seed on the third. The gap is recorded in
+\texttt{data\_status/PENDING\_20260922\_all\_lacking\_runs.md} and is not closed here: the author has
+ruled the re-run out on cost.}
+
+\paragraph{Matched step budgets.}
+
+\autoref{tab:avoiding-budget20} compares each flow-based model at two and twenty network evaluations
+on the seed--geometry cells available at both budgets.
+
+No model improves at twenty. Instantaneous-velocity matching goes from $1.000$ success with constraint
+satisfaction to $0.970$, analytic average-velocity matching from $0.990$ to $0.955$, and
+consistency-interpolated average-velocity matching from $1.000$ to $0.950$; the control-step column moves
+by three steps in one direction for the first and by one to three in the other for the other two. Ten
+times the network evaluations raise the time per control step for all three models.
+
+The same ten-fold rise in the budget multiplies the time to
+compute one action by $17$ for instantaneous-velocity matching and by about $36$ for both
+average-velocity models, from under thirty milliseconds to between $0.48$ and $1.02$ seconds. At twenty
+evaluations two of the three take longer per action than the diffusion baseline at the same budget.
+
+\begin{table}[htpb]
+  \caption[The flow-based models at their own budget and at the baseline's]{D3IL-avoiding at twenty
+  episodes per seed, each flow-based model at $\nfe=2$ and at $\nfe=20$ under the selection rule it is
+  operated with, against the baseline of record at its own budget. Tightened constraints, per-step
+  projection, four candidate plans, temporal U-Net of $4.0$\,M parameters; mean $\pm$ the standard
+  deviation over the seeds, aggregated as in \autoref{tab:state-headline}. \textbf{The two budgets of a
+  model are restricted to the evaluation cells both of them cover}, so that the comparison is
+  within-model and matched; the $\nfe=2$ numbers here can therefore differ slightly from
+  \autoref{tab:state-headline}, which uses every cell a budget has. The last column states what each
+  matched pair rests on.}
+  \label{tab:avoiding-budget20}
+  \centering
+  \footnotesize
+  \begin{tabularx}{\linewidth}{@{}l r c rrr L@{}}
+    \toprule
+    Model & $\nfe$ & Rule & S\&C & Steps & ms/step & Matched cells \\
+    \midrule
+    FM        & 2  & $c$ & $1.000 \pm 0.000$ & $68.8 \pm 2.8$  & $27.3 \pm 0.4$  & 5 seeds, 3 geometries; \emph{both-hard} 3 of 5 seeds \\
+    FM        & 20 & $c$ & $0.970 \pm 0.076$ & $65.6 \pm 4.3$  & $476.6 \pm 39.9$ & \\
+    \midrule
+    MeanFM    & 2  & $t$ & $0.990 \pm 0.022$ & $61.7 \pm 2.6$  & $27.3 \pm 0.5$  & 5 seeds, 2 geometries; no \emph{both-hard} at $\nfe=20$, \emph{top-left-hard} 2 of 5 seeds \\
+    MeanFM    & 20 & $t$ & $0.955 \pm 0.065$ & $63.5 \pm 10.0$ & $1003.9 \pm 43.9$ & \\
+    \midrule
+    CI-MeanFM & 2  & $t$ & $1.000$ & $59.7$ & $28.6$  & one training seed, 3 geometries \\
+    CI-MeanFM & 20 & $t$ & $0.950$ & $62.4$ & $1018.3$ & \\
+    \midrule
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$c$} & \mainconfig{$0.983 \pm 0.025$} & \mainconfig{$69.0 \pm 11.5$} & \mainconfig{$563.5 \pm 29.6$} & \mainconfig{5 seeds, 3 geometries; \emph{both-hard} one seed only}  \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{analysis\_results\_checkpoint/19-09-UAV-Pillars-Exclude/batch\_avoiding\_combined\_20260919\_132703;
+DA\_in\_Paper/analysis/avoiding\_unprojected\_and\_budget20.py, block B, matched cells}
+\guard{Two limits. The consistency-interpolated rows are one training seed and carry no spread, so they
+are read as a single run and not as a peer of the five-seed rows above them. And the $\nfe=20$
+evaluations are the incomplete ones: analytic average-velocity matching has no \emph{both-hard}
+evaluation at that budget at all, which is why its pair is matched on two geometries. The time column is
+a measurement and is reported as one; this thesis does not explain why analytic average-velocity
+matching at twenty evaluations costs more per action than the diffusion baseline at twenty, measured on
+cells that are not the same.}
+
+\FloatBarrier
+
+
+\end{deadblock}

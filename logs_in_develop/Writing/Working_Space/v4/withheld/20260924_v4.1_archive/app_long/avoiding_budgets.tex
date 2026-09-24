@@ -1,0 +1,107 @@
+% =============================================================================
+%  DATA RECORD -- input by chapters/09_appendix.tex inside \ifappendixfull ... \fi
+%  Extracted byte-for-byte from the v3.98 handover (FROM_v3_v3.98_20260924_201920/
+%  chapters/09_appendix.tex, section "D3IL-avoiding at Every Evaluated Budget"); nothing inside was edited at v4.0.
+%  The section heading, its label and its reading stay in 09_appendix.tex.
+% =============================================================================
+\autoref{tab:avoiding-raw-models} and \autoref{tab:avoiding-dpcc-protocol} print the budgets the models
+are operated at and the two at which every model is measured. Two models were also evaluated under the
+full protocol at $\nfe=5$ and $10$ --- analytic average-velocity matching at both, the diffusion baseline
+at ten --- and those rows are here, on the same five seeds $\times$ three geometries $\times$ two episodes
+and reduced the same way. They are kept out of the chapter because a table in which one model has four
+budgets and another two invites a comparison across rows that share no budget. Instantaneous-velocity
+matching at $\nfe=5$ exists only on one seed under the protocol and only in the twenty-episode campaign
+on five, so it has no row here either.
+
+\begin{table}[htpb]
+  \caption[D3IL-avoiding without projection, every budget]{\autoref{tab:avoiding-raw-models} at every
+  budget evaluated under the protocol; columns, protocol and marks as there. What this table adds are the
+  intermediate budgets, which exist for analytic average-velocity matching and the baseline only.}
+  \label{tab:app:avoiding-raw-full}
+  \centering
+  \footnotesize
+  \begin{tabularx}{\linewidth}{@{}L r rrrrr@{}}
+    \toprule
+    Model & $\nfe$ & Success & S\&C & \shortstack{Violating\\steps} & Steps & ms/step \\
+    \midrule
+    MeanFM    & 1  & $1.000 \pm 0.000$ & $0.033 \pm 0.075$ & $15.5 \pm 2.1$ & $63.4 \pm 5.6$ & $10.3 \pm 0.4$ \\
+    MeanFM    & 2  & $1.000 \pm 0.000$ & $0.033 \pm 0.075$ & $15.5 \pm 0.4$ & $62.7 \pm 1.8$ & $19.3 \pm 0.2$ \\
+    MeanFM    & 5  & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $16.4 \pm 2.0$ & $64.2 \pm 3.0$ & $46.3 \pm 0.4$ \\
+    MeanFM    & 10 & $1.000 \pm 0.000$ & $0.167 \pm 0.167$ & $14.2 \pm 2.7$ & $63.8 \pm 1.2$ & $91.7 \pm 0.6$ \\
+    \midrule
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & $1.000 \pm 0.000$ & $0.033 \pm 0.075$ & $15.6 \pm 0.7$ & $60.5 \pm 1.5$ & $9.8 \pm 0.2$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2 & $1.000 \pm 0.000$ & $0.033 \pm 0.075$ & $15.7 \pm 0.7$ & $62.9 \pm 1.2$ & $18.7 \pm 0.3$ \\
+    \midrule
+    FM        & 1  & $1.000 \pm 0.000$ & $0.100 \pm 0.091$ & $16.5 \pm 3.4$ & $68.6 \pm 5.9$ & $9.0 \pm 0.0$ \\
+    FM        & 2  & $1.000 \pm 0.000$ & $0.100 \pm 0.091$ & $15.6 \pm 2.6$ & $61.7 \pm 2.2$ & $17.8 \pm 0.0$ \\
+    FM        & 20 & $1.000 \pm 0.000$ & $0.133 \pm 0.075$ & $16.5 \pm 2.1$ & $70.2 \pm 6.3$ & $183.5 \pm 0.7$ \\
+    \midrule
+    Diffusion & 1  & $0.933 \pm 0.149$ & $0.000 \pm 0.000$ & $19.0 \pm 2.9$ & $68.3 \pm 16.1$ & $9.4 \pm 0.1$ \\
+    Diffusion & 2  & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $20.4 \pm 2.4$ & $61.7 \pm 8.3$ & $18.3 \pm 0.1$ \\
+    Diffusion & 10 & $0.967 \pm 0.075$ & $0.067 \pm 0.149$ & $19.1 \pm 2.7$ & $72.8 \pm 8.1$ & $88.8 \pm 0.3$ \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$0.967 \pm 0.075$} & \mainconfig{$0.100 \pm 0.091$} & \mainconfig{$17.9 \pm 2.5$} & \mainconfig{$67.8 \pm 16.8$} & \mainconfig{$179.3 \pm 1.2$}  \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\begin{table}[htpb]
+  \caption[D3IL-avoiding at the protocol of DPCC, every budget]{\autoref{tab:avoiding-dpcc-protocol} at
+  every budget evaluated under the protocol of \ac{DPCC}; columns, rules, protocol and marks as there.
+  What this table adds are the intermediate budgets, which exist for analytic average-velocity matching
+  and the baseline only.}
+  \label{tab:app:avoiding-dpcc-full}
+  \centering
+  \footnotesize
+  \begin{tabularx}{\linewidth}{@{}L r c rrr@{}}
+    \toprule
+    Model & $\nfe$ & Rule & S\&C & Steps & ms/step \\
+    \midrule
+    MeanFM     & 1 & $r$ & $0.900 \pm 0.149$ & $64.3 \pm 2.6$ & $19.2 \pm 1.6$ \\
+                     &    & $c$ & $0.933 \pm 0.091$ & $72.4 \pm 8.4$ & $18.3 \pm 0.5$ \\
+                     &    & \mainconfig{\selectedmark\ $t$} & \mainconfig{$0.967 \pm 0.075$} & \mainconfig{$58.6 \pm 2.2$} & \mainconfig{$18.3 \pm 0.2$}  \\
+    MeanFM     & 2 & $r$ & $0.967 \pm 0.075$ & $65.1 \pm 2.6$ & $27.6 \pm 0.5$ \\
+                     &    & $c$ & $0.933 \pm 0.091$ & $97.2 \pm 4.8$ & $27.1 \pm 0.2$ \\
+                     &    & $t$ & $0.967 \pm 0.075$ & $59.4 \pm 2.0$ & $27.7 \pm 0.5$ \\
+    MeanFM     & 5 & $r$ & $0.867 \pm 0.139$ & $69.2 \pm 4.8$ & $216.6 \pm 16.4$ \\
+                     &    & $c$ & $0.833 \pm 0.167$ & $61.5 \pm 3.6$ & $209.8 \pm 20.9$ \\
+                     &    & $t$ & $0.933 \pm 0.149$ & $60.6 \pm 2.4$ & $223.8 \pm 14.5$ \\
+    MeanFM     & 10 & $r$ & $0.833 \pm 0.236$ & $73.9 \pm 2.9$ & $391.7 \pm 37.6$ \\
+                     &    & $c$ & $0.833 \pm 0.118$ & $59.4 \pm 1.6$ & $373.2 \pm 32.0$ \\
+                     &    & $t$ & $0.933 \pm 0.149$ & $63.6 \pm 1.9$ & $402.3 \pm 29.0$ \\
+    \midrule
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & $r$ & $1.000 \pm 0.000$ & $61.5 \pm 0.8$ & $17.9 \pm 0.2$ \\
+                     &    & $c$ & $0.967 \pm 0.075$ & $68.4 \pm 2.3$ & $18.0 \pm 0.6$ \\
+                     &    & \textbf{$t$} & \textbf{$1.000 \pm 0.000$} & \textbf{$59.2 \pm 1.2$} & \textbf{$18.1 \pm 0.2$} \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2 & $r$ & $0.900 \pm 0.149$ & $63.3 \pm 1.3$ & $27.0 \pm 0.3$ \\
+                     &    & $c$ & $0.933 \pm 0.091$ & $89.7 \pm 8.2$ & $26.6 \pm 0.2$ \\
+                     &    & $t$ & $1.000 \pm 0.000$ & $60.1 \pm 3.4$ & $27.0 \pm 0.2$ \\
+    \midrule
+    FM         & 1 & $r$ & $1.000 \pm 0.000$ & $67.9 \pm 1.2$ & $17.4 \pm 0.1$ \\
+                     &    & \textbf{$c$} & \textbf{$1.000 \pm 0.000$} & \textbf{$67.0 \pm 0.8$} & \textbf{$17.3 \pm 0.1$} \\
+                     &    & $t$ & $1.000 \pm 0.000$ & $68.2 \pm 1.7$ & $17.7 \pm 0.6$ \\
+    FM         & 2 & $r$ & $1.000 \pm 0.000$ & $65.7 \pm 0.8$ & $26.2 \pm 0.9$ \\
+                     &    & $c$ & $1.000 \pm 0.000$ & $67.0 \pm 3.8$ & $25.5 \pm 0.2$ \\
+                     &    & $t$ & $1.000 \pm 0.000$ & $63.8 \pm 1.9$ & $25.9 \pm 0.2$ \\
+    FM         & 20 & $r$ & $0.867 \pm 0.075$ & $73.3 \pm 7.9$ & $852.6 \pm 624.9$ \\
+                     &    & $c$ & $1.000 \pm 0.000$ & $63.2 \pm 1.5$ & $476.7 \pm 26.0$ \\
+                     &    & $t$ & $1.000 \pm 0.000$ & $63.7 \pm 2.2$ & $486.5 \pm 41.4$ \\
+    \midrule
+    Diffusion  & 1 & $r$ & $0.600 \pm 0.303$ & $67.7 \pm 10.1$ & $33.9 \pm 8.6$ \\
+                     &    & $c$ & $0.667 \pm 0.391$ & $72.1 \pm 17.6$ & $33.3 \pm 14.5$ \\
+                     &    & $t$ & $0.600 \pm 0.190$ & $73.5 \pm 14.1$ & $33.3 \pm 13.2$ \\
+    Diffusion  & 2 & \textbf{$r$} & \textbf{$1.000 \pm 0.000$} & \textbf{$65.1 \pm 1.4$} & \textbf{$191.1 \pm 26.5$} \\
+                     &    & \textbf{$c$} & \textbf{$1.000 \pm 0.000$} & \textbf{$61.2 \pm 1.2$} & \textbf{$211.4 \pm 18.8$} \\
+                     &    & $t$ & $0.933 \pm 0.091$ & $60.9 \pm 1.5$ & $225.9 \pm 48.5$ \\
+    Diffusion  & 10 & $r$ & $0.900 \pm 0.091$ & $75.1 \pm 7.3$ & $327.2 \pm 35.4$ \\
+                     &    & $c$ & $1.000 \pm 0.000$ & $70.3 \pm 11.5$ & $309.8 \pm 11.2$ \\
+                     &    & \textbf{$t$} & \textbf{$1.000 \pm 0.000$} & \textbf{$68.7 \pm 7.0$} & \textbf{$321.7 \pm 14.4$} \\
+    Diffusion  & 20 & $r$ & $0.967 \pm 0.075$ & $74.7 \pm 5.8$ & $573.2 \pm 22.2$ \\
+                     &    & \mainconfig{\baselinemark\ $c$} & \mainconfig{$1.000 \pm 0.000$} & \mainconfig{$70.1 \pm 8.2$} & \mainconfig{$553.4 \pm 28.0$}  \\
+                     &    & $t$ & $1.000 \pm 0.000$ & $76.1 \pm 15.7$ & $563.0 \pm 25.4$ \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\dataref{analysis\_results\_checkpoint/19-09-UAV-Pillars-Exclude/batch\_avoiding\_combined\_20260919\_132703;
+the $\nfe=5$ and $10$ rows recounted at v3.60 (census in
+\texttt{data\_status/PENDING\_20260922\_all\_lacking\_runs.md} \S13); every other row is the chapter's.}

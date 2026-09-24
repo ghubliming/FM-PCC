@@ -1,0 +1,81 @@
+% =============================================================================
+%  CHAPTER 8 -- CONCLUSION                              [v3 drafts, v4 refines]
+% -----------------------------------------------------------------------------
+%  v3.7 (2026-09-14): shared between v3 and v4 (Working_Space/DRAFT_OWNERSHIP.md).
+%  v3 keeps a concise version that follows Chapter 6; v4 refines the prose and
+%  writes sec:conc:future. Individual changelog:
+%  changelogs/v3.7_20260914_ch5-8_restructure.md
+%  v3.49 (2026-09-20): BUILT AGAIN. The input was commented out of thesis_v3.tex on
+%  2026-09-18; the author's instruction is that the thesis must not be missing a
+%  chapter while v4 has not started. Ownership is unchanged -- v4 still refines.
+%  The summary and the RQ answers were brought in line with Chapter 6 as it now
+%  stands: UAV-pillars is withheld (v3.41) and no claim may rest on it, and
+%  "wall-clock" is a banned token (v3.48). changelogs/v3.49_*.md
+% =============================================================================
+
+\chapter{Conclusion}\label{ch:conclusion}
+
+\section{Summary}\label{sec:conc:summary}
+
+This thesis replaced the diffusion model of \ac{DPCC} with instantaneous-velocity matching, analytic
+average-velocity matching and consistency-interpolated average-velocity matching, keeping the backbone,
+the projection, the data and the evaluation code of the baseline. The
+new models were first evaluated on the D3IL-avoiding benchmark of \ac{DPCC} with its setup
+unchanged, where the published baseline result was reproduced, and then on a vision-conditioned
+D3IL-aligning task and a quadrotor benchmark built for this thesis.
+
+On the benchmark of \ac{DPCC}, the flow-based models hold their success with constraint satisfaction down
+to a single network evaluation, where the diffusion baseline loses it, and they reach the level of the
+baseline's own budget of twenty in fewer control steps and at about a thirtieth of the time one action
+costs. Their plans reach the goal more often before any projection than the baseline's do at twenty
+evaluations. On D3IL-aligning, analytic average-velocity matching ends closer to the target than
+instantaneous-velocity matching and the diffusion baseline, and it is the only model whose outcome
+improves as the budget grows. On UAV-corridor, analytic and consistency-interpolated average-velocity
+matching pass the goal collision-free on every flight at three evaluations, at a sixth of the time of the
+diffusion baseline, which stays collision-free but never reaches the finish line. UAV-s-curve yields no
+supported combination: its limit is the tracking controller and not the plan. Of the two projection
+methods, endpoint projection is selected only on D3IL-aligning, the one task run at a budget large enough
+for it to guide sampling; the two benchmarks that operate at one and at three evaluations select the
+per-step projection of \ac{DPCC}.
+
+\hole{Refine in v4.}
+
+\section{Answers to the Research Questions}\label{sec:conc:rqs}
+
+\begin{description}
+  \item[RQ1 --- Generative model.] With the backbone, projection, data and evaluation code held fixed,
+    analytic average-velocity matching is the model selected in each of the three environments that yield
+    a result, alone on D3IL-aligning and jointly with consistency-interpolated average-velocity matching
+    on D3IL-avoiding and UAV-corridor (\autoref{sec:res:summary:models}). It reaches that level at fewer
+    solver steps and at less planning time per control step: on D3IL-avoiding it holds $0.993$ success
+    with constraint satisfaction at one network evaluation, where the diffusion baseline reads $0.983$ at
+    the twenty it was trained with, in fewer control steps and at about a thirtieth of the time one action
+    costs (\autoref{sec:res:avoiding:conclusion}). Instantaneous-velocity matching clears the baseline on
+    the same three axes at that budget and is behind the two average-velocity objectives on D3IL-aligning
+    and UAV-corridor. The budget orders the three objectives only where the environment is hard enough to
+    separate them: on D3IL-avoiding all three hold their success down to one evaluation
+    (\autoref{sec:res:fewstep}), whereas on UAV-corridor the two average-velocity objectives fly every
+    flight collision-free from three evaluations on and instantaneous-velocity matching does not reach
+    that at any budget evaluated, and on D3IL-aligning analytic average-velocity matching improves with
+    more evaluations while consistency-interpolated average-velocity matching does not.
+  \item[RQ2 --- Constraints.] Endpoint projection is well-posed only with at least one guiding step
+    (\autoref{sec:res:constraints:degenerate}), which is why the two environments that operate at one and
+    at three network evaluations select the per-step projection of \ac{DPCC}
+    (\autoref{sec:res:avoiding:conclusion}, \autoref{sec:res:uav:corridor}). Where the budget is large
+    enough for it to act, on D3IL-aligning at twenty evaluations, endpoint projection is the selected
+    method: it alone keeps all ten contexts free of violations, still moves the box in eight of them, and
+    costs less per control step than per-step projection at the same budget
+    (\autoref{sec:res:constraints}).
+  \item[RQ3 --- Transfer.] The lead of analytic average-velocity matching carries over from state to
+    camera observations and from the manipulator to the quadrotor; the step from instantaneous-velocity
+    matching to diffusion does not carry over to camera observations, where the two are level. On
+    UAV-s-curve the tracking controller, not the plan, limits the result
+    (\autoref{sec:res:uav:controller}).
+\end{description}
+
+\hole{Refine in v4.}
+
+\section{Future Work}\label{sec:conc:future}
+
+\hole{Written in v4. Outline material: \texttt{Writing/Working\_Space/future\_work/} (inferring the
+constraint set from perception; changing constraints at test time).}

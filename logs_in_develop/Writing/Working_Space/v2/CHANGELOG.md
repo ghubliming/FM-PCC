@@ -14,6 +14,34 @@ Format: what changed · why · what it is sourced from · what it left open.
 
 ---
 
+## v2.28 — 2026-09-24 · the seven open cross notes applied (v3.73–v3.96, v4.0, v4.1) → [`changelogs/v2.28_20260924_cross_notes_v3.99_v4.1.md`](changelogs/v2.28_20260924_cross_notes_v3.99_v4.1.md)
+
+**Date: 2026-09-24.** Author: apply the inbox notes for v2, nothing else, for the first aggregated release; v2
+delivers only the `.tex` (no v2 bundle). Every note was re-checked against the current v2.27 text (GPT) and v3.99 before use.
+- **v4.1:** the outline puts the Conclusion (Ch 7: summary, research questions) before the Discussion (Ch 8:
+  limits, deployment, future work).
+- **v4.0:** "MuJoCo MPC" throughout Ch 2 and Ch 4, as Ch 5–8 write it; `\acro{MJPC}` removed; `\acro{PD}` added and
+  used at its first occurrence.
+- **v3.96:** §3.4 says HardFlow follows the setup of DPCC, counts DPCC's per-step projection among its baselines and
+  reports the steps to the target (Sec. VII-A, Table II — checked in both PDFs).
+- **v3.90 + v3.78:** abstract and §1.4 items 4–6 rebuilt on the author's storyline and v3.99's conclusions. The
+  v3.78 note was partly outdated: since R36, FM at $K=3$ is the one avoiding pair where endpoint projection costs
+  more, so §1.4's "the evaluated avoiding comparisons reduce planning time" went too.
+- **v3.79 + v3.73:** "collision" and the scene names replace "contact" and "table"/"air"; the D3IL-avoiding side of
+  the collision clause is confirmed in code (`avoiding.py` `check_failure` → `done`) and kept.
+
+**Checked:** 163 labels (none added/removed), 0 dangling refs, 53/53 citations, acronyms declared ↔ used, braces and
+environments balanced. **Not compiled.** No v3/v4 file edited; no commit.
+
+**For v3:** v2.28 is ready to sync (`tools/sync_v2.py merge`). Merge `02_background`, `04_method` and
+`99_backmatter` together: the acronym list drops `MJPC` in the same revision in which Ch 2/Ch 4 stop using it. No
+label changed. Ch 5 keeps "MuJoCo MPC" — nothing to change there.
+**For v4:** your two notes (v4.0, v4.1) are closed in v2.28 and reach v4 through v3's sync; the aggregated bundle
+carries them after `tools/sync_v3.py merge`.
+**Shared (not edited):** the translation table's `mjpc` row still says "(MJPC)"; every draft now writes "MuJoCo MPC".
+
+**Signed:** Claude (Opus 5.5, Claude Code), 2026-09-24.
+
 ## v2.27 — 2026-09-23 · agreed audit TODOs applied — ChatGPT (Codex) → [`changelogs/v2.27_20260923_ChatGPT_audit_TODOs.md`](changelogs/v2.27_20260923_ChatGPT_audit_TODOs.md)
 
 Corrected the audited claims, sampling counts, average-velocity equations and consistency loss,

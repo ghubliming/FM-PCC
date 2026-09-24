@@ -1,0 +1,162 @@
+% =============================================================================
+%  FM-PCC MASTER'S THESIS -- v2
+%  TUM, School of CIT, Chair I6
+% -----------------------------------------------------------------------------
+%  CURRENT SCOPE -- v2.27, 2026-09-23, audit corrections by ChatGPT (Codex)
+%  Owned text: abstract and Chapters 1-4. Chapters 5-8 and appendix material
+%  below are retained placeholders; their live owners are v3 and v4.
+%  Ch 1 introduces the questions and contributions; Ch 2 explains concepts;
+%  Ch 3 positions the work; Ch 4 gives the formulation, system overview,
+%  plant/control models, all three flow objectives, projection and environments.
+%  Transport time is data-at-one. Average velocity uses start and interval inputs.
+%  K denotes sampling steps; endpoint lookahead adds network evaluations.
+%  Experiment settings and outcomes are owned by v3. Detailed noise-scale
+%  discussion and the redundant endpoint configuration table are omitted by
+%  the author's decision. See CHANGELOG.md and the signed v2.27 changelog.
+%  Paper equations carry citations; implementation equations carry srcnotes.
+%
+%  BASIS: derives from DPCC (Diffusion Predictive Control with Constraints,
+%  L4DC 2025), which builds on Diffuser's temporal U-Net and the D3IL
+%  environments. DPCC is both the codebase this work starts from and the
+%  baseline it is measured against.
+%
+%  GOVERNED BY
+%    ../TARGET_20260905_thesis_claim_ladder.md   -- what must be proved
+%    ../../Auxiliary/Methodology_Sources/        -- the apparatus, per section
+%    ../../Auxiliary/NOTES_tum_formatting_rules.md
+%    ../../Auxiliary/NOTES_paper_map.md          -- which paper belongs where
+%    Data_Analysis/DA_Result_Curated_MD/NOTEBOOK_20260829_key_headlines.md
+%
+%  STRUCTURE DELTA vs. v1 -- see README.md in this folder.
+%
+%  CROSS-DRAFT STATE  (update this line in every pass that reads the inbox)
+%    This file is current against  v3.60  (2026-09-21)  and  v4: not started.
+%    Every cross-draft note addressed to v2 up to that version has been applied
+%    or answered; the ledger is ../cross_draft/INBOX.md, and the machine-readable
+%    copy is CROSS_STATE.json in this folder. Open as of v2.26 (2026-09-23): the
+%    v3.69 row (sec:res:fewstep wording), held for the claims rebuild that the
+%    audit of 2026-09-23 asks for (audit from chatgpt/, section 8). v2 owns Ch 1-4, the abstract, the
+%    preamble, the acronyms and bibliography.bib -- nothing under v3/ or v4/.
+%
+%  BUILD: latexmk -pdf thesis_v2.tex
+%     or: pdflatex thesis_v2.tex ; biber thesis_v2 ; pdflatex x2
+% =============================================================================
+
+\newif\ifstandalone
+\standalonetrue   % set false once merged into a copy of the TUM template
+
+\documentclass[headsepline,footsepline,footinclude=false,oneside,fontsize=11pt,paper=a4,listof=totoc,bibliography=totoc]{scrbook}
+
+% -----------------------------------------------------------------------------
+% Metadata (same macro names as the TUM template's main.tex)
+% -----------------------------------------------------------------------------
+\newcommand*{\getUniversity}{Technische Universität München}
+\newcommand*{\getFaculty}{Informatics}
+\newcommand*{\getDegree}{Informatics}
+\newcommand*{\getSchool}{Computation, Information and Technology}
+
+% FIXED TITLE -- verbatim, no hyphens, no subtitle.
+\newcommand*{\getTitle}{Flow Matching Predictive Control with Constraints}
+\newcommand*{\getTitleGer}{Flow-Matching-basierte prädiktive Regelung unter Nebenbedingungen} % TODO: confirm
+
+\newcommand*{\getAuthor}{TODO: Author}
+\newcommand*{\getDoctype}{Master's Thesis in \getDegree}
+\newcommand*{\getSupervisor}{TODO: Supervisor}
+\newcommand*{\getAdvisor}{TODO: Advisor}
+\newcommand*{\getKeywords}{flow matching;predictive control;constrained sampling;imitation learning}
+\newcommand*{\getSubmissionDate}{TODO: Submission date}
+\newcommand*{\getSubmissionLocation}{Munich}
+
+% -----------------------------------------------------------------------------
+\ifstandalone
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+  \usepackage[sc]{mathpazo}
+  \usepackage[ngerman,american]{babel}
+  \usepackage[autostyle]{csquotes}
+  \usepackage{amsmath,amssymb,amsthm}
+  \usepackage{graphicx}
+  \graphicspath{{figures/}}
+  \usepackage{booktabs}
+  \usepackage{xcolor}
+  \usepackage[printonlyused]{acronym}
+  \usepackage[final]{microtype}
+  % Citation style per NOTES_tum_formatting_rules.md: alphabetic + biber.
+  % These options are copied verbatim from Template_DONT_CHANGE/settings.tex
+  % so that merging this file into the template changes nothing.
+  \usepackage[%
+    backend=biber,
+    url=false,
+    style=alphabetic,
+    maxnames=4,
+    minnames=3,
+    maxbibnames=99,
+    giveninits,
+    uniquename=init]{biblatex}
+  \usepackage{hyperref}
+  \hypersetup{hidelinks}
+  \setkomafont{disposition}{\normalfont\bfseries}
+  \linespread{1.05}
+  % settings.tex already registers the .bib in the merged build (its line 68,
+  % \bibliography{bibliography}, is biblatex's legacy form of \addbibresource).
+  % Registering it a second time there would duplicate the resource, so this
+  % line stays inside the standalone branch.
+  \addbibresource{bibliography.bib}
+\else
+  \RequirePackage[l2tabu,orthodox]{nag}
+  \input{settings}
+  \usepackage{amsmath,amssymb,amsthm}
+  \usepackage{xcolor}
+\fi
+
+% Shared by both branches (from v3, cross_draft INBOX v3.9 / v3.16): tables that
+% wrap text columns, and numbered \subsubsection headings, which Ch 6 references.
+% Ch 4's \subsubsection* headings are unaffected.
+\usepackage{tabularx}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\setcounter{secnumdepth}{\subsubsectionnumdepth}
+\setcounter{tocdepth}{\subsectionnumdepth}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[chapter]
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}[chapter]
+\newtheorem{theorem}{Theorem}[chapter]
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}[chapter]
+
+% -----------------------------------------------------------------------------
+% Notation (kept identical to Bone/thesis_bone.tex -- do not diverge)
+% -----------------------------------------------------------------------------
+\newcommand{\vect}[1]{\boldsymbol{#1}}
+\newcommand{\matr}[1]{\boldsymbol{#1}}
+\newcommand{\trans}{^{\textrm{T}}}
+\newcommand{\sidx}[1]{_{\textrm{#1}}}
+\newcommand{\Id}[1]{\textbf{Id}_{#1}}
+\newcommand{\unitvec}[1]{\textbf{e}_{#1}}
+
+% --- v2 additions. Fixes the t / k / tau / u collision named in
+% --- NOTES_tum_formatting_rules.md. The convention is stated once in
+% --- Table~\autoref{tab:notation} (\autoref{sec:method:formalisation}) and used
+% --- everywhere. Do not introduce a second symbol for any of these.
+\newcommand{\R}{\mathbb{R}}                    % reals
+\newcommand{\E}{\mathbb{E}}                    % expectation
+\newcommand{\Unif}{\mathcal{U}}                % uniform distribution
+\newcommand{\Normal}{\mathcal{N}}              % Gaussian
+\newcommand{\sg}{\operatorname{sg}}            % stop-gradient
+\newcommand{\proj}[1]{\Pi_{#1}}                % Euclidean projection onto a set
+\newcommand{\dd}{\mathrm{d}}                   % upright differential
+\newcommand{\vfield}{v}                        % instantaneous velocity field
+\newcommand{\afield}{u}                        % average velocity field
+\newcommand{\ftime}{\tau}                      % transport (generative) time in [0,1]
+\newcommand{\nfe}{K}                           % sampling-step budget; NFE is counted separately
+
+% Drafting aids. For the submitted build set \submissiontrue: every \srcnote then
+% prints nothing, and every \hole still left raises a LaTeX warning (and stays red)
+% so that no missing content can ship unnoticed.
+\newif\ifsubmission
+\submissionfalse
+\newcommand{\hole}[1]{\ifsubmission\GenericWarning{}{Thesis: a HOLE is left in the submitted build}\fi%
+  \textcolor{red}{\textbf{[HOLE:} #1\textbf{]}}}
+\newcommand{\srcnote}[1]{\ifsubmission\else\textcolor{gray}{\footnotesize\textsf{[src: #1]}}\fi}
+

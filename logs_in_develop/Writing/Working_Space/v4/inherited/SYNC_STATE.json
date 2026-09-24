@@ -1,0 +1,26 @@
+{
+  "base_sha256_16": {
+    "bibliography.bib": "5c046b2902675a09",
+    "bibliography_v3.bib": "a84dbb745f2e377b",
+    "chapters/01_introduction.tex": "4182a05e67146994",
+    "chapters/02_background.tex": "73f1e25c6f4c2164",
+    "chapters/03_related_work.tex": "a1671f404d9385ba",
+    "chapters/04_method.tex": "0a22ef2389aadbb1",
+    "chapters/05_setup.tex": "9e4db11fa0ee47dc",
+    "chapters/06_results.tex": "dae59cdb94b3c581",
+    "chapters/07_conclusion.tex": null,
+    "chapters/07_discussion.tex": "062a1847b7163a6e",
+    "chapters/08_conclusion.tex": "f15ff4e05b691ae0",
+    "chapters/08_discussion.tex": null,
+    "chapters/09_appendix.tex": "1e11470b4722f03d",
+    "chapters/app_ntrial20_feasible.tex": "ddde881204c5781a",
+    "parts/00_preamble.tex": "db6ebf7b082d56cf",
+    "parts/00_preamble_v3.tex": "7dde03651a170309",
+    "parts/01_frontmatter.tex": "c7a85584bec7b65b",
+    "parts/99_backmatter.tex": "c1a01a2eae5c9317"
+  },
+  "synced_at": "2026-09-24",
+  "v2_version_via_v3": "v2.27 \u2014 2026-09-23 \u00b7 agreed audit TODOs applied \u2014 ChatGPT (Codex) \u2192 [`changelogs/v2.27_20260923_ChatGPT_audit_TODOs.md`](changelogs/v2.27_20260923_ChatGPT_audit_TODOs.md)",
+  "v3_changelog_sha256_16": "25407f0b32fc1fc9",
+  "v3_version": "v3.99 \u2014 2026-09-24 \u00b7 The v4.0 and v4.1 cross notes applied (Ch 5/6 appendix references); bundle"
+}

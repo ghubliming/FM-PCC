@@ -1,0 +1,149 @@
+% =============================================================================
+%  D3IL-avoiding at twenty episodes per seed -- the rebuilt section (2026-09-24)
+%
+%  Written outside v3/chapters/09_appendix.tex (author, 2026-09-24: do not touch 09). Meant as the
+%  LAST section of the appendix: \input it after the last section of Appendix B (Extended Results),
+%  i.e. immediately before \chapter{Reproducibility}; to make it the very last page of the appendix
+%  instead, input it after Reproducibility and raise \section to \chapter.
+%
+%  It replaces the dead block app:avoiding-twenty-episode (tab:target-twenty, tab:tiers,
+%  tab:state-headline, tab:coverage-k20, tab:avoiding-budget20). Its labels are new, so both can sit
+%  in one build while the dead block is still there. When the dead block goes, re-point the three
+%  \autoref{app:avoiding-twenty-episode} (05_setup.tex:903 and :1319, 06_results.tex:755) to
+%  app:avoiding-twenty; 05_setup.tex:900-903 describes the dropped DPCC twenty-episode row and needs
+%  its own edit then (see the DA, section 8).
+%
+%  Every number: ntrial20_da.py -> DA_20260924_ntrial20_feasible.md, same folder.
+%  Kept: MeanFM (U-Net) and FM at nfe 1 and 2 -- the only twenty-episode campaigns complete on
+%  5 seeds x 3 geometries x 20 episodes whose checkpoint is also a chapter row. Dropped: every nfe=20
+%  campaign (incomplete), the twenty-episode alpha-Flow cells (SiT, alpha_end 0 -- not CI-MeanFM),
+%  CI-MeanFM (seed 6 only). Macros used: \nfe \ac \guard \dataref \mainconfig \selectedmark, column L.
+% =============================================================================
+
+\section{D3IL-avoiding at Twenty Episodes per Seed}\label{app:avoiding-twenty}
+
+Analytic average-velocity matching and instantaneous-velocity matching were evaluated a second time at
+the budgets they are operated at, $\nfe=1$ and $\nfe=2$, with twenty episodes per training seed and
+geometry in place of two: one hundred episodes per geometry and three hundred per configuration.
+Everything else is the configuration of \autoref{tab:avoiding-dpcc-protocol}: the same five trained
+checkpoints per model, four candidate plans, tightened constraints, the per-step projection of \ac{DPCC}
+and the three selection rules. The comparison is within each model, the same configuration at two and at
+twenty episodes. \autoref{tab:app:twenty-projected} prints it under projection and
+\autoref{tab:app:twenty-raw} with projection switched off.
+\guard{These are the twenty-episode evaluations that are complete on all five training seeds and all three
+geometries. Consistency-interpolated average-velocity matching and the diffusion baseline have no
+twenty-episode evaluation that is complete in this sense, and at $\nfe=20$, where one control step takes
+about half a second (\autoref{tab:avoiding-dpcc-protocol}), none was completed for any model.}
+
+\paragraph{Success with constraint satisfaction.}
+The two protocols agree. The operating point, analytic average-velocity matching at $\nfe=1$ under temporal
+consistency, reaches the goal within the constraints in $298$ of $300$ episodes at twenty episodes per seed
+and in $29$ of $30$ at two, and at $\nfe=2$ the counts are the same. Instantaneous-velocity matching under
+cumulative projection cost reaches $299$ of $300$ at $\nfe=1$ and $300$ of $300$ at $\nfe=2$, against
+$30$ of $30$ at both. In all sixteen configurations of the two tables, the count at two episodes lies
+inside the range of counts that $95\,\%$ of two-episode evaluations drawn from the twenty-episode one
+return.
+
+\paragraph{What twenty episodes resolve.}
+At two episodes per seed the count moves in steps of one episode in thirty, and the three selection rules
+of each model read within two episodes of each other. At twenty they separate.
+Analytic average-velocity matching under temporal consistency keeps $298$ of $300$ at both budgets, against
+$279$ under random selection and $283$ under cumulative projection cost at $\nfe=1$, and $280$ and $278$ at
+$\nfe=2$: the rule it is operated with is also the one with the highest success with constraint
+satisfaction. The three rules of instantaneous-velocity matching, all at $30$ of $30$ with two episodes,
+read $299$, $299$ and $297$ of $300$ at $\nfe=1$ and $299$, $300$ and $295$ at $\nfe=2$. Drawn from
+these twenty-episode evaluations, a two-episode evaluation returns $30$ of $30$ with probability $0.81$ for
+the operating point and $0.58$ for instantaneous-velocity matching at $\nfe=2$ under temporal consistency. The spread over the five
+seeds narrows: for the operating point, the standard deviation of the success rate with
+constraint satisfaction falls from $0.075$ at two episodes to $0.015$ at twenty.
+
+\paragraph{Control steps and time.}
+The step counts behind \autoref{sec:res:ablations} are reproduced. Under cumulative projection cost
+analytic average-velocity matching takes $72.0$ control steps at $\nfe=1$ and $98.0$ at $\nfe=2$, against
+$72.4$ and $97.2$ at two episodes, and under temporal consistency $61.0$ and $60.4$, against $58.6$ and
+$59.4$. Across the sixteen configurations the two protocols differ by at most $2.4$ control steps. The
+time per control step of analytic average-velocity matching agrees to within $4\,\%$ under projection and
+$7\,\%$ without it; that of instantaneous-velocity matching is $5$ to $13\,\%$ lower in the two-episode
+evaluation. The best rule of each model is the same at both protocols except for instantaneous-velocity
+matching at $\nfe=2$, whose three rules are level at two episodes and ordered cumulative projection cost,
+random selection, temporal consistency at twenty.
+
+\paragraph{Without projection.}
+Both models reach the goal in $297$ to $299$ of $300$ episodes, against $30$ of $30$ at two episodes, and
+success with constraint satisfaction stays low: $36$ of $300$ for analytic average-velocity matching at
+both budgets and $15$ and $30$ of $300$ for instantaneous-velocity matching at $\nfe=1$ and $\nfe=2$,
+against $1$ and $3$ of $30$.
+
+\begin{table}[htpb]
+  \caption[D3IL-avoiding under projection at twenty and at two episodes per seed]{D3IL-avoiding under
+  per-step projection at twenty and at two episodes per training seed and geometry (columns 20 and 2):
+  five training seeds $\times$ three geometries, $300$ and $30$ episodes per configuration; tightened constraints, four
+  candidate plans, temporal U-Net of $4.0$\,M parameters. The two-episode columns are the cells of
+  \autoref{tab:avoiding-dpcc-protocol}; rules as there. S\&C is the number of episodes that reach the goal
+  within the constraints. \emph{Range}: the counts, of $30$, that $95\,\%$ of two-episode evaluations
+  return when the two episodes of each seed and geometry are drawn without replacement from its twenty,
+  computed exactly from the fifteen seed--geometry counts of the twenty-episode evaluation. Control steps
+  and time per control step are mean $\pm$ standard deviation over the five seeds
+  (\autoref{sec:setup:metrics:spread}). \selectedmark\ the operating point.}
+  \label{tab:app:twenty-projected}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3.5pt}
+  \begin{tabularx}{\linewidth}{@{}L r c rrc rr rr@{}}
+    \toprule
+    & & & \multicolumn{3}{c}{S\&C, episodes} & \multicolumn{2}{c}{Control steps} & \multicolumn{2}{c}{ms per control step} \\
+    \cmidrule(lr){4-6}\cmidrule(lr){7-8}\cmidrule(l){9-10}
+    Model & $\nfe$ & Rule & 20 & 2 & Range & 20 & 2 & 20 & 2 \\
+    \midrule
+    MeanFM & 1 & $r$ & $279/300$ & $27/30$ & $25$--$30$ & $64.7 \pm 1.8$ & $64.3 \pm 2.6$ & $18.4 \pm 0.1$ & $19.2 \pm 1.6$ \\
+           &   & $c$ & $283/300$ & $28/30$ & $26$--$30$ & $72.0 \pm 4.1$ & $72.4 \pm 8.4$ & $18.0 \pm 0.4$ & $18.3 \pm 0.5$ \\
+           &   & \mainconfig{\selectedmark\ $t$} & \mainconfig{$298/300$} & \mainconfig{$29/30$} & \mainconfig{$29$--$30$} & \mainconfig{$61.0 \pm 1.0$} & \mainconfig{$58.6 \pm 2.2$} & \mainconfig{$18.1 \pm 0.3$} & \mainconfig{$18.3 \pm 0.2$} \\
+    MeanFM & 2 & $r$ & $280/300$ & $29/30$ & $25$--$30$ & $65.9 \pm 1.4$ & $65.1 \pm 2.6$ & $27.3 \pm 0.2$ & $27.6 \pm 0.5$ \\
+           &   & $c$ & $278/300$ & $28/30$ & $25$--$30$ & $98.0 \pm 10.4$ & $97.2 \pm 4.8$ & $26.8 \pm 0.4$ & $27.1 \pm 0.2$ \\
+           &   & $t$ & $298/300$ & $29/30$ & $29$--$30$ & $60.4 \pm 0.9$ & $59.4 \pm 2.0$ & $27.1 \pm 0.3$ & $27.7 \pm 0.5$ \\
+    \midrule
+    FM     & 1 & $r$ & $299/300$ & $30/30$ & $29$--$30$ & $68.3 \pm 0.9$ & $67.9 \pm 1.2$ & $19.4 \pm 0.6$ & $17.4 \pm 0.1$ \\
+           &   & $c$ & $299/300$ & $30/30$ & $29$--$30$ & $67.5 \pm 1.2$ & $67.0 \pm 0.8$ & $18.9 \pm 0.2$ & $17.3 \pm 0.1$ \\
+           &   & $t$ & $297/300$ & $30/30$ & $29$--$30$ & $67.1 \pm 1.6$ & $68.2 \pm 1.7$ & $20.1 \pm 1.9$ & $17.7 \pm 0.6$ \\
+    FM     & 2 & $r$ & $299/300$ & $30/30$ & $29$--$30$ & $68.0 \pm 1.6$ & $65.7 \pm 0.8$ & $27.6 \pm 0.5$ & $26.2 \pm 0.9$ \\
+           &   & $c$ & $300/300$ & $30/30$ & $30$ & $68.4 \pm 3.0$ & $67.0 \pm 3.8$ & $27.3 \pm 0.3$ & $25.5 \pm 0.2$ \\
+           &   & $t$ & $295/300$ & $30/30$ & $28$--$30$ & $64.9 \pm 1.9$ & $63.8 \pm 1.9$ & $27.9 \pm 0.5$ & $25.9 \pm 0.2$ \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\begin{table}[htpb]
+  \caption[D3IL-avoiding without projection at twenty and at two episodes per seed]{The configurations of
+  \autoref{tab:app:twenty-projected} with projection switched off; the two-episode columns are the cells
+  of \autoref{tab:avoiding-raw-models}. Success and S\&C are counts of episodes, \emph{Range} as in
+  \autoref{tab:app:twenty-projected}, violating steps per episode as mean $\pm$ standard deviation over
+  the five seeds.}
+  \label{tab:app:twenty-raw}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabularx}{\linewidth}{@{}L r rr rrc rr@{}}
+    \toprule
+    & & \multicolumn{2}{c}{Success, episodes} & \multicolumn{3}{c}{S\&C, episodes} & \multicolumn{2}{c}{Violating steps} \\
+    \cmidrule(lr){3-4}\cmidrule(lr){5-7}\cmidrule(l){8-9}
+    Model & $\nfe$ & 20 & 2 & 20 & 2 & Range & 20 & 2 \\
+    \midrule
+    MeanFM & 1 & $297/300$ & $30/30$ & $36/300$ & $1/30$ & $1$--$7$ & $14.5 \pm 0.7$ & $15.5 \pm 2.1$ \\
+    MeanFM & 2 & $299/300$ & $30/30$ & $36/300$ & $1/30$ & $1$--$7$ & $15.4 \pm 0.9$ & $15.5 \pm 0.4$ \\
+    \midrule
+    FM     & 1 & $297/300$ & $30/30$ & $15/300$ & $3/30$ & $0$--$4$ & $17.3 \pm 1.0$ & $16.5 \pm 3.4$ \\
+    FM     & 2 & $299/300$ & $30/30$ & $30/300$ & $3/30$ & $1$--$6$ & $16.4 \pm 1.3$ & $15.6 \pm 2.6$ \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{\texttt{temp/23-09/batch\_avoiding\_combined\_20260923\_110010}, \texttt{candidates\_multidimensional\_raw};
+twenty episodes: \texttt{H8\_K\{1,2\}\_Meuler\_T0.5\_A0.5\_B1\_\ldots MeanFlowODE\_msg20trials} (U-Net,
+\texttt{objmeanflow\_bbunet}) and \texttt{H8\_K\{1,2\}\_Meuler\_T0.5\_\ldots FlowMatchingODE\_msg20trials};
+two episodes: the same folders without the tag (MeanFM) and with \texttt{\_msgdpccproto} (FM), which
+reproduce \autoref{tab:avoiding-dpcc-protocol} and \autoref{tab:avoiding-raw-models} to the last digit.
+Checkpoints \texttt{state\_best.pt} of 2026-08-06 to 08-10 (MeanFM) and 2026-05-06/07 (FM), the same at
+both protocols; evaluated 2026-08-13/14 and 08-11 (MeanFM), 2026-08-18/19 and 09-17 (FM). Coverage,
+ranges and probabilities: \texttt{Working\_Space/ntrial20\_appendix\_20260924/ntrial20\_da.py},
+\texttt{DA\_20260924\_ntrial20\_feasible.md}.}
+
+\FloatBarrier

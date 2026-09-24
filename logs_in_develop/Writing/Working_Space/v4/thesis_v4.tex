@@ -1,0 +1,53 @@
+% =============================================================================
+%  FM-PCC MASTER'S THESIS -- v4   (master file: structure only, no prose)
+%  TUM, School of CIT, Chair I6
+% -----------------------------------------------------------------------------
+%  WHAT v4 IS -- the final piece. v2 wrote Chapters 1-4 (with the abstract, the preamble,
+%  the acronyms and bibliography.bib); v3 wrote Chapters 5-6 (setup, results); v4 writes
+%  Chapter 7 (Conclusion), Chapter 8 (Discussion) and the appendix, and assembles the
+%  thesis. Order since v4.1 (author): the Conclusion before the Discussion. Chapters 1-6, the parts and both inherited .bib files are byte-identical copies
+%  of v3's, which v3 in turn inherits (1-4) from v2. Ownership: ../DRAFT_OWNERSHIP.md.
+%
+%  VERSIONS BUILT ON  (stamped by tools/sync_v3.py into inherited/SYNC_STATE.json, and
+%  printed in every bundle header): branched from v3.98 (2026-09-24 20:19, the handover in
+%  FROM_v3_v3.98_20260924_201920/); synced to v3.99 (2026-09-24), which carries v2 at v2.27.
+%  `python3 tools/sync_v3.py status` says whether either has moved since.
+%
+%  BUILD: latexmk -pdf thesis_v4.tex
+%     or: pdflatex thesis_v4.tex ; biber thesis_v4 ; pdflatex x2
+%  (No TeX toolchain in the AI container -- never compiled here. Flatten with
+%   bundle/make_bundle.py for Overleaf: v2 chapters collapsed, v3 + v4 built.)
+%
+%  FIGURES: produced only in Data_Analysis/DA_in_Paper/figures and copied into figures/
+%  by  python3 Data_Analysis/DA_in_Paper/plotting/export_to_draft.py v4
+% =============================================================================
+
+% --- preamble -----------------------------------------------------------------
+% 00_preamble.tex is v2's and 00_preamble_v3.tex is v3's, both INHERITED byte-for-byte.
+% v4-only additions go in the _v4 file.
+\input{parts/00_preamble}
+\input{parts/00_preamble_v3}
+\input{parts/00_preamble_v4}
+
+\begin{document}
+
+% --- front matter (v2, inherited) ----------------------------------------------
+\input{parts/01_frontmatter}
+
+% --- main matter --------------------------------------------------------------
+\input{chapters/01_introduction}     % v2
+\input{chapters/02_background}       % v2
+\input{chapters/03_related_work}     % v2
+\input{chapters/04_method}           % v2
+\input{chapters/05_setup}            % v3
+\input{chapters/06_results}          % v3
+\input{chapters/07_conclusion}       % v4  (summary, answers to the research questions)
+\input{chapters/08_discussion}       % v4  (limitations, towards deployment, future work)
+
+% --- appendices (v4) ------------------------------------------------------------
+\input{chapters/09_appendix}
+
+% --- back matter (v2's acronym list; policy merge) --------------------------------
+\input{parts/99_backmatter}
+
+\end{document}

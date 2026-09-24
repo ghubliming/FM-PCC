@@ -1,0 +1,96 @@
+% =============================================================================
+%  DATA RECORD -- input by chapters/09_appendix.tex inside \ifappendixfull ... \fi
+%  Extracted byte-for-byte from the v3.98 handover (FROM_v3_v3.98_20260924_201920/
+%  chapters/09_appendix.tex, section "UAV-s-curve at the Budgets on Disk"); nothing inside was edited at v4.0.
+%  The section heading, its label and its reading stay in 09_appendix.tex.
+% =============================================================================
+Before the matched grids of \autoref{sec:res:uav:scurve} were laid out, the scene was evaluated with
+each model at the budget it is strongest at --- instantaneous-velocity matching at $\nfe=20$, analytic
+average-velocity matching at $10$, the consistency-interpolated model at $5$ --- and, without projection,
+at one further budget per model. No two of those budgets coincide, so every row below is a per-model
+record and none is read against another. The unprojected rows are kept as flown. The projected rows were
+flown on the plain constraint set and were withdrawn at v3.67, when the thesis went to the tightened set
+throughout (\autoref{sec:setup:tasks:avoiding}); their tightened twins are not run, because
+the projection is flown on the configuration the grid of \autoref{tab:uav-scurve} selects, and the two
+tables below keep their structure with those cells marked \emph{not run}.
+
+\begin{table}[htpb]
+  \caption[UAV-s-curve: unprojected cells outside the grid]{UAV-s-curve, plans executed without
+  projection at the two budgets that are not in the grid of \autoref{tab:uav-scurve}, ten flights per row,
+  one training seed. \emph{Safe}: no collision and no loss of altitude; the other columns as there.}
+  \label{tab:app:uav-scurve-unprojected-extra}
+  \centering
+  \small
+  \begin{tabularx}{\linewidth}{@{}L r r r r r r@{}}
+    \toprule
+    Model & $\nfe$ & Success & Distance [m] & Safe & Aborted & ms/step \\
+    \midrule
+    MeanFM    & 10 & 0/10 & 2.809 & 0/10 & 10/10 & 88.8 \\
+    CI-MeanFM & 5  & 2/10 & 2.247 & 2/10 & 8/10  & 45.0 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{batch\_uav\_20260919\_111701, tag \texttt{u18sc}, variant \texttt{diffuser}. The earlier
+\texttt{u7hg} campaign also holds an unprojected MeanFM $\nfe=10$ cell, of thirteen flights with two
+successes; the switched-wall re-run flew the cell again and the chapter uses the re-run throughout.
+CI-MeanFM $\nfe=5$: the same batch, tag \texttt{EPlatest\_u18sc}; FM $\nfe=20$ moved into the grid of
+\autoref{tab:uav-scurve} at v3.75.}
+
+\begin{table}[htpb]
+  \caption[UAV-s-curve: the re-run with endpoint projection]{UAV-s-curve after the switched-wall
+  correction, \textbf{each model at a different budget} --- the one it is strongest at --- six projection
+  variants per model, ten flights per variant, one training seed. \textbf{The three rows are therefore not a
+  model comparison} and are not read as one: every cell is $0.00$ on both outcome columns, and what the
+  table reports is the abort mode they share. \emph{Aborted}: flights ended early by the divergence guard because the
+  vehicle inverted. The last column counts the same aborts on the unprojected plan alone, where no
+  projection has touched the trajectory.}
+  \label{tab:app:uav-scurve-aborts}
+  \centering
+  \small
+  \begin{tabularx}{\linewidth}{@{}L r rr r r@{}}
+    \toprule
+    Model & $\nfe$ & S\&C & \shortstack{Violation-\\free} & Aborted & \shortstack{Aborted,\\unprojected} \\
+    \midrule
+    FM        & 20 & \multicolumn{3}{l}{\emph{not run}} & 4/10 \\
+    MeanFM    & 10 & \multicolumn{3}{l}{\emph{not run}} & 10/10 \\
+    CI-MeanFM & 5  & \multicolumn{3}{l}{\emph{not run}} & 8/10 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{analysis\_results\_checkpoint/19-09-UAV-Pillars-Exclude/batch\_uav\_20260919\_111701, tag u18sc;
+uav\_results.py, s-curve block; DA\_20260919 \S3. The guard fires on
+\texttt{body z-axis} $\cdot$ \texttt{world z} $<0$ and predates this evaluation, so the earlier s-curve
+numbers were produced under it too.}
+
+\begin{table}[htpb]
+  \caption[UAV-s-curve: the projection variants behind the zeros]{UAV-s-curve, the six projection
+  variants of \autoref{tab:app:uav-scurve-aborts} printed individually, ten flights each, one training seed.
+  Success with constraint satisfaction is $0.00$ in every cell and is omitted. \emph{None}: flown
+  unprojected. \emph{Endpoint, single}: the single-candidate form, without a selection rule.
+  \emph{Aborted}: ended early by the divergence guard. \emph{Success}: crossed the finish line, within the
+  constraints or not. Per-step projection has one rule here, for the reason given above.}
+  \label{tab:app:uav-scurve-variants}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabularx}{\linewidth}{@{}L r L rr r@{}}
+    \toprule
+    Model & $\nfe$ & Projection & Aborted & Success & ms/step \\
+    \midrule
+    FM        & 20 & none              & 4/10  & 6/10 & 170.4 \\
+              &    & per-step and endpoint & \multicolumn{3}{l}{\emph{not run} (flown on the plain set only)} \\
+    \midrule
+    MeanFM    & 10 & none              & 10/10 & 0/10 & 88.8 \\
+              &    & per-step and endpoint & \multicolumn{3}{l}{\emph{not run} (flown on the plain set only)} \\
+    \midrule
+    CI-MeanFM & 5  & none              & 8/10  & 2/10 & 45.0 \\
+              &    & per-step and endpoint & \multicolumn{3}{l}{\emph{not run} (flown on the plain set only)} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+\dataref{analysis\_results\_checkpoint/19-09-UAV-Pillars-Exclude/batch\_uav\_20260919\_111701,
+\texttt{per\_rollout\_detail}, run tags \texttt{u18sc} and \texttt{EPlatest\_u18sc}; cells
+\texttt{s\_curve|fm|K20}, \texttt{s\_curve|mf|K10|bbunet|dp0.5} and \texttt{s\_curve|af|K5|bbunet};
+variant \texttt{diffuser} (the unprojected rows). The plain-set projected cells of the same tags
+(\texttt{dpcc-t}, \texttt{hardflow\_sls\{,-r,-c,-t\}}) are in the corpus and no longer cited (v3.67).}
+\guard{The abort readings of the withdrawn plain-set cells are not repeated here, and no tightened re-run of these cells is planned (R38 superseded by R44, v3.75).}

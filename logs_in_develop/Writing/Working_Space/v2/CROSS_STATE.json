@@ -1,13 +1,11 @@
 {
-  "v2_version": "v2.27 — 2026-09-23",
-  "current_against_v3": "v3.75 reviewed (2026-09-23); separate v3.73 contact check open",
-  "current_against_v4": "not started",
-  "checked_at": "2026-09-23",
+  "v2_version": "v2.28 — 2026-09-24",
+  "current_against_v3": "v3.99 (2026-09-24)",
+  "current_against_v4": "v4.1 (2026-09-24)",
+  "checked_at": "2026-09-24",
   "inbox": "../cross_draft/INBOX.md",
-  "note": "Author authorized the audit TODO revision and closed the numerical-noise discussion without requiring reviewer approval. v3.69 semantic reference resolved. v3.73 sampler correction acknowledged and available pillars result used; the separate contact-termination comparison is left open to preserve the existing scene text. No v3 inheritance sync performed; v3/inherited/SYNC_STATE.json still records v2.26.",
-  "thesis_v2_sha256_16": "1b641a5dcb43ba40",
+  "note": "All seven open → v2 rows (v3.73, v3.78, v3.79, v3.90, v3.96, v4.0, v4.1) applied or verified in v2.28, each re-checked against the current text first (the v2.27 base was written by ChatGPT/Codex). v3 inherits v2.27 (v3/inherited/SYNC_STATE.json); v4 carries v2.27 via v3.98a. v2.28 waits for v3's sync_v2.py merge, then v4's sync_v3.py merge.",
+  "thesis_v2_sha256_16": "6863f3a6866c426c",
   "bibliography_sha256_16": "5c046b2902675a09",
-  "open_inbox_items": [
-    "v3.73: verify the comparison claiming manipulator post contact terminates an episode; outside this audit pass, existing scene text preserved."
-  ]
+  "open_inbox_items": []
 }

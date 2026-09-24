@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+
+# Figure PDFs are build output of tools/svg2pdf.sh; the SVGs are the artefact.
+figures/*.pdf
+
+# Bundle build output: generated flat tex, zips, staging, and output folder.
+bundle/output/
+bundle/out/
+bundle/*.tex
+bundle/*.zip
+bundle/bibliography*.bib
+bundle/figures/
+bundle/**/*.tex
+bundle/**/*.zip

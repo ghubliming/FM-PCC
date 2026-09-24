@@ -1,0 +1,42 @@
+% =============================================================================
+%  v4-ONLY PREAMBLE ADDITIONS
+% -----------------------------------------------------------------------------
+%  parts/00_preamble.tex is v2's and parts/00_preamble_v3.tex is v3's, both inherited
+%  byte-for-byte (a change there is made upstream and synced down). Everything v4 needs
+%  beyond them lives here, and nothing else does.
+%
+%  Already provided upstream -- do not redeclare: the notation macros, the theorem
+%  environments, \hole / \srcnote / \ifsubmission (v2); \dataref, \provisional, \guard,
+%  \flawed, \outdated, deadblock, pillarsflawed, \mainconfig, \selectedmark,
+%  \baselinemark, \todofigure, the appendix \autoref names, placeins (v3).
+% =============================================================================
+
+% -----------------------------------------------------------------------------
+%  LONG DATA SECTIONS OF THE APPENDIX  (author, 2026-09-24: "for something pure data
+%  ... maybe use a weblink then just leave the conclusion in appendix; clearly mark the
+%  long sections in head and mark what will hiding from appendix")
+% -----------------------------------------------------------------------------
+%  Four sections of Appendix B are data records. Each keeps its reading (one paragraph)
+%  in the appendix and holds its tables inside \ifappendixfull ... \else ... \fi:
+%    \appendixfulltrue   (default) prints the tables -- nothing is hidden yet;
+%    \appendixfullfalse  hides them, leaving the paragraph, the web-link \hole and alias
+%                        labels so that every \autoref from Chapter 6 still resolves.
+%  bundle/make_bundle.py --appendix-short builds with the switch off; tools/check.py reads
+%  the switch and checks only the active branch.
+\newif\ifappendixfull
+\appendixfulltrue
+
+% \longdata{...}  the banner at the head of a long data section: what is a record here and
+% what would move to the web link. A drafting mark (teal), printed in the annotated build;
+% the clean build prints nothing. Counted by tools/check.py; must be gone before submission.
+\newcommand{\longdata}[1]{\par\noindent\textcolor{teal}{\textbf{[LONG DATA:} #1\textbf{]}}\par}
+
+% -----------------------------------------------------------------------------
+%  BIBLIOGRAPHY -- the v4 half
+% -----------------------------------------------------------------------------
+%  bibliography.bib (v2) and bibliography_v3.bib (v3) are inherited and registered by their
+%  preambles. v4's own entries go to bibliography_v4.bib. It is EMPTY at v4.0, and biber is
+%  not asked to read an empty resource: uncomment the two lines below with the first entry.
+% \ifstandalone
+%   \addbibresource{bibliography_v4.bib}
+% \fi

@@ -14,7 +14,14 @@
 
 ## What v2 is
 
-**Current revision: v2.27 (2026-09-23), audit corrections by ChatGPT (Codex).**
+**Current revision: v2.28 (2026-09-24), the cross notes up to v3.99 / v4.1 applied (Claude).** The abstract and the
+§1.4 result sentences follow the author's storyline (`../GUIDE_20260924_results_storyline_author.md`) and v3.99's
+conclusions; the outline follows v4.1's order (Conclusion, then Discussion); "MuJoCo MPC" replaces `\ac{MJPC}`;
+PD is declared; §3.4 states HardFlow's DPCC setup and baseline. v2 delivers only the `.tex`; the aggregated
+release is built by v4 after v3 and v4 have synced v2.28.
+[v2.28 changelog](changelogs/v2.28_20260924_cross_notes_v3.99_v4.1.md).
+
+**Base: v2.27 (2026-09-23), audit corrections by ChatGPT (Codex).**
 V2 owns the abstract and Chapters 1–4. All three flow objectives are formulated in Chapter 4,
 including the consistency-interpolated loss and its branches. The average-velocity field uses
 start time and interval length; K counts sampling steps, separately from NFE.
@@ -26,7 +33,7 @@ section is preserved unchanged. Detailed noise-scale discussion, the redundant n
 configuration table and loss-monitoring advice are excluded as agreed with the author.
 
 See [the signed v2.27 changelog](changelogs/v2.27_20260923_ChatGPT_audit_TODOs.md) for the finding-by-finding
-record and validation. V3 currently inherits v2.26; this pass does not sync or edit v3.
+record and validation. v3 synced v2.27 at v3.78 and v4 carries it through v3.98a; neither has synced v2.28 yet.
 
 ### Historical revision notes
 

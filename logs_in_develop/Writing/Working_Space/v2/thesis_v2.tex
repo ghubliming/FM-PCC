@@ -2,7 +2,8 @@
 %  FM-PCC MASTER'S THESIS -- v2
 %  TUM, School of CIT, Chair I6
 % -----------------------------------------------------------------------------
-%  CURRENT SCOPE -- v2.27, 2026-09-23, audit corrections by ChatGPT (Codex)
+%  CURRENT SCOPE -- v2.28, 2026-09-24, the cross notes up to v3.99/v4.1 applied
+%  (Claude); on top of v2.27, 2026-09-23, audit corrections by ChatGPT (Codex)
 %  Owned text: abstract and Chapters 1-4. Chapters 5-8 and appendix material
 %  below are retained placeholders; their live owners are v3 and v4.
 %  Ch 1 introduces the questions and contributions; Ch 2 explains concepts;
@@ -30,12 +31,10 @@
 %  STRUCTURE DELTA vs. v1 -- see README.md in this folder.
 %
 %  CROSS-DRAFT STATE  (update this line in every pass that reads the inbox)
-%    This file is current against  v3.60  (2026-09-21)  and  v4: not started.
-%    Every cross-draft note addressed to v2 up to that version has been applied
+%    This file is current against  v3.99  (2026-09-24)  and  v4.1  (2026-09-24).
+%    Every cross-draft note addressed to v2 up to those versions has been applied
 %    or answered; the ledger is ../cross_draft/INBOX.md, and the machine-readable
-%    copy is CROSS_STATE.json in this folder. Open as of v2.26 (2026-09-23): the
-%    v3.69 row (sec:res:fewstep wording), held for the claims rebuild that the
-%    audit of 2026-09-23 asks for (audit from chatgpt/, section 8). v2 owns Ch 1-4, the abstract, the
+%    copy is CROSS_STATE.json in this folder. Nothing is open. v2 owns Ch 1-4, the abstract, the
 %    preamble, the acronyms and bibliography.bib -- nothing under v3/ or v4/.
 %
 %  BUILD: latexmk -pdf thesis_v2.tex
@@ -214,14 +213,23 @@ control steps required to reach the goal. Constraint enforcement forms a second 
 current iterate; endpoint projection predicts and projects the final trajectory,
 then guides later sampling steps towards it. The analysis identifies when the budget and activation threshold permit guidance. After evaluation on the DPCC benchmark, the controller is extended to two
 more complex settings built for this thesis: vision-conditioned object alignment and control of an
-underactuated, open-loop unstable quadrotor. On obstacle avoidance, instantaneous-velocity and
-consistency-interpolated average-velocity matching reach the reliability of DPCC with fewer control
-steps and less computation. Endpoint projection reduces planning time in the evaluated manipulation
-comparisons, while analytic average-velocity matching improves visual alignment.
+underactuated, open-loop unstable quadrotor. On obstacle avoidance, the average-velocity models lead:
+consistency-interpolated average-velocity matching dominates the diffusion model of DPCC with its own
+network, holding its success within the constraints in fewer control steps at a small fraction of its
+computation, and analytic average-velocity matching gives up little of that success for the same
+saving; no configuration of endpoint projection improves on them there. On vision-conditioned
+alignment, analytic average-velocity matching dominates the diffusion model again, and at the larger
+budget that task needs, endpoint projection is the better projector on the constraints. On the
+quadrotor, projection carries over to a new plant and to constraints in three dimensions; there,
+simple generated demonstrations make instantaneous-velocity matching enough, and the tracking
+controller decides whether a plan is flown.
 \fi
-\srcnote{Qualitative results: current v3.75, \texttt{chapters/06\_results.tex},
-\texttt{sec:res:avoiding:conclusion}, \texttt{tab:avoiding-projectors} and
-\texttt{sec:res:aligning:conclusion}; primary DPCC protocol, not the supplementary extended protocol.}
+\srcnote{Qualitative results: v3.99, \texttt{chapters/06\_results.tex},
+\texttt{sec:res:avoiding:conclusion}, \texttt{tab:avoiding-projectors},
+\texttt{sec:res:aligning:conclusion}, \texttt{sec:res:uav:pillars:conclusion},
+\texttt{sec:res:uav:corridor:conclusion}, \texttt{sec:res:uav:scurve:conclusion} and
+\texttt{sec:res:summary:conclusion}; primary DPCC protocol, not the supplementary extended protocol.
+Order of the claims: \texttt{Working\_Space/GUIDE\_20260924\_results\_storyline\_author.md}.}
 
 \microtypesetup{protrusion=false}
 \tableofcontents{}
@@ -336,12 +344,17 @@ cameras, and a plant that flies.
     Endpoint projection \parencite{li2025hardflow} instead projects the trajectory the sampler is
     predicted to reach and steers the sampler towards it. Both are implemented on the same feasible set
     and solver and compared, together with the step budget below which endpoint projection reduces to
-    projection after sampling. At the default activation threshold, the smallest budgets provide
-    terminal projection only. With active guidance, the evaluated avoiding comparisons reduce
-    planning time relative to iterate projection; the outcome also depends on the model and budget
+    projection after sampling. At one network evaluation, the budget that suffices on obstacle
+    avoidance, it has no step to guide, and no configuration of it improves on per-step projection at
+    that budget; at the budgets where it guides, it is as reliable as per-step projection or more, and
+    cheaper for the two average-velocity models. At the larger budgets the alignment task needs, it
+    keeps more contexts free of violations than per-step projection in most comparisons, at a
+    comparable time per action, and on UAV-corridor the two methods trade against each other
     (\autoref{sec:res:constraints}).
-    \srcnote{v3.75 \texttt{chapters/06\_results.tex}, \texttt{tab:avoiding-projectors} and
-    \texttt{sec:res:constraints:degenerate}. Corridor comparisons remain pending.}
+    \srcnote{v3.99 \texttt{chapters/06\_results.tex}: \texttt{sec:res:summary:conclusion};
+    \texttt{tab:avoiding-projectors} (the one pair in which endpoint projection costs more is FM at
+    $\nfe=3$, $71.5$ against $64.1$\,ms); \texttt{sec:res:aligning:conclusion} (seven of nine
+    comparisons); \texttt{sec:res:uav:corridor:conclusion}.}
 \end{enumerate}
 
 \paragraph{Beyond it.}
@@ -352,17 +365,18 @@ cameras, and a plant that flies.
     task built for this thesis from the alignment task of D3IL, in which the robot observes two camera
     views. The generative network is given a visual encoder, and the projection is given the dynamics
     rows and the constraint set of the new task.
-    In the evaluated training contexts, analytic average-velocity matching moves the object closer
-    to its target than instantaneous-velocity matching and the diffusion baseline
-    (\autoref{sec:res:visual}).
+    Analytic average-velocity matching dominates the diffusion baseline again: in the evaluated
+    training contexts it moves the object closer to its target than the other objectives and the
+    baseline, and keeps more contexts free of violations at a fraction of the baseline's time per
+    action (\autoref{sec:res:visual}).
   \item \textbf{A quadrotor benchmark.} The controller is carried to an underactuated, open-loop
     unstable plant: the manipulator with inverse kinematics is replaced by the Skydio~X2 quadrotor of
     MuJoCo Menagerie \parencite{zakka2022menagerie}, commanded through its rotor thrusts by a cascaded
     geometric tracking controller \parencite{lee2010geometric}, and the stack is tested from state
-    observations in three scenes that ask three different questions. UAV-pillars is the
-    obstacle-avoidance benchmark itself in the air: its field is scaled into an arena of pillars, and
+    observations in three scenes that ask three different questions. UAV-pillars is
+    D3IL-avoiding flown by the quadrotor: its field is scaled into an arena of pillars, and
     the planner of the first four contributions flies there unchanged, so the scene reads what the
-    vehicle adds to a plan the table has already judged. UAV-corridor is the three-dimensional test:
+    vehicle adds to a plan D3IL-avoiding has already judged. UAV-corridor is the three-dimensional test:
     its two test-time constraints leave the horizontal plane, and a plan has to descend or climb to
     satisfy them. UAV-s-curve is the scene of two sharp turns, and it is reported for what those turns
     do to the tracking controller. This is where the constraint mechanism is asked to hold on a plant
@@ -370,13 +384,19 @@ cameras, and a plant that flies.
     a quadrotor must regulate both position and attitude in flight
     (\autoref{sec:bg:quadrotor}). The scenes, their constraint sets, the flown demonstrations of the
     corridor and the s-curve, and the control loop were built for this thesis in MuJoCo
-    \parencite{todorov2012mujoco}, inside the environment code of D3IL; sampling-based MuJoCo
-    predictive control \parencite{howell2022predictive} is the second tracking controller, used in
-    the controller comparison alone.
-    On UAV-pillars, the projected flights satisfy the declared constraints while contacts with
-    pillars outside those constraints still reduce task success (\autoref{sec:res:uav}).
-    \srcnote{v3.75 \texttt{chapters/06\_results.tex},
-    \texttt{sec:res:uav:pillars}, and \texttt{DA\_20260923\_pillars\_v2\_live.md}.}
+    \parencite{todorov2012mujoco}, inside the environment code of D3IL; MuJoCo MPC
+    \parencite{howell2022predictive}, a sampling-based predictive controller, is the second tracking
+    controller, used in the controller comparison alone.
+    On UAV-pillars the projected flights keep the declared constraints as in D3IL-avoiding, and
+    collisions with pillars outside those constraints end flights and lower the success. On
+    UAV-corridor the projection carries over to three dimensions, removing most violations of
+    constraints no demonstration satisfies, and on its straight-line demonstrations the three
+    objectives cannot be told apart. On UAV-s-curve the same plans succeed or fail by the controller
+    that flies them, and the cascaded geometric controller is the better of the two
+    (\autoref{sec:res:uav}).
+    \srcnote{v3.99 \texttt{chapters/06\_results.tex}: \texttt{sec:res:uav:pillars:conclusion}
+    (from \texttt{DA\_20260923\_pillars\_v2\_live.md}), \texttt{sec:res:uav:corridor:conclusion},
+    \texttt{sec:res:uav:scurve:conclusion}.}
 \end{enumerate}
 
 \section{Outline}\label{sec:intro:outline}
@@ -386,8 +406,9 @@ control platforms. \autoref{ch:related} positions the comparison among generativ
 constrained control methods. \autoref{ch:method} develops the models, projection procedures and
 execution loops. \autoref{ch:setup} specifies the tasks, training and evaluation protocols.
 \autoref{ch:results} reports the model and projection comparisons and their transfer to visual and
-aerial tasks. \autoref{ch:discussion} interprets the findings and their limits, and
-\autoref{ch:conclusion} concludes with the research questions and future work.
+aerial tasks. \autoref{ch:conclusion} summarises the findings and answers the research questions, and
+\autoref{ch:discussion} states the limits of the work, what a deployment would add to it, and future
+work.
 
 % =============================================================================
 \chapter{Background}\label{ch:background}
@@ -537,7 +558,7 @@ controlled in cascade: an outer loop turns a position error into a desired thrus
 desired attitude, and an inner loop tracks that attitude. Geometric controllers formulate the attitude
 error directly on the rotation group and thereby avoid the singularities of local coordinates
 \parencite{lee2010geometric}. Model predictive control is an alternative that optimises the rotor
-commands over a short horizon against a simulation of the vehicle; predictive sampling in \ac{MJPC}
+commands over a short horizon against a simulation of the vehicle; predictive sampling in MuJoCo MPC
 does so without derivatives, by rolling out perturbed control sequences and keeping the best
 \parencite{howell2022predictive}. The vehicle and its scenes are simulated in MuJoCo, a rigid-body
 physics engine for contact-rich robotic simulation \parencite{todorov2012mujoco}.
@@ -613,9 +634,12 @@ sampling step, and the resulting procedure is stated as an algorithm
 a small step budget that convention leaves no step before the final one, and the method reduces to
 projecting a finished sample --- a case that, to the author's knowledge, has not been characterised.
 
-HardFlow is evaluated on the same obstacle-avoidance task as \ac{DPCC}, with the constraint geometry
-of \parencite{romer2025diffusion}, so its differences from this thesis lie in the control loop rather
-than in the task: it plans a horizon of sixteen steps and executes eight of them before replanning,
+HardFlow is evaluated on the same obstacle-avoidance task as \ac{DPCC}: it follows the setup and the
+constraint geometry of \parencite{romer2025diffusion}, counts projection after every sampling step ---
+the projection of \ac{DPCC} --- among its baselines, and reports, beside the safety rate and the
+computation time, the number of steps to reach the target on the trials that end without a collision
+\parencite[Sec.~VII-A, Table~II]{li2025hardflow}. Its differences from this thesis therefore lie in the
+control loop rather than in the task: it plans a horizon of sixteen steps and executes eight of them before replanning,
 fixes the step budget at ten Euler steps, states its plant as a linear model fitted to the training
 data, and solves the resulting program with an interior-point solver
 \parencite[App.~C]{li2025hardflow}. Its planner is likewise a temporal U-Net
@@ -893,7 +917,7 @@ Two plants are controlled: a manipulator, whose end-effector position the genera
 a quadrotor, whose position it plans. The projection uses a first-order model of the manipulator; the
 quadrotor is described by its rigid-body dynamics. Underneath both sits a low-level controller, because
 the generative model plans position increments and never an actuator command: the manipulator uses
-differential \ac{IK} and a joint-space PD law, the quadrotor a cascaded geometric tracking controller
+differential \ac{IK} and a joint-space \ac{PD} law, the quadrotor a cascaded geometric tracking controller
 or, as a baseline, sampling-based predictive control.
 
 \subsection{The Manipulator and Its First-Order Model}\label{sec:method:manipulator}
@@ -969,8 +993,8 @@ The generative model never commands these inputs; it plans positions, and the co
 In every case the generative model replans at each control step, emits a \emph{position increment},
 and never emits an actuator command; everything below the increment is classical control --- a
 differential \ac{IK} loop feeding a joint-space PD law on the two manipulator environments, and a
-cascaded \emph{geometric} tracking controller, or optionally a sampling-based \ac{MJPC} tracker, on
-the quadrotor.
+cascaded \emph{geometric} tracking controller, or optionally the sampling-based tracker of MuJoCo MPC,
+on the quadrotor.
 
 Write $\Delta\vect{p}_{t}$ for the first action of the selected plan at control step $t$. All three
 environments run the same two-line recursion,
@@ -1018,7 +1042,7 @@ observation through the map in \autoref{sec:method:env:uav}. Two properties foll
     $\vect{o}$ layout & $(\vect{p}\sidx{des},\vect{p})$ & $(\vect{p}\sidx{des},\vect{p})$ & $(\vect{p}\sidx{des},\vect{p},\dot{\vect{p}})$ \\
     $t\sidx{s}$     & $1$                   & $1$                       & $1$ \\
     dynamics rows   & $4$                   & $6$                       & $6$ \\
-    low level       & differential \ac{IK} $\rightarrow$ joint PD & same & geometric cascade, or \ac{MJPC} \\
+    low level       & differential \ac{IK} $\rightarrow$ joint PD & same & geometric cascade, or MuJoCo MPC \\
     plan interval   & one plan per environment step & one plan per environment step & $0.03\,\textrm{s}$ simulated \\
     inner interval  & $n\sidx{sub}$ simulator substeps & $n\sidx{sub}$ simulator substeps & $0.01\,\textrm{s}$ simulated \\
     \bottomrule
@@ -1188,7 +1212,7 @@ same interval; the zero-velocity policy has no velocity feed-forward. Their aver
 speeds therefore need not agree.
 
 The cascaded geometric controller uses zero velocity feed-forward in the reported aerial evaluations.
-The MuJoCo predictive controller is evaluated separately in the s-curve controller comparison
+MuJoCo MPC is evaluated separately in the s-curve controller comparison
 (\autoref{sec:res:uav}). With $\dot{\vect{p}}\sidx{des}=\vect{0}$, position error drives the outer
 loop while its velocity feedback damps the motion. Tracking lag is measured on the executed flights.
 \srcnote{\texttt{mix\_uav\_test/eval\_mix\_uav.py:1764--1765,1869--1888};
@@ -1198,7 +1222,7 @@ loop while its velocity feedback damps the motion. Tracking lag is measured on t
 
 A sampling-based predictive controller is
 implemented behind the same interface, so it can be swapped for the geometric cascade without
-touching the plan layer. It is the \emph{Predictive Sampling} planner of \parencite{howell2022predictive}, used
+touching the plan layer. It is the \emph{Predictive Sampling} planner of MuJoCo MPC \parencite{howell2022predictive}, used
 as published; only the task is ours. Three pieces define it.
 
 \emph{The objective.} The planner minimises the finite-horizon sum
@@ -1241,7 +1265,7 @@ per call, $\sigma = 0.3$, $w_{v} = 0.1$.
 \texttt{mujoco\_mpc.mjx.predictive\_sampling} unmodified.}
 
 The controller comparison in \autoref{sec:res:uav} distinguishes flights tracked by the geometric
-cascade from those tracked by MuJoCo predictive control. The per-scene choices are recorded in
+cascade from those tracked by MuJoCo MPC. The per-scene choices are recorded in
 \autoref{sec:setup:protocol}.
 
 % =============================================================================
@@ -2323,7 +2347,7 @@ the arena,
 \end{equation}
 with $(x_{0},y_{0})$ the centre of the field and $z\sidx{fly}$ a fixed flying altitude.
 
-The planner, its plan, its observation, its projection and its constraint rows are those of the table:
+The planner, its plan, its observation, its projection and its constraint rows are those of D3IL-avoiding:
 the $d = 6$ layout of \autoref{tab:embodiments}, the planar increment, the four dynamics rows, and the
 halfspaces and keep-out disk of the geometry in the table's own coordinates. The loop of
 \autoref{sec:method:setpoint} runs unchanged, and only the plant behind \eqref{eq:method:dep:setpoint}
@@ -2332,8 +2356,8 @@ to the cascaded geometric controller of \autoref{sec:method:geometric} as a setp
 vertical loop holds $z\sidx{fly}$, because the plan carries no altitude, and its reference slides towards
 the setpoint at a bounded speed for one control period, without velocity feed-forward. The vehicle's
 measured position is then mapped back to the table by the inverse of \eqref{eq:method:env:pillarsmap}
-and becomes the measured half of the next observation. A contact with a pillar ends the episode as a
-failure, as the rod's contact with a post does on the table. The scene has no demonstrations of its own:
+and becomes the measured half of the next observation. A collision with a pillar ends the episode as a
+failure, as a collision of the rod with a post does in D3IL-avoiding. The scene has no demonstrations of its own:
 its planner is trained on the human demonstrations of D3IL-avoiding, and what the scene measures is the
 difference between two plants executing the same plans.
 \srcnote{\texttt{uav\_avoiding\_bridge/frame.py} (\texttt{SCALE} $36$, \texttt{ORIGIN\_A} $(0.5,\,0.035)$,
@@ -2342,7 +2366,11 @@ difference between two plants executing the same plans.
 \texttt{control\_hz} $1$, i.e.\ $100$ physics steps of $0.01$\,s per setpoint, reference rate-limited to
 \texttt{v\_max} $1$\,m/s, \texttt{feedforward=False}, contact terminates); \texttt{factory.py}
 (\texttt{FMPCC\_AVOIDING\_PLANT=uav} swaps the plant inside the avoiding evaluation scripts);
-\texttt{scene.py} $\to$ \texttt{scene\_avoiding\_pillars\_s36.xml}. Scene of record since v3.68; the
+\texttt{scene.py} $\to$ \texttt{scene\_avoiding\_pillars\_s36.xml}. D3IL-avoiding side:
+\texttt{d3il/.../gym\_avoiding/envs/avoiding.py} \texttt{check\_failure} (the rod against any of the six
+posts) $\to$ \texttt{\_check\_early\_termination} $\to$ \texttt{done} in
+\texttt{d3il\_sim/gyms/gym\_env\_wrapper.py:90, 125--133}, and \texttt{scripts/eval.py} ends the
+episode without success. Scene of record since v3.68; the
 earlier pillar scene with its own flown demonstrations is not used.}
 
 \subsubsection*{Expert demonstrations of the corridor and the s-curve}
@@ -2567,7 +2595,7 @@ record both a start and an end; re-derive it with \texttt{sacct} before stating 
   \acro{NLP}[NLP]{nonlinear program}
   \acro{SLSQP}[SLSQP]{sequential least-squares quadratic programming}
   \acro{IK}[IK]{inverse kinematics}
-  \acro{MJPC}[MJPC]{MuJoCo predictive control}
+  \acro{PD}[PD]{proportional--derivative}
   \acro{UAV}[UAV]{unmanned aerial vehicle}
   \acro{FiLM}[FiLM]{feature-wise linear modulation}
   \acro{MPC}[MPC]{model predictive control}

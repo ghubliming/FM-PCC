@@ -21,6 +21,23 @@ is sourced from · what it left open.
 
 ---
 
+## v3.99 — 2026-09-24 · The v4.0 and v4.1 cross notes applied (Ch 5/6 appendix references); bundle
+
+- **What was asked:** the author: "check the inbox cross note, update the v3, only job is to check cross note from
+  v2/4, nth else". Two open notes from v4 (v4.0, v4.1), none from v2.
+- **What changed:** 17 passages of Ch 5/6 no longer point at appendix content v4 moved or archived.
+  - The X2 figure is "in the appendix".
+  - The twenty-episode references read `app:avoiding-twenty`. The false sentence about the baseline's incomplete
+    twenty-episode run is rewritten from the author's wording.
+  - The timing pointer goes to `ch:discussion`.
+  - The archived budget and rule tables are gone from Tables 6.1, 6.2 and 6.14 and from their text. Their numbers
+    stay as text, and the data notes give the source.
+- **Check:** every Ch 5/6 reference resolves in v3's build and in v4's, and none uses a v4 alias.
+- **check.py:** reports one false positive, a label in a nested `\input`; the fix is proposed, not applied.
+- **Bundle:** `thesis_v3_20260924_214628_{new,full_clean}`, both byte-faithful.
+- **Record:** [`changelogs/v3.99_…`](changelogs/v3.99_20260924_cross_notes_v4_appendix_references_bundle.md).
+- **Not done:** not compiled; nothing committed.
+
 ## v3.98a — 2026-09-24 20:19 · Ch 7, Ch 8 and the appendix handed to v4 (a copy)
 
 - At the author's request, `07_discussion.tex`, `08_conclusion.tex`, `09_appendix.tex` and `app_ntrial20_feasible.tex`
