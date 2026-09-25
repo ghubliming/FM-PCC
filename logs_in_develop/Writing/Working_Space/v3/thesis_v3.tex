@@ -45,15 +45,11 @@
 \input{chapters/04_method}
 \input{chapters/05_setup}
 \input{chapters/06_results}
-\input{chapters/07_discussion}
-% Chapter 8 is built again (author instruction, 2026-09-20). It was dropped from the build on
-% 2026-09-18 when the conclusion was handed to v4; the author's point is that the thesis must not
-% be missing a chapter in the meantime. v3 keeps the concise draft it owns per DRAFT_OWNERSHIP.md
-% and v4 refines the prose -- the ownership did not change, only whether the file is built.
-\input{chapters/08_conclusion}
-
-% --- appendices ---------------------------------------------------------------
-\input{chapters/09_appendix}
+% --- Chapters 7-8 and the appendices are NOT part of v3 (v3.100b, author, 2026-09-25) --------------
+% They are v4's since the v3.98 handover (v4/chapters/07_conclusion, 08_discussion, 09_appendix,
+% app_ntrial20_feasible). v3's frozen copies are archived in withheld/20260925_v3.100b_archive/chapters/.
+% A reference from Ch 5/6 into them prints "??" in a v3 build; it resolves in the release, which takes
+% Ch 7-9 from v4. tools/check.py checks those references against v4's labels.
 
 % --- back matter --------------------------------------------------------------
 \input{parts/99_backmatter}

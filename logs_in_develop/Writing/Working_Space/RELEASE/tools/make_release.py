@@ -59,9 +59,14 @@ TEMPLATE = os.path.join(WRITING, 'Template_DONT_CHANGE')
 DA_FIGS = os.path.join(REPO, 'Data_Analysis', 'DA_in_Paper', 'figures')
 OUT_DEFAULT = os.path.join(RELEASE, 'output')
 CHANGELOG = os.path.join(RELEASE, 'CHANGELOG.md')
+FRONT_DIR = os.path.join(RELEASE, 'front')      # optional author-supplied front-matter text (acknowledgments.tex)
+LATEX_SUBDIR = 'latex'                           # the LaTeX project inside a build folder; the zip sits next to it
 
 PAGE_MIN, PAGE_MAX = 60, 200          # the hard limits the author set (warn outside)
 PAGE_GUIDE = (60, 80)                 # TUM I6 orientation for a master's thesis (information only)
+# Page model, calibrated on the first compiled release (Overleaf, 2026-09-25: 185 pages at v2.28/v3.99/v4.1a).
+WORDS_PER_PAGE = 370
+BIB_LINES_PER_ENTRY = 4.6
 
 # --- what is a drafting mark ----------------------------------------------------------------
 REMOVE_MACROS = {'srcnote': False, 'dataref': False, 'flawed': True, 'outdated': True,
@@ -80,7 +85,7 @@ V2_CHAPTERS = {
 }
 V3_CHAPTERS = ['chapters/05_setup.tex', 'chapters/06_results.tex']
 V4_CHAPTERS = ['chapters/07_conclusion.tex', 'chapters/08_discussion.tex', 'chapters/09_appendix.tex']
-TEMPLATE_PAGES = ['cover', 'title', 'disclaimer', 'acknowledgments']
+TEMPLATE_PAGES = ['cover', 'title', 'disclaimer', 'acknowledgments']   # acknowledgments/cover are conditional, see build()
 TEMPLATE_VERBATIM = ['Makefile', '.latexmkrc']
 
 RE_IF = re.compile(r'\\(if[a-zA-Z@]*|else|fi)(?![a-zA-Z@])')
@@ -550,6 +555,28 @@ def fix_doctype(text, rep):
     return text
 
 
+def fit_title_page(text, rep):
+    r"""The template's title page fits its dummy titles only. With the real English title (two \huge lines)
+    and the German title (three \huge lines) it overflows, and the faculty logo lands alone on the next
+    page (seen in the first compiled release). The German title goes to \LARGE and the vertical gaps
+    shrink; the fonts of everything else and the order of the page stay the template's."""
+    subs = [(r'\vspace{10mm}', r'\vspace{6mm}', 1),
+            (r'\vspace{20mm}', r'\vspace{10mm}', 1),
+            (r'\vspace{15mm}', r'\vspace{8mm}', 2),
+            (r'{\huge\bfseries \foreignlanguage{ngerman}{\getTitleGer{}} \par}',
+             r'{\LARGE\bfseries \foreignlanguage{ngerman}{\getTitleGer{}} \par}', 1)]
+    for old, new, n in subs:
+        if text.count(old) != n:
+            rep.info.append(f'title page: expected {n}x `{old}` in the template copy, found {text.count(old)}; '
+                            f'the fit adjustment for it was skipped -- check that the title page still fits')
+            continue
+        text = text.replace(old, new)
+    rep.info.append('title page: German title set in \\LARGE and the vertical gaps reduced (20/15/15/10 mm -> '
+                    '10/8/8/6 mm) so that the long titles fit on one page; the first compiled release had the '
+                    'faculty logo alone on page ii')
+    return text
+
+
 def metadata_holes(text, rep):
     for m in re.finditer(r'^\\newcommand\*\{\\(get[A-Za-z]+)\}\{([^}]*)\}', text, re.M):
         if 'TODO' in m.group(2):
@@ -778,7 +805,7 @@ def outline_and_estimate(files, order):
             cur['words'] += len(plain_words(t))
             cur['eqlines'] += eq_lines
     for c in est:
-        c['pages'] = c['words'] / 430.0 + c['eqlines'] * 2.2 / 41.0 + c['fig'] + c['tab'] + 0.5
+        c['pages'] = c['words'] / WORDS_PER_PAGE + c['eqlines'] * 2.2 / 41.0 + c['fig'] + c['tab'] + 0.5
     return rows, lof, lot, est
 
 
@@ -800,7 +827,8 @@ def build(args):
     if args.appendix_short:
         name += '_appendixshort'
     outdir = os.path.abspath(args.outdir or OUT_DEFAULT)
-    root = os.path.join(outdir, name)
+    build_dir = os.path.join(outdir, name)             # output/<build>/  : latex/ + zip + notes together
+    root = os.path.join(build_dir, LATEX_SUBDIR)       # the LaTeX project
     files = {}        # release rel path -> text
     binaries = {}     # release rel path -> source path
     sources = []      # (draft, rel, lines, sha)
@@ -837,6 +865,20 @@ def build(args):
         sys.exit('make_release: the abstract block (\\ifstandalone ... \\fi with prose) was not found in v2\'s front matter')
     front = clean_tex(front_raw, 'v2:frontmatter', rep, states)
     front = re.sub(r'^\\pagenumbering\{alph\}\n?', '', front, flags=re.M)
+    ack_text = ''
+    ack_src = os.path.join(FRONT_DIR, 'acknowledgments.tex')
+    if os.path.isfile(ack_src):
+        ack_text = tidy(strip_comments(read(ack_src), 'front/acknowledgments.tex', rep)).strip()
+    want_ack = bool(ack_text) or args.acknowledgments
+    if not args.standalone:
+        if not want_ack:
+            front = re.sub(r'^\\input\{pages/acknowledgments\}\n?', '', front, flags=re.M)
+            rep.info.append('Acknowledgments page dropped: it is optional and there is no text (the template only '
+                            'has a TODO there; its own compiled PDF shows it blank). Put the text in '
+                            'RELEASE/front/acknowledgments.tex, or pass --acknowledgments for the empty page')
+        if args.no_cover:
+            front = re.sub(r'^\\input\{pages/cover\}\n?', '', front, flags=re.M)
+            rep.info.append('cover page dropped (--no-cover): the title page is the first page')
 
     back = clean_tex(parts['backmatter'], 'v2:backmatter', rep, states)
 
@@ -917,12 +959,22 @@ def build(args):
         for fn in ('settings.tex', 'main.xmpdata'):
             files[fn] = tidy(strip_comments(read(os.path.join(TEMPLATE, fn)), f'template:{fn}', rep))
         for page in TEMPLATE_PAGES:
-            files[f'pages/{page}.tex'] = tidy(strip_comments(read(os.path.join(TEMPLATE, 'pages', page + '.tex')),
-                                                             f'template:pages/{page}.tex', rep))
+            if page == 'acknowledgments' and not want_ack:
+                continue
+            if page == 'cover' and args.no_cover:
+                continue
+            text = tidy(strip_comments(read(os.path.join(TEMPLATE, 'pages', page + '.tex')),
+                                       f'template:pages/{page}.tex', rep))
+            if page == 'title':
+                text = fit_title_page(text, rep)
+            if page == 'acknowledgments' and ack_text:
+                text = text.replace('\\vspace{10mm}\n', '\\vspace{10mm}\n\n' + ack_text + '\n', 1)
+                rep.info.append('Acknowledgments page included with the text of RELEASE/front/acknowledgments.tex')
+            files[f'pages/{page}.tex'] = text
         files['pages/abstract.tex'] = '\\chapter{\\abstractname}\n\n' + abstract
-        rep.hole('template', 'pages/acknowledgments.tex', 1,
-                 'Acknowledgments page is EMPTY (the template only has a TODO there) -- write it or drop '
-                 '\\input{pages/acknowledgments} from main.tex')
+        if want_ack and not ack_text:
+            rep.hole('template', 'pages/acknowledgments.tex', 1,
+                     'Acknowledgments page is EMPTY (--acknowledgments without RELEASE/front/acknowledgments.tex)')
         rep.info.append('template: pages/software_used.tex (the AI-tools declaration page of the template) is not '
                         'included -- the author decides whether the submission needs it')
         for fn in TEMPLATE_VERBATIM:
@@ -970,8 +1022,8 @@ def build(args):
         return 0
 
     # ---- write ---------------------------------------------------------------------------------------
-    if os.path.exists(root):
-        sys.exit(f'make_release: {root} exists already')
+    if os.path.exists(build_dir):
+        sys.exit(f'make_release: {build_dir} exists already')
     os.makedirs(root)
     for rel, text in files.items():
         p = os.path.join(root, rel)
@@ -990,9 +1042,9 @@ def build(args):
     rows, lof, lot, est = outline_and_estimate(files, order)
     body_pages = sum(c['pages'] for c in est)
     n_toc = sum(1 for r in rows if r[2] <= 2)
-    front_pages = 5 + math.ceil((n_toc + 6) / 38)
+    front_pages = (2 if args.no_cover else 3) + (1 if want_ack else 0) + math.ceil((n_toc + 6) / 38)
     n_cited = len(stats['cited'])
-    back_pages = 1 + math.ceil(len(lof) * 1.6 / 41) + math.ceil(len(lot) * 1.6 / 41) + n_cited * 3.3 / 41
+    back_pages = 1 + math.ceil(len(lof) * 1.6 / 41) + math.ceil(len(lot) * 1.6 / 41) + n_cited * BIB_LINES_PER_ENTRY / 41
     total = body_pages + front_pages + back_pages
     lo, hi = 0.85 * total, 1.2 * total
     verdict = 'within the 60-200 limit'
@@ -1006,24 +1058,24 @@ def build(args):
     uncited = sorted(set(bibkeys) - set(stats['cited']))
 
     if pagewarn:
-        new_root = root + '_PAGEWARN'
-        os.rename(root, new_root)
-        root, name = new_root, name + '_PAGEWARN'
+        os.rename(build_dir, build_dir + '_PAGEWARN')
+        build_dir, name = build_dir + '_PAGEWARN', name + '_PAGEWARN'
+        root = os.path.join(build_dir, LATEX_SUBDIR)
 
     # ---- notes ---------------------------------------------------------------------------------------
-    notes = os.path.join(root, f'RELEASE_NOTES_{stamp}.md')
+    notes = os.path.join(build_dir, f'RELEASE_NOTES_{stamp}.md')
     with open(notes, 'w', encoding='utf-8') as f:
         f.write(render_notes(name, stamp, (v2s, v2full), (v3s, v3full), (v4s, v4full), sources, files, binaries,
                              rep, stats, rows, lof, lot, est, front_pages, back_pages, total, lo, hi, verdict,
                              guide, uncited, args, wanted, raster))
     if pagewarn:
-        with open(os.path.join(root, 'WARNING_PAGE_LIMIT.md'), 'w') as f:
+        with open(os.path.join(build_dir, 'WARNING_PAGE_LIMIT.md'), 'w') as f:
             f.write(f'# PAGE LIMIT WARNING\n\nEstimated {total:.0f} pages ({lo:.0f}-{hi:.0f}); {verdict}. '
                     f'See RELEASE_NOTES_{stamp}.md.\n')
 
     zip_path = ''
     if not args.no_zip:
-        zip_path = make_zip(root)
+        zip_path = make_zip(build_dir)
 
     # ---- changelog ---------------------------------------------------------------------------------------
     entry = [f'## {stamp} -- {name}', '',
@@ -1031,20 +1083,23 @@ def build(args):
              f'- **Mode:** {"standalone (no TUM template)" if args.standalone else "TUM template"}'
              f'{"; appendix long-data tables hidden" if args.appendix_short else ""}'
              f'{"; tag " + args.tag if args.tag else ""}',
-             f'- **Output:** `output/{name}/` (main.tex + {len(files) - 1} text files, {len(binaries)} binary files)'
-             + (f', `output/{os.path.basename(zip_path)}` ({os.path.getsize(zip_path) // 1024} KB)' if zip_path else ''),
+             f'- **Output:** `output/{name}/{LATEX_SUBDIR}/` (main.tex + {len(files) - 1} text files, {len(binaries)} binary files)'
+             + (f', `output/{name}/{os.path.basename(zip_path)}` ({os.path.getsize(zip_path) // 1024} KB)' if zip_path else ''),
              f'- **Estimate:** ~{total:.0f} pages ({lo:.0f}-{hi:.0f}), {verdict}; {guide} the {PAGE_GUIDE[0]}-{PAGE_GUIDE[1]} '
              f'guideline. NOT compiled (no TeX toolchain here).',
              f'- **Holes recorded:** {len(rep.holes)} · **bugs/findings:** {len(rep.bugs)} · figures {len(wanted)} '
              f'({len(raster)} raster) · bibliography {len(bibkeys)} entries, {n_cited} cited · labels {stats["labels"]}',
-             f'- **Notes:** `output/{name}/RELEASE_NOTES_{stamp}.md`', '']
+             f'- **Notes:** `output/{name}/RELEASE_NOTES_{stamp}.md`']
+    if args.note:
+        entry += [f'- **Note:** {n}' for n in args.note]
+    entry.append('')
     if not args.no_log:
         prepend_changelog('\n'.join(entry))
 
     # ---- console ------------------------------------------------------------------------------------------
     print(f'RELEASE  {name}')
     print(f'  built on v2 {v2s} · v3 {v3s} · v4 {v4s}   ({len(sources)} source files)')
-    print(f'  {len(files)} text files, {len(binaries)} binary files -> {os.path.relpath(root, RELEASE)}')
+    print(f'  {len(files)} text files, {len(binaries)} binary files -> {os.path.relpath(root, RELEASE)}/')
     if zip_path:
         print(f'  zip: {os.path.relpath(zip_path, RELEASE)} ({os.path.getsize(zip_path) // 1024} KB)')
     print(f'  page estimate: ~{total:.0f} ({lo:.0f}-{hi:.0f}) -- {verdict}; {guide} the {PAGE_GUIDE[0]}-{PAGE_GUIDE[1]} guideline')
@@ -1075,6 +1130,9 @@ def render_notes(name, stamp, v2, v3, v4, sources, files, binaries, rep, stats, 
     w(f'**~{total:.0f} pages (band {lo:.0f}-{hi:.0f}) -- {verdict}.** The estimate is {guide} the '
       f'{PAGE_GUIDE[0]}-{PAGE_GUIDE[1]}-page orientation of the institute for a master\'s thesis '
       f'(Writing_Hints/tum_i6_thesis_submission_reference.md).')
+    for n in (args.note or []):
+        w('')
+        w(f'**Note:** {n}')
     w('')
     w('| chapter | words | eq. lines | figures | tables | est. pages |')
     w('| :-- | --: | --: | --: | --: | --: |')
@@ -1085,9 +1143,10 @@ def render_notes(name, stamp, v2, v3, v4, sources, files, binaries, rep, stats, 
     w(f'| **total** | {sum(c["words"] for c in est)} | {sum(c["eqlines"] for c in est)} | {sum(c["nfig"] for c in est)} '
       f'| {sum(c["ntab"] for c in est)} | **{total:.1f}** |')
     w('')
-    w('Model: 430 prose words per page, 2.2 lines per displayed equation line, a figure by its width '
+    w(f'Model: {WORDS_PER_PAGE} prose words per page, 2.2 lines per displayed equation line, a figure by its width '
       '(0.30 page per full width + caption), a table by its rows (1.2 lines each + 5), half a page lost per chapter start, '
-      '5 front pages + contents, 3.3 lines per bibliography entry. Treat it as +-20 %.')
+      f'the front pages + contents, {BIB_LINES_PER_ENTRY} lines per bibliography entry; calibrated on the compiled first '
+      'release (185 pages, 2026-09-25). Treat it as +-15 %.')
     w('')
     w('## 2. HOLES -- what the submitted PDF would lack or show')
     w('')
@@ -1191,14 +1250,17 @@ def render_notes(name, stamp, v2, v3, v4, sources, files, binaries, rep, stats, 
     return '\n'.join(L) + '\n'
 
 
-def make_zip(root):
-    """The LaTeX project only: notes, warnings and attached PDFs stay in the folder."""
-    zip_path = root + '.zip'
+def make_zip(build_dir):
+    """output/<build>/<build>.zip holds output/<build>/latex/ at the zip root (Overleaf-ready); notes, warnings
+    and attached PDFs stay next to it in the build folder."""
+    build_dir = os.path.abspath(build_dir.rstrip('/'))
+    root = os.path.join(build_dir, LATEX_SUBDIR)
+    if not os.path.isdir(root):
+        sys.exit(f'make_release: {root} not found -- not a build folder')
+    zip_path = os.path.join(build_dir, os.path.basename(build_dir) + '.zip')
     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as z:
         for d, _dirs, fns in os.walk(root):
             for fn in sorted(fns):
-                if fn.startswith('RELEASE_NOTES_') or fn.startswith('WARNING_') or fn.lower().endswith('.pdf') and d == root:
-                    continue
                 p = os.path.join(d, fn)
                 z.write(p, os.path.relpath(p, root))
     return zip_path
@@ -1223,14 +1285,21 @@ def prepend_changelog(entry):
         f.write(text)
 
 
+def builds():
+    if not os.path.isdir(OUT_DEFAULT):
+        return []
+    return sorted(d for d in os.listdir(OUT_DEFAULT)
+                  if os.path.isdir(os.path.join(OUT_DEFAULT, d, LATEX_SUBDIR)))
+
+
 def attach_pdf(args):
     root = args.release
     if not root:
-        cands = sorted(d for d in os.listdir(OUT_DEFAULT) if os.path.isdir(os.path.join(OUT_DEFAULT, d)))
+        cands = builds()
         if not cands:
             sys.exit('no release folder found')
         root = os.path.join(OUT_DEFAULT, cands[-1])
-    root = os.path.abspath(root)
+    root = os.path.abspath(root.rstrip('/'))
     name = os.path.basename(root)
     dst = os.path.join(root, name + '.pdf')
     shutil.copyfile(args.attach_pdf, dst)
@@ -1259,14 +1328,16 @@ def attach_pdf(args):
 
 
 def cmd_list():
-    if not os.path.isdir(OUT_DEFAULT):
+    rows = builds()
+    if not rows:
         print('no releases yet')
         return 0
-    for d in sorted(os.listdir(OUT_DEFAULT)):
+    for d in rows:
         p = os.path.join(OUT_DEFAULT, d)
-        if os.path.isdir(p):
-            z = p + '.zip'
-            print(f'  {d}' + (f'   zip {os.path.getsize(z) // 1024} KB' if os.path.exists(z) else '   (no zip)'))
+        z = os.path.join(p, d + '.zip')
+        pdfs = [f for f in os.listdir(p) if f.lower().endswith('.pdf')]
+        print(f'  {d}' + (f'   zip {os.path.getsize(z) // 1024} KB' if os.path.exists(z) else '   (no zip)')
+              + (f'   pdf: {", ".join(pdfs)}' if pdfs else ''))
     return 0
 
 
@@ -1275,13 +1346,17 @@ def main():
     ap.add_argument('--tag', help='suffix for the release folder name, e.g. GOLDEN_TEMPLATE')
     ap.add_argument('--appendix-short', action='store_true', help='hide the long-data tables of the appendix')
     ap.add_argument('--standalone', action='store_true', help='build on v2\'s standalone preamble instead of the TUM template')
+    ap.add_argument('--acknowledgments', action='store_true',
+                    help='include the Acknowledgments page even without RELEASE/front/acknowledgments.tex (empty page)')
+    ap.add_argument('--no-cover', action='store_true', help='drop the cover page; the title page comes first')
+    ap.add_argument('--note', action='append', metavar='TEXT', help='a line recorded in the notes and the changelog (repeatable)')
     ap.add_argument('--no-zip', action='store_true')
     ap.add_argument('--outdir', help=f'default: {os.path.relpath(OUT_DEFAULT, RELEASE)}')
     ap.add_argument('--dry-run', action='store_true', help='assemble and check in memory, write nothing')
     ap.add_argument('--no-log', action='store_true', help='do not record the build in CHANGELOG.md (test builds)')
     ap.add_argument('--attach-pdf', metavar='PDF', help='copy a compiled PDF into a release folder and record its page count')
     ap.add_argument('--release', metavar='FOLDER', help='the release folder for --attach-pdf (default: newest)')
-    ap.add_argument('--rezip', metavar='FOLDER', help='rebuild the zip of an existing release folder')
+    ap.add_argument('--rezip', metavar='FOLDER', help='rebuild the zip of an existing build folder (output/<build>)')
     ap.add_argument('--list', action='store_true')
     a = ap.parse_args()
     if a.list:

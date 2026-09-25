@@ -27,6 +27,9 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 V3 = os.path.dirname(HERE)
 MASTER = os.path.join(V3, 'thesis_v3.tex')
+# v3.100b: Ch 7-9 are v4's and no longer in v3. A reference from Ch 5/6 into them is checked against v4's
+# live labels (the release takes Ch 7-9 from there); one that resolves in neither draft is still a failure.
+V4_CHAPTERS = os.path.join(os.path.dirname(V3), 'v4', 'chapters')
 BIBS = ['bibliography.bib', 'bibliography_v3.bib']
 
 RE_INPUT = re.compile(r'^[^%\n]*\\input\{([^}]+)\}', re.M)
@@ -99,8 +102,20 @@ def main():
     dangling = sorted({r for s in clean.values() for r in RE_REF.findall(s)} - set(labels))
     if dup:
         problems.append(('duplicate \\label', dup))
+    v4_labels = set()
+    if os.path.isdir(V4_CHAPTERS):
+        for root, _d, fs in os.walk(V4_CHAPTERS):
+            for fn in fs:
+                if fn.endswith('.tex'):
+                    with open(os.path.join(root, fn)) as f:
+                        v4_labels |= set(RE_LABEL.findall(strip_comments(f.read())))
+    external = [r for r in dangling if r in v4_labels]
+    dangling = [r for r in dangling if r not in v4_labels]
+    if external:
+        print(f'{len(external)} reference(s) into v4\'s Ch 7-9 (resolve in the release, "??" in a v3 build): '
+              + ', '.join(external))
     if dangling:
-        problems.append(('reference with no \\label', dangling))
+        problems.append(('reference with no \\label (in v3 or in v4\'s Ch 7-9)', dangling))
 
     # --- citations ----------------------------------------------------------
     bibkeys, bibfrom, overlap = set(), {}, []

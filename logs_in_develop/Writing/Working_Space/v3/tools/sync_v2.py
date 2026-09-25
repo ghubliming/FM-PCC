@@ -54,9 +54,7 @@ POLICY = {
     'chapters/04_method.tex':       'merge',
     'chapters/05_setup.tex':        'own',
     'chapters/06_results.tex':      'own',
-    'chapters/07_discussion.tex':   'own',
-    'chapters/08_conclusion.tex':   'own',
-    'chapters/09_appendix.tex':     'own',
+    # v3.100b: chapters/07_discussion, 08_conclusion, 09_appendix archived (v4's since v3.98).
     # INHERIT, not merge: v3's own entries live in bibliography_v3.bib, so this
     # file only ever moves upstream and always fast-forwards. See the header of
     # bibliography_v3.bib for why both drafts appending to one .bib is the worst

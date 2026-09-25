@@ -18,5 +18,9 @@ cross_draft/
 - **Closing:** the *target* draft acts, records it in its own CHANGELOG, and marks the INBOX line ✅ with
   its version (e.g. `✅ v2.17`). Notes stay in place as the record; nobody deletes them.
 - **Declining:** mark ❌ with a one-line reason. The author decides disputes.
+- **A fourth source since 2026-09-25 (Orchestra O001):** notes named `FROM_Orchestra_<date>_O###_<topic>.md` and rows
+  `Orchestra O### · <date>` come from the Orchestra chat (`../Orchestra/README.md`), which makes minor and cross-linked
+  edits directly in the drafts on the author's request and distributes TODO lists. The target closes them like any
+  other row; the Orchestra never marks its own rows ✅.
 - v2 → v3 changes to inherited chapters still flow through `v3/tools/sync_v2.py`; this folder is for
   findings, not for copying text.

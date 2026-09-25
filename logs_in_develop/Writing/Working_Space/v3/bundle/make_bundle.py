@@ -89,6 +89,10 @@ which is no notes at all, just the thesis itself, so I can check the compiled PD
 
 The earlier --clean-notes and --no-notes levels are withdrawn with this change.
 
+BOTH VARIANTS END AFTER CHAPTER 6 (v3.100a, author, 2026-09-25): Chapters 7-8 and the appendix are v4's
+and are not bundled (EXCLUDED below); their \input lines stay as comments, the back matter stays. A
+reference from Ch 5/6 into them prints "??"; the build lists each one.
+
 Every build writes a new timestamped pair (.tex, .zip) and appends one row to BUNDLE_LOG.md.
 Bundles are build output: they are never edited, and nothing reads them back.
 """
@@ -111,6 +115,13 @@ LOG = os.path.join(HERE, 'BUNDLE_LOG.md')
 OUT_DIR = os.path.join(HERE, 'output')
 COMPILABLE = ('.pdf', '.png', '.jpg', '.jpeg')
 MAX_DEPTH = 8
+# v3.100a (author, 2026-09-25: "From now on, STOP build the things after Chap6 into the bundle!"). Chapters 7-8
+# and the appendix are v4's since the v3.98 handover; v3's copies are frozen and stale. The bundle ends after
+# Chapter 6: these \input lines of the master are left as a comment, the back matter (bibliography) stays.
+# A reference from Ch 5/6 into them prints "??" in the bundle; the build lists them. The release takes Ch 7-9
+# from v4's live files (RELEASE/tools/make_release.py). v3.100b: the files themselves are archived and the
+# master no longer inputs them; this set stays as a guard in case an \input comes back.
+EXCLUDED = {'chapters/07_discussion.tex', 'chapters/08_conclusion.tex', 'chapters/09_appendix.tex'}
 BASE_DIR = os.path.join(V3, 'inherited', 'v2_base')
 STATE = os.path.join(V3, 'inherited', 'SYNC_STATE.json')
 
@@ -310,7 +321,8 @@ def resolve(target):
     return None
 
 
-def flatten(path, seen, sources, depth=0, collapse=False, collapsed=None, kept=None, tag=('', '')):
+def flatten(path, seen, sources, depth=0, collapse=False, collapsed=None, kept=None, tag=('', ''),
+            excluded=None):
     """-> list of output lines, with every resolvable \\input replaced in place.
 
     With ``collapse``, a v2 chapter that passes ``collapse_decision`` becomes a
@@ -337,6 +349,12 @@ def flatten(path, seen, sources, depth=0, collapse=False, collapsed=None, kept=N
             out.append(line)
             continue
         crel = os.path.relpath(child, V3)
+        if crel in EXCLUDED:
+            # Left as a comment, so it is neither built nor counted as an inlinable \input.
+            out.append(f'% NOT BUNDLED (after Chapter 6; owned by v4 since v3.98): {line.strip()}')
+            if excluded is not None:
+                excluded.append(crel)
+            continue
         if m.group('pre').strip():
             out.append(m.group('pre').rstrip())
         out.append('')
@@ -353,7 +371,7 @@ def flatten(path, seen, sources, depth=0, collapse=False, collapsed=None, kept=N
             if why == 'EDITED IN v3':
                 kept.append(crel)
         out.append(f'% <<<<<<<<<<<<<<<< BEGIN {crel}  ({sha(child)}) <<<<<<<<<<<<<<<<')
-        out.extend(flatten(child, seen, sources, depth + 1, collapse, collapsed, kept, tag))
+        out.extend(flatten(child, seen, sources, depth + 1, collapse, collapsed, kept, tag, excluded))
         out.append(f'% >>>>>>>>>>>>>>>> END   {crel} >>>>>>>>>>>>>>>>')
         out.append('')
         if m.group('post').strip():
@@ -496,10 +514,10 @@ def build(args, clean=False):
         base = f'{base}_{n}'
     tex_path = os.path.join(OUT_DIR, base + '.tex')
 
-    sources, collapsed, kept = [], [], []
+    sources, collapsed, kept, excluded = [], [], [], []
     tag, tag_full = v2_tag()
     lines = flatten(MASTER, set(), sources, collapse=not full,
-                    collapsed=collapsed, kept=kept, tag=(tag, tag_full))
+                    collapsed=collapsed, kept=kept, tag=(tag, tag_full), excluded=excluded)
     src_lines = sum(n for _r, n, _s in sources)
     if collapsed:
         lines = inject_shim(lines, V2_SHIM)
@@ -545,15 +563,17 @@ def build(args, clean=False):
               + ', '.join(f'{os.path.basename(r)} ({n} lines)' for r, n, _k, _h in collapsed))
     if kept:
         print('  inlined IN FULL because v3 has edited them: ' + ', '.join(kept))
-    if not full:
+    if excluded:
+        print('  not bundled (after Chapter 6, owned by v4): ' + ', '.join(os.path.basename(r) for r in excluded))
+    if not full or excluded:
         # Every reference from a built section into a collapsed one must still
         # resolve, or the review build prints "??". Headings carry their labels,
         # so section references survive; anything deeper would not.
         code = strip_comments('\n'.join(lines))
         dangling = sorted(set(RE_REF.findall(code)) - set(RE_LABEL.findall(code)))
         if dangling:
-            print(f'  NOTE: {len(dangling)} reference(s) point into collapsed text and will print '
-                  f'"??": ' + ', '.join(dangling[:8]) + (' ...' if len(dangling) > 8 else ''))
+            print(f'  NOTE: {len(dangling)} reference(s) point into collapsed or unbundled text and will '
+                  f'print "??": ' + ', '.join(dangling[:12]) + (' ...' if len(dangling) > 12 else ''))
         else:
             print('  cross-references: all resolve (chapter and section numbers match the full build)')
     print(f'  {os.path.relpath(tex_path, V3)}')

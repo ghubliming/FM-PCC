@@ -1,6 +1,6 @@
 ---
 name: thesis-release-builds
-description: Thesis RELEASE builds (since 2026-09-24) — Working_Space/RELEASE/tools/make_release.py assembles the submission-clean thesis from the LIVE v2/v3/v4 files (never bundles), strips every comment/flag, one aggregated bib, TUM template; outputs are never edited; first build tagged GOLDEN_TEMPLATE
+description: Thesis RELEASE builds (since 2026-09-24) — Working_Space/RELEASE/tools/make_release.py assembles the submission-clean thesis from the LIVE v2/v3/v4 files (never bundles), strips every comment/flag, one aggregated bib, TUM template; one folder per build (latex/ + zip + notes), every build kept; outputs never edited; front-matter decisions of 2026-09-25
 metadata:
   type: project
 ---
@@ -15,14 +15,23 @@ Since 2026-09-24 the thesis is released with `logs_in_develop/Writing/Working_Sp
   no `\if...` build switches, no dev notes. Content is not the release's job — a content issue goes to the
   owning draft via `cross_draft/`, then rebuild.
 - **The abstract is the author's**: copied as is, never edited.
-- **Page limit 60–200** (institute orientation 60–80): the tool estimates pages (no TeX here) and appends
-  `_PAGEWARN` to the folder name when outside; a compiled PDF is recorded with `--attach-pdf`.
-- **Every build**: a row in `RELEASE/CHANGELOG.md` (date-time + v2/v3/v4 revisions) and a
-  `RELEASE_NOTES_<stamp>.md` in the output folder listing HOLES (critical lacking things) and bugs noticed.
-- **Outputs are never edited**; the first release (2026-09-24) is tagged `GOLDEN_TEMPLATE` as the reference.
+- **Output layout (author, 2026-09-25):** `output/<stamp>_thesis_release_<v2>_<v3>_<v4>[_TAG]/` holds
+  `latex/` (the project), `<build>.zip`, `RELEASE_NOTES_<stamp>.md`, later the attached PDF. **Every build is
+  kept**; delete only on the author's word (the first two builds were deleted 2026-09-25 as "not golden yet").
+- **Front matter (author, 2026-09-25, checked against the template's own PDF):** cover + title page both
+  kept (`--no-cover` exists); the authorship declaration (`pages/disclaimer.tex`, bottom of its page) is
+  mandatory; Acknowledgments dropped unless `RELEASE/front/acknowledgments.tex` has text; the title page is
+  shrunk in the release copy (German title `\LARGE`, gaps 10/8/8/6 mm) because the real titles overflowed
+  and left the faculty logo alone on page ii.
+- **Page limit 60–200** (institute orientation 60–80): the tool estimates pages (calibrated: the first compile
+  was **185 pages** on 2026-09-25) and appends `_PAGEWARN` when outside; a compiled PDF is recorded with
+  `--attach-pdf`. Page count is close to the limit — say so when reporting.
+- **Every build**: a row in `RELEASE/CHANGELOG.md` (date-time + v2/v3/v4 revisions) and the notes MD listing
+  HOLES (critical lacking things) and bugs noticed.
 
 **Why:** the author reviews and submits from the release, so it must be reproducible from the owners' files
-in one command and must not silently carry drafting residue.
+in one command and must not silently carry drafting residue; the harness runs `rm` in the session cwd, so
+deletions under `output/` must use absolute paths.
 
 **How to apply:** for any "release / zip / clean build of the thesis" request, run the tool (read
 `RELEASE/README.md` first) instead of hand-assembling; extend the tool when a new drafting macro or

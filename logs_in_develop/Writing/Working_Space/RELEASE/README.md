@@ -1,6 +1,7 @@
 # RELEASE — the submission-clean thesis, assembled from the live v2 / v3 / v4 drafts
 
-**Created:** 2026-09-24 · **Tool:** [`tools/make_release.py`](tools/make_release.py) · **Every build:** [`CHANGELOG.md`](CHANGELOG.md) · **Outputs:** `output/`
+**Created:** 2026-09-24 · **Revised:** 2026-09-25 (per-build folders, front-matter decisions, title-page fit) ·
+**Tool:** [`tools/make_release.py`](tools/make_release.py) · **Every build:** [`CHANGELOG.md`](CHANGELOG.md) · **Outputs:** `output/`
 
 A release is the whole thesis as one LaTeX project on the TUM template, with **no comments, no flags,
 no drafting notes** — ready to compile and hand in. It is built mechanically from the owners' live
@@ -21,14 +22,17 @@ content problem goes to the owning draft through `../cross_draft/`, and the rele
 
 ```bash
 cd logs_in_develop/Writing/Working_Space/RELEASE
-python3 tools/make_release.py --tag GOLDEN_TEMPLATE      # a full release: folder + zip + notes + changelog row
+python3 tools/make_release.py --tag GOLDEN_TEMPLATE      # a full build: output/<build>/ with latex/, the zip, the notes
 python3 tools/make_release.py                            # the same without a tag
+python3 tools/make_release.py --note "..."               # a line recorded in the notes and the changelog (repeatable)
+python3 tools/make_release.py --acknowledgments          # keep the (empty) Acknowledgments page
+python3 tools/make_release.py --no-cover                 # drop the cover page; the title page comes first
 python3 tools/make_release.py --appendix-short           # hide the long-data tables of the appendix
 python3 tools/make_release.py --standalone               # fallback: v2's standalone preamble, no TUM template
 python3 tools/make_release.py --dry-run                  # assemble and check in memory, write nothing
-python3 tools/make_release.py --list                     # what has been built
-python3.14 tools/make_release.py --attach-pdf ~/main.pdf --release output/<folder>   # record the real page count
-python3 tools/make_release.py --rezip output/<folder>    # rebuild a folder's zip
+python3 tools/make_release.py --list                     # the builds in output/
+python3.14 tools/make_release.py --attach-pdf ~/main.pdf --release output/<build>   # record the real page count
+python3 tools/make_release.py --rezip output/<build>     # rebuild a build's zip
 ```
 
 Python 3 only, no third-party package (`--attach-pdf` counts pages with `pypdf`, present under
@@ -36,25 +40,46 @@ Python 3 only, no third-party package (`--attach-pdf` counts pages with `pypdf`,
 Compile it on Overleaf (upload the zip; pdfLaTeX + Biber, main document `main.tex`) or locally
 (`make pdf`, or `pdflatex main; biber main; pdflatex main; pdflatex main`).
 
-## What a build produces
+## What a build produces — every build is kept, never overwritten
 
 ```
 output/<stamp>_thesis_release_<v2>_<v3>_<v4>[_<TAG>][_standalone][_appendixshort][_PAGEWARN]/
-  main.tex                 preamble + front matter + \input order + acronym list + lists + bibliography
-  settings.tex, main.xmpdata, pages/{cover,title,disclaimer,acknowledgments,abstract}.tex, logos/
-  chapters/01..09 (+ app_long/, app_ntrial20_feasible.tex)
-  bibliography.bib         ONE file: v2 + v3 + v4 entries, dev fields (file=) and comments removed
-  figures/                 exactly one file per referenced figure (.pdf preferred, else .png)
-  Makefile, .latexmkrc
+  <same name>.zip          the LaTeX project (latex/ at the zip root) — upload this to Overleaf
+  latex/                   the project itself, browsable:
+    main.tex               preamble + front matter + \input order + acronym list + lists + bibliography
+    settings.tex, main.xmpdata, pages/{cover,title,disclaimer,abstract}.tex (+ acknowledgments.tex when used), logos/
+    chapters/01..09 (+ app_long/, app_ntrial20_feasible.tex)
+    bibliography.bib       ONE file: v2 + v3 + v4 entries, dev fields (file=) and comments removed
+    figures/               exactly one file per referenced figure (.pdf preferred, else .png)
+    Makefile, .latexmkrc
   RELEASE_NOTES_<stamp>.md the record of the build: page estimate, HOLES, bugs, cleaning report,
                            sources with SHA-256, structure / list-of-figures / list-of-tables preview
   WARNING_PAGE_LIMIT.md    only when the estimate (or an attached PDF) is outside 60–200 pages
-output/<same name>.zip     the LaTeX project only (no notes, no PDF) — upload this to Overleaf
+  <build>.pdf              a compiled PDF attached later with --attach-pdf
 ```
 
 The folder name carries the date-time and the three draft revisions (highest `## vN.M` heading of
 each draft's `CHANGELOG.md`). `_PAGEWARN` is appended when the page estimate falls outside the
 60–200-page limit; the compiled count, recorded with `--attach-pdf`, adds a warning file instead.
+
+## Front matter — the decisions (2026-09-25, checked against the template's own compiled PDF)
+
+The template's `build/main.pdf` has: p1 cover (title + author, logos), p2 title page (German title,
+author / examiner / supervisor / submission date), p3 the declaration *"I confirm that this … thesis is
+my own work and I have documented all sources and material used"* at the **bottom** of the page with
+the place, date and name line, p4 a blank Acknowledgments page, p5 the abstract, then the contents.
+
+- **Cover and title page — both kept** (template default; the cover is the outer sheet of the bound
+  copy, the title page the inner one). `--no-cover` drops the cover.
+- **Declaration — kept, always.** It is TUM's mandatory statement of authorship; it is signed in the
+  printed copy. It prints from `pages/disclaimer.tex` at the bottom of its page.
+- **Acknowledgments — dropped unless there is text.** The page is optional. Put the text into
+  `RELEASE/front/acknowledgments.tex` (plain LaTeX paragraphs) and it is included automatically;
+  `--acknowledgments` includes the empty page.
+- **Title page fit.** With the real titles (two `\huge` lines English, three German) the template's
+  title page overflows and the faculty logo lands alone on page ii (seen in the first compiled
+  release). The release copy sets the German title in `\LARGE` and reduces the vertical gaps
+  (20/15/15/10 mm → 10/8/8/6 mm); fonts and order of everything else are the template's.
 
 ## What "clean" means here
 
@@ -74,13 +99,18 @@ each draft's `CHANGELOG.md`). `_PAGEWARN` is appended when the page estimate fal
 - Every `\hole`, `\longdata`, `\provisional`, TODO metadata value, empty template page and raster-only
   figure is listed under **HOLES** in the notes; every failed mechanical check under **Bugs**.
 
+## Page count
+
+The notes carry a model estimate (370 words per page, figures by width, tables by rows; calibrated on
+the first compiled release: 185 pages on 2026-09-25 at v2.28 / v3.99 / v4.1a, including the two pages
+that are gone since). Treat it as ±15 %; only an attached PDF gives the real count. The author's limit
+is 60–200 pages; the institute's orientation for a master's thesis is 60–80.
+
 ## Rules
 
 - **Never edit a file under `output/`.** Fix the owning draft (or this tool) and rebuild.
+- **Never delete a build** unless the author says so (the two builds of 2026-09-24/25 were deleted on
+  the author's word before the front-matter fixes; their changelog rows say so).
 - **Never edit `../../Template_DONT_CHANGE/`.** The tool only reads it.
-- **The first release of 2026-09-24 is tagged `GOLDEN_TEMPLATE`**: the reference for what a release
-  looks like. Later builds are compared against it.
-- A compiled PDF is attached with `--attach-pdf`; it lands in the release folder next to the notes
-  (never in the zip), and its page count is checked against the 60–200 limit.
-- The page estimate in the notes is a model (430 words per page, figures by width, tables by rows);
-  treat it as ±20 %. Only an attached PDF gives the real count.
+- A compiled PDF is attached with `--attach-pdf`; it lands in the build folder next to the zip and the
+  notes (never inside the zip), and its page count is checked against the 60–200 limit.

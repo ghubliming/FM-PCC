@@ -21,6 +21,34 @@ is sourced from · what it left open.
 
 ---
 
+## v3.100b — 2026-09-25 · v3's copies of Ch 7–9 and the appendix archived (author: "also archive the v3 chapters for 07/08/09/appendix")
+
+- **Moved** unchanged to `withheld/20260925_v3.100b_archive/chapters/`: `07_discussion.tex`, `08_conclusion.tex`,
+  `09_appendix.tex`, `app_ntrial20_feasible.tex` (README there). v3 now holds Ch 1–6 only.
+- **`thesis_v3.tex`**: the three `\input` lines replaced by a comment saying where Ch 7–9 live (v4) and where the
+  copies went. **`tools/check.py`**: a Ch 5/6 reference into Ch 7–9 is checked against v4's live labels and
+  listed as external (13 today, all resolve in v4); one found in neither draft still fails. Result: 11 files, 6777
+  lines, 246 labels, 53/53 citations, 37 figures, all pass. **`tools/sync_v2.py`**: the three `own` rows removed.
+  **`bundle/make_bundle.py`**: `EXCLUDED` kept as a guard, comment updated.
+- **Bundle rebuilt:** `bundle/output/thesis_v3_20260925_111503_new.{tex,zip}` and
+  `thesis_v3_20260925_111504_full_clean.{tex,zip}`, both end after Ch 6, both `--verify` byte-faithful; 12/13
+  references print "??" (into v4's chapters, resolved in the release).
+- **→ v4:** note + INBOX row — its `sync_v3.py status` now flags the four rows; retire them (v4's tool, untouched).
+  `v3/figures/` still holds the copies of appendix-only figures (harmless; `export_to_draft.py v3 --prune` would drop them).
+- Not compiled; nothing committed. Signed: Claude (Opus 5.5, Claude Code) · 2026-09-25.
+
+## v3.100a — 2026-09-25 · The bundle ends after Chapter 6 (author: "From now on, STOP build the things after Chap6 into the bundle!")
+
+- `bundle/make_bundle.py`: new `EXCLUDED` set — `chapters/07_discussion.tex`, `08_conclusion.tex`, `09_appendix.tex`
+  (v4's since the v3.98 handover). Their `\input` lines are written into the bundle as a `% NOT BUNDLED …` comment;
+  the back matter (bibliography) stays; both variants (`_new`, `_full_clean`) end after Chapter 6. The build lists
+  what it left out and every reference from Ch 5/6 into it ("??" in the PDF: 12 in `_new`, 13 in `_full_clean`,
+  e.g. `app:avoiding-twenty`, `app:repro`, `fig:platform-x2-dimensions`, `ch:discussion`). The master
+  `thesis_v3.tex` and `tools/check.py` are unchanged (the full v3 build still resolves every reference).
+- Rebuilt: `bundle/output/thesis_v3_20260925_111340_new.{tex,zip}` (7 files inlined, 4610 → 4758 lines) and
+  `thesis_v3_20260925_111340_full_clean.{tex,zip}` (11 files, 6792 → 6878 lines); both `--verify` byte-faithful.
+- Not compiled; nothing committed. Signed: Claude (Opus 5.5, Claude Code) · 2026-09-25.
+
 ## v3.100 — 2026-09-25 · The audit of v3.98 applied in Ch 5/6; the alignment halfspace added to the demonstration check; four figures rebuilt; `check.py` follows nested inputs → [`changelogs/v3.100_20260925_audit_v3.98_applied.md`](changelogs/v3.100_20260925_audit_v3.98_applied.md)
 
 - **Applied (author: "I agree with them … Go"):** the agreed change list, §13 of the audit MD — 76 passages in
