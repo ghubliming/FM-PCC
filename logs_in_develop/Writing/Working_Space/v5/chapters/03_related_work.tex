@@ -7,11 +7,9 @@ Diffusion was first used to plan whole trajectories \parencite{janner2022plannin
 visuomotor policies \parencite{chi2023diffusion}. Motion planning diffusion constructs cost functions
 for safe robot motion and biases the sampler towards them \parencite{carvalho2025motion}. \ac{DPCC}
 combines a trajectory diffusion model with a model-based projection at every denoising step and with
-constraint tightening \parencite{romer2025diffusion}. Its planner runs as \ac{MPC}: a one-dimensional
-temporal U-Net generates a state--action plan over a fixed horizon, a batch of candidate plans is
-drawn, the plan is made dynamically feasible against an Euler-integrated model of the plant, and one
-action is executed before the next plan is generated \parencite[Sec.~5]{romer2025diffusion}. It is
-both the codebase this thesis starts from and the baseline it is measured against.
+constraint tightening \parencite{romer2025diffusion}; its receding-horizon loop is the one this thesis
+inherits (\autoref{sec:method:dpcc}). It is both the codebase this thesis starts from and the baseline it
+is measured against.
 
 \section{Flow Matching and Few-Step Policies}\label{sec:rel:fm}
 
@@ -40,8 +38,7 @@ Implicit samplers shorten the chain of a trained diffusion model \parencite{song
 distillation compresses it further: One-Step Diffusion Policy distils a pre-trained diffusion policy
 into a single-step action generator \parencite{wang2024onedp}. Both accelerate a model after it is
 trained. Consistency models \parencite{song2023consistency} and MeanFlow \parencite{geng2025meanflow}
-instead learn a few-step generator directly, and with flow matching the step budget remains a choice at
-deployment.
+instead learn a few-step generator directly.
 
 \section{Constrained and Safe Generative Planning}\label{sec:rel:safety}
 
@@ -94,14 +91,10 @@ a flow model on images and language \parencite{black2024pi0}.
 Imitation learning for aerial vehicles covers language-guided short-range flight, for which UAV-Flow
 Colosseo provides a real-world benchmark \parencite{wang2025uavflow}, and trajectory planning: CGD
 guides diffusion policies for \ac{UAV} trajectories with constraints never encountered in training
-\parencite{kondo2024cgd}. Below the planner, geometric tracking control on the special Euclidean group
-tracks position and attitude without the singularities of local coordinates. Its
-position-controlled flight mode states the thrust magnitude and moment vector that track a position
-reference, the attitude they imply, and the stability of the resulting closed loop
-\parencite[Eqs.~(19)--(23), Prop.~3]{lee2010geometric}; the cascade from a commanded force to
-individual rotor thrusts through a fixed allocation matrix is the structure of
-\parencite{mellinger2011minimum}. These are the equations the controller of
-\autoref{sec:method:geometric} implements. Predictive sampling offers derivative-free model
+\parencite{kondo2024cgd}. Below the planner, geometric tracking control on the special Euclidean group tracks position and attitude
+without the singularities of local coordinates \parencite[Eqs.~(19)--(23), Prop.~3]{lee2010geometric},
+with the allocation from a commanded force to the rotor thrusts of \parencite{mellinger2011minimum}; these
+are the equations the controller of \autoref{sec:method:geometric} implements. Predictive sampling offers derivative-free model
 predictive control in simulation \parencite{howell2022predictive}. The quadrotor model used here is the Skydio X2 from MuJoCo
 Menagerie \parencite{zakka2022menagerie}.
 

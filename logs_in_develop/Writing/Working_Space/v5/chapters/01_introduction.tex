@@ -2,15 +2,15 @@
 
 \section{Motivation}\label{sec:intro:motivation}
 
-A robot that plans with a generative model buys expressiveness with computation. Diffusion
+A robot that plans with a generative model gains expressiveness at a cost in computation. Diffusion
 planners \parencite{janner2022planning,chi2023diffusion} represent multi-modal demonstration data
 \parencite{jia2024towards} well and, when paired with a constrained projection step
 \parencite{romer2025diffusion}, can respect dynamics and safety at deployment. The price is the sampling
 loop: producing one plan costs tens to hundreds of network evaluations --- the \ac{NFE} of the
 sampler --- and in a receding-horizon controller that cost is paid again at every timestep.
 
-This cost is not incidental but \emph{structural}, and the structure is what makes it
-addressable. In a diffusion model the number of steps is a
+This cost is not incidental but \emph{structural}, and it can be addressed where it arises. In a
+diffusion model the number of steps is a
 property of the trained noise schedule \parencite{ho2020denoising}; reducing it after training
 degrades the sample, and recovering quality needs a different sampler
 \parencite{song2021denoising}. In a deterministic transport model \parencite{lipman2023flow} the same
@@ -78,42 +78,25 @@ cameras, and a plant that flies.
     objective \parencite{lipman2023flow,lipman2024guide}, which learns a velocity field and generates a
     trajectory by integrating an ordinary differential equation. Backbone, projection, data and
     evaluation protocol are kept, and the number of network evaluations becomes a choice made at
-    deployment.
-    At the primary DPCC protocol, it matches the baseline's success with constraint satisfaction
-    while using fewer control steps and less time per action (\autoref{sec:res:fewstep}).
+    deployment (\autoref{sec:res:fewstep}).
   \item \textbf{Analytic average-velocity matching.} Analytic average-velocity matching
     \parencite{geng2025meanflow} learns the average velocity over an interval instead of the
     instantaneous velocity, with a regression target constructed analytically through a
     Jacobian--vector product, so that a single network evaluation can cover the whole integration. It
-    replaces instantaneous-velocity matching within the same architecture.
-    At the selected avoiding configuration, it reduces control steps and planning time with a small
-    loss in success with constraint satisfaction relative to the best baseline rule
-    (\autoref{sec:res:fewstep}).
+    replaces instantaneous-velocity matching within the same architecture (\autoref{sec:res:fewstep}).
   \item \textbf{Consistency-interpolated average-velocity matching.} Consistency-interpolated
     average-velocity matching \parencite{zhang2025alphaflow} also learns the average velocity, with a
     target interpolated by a consistency step ratio between the instantaneous velocity and a
     stop-gradient prediction of the network itself; the ratio is annealed during training. Both
     average-velocity objectives achieve state-of-the-art one- and two-step image generation
     \parencite{geng2025meanflow,zhang2025alphaflow}; this thesis evaluates both as planners inside a
-    constrained controller.
-    On the avoiding benchmark it matches the baseline's success with constraint satisfaction
-    while reducing both control steps and planning time (\autoref{sec:res:fewstep}).
+    constrained controller (\autoref{sec:res:fewstep}).
   \item \textbf{Endpoint projection against DPCC's per-step projection.} The central contribution of
     DPCC is a model-based projection applied to each denoising step \parencite{romer2025diffusion}.
     Endpoint projection \parencite{li2025hardflow} instead projects the trajectory the sampler is
     predicted to reach and steers the sampler towards it. Both are implemented on the same feasible set
     and solver and compared, together with the step budget below which endpoint projection reduces to
-    projection after sampling. At one network evaluation, the budget that suffices on obstacle
-    avoidance, it has no step to guide, and no configuration of it improves on per-step projection at
-    that budget; at the budgets where it guides, it is as reliable as per-step projection or more, and
-    cheaper for the two average-velocity models. At the larger budgets the alignment task needs, it
-    keeps more contexts free of violations than per-step projection in most comparisons, at a
-    comparable time per action, and on UAV-corridor the two methods trade against each other
-    (\autoref{sec:res:constraints}).
-    \srcnote{v3.99 \texttt{chapters/06\_results.tex}: \texttt{sec:res:summary:conclusion};
-    \texttt{tab:avoiding-projectors} (the one pair in which endpoint projection costs more is FM at
-    $\nfe=3$, $71.5$ against $64.1$\,ms); \texttt{sec:res:aligning:conclusion} (seven of nine
-    comparisons); \texttt{sec:res:uav:corridor:conclusion}.}
+    projection after sampling (\autoref{sec:res:constraints}).
 \end{enumerate}
 
 \paragraph{Beyond it.}
@@ -123,11 +106,7 @@ cameras, and a plant that flies.
     of \ac{DPCC}, all generative models and both projection methods are tested on a more complex
     task built for this thesis from the alignment task of D3IL, in which the robot observes two camera
     views. The generative network is given a visual encoder, and the projection is given the dynamics
-    rows and the constraint set of the new task.
-    Analytic average-velocity matching dominates the diffusion baseline again: in the evaluated
-    training contexts it moves the object closer to its target than the other objectives and the
-    baseline, and keeps more contexts free of violations at a fraction of the baseline's time per
-    action (\autoref{sec:res:visual}).
+    rows and the constraint set of the new task (\autoref{sec:res:visual}).
   \item \textbf{A quadrotor benchmark.} The controller is carried to an underactuated, open-loop
     unstable plant: the manipulator with inverse kinematics is replaced by the Skydio~X2 quadrotor of
     MuJoCo Menagerie \parencite{zakka2022menagerie}, commanded through its rotor thrusts by a cascaded
@@ -145,17 +124,7 @@ cameras, and a plant that flies.
     corridor and the s-curve, and the control loop were built for this thesis in MuJoCo
     \parencite{todorov2012mujoco}, inside the environment code of D3IL; MuJoCo MPC
     \parencite{howell2022predictive}, a sampling-based predictive controller, is the second tracking
-    controller, used in the controller comparison alone.
-    On UAV-pillars the projected flights keep the declared constraints as in D3IL-avoiding, and
-    collisions with pillars outside those constraints end flights and lower the success. On
-    UAV-corridor the projection carries over to three dimensions, removing most violations of
-    constraints no demonstration satisfies, and on its straight-line demonstrations the three
-    objectives cannot be told apart. On UAV-s-curve the same plans succeed or fail by the controller
-    that flies them, and the cascaded geometric controller is the better of the two
-    (\autoref{sec:res:uav}).
-    \srcnote{v3.99 \texttt{chapters/06\_results.tex}: \texttt{sec:res:uav:pillars:conclusion}
-    (from \texttt{DA\_20260923\_pillars\_v2\_live.md}), \texttt{sec:res:uav:corridor:conclusion},
-    \texttt{sec:res:uav:scurve:conclusion}.}
+    controller, used in the controller comparison alone (\autoref{sec:res:uav}).
 \end{enumerate}
 
 \section{Outline}\label{sec:intro:outline}

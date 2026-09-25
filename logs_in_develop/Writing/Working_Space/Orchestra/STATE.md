@@ -1,4 +1,4 @@
-# Orchestra STATE · 2026-09-25 15:36
+# Orchestra STATE · 2026-09-25 22:08
 
 Written by `tools/orchestra.py status --write`; a snapshot, not a record. The record is `CHANGELOG.md` and `jobs/`.
 
@@ -9,7 +9,7 @@ Written by `tools/orchestra.py status --write`; a snapshot, not a record. The re
 | v2 | **v2.28** | v2.28 — 2026-09-24 · the seven open cross notes applied (v3.73–v3.96, v4.0, v4.1) |
 | v3 | **v3.100b** | v3.100b — 2026-09-25 · v3's copies of Ch 7–9 and the appendix archived (author: "also archive the v3 chapters for 07/08/09/appendix") |
 | v4 | **v4.2** | v4.2 — 2026-09-25 · The ChatGPT audit of v4.1a applied (§15) on v3.100; author's long-data heading flag and planning-horizon item; figures re-exported; bundles and release rebuilt |
-| v5 | **v5.3** | v5.3 — 2026-09-25 · **PURE BUG FIX** · source: the same first-reading audit (answer group A, items A6 and A9) · Figures 5.10 / 5.11 (clipped text) and 6.4 (palette) rebuilt in the DA store and re-exported; no text change (Orchestra O007) — **the thesis** (the aggregate; Advance Orchestra since 2026-09-25) |
+| v5 | **v5.8** | v5.8 — 2026-09-25 · ROUND2 FIX · source: the second reading of v5.7 (ROUND2_FEEDBACK…), answer list R2-A · twenty factual and consistency corrections in Ch 5–8, six of them undoing regressions of v5.5–v5.7; the controller reference, the guard, the Steps definitions, the dominance definition; no number of record changed (Orchestra O023) — **the thesis** (the aggregate; Advance Orchestra since 2026-09-25) |
 
 ## v5 — the aggregate (Advance Orchestra, since 2026-09-25; runbook `v5/README.md`)
 
@@ -32,12 +32,12 @@ Written by `tools/orchestra.py status --write`; a snapshot, not a record. The re
 
 ## RELEASE
 
-- builds kept in `RELEASE/output/`: 2; newest: `20260925_152307_thesis_release_ORCH_v5.3_BUGFIX_A`
-- of these built by the Orchestra from v5 (`_ORCH_`): 1; newest: `20260925_152307_thesis_release_ORCH_v5.3_BUGFIX_A` (`cd v5 && python3 tools/make_release_v5.py`)
-- `RELEASE/CHANGELOG.md` top row: 20260925_152307 -- 20260925_152307_thesis_release_ORCH_v5.3_BUGFIX_A
+- builds kept in `RELEASE/output/`: 7; newest: `20260925_220823_thesis_release_ORCH_v5.8_ROUND2_FIX`
+- of these built by the Orchestra from v5 (`_ORCH_`): 6; newest: `20260925_220823_thesis_release_ORCH_v5.8_ROUND2_FIX` (`cd v5 && python3 tools/make_release_v5.py`)
+- `RELEASE/CHANGELOG.md` top row: 20260925_220823 -- 20260925_220823_thesis_release_ORCH_v5.8_ROUND2_FIX
 
 ## Orchestra
 
-- jobs on file: 9; open rows in `CHANGELOG.md`: 1; next id: **O010**
-- last row: | [O009](jobs/O009_20260925_1533_answer_md_group_b_rebuilt_by_risk_size_and.md) | 2026-09-25 15:33 → 2026-09-25 15:36 | check | v2.28 · v3.100b · v4.2 · v5.3 | ✅ | Answer MD §9 re-sorted for the author: B rebuilt as B-i low-risk minor (17 rows, file:line, size, risk), B-ii giant rebuilds (13 rows, incl. the W3 sweep quantified), B-iii no target (9 rows, word counts vs the claims); C tagged 🔴 dangerous 6 · 🟠 careful 9 · 🟢 minor 9 with a reason each; 'How this proceeds' by tag. Nothing applied to the thesis. | — | — |
-- git: 24 modified/untracked path(s) under `logs_in_develop/Writing` (the Orchestra never commits)
+- jobs on file: 24; open rows in `CHANGELOG.md`: 1; next id: **O025**
+- last row: | [O024](jobs/O024_20260925_2208_release_from_v5_8_marked_round2_fix.md) | 2026-09-25 22:08 → 2026-09-25 22:08 | release | v2.28 · v3.100b · v4.2 · v5.8 | ✅ | Release from v5.8 on the author's word: output/20260925_220823_thesis_release_ORCH_v5.8_ROUND2_FIX — the ROUND2 FIX build; page estimate ~179 (152-215); differs from the v5.7 build in the four chapter files v5.8 edited. | — | `20260925_220823_thesis_release_ORCH_v5.8_ROUND2_FIX` |
+- git: 39 modified/untracked path(s) under `logs_in_develop/Writing` (the Orchestra never commits)

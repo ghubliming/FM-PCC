@@ -1,0 +1,103 @@
+\chapter{Conclusion}\label{ch:conclusion}
+
+\section{Summary}\label{sec:conc:summary}
+
+This thesis replaced the diffusion model of \ac{DPCC} with three flow-based objectives,
+instantaneous-velocity matching, analytic average-velocity matching and consistency-interpolated
+average-velocity matching, and set endpoint projection beside the per-step projection of \ac{DPCC},
+keeping the temporal U-Net, the projection program, the data and the evaluation of the baseline. The
+step budget thereby moved from training to inference. The comparison was made in three steps: on the
+obstacle-avoidance benchmark of \ac{DPCC} with its setup unchanged, on a vision-conditioned alignment
+task built for this thesis, and on a quadrotor benchmark of three scenes built for it as well.
+
+On the benchmark of \ac{DPCC} consistency-interpolated average-velocity matching Pareto-dominates --- ahead on every reported axis at once, the sense of
+\autoref{sec:res:avoiding:pareto} --- its
+diffusion model with its own U-Net: the same success with constraint satisfaction, fewer control
+steps, and about a thirtieth of the time per action, twelve times less than a baseline retrained at
+two denoising steps; analytic average-velocity matching matches the saving at one episode in thirty.
+Instantaneous-velocity matching dominates the baseline as well, so the saving belongs first to a
+flow-based sampler at a small budget and then to the average-velocity objective, which adds the fewest
+control steps. On D3IL-aligning the dominance repeats where the task separates the models: without projection, at
+twenty sampling steps, analytic average-velocity matching is the only model that moves the box in
+every context, and it reduces the median final distance by $84\,\%$ of the mean initial distance,
+$0.0741$ against $0.4530$\,m, where the consistency-interpolated model, instantaneous-velocity
+matching and the baseline leave the box near where it started; its median falls at every tested
+budget, while the consistency-interpolated model's varies from two to twenty steps and falls
+substantially only at a hundred, still behind. No context ends within the $1.8$\,cm of the task's own
+position test, under the selected endpoint configuration at twenty steps or without projection.
+Endpoint projection has no step to guide at the one-evaluation operating point of D3IL-avoiding and
+nothing to win there; on D3IL-aligning, run at $\nfe = 20$, it is the better projector on the
+constraint, keeping every context violation-free at the price of per-step projection.
+
+The quadrotor scenes carry the framework to a plant that needs feedback even to hover. UAV-pillars flies
+the operating points of D3IL-avoiding and keeps their result on the declared constraints, and shows
+what the plant changes: the vehicle tracks more closely than the arm, and a collision with a pillar the
+constraints leave out ends the flight. UAV-corridor shows that the projection scheme of \ac{DPCC}
+carries over to three dimensions, against constraints that leave the horizontal plane and that no
+demonstration satisfies, and that on straight-line demonstrations the generative model does not
+matter, the budget does; there the two projectors trade against each other without one dominating.
+UAV-s-curve shows that the controller matters: the same planner configuration succeeds or fails by
+the controller that flies it in closed loop, and the cascaded geometric controller used throughout is
+the better of the two, at a twenty-fourth of the controller's cost per control step --- controller
+and simulator step together, on the unprojected pair, a tenth of the whole loop.
+
+With human demonstrations the average-velocity models lead, on the harder tasks the model and the
+projection matter together and endpoint projection helps where the task needs a large budget; with
+simple generated demonstrations instantaneous-velocity matching is enough: on the corridor the
+objectives cannot be told apart where the flights traverse it at a jointly tested budget, and on the
+s-curve instantaneous-velocity matching leads; and on the quadrotor the plant and its controller
+matter as much as the planner.
+
+\section{Answers to the Research Questions}\label{sec:conc:rqs}
+
+\begin{description}
+  \item[RQ1 --- Generative model.] Yes, with a margin, on the benchmark of \ac{DPCC}. With the
+    backbone, the data and the evaluation held fixed, consistency-interpolated average-velocity
+    matching and instantaneous-velocity matching reach the diffusion baseline's success with
+    constraint satisfaction on D3IL-avoiding at one network evaluation, where the diffusion model,
+    run away from its trained budget, loses it (\autoref{tab:avoiding-conclusion}). On D3IL-avoiding and
+    D3IL-aligning, the tasks with human demonstrations, the order is the average-velocity models
+    first, then instantaneous-velocity matching and the diffusion model, which are level on outcome
+    and differ in cost. On D3IL-aligning without projection analytic average-velocity matching
+    reduces the median final distance by $84\,\%$ of the mean initial distance at $\nfe = 20$,
+    against $14$, $10$ and $-2\,\%$ for the consistency-interpolated model, instantaneous-velocity
+    matching and the baseline, and under per-step projection it keeps nine contexts violation-free
+    against the baseline's four at a third of its time. Between the two average-velocity objectives
+    the consistency-interpolated one is ahead by one episode in thirty on D3IL-avoiding, keeps that
+    lead on UAV-pillars, which flies both, and is behind by most of the task on D3IL-aligning, where
+    its median varies from two to twenty steps and falls substantially only at a hundred, still
+    behind the analytic objective, whose median falls at every tested budget. On the quadrotor's
+    generated demonstrations the picture is the corridor's and the s-curve's: on the corridor the
+    objectives cannot be told apart where the flights traverse it at a jointly tested budget, and on
+    the s-curve's single route instantaneous-velocity matching crosses the finish line on nine
+    flights of ten, the consistency-interpolated model on six and the analytic one on three, with the
+    fewest violating steps. One evaluation saturates D3IL-avoiding, D3IL-aligning is run at its
+    selected operating budget of twenty steps, and on the s-curve more sampling steps lose flights.
+  \item[RQ2 --- Constraints.] Endpoint projection guides the sample only where the budget and the
+    threshold leave a sampling step before the terminal one, the guiding-step count of
+    \autoref{sec:method:degenerate}: at $\nfe = 1$ never, and at $\nfe = 2$ with the threshold of
+    $0.5$ not, where it reduces to a terminal projection of the finished sample and gives no evidence
+    of guidance; on instantaneous-velocity matching a run at $\nfe = 2$ that handed both methods the
+    same candidate plans produced bit-identical rollouts, while on the two average-velocity models the
+    two arms differ even there. Where it has steps to guide it is the better projector on the
+    constraint at a comparable planning time: on D3IL-aligning at $\nfe = 20$ it keeps more contexts
+    violation-free than per-step projection in seven of nine model--rule comparisons, on analytic
+    average-velocity matching under random selection all ten against nine at $275$ against
+    $266$\,ms per control step, and at $\nfe = 10$ under the same rule at $37\,\%$ of per-step
+    projection's time; on D3IL-avoiding at $\nfe = 3$ it reaches $1.000$ on the two average-velocity
+    models where per-step projection reaches $0.917$ and $0.958$, at about half the time per control
+    step. It does not reach the goal in fewer control steps, and on UAV-corridor it trades: fewer and
+    shallower violations at $\nfe = 20$, cheaper over the hump with one candidate and dearer under
+    the tilt, on longer flights. It helps on the hard task that needs the budget, D3IL-aligning, and
+    not on D3IL-avoiding, which is solved at a budget where it has no step to act.
+  \item[RQ3 --- Transfer.] The answers hold where the demonstrations are of the same kind, and the
+    plant and the demonstrations change the rest. Analytic average-velocity matching leads again on
+    camera observations and contact, and the declared constraints transfer exactly from the
+    manipulator to the quadrotor on UAV-pillars, where the two average-velocity models keep their
+    order. The quadrotor adds what the manipulator could not show: an undeclared obstacle ends a
+    flight, the controller decides whether a plan on a route of sharp turns is flown at all, and on
+    the corridor's demonstrations, one path forward from every position, the objectives cannot be
+    told apart where the flights traverse it. The projection scheme itself carries over to three
+    dimensions and to constraints that leave
+    the horizontal plane.
+\end{description}

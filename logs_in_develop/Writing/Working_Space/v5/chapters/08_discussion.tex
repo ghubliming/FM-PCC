@@ -21,8 +21,8 @@
 
 \chapter{Discussion}\label{ch:discussion}
 
-The results stop at three things: what the framework does not do, what a deployment has to add to it,
-and what has not been tested.
+This chapter states what the framework does not do, what a deployment has to add to it, and what has
+not been tested.
 
 \section{Limitations}\label{sec:disc:limitations}
 
@@ -30,8 +30,9 @@ and what has not been tested.
 never an actuator command; everything below the increment is the plant's controller
 (\autoref{sec:method:setpoint}). The projection's dynamics model is a first-order integrator over the
 commanded quantity, so feasibility is a statement about that model and its mismatch bound, which the
-tightening absorbs, and not about the plant. On the manipulator this holds, because the end effector
-tracks its setpoint within the margin; on the quadrotor whether a plan can be flown is the
+tightening absorbs, and not about the plant. On the manipulator the guarantee is conditional: the tightening
+absorbs the mismatch only while the one-step change of the tracking error stays within the configured margin,
+which was not calibrated here (\autoref{sec:setup:protocol:eval}); on the quadrotor whether a plan can be flown is the
 controller's, which is what UAV-s-curve shows.
 
 \paragraph{A constraint is what is declared.} The projector holds a plan inside the declared geometry,
@@ -61,7 +62,8 @@ from state to vision alone. The quadrotor is observed through its state, at one 
 where the plan carries no altitude; the demonstrations of the other two scenes lie between $0.90$ and
 $1.30$\,m, and the projected flights over the hump climb above that range.
 D3IL-aligning, UAV-corridor and UAV-s-curve are evaluated on one training seed, D3IL-avoiding and
-UAV-pillars on five (\autoref{tab:protocol}). No loop of this thesis was run in real time, and no environment is a physical system.
+UAV-pillars on five (\autoref{tab:protocol}); the ten alignment contexts are drawn from the training set, and no
+held-out context was evaluated. No loop of this thesis was run in real time, and no environment is a physical system.
 \dataref{\autoref{sec:method:manipulator}; \autoref{sec:method:env:uav}; \autoref{sec:res:uav:pillars};
 \autoref{sec:res:uav:projected}; \autoref{sec:method:hardflow}; \autoref{tab:uav-demos};
 \autoref{sec:method:setpoint}.}
@@ -135,7 +137,11 @@ at about $11.7$\,ms, an idealised prediction from two measured points.
   \item[The planning horizon.] Every plan of this thesis is eight steps long, and one step of it is
     executed before the next replan (\autoref{sec:setup:protocol:eval}); a constraint the horizon does
     not yet reach enters the projection at the replan that reaches it. A longer horizon would hand the
-    projector its constraints earlier and the endpoint solve a farther endpoint, at a price: the
+    projector the constraints that are in the program at every replan earlier; the span-switched ones --- the walls
+    and the hump's two halves, \eqref{eq:method:env:switched} --- enter by the vehicle's current position, so they
+    would need a rule on the predicted position, at the cost of an irrelevant wall over the whole horizon --- and
+    the endpoint solve a
+    farther endpoint, at a price: the
     network runs over a longer sequence, and the projection program carries one block of variables and
     one inequality per obstacle for every added step. Whether that foresight buys fewer violating
     steps or shorter routes at the added cost is untested.

@@ -86,7 +86,7 @@ the scene, and no band is added.
   \centering
   \includegraphics[width=0.75\linewidth]{fig_platform_x2_dimensions}
   \caption[X2 dimensions and projection footprint]{The Skydio X2 rotor disks (radius $0.13$\,m), body
-  and $0.54\times0.62$\,m collision footprint (dotted), drawn to scale. The dashed circle is the $0.31$\,m rotor reach, the configured inflation of the projection constraints on UAV-corridor and UAV-s-curve.}
+  and $0.54\times0.62$\,m collision footprint (dotted), drawn to scale. The dashed circle is the $0.31$\,m rotor reach, the configured inflation of the projection constraints on UAV-corridor and UAV-s-curve: the per-axis reach, which the enclosing radius of the four rotor disks --- about $0.36$\,m from the drawn dimensions, the radial reach UAV-pillars uses --- exceeds on the diagonal.}
   \label{fig:platform-x2-dimensions}
 \end{figure}
 \FloatBarrier
@@ -94,13 +94,73 @@ the scene, and no band is added.
 \chapter{Extended Results (long data: web link and repository code link)}\label{app:results}
 
 This appendix records the data behind \autoref{ch:results} that the chapter reads without printing:
-the executed paths of D3IL-avoiding (\autoref{app:avoiding-paths}) and D3IL-aligning
-(\autoref{app:aligning-paths}), the flights of UAV-corridor along the corridor
-(\autoref{app:uav-corridor-side}), UAV-corridor under every selection rule
-(\autoref{app:uav-corridor-rules}), and D3IL-avoiding at twenty episodes per seed
-(\autoref{app:avoiding-twenty}). \autoref{app:uav-corridor-rules} is a data record and keeps its
+the plans of D3IL-avoiding across the step budget (\autoref{app:avoiding-plans}), the executed paths of
+D3IL-avoiding (\autoref{app:avoiding-paths}) and D3IL-aligning (\autoref{app:aligning-paths}), the threshold and
+projection ladders of D3IL-aligning (\autoref{app:aligning-ladders}), the flown paths of UAV-pillars
+(\autoref{app:uav-pillars-paths}), the flights of UAV-corridor along the corridor (\autoref{app:uav-corridor-side}),
+UAV-corridor under every selection rule (\autoref{app:uav-corridor-rules}), the plans of UAV-s-curve across the
+budget (\autoref{app:uav-scurve-plans}), and D3IL-avoiding at twenty episodes per seed (\autoref{app:avoiding-twenty}). \autoref{app:uav-corridor-rules} is a data record and keeps its
 reading here. \hole{Web link to the full record of the long data section (author: URL), once it is
 hosted; until then its tables are printed.}
+
+\section{D3IL-avoiding: Plans without Projection across the Step Budget}\label{app:avoiding-plans}
+
+\autoref{sec:res:avoiding:raw} reads the plans the four models emit on \emph{both-hard} at one evaluation
+(\autoref{fig:raw-plans}); the same panels at two evaluations and the baseline at its trained budget are here.
+
+\begin{figure}[!htbp]
+  \centering
+  \setlength{\tabcolsep}{2pt}
+  \begin{tabular}{@{}c cccc@{}}
+    & {\footnotesize\bfseries MeanFM $\downarrow$}
+    & {\footnotesize\bfseries CI-MeanFM $\downarrow$}
+    & {\footnotesize FM}
+    & {\footnotesize Diffusion} \\[0.2em]
+    {\footnotesize $\nfe=1$} &
+    \begin{minipage}[c]{0.21\linewidth}\centering
+    \includegraphics[width=\linewidth]{fig_raw_plans_meanflow_K1}
+    \end{minipage} &
+    \begin{minipage}[c]{0.21\linewidth}\centering
+    \includegraphics[width=\linewidth]{fig_raw_plans_af_K1}
+    \end{minipage} &
+    \begin{minipage}[c]{0.21\linewidth}\centering
+    \includegraphics[width=\linewidth]{fig_raw_plans_fm_K1}
+    \end{minipage} &
+    \begin{minipage}[c]{0.21\linewidth}\centering
+    \includegraphics[width=\linewidth]{fig_raw_plans_diffusion_K1}
+    \end{minipage} \\
+    {\footnotesize $\nfe=2$} &
+    \begin{minipage}[c]{0.21\linewidth}\centering
+    \includegraphics[width=\linewidth]{fig_raw_plans_meanflow_K2}
+    \end{minipage} &
+    \begin{minipage}[c]{0.21\linewidth}\centering
+    \includegraphics[width=\linewidth]{fig_raw_plans_af_K2}
+    \end{minipage} &
+    \begin{minipage}[c]{0.21\linewidth}\centering
+    \includegraphics[width=\linewidth]{fig_raw_plans_fm_K2}
+    \end{minipage} &
+    \begin{minipage}[c]{0.21\linewidth}\centering
+    \includegraphics[width=\linewidth]{fig_raw_plans_diffusion_K2}
+    \end{minipage} \\
+    {\footnotesize $\nfe=20$} &
+    \begin{minipage}[c]{0.21\linewidth}\centering{\footnotesize ---}\end{minipage} &
+    \begin{minipage}[c]{0.21\linewidth}\centering{\footnotesize ---}\end{minipage} &
+    \begin{minipage}[c]{0.21\linewidth}\centering{\footnotesize ---}\end{minipage} &
+    \begin{minipage}[c]{0.21\linewidth}\centering
+    \includegraphics[width=\linewidth]{fig_raw_plans_diffusion_K20}
+    \end{minipage} \\
+  \end{tabular}
+  \caption[Plans without projection, four models across the step budget]{Plans without projection across the step budget, one episode
+  per panel: the plans the model emitted at every fourth control step, all four candidates, each drawn as
+  the measured planar position of its eight waypoints, green at the waypoint the plan is anchored at; the
+  executed path is not drawn. Columns: MeanFM, CI-MeanFM, FM and the diffusion model of \ac{DPCC}; rows:
+  the step budget; \emph{both-hard}, one training seed, temporal U-Net of $4.0$\,M parameters. The arrows
+  mark the two average-velocity columns; the last row is the baseline at its trained budget, where the
+  flow-based models are not run (dashes). \autoref{tab:avoiding-raw-models} aggregates the outcomes.}
+  \label{fig:raw-plans-full}
+\end{figure}
+
+\FloatBarrier
 
 \section{D3IL-avoiding: Executed Paths under Per-Step Projection}\label{app:avoiding-paths}
 
@@ -188,6 +248,103 @@ the box would need an evaluation re-run with its pose recorded,
 
 \FloatBarrier
 
+\section{D3IL-aligning: The Threshold and Projection Ladders}\label{app:aligning-ladders}
+
+\autoref{sec:res:aligning:projection} reads two ladders on the analytic average-velocity model and keeps their
+numbers in the text: the activation threshold across the budget (\autoref{tab:va-threshold}) and the two
+projection methods across the budget and the selection rules (\autoref{tab:va-projection}). The tables are
+recorded here.
+
+\begin{table}[htpb]
+  \caption[Alignment: the activation threshold across the budget ladder]{The activation threshold
+  $\eta$ on D3IL-aligning: MeanFM under random selection, tightened constraints, ten contexts (nine attempted:
+  context~7 is held by the box--obstacle guard on the tightened set and counts as unmoved,
+  \autoref{sec:setup:protocol:aligning}), one training seed, under both projectors. \emph{Guiding}: sampling steps the projection acts on minus the
+  terminal one, $\lceil \eta\nfe \rceil - 1$ (\autoref{sec:setup:protocol:guiding}). \emph{ms/step}:
+  mean over the contexts, unprojected and under each projector;
+  \emph{median}: median final box-to-target distance from $0.4530$\,m; \emph{violation-free}: contexts free of
+  violations. The $\nfe=2$, $10$ and $20$ rows are the random-rule cells of \autoref{tab:va-projection}.}
+  \label{tab:va-threshold}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabularx}{\linewidth}{@{}r r r r rrr rrr@{}}
+    \toprule
+    & & & & \multicolumn{3}{c}{per-step projection} & \multicolumn{3}{c}{endpoint projection} \\
+    \cmidrule(lr){5-7}\cmidrule(l){8-10}
+    $\nfe$ & $\eta$ & Guiding & \shortstack{ms/step\\unproj.} & ms/step & Median [m] & \shortstack{Violation-\\free} & ms/step & Median [m] & \shortstack{Violation-\\free} \\
+    \midrule
+    2   & 0.5 & 0  & $24.6$  & $46.2$  & 0.275 & 8/10  & \multicolumn{3}{l}{--- no guiding step} \\
+    10  & 0.4 & 3  & $89.7$  & $517.5$ & 0.434 & 7/10  & $192.5$ & 0.242 & 10/10 \\
+    20  & 0.2 & 3  & $172.5$ & $265.9$ & 0.179 & 9/10  & $275.3$ & 0.197 & 10/10 \\
+    100 & 0.1 & 9  & $924.6$ & $1112.0$ & 0.248 & 8/10 & $1107.0$ & 0.153 & 8/10 \\
+    100 & 0.5 & 49 & \multicolumn{7}{l}{\emph{not run}: two hundred solves per control step (text)} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\begin{table}[htpb]
+  \caption[Alignment: the two projection methods]{D3IL-aligning, MeanFM with each
+  projection method, tightened constraints, ten contexts (nine attempted, as in \autoref{tab:va-threshold}), one
+  training seed. \emph{Violation-free}:
+  contexts with no violating control step; \emph{violating steps}: per context; \emph{moved}: contexts
+  in which the box moves; \emph{median} and \emph{mean}: final box-to-target distance over the ten
+  contexts, the median with its reduction relative to the mean initial $0.4530$\,m in brackets, the mean $\pm$
+  sample standard deviation; ms/step likewise. Rules $r$, $c$, $t$ as in
+  \autoref{tab:avoiding-dpcc-protocol}. \selectedmark\ the selected configuration.}
+  \label{tab:va-projection}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabularx}{\linewidth}{@{}r L c rrrrrr@{}}
+    \toprule
+    $\nfe$ & Projection & Rule & \shortstack{Violation-\\free} & \shortstack{Violating\\steps} & Moved & Median [m] & Mean [m] & ms/step \\
+    \midrule
+    20 & none      & ---  & 2/10  & 31.6 & 9/10 & 0.090 (80\,\%) & $0.143 \pm 0.134$ & $172.5 \pm 60.6$ \\
+       & per-step  & $r$  & 9/10  & 2.7  & 8/10 & 0.179 (61\,\%) & $0.200 \pm 0.150$ & $265.9 \pm 101.9$ \\
+       &           & $c$  & 9/10  & 4.3  & 6/10 & 0.333 (27\,\%) & $0.306 \pm 0.164$ & $325.3 \pm 165.8$ \\
+       &           & $t$  & 8/10  & 1.5  & 7/10 & 0.228 (50\,\%) & $0.240 \pm 0.165$ & $323.2 \pm 175.0$ \\
+       & \mainconfig{endpoint}  & \mainconfig{\selectedmark\ $r$} & \mainconfig{10/10} & \mainconfig{0.0} & \mainconfig{8/10} & \mainconfig{0.197 (57\,\%)} & \mainconfig{$0.211 \pm 0.144$} & \mainconfig{$275.3 \pm 102.4$}  \\
+       &           & $c$  & 10/10 & 0.0  & 6/10 & 0.323 (29\,\%) & $0.286 \pm 0.190$ & $282.3 \pm 104.1$ \\
+       &           & $t$  & 9/10  & 0.6  & 7/10 & 0.230 (49\,\%) & $0.255 \pm 0.154$ & $301.5 \pm 128.6$ \\
+    \midrule
+    10 & none      & ---  & 1/10  & 35.5 & 8/10 & 0.142 (69\,\%) & $0.199 \pm 0.179$ & $89.7 \pm 31.5$ \\
+       & per-step  & $r$  & 7/10  & 12.3 & 8/10 & 0.434 (4\,\%) & $0.420 \pm 0.352$ & $517.5 \pm 344.3$ \\
+       &           & $c$  & 6/10  & 21.3 & 6/10 & 0.411 (9\,\%) & $0.352 \pm 0.174$ & $524.3 \pm 417.2$ \\
+       &           & $t$  & 7/10  & 5.0  & 4/10 & 0.408 (10\,\%) & $0.271 \pm 0.217$ & $433.5 \pm 224.6$ \\
+       & endpoint  & $r$  & 10/10 & 0.0  & 8/10 & 0.242 (47\,\%) & $0.236 \pm 0.126$ & $192.5 \pm 72.3$ \\
+       &           & $c$  & 8/10  & 0.6  & 4/10 & 0.425 (6\,\%) & $0.307 \pm 0.198$ & $204.2 \pm 79.4$ \\
+       &           & $t$  & 8/10  & 2.3  & 6/10 & 0.255 (44\,\%) & $0.284 \pm 0.161$ & $222.1 \pm 99.0$ \\
+    \midrule
+    2  & none      & ---  & 5/10  & 46.1 & 8/10 & 0.320 (29\,\%) & $0.323 \pm 0.279$ & $24.6 \pm 8.6$ \\
+       & per-step  & $r$  & 8/10  & 11.6 & 9/10 & 0.275 (39\,\%) & $0.286 \pm 0.210$ & $46.2 \pm 18.4$ \\
+       &           & $c$  & 8/10  & 6.5  & 5/10 & 0.434 (4\,\%) & $0.329 \pm 0.186$ & $47.3 \pm 19.1$ \\
+       &           & $t$  & 10/10 & 0.0  & 7/10 & 0.221 (51\,\%) & $0.250 \pm 0.177$ & $43.0 \pm 16.0$ \\
+       & endpoint  & \multicolumn{7}{l}{--- none: no guiding step at $\nfe=2$ (\autoref{sec:setup:protocol:guiding})} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\FloatBarrier
+
+\section{UAV-pillars: The Flown Paths of the Selected Configuration}\label{app:uav-pillars-paths}
+
+\autoref{sec:res:uav:pillars:projected} reads these flights; the figure is recorded here.
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=\linewidth]{fig_uav_pillars_paths}
+  \caption[UAV-pillars: the flown paths of the selected configuration]{UAV-pillars from above, MeanFM at
+  $\nfe=1$: the ten flights of each constraint geometry (columns) before projection (upper row) and under
+  per-step projection with temporal consistency (lower row), one seed per pair of flights. Shaded
+  regions and the dashed tightened boundary as in \autoref{fig:constraints-uav}; the six pillars in red.
+  Green: violation-free; red: violated a constraint; dotted: no success; a cross marks a collision with a
+  pillar, which ends the flight.}
+  \label{fig:uav-pillars-paths}
+\end{figure}
+
+\FloatBarrier
+
 \section{UAV-corridor: The Flights along the Corridor}\label{app:uav-corridor-side}
 
 \autoref{fig:uav-corridor-side} draws the flights of instantaneous-velocity matching at one and twenty network
@@ -249,6 +406,24 @@ of ten.
 \else
 \label{tab:app:uav-corridor-tilt-ps}\label{tab:app:uav-corridor-tilt-ep}\label{tab:app:uav-corridor-hump-ps}\label{tab:app:uav-corridor-hump-ep}
 \fi
+
+\FloatBarrier
+
+\section{UAV-s-curve: The Plans without Projection across the Budget}\label{app:uav-scurve-plans}
+
+\autoref{sec:res:uav:scurve:models} reads these plans; the figure is recorded here.
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=\linewidth,height=0.70\textheight,keepaspectratio]{fig_uav_scurve_plans}
+  \caption[UAV-s-curve: the plans without projection across the budget]{UAV-s-curve, the plans without
+  projection, one flight per panel, drawn like \autoref{fig:raw-plans} but sampled: the plan the model
+  emitted at every twentieth control step, all four candidates, each drawn as the measured planar position of
+  its eight waypoints, green at the waypoint it is anchored at; the executed path is not drawn. Left, FM at
+  $\nfe=1$, $2$ and $20$; right, MeanFM at $\nfe=1$ and $2$; the same flight of the route in every panel, the
+  cascaded geometric controller, one training seed. A cross marks where the flight lost control.}
+  \label{fig:uav-scurve-plans}
+\end{figure}
 
 \FloatBarrier
 

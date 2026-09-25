@@ -1,0 +1,96 @@
+\PassOptionsToPackage{table,svgnames,dvipsnames}{xcolor}
+
+\usepackage[a-2u]{pdfx}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[sc]{mathpazo}
+\usepackage[ngerman,american]{babel}
+\usepackage[autostyle]{csquotes}
+\usepackage[%
+  backend=biber,
+  url=false,
+  style=alphabetic,
+  maxnames=4,
+  minnames=3,
+  maxbibnames=99,
+  giveninits,
+  uniquename=init]{biblatex}
+\usepackage{graphicx}
+\usepackage{scrhack}
+\usepackage{listings}
+\usepackage{lstautogobble}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\usepackage{booktabs}
+\usepackage[final]{microtype}
+\usepackage{caption}
+\usepackage[printonlyused]{acronym}
+\usepackage{ifthen}
+
+\hypersetup{hidelinks}
+
+\makeatletter
+\if@twoside
+	\typeout{TUM-Dev LaTeX-Thesis-Template: twoside}
+\else
+	\typeout{TUM-Dev LaTeX-Thesis-Template: oneside}
+\fi
+\makeatother
+
+\addto\extrasamerican{
+	\def\lstnumberautorefname{Line}
+	\def\chapterautorefname{Chapter}
+	\def\sectionautorefname{Section}
+	\def\subsectionautorefname{Subsection}
+	\def\subsubsectionautorefname{Subsubsection}
+}
+
+\addto\extrasngerman{
+	\def\lstnumberautorefname{Zeile}
+}
+
+\ifthenelse{\equal{\detokenize{dark}}{\jobname}}{%
+  \newcommand{\bg}{black}
+  \newcommand{\fg}{white}
+  \usepackage[pagecolor=\bg]{pagecolor}
+  \color{\fg}
+}{%
+  \newcommand{\bg}{white}
+  \newcommand{\fg}{black}
+}
+
+\bibliography{bibliography}
+
+\setkomafont{disposition}{\normalfont\bfseries}
+\linespread{1.05}
+
+\BeforeTOCHead[toc]{{\cleardoublepage\pdfbookmark[0]{\contentsname}{toc}}}
+
+\definecolor{TUMBlue}{HTML}{0065BD}
+\definecolor{TUMSecondaryBlue}{HTML}{005293}
+\definecolor{TUMSecondaryBlue2}{HTML}{003359}
+\definecolor{TUMBlack}{HTML}{000000}
+\definecolor{TUMWhite}{HTML}{FFFFFF}
+\definecolor{TUMDarkGray}{HTML}{333333}
+\definecolor{TUMGray}{HTML}{808080}
+\definecolor{TUMLightGray}{HTML}{CCCCC6}
+\definecolor{TUMAccentGray}{HTML}{DAD7CB}
+\definecolor{TUMAccentOrange}{HTML}{E37222}
+\definecolor{TUMAccentGreen}{HTML}{A2AD00}
+\definecolor{TUMAccentLightBlue}{HTML}{98C6EA}
+\definecolor{TUMAccentBlue}{HTML}{64A0C8}
+
+\pgfplotsset{compat=newest}
+\pgfplotsset{
+  cycle list={TUMBlue\\TUMAccentOrange\\TUMAccentGreen\\TUMSecondaryBlue2\\TUMDarkGray\\},
+}
+
+\lstset{%
+  basicstyle=\ttfamily,
+  columns=fullflexible,
+  autogobble,
+  keywordstyle=\bfseries\color{TUMBlue},
+  stringstyle=\color{TUMAccentGreen},
+  captionpos=b
+}

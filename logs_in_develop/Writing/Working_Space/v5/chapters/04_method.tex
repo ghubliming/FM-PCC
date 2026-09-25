@@ -203,13 +203,14 @@ model is
     + \vect{w}_{t},
 \end{equation}
 i.e.\ \emph{both} halves of the state are advanced by the \emph{same} action
-\parencite[Sec.~6.1]{romer2025diffusion}. Three things follow, and all three are inherited by every
+\parencite[Sec.~6.1]{romer2025diffusion}. Each of the following is inherited by every
 environment in this thesis.
 
 \begin{itemize}
   \item \textbf{The model carries no knowledge of the robot.} $f$ knows nothing of the arm's
     kinematics, its impedance controller or its integration error. What it omits appears as the
-    mismatch $\vect{w}_{t}$, whose bound $\gamma$ is estimated from unconstrained rollouts, and the
+    mismatch $\vect{w}_{t}$, whose bound $\gamma$ \ac{DPCC} estimates from unconstrained rollouts and this
+    thesis takes over as a configured margin (\autoref{sec:setup:protocol:eval}), and the
     tightening of \eqref{eq:method:dpcc:tighten} absorbs it. Feasibility is therefore a statement
     about the model and its mismatch bound, not about the plant.
   \item \textbf{$t\sidx{s} = 1$, because the action is a displacement and not a velocity.} The
@@ -275,7 +276,7 @@ environments run the same two-line recursion,
 \end{align}
 where $\vect{o}_{t}$ is the observation the model conditions on at the next step and the bracketed
 velocity block is present for UAV-corridor and UAV-s-curve; UAV-pillars uses the planar
-observation through the map in \autoref{sec:method:env:uav}. Two properties follow.
+observation through the map in \autoref{sec:method:env:uav}.
 
 \begin{itemize}
   \item \textbf{\eqref{eq:method:dep:setpoint} is a free-running integrator driven by the model's own
@@ -365,10 +366,12 @@ $(120,120,120,120,50,30,10)$ / $(10,10,10,10,6,5,3)$.
 (\texttt{CartPosQuatImpedenceController}) and
 \texttt{.../controllers/Config/mujoco\_controller\_config.gin:6--37}.}
 
-Two consequences matter for the thesis. \eqref{eq:method:dep:dls} is a \emph{local} solve run three
-times per step, so the arm does not exactly reach $\vect{p}\sidx{des}$ within one step --- the residual
-is precisely the $\vect{w}_{t}$ that \eqref{eq:method:dpcc:euler} pushes into the mismatch bound and
-\eqref{eq:method:dpcc:tighten} then absorbs. And the null-space term makes the map from setpoint to
+\eqref{eq:method:dep:dls} is a \emph{local} solve run three
+times per step, so the arm does not exactly reach $\vect{p}\sidx{des}$ within one step. Because the setpoint
+accumulates the planned increments, the mismatch $\vect{w}_{t}$ of \eqref{eq:method:dpcc:euler} on the measured
+channels is the change of that residual over one step, $\vect{e}_{t}-\vect{e}_{t+1}$ with $\vect{e}_{t}$ the
+tracking error of step $t$, and it is that change which the mismatch bound and \eqref{eq:method:dpcc:tighten}
+absorb. And the null-space term makes the map from setpoint to
 joint configuration history-dependent, so two identical plans executed from different postures do not
 produce identical joint trajectories. They request the same Cartesian reference, while the executed
 trace also depends on tracking error.
@@ -491,7 +494,7 @@ loop while its velocity feedback damps the motion. Tracking lag is measured on t
 A sampling-based predictive controller is
 implemented behind the same interface, so it can be swapped for the geometric cascade without
 touching the plan layer. It is the \emph{Predictive Sampling} planner of MuJoCo MPC \parencite{howell2022predictive}, used
-as published; only the task is ours. Three pieces define it.
+as published; only the task is ours.
 
 \emph{The objective.} The planner minimises the finite-horizon sum
 $J = \sum_{i} c(\vect{x}_{i},\vect{u}_{i})$ over a rollout of the true simulator dynamics
@@ -705,7 +708,7 @@ the explicit Euler scheme at a uniform grid $\ftime_{k} = k/\nfe$,
 which costs $\nfe$ network evaluations per candidate for unguided Euler sampling. Here $\nfe$
 denotes sampling steps; endpoint lookahead adds evaluations as described in
 \autoref{sec:method:hardflow}. The initialization distribution used at inference is specified with
-the experiment settings in \autoref{sec:setup:protocol}. Two consequences follow.
+the experiment settings in \autoref{sec:setup:protocol}.
 
 \emph{The budget moved.} $\nfe$ appears in \eqref{eq:bg:fm:euler} and nowhere in
 \eqref{eq:bg:fm:loss}. It is a solver argument, chosen after training and changeable per
@@ -808,7 +811,7 @@ through the JVP \parencite[Eqs.~(7)--(11)]{geng2025meanflow}.
 \srcnote{Start/interval convention and conditional-velocity tangent:
 \texttt{flow\_matcher\_v3\_meanflow/models/mf\_diffusion.py:353--473}.}
 
-Three properties of \eqref{eq:bg:mf:loss} are used later in this thesis.
+The following properties of \eqref{eq:bg:mf:loss} are used later in this thesis.
 
 \begin{itemize}
   \item \textbf{It contains instantaneous-velocity matching as the case $r = \ftime$.} The second term of
@@ -841,11 +844,7 @@ larger draw assigned to $\ftime$ and the smaller to $r$.
 \subsubsection*{Implementation: the start-anchored identity}
 
 The network inputs $(\vect{x}_{r},r,h)$ use the same start-anchored convention as
-\eqref{eq:bg:mf:def}. Writing the identity in these coordinates gives
-\begin{equation}\label{eq:method:engine:mfid}
-  \afield=\vfield+h\big((\partial_{\vect{x}}\afield)\vfield
-                            +\partial_r\afield-\partial_h\afield\big).
-\end{equation}
+\eqref{eq:bg:mf:def}, and the identity \eqref{eq:bg:mf:identity} is written in these coordinates.
 The two-head implementation combines an average-velocity target with an instantaneous-velocity
 loss. The target and loss are
 \begin{align}
@@ -863,7 +862,7 @@ loss. The target and loss are
 \end{align}
 where $\varrho(e) = e\,/\,\sg\big((e+c)^{p}\big)$ is the adaptive reweighting of
 \autoref{sec:method:meanflow} and the squared errors are summed over the plan before reweighting.
-Four properties of \eqref{eq:method:engine:mftgt}--\eqref{eq:method:engine:mfloss} are choices of
+The following properties of \eqref{eq:method:engine:mftgt}--\eqref{eq:method:engine:mfloss} are choices of
 this implementation:
 
 \begin{itemize}
@@ -872,8 +871,9 @@ this implementation:
   \item \textbf{$(\ftime,r)$ are two independent draws} on the transport axis, the larger
     assigned to $\ftime$ and the smaller to $r$.
   \item \textbf{A fraction of samples is drawn with $r = \ftime$}, i.e.\ $h=0$, at which
-    \eqref{eq:method:engine:mftgt} reduces to $\afield\sidx{tgt} = \vect{v}$ and the objective
-    becomes \eqref{eq:bg:fm:loss}. These anchor the field.
+    \eqref{eq:method:engine:mftgt} reduces to $\afield\sidx{tgt} = \vect{v}$ and the target
+    is the instantaneous-velocity target of \eqref{eq:bg:fm:loss}, while the loss keeps its two heads and the
+    reweighting. These anchor the field.
   \item \textbf{The instantaneous head has a separate regression loss.} Sampling uses the
     average-velocity head; the auxiliary instantaneous head is not integrated.
 \end{itemize}
@@ -1119,8 +1119,8 @@ point the plan is anchored at. The returned projection cost is
 $c_{\mathcal{Z}_{f}}(\vect{x}) = \tfrac{1}{2}\|\proj{\mathcal{Z}_{f}}(\vect{x})-\vect{x}\|_{\matr{Q}}^{2}$,
 which is the quantity the cumulative-cost selection rule of \autoref{sec:method:selection} sums.
 Each candidate plan is a separate program. Exact projection yields a feasible point when the set
-is nonempty and the problem is solved. The implementation uses a numerical local solve and can
-return its last iterate on non-convergence, so feasibility of that output is not guaranteed;
+is nonempty and the problem is solved. The implementation uses a numerical local solve --- \ac{SLSQP} with at most $1000$ iterations and a function
+tolerance of $10^{-6}$ --- and can return its last iterate on non-convergence, so feasibility of that output is not guaranteed;
 constraint satisfaction is evaluated on the executed trajectories.
 \srcnote{\texttt{aux\_repo/dpcc/diffuser/sampling/projection.py:70--155} and its Gen-local copies;
 the constraint families are \texttt{SafetyConstraints}, \texttt{DynamicConstraints},
@@ -1241,7 +1241,8 @@ $\mathcal{S}\ominus\mathcal{B}_{\gamma}
 =\{\vect{z}:\vect{z}+\mathcal{B}_{\gamma}\subseteq\mathcal{S}\}$.
 Under the mismatch-bound and feasibility assumptions of
 \parencite[Theorem~2]{romer2025diffusion}, tightening provides the margin needed for the next
-executed state to satisfy the original set. Here $\gamma$ is estimated from unconstrained rollouts.
+executed state to satisfy the original set. In \ac{DPCC} $\gamma$ is estimated from unconstrained rollouts; here it is not re-estimated, and the margins
+actually configured are stated in \autoref{sec:setup:protocol:eval}.
 Tightening is relative to the original constraints, not relative to the diffusion baseline; the
 configured margins and their use in the comparisons are given in \autoref{sec:setup:protocol}.
 
@@ -1462,9 +1463,10 @@ linear row
 with unit normal $\vect{n}$ and offset $d\sidx{obs}$, distinct from the plan width $d$. A circular keep-out region with centre $\vect{o}$ and radius
 $\rho$ is the quadratic row
 \begin{equation}\label{eq:method:env:disk}
-  \left\|\vect{p}_{i}-\vect{o}\right\|_{2}^{2} \ge \rho^{2},
+  \left\|\vect{p}_{i}^{xy}-\vect{o}\right\|_{2}^{2} \ge \rho^{2},
 \end{equation}
-which makes the feasible set non-convex.
+with $\vect{p}_{i}^{xy}$ the horizontal components of the planned position, so the excluded region is a vertical
+cylinder --- a disk in the plane of the table or of the flight --- and it makes the feasible set non-convex.
 
 A third family bounds the action rather than the position. The planned increment is held inside a
 box whose per-channel limits are read off the demonstrations at evaluation time, so the bound
@@ -1556,7 +1558,9 @@ benchmark's obstacle field scaled up around the vehicle.
 On these two scenes the plan stacks action, commanded position, measured position and measured velocity
 (\autoref{tab:embodiments}, $d = 12$), a plan is queried every third physics step
 \eqref{eq:method:dep:multirate}, and the six dynamics rows anchor the commanded and the measured position
-as in \eqref{eq:method:dep:varows}. The corridor is two parallel walls; the s-curve is two offset corridor
+as in \eqref{eq:method:dep:varows}. The measured velocity is carried in the plan as a predicted quantity only:
+no dynamics row constrains it and the geometric rows act on the planned position alone, so the mismatch ball of
+\eqref{eq:method:dpcc:tighten} is a ball in position. The corridor is two parallel walls; the s-curve is two offset corridor
 segments joined by a diagonal passage. The constraint set of each combines four families:
 \begin{itemize}
   \item a workspace box $\vect{p}\sidx{min}\le\vect{p}_{i}\le\vect{p}\sidx{max}$ bounding extent and
@@ -1588,7 +1592,10 @@ boundary existed. The dimensions of every scene and boundary are listed in \auto
 Every wall, plane, roof and disk of these two scenes is moved outward by the vehicle's \emph{rotor
 reach} $r\sidx{b}$ before the projection sees it --- the distance from the centre to the rim of a rotor
 disk along a body axis, with the vehicle at zero yaw and every approach in these scenes lateral --- so
-that a plan for the vehicle's centre is a plan for the vehicle under that assumption. The offset is
+that a plan for the vehicle's centre is a plan for the vehicle under that assumption. The reach is a per-axis
+bound: a surface met head-on along a body axis, as the corridor walls are, is cleared exactly, while a surface
+met diagonally, as a keep-out disk can be at zero yaw, is cleared by less, because the enclosing radius of the
+four rotor disks exceeds the per-axis reach (\autoref{fig:platform-x2-dimensions}). The offset is
 carried in every geometry, and it is not the tightening \eqref{eq:method:dpcc:tighten}: the two are
 separate quantities, and only the tightening is what the tightened variant of a geometry changes.
 \srcnote{\texttt{config/uav\_projection.yaml}: \texttt{corridor\_v3\_tilt} (the sloping halfspace with

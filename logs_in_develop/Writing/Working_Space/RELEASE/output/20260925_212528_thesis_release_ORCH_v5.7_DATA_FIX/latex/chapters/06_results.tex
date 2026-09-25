@@ -1,0 +1,1924 @@
+\chapter{Results}\label{ch:results}
+
+The results follow the order of the study: D3IL-avoiding, the benchmark of \ac{DPCC}, first, then
+the two environments built for this thesis, D3IL-aligning and the UAV scenes. \autoref{sec:res:summary} brings the three together and
+answers, per environment, how the generative models and the projection methods compare. Each
+environment is reported in those two parts and closes with the supported model--projection combination.
+Each table states its backbone and its evaluation protocol.
+
+\section{Obstacle Avoidance}\label{sec:res:state}
+
+Every comparison in this section is made at the protocol of \ac{DPCC} --- five training seeds and two
+episodes per seed and geometry, ten episodes per geometry (\autoref{sec:setup:protocol:avoiding}) ---
+except where a table states otherwise: \autoref{tab:avoiding-projectors} runs on four training seeds at
+$\nfe=3$ and on one at $\nfe=10$, one of its cells on twenty episodes.
+Results are averaged per geometry and then across the three geometries. At every control step the planner generates
+$B=4$ candidate plans and executes one of them, and every model is shown under each of the three rules
+that make that choice (\autoref{sec:method:selection}): random selection ($r$), cumulative projection
+cost ($c$) and temporal consistency ($t$). The models are then compared at their best rule.
+
+The generative-model comparison first reads the raw outputs with projection switched off. All results
+with a projector in the loop are then reported together under projection methods, including the
+comparison of the four models through the fixed per-step projector of \ac{DPCC} and the comparison
+between per-step and endpoint projection. The section closes with the supported model--projection
+combinations.
+
+\subsection{Generative Models}\label{sec:res:avoiding:models}
+
+The four models of \autoref{sec:setup:baselines} are compared, on the shared temporal U-Net: FM,
+MeanFM, CI-MeanFM and the diffusion model of \ac{DPCC}. One property of the step budget decides how the
+results below are read. $\nfe$ counts network evaluations in both families but is not the same quantity
+in them (\autoref{tab:eval}): for the flow-based models it is the number of ODE solver steps, chosen at
+inference, and for the baseline the number of denoising steps, fixed when its noise schedule is
+discretised during training --- so every diffusion budget is a separately trained checkpoint and every
+flow-based budget is the same checkpoint read again. This subsection reads the plans executed without
+projection; projected results begin in \autoref{sec:res:avoiding:projection}.
+
+The demonstrations teach the route to the goal. With projection switched off, each of the three
+flow-based models reaches it in all thirty episodes at both reported budgets; the diffusion model
+reaches it in 28 of thirty at one denoising step and 29 of thirty at twenty
+(\autoref{tab:avoiding-raw-models}). Reaching the goal is therefore distinct from satisfying the
+test-time constraints: no unprojected row exceeds $0.133$ success with constraint satisfaction.
+
+\subsubsection{Raw Model Outputs}\label{sec:res:avoiding:raw}
+
+With the projector switched off, \autoref{tab:avoiding-raw-models} measures goal arrival, constraint satisfaction and generation time on the same cells as \autoref{tab:avoiding-dpcc-protocol}.
+
+\begin{table}[htpb]
+  \caption[The four models without projection]{D3IL-avoiding with the projection switched off: the
+  cells of \autoref{tab:avoiding-dpcc-protocol} at the same protocol, five training seeds $\times$ two
+  episodes per geometry, averaged per geometry and then over the three; tightened constraints, four
+  candidate plans, temporal U-Net of $4.0$\,M parameters. Success, S\&C and violating steps per episode as
+  in \autoref{sec:setup:metrics:avoiding}; each cell mean $\pm$ standard deviation over the seeds. No rule
+  column: the evaluation records one unprojected arm per cell. The budgets $\nfe=5$ and $10$ were
+  evaluated as well and are not printed. \baselinemark\ the baseline of record at its own budget.}
+  \label{tab:avoiding-raw-models}
+  \centering
+  \footnotesize
+  \begin{tabularx}{\linewidth}{@{}L r rrrrr@{}}
+    \toprule
+    Model & $\nfe$ & Success & S\&C & \shortstack{Violating\\steps} & Steps & ms/step \\
+    \midrule
+    MeanFM    & 1  & $1.000 \pm 0.000$ & $0.033 \pm 0.075$ & $15.5 \pm 2.1$ & $63.4 \pm 5.6$ & $10.3 \pm 0.4$ \\
+    MeanFM    & 2  & $1.000 \pm 0.000$ & $0.033 \pm 0.075$ & $15.5 \pm 0.4$ & $62.7 \pm 1.8$ & $19.3 \pm 0.2$ \\
+    \midrule
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & $1.000 \pm 0.000$ & $0.033 \pm 0.075$ & $15.6 \pm 0.7$ & $60.5 \pm 1.5$ & $9.8 \pm 0.2$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2 & $1.000 \pm 0.000$ & $0.033 \pm 0.075$ & $15.7 \pm 0.7$ & $62.9 \pm 1.2$ & $18.7 \pm 0.3$ \\
+    \midrule
+    FM        & 1  & $1.000 \pm 0.000$ & $0.100 \pm 0.091$ & $16.5 \pm 3.4$ & $68.6 \pm 5.9$ & $9.0 \pm 0.0$ \\
+    FM        & 2  & $1.000 \pm 0.000$ & $0.100 \pm 0.091$ & $15.6 \pm 2.6$ & $61.7 \pm 2.2$ & $17.8 \pm 0.0$ \\
+    FM        & 20 & $1.000 \pm 0.000$ & $0.133 \pm 0.075$ & $16.5 \pm 2.1$ & $70.2 \pm 6.3$ & $183.5 \pm 0.7$ \\
+    \midrule
+    Diffusion & 1  & $0.933 \pm 0.149$ & $0.000 \pm 0.000$ & $19.0 \pm 2.9$ & $68.3 \pm 16.1$ & $9.4 \pm 0.1$ \\
+    Diffusion & 2  & $1.000 \pm 0.000$ & $0.000 \pm 0.000$ & $20.4 \pm 2.4$ & $61.7 \pm 8.3$ & $18.3 \pm 0.1$ \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$0.967 \pm 0.075$} & \mainconfig{$0.100 \pm 0.091$} & \mainconfig{$17.9 \pm 2.5$} & \mainconfig{$67.8 \pm 16.8$} & \mainconfig{$179.3 \pm 1.2$}  \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+Every flow-based model reaches the goal in every one of its thirty
+episodes at every budget in the table, and the baseline in $0.933$ of them at one denoising step and
+$0.967$ at twenty. Producing a plan that arrives is not what separates these models on this benchmark.
+
+None of them arrives legally. The highest success with constraint satisfaction
+anywhere in the table is $0.133$, instantaneous-velocity matching at twenty evaluations; the two
+average-velocity models read $0.033$ at the budgets they are operated at, instantaneous-velocity
+matching $0.100$, the baseline $0.100$ at its own budget and $0.000$ at one denoising step. Between
+$15.5$ and $20.4$ control steps of an average episode violate a constraint, and raising the budget does
+not work that number down: the intermediate budgets of five and ten, which the table does not print,
+hold it between $14.2$ and $19.1$, and the best and the worst of those counts both come at a budget of ten.
+The demonstrations all four models learn from cross the
+same constraint sets (\autoref{tab:avoiding-geometries}), so a plan that respects them is not something
+any of them could have imitated. On this benchmark constraint satisfaction is the projector's work, for
+the flow-based objectives exactly as for the diffusion baseline.
+
+The last column is the cost of generation alone: one network evaluation of a flow-based model costs $9.0$ to
+$10.3$\,ms per control step and twenty denoising steps of the baseline $179.3$\,ms. Against the projected
+table the remainder is the projector: about $8$ of the $18.3$\,ms analytic average-velocity matching
+takes at one network evaluation, and about $374$ of the baseline's $553.4$\,ms at its own twenty
+denoising steps. The projector runs on
+$\lceil \eta\nfe \rceil$ sampling steps (\autoref{sec:setup:protocol:guiding}), which is one at the
+flow-based operating budget and eleven at the baseline's, whose gate includes the threshold step, so the
+budget is paid twice --- once in the network and again in the solver.
+
+\FloatBarrier
+
+Those three columns score what the models produce. \autoref{fig:raw-plans} shows it. The raw plan is to a
+planning model what a generated image is to an image model: the fidelity of the sample itself, before any
+use is made of it \parencite{ho2020denoising,lipman2023flow,geng2025meanflow}, and the columns above are
+that fidelity scored on the task. The one thing to be clear about before reading the figure is that it is
+not the executed path --- the executed path is not drawn in it
+at all. At every control step the policy returns a plan tensor of shape $(N,8,6)$
+(\autoref{tab:train}): $N=4$ candidate plans, each $H=8$ waypoints long, each waypoint carrying a planar
+position increment together with the commanded and the measured planar position. What the figure draws,
+per candidate, is the \emph{measured} planar position channels of those eight waypoints --- one
+eight-point curve --- and the green dot marks the first of the eight, the state the plan is anchored at.
+Drawing the fan at every control step would fill the panel with a solid block, so it is drawn at every
+fourth; the stored tensor keeps all of them.
+
+Of the eight waypoints exactly one is ever carried out. The selection rule picks one of the four
+candidates (\autoref{sec:method:selection}), its first action is applied as a Cartesian increment, and the
+other seven waypoints are thrown away and regenerated at the next control step, because the planner
+replans every step (\autoref{tab:eval}). So the eight-step plan is never executed as drawn --- and that is
+what makes it worth drawing. It is the network's output before the projector repairs it and before the
+controller smooths it, the quantity that for an image generative model would be the fidelity of a sample.
+Every other figure and table in this section reads the models through something downstream; this one reads
+them directly.
+
+\begin{figure}[htpb]
+  \centering
+  \setlength{\tabcolsep}{2pt}
+  \begin{tabular}{@{}c cccc@{}}
+    & {\footnotesize\bfseries MeanFM $\downarrow$}
+    & {\footnotesize\bfseries CI-MeanFM $\downarrow$}
+    & {\footnotesize FM}
+    & {\footnotesize Diffusion} \\[0.2em]
+    {\footnotesize $\nfe=1$} &
+    \begin{minipage}[c]{0.21\linewidth}\centering
+    \includegraphics[width=\linewidth]{fig_raw_plans_meanflow_K1}
+    \end{minipage} &
+    \begin{minipage}[c]{0.21\linewidth}\centering
+    \includegraphics[width=\linewidth]{fig_raw_plans_af_K1}
+    \end{minipage} &
+    \begin{minipage}[c]{0.21\linewidth}\centering
+    \includegraphics[width=\linewidth]{fig_raw_plans_fm_K1}
+    \end{minipage} &
+    \begin{minipage}[c]{0.21\linewidth}\centering
+    \includegraphics[width=\linewidth]{fig_raw_plans_diffusion_K1}
+    \end{minipage} \\
+  \end{tabular}
+  \caption[Plans without projection at one evaluation, four models]{Plans without projection at $\nfe=1$, one episode
+  per panel: the plans the model emitted at every fourth control step, all four candidates, each drawn as
+  the measured planar position of its eight waypoints, green at the waypoint the plan is anchored at; the
+  executed path is not drawn. Columns: MeanFM, CI-MeanFM, FM and the diffusion model of \ac{DPCC};
+  \emph{both-hard}, one training seed, temporal U-Net of $4.0$\,M parameters. The arrows mark the two
+  average-velocity columns. The same panels at $\nfe=2$, and the baseline at its trained budget, are
+  \autoref{fig:raw-plans-full}. \autoref{tab:avoiding-raw-models} aggregates the outcomes.}
+  \label{fig:raw-plans}
+\end{figure}
+
+Read that way, the models separate (\autoref{fig:raw-plans}). At one network evaluation the successive
+plans of analytic average-velocity matching form a narrow ribbon: consecutive fans overlap, and each of
+the eight-point curves is a bounded arc towards the goal. The diffusion baseline at the same budget emits
+plans that jump across the workspace from one control step to the next.
+
+That difference does not appear in the motion, and it is worth saying why before the panels are used for
+anything. Two things sit between a plan and the arm (\autoref{sec:setup:platforms}): only the
+\emph{first} action of the plan is executed, and that action is a Cartesian increment reaching the joints
+through inverse kinematics and a joint-space PD controller. A path assembled one first-action at a time,
+through an integrator, is smooth whether or not the plans behind it were. The panels are therefore the
+only place the incoherence is visible at all. The analytic average-velocity matching panel at two
+evaluations shows the ribbon surviving a second evaluation (\autoref{fig:raw-plans-full}).
+
+The two remaining objectives, in the middle two columns, fall between those extremes and in the order
+the projected results below give. Instantaneous-velocity matching throws a wide, jagged fan at both budgets, and much of its length
+lies inside the forbidden halfspace on the left of the panel rather than in the free corridor.
+Consistency-interpolated average-velocity matching is noisy at one evaluation and markedly tighter at two,
+where its plans thread the obstacle field in a band comparable to the analytic objective's. Neither is as
+tight as analytic average-velocity matching at the same budget, and all three are far from the near-scribble
+of the baseline at one evaluation.
+
+The baseline's small-budget panels are two models, one trained at each budget. At $\nfe=2$ its plans
+form a single coherent bundle from start to goal, and that bundle runs along the wrong side of the
+constraint. At its own twenty steps, in the last row of \autoref{fig:raw-plans-full}, the baseline draws a single tight bundle from the
+start state to the goal line, the upper half of which lies inside the left halfspace.
+
+In the cell these panels are drawn from --- one training seed, \emph{both-hard}, two episodes, no
+projection --- the violating control steps per episode are $6.0$ for analytic average-velocity matching at one evaluation and $12.0$ at two, and for the
+diffusion baseline $28.0$ at one, $21.5$ at two and $18.5$ at twenty.
+
+Each panel is one episode. The panels share the geometry and the training seed and come from separate
+evaluations. A flow-based column is one checkpoint read at both budgets; the three diffusion panels are
+three separately trained models, one per budget, since a diffusion model's step count is fixed at
+training. The last row is the baseline at twenty denoising steps; the flow-based models are operated at
+one and two evaluations and have no panel there.
+
+\subsection{Projection Methods}\label{sec:res:avoiding:projection}
+
+The remaining results all include projection. The first comparison holds the per-step projection of
+\ac{DPCC} fixed and varies the generative model. The later comparison holds the generative model fixed
+and varies the projection method.
+
+\subsubsection{At the Protocol of DPCC}\label{sec:res:avoiding:dpccprotocol}\label{sec:res:fewstep}
+
+This pass puts the projector back and holds it fixed at the per-step projection of \ac{DPCC}, so that
+the generative model is the only thing that varies; the two projection methods are compared against
+each other in \autoref{sec:res:avoiding:projectors}. Every number from here to the end of the
+subsection is an executed-episode result of that pipeline.
+
+Two marks recur in this table and in the ones after it. The \textbf{operating point}, \selectedmark, is
+the configuration this thesis carries forward on the benchmark --- the cheapest one that holds its
+success, not the highest number in a column. The \textbf{baseline of record}, \baselinemark, is the
+diffusion model of \ac{DPCC} at its own budget of twenty under its own best selection rule, and it is
+what every claim of this chapter is measured against. Every row of the table carries all five training
+seeds and all three geometries: the budgets are $\nfe\in\{1,2,5,10\}$ for analytic average-velocity
+matching, $\{1,2\}$ for the consistency-interpolated model, $\{1,2,20\}$ for instantaneous-velocity
+matching and $\{1,2,10,20\}$ for the diffusion baseline, whose step count is fixed at training.
+
+The baseline reproduces its published result (\autoref{tab:avoiding-dpcc-protocol},
+\autoref{tab:target}): under cumulative projection cost it reaches a success rate with constraint
+satisfaction of $1.000$ in $70.1$ control steps, at $553.4$\,ms per control step. Temporal consistency
+reaches the same rate in more steps and random selection falls short of it.
+
+At two denoising steps under cumulative projection cost the baseline also reaches $1.000$, in $61.2$
+control steps at $211.4$\,ms, on five seeds and three geometries: the same constraint satisfaction in
+fewer control steps at $38\,\%$ of the time. At ten steps under temporal consistency it reaches $1.000$
+in $68.7$ control steps at $321.7$\,ms. The baseline of record is
+the configuration \ac{DPCC} reports, at twenty steps, and the cost factors below are stated against it;
+against the two-step diffusion configuration the $30\times$ below is $12\times$.
+
+That two-step time is six times the one-step time for twice the denoising steps, and where the
+difference comes from is set out in \autoref{sec:res:avoiding:caveat:noise}.
+
+Two flow-based models clear that row at a single network evaluation, on all three of its axes at once.
+Instantaneous-velocity matching reaches $1.000$ in $67.0$ control steps and consistency-interpolated
+average-velocity matching $1.000$ in $59.2$, the fewest in the table, each at about $18$\,ms per control
+step --- a thirtieth of the baseline's, on the same temporal U-Net of $4.0$\,M parameters. Neither gives
+up success with constraint satisfaction, and both finish in fewer control steps. Here a flow-based model
+is ahead of the baseline on every reported axis at once rather than trading one against another.
+
+Analytic average-velocity matching, the model this benchmark is operated with, reaches $0.967$ in $58.6$
+control steps at $18.3$\,ms --- against the baseline's best rule, one episode of thirty fewer reaching
+the goal within the constraints, $11.5$ fewer control steps, and a thirtieth of the time. What moves that
+result is the selection rule: under cumulative projection cost the same model drops to $0.933$ and stalls
+at $72.4$ or $97.2$ control steps, the
+behaviour described in \autoref{sec:res:ablations}. The three models differ in how exposed they are to
+that choice. Instantaneous-velocity matching is the only one that holds $1.000$ under all three rules at
+both budgets; consistency-interpolated average-velocity matching holds it under temporal consistency at
+both, but falls to $0.900$ under random selection at two evaluations and stalls under cumulative
+projection cost in the same way.
+
+\begin{table}[htpb]
+  \caption[The generative models at the protocol of DPCC]{D3IL-avoiding at the protocol of \ac{DPCC}:
+  five training seeds $\times$ two episodes per geometry, averaged per geometry and then over the three;
+  tightened constraints, four candidate plans, temporal U-Net of $4.0$\,M parameters. Rules: $r$ random,
+  $c$ cumulative projection cost, $t$ temporal consistency. Columns as in
+  \autoref{sec:setup:metrics:avoiding}, each mean $\pm$ standard deviation over the seeds. The budgets
+  $\nfe=5$ and $10$ were evaluated as well and are not printed. \selectedmark\ the operating
+  point, \baselinemark\ the baseline of record, bold the cells that clear it on all three columns.}
+  \label{tab:avoiding-dpcc-protocol}
+  \centering
+  \footnotesize
+  \begin{tabularx}{\linewidth}{@{}L r c rrr@{}}
+    \toprule
+    Model & $\nfe$ & Rule & S\&C & Steps & ms/step \\
+    \midrule
+    MeanFM     & 1 & $r$ & $0.900 \pm 0.149$ & $64.3 \pm 2.6$ & $19.2 \pm 1.6$ \\
+                     &    & $c$ & $0.933 \pm 0.091$ & $72.4 \pm 8.4$ & $18.3 \pm 0.5$ \\
+                     &    & \mainconfig{\selectedmark\ $t$} & \mainconfig{$0.967 \pm 0.075$} & \mainconfig{$58.6 \pm 2.2$} & \mainconfig{$18.3 \pm 0.2$}  \\
+    MeanFM     & 2 & $r$ & $0.967 \pm 0.075$ & $65.1 \pm 2.6$ & $27.6 \pm 0.5$ \\
+                     &    & $c$ & $0.933 \pm 0.091$ & $97.2 \pm 4.8$ & $27.1 \pm 0.2$ \\
+                     &    & $t$ & $0.967 \pm 0.075$ & $59.4 \pm 2.0$ & $27.7 \pm 0.5$ \\
+    \midrule
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & $r$ & $1.000 \pm 0.000$ & $61.5 \pm 0.8$ & $17.9 \pm 0.2$ \\
+                     &    & $c$ & $0.967 \pm 0.075$ & $68.4 \pm 2.3$ & $18.0 \pm 0.6$ \\
+                     &    & \textbf{$t$} & \textbf{$1.000 \pm 0.000$} & \textbf{$59.2 \pm 1.2$} & \textbf{$18.1 \pm 0.2$} \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2 & $r$ & $0.900 \pm 0.149$ & $63.3 \pm 1.3$ & $27.0 \pm 0.3$ \\
+                     &    & $c$ & $0.933 \pm 0.091$ & $89.7 \pm 8.2$ & $26.6 \pm 0.2$ \\
+                     &    & $t$ & $1.000 \pm 0.000$ & $60.1 \pm 3.4$ & $27.0 \pm 0.2$ \\
+    \midrule
+    FM         & 1 & $r$ & $1.000 \pm 0.000$ & $67.9 \pm 1.2$ & $17.4 \pm 0.1$ \\
+                     &    & \textbf{$c$} & \textbf{$1.000 \pm 0.000$} & \textbf{$67.0 \pm 0.8$} & \textbf{$17.3 \pm 0.1$} \\
+                     &    & $t$ & $1.000 \pm 0.000$ & $68.2 \pm 1.7$ & $17.7 \pm 0.6$ \\
+    FM         & 2 & $r$ & $1.000 \pm 0.000$ & $65.7 \pm 0.8$ & $26.2 \pm 0.9$ \\
+                     &    & $c$ & $1.000 \pm 0.000$ & $67.0 \pm 3.8$ & $25.5 \pm 0.2$ \\
+                     &    & $t$ & $1.000 \pm 0.000$ & $63.8 \pm 1.9$ & $25.9 \pm 0.2$ \\
+    FM         & 20 & $r$ & $0.867 \pm 0.075$ & $73.3 \pm 7.9$ & $852.6 \pm 624.9$ \\
+                     &    & $c$ & $1.000 \pm 0.000$ & $63.2 \pm 1.5$ & $476.7 \pm 26.0$ \\
+                     &    & $t$ & $1.000 \pm 0.000$ & $63.7 \pm 2.2$ & $486.5 \pm 41.4$ \\
+    \midrule
+    Diffusion  & 1 & $r$ & $0.600 \pm 0.303$ & $67.7 \pm 10.1$ & $33.9 \pm 8.6$ \\
+                     &    & $c$ & $0.667 \pm 0.391$ & $72.1 \pm 17.6$ & $33.3 \pm 14.5$ \\
+                     &    & $t$ & $0.600 \pm 0.190$ & $73.5 \pm 14.1$ & $33.3 \pm 13.2$ \\
+    Diffusion  & 2 & \textbf{$r$} & \textbf{$1.000 \pm 0.000$} & \textbf{$65.1 \pm 1.4$} & \textbf{$191.1 \pm 26.5$} \\
+                     &    & \textbf{$c$} & \textbf{$1.000 \pm 0.000$} & \textbf{$61.2 \pm 1.2$} & \textbf{$211.4 \pm 18.8$} \\
+                     &    & $t$ & $0.933 \pm 0.091$ & $60.9 \pm 1.5$ & $225.9 \pm 48.5$ \\
+    Diffusion  & 20 & $r$ & $0.967 \pm 0.075$ & $74.7 \pm 5.8$ & $573.2 \pm 22.2$ \\
+                     &    & \mainconfig{\baselinemark\ $c$} & \mainconfig{$1.000 \pm 0.000$} & \mainconfig{$70.1 \pm 8.2$} & \mainconfig{$553.4 \pm 28.0$}  \\
+                     &    & $t$ & $1.000 \pm 0.000$ & $76.1 \pm 15.7$ & $563.0 \pm 25.4$ \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsubsection{Candidate Plans and Selection Rules}\label{sec:res:ablations}
+
+With a single candidate plan the three selection rules return the same plan: success and control steps
+are identical in all fifteen paired seed--geometry combinations, for the diffusion baseline, analytic average-velocity matching,
+instantaneous-velocity matching and consistency-interpolated average-velocity matching. With four candidates, generation time changes by at most six per
+cent, because the four plans are one batched network evaluation, while projection time grows by a factor
+of $3.2$ to $4.9$, because the programs are solved one after another on the CPU. Solving them in parallel
+would bring analytic average-velocity matching at $\nfe=1$ from $18.1$ to about $11.7$\,ms per control step with all four
+candidates kept; this is a prediction from two measured points.
+
+Cumulative projection cost slows analytic average-velocity matching down on this task. In
+\autoref{tab:avoiding-dpcc-protocol} it takes $72.4$ control steps at $\nfe=1$ and $97.2$ at $\nfe=2$,
+against $58.6$ and $59.4$ under temporal consistency, and reaches $0.933$ success with constraint
+satisfaction against $0.967$: the rule occasionally selects a plan that stalls, and a stalled plan costs
+steps without buying constraint satisfaction. The same happens to consistency-interpolated
+average-velocity matching, which goes from $60.1$ steps under temporal consistency to $89.7$ under
+cumulative projection cost at $\nfe=2$, and it does not happen to the diffusion baseline, for which
+cumulative projection cost is the best of the three. Temporal consistency is therefore the selection rule
+the flow-based models are operated with on this task.
+
+\subsubsection{The Cost Frontier}\label{sec:res:avoiding:pareto}
+
+At equal success, two costs remain: how many control steps an episode takes, and how long one action takes
+to compute. They are not exchangeable --- a plan that arrives in fewer steps but costs half a second per
+step is not obviously better than the reverse --- so this section does not add them into one score. It
+places every configuration on both axes at once and asks which of them no other configuration improves on in both
+(\autoref{fig:avoiding-tradeoff}).
+
+A configuration is \emph{non-dominated} when no other configuration in the comparison is at the same time
+faster per action and shorter in control steps. Only configurations that keep the task solved take part:
+a point enters the comparison when its success with constraint satisfaction is within $0.05$ of the best
+value in its panel, so that a fast configuration that falls further short of the best cannot appear as a
+favourable trade; at thirty episodes the band admits $29/30$ beside $30/30$, and where that matters the text
+says so. Reading the figure, colour identifies the model, marker shape the selection rule, the
+number beside a point its step budget, and a ring marks each non-dominated point; down and to the left is
+better on both axes, which the boxed arrow in the legend repeats. The step axis is broken at $80$: every
+configuration that solves the task lies below that line, and the few above it --- the hollow $\nfe=2$
+points and one diffusion cell --- are drawn on a compressed scale so that the solved band is not squeezed
+into a third of the panel. The figure and
+\autoref{tab:avoiding-dpcc-protocol} draw on the same cells: every budget plotted here is a row of that
+table, on five training seeds and three geometries, under both selection rules, and the frontier is taken
+over all of them, so the ringed point of a model is that model at its better rule.
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=\linewidth]{fig_avoiding_tradeoff}
+  \caption[Control steps against planner time per control step]{Control steps against the time to
+  compute one action (generation, projection and selection), every step budget of
+  \autoref{tab:avoiding-dpcc-protocol} under both selection rules: circles cumulative projection cost,
+  squares temporal consistency; colour the model, the number beside a point its step budget; a hollow
+  point is more than $0.05$ below its panel's best success with constraint satisfaction and stays out of
+  the comparison; a ring a non-dominated point, the boxed arrow the direction in which both axes improve. Three panels are the
+  constraint geometries; the fourth averages within a geometry and then across the three. The step axis
+  is broken at $80$. Five training seeds $\times$ two episodes per geometry, tightened constraints,
+  temporal U-Net of $4.0$\,M parameters.}
+  \label{fig:avoiding-tradeoff}
+\end{figure}
+
+The horizontal axis is planner time, not the full executed-step time. Full executed-step timing is
+available for the separate UAV controller comparison in \autoref{tab:uav-controller}; it was not
+recorded for the matched avoiding configurations plotted here.
+
+The frontier is occupied by the flow-based models at their smallest budgets, and the three of them at
+the lower left reach the baseline's control-step count at one twentieth to one thirtieth of its time per
+action. Consistency-interpolated average-velocity matching at one network evaluation sits at the lower
+left, $59.2$ control steps at $18.1$\,ms, with analytic average-velocity matching beside it at $58.6$
+and $18.3$; no configuration of any model is both faster and shorter than either.
+Instantaneous-velocity matching at one and two evaluations lies a little longer in steps at a similar
+time. Every diffusion configuration lies to the right by more than an order of magnitude in time, and
+the baseline's own operating point, twenty evaluations with cumulative projection cost, is neither the
+fastest nor the shortest point in the figure.
+What the frontier shows is therefore not a single best configuration but a region --- one or two network
+evaluations of a flow-based model --- inside which the remaining choices trade a control step against a
+millisecond.
+
+\subsubsection{Caveat: What the Projector Is Handed}\label{sec:res:avoiding:caveat:noise}
+
+One number in \autoref{tab:avoiding-dpcc-protocol} does not scale the way the others do, and it says
+something about the two sampler families that the table itself cannot. The diffusion baseline's own cost
+doubles from one denoising step to two ($9.4$ to $18.3$\,ms, \autoref{tab:avoiding-raw-models}), as it
+should; its projected cost rises six-fold, from $33$ to $191$--$226$\,ms. The projection is the same
+program, on the same four candidate plans, against the same tightened constraints.
+
+What changes is the state the projector is handed. The baseline projects at every denoising step with
+$t \le 0.5\,\nfe$, which at two steps is both of them: the final step, as at every budget, and the first
+--- a plan one denoising step away from Gaussian noise. No larger budget hands the projector such a plan,
+because there the gated steps begin in the middle of the schedule; and the flow-based models never do,
+because their projection window is the last $\lceil 0.5\,\nfe \rceil$ solver steps, which at two steps
+is the terminal one alone. Projecting the final step costs what it costs everywhere: the post-processing
+variant of the same cell, which projects nothing but the final step, runs at $28$\,ms per control step,
+$10$\,ms above the unprojected plan. The remaining $180$--$190$\,ms is the first-step projection,
+about $45$\,ms per candidate against $2$--$6$\,ms for a plan that is nearly denoised. The baseline's
+projector is a sequential quadratic program solved iteratively, and its cost is set by how far from
+feasible and how rough the plan it starts from is: a plan that is still mostly noise violates every
+constraint at once and the dynamics rows between every pair of steps, and the solver spends its
+iterations there.
+
+Two evaluations on different days give the same time on all five seeds. At equal noise level the two
+families cost about the same per solve: at $\nfe=20$ the diffusion baseline projects eleven steps from
+the middle of the schedule at about $8.5$\,ms per solve, and instantaneous-velocity matching ten at about
+$7$\,ms. Whether a flow-based model's first-step plan --- a point on the straight path from noise to
+data --- projects more cheaply than the diffusion model's at the same step is not measured here: at two
+steps the flow-based window excludes that step. The measurement that would show it is the same cell with
+the projection window opened to both steps on the flow-based side.
+The ordering of this benchmark does not rest on this cell: every flow-based row is cheaper than
+every diffusion row at equal success with constraint satisfaction, and the operating points are at one
+evaluation, where both families project a single, final step.
+
+\subsubsection{Endpoint and Per-Step Projection}\label{sec:res:avoiding:projectors}
+
+The models above were read twice, unprojected and under the per-step projector. This subsection holds the
+model fixed and varies the projector, and it is made on matched work: every comparison gives both methods
+four candidate plans and reads them on the same training seed, the same three geometries and the same
+episodes, so that the two projectors are priced on the same thing. It is read at two budgets. At the
+default threshold of $0.5$, $\nfe=3$ is the smallest budget at which endpoint projection has a guiding step
+(\autoref{sec:res:constraints:degenerate}); at the threshold of $1.0$ the $\nfe=3$ rows were run at, $\nfe=2$
+already has one and $\nfe=3$ two. At $\nfe=10$ both methods have several. On the two average-velocity models the endpoint sampler also
+queries the network at a zero interval where the plain sampler queries it at the step width
+(\autoref{sec:setup:protocol:guiding}), so on those models a difference between the rows belongs to the
+sampler and the point of projection together. \autoref{tab:avoiding-projectors} prints every model at both budgets.
+No endpoint-projection evaluation of the diffusion baseline exists on D3IL-avoiding, so no
+statement in this subsection extends to it.
+
+\begin{table}[htpb]
+  \caption[Endpoint against per-step projection at matched candidates]{Endpoint projection
+  \parencite{li2025hardflow} against per-step projection on D3IL-avoiding, both with \textbf{four
+  candidate plans}, tightened constraints, the same seed, geometries and episodes on both sides of every
+  pair. Both under temporal consistency ($t$) unless marked. At $\nfe=3$ endpoint projection ran at activation threshold $1.0$ (two guiding
+  steps), at $\nfe=10$ at $0.5$ (four). S\&C, control steps and the time to compute one action are means
+  over three geometries $\times$ two episodes and over the training seeds listed, except CI-MeanFM at
+  $\nfe=10$, whose cell holds twenty episodes per geometry. Bold: the better of the pair. Temporal U-Net of
+  $4.0$\,M parameters.}
+  \label{tab:avoiding-projectors}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabularx}{\linewidth}{@{}L r r L rrr@{}}
+    \toprule
+    Model & $\nfe$ & Seeds & Projection & S\&C & Steps & ms/step \\
+    \midrule
+    MeanFM    & 3  & 4 & per-step, $t$ & 0.917 & 59.3 & 148 \\
+              &    &       & endpoint      & \textbf{1.000} & 58.9 & \textbf{74.5} \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & 4 & per-step, $t$ & 0.958 & 60.0 & 146 \\
+              &    &       & endpoint      & \textbf{1.000} & 60.0 & \textbf{76.1} \\
+    FM        & 3  & 4     & per-step, $t$ & 1.000 & 61.2 & \textbf{64.1} \\
+              &    &       & endpoint      & 1.000 & 60.8 & 71.5 \\
+    \midrule
+    MeanFM    & 10 & 1     & per-step, $t$ & 1.000 & 64.2 & 362 \\
+              &    &       & endpoint      & 1.000 & 64.8 & \textbf{176} \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 10 & 1 & per-step, $t$ & 0.983 & 60.5 & 386 \\
+              &    &       & endpoint      & \textbf{1.000} & 60.7 & \textbf{176} \\
+    FM        & 10 & 1     & per-step, $c$ & 1.000 & 63.2 & 199 \\
+              &    &       & endpoint      & 1.000 & 64.0 & \textbf{167} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+At $\nfe=3$, on the same four training seeds for every model, endpoint projection reaches $1.000$ success
+with constraint satisfaction on all three. On the two average-velocity models it is ahead on the
+constraint --- $1.000$ against $0.917$ for analytic average-velocity matching and against $0.958$ for the
+consistency-interpolated model --- at level control steps and about half the time per step, $74.5$ against
+$148$\,ms and $76.1$ against $146$\,ms, so there it Pareto-dominates per-step projection. The factor of two
+is the projector: the predicted endpoint is close to the feasible set at every step, so the single solve
+needs few iterations, where the per-step projector solves one program per candidate at each active step.
+The endpoint solves also converge: across the six endpoint cells of \autoref{tab:avoiding-projectors}, $0.1$ to
+$1.1\,\%$ of them returned their last iterate without converging (\autoref{sec:method:proj}).
+On instantaneous-velocity matching both projectors reach $1.000$ and per-step projection is the cheaper,
+$64.1$ against $71.5$\,ms, with endpoint projection $0.4$ control steps shorter: a trade-off. The per-step
+time differs between the models' evaluations ($64$ against $146$--$148$\,ms), so the table is read within
+a model.
+
+That result does not move the operating point of this task, because $\nfe=3$ is not on its cost frontier.
+\autoref{fig:avoiding-tradeoff} and \autoref{tab:avoiding-dpcc-protocol} place the frontier at one and
+two network evaluations: per-step projection at $\nfe=1$ already reaches $0.967$ and $1.000$ for the two
+average-velocity models at about $18$\,ms per control step, on five seeds. Five of the six $\nfe=3$ points of
+\autoref{tab:avoiding-projectors} are dominated on all three columns by CI-MeanFM at one evaluation, on four
+seeds against five; the sixth, MeanFM under endpoint projection, matches that point's success within $0.3$
+control steps at four times its time per step. The budget of three therefore offers similar control-step
+counts at three to eight times the planning time, and it is dropped from this benchmark's operating point
+--- with it the one budget at which endpoint projection would be the better projector at a price that
+matters.
+
+At $\nfe=10$, where the comparison is at the same budget on one training seed, endpoint projection is level
+or ahead on the constraint and cheaper on all three models. On analytic average-velocity matching both reach
+$1.000$, at $176$ against $362$\,ms; on the consistency-interpolated model endpoint projection reaches
+$1.000$ at $176$\,ms against $0.983$ at $386$\,ms; on instantaneous-velocity matching both reach $1.000$, at
+$167$ against $199$\,ms. Under the other two rules the picture is mixed. Under random selection analytic
+average-velocity matching reaches $0.500$ with per-step projection and $1.000$ with endpoint projection, the
+largest gap in the table, while the consistency-interpolated model scores $0.833$ and $0.883$ with endpoint
+projection against $0.850$ and $0.900$ with per-step projection, level within one episode. The
+cumulative-cost rule lengthens the endpoint paths, to $88$ to $111$ control steps, because with four
+candidates it can select a stalled plan. The $\nfe=10$ rows are one training seed: six episodes per
+rule for analytic average-velocity and instantaneous-velocity matching, sixty for the consistency-interpolated
+model, whose cell was evaluated with twenty episodes per geometry. The $\nfe=3$ rows are four training
+seeds. Nothing here is read at the protocol of \ac{DPCC}, and nothing here changes a selection made in
+\autoref{sec:res:avoiding:dpccprotocol}.
+
+The consequence for this task is that endpoint projection is not needed here, and the reason is the budget
+rather than the method. At one network evaluation the two average-velocity models already reach $0.967$
+and $1.000$ at about $18$\,ms per control step with the per-step projector, and instantaneous-velocity
+matching reaches $1.000$ at one and at two (\autoref{tab:avoiding-dpcc-protocol}); there is no shortfall
+left for a second projection method to close. Endpoint projection needs sampling steps to guide, and at
+one and two evaluations it has none at the default threshold (\autoref{sec:method:degenerate},
+\autoref{sec:res:constraints:degenerate}); on instantaneous-velocity matching a run at $\nfe=2$ that handed
+both methods the same candidate plans produced bit-identical rollouts, while on the average-velocity models
+the two arms differ even there (\autoref{sec:setup:protocol:guiding}). Where it does act, at three and at ten
+evaluations, it is level or ahead on the constraint at the same budget, and cheaper on every model except
+instantaneous-velocity matching at three evaluations --- and that is the result carried to the tasks that are
+run at those budgets, D3IL-aligning and the quadrotor scenes.
+
+On D3IL-avoiding endpoint projection therefore has no task to win: the per-step projector at one or two
+evaluations already reaches $0.967$--$1.000$ at about $18$\,ms, and the budget of three, the first at which
+endpoint projection can act at the default threshold, reaches similar control steps at three to eight times
+the time, so it lies off the cost frontier of \autoref{sec:res:avoiding:pareto}, which admits success within
+$0.05$ of the best. On D3IL-aligning, which needs twenty
+evaluations, endpoint projection keeps more contexts violation-free than per-step projection
+(\autoref{sec:res:aligning:projection}).
+
+\subsubsection{Steps at Which Projection Guides Sampling}\label{sec:res:constraints:degenerate}
+
+The guiding step count is defined in \autoref{sec:method:degenerate} and the convention for reporting a
+configuration that has none in \autoref{sec:setup:protocol:guiding}. This section reports what the
+evaluations measured against it.
+
+The count holds. With the activation threshold at $1.0$ the evaluation ran with one guiding step at
+$\nfe=2$, two at $\nfe=3$ and four at $\nfe=5$, and the number of programs it actually solved grew as
+$1:1.51:2.52$ against the predicted $1:1.5:2.5$, so the configurations reported below are the ones the
+prediction says they are.
+
+Two settings in this chapter have no guiding step, and neither supports a statement about endpoint
+projection. A budget of $\nfe=1$ has none at any threshold, which is why D3IL-avoiding at its operating
+budget is reported with per-step projection only and why UAV-corridor has no endpoint row at that budget;
+at the default threshold of $0.5$, $\nfe=2$ has none either, which is where the bit-identical rollouts
+of \autoref{sec:res:avoiding:projectors} come from and why \autoref{tab:avoiding-projectors} starts at
+$\nfe=3$.
+
+\subsection{Conclusion}\label{sec:res:avoiding:conclusion}
+
+D3IL-avoiding carries the central claim of this thesis, and the results support it: CI-MeanFM
+Pareto-dominates the diffusion model of \ac{DPCC} on its own benchmark, at its protocol and with its own
+temporal U-Net of $4.0$\,M parameters, and MeanFM matches the saving at one episode in thirty
+(\autoref{tab:avoiding-conclusion}). CI-MeanFM at one network evaluation, with temporal consistency and
+per-step projection, reaches $1.000$ success with constraint satisfaction as the baseline of record does, in
+$59.2$ control steps against $70.1$ and at $18.1$\,ms per step against $553.4$, a thirtieth of the time.
+Analytic average-velocity matching at the same budget and projector reaches $0.967$ in $58.6$ steps at
+$18.3$\,ms: the same saving, one episode in thirty fewer within the constraints --- a trade-off, not a
+dominance.
+
+Instantaneous-velocity matching at one evaluation dominates the baseline as well, at $1.000$ in $67.0$ control
+steps and $17.3$\,ms, so much of the saving belongs to a flow-based sampler at a small budget; the
+average-velocity models add to it the fewest control steps of the benchmark, about eight fewer than
+instantaneous-velocity matching for about a millisecond more per step. The saving does not rest on the
+baseline's twenty steps. Retrained at two denoising steps, the baseline also reaches $1.000$, in $61.2$
+control steps at $211.4$\,ms, and against that configuration the flow-based models are twelve times faster
+rather than thirty. Its two-step time is six times its one-step time for twice the denoising steps, because
+of what its projector is handed: at two steps it projects a plan one denoising step away from noise, which costs about $45$\,ms per candidate to repair against $2$ to
+$6$\,ms for a nearly denoised plan, while the flow-based models at one or two evaluations project only their
+terminal step. What the frontier shows is therefore a region, not a single point: one or two evaluations of
+a flow-based model under temporal consistency, inside which the remaining choices trade a control step
+against a millisecond. Cumulative projection cost, the baseline's best rule, is not theirs: it occasionally
+selects a stalled plan and costs them control steps.
+
+\begin{table}[htpb]
+  \caption[Supported combinations on D3IL-avoiding]{The supported model--projection combinations on
+  D3IL-avoiding and the baseline of record, at the protocol of \ac{DPCC}. All use tightened constraints
+  and the temporal U-Net of $4.0$\,M parameters. The episodes column states the number per geometry;
+  every row uses five training seeds and all three geometries.}
+  \label{tab:avoiding-conclusion}
+  \centering
+  \footnotesize
+  \begin{tabularx}{\linewidth}{@{}L r l c rrrr@{}}
+    \toprule
+    Model & $\nfe$ & Projection & Rule & Episodes & S\&C & Steps & ms/step \\
+    \midrule
+    \mainconfig{\selectedmark\ MeanFM} & \mainconfig{1} & \mainconfig{per-step} &
+      \mainconfig{$t$} & \mainconfig{10} & \mainconfig{0.967} & \mainconfig{58.6} & \mainconfig{18.3} \\
+    CI-MeanFM & 1 & per-step & $t$ & 10 & 1.000 & 59.2 & 18.1 \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{per-step} &
+      \mainconfig{$c$} & \mainconfig{10} & \mainconfig{1.000} & \mainconfig{70.1} & \mainconfig{553.4} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+Endpoint projection is not needed at either low-budget operating point. At one evaluation it has no
+guiding step, and at two it has none at the default threshold and one at a threshold of $1.0$; raising the
+budget so that it can guide sampling gives up the
+low-step advantage that decides this benchmark. Where it can act, at three evaluations, it halves the time
+per control step of the two average-velocity models at a success with constraint satisfaction of $1.000$,
+because the endpoint it projects is already close to the feasible set: the other face of the two-step
+baseline's cost, since the price of a projection is set by how far from feasible the plan it is handed is.
+Those budgets lie off the cost frontier, so no endpoint-projection configuration improves on the operating
+point at one evaluation with per-step projection: on its own benchmark the operating point leads both the
+diffusion model of \ac{DPCC} and endpoint projection. D3IL-aligning and the UAV scenes below test endpoint
+projection at larger budgets.
+
+The appendix carries more of this benchmark: the executed end-effector paths of the two average-velocity
+models at their operated budgets (\autoref{app:avoiding-paths}) and the evaluation at twenty episodes per
+seed (\autoref{app:avoiding-twenty}).
+
+\section{Vision-Conditioned Alignment}\label{sec:res:visual}
+
+All results in this section use one training seed and the same ten contexts, and every comparison is made
+context by context (\autoref{sec:setup:protocol:aligning}). The box starts on average $0.4530$\,m
+from its target. The generative models are compared on the final box-to-target distance of plans executed
+without projection on the untightened set, where the constraint set has no bearing --- the plan is the
+same plan --- so all four models are compared at once; constraint violations and the time one action costs
+are compared in \autoref{sec:res:aligning:projection}, on the tightened set, where the evaluation's
+box--obstacle guard freezes one context and the unprojected rows are read within that evaluation.
+The ten contexts are drawn from the training contexts of the D3IL task, not from its held-out set,
+so these results measure how well each model plans for initial poses of the kind it was trained on.
+
+\subsection{Generative Models}\label{sec:res:aligning:models}
+
+One model moves the box most of the way to its target on this task and the other three barely move it at all
+(\autoref{tab:va-models}). The median is the column to read there: the spread over the ten contexts is
+of the order of the mean itself, because a context in which the box is not touched contributes the whole
+starting distance and one in which it is delivered contributes almost nothing. Analytic average-velocity matching ends a median $0.0741$\,m from the target,
+from a mean starting distance of $0.4530$\,m --- the median reduced by $84\,\%$ of it --- and it is the only model
+that moves the box in every context. The other three end between $0.39$ and $0.46$\,m. The two
+flow-based models reduce the median by $10$--$14\,\%$, while the diffusion median is $2\,\%$ farther
+away than the mean starting distance; each leaves the box untouched in some contexts.
+
+The margins behind that ordering are one-sided. Analytic average-velocity matching ends closer than the
+diffusion baseline in all ten contexts, by $0.3744$\,m on average, at $0.64$ of the baseline's time per
+control step, and closer than instantaneous-velocity matching in nine of ten, by $0.2333$\,m. Between
+instantaneous-velocity matching and the baseline there is no ordering: their medians are $0.4085$ and
+$0.4619$\,m, and each ends closer in about half the contexts. Instantaneous-velocity matching leaves the
+box unmoved in four of ten contexts and the diffusion baseline in five of ten.
+
+\begin{table}[htpb]
+  \caption[Alignment: the generative models without projection]{The generative models on
+  D3IL-aligning without projection: the three flow-based models at $\nfe \in \{2, 10, 20, 100\}$ and the
+  diffusion baseline at its trained budget, printed last. Final box-to-target distance over the ten
+  contexts from a mean initial $0.4530$\,m, in brackets the reduction of the median relative to that mean,
+  in per cent (\autoref{sec:setup:metrics:aligning}); \emph{unmoved}: contexts in which the box does not move; mean
+  and time as mean $\pm$ sample standard deviation over the contexts.
+  Temporal U-Net of $4.0$\,M parameters, FiLM conditioning, one training seed. \selectedmark\ the
+  selected configuration; \baselinemark\ the diffusion model of \ac{DPCC}.}
+  \label{tab:va-models}
+  \centering
+  \footnotesize
+  \begin{tabularx}{\linewidth}{@{}L r rrr r@{}}
+    \toprule
+    Model & $\nfe$ & Median [m] & Mean [m] & Unmoved & ms/step \\
+    \midrule
+    MeanFM     & 2  & 0.2779 (39\,\%) & $0.368 \pm 0.301$ & 0/10  & $28.4 \pm 2.0$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2  & 0.3738 (17\,\%) & $0.357 \pm 0.201$ & 2/10  & $28.7 \pm 5.7$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.05$ & 2  & 0.3978 (12\,\%) & $0.336 \pm 0.166$ & 0/10  & $27.6 \pm 2.0$ \\
+    FM         & 2 & 0.4257 (6\,\%) & $0.375 \pm 0.133$ & 3/10  & $32.5 \pm 2.5$ \\
+    \midrule
+    MeanFM     & 10 & 0.1194 (74\,\%) & $0.173 \pm 0.153$ & 1/10 & $99.2 \pm 1.9$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 10 & 0.4247 (6\,\%) & $0.399 \pm 0.094$ & 2/10 & $98.5 \pm 4.0$ \\
+    FM         & 10 & 0.4224 (7\,\%) & $0.415 \pm 0.085$ & 4/10 & $145.1 \pm 2.0$ \\
+    \midrule
+    \mainconfig{\selectedmark\ MeanFM} & \mainconfig{20} & \mainconfig{0.0741 (84\,\%)} & \mainconfig{$0.093 \pm 0.073$} & \mainconfig{0/10} & \mainconfig{$190.5 \pm 2.0$}  \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 20 & 0.3897 (14\,\%) & $0.325 \pm 0.224$ & 2/10  & $189.1 \pm 5.6$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.05$ & 20 & 0.4488 (1\,\%) & $0.436 \pm 0.283$ & 0/10  & $187.3 \pm 2.0$ \\
+    FM         & 20 & 0.4085 (10\,\%) & $0.327 \pm 0.160$ & 4/10  & $295.8 \pm 1.9$ \\
+    \midrule
+    MeanFM     & 100 & 0.0673 (85\,\%) & $0.136 \pm 0.148$ & 0/10 & $892.4 \pm 1.8$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 100 & 0.1791 (60\,\%) & $0.327 \pm 0.323$ & 1/10 & $902.2 \pm 1.5$ \\
+    FM         & 100 & 0.4247 (6\,\%) & $0.352 \pm 0.180$ & 0/10 & $1425.0 \pm 1.8$ \\
+    \midrule
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{0.4619 ($-2$\,\%)} & \mainconfig{$0.468 \pm 0.399$} & \mainconfig{5/10} & \mainconfig{$298.3 \pm 2.0$} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+The ordering rests on analytic average-velocity matching's margins, which hold in nine and ten of
+ten contexts; the level result for instantaneous-velocity matching and diffusion is the absence of a
+difference at ten contexts, not evidence that they are equal.
+
+\subsubsection{Step Budget and the Cost Frontier}\label{sec:res:aligning:budget}
+
+Analytic average-velocity matching improves with the budget: its median final distance falls from
+$0.2779$\,m at $\nfe=2$ to $0.1194$\,m at $\nfe=10$, $0.0741$\,m at $\nfe=20$, and
+$0.0673$\,m at $\nfe=100$ (\autoref{tab:va-models}). The last fivefold increase in evaluations reduces the median distance by
+$0.0068$\,m while raising the time per control step from $190.5$ to $892.4$\,ms. Unlike D3IL-avoiding,
+where one network evaluation already saturates the task (\autoref{sec:res:state}), alignment rewards
+additional evaluations.
+
+The three flow-based models are measured at $\nfe=100$ as well, and the ordering among them is the same as
+at twenty: analytic average-velocity matching first ($0.0741$ and $0.0673$\,m), then the
+consistency-interpolated model ($0.3897$ and $0.1791$\,m), with instantaneous-velocity matching last
+($0.4085$ and $0.4247$\,m). A hundred evaluations more than halve the consistency-interpolated model's
+median and leave instantaneous-velocity matching where it was. On the complete ladder
+instantaneous-velocity matching reduces the median by $6$ to $10\,\%$ of the mean starting distance at every budget from two to a hundred,
+and the consistency-interpolated model by $17$, $6$, $14$ and $60\,\%$, so at ten evaluations it is at the
+level of instantaneous-velocity matching. Analytic average-velocity matching leads at every budget: at ten
+evaluations it ends closer than instantaneous-velocity matching at less time per control step ($99.2$
+against $145.1$\,ms), and closer than the consistency-interpolated model at the same time ($98.5$\,ms). The diffusion baseline is compared at the
+budget it was trained with. The ladder starts at two evaluations: the analytic model's reduction is $39\,\%$
+there against $84\,\%$ at twenty, so a smaller budget is not an operating point on this
+task.
+
+Putting the outcome and its price on the same axes gives this task its cost frontier
+(\autoref{fig:aligning-tradeoff}). It is not the frontier of \autoref{fig:avoiding-tradeoff} and cannot
+be: on D3IL-avoiding every eligible configuration solves the task and only the two costs differ, whereas
+here nothing is solved or failed --- what a model delivers is a distance, and the control-step count is
+set by the episode limit rather than by arrival (\autoref{tab:eval}). The frontier is therefore the
+outcome itself against the time one action costs, and a configuration is on it when nothing else both
+ends closer to the target and computes faster.
+
+Three marks of the drawing carry a reading rule. The outcome axis is the reduction of the median final
+distance relative to the mean initial distance, the bracketed number of \autoref{tab:va-models}, so the
+dashed line at $0\,\%$ is a median final distance equal to the mean initial one and $100\,\%$ at the top is
+a median box delivered; two points
+that would print on top of each other are displaced by a few pixels, which moves the drawing and not the
+data; and the boxed arrow is the direction in which both axes improve.
+
+Four of the thirteen configurations are on it, and all four are analytic average-velocity matching, at
+$\nfe=2$, $10$, $20$ and $100$. Every other model at every budget is dominated, and the way they are dominated
+is the result: at $\nfe=20$ the consistency-interpolated objective, instantaneous-velocity matching and
+the diffusion baseline all sit close to the $0\,\%$ line, at between $189$
+and $298$\,ms per control step, while the analytic objective at $\nfe=2$ --- a seventh to a tenth of
+that cost --- has already closed two fifths of the distance. MeanFM's own $\nfe=100$ point reduces its median distance
+by only $0.0068$\,m at $4.7$ times its $\nfe=20$ cost.
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=0.92\linewidth]{fig_aligning_tradeoff}
+  \caption[Alignment: outcome against cost]{D3IL-aligning without projection: the reduction of the
+  median final box-to-target distance relative to the mean initial distance, in per cent
+  (\autoref{sec:setup:metrics:aligning}), against the time to compute one action on a log axis; every cell
+  of \autoref{tab:va-models} except the two $\alpha_{\mathrm{end}}=0.05$ rows, one training seed. The
+  dashed red line is the $0\,\%$ reference. Rings mark the non-dominated configurations, joined by the
+  dashed staircase; beside each point is its step budget; the boxed arrow points where both axes improve.
+  The outcome axis is logarithmic in the median distance left to the target; the tick labels are the
+  reduction.}
+  \label{fig:aligning-tradeoff}
+\end{figure}
+
+\subsubsection{Consistency Interpolation across the Step Budget}\label{sec:res:aligning:consistency}
+
+The consistency-interpolated objective behaves differently from the analytic one on this task: from two to twenty
+evaluations it does not improve when it is given a larger budget, and only at a hundred does it
+(\autoref{tab:va-models}). At two network evaluations the two are level --- each ends
+closer in five of the ten contexts. At twenty, where the analytic objective has moved the box most of the
+way to its target, the consistency-interpolated one has not moved at all from where it was at two
+evaluations, and it ends further away in seven of ten contexts. Raising the budget to twenty spends time and buys
+nothing, and the same holds for the more aggressive setting $\alpha_{\mathrm{end}}=0.05$
+(\autoref{tab:va-models}).
+
+The numbers behind that are flat where the analytic objective's fall. With
+$\alpha_{\mathrm{end}}=0.2$ the median final distance moves from $0.3738$ to $0.3897$\,m between two and
+twenty evaluations, and with $\alpha_{\mathrm{end}}=0.05$ from $0.3978$ to $0.4488$\,m, against the analytic
+objective's $0.2779$ to $0.0741$\,m; the time per control step is the same for the three at each budget.
+
+One account of this is the training target; it is consistent with the ladder and not tested here. The target is
+built from a stop-gradient copy of the network itself, so part of the network's own error enters the field it
+learns, and that part need not shrink when the solver takes smaller steps (\autoref{sec:method:alphaflow}); a
+task that rewards more evaluations would expose it, as this one does, and a task already saturated at one
+evaluation, as D3IL-avoiding is, would not.
+The level result at $\nfe=2$ is in distance only.
+
+\subsection{Projection Methods}\label{sec:res:aligning:projection}
+
+D3IL-aligning is the task on which the generative model needs many network evaluations: analytic
+average-velocity matching comes closest to the target, and $\nfe=20$ is its operating budget --- the
+$\nfe=100$ point ends only $0.0068$\,m closer at $4.7$ times the cost (\autoref{sec:res:aligning:budget})
+--- so that is the model and the budget the projection is put on. The projected results below are all read
+on it.
+
+\paragraph{The activation threshold is compressed, because the budget is high.}
+Everything about the threshold on this task follows from one fact: D3IL-aligning is the task that needs a
+large step budget, and the default of \ac{DPCC}, $\eta=0.5$, was set for small ones. The projector runs
+on the last $\lceil \eta\nfe \rceil$ sampling steps, so at a fixed share $\eta$ its cost grows with the
+budget: every extra sampling step in the active window is another program solved, for each of the four
+candidate plans, at each of up to four hundred control steps. On D3IL-avoiding at one or two evaluations
+the default costs one solve; here, at $\nfe=20$, it would be ten solves per candidate per control step,
+and at $\nfe=100$ fifty.
+
+What a solve costs is measured on the two budgets the projector has been run at
+(\autoref{tab:va-threshold}). At $\nfe=20$ with $\eta=0.2$ the projector runs on four sampling steps,
+sixteen solves per control step, and the projected control step costs $93$\,ms more than the unprojected
+one: about $6$\,ms per solve. At $\nfe=10$ with $\eta=0.4$, the same sixteen solves cost $428$\,ms,
+$27$\,ms per solve, the plans handed to the projector there being further from their final shape. With
+those two figures the default threshold at $\nfe=100$ prices itself: fifty active steps are two hundred
+solves per control step, $1.2$--$5.4$\,s on top of the $0.9$\,s the hundred evaluations take, and an
+alignment cell is four hundred control steps on ten contexts --- between two and seven hours of computation
+for one cell as a lower bound, since the early sampling steps of a hundred-step schedule are noisier than
+any step of a twenty-step one. That pair is not run. The compressed threshold at the same budget,
+$\eta=0.1$, is forty solves per control step, which the same figures price at $0.2$--$1.1$\,s on top of the
+generation; measured, the forty solves add $187$\,ms to the $925$\,ms of the hundred evaluations, under
+$5$\,ms per solve (\autoref{tab:va-threshold}).
+
+The threshold is therefore compressed as the budget grows, so that the projector keeps a roughly constant
+\emph{number} of guiding steps instead of a constant share: $\eta=0.2$ at $\nfe=20$ and $\eta=0.4$ at
+$\nfe=10$, which is three guiding steps at both (\autoref{sec:setup:protocol:guiding}), where on
+D3IL-avoiding at one evaluation there were none. Every projected alignment result of this chapter is under
+that compressed threshold, and \autoref{tab:va-threshold} is the ladder it was chosen on. What a lower threshold gives up is the early part of sampling, where the sample is still
+far from its final shape and the projection has least to hold on to; what it buys is a projected
+configuration whose time per action is of the same order as the generation it is attached to.
+
+Each row of \autoref{tab:va-threshold} is the analytic average-velocity model under random selection on
+the tightened set, the configuration of the $\nfe=100$ comparison, under \emph{both} projectors: the
+per-step projector of \ac{DPCC}, which is what the threshold governs, and endpoint projection at the same
+threshold, whose guiding steps are the same count minus the terminal one. The number of guiding steps is
+the quantity held roughly constant. The $\nfe=2$, $10$ and $20$ rows are the random-rule cells of
+\autoref{tab:va-projection}, the compressed $\nfe=100$ row is its own evaluation, and the uncompressed
+$\nfe=100$ row is not run, for the cost set out above.
+
+Along the ladder the compressed threshold holds the projected control step at $1.9$, $5.8$, $1.5$ and
+$1.2$ times the unprojected one at $\nfe=2$, $10$, $20$ and $100$ under per-step projection, and at $2.1$,
+$1.6$ and $1.2$ times under endpoint projection where it has guiding steps: at a budget of a hundred,
+nine guiding steps add a fifth to the time of the generation. Endpoint projection keeps ten of ten contexts
+violation-free at budgets of ten and twenty and eight at a hundred; per-step projection keeps seven to nine at
+every budget. Under either projector the median ends further from the target than the unprojected plan at
+budgets of ten and twenty: $0.179$ and $0.197$\,m against $0.090$\,m at $\nfe=20$, $0.434$ and $0.242$\,m
+against $0.142$\,m at $\nfe=10$. At a budget of two the per-step median, $0.275$\,m, is closer than the
+unprojected $0.320$\,m, and at a hundred endpoint projection ends at $0.153$\,m, the smallest median of any
+projected row of the ladder.
+
+\autoref{tab:va-projection} compares the two projection methods on the analytic average-velocity model,
+on tightened constraints, under all three selection rules.
+
+Every cell of that table, and of every other alignment table in this chapter, is the same ten contexts.
+Some of the evaluations behind them were run over thirty contexts rather than ten; those ten are a subset
+of those thirty in every case, so each cell is restricted to them. The section is then paired on one
+context set throughout, as \autoref{sec:setup:protocol:aligning} says it is, rather than setting a
+ten-context result beside a thirty-context one.
+
+The $\nfe=2$ block has per-step rows only. At its activation threshold of $0.5$ a two-step budget has no
+guiding step --- $\lceil \eta\nfe\rceil - 1 = 0$ (\autoref{sec:setup:protocol:guiding},
+\autoref{sec:res:constraints:degenerate}) --- so endpoint projection does not exist there as a method: what
+the evaluation ran under that name at $\nfe=2$ is projection after sampling, and it is not printed as an
+endpoint row. The smallest budget at which the two methods can be compared is $\nfe=3$.
+
+At $\nfe=20$, endpoint projection keeps all ten contexts free of violations with random selection and
+with cumulative projection cost, and nine with temporal consistency; per-step projection keeps nine, nine
+and eight. Together with endpoint projection and random selection at $\nfe=10$, these are the only
+configurations at ten or more evaluations that keep every context free of violations while the box is
+still moved.
+The time per control step is the same for both methods at this budget, $275$ against $266$\,ms with random
+selection: what endpoint projection adds at $\nfe=20$ is the removal of the last violations.
+
+At $\nfe=10$ the difference is larger. Endpoint projection with random selection again keeps all ten
+contexts free of violations, where per-step projection keeps seven, and it takes $193$ against $518$\,ms
+per control step, less in every context whose time differs. With the other two rules it is faster by
+$320$ and $211$\,ms per control step and keeps at least as many contexts free of violations.
+
+Of the two budgets, $\nfe=20$ is the operating point, because the generative model itself is closest to
+the target there; $\nfe=10$ reaches the same constraint satisfaction with endpoint projection in
+$70\,\%$ of the time.
+Repeated evaluations of configurations with projection vary by about $0.4$\,m in final
+distance, so the median distances of the projected rows are not ranked against each other.
+
+The two-evaluation block says one thing: the budget at which this task can be run cheaply is not the
+budget at which the generative model comes closest to solving it. Per-step projection under temporal consistency keeps all
+ten contexts free of violations there at $43$\,ms per control step, which nothing at the two larger
+budgets does at that price, but the median ends $0.22$--$0.43$\,m from the target, against $0.09$\,m
+unprojected at $\nfe=20$.
+
+\subsubsection{Endpoint Projection across the Models}\label{sec:res:aligning:projection:models}
+
+The comparison above is one generative model. \autoref{tab:va-projection-models} runs it across the
+models at the operating point this section has settled on --- $\nfe=20$ and the compressed threshold
+$\eta=0.2$ --- under every selection rule, and it holds in the same direction. The budget ladder below
+twenty was the subject of \autoref{tab:va-projection} and \autoref{tab:va-threshold}; it is not repeated
+here, because the model that comes closest to the target does so at twenty and the threshold study has already priced
+the other budgets.
+
+All three flow-based models carry both projectors at $\nfe=20$ on the tightened set, and the diffusion
+baseline carries per-step projection; endpoint projection is not defined for it. The comparison before
+projection in \autoref{tab:va-models} and the one after projection here therefore rest on the same four
+models.
+Nine comparisons run the two methods on the same model, the same budget and the same rule. Endpoint
+projection keeps more contexts free of violations in seven of them and per-step projection in two,
+instantaneous-velocity matching and the consistency-interpolated model under temporal consistency, each by
+one context. A second evaluation of one projected cell --- analytic average-velocity matching at
+$\nfe=2$, per-step, random selection --- moved it by one context and $3$\,cm in median, so a one-context
+difference is within what a re-run changes.
+
+That is the reverse of D3IL-avoiding, and the reason is the budget rather than the task. This task is
+run at ten and twenty network evaluations because the generative model needs them
+(\autoref{sec:res:aligning:budget}), so the endpoint solve has several guiding steps to act on, where on
+D3IL-avoiding at one evaluation it had none (\autoref{sec:res:avoiding:projection}). Given steps to act
+on, the method does what it is for: it removes violations from the plan before the plan is finished,
+rather than correcting each step after the fact.
+
+What it does not do is dominate. Its advantage is on the constraint and not on the task: across the same
+nine comparisons it moves the box in more contexts than per-step projection in one, in as many in four,
+and in fewer in four, and its median final distances are level. Nor is it cheaper at this budget as a
+rule: on the analytic model it costs $0.87$ to $1.04$ of per-step projection's time per control step, on
+the consistency-interpolated model $0.71$ to $1.08$, on instantaneous-velocity matching $1.13$ to $1.24$.
+Endpoint projection is therefore the better projector on the constraint --- more contexts free of violations --- on this task, at the budget the
+task is run at, by a margin that is consistent rather than large, and at a comparable price.
+
+\begin{table}[htpb]
+  \caption[Alignment: the two projection methods across the models]{D3IL-aligning, both projection
+  methods on the three flow-based models and the diffusion baseline at $\nfe=20$, $\eta=0.2$, tightened
+  constraints, the same ten contexts in every row (nine attempted: context~7 is held by the box--obstacle guard
+  on the tightened set and counts as unmoved, \autoref{sec:setup:protocol:aligning}), one training seed. Columns as in
+  \autoref{tab:va-projection}; the MeanFM rows repeat the $\nfe=20$ block of that table, and a negative
+  share is a box that ends farther from the target than it started. The diffusion model has no velocity field for endpoint projection to act on
+  (\autoref{sec:method:hardflow}), so its endpoint row is empty. \selectedmark\ the selected configuration; \baselinemark\ the diffusion model of
+  \ac{DPCC}.}
+  \label{tab:va-projection-models}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabularx}{\linewidth}{@{}L r c rrrrrr@{}}
+    \toprule
+    Model & $\nfe$ & Rule & \shortstack{Violation-\\free} & \shortstack{Violating\\steps} & Moved & Median [m] & Mean [m] & ms/step \\
+    \midrule
+    \multicolumn{9}{@{}l}{\emph{per-step projection}}\\
+    MeanFM    & 20 & $r$ & 9/10  & 2.7  & 8/10 & 0.179 (61\,\%) & $0.200 \pm 0.150$ & $265.9 \pm 101.9$ \\
+              &    & $c$ & 9/10  & 4.3  & 6/10 & 0.333 (27\,\%) & $0.306 \pm 0.164$ & $325.3 \pm 165.8$ \\
+              &    & $t$ & 8/10  & 1.5  & 7/10 & 0.228 (50\,\%) & $0.240 \pm 0.165$ & $323.2 \pm 175.0$ \\
+    CI-MeanFM & 20 & $r$ & 4/10  & 44.6 & 8/10 & 0.429 (5\,\%) & $0.432 \pm 0.182$  & $415.8 \pm 268.0$ \\
+              &    & $c$ & 5/10  & 10.7 & 5/10 & 0.443 (2\,\%) & $0.388 \pm 0.131$  & $311.4 \pm 130.1$ \\
+              &    & $t$ & 6/10  & 23.2 & 7/10 & 0.422 (7\,\%) & $0.353 \pm 0.153$  & $320.5 \pm 153.3$ \\
+    FM        & 20 & $r$ & 5/10  & 14.3 & 3/10 & 0.425 (6\,\%) & $0.409 \pm 0.112$  & $409.7 \pm 147.9$ \\
+              &    & $c$ & 4/10  & 14.9 & 2/10 & 0.425 (6\,\%) & $0.409 \pm 0.111$  & $406.8 \pm 149.5$ \\
+              &    & $t$ & 6/10  & 12.8 & 3/10 & 0.425 (6\,\%) & $0.411 \pm 0.111$  & $402.0 \pm 146.4$ \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & $r$ & 4/10 & 14.8 & 3/10 & 0.462 ($-2$\,\%) & $0.397 \pm 0.160$ & $809.2 \pm 756.0$ \\
+              &    & $c$ & 1/10  & 35.0 & 0/10 & 0.456 ($-1$\,\%) & $0.453 \pm 0.037$ & $1069.7 \pm 848.6$ \\
+              &    & $t$ & 1/10  & 41.1 & 1/10 & 0.462 ($-2$\,\%) & $0.456 \pm 0.039$ & $766.0 \pm 284.5$ \\
+    \midrule
+    \multicolumn{9}{@{}l}{\emph{endpoint projection}}\\
+    \mainconfig{\selectedmark\ MeanFM} & \mainconfig{20} & \mainconfig{$r$} & \mainconfig{10/10} & \mainconfig{0.0} & \mainconfig{8/10} & \mainconfig{0.197 (57\,\%)} & \mainconfig{$0.211 \pm 0.144$} & \mainconfig{$275.3 \pm 102.4$}  \\
+              &    & $c$ & 10/10 & 0.0  & 6/10 & 0.323 (29\,\%) & $0.286 \pm 0.190$ & $282.3 \pm 104.1$ \\
+              &    & $t$ & 9/10  & 0.6  & 7/10 & 0.230 (49\,\%) & $0.255 \pm 0.154$ & $301.5 \pm 128.6$ \\
+    CI-MeanFM & 20 & $r$ & 8/10  & 2.7  & 7/10 & 0.425 (6\,\%)  & $0.333 \pm 0.183$  & $294.2 \pm 113.3$ \\
+              &    & $c$ & 6/10  & 10.1 & 4/10 & 0.456 ($-1$\,\%) & $0.440 \pm 0.076$  & $314.8 \pm 119.6$ \\
+              &    & $t$ & 5/10  & 8.6  & 6/10 & 0.434 (4\,\%)  & $0.368 \pm 0.124$  & $344.8 \pm 164.6$ \\
+    FM        & 20 & $r$ & 6/10  & 12.0 & 3/10 & 0.443 (2\,\%) & $0.398 \pm 0.132$  & $498.0 \pm 210.4$ \\
+              &    & $c$ & 5/10  & 10.4 & 3/10 & 0.425 (6\,\%) & $0.407 \pm 0.109$  & $502.4 \pm 212.0$ \\
+              &    & $t$ & 5/10  & 7.5  & 2/10 & 0.425 (6\,\%) & $0.410 \pm 0.110$  & $452.4 \pm 193.4$ \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \multicolumn{7}{l}{\mainconfig{--- (not defined: no velocity field)}} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+On the tightened set one of the ten contexts is never attempted: the tightening enlarges the
+obstacle until it overlaps the box of context~7 (position~8 in the evaluation's order), the evaluation's
+box--obstacle guard holds the box, and
+the context scores clean and unmoved in every tightened row. Every $x/10$ of the tightened alignment tables
+(\autoref{tab:va-threshold}, \autoref{tab:va-projection}, \autoref{tab:va-projection-models}) is therefore
+$x-1$ of nine attempted contexts, and the diffusion baseline's single clean context under $c$ and $t$ is
+that one. Comparisons between rows are unaffected.
+Consistency-interpolated average-velocity matching and instantaneous-velocity matching barely
+move the box on this task at $\nfe=20$ --- medians $14$ and $10\,\%$ of the distance closed, the box unmoved
+in two and four of ten contexts (\autoref{tab:va-models}) --- so their rows compare the two
+projectors on a plan that does not solve the task. That is what makes them a clean read on the
+projector --- the constraint columns are not confounded by how far the box travelled --- and it is also
+why the median-distance column of those rows carries no information: every cell sits within a few
+centimetres of the starting $0.4530$\,m. The analytic average-velocity rows are the opposite case and are
+the ones to read for the median.
+
+The diffusion baseline under per-step projection keeps four contexts free of violations with random
+selection and one with each of the other two rules, moves the box in at most three contexts, and ends with
+its median slightly farther from the target than the box started. Analytic average-velocity matching under
+the same rule Pareto-dominates its best row: nine violation-free contexts against four, $0.179$ against $0.462$\,m,
+$266$ against $809$\,ms per control step. The baseline's violations change family under projection:
+halfspace and obstacle violations fall to almost none, while executed steps beyond the action bound rise
+from $64$ without projection to between $145$ and $408$ over the ten contexts.
+
+The medians of \autoref{tab:va-projection} also hide which contexts changed. The per-context records
+show three differences that the medians cannot show.
+
+The constraint column turns over almost completely: eight of the ten contexts carry a violating step
+without a projector, one still does under per-step projection, and none does under endpoint projection.
+The distances do not turn over with it --- they move around, and mostly in the wrong direction.
+
+The cost of that turnover falls on the contexts the unprojected arm had already delivered. Context~1 ends
+$0.065$\,m from the target unprojected and $0.21$ or $0.25$\,m with a projector; context~8 goes from
+$0.099$ to $0.28$\,m; context~9 is pushed to within $0.029$\,m unprojected and is then not moved at all.
+What the projector pays for constraint satisfaction, it pays in the contexts that were nearly solved.
+
+The exchange is not one-sided. Context~10 improves from $0.143$ to $0.022$\,m and context~4 from
+$0.262$ to $0.147$\,m under the same projectors, so what the median reports as a rise from $0.090$ to
+$0.197$\,m is not a uniform degradation but a redistribution --- three contexts much worse, two clearly
+better, and one, context~7, that no configuration on this task moves at all.
+
+The projected configurations of \autoref{tab:va-projection-models} are compared on the two axes of
+\autoref{fig:aligning-tradeoff} in \autoref{fig:aligning-projected-tradeoff}, and what separates the two
+drawings is said on the page. Every point of the second is a plan \emph{after} projection on the tightened
+set, so it is dearer per control step and, for the same model and budget, further from the target than
+the unprojected plan. The faint grey rings are the unprojected cells of analytic average-velocity matching
+from \autoref{fig:aligning-tradeoff}, evaluated on the untightened set; the matched reference is the
+tightened evaluation's own unprojected row (\autoref{tab:va-projection}), and against it the price reads
+from a reduction of $80\,\%$ at $172.5$\,ms to $61\,\%$ at $266$\,ms (from $84\,\%$ at $190$\,ms against the
+ring). What that price buys is the constraint: a filled point keeps at least nine of ten
+contexts free of violations, which is this task's counterpart of success with constraint satisfaction,
+where the unprojected plan keeps one or two. That is the trade this task poses: pursuing no violation
+costs completion --- the projected plan ends further from the target --- and allowing some violation
+buys completion, the unprojected plan ending closest of all while crossing the keep-out region in seven
+contexts of ten and the halfspace in one. The figure places the two ends of that trade on the same axes. Only filled points enter the cost frontier; the hollow ones
+remain visible, and on this task they are every point of the two models that barely move the box. The
+plotted runs use random selection at $\nfe=20$, the rows of \autoref{tab:va-projection-models}. The
+diffusion baseline under per-step projection and the consistency-interpolated model under endpoint
+projection keep at most eight contexts free of violations (\autoref{tab:va-projection-models}), below the
+nine a filled point needs, so both are hollow and the frontier does not include them.
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=0.92\linewidth]{fig_aligning_projected_tradeoff}
+  \caption[Alignment after projection: outcome against cost]{D3IL-aligning after projection, on the
+  axes of \autoref{fig:aligning-tradeoff}: the cells of \autoref{tab:va-projection-models} under random
+  selection, $\nfe=20$, $\eta=0.2$, tightened constraints, one training seed. Colour: MeanFM, CI-MeanFM,
+  FM, diffusion; circles per-step projection, squares endpoint projection; the faint dashed grey ring is the
+  unprojected MeanFM cell at the same budget from \autoref{fig:aligning-tradeoff}, untightened set. Filled
+  points keep at least nine contexts violation-free, hollow ones do not; rings and the dashed staircase mark
+  the non-dominated filled points; the dashed line is the $0\,\%$ reference.}
+  \label{fig:aligning-projected-tradeoff}
+\end{figure}
+
+\subsection{Conclusion}\label{sec:res:aligning:conclusion}
+
+D3IL-aligning repeats the result of D3IL-avoiding on a harder task and adds endpoint projection to it. On
+camera observations and an alignment through contact, analytic average-velocity matching again dominates the
+diffusion baseline: under per-step projection with random selection it keeps nine contexts free of
+violations against the four of the baseline's best projected row, its median box ends $0.179$ against
+$0.462$\,m from the target, and it takes $266$ against $809$\,ms per control step. Without projection every
+non-dominated configuration of the task is analytic average-velocity matching: at twenty evaluations it reduces
+the median final distance by $84\,\%$ of the mean starting distance, against $14$, $10$ and $-2\,\%$ for the consistency-interpolated model,
+instantaneous-velocity matching and the baseline, and at two evaluations, at a seventh to a tenth of their
+cost, the reduction is already two fifths. The consistency-interpolated model does not improve with the budget below a hundred evaluations
+and reaches $60\,\%$ only there; the account consistent with this, not tested here, is its training target, built
+from a stop-gradient copy of the network, so that part of its own error enters the field it learns and smaller
+steps need not remove it --- a task that rewards more evaluations would expose this, and D3IL-avoiding, saturated
+at one evaluation, would not.
+
+At the large budget this task needs, endpoint projection is the better projector on the constraint. With
+random selection it keeps all ten contexts free of violations and still moves the box towards its target in
+eight, at the time per control step of per-step projection at $\nfe=20$ and at $37\,\%$ of it at $\nfe=10$, and
+it keeps more contexts free of violations than per-step projection in seven of nine comparisons. That is the reverse of D3IL-avoiding,
+and the reason is the budget rather than the task: at ten and twenty evaluations the endpoint solve has steps
+to guide, and it removes violations before the plan is finished. Its advantage is on the constraint and not on
+the task, at a comparable price, and the task poses its own trade: pursuing no violation costs completion, the
+projected plan ending further from the target than the unprojected one, and the budget at which the task runs
+cheaply, two evaluations at $43$\,ms, is not the budget at which the model comes closest to it. No context ends
+in position, within the $1.8$\,cm of the task's own test: with endpoint projection the box stops $2.2$ and
+$4.7$\,cm from its target in the best two contexts and $13$ to $27$\,cm away in six more, and the unprojected plan's
+best two end $2.8$ and $2.9$\,cm away. The conclusion is limited to training-set contexts. The executed end-effector paths of the three projection settings, context by
+context, are drawn in \autoref{app:aligning-paths}.
+
+\section{Quadrotor Benchmark}\label{sec:res:uav}
+
+The section is one part per scene, and each scene is read like the two manipulation benchmarks: the
+generative models first on the plans they generate, executed without projection; the same cells then under
+the projector of \ac{DPCC}, where the cost frontier and the flown paths are; and the two projection methods
+against each other last. The scenes come in the order of what they add. UAV-pillars flies the plans of the avoiding planner itself
+--- the obstacle field of D3IL-avoiding scaled into an arena of pillars, the same test-time constraints, the
+quadrotor as the plant --- so it asks whether a plan the projector repairs on D3IL-avoiding survives execution
+by a vehicle. UAV-corridor is the scene whose test-time constraints leave the horizontal plane --- a slide leaned into
+the vertical, and a roof --- read one at a time, as the geometries of D3IL-avoiding are, and neither of
+which the demonstrations satisfy.
+UAV-s-curve is the scene of the two sharp turns. It is read in the same order and adds one step: the model
+whose plans cross its finish line most often is the one the projector and then the controller comparison
+of \autoref{sec:res:uav:controller} are applied to, the one place in this thesis where MuJoCo MPC replaces
+the tracking controller (\autoref{sec:res:uav:scurve}). Each scene closes on its own conclusion.
+
+UAV-corridor and UAV-s-curve use one training seed, and every generative model there is a temporal U-Net
+with $3.96$--$3.97$\,M parameters, trained with the same optimiser settings (\autoref{tab:train});
+UAV-pillars flies the models of D3IL-avoiding at its five training seeds (\autoref{sec:setup:protocol:uav}).
+Every flight is tracked by the cascaded geometric controller of \autoref{sec:method:geometric} unless
+stated otherwise. The diffusion
+model is trained at $\nfe=20$ and is compared at the budget it was trained with.
+
+\subsection{UAV-pillars}\label{sec:res:uav:pillars}
+
+This scene is D3IL-avoiding flown. The arena is the obstacle field scaled by $36$, the constraint sets are
+the three geometries of the table mapped into it, and the planner is the one of \autoref{sec:res:state},
+not retrained (\autoref{sec:setup:tasks:uav}). What is read here is therefore not a new benchmark but a
+retest of the result of D3IL-avoiding on another plant. The configurations flown are the Pareto-optimal ones
+of that benchmark, the two average-velocity models at one and two network evaluations on its cost frontier
+(\autoref{sec:res:avoiding:pareto}, \autoref{tab:avoiding-conclusion}), and they are flown again, before and
+after per-step projection, to test what else happens when a quadrotor and its tracking controller execute the
+same planner configurations instead of the manipulator: whether the result holds, and where the flown outcome departs from the
+table's. Each flown outcome is set beside its table outcome at the same protocol, five training seeds $\times$
+two episodes per geometry, averaged over the three geometries. Every flight of the scene ended by crossing the goal line
+or by touching a pillar; none reached the episode limit and none was aborted.
+
+\subsubsection{From D3IL-avoiding to UAV-pillars}\label{sec:res:uav:models}
+
+Before projection the vehicle changes little (\autoref{tab:uav-pillars-raw}, upper block). The four
+unprojected cells read $0.033$ success with constraint satisfaction on D3IL-avoiding and $0.033$ to
+$0.100$ on UAV-pillars, with the same $15$ to $20$ violating control steps per episode and the same sixty
+control steps to the goal line; the planner's time per action is the same to within a millisecond, since
+nothing about the plant enters it. Nine of the $120$ unprojected flights end in a collision with a pillar,
+and the rest cross the goal line.
+
+\begin{table}[htpb]
+  \caption[UAV-pillars: the avoiding configurations on D3IL-avoiding and on UAV-pillars]{The two
+  average-velocity models (CI-MeanFM at $\alpha_{\mathrm{end}}=0.2$) at $\nfe=1$ and $2$, before projection
+  and after per-step projection under temporal consistency, on tightened constraints: executed by the
+  manipulator on D3IL-avoiding and flown by the quadrotor on UAV-pillars, one row each. Columns as in
+  \autoref{tab:avoiding-raw-models}. The protocol of \ac{DPCC} on both: five training seeds $\times$ two
+  episodes per geometry, averaged over the three geometries; mean $\pm$ the spread over the seeds. Every
+  UAV-pillars flight without success ended in a collision with a pillar. \selectedmark\ the selected
+  configuration of D3IL-avoiding.}
+  \label{tab:uav-pillars-raw}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabularx}{\linewidth}{@{}L r l rrrr@{}}
+    \toprule
+    Model & $\nfe$ & Environment & Success & S\&C & \shortstack{Violating\\steps} & Steps \\
+    \midrule
+    \multicolumn{7}{@{}l}{\emph{before projection}}\\
+    MeanFM & 1 & D3IL-avoiding & $1.000 \pm 0.000$ & $0.033 \pm 0.075$ & $15.5 \pm 2.1$ & $63.4 \pm 5.6$ \\
+              &   & UAV-pillars & $1.000 \pm 0.000$ & $0.100 \pm 0.091$ & $19.9 \pm 0.6$ & $62.7 \pm 3.3$ \\
+    \addlinespace[2pt]
+    MeanFM & 2 & D3IL-avoiding & $1.000 \pm 0.000$ & $0.033 \pm 0.075$ & $15.5 \pm 0.4$ & $62.7 \pm 1.8$ \\
+              &   & UAV-pillars & $0.800 \pm 0.274$ & $0.100 \pm 0.091$ & $19.1 \pm 1.8$ & $60.9 \pm 3.2$ \\
+    \addlinespace[2pt]
+    CI-MeanFM & 1 & D3IL-avoiding & $1.000 \pm 0.000$ & $0.033 \pm 0.075$ & $15.6 \pm 0.7$ & $60.5 \pm 1.5$ \\
+              &   & UAV-pillars & $1.000 \pm 0.000$ & $0.100 \pm 0.149$ & $18.1 \pm 3.2$ & $59.7 \pm 0.7$ \\
+    \addlinespace[2pt]
+    CI-MeanFM & 2 & D3IL-avoiding & $1.000 \pm 0.000$ & $0.033 \pm 0.075$ & $15.7 \pm 0.7$ & $62.9 \pm 1.2$ \\
+              &   & UAV-pillars & $0.900 \pm 0.224$ & $0.033 \pm 0.075$ & $19.8 \pm 1.7$ & $62.3 \pm 4.2$ \\
+    \midrule
+    \multicolumn{7}{@{}l}{\emph{after per-step projection, temporal consistency}}\\
+    \mainconfig{\selectedmark\ MeanFM} & \mainconfig{1} & \mainconfig{D3IL-avoiding} & \mainconfig{$0.967 \pm 0.075$} & \mainconfig{$0.967 \pm 0.075$} & \mainconfig{$0.0$} & \mainconfig{$58.6 \pm 2.2$} \\
+              &   & \mainconfig{UAV-pillars} & \mainconfig{$0.600 \pm 0.190$} & \mainconfig{$0.600 \pm 0.190$} & \mainconfig{$0.0$} & \mainconfig{$61.4 \pm 2.3$} \\
+    \addlinespace[2pt]
+    MeanFM & 2 & D3IL-avoiding & $0.967 \pm 0.075$ & $0.967 \pm 0.075$ & $0.0$ & $59.4 \pm 2.0$ \\
+              &   & UAV-pillars & $0.667 \pm 0.236$ & $0.667 \pm 0.236$ & $0.0$ & $60.2 \pm 1.6$ \\
+    \addlinespace[2pt]
+    CI-MeanFM & 1 & D3IL-avoiding & $1.000 \pm 0.000$ & $1.000 \pm 0.000$ & $0.0$ & $59.2 \pm 1.2$ \\
+              &   & UAV-pillars & $0.633 \pm 0.217$ & $0.633 \pm 0.217$ & $0.0$ & $60.7 \pm 1.6$ \\
+    \addlinespace[2pt]
+    CI-MeanFM & 2 & D3IL-avoiding & $1.000 \pm 0.000$ & $1.000 \pm 0.000$ & $0.0$ & $60.1 \pm 3.4$ \\
+              &   & UAV-pillars & $0.700 \pm 0.139$ & $0.700 \pm 0.139$ & $0.0$ & $60.6 \pm 0.6$ \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+After projection the declared constraints hold on UAV-pillars as they hold on D3IL-avoiding, and a third
+of the flights still fail. The projected rows read $0.0$ violating control steps on every flight that
+reached the goal line --- $78$ flights, none of which crosses a halfspace or enters the keep-out disk ---
+so what the per-step projector delivers on D3IL-avoiding it delivered on every one of the $120$ projected
+flights, up to the moment each ended. Yet success falls
+from $0.967$ and $1.000$ to $0.600$ to $0.700$: $42$ of the $120$ projected flights end in a collision with
+a pillar, with no violation of the declared constraint set up to that moment. Since no projected flight
+violates a constraint, success with constraint satisfaction falls with success. The loss sits on one
+geometry. On \emph{both-hard} two to four of ten projected flights succeed and the other six to eight end
+in a collision, while on the two single-halfspace geometries seven to nine of ten succeed
+(\autoref{tab:uav-pillars-geo}). The two models lose the same amount on the same geometry at both budgets,
+so nothing here re-orders them.
+
+\begin{table}[htpb]
+  \caption[UAV-pillars: the projected flights per geometry]{The projected rows of
+  \autoref{tab:uav-pillars-raw} per constraint geometry: success with constraint satisfaction on
+  D3IL-avoiding and on UAV-pillars. Every UAV-pillars flight counted as a failure here ended in a
+  collision with a pillar.}
+  \label{tab:uav-pillars-geo}
+  \centering
+  \small
+  \begin{tabularx}{\linewidth}{@{}L r rr rr rr@{}}
+    \toprule
+    & & \multicolumn{2}{c}{\emph{top-right-hard}} & \multicolumn{2}{c}{\emph{top-left-hard}} & \multicolumn{2}{c}{\emph{both-hard}} \\
+    \cmidrule(lr){3-4}\cmidrule(lr){5-6}\cmidrule(l){7-8}
+    Model & $\nfe$ & \shortstack{D3IL-\\avoiding} & \shortstack{UAV-\\pillars} & \shortstack{D3IL-\\avoiding} & \shortstack{UAV-\\pillars} & \shortstack{D3IL-\\avoiding} & \shortstack{UAV-\\pillars} \\
+    \midrule
+    MeanFM    & 1 & 0.90 & 0.90 & 1.00 & 0.70 & 1.00 & 0.20 \\
+    MeanFM    & 2 & 0.90 & 0.80 & 1.00 & 0.80 & 1.00 & 0.40 \\
+    CI-MeanFM & 1 & 1.00 & 0.80 & 1.00 & 0.90 & 1.00 & 0.20 \\
+    CI-MeanFM & 2 & 1.00 & 0.90 & 1.00 & 0.90 & 1.00 & 0.30 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+Two things about these collisions are the quadrotor's own: why they happen, and what follows from them.
+They happen because of the plans and the scene, not the tracking. Five of the six pillars are in no
+constraint set a geometry declares --- one or two halfspaces and one keep-out disk, which covers the sixth
+(\autoref{sec:setup:tasks:avoiding}) --- so the projector keeps the plan away from none of them, and the
+demonstrations of D3IL-avoiding pass them at the rod's own radius, which that benchmark never scores. The
+map of the scene sends that radius onto the rotor reach (\autoref{sec:setup:tasks:uav}), so a commanded path
+that skims a post on D3IL-avoiding brings the rotors into the pillar on UAV-pillars: on $50$ of the $51$
+flights that ended in a collision the commanded path itself passes within the reach of that pillar, and only
+one collision is decided by the tracking lag. On \emph{both-hard} the two halfspaces funnel the plan through
+the centre of the field and past the outer pillars of the third row, which is where $29$ of the $42$
+projected collisions are; on the single-halfspace geometries the collisions are on the second row, where the
+plan rounds the pillar next to the keep-out disk.
+
+What follows from a collision is where the quadrotor differs from the manipulator in kind. The arm stands on
+a fixed base and holds its end effector under position control, so an end effector that meets an obstacle is
+stopped and stays under control. The quadrotor is held in the air by its rotors alone: a rotor that strikes a
+pillar no longer gives the thrust the attitude loop relies on, and in most cases the vehicle loses control of
+its attitude and falls. A collision is therefore the end of a flight, not an event to be counted within it.
+The simulation does not model the strike itself; the scene ends the flight at its first contact with a
+pillar, and the tables read it through the success column (\autoref{sec:setup:metrics:uav}).
+
+\FloatBarrier
+\subsubsection{Executed Paths: the Manipulator and the Quadrotor}\label{sec:res:uav:pillars:projected}
+
+\autoref{fig:uav-pillars-paths} draws the flights of the selected configuration, MeanFM at $\nfe=1$, on
+each geometry, before and after projection. Before projection every flight crosses the goal line and
+almost every one crosses the declared boundary on its way: on \emph{top-right-hard} the flights that
+take the upper passage cut through the halfspace and those that take the lower one pass through the
+keep-out disk, and on \emph{both-hard} both passages cross a halfspace. After projection no path enters
+the shaded region or the disk; the paths hug the dashed tightened boundary instead, and where a hugging
+path meets a pillar that stands at the boundary the flight ends in a collision --- one flight on
+\emph{top-right-hard}, three on \emph{top-left-hard}, eight on \emph{both-hard}, at the third-row pillars
+on either side of the finish line's centre. The paths that do reach the line are the paths of
+D3IL-avoiding (\autoref{fig:avoiding-paths}) at scale $36$.
+
+\FloatBarrier
+\subsubsection{Conclusion}\label{sec:res:uav:pillars:conclusion}
+
+UAV-pillars flies the Pareto-optimal operating points of D3IL-avoiding again, on the quadrotor, to see what
+else happens when the plant changes, and it reaffirms D3IL-avoiding. Its demonstrations, planner, projection
+and constraint rows are those of D3IL-avoiding, and only the plant that executes each commanded position is
+replaced (\autoref{sec:method:env:uav}). As far as the declared constraints go, the result of D3IL-avoiding holds when
+flown: before projection the flown plans violate them as the executed ones do, after projection neither
+violates them at all, at the same control steps to within three and the same time per action to within a
+millisecond. The two average-velocity models keep their order and their gap, CI-MeanFM succeeding within the
+constraints on one flight in thirty more than analytic average-velocity matching at both budgets, on
+UAV-pillars as on D3IL-avoiding, and per-step projection is again what turns plans that violate the declared
+constraints in almost every episode into plans that violate none.
+
+Where the flown outcome departs from the table, the cause is the plant and its controller, and what they
+change against the manipulator is twofold. The vehicle tracks more
+closely: the $95$th percentile of a flight's gap to the commanded position, averaged over the flights, is
+$0.007$ in the table's units, against the
+manipulator's own $0.02$ to $0.04$ and well inside the tightening margin of $0.025$, so the flown path keeps
+the constraint satisfaction the projection gives the plan. And an obstacle costs more. Success within the
+constraints falls to $0.600$--$0.700$ against $0.967$--$1.000$, entirely through collisions with the five
+pillars the constraint sets leave out: the plans pass them as closely as the demonstrations passed the posts,
+at the rod's radius, which the scale of the scene makes the rotor reach --- on $50$ of the $51$ collisions the
+commanded path itself is inside the reach --- and for a quadrotor a collision is catastrophic, a rotor strike
+that in most cases ends in lost control, so the flight ends at the first contact. Both models lose the same
+share on the same geometry, so the collisions do not re-order them. The declared constraint set transfers
+exactly; freedom from collision with the obstacles it leaves out does not.
+Only the Pareto-optimal operating points of D3IL-avoiding were flown on this scene, since it tests what
+the change of plant does to them; the diffusion baseline and instantaneous-velocity matching were not flown,
+and the dominance over the baseline remains a result of D3IL-avoiding.
+
+\subsection{UAV-corridor}\label{sec:res:uav:corridor}
+
+The two constraints are read one at a time, as the avoiding geometries are: every table of this scene has a
+\emph{tilt} block and a \emph{hump} block, and nothing is averaged across them. A flight succeeds when it
+reaches the end of the corridor, the scene's finish line, and since almost no flight of this scene is free
+of violations, the constraint is read as the number of violating control steps per flight
+(\autoref{sec:setup:metrics:uav}). Every value is the mean over the ten flights of a cell with the sample
+standard deviation over them.
+
+\subsubsection{Generative Models}\label{sec:res:uav:corridor:raw}
+Without projection every model reaches the end of the corridor on every flight at every budget, and every
+flight violates the constraint (\autoref{tab:uav-corridor-raw}): a flight violates the tilt on $74.5$ to
+$99.4$ control steps on average and the hump on $28.6$ to $36.6$. The plans follow the level lanes of the
+demonstrations, which were flown before either boundary existed (\autoref{sec:setup:data:uav}), so the two
+blocks are the same flights read against two constraints: they share their steps, their time per action
+differs by at most $1.5$\,ms between the two runs, and they differ in what they violate. The flow-based
+models lie within one standard deviation of one another in violating steps; the diffusion baseline has the
+most under the tilt and the fewest over the hump. The flights take $242$ to $251$ control steps to the end
+of the corridor, and one action costs $9.1$ to $9.4$\,ms at one evaluation, $170.8$ to $172.3$\,ms at
+twenty and about $178$\,ms for the baseline. As before projection on D3IL-avoiding, every configuration
+succeeds, and no cost frontier is drawn for it.
+
+\begin{table}[htpb]
+  \caption[UAV-corridor: the generative models before projection]{UAV-corridor with the test-time
+  constraints, \textbf{before projection}: the plan flown as generated, ten flights per row spread over the
+  three routes, one training seed, one block per constraint. The grid: the two average-velocity models at
+  $\nfe\in\{1,2,3\}$, instantaneous-velocity matching at $\nfe\in\{1,2,3,5,20\}$, the diffusion baseline at
+  its trained budget. Each value mean $\pm$ the sample standard deviation over the flights; \emph{Success}:
+  reaches the end of the corridor (\autoref{sec:setup:metrics:uav}); \emph{Violating steps}: control steps
+  of the flight that violate the constraint; \emph{Steps}: control steps to the end of the corridor.
+  \baselinemark\ the diffusion model of \ac{DPCC}.}
+  \label{tab:uav-corridor-raw}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabularx}{\linewidth}{@{}L r rrrr@{}}
+    \toprule
+    Model & $\nfe$ & Success & \shortstack{Violating\\steps} & Steps & ms/step \\
+    \midrule
+    \multicolumn{6}{@{}l}{\emph{tilt}}\\
+    MeanFM & 1 & $1.000 \pm 0.000$ & $91.3 \pm 34.8$ & $246.4 \pm 7.0$ & $9.4 \pm 0.4$ \\
+    MeanFM & 2 & $1.000 \pm 0.000$ & $92.9 \pm 30.2$ & $247.3 \pm 4.8$ & $18.1 \pm 0.4$ \\
+    MeanFM & 3 & $1.000 \pm 0.000$ & $92.0 \pm 30.4$ & $246.5 \pm 5.0$ & $27.0 \pm 0.4$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & $1.000 \pm 0.000$ & $90.0 \pm 32.6$ & $242.4 \pm 4.3$ & $9.3 \pm 0.4$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2 & $1.000 \pm 0.000$ & $93.8 \pm 30.0$ & $246.2 \pm 5.5$ & $18.4 \pm 0.4$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & $1.000 \pm 0.000$ & $93.1 \pm 30.1$ & $245.4 \pm 4.9$ & $27.3 \pm 0.4$ \\
+    FM & 1 & $1.000 \pm 0.000$ & $74.5 \pm 25.6$ & $250.9 \pm 5.2$ & $9.1 \pm 0.4$ \\
+    FM & 2 & $1.000 \pm 0.000$ & $83.9 \pm 28.4$ & $251.2 \pm 2.9$ & $17.7 \pm 0.4$ \\
+    FM & 3 & $1.000 \pm 0.000$ & $87.0 \pm 28.3$ & $251.4 \pm 2.7$ & $25.9 \pm 0.5$ \\
+    FM & 5 & $1.000 \pm 0.000$ & $89.9 \pm 28.4$ & $249.7 \pm 2.5$ & $43.4 \pm 0.4$ \\
+    FM & 20 & $1.000 \pm 0.000$ & $94.7 \pm 27.0$ & $249.5 \pm 2.9$ & $170.8 \pm 0.4$ \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$1.000 \pm 0.000$} & \mainconfig{$99.4 \pm 27.0$} & \mainconfig{$242.4 \pm 4.2$} & \mainconfig{$178.1 \pm 0.8$} \\
+    \midrule
+    \multicolumn{6}{@{}l}{\emph{hump}}\\
+    MeanFM & 1 & $1.000 \pm 0.000$ & $36.0 \pm 8.9$ & $246.4 \pm 7.0$ & $9.4 \pm 0.4$ \\
+    MeanFM & 2 & $1.000 \pm 0.000$ & $35.6 \pm 8.1$ & $247.3 \pm 4.8$ & $18.2 \pm 0.4$ \\
+    MeanFM & 3 & $1.000 \pm 0.000$ & $35.7 \pm 7.8$ & $246.5 \pm 5.0$ & $27.2 \pm 0.4$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & $1.000 \pm 0.000$ & $36.6 \pm 8.4$ & $242.4 \pm 4.3$ & $9.3 \pm 0.4$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2 & $1.000 \pm 0.000$ & $35.6 \pm 7.9$ & $246.2 \pm 5.5$ & $18.0 \pm 0.4$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & $1.000 \pm 0.000$ & $35.6 \pm 7.6$ & $245.4 \pm 4.9$ & $27.1 \pm 0.4$ \\
+    FM & 1 & $1.000 \pm 0.000$ & $34.7 \pm 6.8$ & $250.9 \pm 5.2$ & $9.1 \pm 0.4$ \\
+    FM & 2 & $1.000 \pm 0.000$ & $32.6 \pm 7.8$ & $251.2 \pm 2.9$ & $17.5 \pm 0.3$ \\
+    FM & 3 & $1.000 \pm 0.000$ & $32.6 \pm 8.0$ & $251.4 \pm 2.7$ & $26.3 \pm 0.4$ \\
+    FM & 5 & $1.000 \pm 0.000$ & $32.0 \pm 7.9$ & $249.7 \pm 2.5$ & $43.6 \pm 0.4$ \\
+    FM & 20 & $1.000 \pm 0.000$ & $31.3 \pm 7.6$ & $249.5 \pm 2.9$ & $172.3 \pm 2.6$ \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$1.000 \pm 0.000$} & \mainconfig{$28.6 \pm 7.7$} & \mainconfig{$242.4 \pm 4.2$} & \mainconfig{$178.2 \pm 2.7$} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\FloatBarrier
+\subsubsection{Projection}\label{sec:res:uav:projected}
+After projection every flow-based configuration still reaches the end of the corridor on every flight,
+except per-step projection at one and two evaluations over the hump, whose flights stop short of the apex
+(\autoref{tab:uav-corridor}). Projection removes most of the violating steps and rarely all of them: a
+flight's count falls from $74.5$ to $99.4$ under the tilt and from $28.6$ to $36.6$ over the hump to $1.4$
+to $10.4$ and $0.2$ to $8.3$ for the flow-based models, and to $0.8$ and $0.0$ for the diffusion baseline
+at its best rule, at $666$ and $654$\,ms per action against $26$ to $417$\,ms for the flow-based models.
+At the route's goal point, the line these flights were first scored at, only the baseline's success
+differs, $0.000$ under the tilt and $0.300$ over the hump at its best rule: $41$ of its $60$ projected
+flights had passed the end of the corridor and were still flying towards the goal when the episode limit
+ended them (\autoref{sec:setup:metrics:uav}). The budgets are read as one ladder across the scene: the
+per-step projector is active at every budget, endpoint projection at $\nfe\ge 3$, where it has a guiding
+step (\autoref{sec:res:constraints:degenerate}), so at $\nfe=1$ and $\nfe=2$ the table carries per-step
+rows only.
+
+\begin{table}[htpb]
+  \caption[UAV-corridor: the generative models after projection]{UAV-corridor \textbf{after projection}:
+  each model at each budget under the per-step projector of \ac{DPCC} and, from $\nfe=3$, under endpoint
+  projection, at its best selection rule (the order and every rule in \autoref{app:uav-corridor-rules});
+  tightened constraints, activation threshold $0.5$, ten flights per cell, one training seed. Columns as in
+  \autoref{tab:uav-corridor-raw}; \emph{---}: no flight reaches the end of the corridor.
+  \baselinemark\ the diffusion model of \ac{DPCC}.}
+  \label{tab:uav-corridor}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabularx}{\linewidth}{@{}L r c rrrr@{}}
+    \toprule
+    Model & $\nfe$ & Rule & Success & \shortstack{Violating\\steps} & Steps & ms/step \\
+    \midrule
+    \multicolumn{7}{@{}l}{\emph{tilt, per-step projection}}\\
+    MeanFM & 1 & $c$ & $1.000 \pm 0.000$ & $10.2 \pm 1.1$ & $253.2 \pm 4.4$ & $27.4 \pm 0.5$ \\
+    MeanFM & 2 & $c$ & $1.000 \pm 0.000$ & $10.3 \pm 0.9$ & $253.9 \pm 4.2$ & $36.4 \pm 0.8$ \\
+    MeanFM & 3 & $c$ & $1.000 \pm 0.000$ & $6.6 \pm 0.8$ & $256.4 \pm 2.9$ & $93.6 \pm 1.1$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & $c$ & $1.000 \pm 0.000$ & $10.3 \pm 0.9$ & $252.0 \pm 3.7$ & $27.9 \pm 0.5$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2 & $c$ & $1.000 \pm 0.000$ & $10.4 \pm 0.7$ & $251.9 \pm 2.4$ & $36.1 \pm 0.3$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & $c$ & $1.000 \pm 0.000$ & $5.0 \pm 0.8$ & $254.0 \pm 1.8$ & $93.4 \pm 1.2$ \\
+    FM & 1 & $c$ & $1.000 \pm 0.000$ & $10.2 \pm 1.5$ & $259.8 \pm 9.2$ & $27.6 \pm 1.5$ \\
+    FM & 2 & $c$ & $1.000 \pm 0.000$ & $9.8 \pm 1.4$ & $253.9 \pm 9.4$ & $34.7 \pm 0.5$ \\
+    FM & 3 & $c$ & $1.000 \pm 0.000$ & $5.8 \pm 1.5$ & $247.2 \pm 3.4$ & $79.2 \pm 3.2$ \\
+    FM & 5 & $c$ & $1.000 \pm 0.000$ & $4.4 \pm 1.5$ & $247.6 \pm 2.0$ & $116.9 \pm 2.4$ \\
+    FM & 20 & $c$ & $1.000 \pm 0.000$ & $2.1 \pm 0.7$ & $252.6 \pm 2.7$ & $360.4 \pm 1.5$ \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$c$} & \mainconfig{$1.000 \pm 0.000$} & \mainconfig{$0.8 \pm 1.8$} & \mainconfig{$290.3 \pm 15.5$} & \mainconfig{$666.3 \pm 16.7$} \\
+    \addlinespace[3pt]
+    \multicolumn{7}{@{}l}{\emph{tilt, endpoint projection}}\\
+    MeanFM & 3 & $c$ & $1.000 \pm 0.000$ & $7.6 \pm 1.3$ & $255.2 \pm 4.5$ & $73.5 \pm 0.8$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & $c$ & $1.000 \pm 0.000$ & $7.1 \pm 1.0$ & $253.2 \pm 3.5$ & $72.7 \pm 0.5$ \\
+    FM & 3 & $c$ & $1.000 \pm 0.000$ & $6.9 \pm 1.8$ & $257.8 \pm 3.3$ & $71.6 \pm 0.6$ \\
+    FM & 5 & $c$ & $1.000 \pm 0.000$ & $4.9 \pm 1.9$ & $256.6 \pm 2.9$ & $115.2 \pm 1.4$ \\
+    FM & 20 & $c$ & $1.000 \pm 0.000$ & $1.4 \pm 0.7$ & $269.8 \pm 10.5$ & $416.9 \pm 0.8$ \\
+    \midrule
+    \multicolumn{7}{@{}l}{\emph{hump, per-step projection}}\\
+    MeanFM & 1 & $c$ & $0.000 \pm 0.000$ & $0.0 \pm 0.0$ & --- & $26.4 \pm 0.0$ \\
+    MeanFM & 2 & $t$ & $0.100 \pm 0.316$ & $17.9 \pm 30.0$ & $387.0$ & $42.3 \pm 10.9$ \\
+    MeanFM & 3 & $c$ & $1.000 \pm 0.000$ & $4.9 \pm 0.9$ & $286.3 \pm 4.3$ & $91.1 \pm 1.8$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1 & $t$ & $0.000 \pm 0.000$ & $0.0 \pm 0.0$ & --- & $26.6 \pm 0.3$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2 & $t$ & $0.200 \pm 0.422$ & $19.8 \pm 32.1$ & $388.0 \pm 2.8$ & $43.0 \pm 12.2$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & $c$ & $1.000 \pm 0.000$ & $4.6 \pm 0.8$ & $282.7 \pm 3.6$ & $89.2 \pm 1.9$ \\
+    FM & 1 & $c$ & $0.000 \pm 0.000$ & $0.0 \pm 0.0$ & --- & $26.2 \pm 0.2$ \\
+    FM & 2 & $r$ & $0.000 \pm 0.000$ & $0.0 \pm 0.0$ & --- & $34.5 \pm 0.4$ \\
+    FM & 3 & $c$ & $1.000 \pm 0.000$ & $5.6 \pm 0.5$ & $277.0 \pm 7.3$ & $77.1 \pm 2.7$ \\
+    FM & 5 & $c$ & $1.000 \pm 0.000$ & $3.9 \pm 0.7$ & $277.8 \pm 7.0$ & $114.1 \pm 2.3$ \\
+    FM & 20 & $c$ & $1.000 \pm 0.000$ & $1.8 \pm 0.4$ & $285.1 \pm 5.6$ & $355.2 \pm 2.2$ \\
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{$r$} & \mainconfig{$1.000 \pm 0.000$} & \mainconfig{$0.0 \pm 0.0$} & \mainconfig{$320.8 \pm 53.6$} & \mainconfig{$654.2 \pm 89.7$} \\
+    \addlinespace[3pt]
+    \multicolumn{7}{@{}l}{\emph{hump, endpoint projection}}\\
+    MeanFM & 3 & $c$ & $1.000 \pm 0.000$ & $8.0 \pm 1.5$ & $287.7 \pm 4.9$ & $72.1 \pm 0.3$ \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 3 & $c$ & $1.000 \pm 0.000$ & $8.0 \pm 1.2$ & $284.6 \pm 2.8$ & $71.9 \pm 0.6$ \\
+    FM & 3 & $c$ & $1.000 \pm 0.000$ & $8.3 \pm 1.1$ & $299.3 \pm 4.7$ & $71.9 \pm 1.0$ \\
+    FM & 5 & $c$ & $1.000 \pm 0.000$ & $3.9 \pm 0.3$ & $292.8 \pm 3.7$ & $112.4 \pm 0.6$ \\
+    FM & 20 & single & $1.000 \pm 0.000$ & $0.2 \pm 0.4$ & $316.2 \pm 6.3$ & $291.0 \pm 0.8$ \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+The budget makes the violations fewer and shallower and does not remove them. Wherever the flights reach
+the end of the corridor, the violating steps per flight fall with the budget, under both constraints and
+both projection methods. Under the tilt they fall from $9.8$ to $11.1$ at one and two evaluations to $2.1$
+to $3.2$ at twenty under per-step projection and to $1.4$ to $2.5$ under endpoint projection, and the
+deepest of them from $8.8$ to $11.9$\,cm to $1.3$ to $2.2$ and $1.0$ to $1.3$\,cm. Over the hump they fall
+from $4.6$ to $6.5$ under per-step and $8.0$ to $10.4$ under endpoint projection at three evaluations to
+$1.8$ to $2.2$ and $0.2$ to $0.7$ at twenty. The budget at which a flight stops reaching the finish line lies
+at the other end of the ladder: under per-step projection at one and two evaluations $177$ of the $180$
+flow-based flights over the hump stop short of the apex, and the other three reach the end of the corridor
+only after drifting across the boundary of its wall. The baseline, at its one budget, is the slowest
+planner on the scene: its projected flights need $290$ (tilt) and $321$ (hump) control steps to the end of
+the corridor, against $247$ to $270$ and $277$ to $316$ for the flow-based ones, and $623$ to $680$\,ms
+per action, the highest price of the scene.
+
+The cost frontier of this scene is drawn after projection only, on violating steps per flight against the
+time to compute one action (\autoref{fig:uav-corridor-tradeoff}, top). A configuration takes part when every one
+of its flights reaches the end of the corridor --- its success within $0.05$ of the best, as on
+D3IL-avoiding --- and is on the frontier when no other configuration leaves fewer violating steps at no more
+time. Both frontiers are staircases along the budget, and the budget is the trade between the two axes:
+every step up in network evaluations buys fewer violating steps with more time per action. Under the tilt a
+flight violates on about ten control steps at one and two evaluations ($27$ to $36$\,ms per action), on four
+to eight at three and five ($72$ to $117$\,ms) and on one to two at twenty ($360$ to $417$\,ms); over the hump
+on about eight at three evaluations under endpoint projection and four to six under per-step projection
+($72$ to $91$\,ms), about four at five ($112$ to $114$\,ms) and under two at twenty ($291$ to $355$\,ms). Under the tilt it runs from analytic average-velocity matching at one evaluation, $10.2$ violating
+steps at $27.4$\,ms, through instantaneous-velocity matching at two, three, five and twenty evaluations and
+consistency-interpolated average-velocity matching at three, to the baseline, $0.8$ at $666.3$\,ms. Over the
+hump it runs from consistency-interpolated average-velocity matching at three evaluations under endpoint
+projection, $8.0$ at $71.9$\,ms, through instantaneous-velocity matching and the consistency-interpolated
+model at three evaluations under per-step projection and instantaneous-velocity matching at five under
+endpoint projection, to instantaneous-velocity matching at twenty with a single candidate under endpoint
+projection, $0.2$ at $291.0$\,ms, and the baseline, $0.0$ at $654.2$\,ms.
+No model is ahead at every budget. Where the three flow-based models share a budget, the average-velocity
+objectives are on the frontier at its cheap end: under the tilt at one evaluation analytic average-velocity
+matching leaves the same $10.2$ violating steps as instantaneous-velocity matching $0.2$\,ms sooner, and at
+three evaluations the consistency-interpolated model leaves the fewest under per-step projection on both
+constraints, $5.0$ and $4.6$ against $5.8$ and $5.6$, at about a sixth more time, and over the hump under
+endpoint projection $8.0$ against $8.3$ at the same $71.9$\,ms. Each of these differences is about one
+standard deviation of the flights. Per-step projection at one and two evaluations over the hump is off the
+frontier: its flights stop before the apex, most of them with no violating step.
+
+The configurations on that frontier fall into groups that violate about equally, and within a group the
+comparison is the one of D3IL-avoiding: which of them reaches the finish line in fewer control steps at no
+more time (\autoref{fig:uav-corridor-tradeoff}, bottom). The groups are where the violating steps jump by
+more than two: under the tilt about ten (one and two evaluations), four to eight (three and five) and up
+to two (twenty, and the baseline); over the hump about eight (endpoint projection at three evaluations), four
+to six (per-step projection at three, and five) and up to two (twenty, and the baseline). Among the one- and
+two-evaluation configurations under the tilt the average-velocity objectives reach the line first: analytic
+average-velocity matching at one evaluation in $253.2$ control steps at $27.4$\,ms, against $259.8$ at
+$27.6$\,ms for instantaneous-velocity matching, and the consistency-interpolated model in $252.0$ and $251.9$
+steps at one and two evaluations. In the middle group under the tilt instantaneous-velocity matching under
+per-step projection at three evaluations is the shortest, $247.2$ steps at $79.2$\,ms, and the endpoint
+cells of it and of the consistency-interpolated model are about $7$\,ms cheaper at $253.2$ to $257.8$ steps.
+Over the hump the consistency-interpolated model under endpoint projection dominates its group, $284.6$ steps
+against $287.7$ and $299.3$ at $72$\,ms, and instantaneous-velocity matching under per-step projection at
+three evaluations dominates the next, $277.0$ steps at $77.1$\,ms. Among the configurations with the fewest
+violating steps, the band of at most two, instantaneous-velocity matching at twenty evaluations is on the
+frontier and the baseline is not, on steps and time within that band --- in which the baseline itself
+violates least, $0.8$ and $0.0$: under the tilt per-step projection, $252.6$ steps at $360$\,ms, dominates
+endpoint projection ($269.8$, $417$\,ms) and the baseline ($290.3$, $666$\,ms) on those two axes; over the
+hump endpoint projection with one candidate is the cheaper, $316.2$ steps at $291$\,ms, per-step projection
+the shorter, $285.1$ at $355$\,ms, and the baseline, $320.8$ steps at $654$\,ms, is dominated on both. Most of these differences are about one standard deviation of the
+flights; the largest, over the hump between the consistency-interpolated model and instantaneous-velocity
+matching under endpoint projection, is three.
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=\linewidth]{fig_uav_corridor_tradeoff}
+  \caption[UAV-corridor after projection: violating steps and control steps against cost]{UAV-corridor after
+  projection, one point per model, budget and projection method at its best rule (\autoref{tab:uav-corridor});
+  colour the model, circles per-step projection, squares endpoint projection, the number its budget.
+  (a, b) Violating steps per flight against the time to compute one action; rings and the dashed staircase
+  mark the non-dominated points among those reaching the end of the corridor on every flight (hollow: not).
+  Bands I--III group configurations separated by more than two violating steps. (c, d) Within each group,
+  control steps to the finish line against time, its non-dominated points ringed. Ten flights per point,
+  one training seed.}
+  \label{fig:uav-corridor-tradeoff}
+\end{figure}
+
+Where the violating steps lie is seen in the flights themselves (\autoref{fig:uav-corridor-side},
+\autoref{app:uav-corridor-side}), drawn
+for instantaneous-velocity matching, the one flow-based model flown at twenty evaluations, without
+projection and under per-step projection at one and at twenty evaluations. Under the tilt the unprojected
+flights stay level, so their margin to the leaned plane shrinks steadily along the corridor, to as much
+as $0.37$\,m inside the plane at its end. The projected flights move sideways and down until they hold a few
+centimetres clear of the plane, and every one of them cuts into it in the last $0.3$\,m of the plane's
+span: every violating step of every projected flight, on every model, budget and projection method, lies
+between $x=1.71$ and $2.00$\,m. At the first violating step of each projected flow-based flight the
+commanded position is already past the end of the plane, at $x=2.27$ to $2.52$\,m and $0.49$ to
+$0.61$\,m ahead of the vehicle, and at every violating step the commanded position itself is clear of the
+constraint. The plane is enforced over its span of $x$, and on this scene the span is checked at the
+commanded position: once that position has left the span, the plan is released from the plane and
+returns toward its route, and the vehicle, half a metre behind, follows it into the plane. The violating
+steps under the tilt are thus the vehicle catching up with a plan that has already left the constraint,
+which is why the budget makes them shallower without removing them. The baseline's projected flights leave
+the corridor further to the side of their routes --- a median of $0.37$\,m, against $0.19$\,m for the
+flow-based flights --- and stay there, and three to eight of ten of them fly the scene without a
+violation.
+
+Over the hump the unprojected flights stay level and pass through the roof. Under per-step projection at one
+evaluation every flight climbs along the boundary and stops $0.12$ to $0.13$\,m short of the apex, at
+$1.42$ to $1.43$\,m, where it stays until its $396$ control steps run out. At one and two evaluations
+all three flow-based models stop this way, on $174$ of their $180$ flights, $0.01$ to $0.17$\,m short of
+the apex; the other six clear the apex and then drift sideways across the boundary of the corridor wall.
+Two properties of the setup meet at the apex. The plans never rise above $1.30$\,m, the top of the
+altitude range of the demonstrations (dotted in \autoref{fig:uav-corridor-side}), while the apex asks for
+$1.48$\,m. And each face of the roof, like the tilt, is enforced over its span of $x$ checked at the
+commanded position, so while that position is short of the apex the rising face binds the whole plan,
+including its part beyond the apex, where the face keeps rising. Both hold at every budget. At one and
+two evaluations the corrected plan settles short of the apex; from three on it does not, and at twenty
+the flights cross the apex grazing the boundary by about a centimetre and descend toward their route
+altitude before the line. In altitude, projection does what the two constraints ask: the lowest altitude
+under the tilt drops on $540$ of the $560$ projected flights, and the highest over the hump rises on all
+$560$, while the unprojected flights fly level.
+
+UAV-pillars is not drawn as a cost frontier: its result is the difference between a planner configuration's outcome on
+D3IL-avoiding and the outcome of the same configuration flown, which is a comparison and not a trade-off
+(\autoref{sec:res:uav:models}). UAV-s-curve is not drawn either: most of its flights end inverted
+(\autoref{tab:uav-scurve}), and a frontier over its configurations would rank how early they fail, so that
+scene gets the abort count printed beside each of its rows instead.
+
+\FloatBarrier
+\subsubsection{Projection Methods}\label{sec:res:uav:projection}
+Per-step and endpoint projection separate on this scene only at twenty evaluations
+(\autoref{tab:uav-corridor}; every selection rule in \autoref{app:uav-corridor-rules}). At three and five
+evaluations endpoint projection is as cheap or cheaper, $44$ to $74$\,ms per action against $77$ to $94$ at
+three evaluations and $73$ to $115$ against $112$ to $118$ at five, and it leaves more violating steps: at
+three evaluations about two more per flight under the tilt ($6.9$ to $9.2$ against $5.0$ to $7.5$) and about
+four more over the hump ($8.0$ to $10.4$ against $4.6$ to $6.5$), at five about one more. At twenty
+evaluations endpoint projection leaves fewer and shallower violating steps than per-step projection under
+both constraints: under the tilt $1.4$ to $2.5$ per flight, at most $1.3$\,cm deep, against $2.1$ to $3.2$
+and $2.2$\,cm, and over the hump $0.2$ to $0.7$ against $1.8$ to $2.2$. The bar this thesis set for endpoint
+projection, to overtake the per-step projector of \ac{DPCC} at a lower cost, is met on those two measures over
+the hump at twenty evaluations with a single candidate, $0.2$ against $1.8$ violating steps per flight at $291$
+against $355$\,ms per action, though on flights about thirty control steps longer, $316$ against $285$, so that
+neither projector dominates the other; with four candidates it leaves $0.4$ to $0.7$ at $422$ to $425$\,ms. Under the tilt
+its fewest violating steps come with four candidates at $417$\,ms, more time than the per-step projector's
+$360$\,ms, and with a single candidate it is cheaper, $289$\,ms, but leaves $2.3$.
+
+Endpoint projection has no row at $\nfe=1$ or $\nfe=2$ on this scene and will not get one: at the
+activation threshold of $0.5$ the only active sampling step there is the terminal one, so there is no
+guiding step for the method to act on (\autoref{sec:res:constraints:degenerate}). That is a property of
+the method at those budgets, not a pending evaluation. The baseline has no endpoint rows for another
+reason: endpoint projection adds its control to a velocity field (\autoref{sec:method:hardflow}), which
+the diffusion model does not have.
+
+The projection configuration of this scene differs from that of the other quadrotor scene
+(\autoref{sec:setup:protocol:uav}), so the scenes are not pooled.
+
+\subsubsection{Conclusion}\label{sec:res:uav:corridor:conclusion}
+
+UAV-corridor shows two things the manipulation benchmarks could not. The first is that the concept of
+\ac{DPCC}, a generative planner whose plans a projector holds inside the constraints, carries over to a new,
+three-dimensional environment, against constraints that leave the horizontal plane and that no demonstration
+satisfies. Projected, the flights descend under the tilt ($540$ of $560$) and climb over the hump (all $560$),
+where the unprojected ones fly level through both, and the violating steps of a flight fall from $74.5$ to
+$99.4$ (tilt) and $28.6$ to $36.6$ (hump) to $1.4$ to $10.4$ and $0.2$ to $8.3$ for the flow-based models and
+to $0.8$ and $0.0$ for the baseline. What remains lies where each constraint ends, and the budget shrinks it.
+Under the tilt it is the vehicle catching up with a plan the constraint has already released: the plane is
+enforced over its span along the corridor at the commanded position, half a metre ahead of the vehicle, and
+once that position has left the span the plan turns back toward its route while the vehicle is still inside.
+
+The second is what the expert data decide. The demonstrations carry little information --- straight lines on
+three lanes at one altitude per episode, a single path forward from any position (\autoref{tab:uav-demos})
+--- and on them the generative model does not matter; the budget does. Without projection the flights of the
+three flow-based objectives cannot be told apart; with it they leave the same violating steps at a shared
+budget and projection method wherever the flights reach the end of the corridor, to within $1.6$ per flight
+--- over the hump at one and two evaluations under per-step projection they do not reach it --- while under
+the tilt the budget takes them from
+about ten at one evaluation to one or two at twenty. The one place where projection falls short lies at the
+edge of the data: per-step projection at one and two evaluations does not carry a plan over the apex of the
+hump, at $1.48$\,m, above the $1.30$\,m that neither the plans nor the demonstrations exceed, and those flights
+stop short of it. Against the baseline the flow-based models trade: a twenty-fourth (tilt) and a ninth (hump)
+of its time per action at their cheapest, for more violating steps, at best $1.4$ and $0.2$ per flight against its
+$0.8$ and $0.0$. The baseline's projected flights leave the corridor further to the side of their routes, a
+median of $0.37$\,m against $0.19$\,m, and take more control steps to its end, $290$ and $321$ against $247$ to
+$316$.
+
+Between the two projection methods the scene shows a trade-off, and neither dominates. At twenty evaluations
+endpoint projection leaves fewer violating steps under both constraints: over the hump with a single
+candidate also at less time per action, $0.2$ against $1.8$ violating steps at $291$ against $355$\,ms, but on
+flights about thirty control steps longer; under the tilt at more time, $1.4$ against $2.1$ at $417$ against
+$360$\,ms. At three and five evaluations it is as cheap or cheaper but leaves as many violating steps or more,
+and at one and two it has no guiding step.
+
+\FloatBarrier
+\subsection{UAV-s-curve}\label{sec:res:uav:scurve}
+
+UAV-s-curve is read in the order of the two other scenes, with one step added. The generative models
+fly the single route without projection first, each flow-based model at one, two and twenty network
+evaluations and the diffusion baseline at the twenty it was trained with (\autoref{tab:uav-scurve}). The
+configuration whose plans cross the finish line on the most flights is then the one the projector is
+applied to (\autoref{tab:uav-controller}), and its plans, unprojected and projected, are what the
+controller comparison of \autoref{sec:res:uav:controller} flies under the two tracking controllers.
+Every cell is ten flights of the one route, one training seed, tracked by the cascaded geometric
+controller of \autoref{sec:method:geometric} unless the row says otherwise. A flight ends in one of
+three ways: it reaches the goal point of its route, it reaches the episode limit, or the divergence guard
+ends it because the vehicle inverted (\autoref{sec:setup:metrics:uav}); crossing the finish line is latched
+when it happens and does not end the flight. The last is the \emph{aborted} column,
+and an aborted flight is never a success.
+
+\subsubsection{Generative Models}\label{sec:res:uav:scurve:models}
+
+\begin{table}[htpb]
+  \caption[UAV-s-curve: the generative models without projection]{UAV-s-curve, every flow-based model at
+  one, two and twenty network evaluations and the diffusion baseline at its own twenty, executed without
+  projection under the cascaded geometric controller: ten flights of the single route per cell, one
+  training seed. \emph{Success}: crosses the finish line in controlled flight (\autoref{sec:setup:metrics:uav});
+  \emph{violating steps}: per flight, until
+  the flight ends, and \emph{distance}, the final distance to the route's goal point, mean $\pm$ sample
+  standard deviation over the flights; \emph{aborted}:
+  ended by the divergence guard; \emph{ms/step}: time to compute one action. \selectedmark\ the
+  configuration selected for projection; \baselinemark\ the baseline of record.}
+  \label{tab:uav-scurve}
+  \centering
+  \small
+  \begin{tabularx}{\linewidth}{@{}L r r r r r r@{}}
+    \toprule
+    Model & $\nfe$ & Success & \shortstack{Violating\\steps} & Distance [m] & Aborted & ms/step \\
+    \midrule
+    MeanFM        & 1  & 3/10 & $18.5 \pm 10.3$ & $2.023 \pm 1.193$ & 7/10  & 9.2 \\
+    MeanFM        & 2  & 0/10 & $16.4 \pm 17.7$ & $2.515 \pm 0.796$ & 9/10  & 17.9 \\
+    MeanFM        & 20 & 0/10 & $13.0 \pm 5.1$ & $2.772 \pm 0.264$ & 10/10 & 176.4 \\
+    \addlinespace[3pt]
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 1  & 6/10 & $23.3 \pm 11.6$ & $1.306 \pm 1.319$ & 4/10 & 9.3 \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 2  & 1/10 & $21.3 \pm 22.3$ & $2.082 \pm 1.236$ & 7/10 & 18.0 \\
+    CI-MeanFM, $\alpha_{\mathrm{end}}=0.2$ & 20 & 1/10 & $16.3 \pm 13.6$ & $2.511 \pm 0.843$ & 9/10 & 180.4 \\
+    \addlinespace[3pt]
+    \mainconfig{\selectedmark\ FM} & \mainconfig{1} & \mainconfig{9/10} & \mainconfig{$23.0 \pm 5.4$} & \mainconfig{$0.571 \pm 0.868$} & \mainconfig{1/10} & \mainconfig{8.9} \\
+    FM            & 2  & 7/10 & $24.3 \pm 13.4$ & $1.110 \pm 1.328$ & 3/10 & 17.2 \\
+    FM            & 20 & 6/10 & $26.1 \pm 20.0$ & $1.193 \pm 1.257$ & 4/10 & 168.3 \\
+    \midrule
+    \mainconfig{\baselinemark\ Diffusion} & \mainconfig{20} & \mainconfig{0/10} & \mainconfig{$119.4 \pm 199.4$} & \mainconfig{$2.432 \pm 0.674$} & \mainconfig{8/10} & \mainconfig{174.3} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+No flight of any cell is free of violations: the flow-based flights violate on $13.0$ to $26.1$ control
+steps on average, counted until the flight ends, and the baseline's on $119.4$, two of its flights ending on
+the floor with close to five hundred. Instantaneous-velocity matching at one evaluation
+crosses the finish line on nine flights of ten, one flight ending inverted, and ends $0.571$\,m from the
+goal point on average; it is the configuration with the most crossings, followed by the same model at two
+evaluations (seven) and at twenty and CI-MeanFM at one (six each). For every flow-based model the crossings
+fall and the inversions rise from one to two to twenty evaluations: nine, seven and six crossings for
+instantaneous-velocity matching, six, one and one for CI-MeanFM, three, none and none for analytic
+average-velocity matching, whose ten flights at twenty evaluations all end inverted. The diffusion baseline
+at its own twenty steps crosses on none, with eight inverted. The inversions come $11.6$ to $15.9$\,s into the
+flight, at control steps $386$ to $530$, and at the second turn: $48$ of the $54$ flow-based inversions lie
+between $x=0.2$ and $1.2$\,m, just past the crossover, where the route turns into its second straight. The
+flights that cross reach the line at step $590$ to $635$. Every flight that crosses violates the constraints
+on the way, and the reason is in the plans. On every flight of every configuration the commanded path cuts
+the second inside corner of the crossover, passing $8$ to $19$\,cm inside its keep-out, where the
+demonstrated route clears the constraints by $0.121$\,m, and that corner is where the violations lie. The plans
+cross the gap about $0.2$\,m late: their commanded paths cross its middle at $x=0.21$ to $0.27$\,m, where the
+Z-shaped route of the demonstrations crosses at $x=0$, half a metre from both corners. The
+cascaded geometric controller follows the commanded path to within about a centimetre sideways on average,
+and it never comes more than $1.4$\,cm closer to the corner than the command does; the $0.30$ to $0.33$\,m
+between a flow-based flight and its commanded position is the lead of that position along the path, not a
+sideways error.
+
+The plans themselves show a second side of the budget (\autoref{fig:uav-scurve-plans}). At one and two
+evaluations the four candidates of a plan scatter and zig-zag from one control step to the next, for both
+models; at twenty they lie smooth along the route. The rougher plans are not the worse ones on this scene:
+instantaneous-velocity matching crosses the finish line on nine flights with its roughest plans and on six
+with its smoothest, and every flow-based model crosses most often at one evaluation. A plan of lower quality,
+re-drawn at every control step, varies more from step to step, and on this route that variation appears to
+help the controller through the turns rather than hinder it --- although, as the two panels of analytic
+average-velocity matching show, it does not save every model's flights at the second corner.
+
+\subsubsection{Projection}\label{sec:res:uav:scurve:projection}
+
+The configuration \autoref{tab:uav-scurve} selects is instantaneous-velocity matching at one evaluation,
+and it is flown under per-step projection on the tightened constraint set. Endpoint projection guides the
+sample only on the sampling steps before the terminal one that the activation threshold selects
+(\autoref{sec:setup:protocol:guiding}): at the default threshold of $0.5$ that is none at one evaluation, so
+the method has nothing to act on at the selected budget and is not flown there; the flown rows are in
+\autoref{tab:uav-controller}, beside the controller comparison.
+
+Per-step projection does not keep the nine crossings. Under every selection rule the selected configuration
+crosses on five flights of ten, the aborts rise from one to three or five, and the violating steps rise from
+$23.0$ to between $37.2$ and $74.7$ per flight, while the time per control step rises from $8.9$ to between
+$136$ and $164$\,ms, $126$ to $155$ of it the projection. Under random selection and cumulative projection cost
+two flights each drop to the floor after crossing, which is where their spread comes from. The projector
+does not reach what causes the violations: on this scene it binds the plan's measured positions, as \ac{DPCC}
+does, and not the commanded position the vehicle is sent to, which UAV-corridor binds as well
+(\autoref{sec:setup:protocol:uav}), and the projected commanded paths still cut the second inside corner,
+$8$ to $9$\,cm inside its keep-out.
+A per-step projector that also binds the commanded position, as on UAV-corridor, was not flown on this
+scene.
+
+\subsubsection{Caveat: The Tracking Controller}\label{sec:res:uav:controller}
+
+On the manipulator, inverse kinematics and the joint-space controller lie between a generated plan and
+the executed motion. The quadrotor is underactuated and open-loop unstable
+(\autoref{sec:bg:quadrotor}), and a plan reaches the rotors only through the cascaded geometric
+controller that tracks it (\autoref{sec:method:geometric}). The result of a flight is therefore a
+property of the planner and the controller together, and UAV-s-curve, with its two sharp turns, is where
+the choice of controller shows. Under the cascaded geometric controller most flights of analytic
+average-velocity matching, of the consistency-interpolated model and of the baseline end inverted
+(\autoref{tab:uav-scurve}), while instantaneous-velocity matching at one evaluation crosses the finish line
+on nine flights of ten, each with $17$ to $37$ violating steps. What the controller changes is tested by
+keeping the planner and its configuration and changing the controller, in closed loop: MuJoCo MPC (\autoref{sec:method:mjpc}) replaces the cascaded
+geometric controller here and nowhere else.
+
+The comparison is made on that configuration, instantaneous-velocity
+matching at one evaluation, with ten flights per cell (\autoref{tab:uav-controller},
+\autoref{fig:uav-scurve-paths}): its plans, unprojected and under per-step projection with random selection,
+under each controller. On the unprojected plans the two controllers succeed on the same nine flights of ten.
+MuJoCo MPC removes the one inversion and brings every flight within $0.3$\,m of the goal point, a mean distance
+of $0.297$ against $0.571$\,m, the tenth flight being scored unsafe for contact; but it follows the commanded
+path less closely, $5$\,cm on average and up to $29$\,cm, the plans generated from its states cut the corner
+deeper, and the violating steps rise from $23.0$ to $41.5$ per flight.
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=\linewidth]{fig_uav_scurve_paths}
+  \caption[UAV-s-curve: the selected plans under the two tracking controllers]{UAV-s-curve from above, drawn
+  like \autoref{fig:constraints-uav}: FM at $\nfe=1$, ten flights per panel; top, the unprojected plans;
+  bottom, the plans under per-step projection (random selection, tightened constraint set); left, the
+  cascaded geometric controller; right, MuJoCo MPC. Green: success; red: no success; a cross marks a flight
+  that collided or that the divergence guard ended.}
+  \label{fig:uav-scurve-paths}
+\end{figure}
+
+\begin{table}[htpb]
+  \caption[UAV-s-curve: the selected configuration under projection and under two tracking controllers]{UAV-s-curve,
+  FM at $\nfe=1$, the configuration selected in \autoref{tab:uav-scurve}: without projection and under per-step
+  projection (random selection, the tightened constraint set), flown in closed loop under each of the two tracking
+  controllers, ten flights per cell, one training seed. \emph{Cascaded geometric} is the controller behind every
+  other result in this chapter; \emph{MuJoCo MPC} (\autoref{sec:method:mjpc}) replaces it here and nowhere else.
+  Columns as in \autoref{tab:uav-scurve}; \emph{planner}: the time to compute one action, the projection included;
+  \emph{loop}: the elapsed time of a flight per executed control step, the one quantity in this chapter that
+  contains the controller and the simulator step, measured on the unprojected pair (\emph{---}: not measured).
+  Random selection is the per-step rule carried from \autoref{sec:res:uav:scurve:projection}: the three rules cross
+  on five flights each, and random aborts least and violates least of those. Endpoint projection has no guiding
+  step at $\nfe=1$ and is not flown.}
+  \label{tab:uav-controller}
+  \centering
+  \small
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabularx}{\linewidth}{@{}L L r r r r r r@{}}
+    \toprule
+    Projection & Controller & Success & \shortstack{Violating\\steps} & Distance [m] & Aborted & \shortstack{Planner\\ms/step} & \shortstack{Loop\\ms/step} \\
+    \midrule
+    none      & cascaded geometric & 9/10 & $23.0 \pm 5.4$ & $0.571 \pm 0.868$ & 1/10 & $8.9$ & $14.0$ \\
+    none      & MuJoCo MPC         & 9/10 & $41.5 \pm 18.4$ & $0.297 \pm 0.002$ & 0/10 & $10.4$ & $135.8$ \\
+    \addlinespace[3pt]
+    per-step  & cascaded geometric & 5/10 & $71.3 \pm 66.6$ & $0.572 \pm 0.345$ & 3/10 & $157.1$ & --- \\
+    per-step  & MuJoCo MPC         & 0/10 & $105.5 \pm 46.0$ & $1.626 \pm 0.988$ & 7/10 & --- & --- \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+Ten flights per cell on the selected configuration. The gains are
+held at their nominal values in every evaluation of this thesis and were not tuned; the two alternative
+settings that exist scale the position loop by $\pm20\,\%$ and leave the attitude loop and the thrust limit
+untouched. What the comparison supports is that the inversions are the controller's limit, not that no tuning
+of this controller could fly the scene.
+
+Under projection the cascaded geometric controller is the better of the two. It brings five of ten flights
+across the finish line, and MuJoCo MPC none: seven
+of its flights invert $15.7$ to $20.7$\,s into the flight, pressed against the outer wall of the second straight,
+and the other three reach the goal region with more wall contact than the scene allows. MuJoCo MPC, which
+keeps every unprojected flight upright, loses every projected one. No flight of the forty is free of violations under
+either controller, because the corner cut is in the plans; MuJoCo MPC, following the projected plans less
+closely, $12$\,cm on average against $8.5$\,cm for the cascaded law, violates on $105.5$ control steps per flight
+against $71.3$.
+
+The other reason MuJoCo MPC replaces the controller here and nowhere else is what it costs to run. The
+time reported in every other table of this chapter is measured around the planner and stops there
+(\autoref{sec:setup:metrics:avoiding}), so it prices no controller at all; pricing one means reading the
+elapsed time of the flights themselves and dividing it by the control steps that executed
+(\autoref{tab:uav-controller}). On the selected plans without projection, where nothing lies between
+the plan and the controller, a control step takes $14.0$\,ms under the cascaded geometric controller and
+$135.8$\,ms under MuJoCo MPC. The planner's share of that is $8.9$ and $10.4$\,ms, so the difference belongs to
+the controller: about $5$\,ms per step for the cascaded geometric law against about $125$\,ms for MuJoCo MPC,
+which solves an optimisation problem at every control step where the other evaluates an algebraic law. MuJoCo
+MPC is about twenty-four times the price of the cascaded geometric controller per control step, controller
+and simulator step together on the unprojected pair, and by itself it costs twelve times as much per control
+step as generating the plan --- some seven times what the operating
+point of D3IL-avoiding spends on an entire action (\autoref{tab:avoiding-conclusion}).
+
+This is a decomposition of recorded elapsed times and not a measurement taken around the
+controller call, which the evaluation does not instrument. The remainder row therefore carries the
+simulator step with the controller, and its difference between the two columns is read as the controller's
+cost, in two execution environments (MJX for MuJoCo MPC). One training seed, ten flights against ten.
+
+What the comparison shows is that the controller matters. In this framework a plan reaches the rotors only
+through the tracking controller, and the same projected planner configuration succeeds on five flights of ten or on none, and
+the same unprojected configuration violates on $23$ control steps per flight or on $42$, depending on which
+controller flies it in closed loop. On the configuration of record the cascaded geometric controller used throughout this thesis is
+the better one: as many successes as MuJoCo MPC without projection, five against none with it, fewer violating
+steps in both, at a twenty-fourth of the controller-and-simulator cost per control step --- a tenth of the whole loop
+unprojected, half of it projected. MuJoCo MPC's one gain, keeping the unprojected
+flights upright and closer to the goal point, does not survive projection, and it is not adopted.
+
+\FloatBarrier
+\subsubsection{Conclusion}\label{sec:res:uav:scurve:conclusion}
+
+UAV-s-curve shows that in this framework the controller matters. A plan reaches the rotors only through the
+tracking controller, and on a route of two sharp turns the same planner configuration succeeds or fails by the controller that
+flies it. On the configuration of record the cascaded geometric controller, the one every result of this
+thesis is measured with, is the better of the two: without projection it succeeds on as many flights as
+MuJoCo MPC, nine of ten, with fewer violating steps, and under projection on five flights where MuJoCo MPC
+succeeds on none, at a twenty-fourth of MuJoCo MPC's controller-and-simulator cost per control step. MuJoCo MPC's one gain,
+keeping
+the unprojected flights upright and within $0.3$\,m of the goal point, does not survive projection. The
+violations themselves are the plan's: every commanded path cuts the second inside corner of the crossover,
+crossing the gap about $0.2$\,m later than the demonstrations do and passing $8$ to $19$\,cm inside the
+corner's keep-out, and neither controller nor per-step projection, as configured, removes that cut.
+
+Among the models instantaneous-velocity matching leads: at one evaluation it crosses the finish line on
+nine flights of ten, the consistency-interpolated model on six and analytic average-velocity matching on
+three, while most flights of the other two models and of the baseline invert at the second turn. That the
+simplest objective leads is read here as a property of the data: the demonstrations are one route of straight segments
+joined by arcs (\autoref{tab:uav-demos}), too simple to need what the average-velocity objectives are built
+for. The scene adds a caveat on the budget: where a flight is easy to lose, more network evaluations are not
+always better. For every flow-based model the crossings fall as the budget grows --- from nine to seven to
+six for instantaneous-velocity matching, from six to one for the consistency-interpolated model and from
+three to none for analytic average-velocity matching --- although the plans grow smoother with it
+(\autoref{fig:uav-scurve-plans}): the rougher plans of one evaluation, re-drawn at every control step, vary
+more from step to step, and on this route that variation appears to help the controller through the turns.
+Instantaneous-velocity matching is sampled from initial noise of half its training scale
+(\autoref{sec:setup:protocol:avoiding}); that bears on its order against the average-velocity models, not on
+the controller comparison, which flies the same planner configuration under both controllers.
+
+\section{Comparison across Environments}\label{sec:res:summary}
+
+This section recaps the preceding ones and adds no new result. It answers, per environment, the first two
+research questions (\autoref{sec:intro:rqs}): how the flow-based models compare with the diffusion baseline
+and with one another, and whether endpoint projection improves on the per-step projection of \ac{DPCC}.
+
+\subsection{Generative Models}\label{sec:res:summary:models}
+
+The results follow the lines along which the study was designed. On the two D3IL tasks flow-based models
+Pareto-dominate the diffusion model of \ac{DPCC} with its own temporal U-Net of $4.0$\,M parameters ---
+CI-MeanFM and FM on D3IL-avoiding, MeanFM on D3IL-aligning; on the quadrotor they carry that result to a
+new plant, and each scene adds what the plant or the data change.
+
+\begin{description}
+  \item[D3IL-avoiding: Pareto dominance over the baseline.] CI-MeanFM Pareto-dominates the baseline and MeanFM
+    matches its saving at one episode in thirty. CI-MeanFM at one evaluation holds its success with constraint satisfaction of $1.000$ in $59.2$ control
+    steps against $70.1$, at $18.1$ against $553.4$\,ms per action; MeanFM reads $0.967$ for the same saving; FM at one evaluation dominates the baseline too ($1.000$, $67.0$ steps,
+    $17.3$\,ms). Against the baseline retrained at two denoising steps the saving is still twelvefold.
+  \item[D3IL-aligning: the dominance under vision and contact.] On camera observations and contact, analytic average-velocity
+    matching under per-step projection dominates the baseline's best projected row: nine violation-free
+    contexts against four, a median box $0.179$ against $0.462$\,m from its target, $266$ against $809$\,ms.
+    Without projection every non-dominated configuration is analytic average-velocity matching, which reduces
+    the median final distance by $84\,\%$ of the mean starting distance at twenty evaluations against $14$, $10$ and $-2\,\%$ for the others.
+  \item[UAV-pillars: transfer of the D3IL-avoiding result to the quadrotor.] The Pareto-optimal operating points
+    of D3IL-avoiding, flown again by the quadrotor: the declared constraints transfer exactly and the two
+    average-velocity models keep their order, and the outcome departs from the table where the plant and its
+    controller differ from the manipulator. The vehicle tracks more closely than the arm, and
+    collisions with pillars outside the constraint sets, which end a quadrotor's flight, cost a third of the
+    flights: success within the constraints $0.600$ to $0.700$.
+  \item[UAV-corridor: projection in three dimensions and the role of the demonstrations.] The projection scheme
+    of \ac{DPCC} carries over to three dimensions: the violating steps
+    of a flight fall from $29$--$99$ to $0$--$10$. On its straight-line demonstrations the three objectives
+    cannot be told apart and the budget decides; against the baseline the flow-based models trade a
+    twenty-fourth (tilt) and a ninth (hump) of its time for more violating steps.
+  \item[UAV-s-curve: the role of the tracking controller.] The same planner configuration succeeds or fails by the controller that
+    flies it, and the cascaded geometric controller is the better one: as many successes as MuJoCo MPC without
+    projection, five of ten against none with it, at a twenty-fourth of the controller-and-simulator cost per control step.
+    Instantaneous-velocity
+    matching leads on this single, simple route, and more evaluations are not always better where a flight
+    is easy to lose.
+\end{description}
+
+\subsection{Projection Methods}\label{sec:res:constraints}
+
+Endpoint projection is the better projector on the constraint --- more contexts kept free of violations --- where the task needs a budget that gives it
+steps to guide, as on D3IL-aligning; on UAV-corridor the two projectors trade against each other, and where one
+or two evaluations solve the task endpoint projection has no step to guide.
+
+\begin{description}
+  \item[D3IL-avoiding (operated at $\nfe=1$).] Endpoint projection has no guiding step at the operating
+    budget. Where it can act, with matched candidates, it is level or ahead on the constraint and cheaper on
+    every model except instantaneous-velocity matching at three evaluations; on the average-velocity models
+    at three it halves the time per control step.
+  \item[D3IL-aligning ($\nfe=20$).] Endpoint projection is the better projector on the constraint: all ten
+    contexts free of violations at the time per control step of per-step projection, and more contexts
+    violation-free in seven of nine comparisons. Its advantage is on the constraint, not the task.
+  \item[UAV-pillars ($\nfe=1$ and $2$).] Per-step projection only, at the D3IL-avoiding operating points: as
+    there, it turns plans that violate the declared constraints into plans that violate none.
+  \item[UAV-corridor ($\nfe=1$ to $20$).] A trade-off, with no clear dominance. At twenty evaluations endpoint
+    projection leaves fewer violating steps under both constraints: over the hump with one candidate also at
+    less time, $0.2$ against $1.8$ at $291$ against $355$\,ms, but on flights about thirty control steps
+    longer; under the tilt at more time, $1.4$ against $2.1$ at $417$ against $360$\,ms. At three and five
+    evaluations it leaves as many violating steps or more.
+  \item[UAV-s-curve ($\nfe=1$).] Only per-step projection runs. It binds the measured position, leaves the
+    corner cut of the plans in place and costs four of the nine crossings, at $126$ to $155$\,ms of
+    projection per step.
+\end{description}
+
+\subsection{Conclusion}\label{sec:res:summary:conclusion}
+
+The study is built in three steps, and its results follow them. The main claim is made and tested on
+D3IL-avoiding, the benchmark of \ac{DPCC}, on which the endpoint-projection work was also evaluated: there
+CI-MeanFM Pareto-dominates the diffusion model of \ac{DPCC} with its own temporal U-Net, MeanFM matches its
+saving at one episode in thirty, and no
+endpoint-projection configuration, which needs at least three evaluations to guide the sample, improves on their
+operating point at one evaluation with per-step projection. D3IL-aligning extends the claim to a more complex
+task, camera observations and an alignment through contact, and reaffirms it. The quadrotor scenes are mainly a
+test of transfer: they carry the framework to a new plant and its tracking controller, and show where the result
+holds and what the plant, the controller and the demonstrations change.
+
+Three findings cut across the environments.
+
+\begin{enumerate}
+  \item \textbf{The time a projection takes depends on how far from feasible the plan it receives is.} A plan close to the
+    feasible set is cheap to repair, which is why the flow-based models at one evaluation and endpoint
+    projection's predicted endpoint are cheap, and the two-step diffusion baseline, handed a plan one step
+    from noise, is not.
+  \item \textbf{A task saturated at one evaluation hides what a task that rewards more evaluations exposes.}
+    The self-referential target of the consistency-interpolated model is the account consistent with its
+    plateau on D3IL-aligning, invisible on D3IL-avoiding; it was not tested.
+  \item \textbf{The demonstrations bound what a model can show.} On the straight lanes of UAV-corridor the
+    objectives do not differ, and the plans stay within the altitudes the demonstrations cover, which is
+    where per-step projection at the smallest budgets falls short.
+\end{enumerate}
+
+The combination each environment supports, and what it achieves:
+
+\begin{description}
+  \item[D3IL-avoiding.] MeanFM or CI-MeanFM at one evaluation, per-step projection, temporal consistency:
+    the operating points of \autoref{tab:avoiding-conclusion}, five training seeds, the protocol of \ac{DPCC}.
+  \item[D3IL-aligning.] MeanFM at twenty evaluations, endpoint projection, random selection: all ten contexts
+    free of violations. The box ends in position, within the $1.8$\,cm of the task's own test, in none of
+    them, but it comes close in two, $2.2$ and $4.7$\,cm from its target; in six more it closes $40$ to
+    $75\,\%$ of the distance and ends $13$ to $27$\,cm away, and in the last two it does not move ($41$ and
+    $45$\,cm). The median context ends $0.197$\,m from the target, a reduction of $57\,\%$ relative to the mean initial
+    distance.
+    The unprojected plan does not reach the tolerance either: its best two contexts end $2.8$ and $2.9$\,cm
+    away.
+  \item[UAV-pillars.] The D3IL-avoiding configurations, MeanFM or CI-MeanFM at one or two evaluations,
+    per-step projection, temporal consistency: no violating step, and success within the constraints of
+    $0.600$ to $0.700$, every failure a collision with a pillar outside the constraint sets.
+  \item[UAV-corridor.] Any of the flow-based objectives tested at a budget --- the average-velocity models to
+    three evaluations, instantaneous-velocity matching to twenty --- the budget chosen for the trade:
+    violating steps per flight
+    from $10.2$ at $27.4$\,ms (one evaluation, per-step) to $1.4$ at $416.9$\,ms (twenty, endpoint) under the
+    tilt, and from $8.0$ at $71.9$\,ms (three, endpoint) to $0.2$ at $291.0$\,ms (twenty, endpoint, one
+    candidate) over the hump; every flight reaches the end of the corridor.
+  \item[UAV-s-curve.] FM at one evaluation without projection, under the cascaded geometric controller: nine
+    of ten flights cross the finish line, none free of violations; MuJoCo MPC crosses as often without
+    projection and on none with it, at twenty-four times the controller-and-simulator cost per step.
+\end{description}

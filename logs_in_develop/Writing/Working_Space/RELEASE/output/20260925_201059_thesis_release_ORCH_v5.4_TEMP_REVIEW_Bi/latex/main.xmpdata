@@ -1,0 +1,4 @@
+\Author{\getAuthor}
+\Title{\getTitle}
+\Keywords{\getKeywords}
+\Subject{\getDoctype}

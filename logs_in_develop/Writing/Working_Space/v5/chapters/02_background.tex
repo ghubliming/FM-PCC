@@ -23,7 +23,7 @@ removes it step by step. Diffuser \parencite{janner2022planning} applies this to
 and diffusion policies \parencite{chi2023diffusion} brought it to visuomotor control.
 
 Two properties follow from the construction. The number of denoising steps is tied to the schedule
-the network was trained on, so it is fixed when training ends; fewer steps require a different sampler
+the network was trained on, so it is fixed when training ends in the inherited implementation; fewer steps require a different sampler
 \parencite{song2021denoising} or a distilled model. The stochastic reverse sampler adds noise at nonterminal steps, so plans drawn
 for the same observation can differ.
 
@@ -128,15 +128,12 @@ trajectory transformers instead represent a sequence of planned states or action
 
 \section{Quadrotor Dynamics and Control}\label{sec:bg:quadrotor}
 
-A fully actuated manipulator in position control holds its configuration through joint feedback; a
-planned sequence of end-effector positions becomes joint commands through \ac{IK}. A quadrotor is
-different. Its four rotors produce a thrust along one body axis and three moments, so it controls four
-of its six degrees of freedom directly and must tilt in order to translate, and hover is an unstable
-equilibrium that requires continuous feedback.
-
-A position-controlled arm can hold its last setpoint through the joint controller, although tracking
-error and collisions still depend on the commanded motion. A quadrotor must continuously regulate
-thrust and attitude even to hold a fixed position. Position corrections require tilting and translation,
+A fully actuated manipulator in position control holds its configuration through joint feedback: a
+planned sequence of end-effector positions becomes joint commands through \ac{IK}, and the arm holds
+its last setpoint even though tracking error and collisions still depend on the commanded motion. A
+quadrotor is different. Its four rotors produce a thrust along one body axis and three moments, so it
+controls four of its six degrees of freedom directly and must tilt in order to translate; hover is an
+unstable equilibrium, so it must regulate thrust and attitude continuously even to hold a fixed position,
 and a loss of attitude control can end the flight. This difference in tracking behaviour motivates
 testing the same planning framework on both plants.
 
