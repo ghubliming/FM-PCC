@@ -73,20 +73,33 @@ def _vehicle(f, centre, r_drone, colour):
               stroke='#111', w=0.8)
 
 
+LEGEND_LINE = 32      # px between the lines of a wrapped legend key (font 18 x FONT_CONSTRAINT = 28 px)
+
+
 def _legend(width, items, cols=2):
-    rows = (len(items) + cols - 1) // cols
-    h = Fig(width, 20 + 40 * rows, ml=0, mr=0, mt=0, mb=0, font=FONT_CONSTRAINT)
+    """One legend strip above a grid. A key may carry '\n' (v5.3, review A6): its further
+    lines are drawn under the first, LEGEND_LINE apart, and the rows below move down -- so a
+    long key wraps instead of running past the canvas, which fig_expert_uav's third key did
+    (the PNG cut it at "...is in the surfa"). Keys without '\n' render exactly as before."""
+    rows = [items[i:i + cols] for i in range(0, len(items), cols)]
+    extra = [max(str(lab).count('\n') for _, _, lab in r) for r in rows]
+    h = Fig(width, 20 + 40 * len(rows) + LEGEND_LINE * sum(extra), ml=0, mr=0, mt=0, mb=0,
+            font=FONT_CONSTRAINT)
     col_x = tuple(16 + (width // cols) * c for c in range(cols))
-    for i, (colour, dash, lab) in enumerate(items):
-        x, y = col_x[i % cols], 26 + 40 * (i // cols)
-        if colour is None:                       # the vehicle key: a disk, not a line
-            # the legend Fig has no data axes, so this one is written in pixels
-            h.s.append(f'<circle cx="{x}" cy="{y}" r="14" fill="#777" fill-opacity="0.16" '
-                       f'stroke="#777" stroke-width="1.4" stroke-dasharray="5,4"/>')
-            h.marker(x, y, 's', '#777', filled=True, r=4.5, ew=0.8)
-        else:
-            h.poly([(x - 14, y), (x + 14, y)], colour, w=3.0, dash=dash)
-        h.text(x + 26, y + 7, lab, 18, '#111')
+    y = 26
+    for r, ex in zip(rows, extra):
+        for c, (colour, dash, lab) in enumerate(r):
+            x = col_x[c]
+            if colour is None:                   # the vehicle key: a disk, not a line
+                # the legend Fig has no data axes, so this one is written in pixels
+                h.s.append(f'<circle cx="{x}" cy="{y}" r="14" fill="#777" fill-opacity="0.16" '
+                           f'stroke="#777" stroke-width="1.4" stroke-dasharray="5,4"/>')
+                h.marker(x, y, 's', '#777', filled=True, r=4.5, ew=0.8)
+            else:
+                h.poly([(x - 14, y), (x + 14, y)], colour, w=3.0, dash=dash)
+            for j, line in enumerate(str(lab).split('\n')):
+                h.text(x + 26, y + 7 + LEGEND_LINE * j, line, 18, '#111')
+        y += 40 + LEGEND_LINE * ex
     return h
 
 
@@ -221,7 +234,7 @@ def fig_expert_uav(outdir):
     legend = _legend(width, [
         (CLEAN, '', 'demonstration / reference path satisfies the constraints'),
         (VIOLATING, '', 'demonstration / reference path crosses them'),
-        (None, '', f"the vehicle to scale, for size only (the {r:g} m reach is in the surfaces)"),
+        (None, '', f"the vehicle to scale, for size only\n(the {r:g} m reach is in the surfaces)"),
     ], cols=1)
     path = save_grid(panels, os.path.join(outdir, 'fig_expert_uav.svg'), cols=2, gap=8,
                      header=legend)
@@ -245,7 +258,9 @@ def fig_expert_aligning(outdir):
     fs = 1.35
     t = C['tightening']
     (x0, x1), (y0, y1) = C['extent']['x'], C['extent']['y']
-    ml, mr, mt, mb = int(46 * fs), int(14 * fs), int(50 * fs), int(46 * fs)
+    # v5.3 (review A6): the subtitle is two lines now (the one-line form ran past the 620 px
+    # canvas -- the PNG cut it at "...none the l"), so the top margin holds title + two lines.
+    ml, mr, mt, mb = int(46 * fs), int(14 * fs), int(64 * fs), int(46 * fs)
     w = 620
     pw = w - ml - mr
     ph = pw * (y1 - y0) / (x1 - x0)
@@ -257,8 +272,10 @@ def fig_expert_aligning(outdir):
     hs = sum(b.get('n_push_hits_halfspace', 0) for b in D['aligning'])   # v3.100: 0 of 120
     f.frame([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8], [-0.4, -0.2, 0.0, 0.2, 0.4],
             'x [m]', 'y [m]', 'Vision-conditioned alignment',
-            f'{n} recorded contexts · {hits} direct pushes cross the keep-out region, {hs or "none"} the halfspace',
+            f'{n} recorded contexts',
             xfmt=lambda v: f'{v:g}', yfmt=lambda v: f'{v:g}')
+    f.text(f.L, 49 * fs, f'{hits} direct pushes cross the keep-out region, {hs or "none"} the halfspace',
+           10.5, '#555')                                   # the subtitle's second line (frame draws one)
     f.clip_to_box()
 
     hs = C['halfspace']

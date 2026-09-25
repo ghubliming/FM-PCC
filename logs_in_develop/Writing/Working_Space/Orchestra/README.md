@@ -2,8 +2,29 @@
 
 **Created:** 2026-09-25 (job O001) · **Authority:** the author · **Record:** [`CHANGELOG.md`](CHANGELOG.md) (one row per job, date-time + the v2 / v3 / v4 revisions) and [`jobs/`](jobs/) (one file per job) · **Snapshot:** [`STATE.md`](STATE.md) · **Tool:** [`tools/orchestra.py`](tools/orchestra.py)
 
-> **Start of every Orchestra session:** `python3 tools/orchestra.py status`, then read `../cross_draft/INBOX.md` and
-> `../DRAFT_OWNERSHIP.md`. Nothing under `Orchestra/` is thesis text.
+> **Start of every Orchestra session:** `python3 tools/orchestra.py status`, then `cd ../v5 && python3 tools/absorb.py status`,
+> then read `../cross_draft/INBOX.md` (`## → v5` first) and `../DRAFT_OWNERSHIP.md`. Nothing under `Orchestra/` is thesis text.
+
+---
+
+## ⚡ Advance Orchestra — since 2026-09-25 (job O003): the thesis lives in `../v5`
+
+**The author (2026-09-25):** the major parts of the thesis are set, so the split v2 / v3 / v4 flow described below is
+**kept but used less**. The whole thesis is now **one draft, [`../v5`](../v5/README.md)** — the aggregate of v2.28 ·
+v3.100b · v4.2, initialised 2026-09-25 13:43 (v5.0) — and the Orchestra **edits it directly**: no owner chat to notify,
+no inherited copy, no sync tool, no bundle. **The release is the build:** `cd ../v5 && python3 tools/make_release_v5.py`
+writes `../RELEASE/output/<stamp>_thesis_release_ORCH_v5.N[_TAG]/`, marked as the Orchestra's; **the date-time is a
+build's identity**, the v5 revision is information; no build is ever deleted. **Every update of v5 is a `## v5.N` entry**
+in `../v5/CHANGELOG.md` (v5.0 = init with the v2 / v3 / v4 revisions, v5.1 = the inboxes resolved, …) with a detailed
+MD in `../v5/changelogs/`. The runbook of the Advance flow is **[`../v5/README.md`](../v5/README.md)**; every job,
+Advance or legacy, is still a row in [`CHANGELOG.md`](CHANGELOG.md) — kind `advance` = an edit in v5, `absorb` = a change
+made in a legacy draft merged into v5 (`../v5/tools/absorb.py`).
+
+**What "kept" means for the legacy flow:** when the author takes a big job to a v2 / v3 / v4 chat, the owner edits its
+own files as before and adds a row under `## → v5` in `../cross_draft/INBOX.md`; the Orchestra absorbs it into v5
+(`absorb.py status / diff / merge` against `../v5/inherited/materials/`) and records a new v5.N. The rules and the
+procedure below still govern an Orchestra edit *inside* a legacy draft (kinds `edit`, `todo`, `sync`); they do not
+apply to v5, which the Orchestra owns. Rows that were open on 2026-09-25 were resolved in v5.1 and are marked `🔀 v5.1`.
 
 ---
 
@@ -26,7 +47,7 @@ v2, v3 and v4 are each maintained by **their own chat** (the owner chats; the ma
 big while working (a section rewritten, a new result, a restructuring, a figure), the job becomes a TODO
 distribution (rule 8), not an edit.
 
-## What it is not
+## What it is not — in the legacy flow (for v5 the Orchestra *is* the owner; see above)
 
 - **Not a fourth draft.** It owns no chapter, writes no prose of its own, holds no thesis text.
 - **Not the merger.** The whole thesis is assembled by `../RELEASE/tools/make_release.py` from the owners' live files.
@@ -46,7 +67,8 @@ distribution (rule 8), not an edit.
 | `Orchestra/templates/` | the three templates the tool fills (job, cross note, TODO master) | the tool |
 | `../cross_draft/to_<draft>/FROM_Orchestra_<date>_O###_<topic>.md` + `../cross_draft/INBOX.md` | **the only channel to an owner chat** | the owner chats, at their session start |
 | `../<draft>/CHANGELOG.md` | where an Orchestra edit is recorded *inside* the draft, as a revision entry tagged `(Orchestra O###)` | the owner chat, the sync tools, the release tool |
-| `../RELEASE/` | the release tool, its changelog, every build kept under `output/` | the author |
+| `../RELEASE/` | the release tool, its changelog, every build kept under `output/` (legacy builds and the `_ORCH_v5.N` builds from v5) | the author |
+| `../v5/` | **the thesis** since 2026-09-25: `CHANGELOG.md` (`## v5.N`), `changelogs/`, `tools/check.py`, `tools/make_release_v5.py`, `tools/absorb.py`, `inherited/` (the init record and the merge base) | the Orchestra chat, the author |
 
 ## The rules (binding on the Orchestra chat)
 
@@ -85,7 +107,9 @@ distribution (rule 8), not an edit.
    appears, in which draft and file. Places inside the job's scope are edited (each in its owner's live file, each
    with its own entry and note); places outside it become TODO items (rule 8). A renamed or removed `\label` is
    always called out by name in every note: it breaks references in the other drafts and in the release.
-7. **Release only on the author's word.** Then, from `../RELEASE`:
+7. **Release only on the author's word.** Advance flow: `cd ../v5 && python3 tools/make_release_v5.py --dry-run`, then
+   `python3 tools/make_release_v5.py --job O### --note "Orchestra O###: <why>"` (folder `…_thesis_release_ORCH_v5.N`,
+   `RELEASE/CHANGELOG.md` entry marked Orchestra / v5). Legacy flow, from `../RELEASE`:
    ```bash
    python3 tools/make_release.py --dry-run                                             # first: holes, bugs, the page estimate
    python3 tools/make_release.py --tag ORCH_O### --note "Orchestra O###: <why this build>"   # the build, marked as the Orchestra's

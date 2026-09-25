@@ -291,8 +291,11 @@ def fig_aligning_projected_tradeoff(outdir):
     than nine contexts violation-free, so both are hollow and the frontier does not move.
     """
     PROJECTED_K = (20,)
-    colours = {'mf': '#1F4E79', 'af': '#8B3F71', 'fm': '#C45B24',
-               'diffusion': S.ENGINE_COLOUR_DISTINCT['diffusion']}   # the baseline stays near-black
+    # v5.3 (review A9): one palette per model across the frontier figures. This figure had its
+    # own darker triple (#1F4E79 / #8B3F71 / #C45B24), so CI-MeanFM was purple here and teal in
+    # fig_avoiding_tradeoff, fig_aligning_tradeoff and fig_uav_corridor_tradeoff; no decision
+    # in v3's changelog asked for that, and marker shape / hollowness carry the rest.
+    colours = dict(S.ENGINE_COLOUR_DISTINCT)                  # the baseline stays near-black
     c = S.CORPORA['visual_aligning_15_09']
     if not c.available:
         return None

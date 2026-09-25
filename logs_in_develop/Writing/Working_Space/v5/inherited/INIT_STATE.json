@@ -1,0 +1,280 @@
+{
+  "initialised_at": "2026-09-25 13:43:19",
+  "job": "O003",
+  "v5_version": "v5.0",
+  "built_on": {
+    "v2": {
+      "short": "v2.28",
+      "heading": "v2.28 — 2026-09-24 · the seven open cross notes applied (v3.73–v3.96, v4.0, v4.1)",
+      "changelog_sha256_16": "23a09aa329a5476b"
+    },
+    "v3": {
+      "short": "v3.100b",
+      "heading": "v3.100b — 2026-09-25 · v3's copies of Ch 7–9 and the appendix archived (author: \"also archive the v3 chapters for 07/08/09/appendix\")",
+      "changelog_sha256_16": "dc068728c207275d"
+    },
+    "v4": {
+      "short": "v4.2",
+      "heading": "v4.2 — 2026-09-25 · The ChatGPT audit of v4.1a applied (§15) on v3.100; author's long-data heading flag and planning-horizon item; figures re-exported; bundles and release rebuilt",
+      "changelog_sha256_16": "9530f7535cd7dc9b"
+    }
+  },
+  "last_release_at_init": "20260925_115125_thesis_release_v2.28_v3.100b_v4.2_GOLDEN_TEMPLATE",
+  "release_sources_identical_to_init": true,
+  "files": [
+    {
+      "v5_file": "parts/00_preamble.tex",
+      "draft": "v2",
+      "source": "v2/thesis_v2.tex",
+      "how": "split: lines before \\begin{document}",
+      "sha256_16": "b386c7b93aa033c2",
+      "lines": 161,
+      "source_sha256_16": "6863f3a6866c426c",
+      "identical_to_source": false
+    },
+    {
+      "v5_file": "parts/01_frontmatter.tex",
+      "draft": "v2",
+      "source": "v2/thesis_v2.tex",
+      "how": "split: \\begin{document}+1 .. first \\chapter (title page, abstract, contents, \\mainmatter)",
+      "sha256_16": "a08634de135d83f5",
+      "lines": 79,
+      "source_sha256_16": "6863f3a6866c426c",
+      "identical_to_source": false
+    },
+    {
+      "v5_file": "chapters/01_introduction.tex",
+      "draft": "v2",
+      "source": "v2/thesis_v2.tex",
+      "how": "split: \\chapter ch:introduction",
+      "sha256_16": "2323d403aa0a3be4",
+      "lines": 172,
+      "source_sha256_16": "6863f3a6866c426c",
+      "identical_to_source": false
+    },
+    {
+      "v5_file": "chapters/02_background.tex",
+      "draft": "v2",
+      "source": "v2/thesis_v2.tex",
+      "how": "split: \\chapter ch:background",
+      "sha256_16": "419b89fba4699ed3",
+      "lines": 153,
+      "source_sha256_16": "6863f3a6866c426c",
+      "identical_to_source": false
+    },
+    {
+      "v5_file": "chapters/03_related_work.tex",
+      "draft": "v2",
+      "source": "v2/thesis_v2.tex",
+      "how": "split: \\chapter ch:related",
+      "sha256_16": "9801b196cd7158bb",
+      "lines": 166,
+      "source_sha256_16": "6863f3a6866c426c",
+      "identical_to_source": false
+    },
+    {
+      "v5_file": "chapters/04_method.tex",
+      "draft": "v2",
+      "source": "v2/thesis_v2.tex",
+      "how": "split: \\chapter ch:method",
+      "sha256_16": "1796c37a81d4a07e",
+      "lines": 1707,
+      "source_sha256_16": "6863f3a6866c426c",
+      "identical_to_source": false
+    },
+    {
+      "v5_file": "parts/99_backmatter.tex",
+      "draft": "v2",
+      "source": "v2/thesis_v2.tex",
+      "how": "split: \\microtypesetup .. before \\end{document} (acronyms, lists, bibliography)",
+      "sha256_16": "fe62846cdeafb4d0",
+      "lines": 30,
+      "source_sha256_16": "6863f3a6866c426c",
+      "identical_to_source": false
+    },
+    {
+      "v5_file": "bibliography.bib",
+      "draft": "v2",
+      "source": "v2/bibliography.bib",
+      "how": "copy",
+      "sha256_16": "5c046b2902675a09",
+      "lines": 587,
+      "source_sha256_16": "5c046b2902675a09",
+      "identical_to_source": true
+    },
+    {
+      "v5_file": "parts/00_preamble_v3.tex",
+      "draft": "v3",
+      "source": "v3/parts/00_preamble_v3.tex",
+      "how": "copy",
+      "sha256_16": "7dde03651a170309",
+      "lines": 198,
+      "source_sha256_16": "7dde03651a170309",
+      "identical_to_source": true
+    },
+    {
+      "v5_file": "chapters/05_setup.tex",
+      "draft": "v3",
+      "source": "v3/chapters/05_setup.tex",
+      "how": "copy",
+      "sha256_16": "4321c7942aeec67e",
+      "lines": 1500,
+      "source_sha256_16": "4321c7942aeec67e",
+      "identical_to_source": true
+    },
+    {
+      "v5_file": "chapters/06_results.tex",
+      "draft": "v3",
+      "source": "v3/chapters/06_results.tex",
+      "how": "copy",
+      "sha256_16": "5e2715bb809f5e9a",
+      "lines": 2582,
+      "source_sha256_16": "5e2715bb809f5e9a",
+      "identical_to_source": true
+    },
+    {
+      "v5_file": "bibliography_v3.bib",
+      "draft": "v3",
+      "source": "v3/bibliography_v3.bib",
+      "how": "copy",
+      "sha256_16": "a84dbb745f2e377b",
+      "lines": 54,
+      "source_sha256_16": "a84dbb745f2e377b",
+      "identical_to_source": true
+    },
+    {
+      "v5_file": "parts/00_preamble_v4.tex",
+      "draft": "v4",
+      "source": "v4/parts/00_preamble_v4.tex",
+      "how": "copy",
+      "sha256_16": "3e2afbe3eba2c4f9",
+      "lines": 42,
+      "source_sha256_16": "3e2afbe3eba2c4f9",
+      "identical_to_source": true
+    },
+    {
+      "v5_file": "chapters/07_conclusion.tex",
+      "draft": "v4",
+      "source": "v4/chapters/07_conclusion.tex",
+      "how": "copy",
+      "sha256_16": "0fff00f679f66b12",
+      "lines": 124,
+      "source_sha256_16": "0fff00f679f66b12",
+      "identical_to_source": true
+    },
+    {
+      "v5_file": "chapters/08_discussion.tex",
+      "draft": "v4",
+      "source": "v4/chapters/08_discussion.tex",
+      "how": "copy",
+      "sha256_16": "37041a03fb37c40a",
+      "lines": 169,
+      "source_sha256_16": "37041a03fb37c40a",
+      "identical_to_source": true
+    },
+    {
+      "v5_file": "chapters/09_appendix.tex",
+      "draft": "v4",
+      "source": "v4/chapters/09_appendix.tex",
+      "how": "copy",
+      "sha256_16": "c1d5eaf909afb096",
+      "lines": 314,
+      "source_sha256_16": "c1d5eaf909afb096",
+      "identical_to_source": true
+    },
+    {
+      "v5_file": "chapters/app_long/uav_corridor_rules.tex",
+      "draft": "v4",
+      "source": "v4/chapters/app_long/uav_corridor_rules.tex",
+      "how": "copy",
+      "sha256_16": "e439689d30ebd8de",
+      "lines": 217,
+      "source_sha256_16": "e439689d30ebd8de",
+      "identical_to_source": true
+    },
+    {
+      "v5_file": "chapters/app_ntrial20_feasible.tex",
+      "draft": "v4",
+      "source": "v4/chapters/app_ntrial20_feasible.tex",
+      "how": "copy",
+      "sha256_16": "ddde881204c5781a",
+      "lines": 149,
+      "source_sha256_16": "ddde881204c5781a",
+      "identical_to_source": true
+    },
+    {
+      "v5_file": "bibliography_v4.bib",
+      "draft": "v4",
+      "source": "v4/bibliography_v4.bib",
+      "how": "copy",
+      "sha256_16": "8866985bfc96766e",
+      "lines": 10,
+      "source_sha256_16": "8866985bfc96766e",
+      "identical_to_source": true
+    }
+  ],
+  "v2_split_unused": [
+    "chapters/05_setup.tex",
+    "chapters/06_results.tex",
+    "chapters/07_discussion.tex",
+    "chapters/08_conclusion.tex",
+    "chapters/09_appendix.tex"
+  ],
+  "figures": {
+    "count": 78,
+    "from_": "v4/figures (v4.2 export of 2026-09-25) + v3/figures + v2/figures where v4 had no copy",
+    "exported_md": "v4/figures/EXPORTED.md (copied as is)"
+  },
+  "inbox_open_rows_at_init": [
+    {
+      "target": "v2",
+      "line": 8,
+      "status": "⏳",
+      "src": "Orchestra O001 · 2026-09-25",
+      "item": "(FYI — nothing asked of v2 now) A new Orchestra chat handles minor and cross-linked changes across v2/v3/v4 directly in the drafts (author, 2026-09-25): an edit of yours shows up as a tagged revision entry in your CHANGELOG plus a note here; TODO lists and Orc"
+    },
+    {
+      "target": "v3",
+      "line": 44,
+      "status": "⏳",
+      "src": "Orchestra O001 · 2026-09-25",
+      "item": "(FYI — nothing asked of v3 now) A new Orchestra chat handles minor and cross-linked changes across v2/v3/v4 directly in the drafts (author, 2026-09-25): an edit of yours shows up as a tagged revision entry in your CHANGELOG plus a note here; TODO lists and Orc"
+    },
+    {
+      "target": "v3",
+      "line": 45,
+      "status": "⏳ (FYI — nothing asked of v3 now)",
+      "src": "v4.2 · 2026-09-25",
+      "item": "Your v3.100 note is closed (Ch 7 l. 25/45/47 rewritten; figures re-exported). Two FYI items for Ch 6: \"at twenty evaluations\" for the endpoint sampler's budget is an unresolved K/NFE terminology follow-up (audit of v4.1a, F02 / §12.3 — Ch 7 now writes $\\nfe$);"
+    },
+    {
+      "target": "v3",
+      "line": 46,
+      "status": "⏳",
+      "src": "v2.28 · 2026-09-24",
+      "item": "v2.28 is ready to sync for the first aggregated release (`tools/sync_v2.py merge`): abstract and §1.4 items 4–6 rebuilt on the author's storyline and v3.99's conclusions; outline in v4.1's order; \"MuJoCo MPC\" replaces `\\ac{MJPC}` (merge `02_background`, `04_me"
+    },
+    {
+      "target": "v4",
+      "line": 77,
+      "status": "⏳",
+      "src": "Orchestra O001 · 2026-09-25",
+      "item": "(FYI — nothing asked of v4 now) A new Orchestra chat handles minor and cross-linked changes across v2/v3/v4 directly in the drafts (author, 2026-09-25): an edit of yours shows up as a tagged revision entry in your CHANGELOG plus a note here; TODO lists and Orc"
+    },
+    {
+      "target": "v4",
+      "line": 78,
+      "status": "⏳",
+      "src": "v3.100b · 2026-09-25",
+      "item": "v3's copies of Ch 7–9 (`07_discussion`, `08_conclusion`, `09_appendix`, `app_ntrial20_feasible`) are archived; your `sync_v3.py status` now flags those four rows as \"v3 moved\" — retire them. v3's `check.py` now checks Ch 5/6 references into your Ch 7–9 labels "
+    },
+    {
+      "target": "v4",
+      "line": 80,
+      "status": "⏳",
+      "src": "v2.28 · 2026-09-24",
+      "item": "Your v4.0 and v4.1 notes are closed in v2.28 (outline: Conclusion before Discussion; \"MuJoCo MPC\" throughout, MJPC out of the list; PD declared). They reach v4 after v3's `sync_v2.py merge` and your `sync_v3.py merge`"
+    }
+  ],
+  "materials": "inherited/materials/<draft>/... = the owner files as v5 last absorbed them (at init: byte-exact copies of v2.28 / v3.100b / v4.2; advanced by tools/absorb.py merge); v2_split/ = the split of the v2 monolith"
+}

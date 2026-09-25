@@ -1,0 +1,61 @@
+% =============================================================================
+%  FM-PCC MASTER'S THESIS -- v5   (master file: structure only, no prose)
+%  TUM, School of CIT, Chair I6
+% -----------------------------------------------------------------------------
+%  WHAT v5 IS -- the AGGREGATE. Since 2026-09-25 (author) the whole thesis lives in
+%  this one folder and is edited here by the Orchestra chat ("Advance Orchestra",
+%  ../Orchestra/README.md, runbook ./README.md). It was initialised (v5.0, job O003)
+%  from the live files of the three legacy drafts:
+%     v2.28   -> parts/00_preamble, 01_frontmatter (abstract), 99_backmatter (acronyms),
+%                chapters/01-04, bibliography.bib          (split of v2/thesis_v2.tex)
+%     v3.100b -> chapters/05-06, parts/00_preamble_v3, bibliography_v3.bib
+%     v4.2    -> chapters/07-09 (+ app_long/, app_ntrial20_feasible), parts/00_preamble_v4,
+%                bibliography_v4.bib
+%  Every file is v5's own now: there is no inherited copy, no sync tool and no owner
+%  chat to notify. v2 / v3 / v4 are kept as legacy sources ("used less"); what changes
+%  there is absorbed with tools/absorb.py against inherited/materials/ (the copies at
+%  init). Revisions: CHANGELOG.md (v5.0, v5.1, ...), one detailed MD per revision in
+%  changelogs/.
+%
+%  BUILD: the RELEASE is the build -- python3 tools/make_release_v5.py (dry-run first),
+%  which writes ../RELEASE/output/<stamp>_thesis_release_ORCH_v5.N[_TAG]/ on the TUM
+%  template, marked as built by the Orchestra from v5. This master file is for the
+%  mechanical checks (tools/check.py) and for a standalone build on a machine with TeX:
+%     latexmk -pdf thesis_v5.tex   (or: pdflatex ; biber thesis_v5 ; pdflatex x2)
+%  (No TeX toolchain in the AI container -- never compiled here.)
+%
+%  FIGURES: produced only in Data_Analysis/DA_in_Paper/figures; figures/ holds copies
+%  (at init: v4's exported set plus what v3 / v2 held; EXPORTED.md is v4's list).
+% =============================================================================
+
+% --- preamble -----------------------------------------------------------------
+% 00_preamble.tex is v2's (the TUM metadata, packages, notation, drafting macros),
+% 00_preamble_v3.tex v3's additions, 00_preamble_v4.tex v4's (the appendix long-data
+% switch, \longdata). All three are v5's to edit; keep the split so a preamble change
+% is easy to find.
+\input{parts/00_preamble}
+\input{parts/00_preamble_v3}
+\input{parts/00_preamble_v4}
+
+\begin{document}
+
+% --- front matter -------------------------------------------------------------
+\input{parts/01_frontmatter}
+
+% --- main matter --------------------------------------------------------------
+\input{chapters/01_introduction}
+\input{chapters/02_background}
+\input{chapters/03_related_work}
+\input{chapters/04_method}
+\input{chapters/05_setup}
+\input{chapters/06_results}
+\input{chapters/07_conclusion}       % Conclusion: summary, answers to the research questions
+\input{chapters/08_discussion}       % Discussion: limitations, towards deployment, future work
+
+% --- appendices -----------------------------------------------------------------
+\input{chapters/09_appendix}
+
+% --- back matter (acronym list, lists, bibliography) ------------------------------
+\input{parts/99_backmatter}
+
+\end{document}

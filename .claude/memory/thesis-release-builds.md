@@ -1,6 +1,6 @@
 ---
 name: thesis-release-builds
-description: Thesis RELEASE builds (since 2026-09-24) — Working_Space/RELEASE/tools/make_release.py assembles the submission-clean thesis from the LIVE v2/v3/v4 files (never bundles), strips every comment/flag, one aggregated bib, TUM template; one folder per build (latex/ + zip + notes), every build kept; outputs never edited; front-matter decisions of 2026-09-25
+description: "Thesis RELEASE builds — since 2026-09-25 built FROM v5 with Working_Space/v5/tools/make_release_v5.py (imports RELEASE/tools/make_release.py; folder output/<stamp>_thesis_release_ORCH_v5.N, date-time = identity, marked Orchestra); the legacy make_release.py (live v2/v3/v4 files) stays; submission-clean (every comment/flag stripped, one aggregated bib, TUM template); one folder per build (latex/ + zip + notes), every build kept, never deleted or edited; front-matter decisions of 2026-09-25; page limit 60–200"
 metadata:
   type: project
 ---
@@ -28,6 +28,12 @@ Since 2026-09-24 the thesis is released with `logs_in_develop/Writing/Working_Sp
   `--attach-pdf`. Page count is close to the limit — say so when reporting.
 - **Every build**: a row in `RELEASE/CHANGELOG.md` (date-time + v2/v3/v4 revisions) and the notes MD listing
   HOLES (critical lacking things) and bugs noticed.
+
+- **Since 2026-09-25 the build comes from v5** (the aggregate; [[thesis-orchestra-role]]): `cd Working_Space/v5 && python3
+  tools/make_release_v5.py --dry-run`, then `--job O### [--tag …] --note "…"` on the author's word. Same cleaner/checks/notes (the
+  legacy tool is imported); name `<stamp>_thesis_release_ORCH_v5.N` — the DATE-TIME is the identity ("not vXX"); a marked entry
+  in RELEASE/CHANGELOG.md with the v2/v3/v4 revisions v5 was initialised from. Verified: a v5.0 build reproduced the golden
+  release's latex/ byte for byte. Content problems are fixed in v5 (a new v5.N), then rebuild.
 
 **Why:** the author reviews and submits from the release, so it must be reproducible from the owners' files
 in one command and must not silently carry drafting residue; the harness runs `rm` in the session cwd, so

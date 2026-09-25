@@ -18,6 +18,19 @@ stale).
 The abstract is the author's and is copied as it stands. **Content is never changed by a release**: a
 content problem goes to the owning draft through `../cross_draft/`, and the release is rebuilt.
 
+## Builds from v5 — the Advance Orchestra (since 2026-09-25)
+
+Since 2026-09-25 the thesis is edited as **one draft in `../v5`** (author; runbook `../v5/README.md`), and those builds
+are made by **`../v5/tools/make_release_v5.py`**, which imports this tool — the same cleaner, checks, page model, notes,
+zip and changelog writer — and reads its sources from v5 instead of v2 / v3 / v4. They land here as
+`output/<stamp>_thesis_release_ORCH_v5.N[_TAG]/`: **ORCH** marks a build by the Orchestra, **the date-time is its
+identity** (author: "use majorly datetime to distinguish, not vXX"), the v5 revision is information. Each one is
+recorded in [`CHANGELOG.md`](CHANGELOG.md) as *built by the Orchestra from v5*, with the v2 / v3 / v4 revisions v5 was
+initialised from (v2.28 · v3.100b · v4.2, 2026-09-25) and the Orchestra job. The legacy build from v2 / v3 / v4
+(`tools/make_release.py`) stays as it is; **no build of either kind is deleted.** A content problem in a v5 build is
+fixed in v5 (`v5/CHANGELOG.md`), then the release is rebuilt. Verified at init: a v5.0 build reproduces the golden
+release's `latex/` tree byte for byte (`v5/changelogs/v5.0_…`).
+
 ## Quick build
 
 ```bash

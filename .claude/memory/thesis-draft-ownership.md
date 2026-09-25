@@ -1,12 +1,14 @@
 ---
 name: thesis-draft-ownership
-description: Thesis drafts v2/v3/v4 are edited by separate chats and each owns fixed chapters (v2=Ch1–4, v3=Ch5–6, v4=Ch7 Conclusion + Ch8 Discussion + appendix, live since 2026-09-24 at v3.98/v2.27) — never cross-edit; read Working_Space/DRAFT_OWNERSHIP.md first
+description: "LEGACY since 2026-09-25 — the thesis now lives in Working_Space/v5 (the aggregate the Orchestra edits; see thesis-orchestra-role). The v2/v3/v4 owner-chat split (v2=Ch1–4, v3=Ch5–6, v4=Ch7 Conclusion + Ch8 Discussion + appendix) is kept and used less: never cross-edit inside them; a change made there is announced under ## → v5 in cross_draft/INBOX.md and absorbed into v5; read Working_Space/DRAFT_OWNERSHIP.md first"
 metadata:
   node_type: memory
   type: project
   originSessionId: 1c56946d-b40c-4293-9648-70342972edfd
   modified: 2026-09-24T21:00:00.000Z
 ---
+
+**SINCE 2026-09-25 (author): the thesis is ONE draft, `Working_Space/v5/`, edited by the Orchestra chat ([[thesis-orchestra-role]]); v5 = v2.28 · v3.100b · v4.2 put together (byte-identical to the golden release's sources). v2 / v3 / v4 are legacy sources — kept, used less, never edited from v5; when the author does take a big job to one of them, the owner edits its own files as before and adds a `## → v5` INBOX row, and the Orchestra merges it with `v5/tools/absorb.py`. The seven INBOX rows open on 2026-09-25 were resolved in v5.1 (`🔀 v5.1`). Everything below describes the legacy split, still binding inside those folders.**
 
 The thesis drafts in `logs_in_develop/Writing/Working_Space/` are worked on by **separate chats**, and each owns fixed chapters (set by the author 2026-09-14; v4 live 2026-09-24):
 

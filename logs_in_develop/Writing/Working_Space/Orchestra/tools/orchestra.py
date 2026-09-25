@@ -2,8 +2,12 @@
 """orchestra.py -- the Orchestra's helper (Working_Space/Orchestra).
 
 The Orchestra handles MINOR and CROSS-LINKED changes to the thesis drafts v2 / v3 / v4, distributes
-bigger jobs as TODO lists to the owner chats, and runs a RELEASE when the author asks. This tool
-does the bookkeeping that is easy to get wrong by hand:
+bigger jobs as TODO lists to the owner chats, and runs a RELEASE when the author asks. Since
+2026-09-25 (the Advance Orchestra, job O003) the thesis lives in Working_Space/v5 -- the aggregate the
+Orchestra edits directly (runbook v5/README.md); v2 / v3 / v4 are legacy sources, kept and used less.
+`status` shows v5 and what it carries, `bump v5` writes the next `## v5.N`, kinds `advance` (an edit
+in v5) and `absorb` (a legacy change merged into v5) name the two Advance job types. This tool does
+the bookkeeping that is easy to get wrong by hand:
 
     python3 tools/orchestra.py status [--write] [--full]      the snapshot: draft versions, sync chain, open INBOX rows,
                                                               last release, last job; --write also writes STATE.md
@@ -35,7 +39,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ORCH = os.path.dirname(HERE)                      # Working_Space/Orchestra
 WS = os.path.dirname(ORCH)                        # Working_Space
 WRITING = os.path.dirname(WS)                     # logs_in_develop/Writing
-DRAFTS = {d: os.path.join(WS, d) for d in ('v2', 'v3', 'v4')}
+DRAFTS = {d: os.path.join(WS, d) for d in ('v2', 'v3', 'v4', 'v5')}
+V5 = os.path.join(WS, 'v5')
 RELEASE = os.path.join(WS, 'RELEASE')
 RELEASE_OUT = os.path.join(RELEASE, 'output')
 CROSS = os.path.join(WS, 'cross_draft')
@@ -50,8 +55,10 @@ RE_VERSION = re.compile(r'^## v(\d+)\.(\d+)([a-z]?)\b(.*)$')
 RE_SHORT = re.compile(r'^(v\d+\.\d+[a-z]?)')
 RE_JOB = re.compile(r'^O(\d{3})_')
 RE_RELEASE_DIR = re.compile(r'^\d{8}_\d{6}_thesis_release_')
-TARGETS = ('v2', 'v3', 'v4')
-KINDS = ('edit', 'todo', 'release', 'sync', 'check', 'init')
+TARGETS = ('v2', 'v3', 'v4')                       # the legacy owner chats: cross notes go to them
+ALL = ('v2', 'v3', 'v4', 'v5')                     # every draft with a CHANGELOG.md; v5 = the aggregate
+INBOX_TARGETS = ('v2', 'v3', 'v4', 'v5')           # sections of cross_draft/INBOX.md
+KINDS = ('edit', 'todo', 'release', 'sync', 'check', 'init', 'advance', 'absorb')
 
 
 # ------------------------------------------------------------------------------------------ io
@@ -135,12 +142,13 @@ def draft_version(name):
 
 def next_version(name):
     """v3/v4: the next letter of the current revision (v3.100b -> v3.100c, v4.2 -> v4.2a).
-    v2: the next number (v2.28 -> v2.29) -- v3/tools/sync_v2.py reads no letter suffix."""
+    v2: the next number (v2.28 -> v2.29) -- v3/tools/sync_v2.py reads no letter suffix.
+    v5: the next number (v5.0 -> v5.1) -- one revision per working pass, the author's scheme."""
     cur = draft_version(name)
     if cur['key'] is None:
         raise SystemExit(f'{name}: no version heading found in its CHANGELOG.md')
     major, minor, letter = cur['key']
-    if name == 'v2':
+    if name in ('v2', 'v5'):
         return f'v{major}.{minor + 1}', cur
     nxt = 'a' if not letter else chr(ord(letter) + 1)
     if nxt > 'z':
@@ -162,6 +170,31 @@ def sync_state(name):
         return {}
 
 
+def absorb_state():
+    """What v5 carries of v2 / v3 / v4: ABSORB_STATE.json after an absorb, else the INIT_STATE.json of v5.0."""
+    for fn in ('ABSORB_STATE.json', 'INIT_STATE.json'):
+        try:
+            with open(os.path.join(V5, 'inherited', fn), encoding='utf-8') as f:
+                j = json.load(f)
+        except (OSError, ValueError):
+            continue
+        if fn == 'INIT_STATE.json':
+            b = j.get('built_on', {})
+            return dict(absorbed_at=j.get('initialised_at', '?') + ' (init, v5.0)',
+                        **{d: b[d]['heading'] for d in TARGETS if d in b})
+        return j
+    return {}
+
+
+def v5_builds():
+    try:
+        dirs = sorted(d for d in os.listdir(RELEASE_OUT)
+                      if RE_RELEASE_DIR.match(d) and '_ORCH_' in d and os.path.isdir(os.path.join(RELEASE_OUT, d)))
+    except OSError:
+        dirs = []
+    return (dirs[-1] if dirs else None), len(dirs)
+
+
 def sync_chain():
     """What v3 carries of v2, what v4 carries of v3 (and of v2 through it), against the live versions."""
     v2, v3, v4 = (draft_version(d) for d in TARGETS)
@@ -170,7 +203,7 @@ def sync_chain():
     v3_in_v4 = short_of(s4.get('v3_version'))
     v2_in_v4 = short_of(s4.get('v2_version_via_v3'))
     return dict(
-        v2=v2, v3=v3, v4=v4,
+        v2=v2, v3=v3, v4=v4, v5=draft_version('v5'),
         v2_in_v3=v2_in_v3, v3_lags=(v2_in_v3 != v2['short']), v3_synced=s3.get('synced_at', '?'),
         v3_in_v4=v3_in_v4, v2_in_v4=v2_in_v4, v4_lags=(v3_in_v4 != v3['short']), v4_synced=s4.get('synced_at', '?'),
     )
@@ -204,7 +237,7 @@ def inbox_sections():
 def inbox_open(full=False):
     _, secs = inbox_sections()
     res = {}
-    for t in TARGETS:
+    for t in INBOX_TARGETS:
         rows = [r for r in secs.get(t, dict(rows=[]))['rows'] if r['status'].startswith('⏳')]
         res[t] = rows
     return res
@@ -292,7 +325,7 @@ def git_dirty():
 
 
 def versions_cell():
-    return ' · '.join(draft_version(d)['short'] for d in TARGETS)
+    return ' · '.join(draft_version(d)['short'] for d in ALL)
 
 
 # ------------------------------------------------------------------------------------ status
@@ -315,14 +348,25 @@ def cmd_status(args):
     L.append('')
     L.append('| draft | revision | heading |')
     L.append('| :-- | :-- | :-- |')
-    for d in TARGETS:
+    for d in ALL:
         v = ch[d]
         flag = ''
         if v['out_of_order']:
             flag += ' ⚠ CHANGELOG not in descending order'
         if d == 'v2' and v['letter']:
             flag += ' ⚠ v2 has a letter suffix: v3/tools/sync_v2.py cannot read it'
+        if d == 'v5':
+            flag += ' — **the thesis** (the aggregate; Advance Orchestra since 2026-09-25)'
         L.append(f'| {d} | **{v["short"]}** | {v["text"]}{flag} |')
+    L.append('')
+    ab = absorb_state()
+    moved = [d for d in TARGETS if short_of(ab.get(d, '')) != ch[d]['short']]
+    L.append('## v5 — the aggregate (Advance Orchestra, since 2026-09-25; runbook `v5/README.md`)')
+    L.append('')
+    L.append(f'- v5 carries (last absorbed {ab.get("absorbed_at", "?")}): '
+             + ' · '.join(f'{d} **{short_of(ab.get(d, "?"))}**' for d in TARGETS)
+             + f'; legacy drafts moved since: **{", ".join(moved) if moved else "none"}**. '
+             f'File view: `cd v5 && python3 tools/absorb.py status`')
     L.append('')
     L.append('## Sync chain (one-way v2 → v3 → v4; a RELEASE reads the LIVE files, so a lag matters only for bundles and inherited copies)')
     L.append('')
@@ -335,7 +379,7 @@ def cmd_status(args):
     L.append('')
     L.append('## cross_draft/INBOX.md — open rows (⏳)')
     L.append('')
-    for tgt in TARGETS:
+    for tgt in INBOX_TARGETS:
         rows_t = opened[tgt]
         L.append(f'- **→ {tgt}: {len(rows_t)} open**')
         for r in rows_t:
@@ -347,6 +391,9 @@ def cmd_status(args):
     L.append('## RELEASE')
     L.append('')
     L.append(f'- builds kept in `RELEASE/output/`: {n_builds}; newest: `{rel_dir or "none"}`')
+    o_dir, o_n = v5_builds()
+    L.append(f'- of these built by the Orchestra from v5 (`_ORCH_`): {o_n}; newest: `{o_dir or "none"}` '
+             f'(`cd v5 && python3 tools/make_release_v5.py`)')
     L.append(f'- `RELEASE/CHANGELOG.md` top row: {rel_top or "none"}')
     L.append('')
     L.append('## Orchestra')
@@ -379,9 +426,9 @@ def cmd_new_job(args):
     sync_line = (f'v3 carries {ch["v2_in_v3"]} ({"v2 moved" if ch["v3_lags"] else "in step"}); '
                  f'v4 carries {ch["v3_in_v4"]} / {ch["v2_in_v4"]} ({"v3 moved" if ch["v4_lags"] else "in step"})')
     opened = inbox_open()
-    inbox_line = ', '.join(f'→ {tg}: {len(opened[tg])}' for tg in TARGETS)
+    inbox_line = ', '.join(f'→ {tg}: {len(opened[tg])}' for tg in INBOX_TARGETS)
     text = fill(tpl, dict(JOB=job, TITLE=args.title, OPENED=human(t), KIND=args.kind,
-                          V2=ch['v2']['short'], V3=ch['v3']['short'], V4=ch['v4']['short'],
+                          V2=ch['v2']['short'], V3=ch['v3']['short'], V4=ch['v4']['short'], V5=ch['v5']['short'],
                           RELEASE_LAST=rel_dir or 'none', SYNC=sync_line, INBOX_OPEN=inbox_line))
     write(path, text)
     row = (f'| [{job}](jobs/{os.path.basename(path)}) | {human(t)} → ⏳ | {args.kind} | '
@@ -398,16 +445,27 @@ DEFAULT_BODY = """- **Changed:** `<file>` (l. <n>–<m> / `\\label{{...}}`): <wh
 - **Left to {draft}:** README / CROSS_STATE / SYNC_STATE untouched — refresh them at your next pass; INBOX row → {draft} (Orchestra {job}).
 - Signed: Orchestra (Claude Fable 5.1, Claude Code), {job} · {date}."""
 
+DEFAULT_BODY_V5 = """- **Changed:** `<file>` (l. <n>–<m> / `\\label{{...}}`): <what, in one sentence per file>.
+- **Why:** the author's request (job {job}): "<the author's words>".
+- **Checked:** `tools/check.py` → <result>; `tools/make_release_v5.py --dry-run` → <result>; `tools/absorb.py status` → <result>. **Not compiled.**
+- **INBOX:** <rows resolved here, marked 🔀 {version} — or none>. **Release:** <none / the build folder>.
+- Signed: Orchestra (Claude Fable 5.1, Claude Code), {job} · {date}."""
+
 
 def cmd_bump(args):
     draft = args.draft
     if draft not in DRAFTS:
-        raise SystemExit('draft must be v2, v3 or v4')
+        raise SystemExit('draft must be v2, v3, v4 or v5')
     nxt, cur = next_version(draft)
     jf = job_file(args.job)
-    link = f'../Orchestra/jobs/{os.path.basename(jf)}'
+    link = args.link or f'../Orchestra/jobs/{os.path.basename(jf)}'
     heading = f'## {nxt} — {today()} · {args.title} (Orchestra {args.job}) → [`{link}`]({link})'
-    body = read(args.body_file) if args.body_file else DEFAULT_BODY.format(job=args.job, draft=draft, date=today())
+    if args.body_file:
+        body = read(args.body_file)
+    elif draft == 'v5':
+        body = DEFAULT_BODY_V5.format(job=args.job, version=nxt, date=today())
+    else:
+        body = DEFAULT_BODY.format(job=args.job, draft=draft, date=today())
     entry = heading + '\n\n' + body.rstrip('\n') + '\n\n'
     print(f'{draft}: {cur["short"]} -> {nxt}')
     print(entry)
@@ -475,7 +533,7 @@ def cmd_new_todo(args):
     jf = job_file(args.job)
     targets = [x.strip() for x in args.to.split(',') if x.strip()]
     for x in targets:
-        if x not in TARGETS + ('RELEASE',):
+        if x not in ALL + ('RELEASE',):
             raise SystemExit(f'--to: unknown target {x}')
     slug = slugify(args.title)
     path = os.path.join(TODO, f'TODO_{stamp(t)}_{args.job}_{slug}.md')
@@ -552,10 +610,11 @@ def main(argv=None):
     p.set_defaults(fn=cmd_new_job)
 
     p = sub.add_parser('bump', help="insert the next revision entry into a draft's CHANGELOG.md")
-    p.add_argument('draft', help='v2 | v3 | v4')
+    p.add_argument('draft', help='v2 | v3 | v4 | v5 (v5: the next number, one revision per pass)')
     p.add_argument('--job', required=True)
     p.add_argument('--title', required=True, help='the heading text after the date')
     p.add_argument('--body-file', help='markdown body of the entry (default: a skeleton to complete by hand)')
+    p.add_argument('--link', help='what the heading links (default: the Orchestra job file; v5: e.g. changelogs/v5.1_<date>_<slug>.md)')
     p.add_argument('--dry-run', action='store_true')
     p.set_defaults(fn=cmd_bump)
 
@@ -571,7 +630,7 @@ def main(argv=None):
     p = sub.add_parser('new-todo', help='a TODO master file with one section per target draft')
     p.add_argument('title')
     p.add_argument('--job', required=True)
-    p.add_argument('--to', default='v2,v3,v4', help='comma list of v2,v3,v4,RELEASE')
+    p.add_argument('--to', default='v2,v3,v4', help='comma list of v2,v3,v4,v5,RELEASE')
     p.set_defaults(fn=cmd_new_todo)
 
     p = sub.add_parser('close-job', help='close the CHANGELOG row with the versions after the job')

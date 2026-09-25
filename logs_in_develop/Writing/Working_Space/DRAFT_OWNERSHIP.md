@@ -2,11 +2,27 @@
 
 **Read this first in any v2, v3 or v4 session.** Three drafts are worked on by separate chats.
 Each owns a fixed set of chapters; **no chat edits another draft's chapters or files.**
-**Created:** 2026-09-14 · **Revised:** 2026-09-14 (v3.7 — Discussion moved to v4, Conclusion shared); 2026-09-24 (v4.0 — v4 live: the endings and the appendix are v4's; v4.1 — Ch 7 = Conclusion, Ch 8 = Discussion) · **Authority:** the author. Change this file only when the author re-divides the work.
+**Created:** 2026-09-14 · **Revised:** 2026-09-14 (v3.7 — Discussion moved to v4, Conclusion shared); 2026-09-24 (v4.0 — v4 live: the endings and the appendix are v4's; v4.1 — Ch 7 = Conclusion, Ch 8 = Discussion); **2026-09-25 (v5 — the aggregate: the Orchestra edits the whole thesis in `v5/`; v2 / v3 / v4 are legacy sources, kept and used less)** · **Authority:** the author. Change this file only when the author re-divides the work.
 
 ---
 
-## The map
+## Since 2026-09-25 — v5, the aggregate (the Advance Orchestra)
+
+**The author (2026-09-25): the major parts of the thesis are set; from now on the whole thesis lives in `v5/` and is
+edited there by the Orchestra chat, while v2 / v3 / v4 are kept as legacy sources and used less.** v5 was initialised
+(v5.0, Orchestra job O003, 2026-09-25 13:43) from the live files of **v2.28, v3.100b and v4.2** — byte-identical to the
+sources of the golden release of 2026-09-25 (`v5/inherited/INIT_STATE.json`). What this does to the map below:
+
+| draft | status since 2026-09-25 | writes | reaches the thesis how |
+| :-- | :-- | :-- | :-- |
+| **v5** | 🟢 **live — the thesis** (runbook [`v5/README.md`](v5/README.md)) | everything: Ch 1–9, abstract, the three preamble parts, the acronym list, the three `.bib` files; `figures/` holds copies | **the release is the build:** `v5/tools/make_release_v5.py` → `RELEASE/output/<stamp>_thesis_release_ORCH_v5.N/`; one `## v5.N` entry per update in `v5/CHANGELOG.md` |
+| v2 · v3 · v4 | 🟡 legacy, kept | their own files as before, only when the author takes a big job to that chat | a row under `## → v5` in `cross_draft/INBOX.md`; the Orchestra merges the change into v5 with `v5/tools/absorb.py` and records a new v5.N; nothing is edited in the legacy draft for that |
+
+The one-way flow v2 → v3 → v4 and the per-chat rules below still hold *inside* the legacy drafts; they no longer
+describe how the thesis is assembled. The seven INBOX rows open on 2026-09-25 were resolved in v5.1 (marked `🔀 v5.1`;
+the drafts' own files untouched). Jobs: [`Orchestra/README.md`](Orchestra/README.md).
+
+## The map (the legacy drafts; superseded for assembly by v5, see above)
 
 | draft | status | **owns — the only things it writes** | where |
 | :-- | :-- | :-- | :-- |

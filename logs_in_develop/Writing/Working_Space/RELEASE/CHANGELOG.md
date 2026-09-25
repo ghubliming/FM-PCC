@@ -4,6 +4,18 @@ One entry per build of `tools/make_release.py`, newest first: when, which v2 / v
 
 ---
 
+## 20260925_152307 -- 20260925_152307_thesis_release_ORCH_v5.3_BUGFIX_A
+
+- **Built by the Orchestra from v5 v5.3** (v5.3 — 2026-09-25 · **PURE BUG FIX** · source: the same first-reading audit (answer group A, items A6 and A9) · Figures 5.10 / 5.11 (clipped text) and 6.4 (palette) rebuilt in the DA store and re-exported; no text change (Orchestra O007)) · job O008 · `v5/tools/make_release_v5.py`
+- **v5 was initialised from:** v2 **v2.28** · v3 **v3.100b** · v4 **v4.2** (initialised 2026-09-25 13:43:19, job O003); what changed in v5 since is in `v5/CHANGELOG.md`
+- **Mode:** TUM template; tag BUGFIX_A
+- **Output:** `output/20260925_152307_thesis_release_ORCH_v5.3_BUGFIX_A/latex/` (main.tex + 18 text files, 48 binary files), `output/20260925_152307_thesis_release_ORCH_v5.3_BUGFIX_A/20260925_152307_thesis_release_ORCH_v5.3_BUGFIX_A.zip` (7841 KB)
+- **Estimate:** ~179 pages (153-215), inside the 60-200 limit, but the uncertainty band touches it; above the 60-80 guideline. NOT compiled (no TeX toolchain here).
+- **Holes recorded:** 9 · **bugs/findings:** 1 · figures 41 (41 raster) · bibliography 53 entries, 53 cited · labels 275
+- **Notes:** `output/20260925_152307_thesis_release_ORCH_v5.3_BUGFIX_A/RELEASE_NOTES_20260925_152307.md`
+- **Note:** PURE BUG FIX build — the first-reading audit's tier A applied: v5.2 (twenty text fixes in Ch 4–6: the lost FM-loss label, the printed audit identifier, four floats over the page, two captions, one retired wording, nine prose-vs-table contradictions) + v5.3 (Figures 5.10, 5.11, 6.4 fixed at the DA source). No content change against the golden release 20260925_115125; the float fixes are sized, not compiled — check pp. 61, 67, 122, 131 first.
+- **Note:** Source: RELEASE/output/20260925_115125_…_GOLDEN_TEMPLATE/feedback/THESIS_FIRST_READING_REVIEW.md, answered in feedback/CLAUDE_ANSWER_…md §9 group A (status column = what this build carries).
+
 ## 20260925_115125 -- 20260925_115125_thesis_release_v2.28_v3.100b_v4.2_GOLDEN_TEMPLATE
 
 - **Built on:** v2 **v2.28** (v2.28 — 2026-09-24 · the seven open cross notes applied (v3.73–v3.96, v4.0, v4.1)) · v3 **v3.100b** (v3.100b — 2026-09-25 · v3's copies of Ch 7–9 and the appendix archived (author: "also archive the v3 chapters for 07/08/09/appendix")) · v4 **v4.2** (v4.2 — 2026-09-25 · The ChatGPT audit of v4.1a applied (§15) on v3.100; author's long-data heading flag and planning-horizon item; figures re-exported; bundles and release rebuilt)

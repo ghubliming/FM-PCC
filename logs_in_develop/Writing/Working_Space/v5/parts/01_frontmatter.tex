@@ -1,0 +1,79 @@
+
+\pagenumbering{alph}
+\ifstandalone
+  \begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\scshape\LARGE \getUniversity\par}
+    \vspace{0.5cm}
+    {\scshape\large School of \getSchool\par}
+    \vspace{2.5cm}
+    {\huge\bfseries \getTitle\par}
+    \vspace{1cm}
+    {\Large \getDoctype\par}
+    \vfill
+    {\large \getAuthor\par}
+    \vspace{1cm}
+    {\large Supervisor: \getSupervisor\par}
+    {\large Advisor: \getAdvisor\par}
+    \vspace{1cm}
+    {\large \getSubmissionLocation, \getSubmissionDate\par}
+  \end{titlepage}
+  \chapter*{Abstract}
+\else
+  % Order copied from Template_DONT_CHANGE/main.tex so the merge is a straight
+  % lift: cover, \frontmatter, then the front pages.
+  \input{pages/cover}
+  \frontmatter{}
+  \input{pages/title}
+  \input{pages/disclaimer}
+  % \input{pages/software_used}   % optional, per the template
+  \input{pages/acknowledgments}
+  \input{pages/abstract}
+\fi
+
+% -----------------------------------------------------------------------------
+% ABSTRACT -- v2.21. Modelled on the abstracts of the reference papers (DPCC,
+% HardFlow, SafeFlowMPC, Diffuser): one paragraph, NO numbers, context ->
+% limitation -> approach -> extensions -> qualitative results.
+% -----------------------------------------------------------------------------
+\ifstandalone
+Diffusion planners capture multimodal demonstrations, and Diffusion Predictive Control with
+Constraints (DPCC) enforces constraints by projecting denoising iterates onto the feasible set.
+However, their long denoising sequence is fixed during training and repeated at every control step.
+This thesis replaces diffusion with deterministic transport along an ordinary differential equation.
+Three objectives are studied: instantaneous-velocity matching, analytic average-velocity matching and
+consistency-interpolated average-velocity matching, whose target mixes the instantaneous velocity with
+the network's own prediction; the integration budget is selected at deployment. On the
+obstacle-avoidance benchmark of DPCC, the aim is to preserve success and
+constraint satisfaction while reducing network evaluations, the time to compute one action and the
+control steps required to reach the goal. Constraint enforcement forms a second contribution. DPCC projects the
+current iterate; endpoint projection predicts and projects the final trajectory,
+then guides later sampling steps towards it. The analysis identifies when the budget and activation threshold permit guidance. After evaluation on the DPCC benchmark, the controller is extended to two
+more complex settings built for this thesis: vision-conditioned object alignment and control of an
+underactuated, open-loop unstable quadrotor. On obstacle avoidance, the average-velocity models lead:
+consistency-interpolated average-velocity matching dominates the diffusion model of DPCC with its own
+network, holding its success within the constraints in fewer control steps at a small fraction of its
+computation, and analytic average-velocity matching gives up little of that success for the same
+saving; no configuration of endpoint projection improves on them there. On vision-conditioned
+alignment, analytic average-velocity matching dominates the diffusion model again, and at the larger
+budget that task needs, endpoint projection is the better projector on the constraints. On the
+quadrotor, projection carries over to a new plant and to constraints in three dimensions; there,
+simple generated demonstrations make instantaneous-velocity matching enough, and the tracking
+controller decides whether a plan is flown.
+\fi
+\srcnote{Qualitative results: v3.99, \texttt{chapters/06\_results.tex},
+\texttt{sec:res:avoiding:conclusion}, \texttt{tab:avoiding-projectors},
+\texttt{sec:res:aligning:conclusion}, \texttt{sec:res:uav:pillars:conclusion},
+\texttt{sec:res:uav:corridor:conclusion}, \texttt{sec:res:uav:scurve:conclusion} and
+\texttt{sec:res:summary:conclusion}; primary DPCC protocol, not the supplementary extended protocol.
+Order of the claims: \texttt{Working\_Space/GUIDE\_20260924\_results\_storyline\_author.md}.}
+
+\microtypesetup{protrusion=false}
+\tableofcontents{}
+\microtypesetup{protrusion=true}
+
+% =============================================================================
+\mainmatter{}
+% =============================================================================
+

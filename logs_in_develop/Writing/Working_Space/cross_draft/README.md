@@ -8,7 +8,9 @@ cross_draft/
 ├── INBOX.md      one line per open item — read this first, every session
 ├── to_v2/        found by v3 or v4, to be acted on in v2 (Ch 1–4, abstract, preamble, bib)
 ├── to_v3/        found by v2 or v4, to be acted on in v3 (Ch 5–6, appendix, Ch 8 draft)
-└── to_v4/        found by v2 or v3, for v4 (Ch 7 Discussion, Ch 8 refinement, future work)
+├── to_v4/        found by v2 or v3, for v4 (Ch 7 Discussion, Ch 8 refinement, future work)
+└── to_v5/        since 2026-09-25: for the Orchestra, which edits the thesis in ../v5 — findings about the thesis
+                  text, and announcements of a change made in a legacy draft's own files (to be absorbed into v5)
 ```
 
 ## Rules
@@ -24,3 +26,8 @@ cross_draft/
   other row; the Orchestra never marks its own rows ✅.
 - v2 → v3 changes to inherited chapters still flow through `v3/tools/sync_v2.py`; this folder is for
   findings, not for copying text.
+- **Since 2026-09-25 (Orchestra O003) the thesis lives in `../v5`** (the aggregate; runbook `../v5/README.md`). A finding
+  that concerns the thesis text goes under `## → v5` (folder `to_v5/`), where the Orchestra acts on it in v5. A change
+  made in a legacy draft's own files is announced the same way (a `## → v5` row naming the files and the revision), so
+  that the Orchestra absorbs it with `v5/tools/absorb.py`. A row the Orchestra resolves in v5 is marked **`🔀 v5.N`**;
+  that never touches the legacy draft's own files, so the owner has nothing to redo.

@@ -1,0 +1,198 @@
+% =============================================================================
+%  v3-ONLY PREAMBLE ADDITIONS
+% -----------------------------------------------------------------------------
+%  Everything v3 needs that v2's preamble does not already provide lives here,
+%  and NOTHING else does. The reason is mechanical: parts/00_preamble.tex is
+%  inherited from v2 byte-for-byte, so that a v2 preamble change fast-forwards
+%  into v3 without a conflict. Editing that file would forfeit exactly that.
+%
+%  Already provided by parts/00_preamble.tex -- do not redeclare:
+%    amsmath, amssymb, amsthm, graphicx, booktabs, xcolor, acronym, biblatex,
+%    hyperref, the \vect/\matr/\R/\E/\ftime/\nfe notation macros, the theorem
+%    environments, and the \hole / \srcnote drafting macros.
+% =============================================================================
+
+% Figures are produced in Data_Analysis/DA_in_Paper/figures and copied into
+% figures/ by DA_in_Paper/plotting/export_to_draft.py. Extension-less
+% \includegraphics lets the same source use the PDF once DA_in_Paper/plotting/svg/svg2pdf.sh has
+% run, and fall back to nothing gracefully while only the SVG exists.
+\graphicspath{{figures/}}
+
+% -----------------------------------------------------------------------------
+%  v3 drafting macros -- REMOVE ALL THREE BEFORE SUBMISSION
+% -----------------------------------------------------------------------------
+
+% \dataref{...}  the *evidence of record* for the claim just made: which batch,
+% which DA, at what protocol. v2's \srcnote points at CODE, which answers "how
+% is it implemented"; \dataref points at DATA, which answers "where does this
+% number come from". Every number in Chapters 6-7 carries one.
+\newcommand{\dataref}[1]{\textcolor{gray}{\footnotesize\textsf{[data: #1]}}}
+
+% \provisional{...}  a statement that is true of the data on disk today but sits
+% below the strength the thesis wants, and will move when an owed run lands.
+% The list of owed runs is DATASTATUS_20260910 section 8; each use names its own.
+\newcommand{\provisional}[1]{\textcolor{orange}{\textbf{[PROVISIONAL:} #1\textbf{]}}}
+
+% \guard{...}  the caveat sentence that must travel with a claim wherever it is
+% quoted -- seed depth, protocol tier, a selection effect. Set in the running
+% text rather than a footnote, because a caveat in a footnote gets dropped when
+% the sentence is quoted.
+\newcommand{\guard}[1]{\textcolor{violet}{\emph{#1}}}
+
+% \flawed{...}  (v3.65, author 2026-09-22) a passage the author has declared FLAWED
+% and temporarily DISABLED: it stays in the source and in the build, printed in
+% grey under a red banner, so that nothing is deleted, every label it defines
+% still resolves, and no reader can mistake it for a result. The UAV-pillars
+% material of Chapters 5 and 6 is the first use. Flip \pillarsflawedfalse to
+% print those blocks normally again once the scene has been re-evaluated.
+% Counted by tools/check.py; must reach zero before submission.
+\newif\ifpillarsflawed
+\pillarsflawedtrue
+\newcommand{\flawed}[1]{\textcolor{red}{\textbf{[FLAWED:} #1\textbf{]}}}
+% \outdated{...}  (v3.66) a passage whose DATA is being replaced by a run that has not landed:
+% the structure stays, the numbers are blanked or archived (withheld/20260922_v3.66_archive).
+\newcommand{\outdated}[1]{\textcolor{red}{\textbf{[OUTDATED:} #1\textbf{]}}}
+% deadblock  (v3.67) a block the author has declared DEAD for now: kept in the build, grey
+% under a red banner, untouched inside; may be dropped wholesale before submission.
+% #1 = the banner text. First use: the twenty-episode appendix section.
+\newenvironment{deadblock}[1]{%
+  \par\noindent\flawed{DEAD FOR NOW (author, 2026-09-22): #1}\par\color{black!55}}{\normalcolor}
+\newenvironment{pillarsflawed}{%
+  \ifpillarsflawed
+    \par\noindent\flawed{UAV-pillars --- this block is temporarily disabled (author, 2026-09-22,
+    v3.65). The evaluation on this scene is under review and will be updated; until then nothing in
+    it may be cited, and its numbers are printed in grey for the record only.}\par
+    \color{black!55}%
+  \fi}{%
+  \ifpillarsflawed\normalcolor\fi}
+% Bold identifies a main experimental configuration selected in the surrounding
+% text. Monochrome emphasis survives grayscale printing and does not rely on
+% colour perception.
+\newcommand{\mainconfig}[1]{\textbf{#1}}
+\newcommand{\selectedmark}{\ensuremath{\blacktriangleright}}
+% The pinned baseline of the whole thesis -- the diffusion model of DPCC at its own
+% budget and its own best selection rule -- is marked with a filled circle, so that a
+% reader never has to work out which row is the thing being beaten. Deliberately a
+% different shape from \selectedmark: the triangle is OUR operating point, the dot is
+% THEIRS, and a table may carry both.
+\newcommand{\baselinemark}{\ensuremath{\bullet}}
+
+% -----------------------------------------------------------------------------
+%  BIBLIOGRAPHY -- the v3 half
+% -----------------------------------------------------------------------------
+%  bibliography.bib is inherited from v2 byte-for-byte and is registered by the
+%  inherited preamble. v3's own entries live in a SEPARATE resource so that the
+%  two drafts never append to the same file -- see the header of
+%  bibliography_v3.bib for why that matters, and inherited/SYNC_STATE.json for
+%  which v2 revision the inherited half is currently at.
+%
+%  \addbibresource is additive; biber reports a key defined in both resources
+%  rather than silently shadowing it. Guarded by \ifstandalone for the same
+%  reason v2 guards its own: in the merged template build, settings.tex line 68
+%  already registers the bibliography, and registering a resource twice there
+%  duplicates it.
+\ifstandalone
+  \addbibresource{bibliography_v3.bib}
+\fi
+
+% -----------------------------------------------------------------------------
+%  \autoref NAMES THAT NOTHING ELSE DEFINES
+% -----------------------------------------------------------------------------
+%  Two gaps that only bite once Chapters 5-8 exist, both fixed here rather than
+%  in a chapter, so no inherited file diverges from v2 over them.
+%
+%  1. THEOREM-LIKE ENVIRONMENTS. The inherited preamble declares definition /
+%     proposition / theorem / remark, but hyperref only knows \autoref names for
+%     the standard sectioning units. sec:setup:metrics states the thesis's
+%     definition of improvement as a `definition' and five places \autoref it,
+%     which without this is an undefined control sequence at build time.
+%     \providecommand, not \newcommand: settings.tex may define them on merge.
+\providecommand{\definitionautorefname}{Definition}
+\providecommand{\propositionautorefname}{Proposition}
+\providecommand{\theoremautorefname}{Theorem}
+\providecommand{\remarkautorefname}{Remark}
+
+%  2. APPENDICES. After \appendix the chapter counter still carries the chapter
+%     autoref name, so \autoref{app:repro} renders "Chapter C" -- which is why v2
+%     wrote that one cross-reference as `Appendix~\ref{...}' by hand and recorded
+%     it as its single \ref exception. Redefining the name inside \appendix fixes
+%     it for every appendix reference at once and lets \autoref be used
+%     uniformly. The hand-written exception in Chapter 4 still typesets
+%     correctly, so nothing there needs touching.
+\providecommand{\chapterautorefname}{Chapter}
+\let\fmpccorigappendix\appendix
+\renewcommand{\appendix}{\fmpccorigappendix\def\chapterautorefname{Appendix}}
+
+% -----------------------------------------------------------------------------
+%  TEMPLATE PARITY: the capitalised \autoref names
+% -----------------------------------------------------------------------------
+%  Template_DONT_CHANGE/settings.tex:44-52 capitalises the \autoref names
+%  through the babel language hook:
+%      \addto\extrasamerican{\def\chapterautorefname{Chapter} ...}
+%  The standalone branch never loads settings.tex, so a standalone build gets
+%  hyperref's own defaults instead and renders "section 5.2" where the merged
+%  template build renders "Section 5.2". With 133 \autoref calls in the draft
+%  that is a visible difference between the two builds of the same source.
+%
+%  Mirrored here through the SAME hook, so it behaves identically and is not
+%  overwritten when babel selects the language at \begin{document} -- a plain
+%  \providecommand in the preamble would be. Guarded by \ifstandalone so that
+%  the merged build takes settings.tex's copy and this never fires twice.
+\ifstandalone
+  \addto\extrasamerican{%
+    \def\chapterautorefname{Chapter}%
+    \def\sectionautorefname{Section}%
+    \def\subsectionautorefname{Subsection}%
+    \def\subsubsectionautorefname{Subsubsection}%
+  }
+\fi
+
+% -----------------------------------------------------------------------------
+%  \todofigure -- a figure that is PLANNED but does not exist yet
+% -----------------------------------------------------------------------------
+%  Distinct from \fmpccgraphic's fallback, which handles "the file should be
+%  here and is not". This one means "nobody has made this yet", and it carries
+%  the SPEC: what the panel must show, and where the asset has to come from.
+%  Written into the draft rather than into a side file so the gap is visible on
+%  every read of the chapter, and so whoever renders it does not have to guess.
+%  Counted by tools/check.py; must reach zero before submission.
+%
+%  #1 (optional) box height, default 0.30\textwidth · #2 the specification
+\newcommand{\todofigure}[2][0.30\textwidth]{%
+  \fcolorbox{red}{white}{%
+    \parbox[c][#1][c]{0.90\linewidth}{%
+      \centering
+      {\color{red}\textbf{[FIGURE TO BE MADE]}}\\[0.7em]
+      {\footnotesize #2}%
+    }%
+  }%
+}
+
+% -----------------------------------------------------------------------------
+%  TABLES THAT FIT THE PAGE
+% -----------------------------------------------------------------------------
+%  Table 6.1 ran off the right margin in the first Overleaf build: a plain
+%  `tabular' is as wide as its longest row, and a \multicolumn{..}{l}{...} note
+%  never wraps. Every v3 table whose text can grow is now a `tabularx' of width
+%  \linewidth, with its text columns as `L' (ragged-right, wrapping) and its
+%  number columns as r/c, so LaTeX shrinks the text columns instead of the page.
+%  Notes that used to sit in a \multicolumn row are in the caption.
+%  tabularx is not in the TUM template's settings.tex -- fold it in at merge time.
+% (tabularx and the L column type are now defined in the inherited parts/00_preamble.tex, v2.17;
+%  defining L here too would be a redefinition error.)
+
+
+% -----------------------------------------------------------------------------
+%  NUMBERED SUBSUBSECTIONS
+% -----------------------------------------------------------------------------
+%  scrbook numbers headings down to \subsection only. Chapter 6 nests its per-task
+%  parts one level deeper (Generative Models -> Step Budget, ...), and thirteen
+%  \autoref calls point at those \subsubsection labels. Unnumbered, each would print
+%  the PARENT subsection's number and send the reader to the wrong heading. Starred
+%  \subsubsection* headings (used in Ch 4) are unaffected. Fold into settings.tex at merge.
+% (now set in the inherited parts/00_preamble.tex, v2.17.)
+
+% Keep the task figures inside the subsection that introduces them. Without
+% explicit barriers, LaTeX may defer the two avoiding figures past the aligning
+% heading, and the same can happen again at the quadrotor subsection.
+\usepackage{placeins}
