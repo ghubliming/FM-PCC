@@ -254,9 +254,10 @@ def fig_expert_aligning(outdir):
 
     n = sum(b['n'] for b in D['aligning'])
     hits = sum(b['n_push_hits'] for b in D['aligning'])
+    hs = sum(b.get('n_push_hits_halfspace', 0) for b in D['aligning'])   # v3.100: 0 of 120
     f.frame([0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8], [-0.4, -0.2, 0.0, 0.2, 0.4],
             'x [m]', 'y [m]', 'Vision-conditioned alignment',
-            f'{n} recorded contexts · {hits} direct pushes cross the keep-out region',
+            f'{n} recorded contexts · {hits} direct pushes cross the keep-out region, {hs or "none"} the halfspace',
             xfmt=lambda v: f'{v:g}', yfmt=lambda v: f'{v:g}')
     f.clip_to_box()
 

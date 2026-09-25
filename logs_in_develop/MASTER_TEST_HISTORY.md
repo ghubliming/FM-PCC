@@ -6282,3 +6282,26 @@ Comprehensive data analysis of the MPC candidate fan ($B=4$ vs $B=1$) on `avoidi
 
 4. **Extended Protocol Feasibility Validation (`ntrial20`)** (`ntrial20_da.py`, `app_ntrial20_feasible.tex`):
    - Formalized appendix analysis over 20-episode extended rollouts across D3IL tasks, demonstrating that ranking, speedup factors, and constraint satisfaction rates observed under the 5-seed DPCC protocol reproduce faithfully in larger sample evaluations.
+
+
+***
+
+## S-Curve Plan Horizon Diagnostics, Aligning Precision Limits & Thesis v4 Release Pipeline (September 24–25, 2026)
+
+**Keywords**: UAV S-curve MPC plan diagnostics, fig_uav_scurve_plans, scurve_r44_plans.py, plan horizon corner cutting, goal distance variance, scurve_goal_dist_sd.py, D3IL-aligning, in-position precision limits, aligning_in_position.py, thesis v4 migration, RELEASE pipeline, commits c885010b, 65bca136.
+
+1. **UAV S-Curve Open-Loop MPC Plan Horizon Diagnostics & Visualization** (`Data_Analysis/DA_in_Paper/plotting/extract/scurve_r44_plans.py`, `Data_Analysis/DA_in_Paper/plotting/builders/paths.py`, `Data_Analysis/DA_in_Paper/figures/da/fig_uav_scurve_plans.{png,svg}`, commit `c885010b`):
+   - **MPC Plan Sampling & Architecture**: To decouple trajectory generator planning quality from tracking controller performance on UAV S-Curve, extracted 4-candidate, 8-waypoint MPC plans sampled every 20th control step across trial 0 flights for FM ($K \in \{1, 2, 20\}$) and MeanFM ($K \in \{1, 2\}$) from corpus `temp/23-09-FULL/S_CURVE-P2/R44_scurve_20260924_161747` (tag `p23scgrid`). Serialized trajectory arrays to `data/uav_scurve_plans.json` and generated `fig_uav_scurve_plans.png` depicting waypoint candidate fans across the track.
+   - **Plan Smoothness & Corner-Cutting Verification**: Confirmed that open-loop MPC candidate distributions from both Flow Matching and MeanFlow exhibit smooth, un-chattered waypoint arcs. Crucially, the plans themselves fundamentally route through the second inside corner of the crossover, proving that corner cutting is an intrinsic property of the learned plan distribution rather than dynamic tracking error or controller lag.
+
+2. **UAV S-Curve Goal Distance Statistical Variance Analysis** (`Data_Analysis/DA_in_Paper/analysis/scurve_goal_dist_sd.py`, commit `c885010b`):
+   - Implemented automated statistical extraction for final distance-to-goal metrics ($d_{goal}$) across all 15 experimental cells in the UAV S-Curve benchmark (MeanFM, CI-MeanFM, FM, and Diffusion across budgets and controllers).
+   - Augmented Table 6.13, Table 6.14, and Table 6.15 reporting with rigorous sample standard deviations ($\mu \pm \sigma$), providing empirical variance bounds on terminal flight precision.
+
+3. **D3IL Visual Aligning "In-Position" Precision Limit Analysis** (`Data_Analysis/DA_in_Paper/analysis/aligning_in_position.py`, commit `c885010b`):
+   - Conducted an in-depth precision audit of box alignment accuracy on MeanFM $K=20$ unprojected (`diffuser`) versus projected (`hardflow_sls-r` tightened) across the 10 evaluation contexts.
+   - Evaluated final planar box-to-target distance against the official environment success threshold ($dist_{xy} \le 0.018$ m). Revealed that while projection achieves 10/10 violation-free rollouts and moves the box towards the target in 8/10 contexts (reducing median distance to 0.074 m, closing 84% of initial distance), **0/10 contexts satisfy the strict 18 mm in-position tolerance** (best achieved: 2.2 cm in rollout 9 and 4.7 cm in rollout 2). Confirmed that the task is constrained by end-effector manipulation precision rather than obstacle feasibility.
+
+4. **Thesis v4 Draft Architecture & RELEASE Pipeline Initialization** (`logs_in_develop/Writing/Working_Space/v4/`, `RELEASE/`, commit `65bca136`):
+   - Initiated the thesis v4 working tree and release infrastructure, establishing automated synchronization tooling (`sync_v3.py`, `check.py`) and frozen v3 references.
+   - Formalized overarching cross-environment synthesis: average-velocity flow models (MeanFlow family) decisively win across imitation learning benchmarks with expert demonstrations (D3IL-avoiding and D3IL-aligning); HardFlow projection provides vital constraint enforcement for difficult non-convex sets; on UAV scenes with simple expert trajectories, standard Flow Matching ($K=1$) suffices, with performance governed primarily by tracking controller limits and demonstration compatibility.

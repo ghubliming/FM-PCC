@@ -1,14 +1,15 @@
 % =============================================================================
 %  DATA RECORD -- input by chapters/09_appendix.tex inside \ifappendixfull ... \fi
 %  Extracted byte-for-byte from the v3.98 handover (FROM_v3_v3.98_20260924_201920/
-%  chapters/09_appendix.tex, section "UAV-corridor under Every Selection Rule"); nothing inside was edited at v4.0.
+%  chapters/09_appendix.tex, section "UAV-corridor under Every Selection Rule"); nothing inside was edited at v4.0; the intro sentence (success = crossing in controlled flight, latched) at v4.2.
 %  The section heading, its label and its reading stay in 09_appendix.tex.
 % =============================================================================
 \autoref{tab:uav-corridor} prints each model at each budget at its best selection rule under each projection
 method: the rule with the most successes, then the fewest violating steps, then the least time. The four
-tables below print every rule, per constraint and projection method. Success is reaching the end of the
-corridor within the episode limit, and the constraint is read as violating control steps per flight
-(\autoref{sec:setup:metrics:uav}).
+tables below print every rule, per constraint and projection method. A flight succeeds when it crosses the
+finish line at the end of the corridor in controlled flight: the crossing is latched when it happens,
+and the controlled-flight checks of \autoref{sec:setup:metrics:uav} are taken over the whole flight;
+the constraint is read as violating control steps per flight.
 \dataref{R33 at the end of the corridor (R45a): \texttt{DA\_in\_Paper/data/corridor\_v3\_frontier.json},
 \texttt{plotting/extract/corridor\_v3\_frontier.py}, on the batch and npz of \autoref{tab:uav-corridor-raw};
 counts equal \texttt{DA\_20260924\_corridor\_v3.md} \S3.3 and \texttt{DA\_20260924\_corridor\_v3\_R45a\_clear\_line.md}

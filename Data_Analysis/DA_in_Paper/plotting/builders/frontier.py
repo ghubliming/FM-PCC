@@ -135,7 +135,10 @@ def _legend_strip(width, engines):
 # ═══════════════════════════════════════════════════════════════════════════
 # The outcome axis of both alignment frontiers (v3.62, author): the share of the starting
 # distance the box was moved TOWARDS its target, on a linear axis. 100 % is a box delivered
-# to the target and 0 % a box not moved at all; it is the bracketed number of
+# to the target and 0 % a median final distance equal to the mean initial one: the printed
+# number is 100*(1 - median(d_final)/mean(d_init)), not a median of per-context shares, so 0 %
+# is NOT 'a box not moved' (v3.100, audit F03; the zero-line label reads '0 % reference'). It is
+# the bracketed number of
 # tab:va-models. v3.61 drew the complement (final distance as % of the start, log axis),
 # which put 100 % at the bad end and read as inverted.
 PCT_LABEL = 'distance closed, % of the start (log scale)'
@@ -249,7 +252,7 @@ def fig_aligning_tradeoff(outdir):
     edges = [f.L] + near + [f.R]
     ga, gb = max(zip(edges, edges[1:]), key=lambda ab: ab[1] - ab[0])
     lx = ga + 14 if gb - ga > 160 else f.L + 8
-    f.text(lx, y0 - 9, 'box not moved', 11, '#c0392b', anchor='start', bold=True)
+    f.text(lx, y0 - 9, '0 % reference', 11, '#c0392b', anchor='start', bold=True)
     zero_label = (lx, y0 - 22, lx + 140, y0 - 6)     # handed to _scatter so no budget label lands on it
     if len(front) > 1:
         st = []
@@ -387,7 +390,7 @@ def fig_aligning_projected_tradeoff(outdir):
     # v3.77: above the line at the left end. Under the line (v3.6x) the label sat on the bottom
     # frame, which struck it through; the left end is empty near the line (the cheapest
     # projected point is ~266 ms, the axis starts below the unprojected ring at ~190 ms).
-    f.text(f.L + 8, y0 - 9, 'box not moved', 11, '#777', anchor='start', bold=True)
+    f.text(f.L + 8, y0 - 9, '0 % reference', 11, '#777', anchor='start', bold=True)
     if len(front) > 1:
         staircase = []
         for i, p in enumerate(front):

@@ -21,6 +21,29 @@ what it left open.
 
 ---
 
+## v4.2 — 2026-09-25 · The ChatGPT audit of v4.1a applied (§15) on v3.100; author's long-data heading flag and planning-horizon item; figures re-exported; bundles and release rebuilt → [`changelogs/v4.2_20260925_audit_v4.1a_applied.md`](changelogs/v4.2_20260925_audit_v4.1a_applied.md)
+
+- **Absorbed:** v3.100's `05_setup.tex` and `06_results.tex` (`tools/sync_v3.py merge`, fast-forward; stamp
+  v3.100, carrying **v2.27** — v2.28 is still not in v3). Six figure files re-exported (`export_to_draft.py v4`).
+- **Audit applied in full** (`audit from chatgpt/AUDIT_v4.1a_2026-09-25.md` §15, agreed by the auditor in
+  §12–14): Ch 7 C1–C8 (CI-MeanFM dominates, MeanFM one in thirty; aligning claims scoped to the unprojected
+  K = 20 comparison and medians; the order scoped to the tasks with human demonstrations; corridor tie on
+  traversing flights; s-curve order; $\nfe$; RQ2 without the 2.45× claim), Ch 8 D1–D11 (populations named for
+  every restated statistic; the candidate paragraph; future-work items as tests), appendix E1–E7 (rotor reach
+  scope; B.1/B.2 guards; nominal scoring set; B.4 rules on traversing cells and the latched crossing; B.5
+  aggregate-agreement guard for D01; C the MuJoCo MPC environment), M1–M3.
+- **Author's notes:** the Extended Results heading reads "Extended Results (long data: web link and repository
+  code link)" — every `\hole`/`\longdata`/`\guard` kept; Future Work gains *The planning horizon* (H = 8, one
+  executed step per replan; earlier constraints and a farther endpoint against more network and projection cost;
+  untested).
+- **Checked:** `tools/check.py` 17 files, 7788 lines, 276 labels, 53 of 53 citations, 41 figures, all pass.
+  Bundles `thesis_v4_20260925_110246_new` / `_full_clean` byte-faithful, headers v3.100 / v2.27. Release: in the
+  individual changelog. **Not compiled.** Nothing committed.
+- **Cross-draft:** INBOX v3.100 row closed; FYI note to v3 (K/NFE wording in Ch 6 unresolved; the 18.1 ms
+  candidate-study record). Signed: Claude (Fable 5.1, Claude Code), 2026-09-25.
+
+---
+
 ## v4.1a — 2026-09-24 · Synced to v3.99 (carrying v2.27); alias labels removed; bundle rebuilt
 
 - **Absorbed:** v3.99's `05_setup.tex` and `06_results.tex` (`tools/sync_v3.py merge`, fast-forward; stamp

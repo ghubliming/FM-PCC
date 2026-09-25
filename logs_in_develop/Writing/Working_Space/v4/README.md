@@ -1,6 +1,6 @@
 # v4 — the final piece: Discussion, Conclusion, Appendix, and the assembled thesis
 
-> 🚦 **Draft ownership:** v4 writes **Ch 7 Discussion, Ch 8 Conclusion and the appendix**, plus its own
+> 🚦 **Draft ownership:** v4 writes **Ch 7 Conclusion, Ch 8 Discussion and the appendix**, plus its own
 > preamble additions, `bibliography_v4.bib`, `bundle/` and `tools/` — never its copies of Ch 1–6, nothing
 > under `v2/` or `v3/`. Rules: [`../DRAFT_OWNERSHIP.md`](../DRAFT_OWNERSHIP.md).
 

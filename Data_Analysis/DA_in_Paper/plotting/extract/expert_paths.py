@@ -202,6 +202,8 @@ def aligning_contexts():
     b = ay - m * ax
     cx, cy = C['disk']['c']
     r, t = C['disk']['r'], C['tightening']
+    # the tightened halfspace boundary, moved toward the allowed side by t (as the builder draws it)
+    shift = -t * (1 + m * m) ** 0.5
 
     base = os.path.join(S.REPO, 'd3il', 'environments', 'dataset', 'data', 'aligning')
     out = []
@@ -225,14 +227,23 @@ def aligning_contexts():
                 # excluded side of the halfspace (above the line)
                 'box_excluded': bool(bpos[1] > m * bpos[0] + b),
                 'target_excluded': bool(tpos[1] > m * tpos[0] + b),
+                # v3.100 (audit F13.1, author): the push tested against the halfspace too. Its excluded
+                # side is a halfplane, convex, so a segment enters it iff one of its ends lies in it.
+                'push_hits_halfspace': bool(bpos[1] > m * bpos[0] + b or tpos[1] > m * tpos[0] + b),
+                'push_hits_halfspace_tightened': bool(bpos[1] > m * bpos[0] + b + shift
+                                                      or tpos[1] > m * tpos[0] + b + shift),
             })
         n = len(rows)
         print(f'  aligning {split:5s} {n} contexts · direct push crosses the keep-out region in '
               f'{sum(r_["push_hits_disk"] for r_ in rows)} of them '
-              f'({sum(r_["push_hits_disk_tightened"] for r_ in rows)} tightened)')
+              f'({sum(r_["push_hits_disk_tightened"] for r_ in rows)} tightened); the halfspace in '
+              f'{sum(r_["push_hits_halfspace"] for r_ in rows)} '
+              f'({sum(r_["push_hits_halfspace_tightened"] for r_ in rows)} tightened)')
         out.append({'split': split, 'n': n, 'contexts': rows,
                     'n_push_hits': sum(r_['push_hits_disk'] for r_ in rows),
-                    'n_push_hits_tightened': sum(r_['push_hits_disk_tightened'] for r_ in rows)})
+                    'n_push_hits_tightened': sum(r_['push_hits_disk_tightened'] for r_ in rows),
+                    'n_push_hits_halfspace': sum(r_['push_hits_halfspace'] for r_ in rows),
+                    'n_push_hits_halfspace_tightened': sum(r_['push_hits_halfspace_tightened'] for r_ in rows)})
     return out
 
 
@@ -246,7 +257,7 @@ def main():
         'note': ('Quadrotor: the demonstration generator\'s own reference path per homotopy '
                  'class, tested against the inflated and tightened constraint set. Alignment: '
                  'the recorded contexts, and whether the direct push from box to target crosses '
-                 'the keep-out region. Neither is a flown demonstration; those are on the cluster.'),
+                 'the keep-out region or the halfspace. Neither is a flown demonstration; those are on the cluster.'),
         'uav': uav,
         'aligning': align,
     }

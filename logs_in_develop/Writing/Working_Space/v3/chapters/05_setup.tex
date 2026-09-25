@@ -56,7 +56,9 @@ in projection are drawn in \autoref{fig:platform-x2-dimensions} in the appendix.
 
 How a plan reaches each of them differs. On the manipulator the planner commands an end-effector
 increment; inverse kinematics turns each Cartesian setpoint into joint commands. On the quadrotor the
-planner updates a commanded position increment once every three $0.01$\,s MuJoCo physics steps.
+planner updates a commanded position increment once every three $0.01$\,s MuJoCo physics steps on
+UAV-corridor and UAV-s-curve, and once every hundred on UAV-pillars, which flies the planar planner of
+D3IL-avoiding at a fixed altitude (\autoref{sec:setup:protocol:uav}).
 Between planner updates, the cascaded geometric controller of \autoref{sec:method:geometric}
 computes rotor thrusts at every physics step.
 
@@ -100,8 +102,8 @@ computes rotor thrusts at every physics step.
     Skydio X2
       & four rotors; mass $1.325$\,kg; rotor centres $0.228$\,m out; $0.54\times0.62$\,m footprint;
         thrust $[0,13]$\,N per rotor
-      & spatial position increments
-      & $0.03$\,s of simulated time; controller at $0.01$\,s \\
+      & spatial position increments (UAV-corridor, UAV-s-curve); planar increments at a fixed altitude (UAV-pillars)
+      & $0.03$\,s of simulated time, $1$\,s on UAV-pillars; controller at $0.01$\,s \\
     \bottomrule
   \end{tabularx}
 \end{table}
@@ -159,7 +161,7 @@ end effector across a field of six obstacles to a goal line (\autoref{fig:env-av
 
 At test time
 the plan is constrained by halfspaces that the demonstrations never respect, in three geometries --- \emph{top-left-hard}, \emph{top-right-hard} and \emph{both-hard}, defined in \autoref{tab:avoiding-geometries} and drawn in \autoref{fig:constraints-avoiding-sets} --- together with the circular keep-out regions
-of \autoref{sec:method:env:avoiding}. The geometries are those of the \ac{DPCC} configuration \parencite[Sec.~6.1]{romer2025diffusion}, and all three share the workspace $x\in[0.2,0.8]$, $y\in[-0.3,0.4]$, the six obstacles of radius $0.025$ and the goal line at $y=0.35$. Every
+of \autoref{sec:method:env:avoiding}. The geometries are those of the \ac{DPCC} configuration \parencite[Sec.~6.1]{romer2025diffusion}, and all three share the workspace $x\in[0.2,0.8]$, $y\in[-0.3,0.4]$, the six obstacles --- one of radius $0.03$, five of $0.025$ --- and the goal line at $y=0.35$. Every
 constraint also has a tightened version, shrunk by the margin of $0.025$ that \ac{DPCC} introduces and
 applies to this benchmark \parencite[Sec.~5.3]{romer2025diffusion} (\autoref{sec:method:dpcc}). The same
 holds for every constraint set of this thesis, and one convention is fixed here for every result that
@@ -169,11 +171,20 @@ published rate of success with constraint satisfaction from $0.49$ to $0.98$ and
 from $6.0$ to $0.0$ per episode \parencite[Table~1]{romer2025diffusion}. \autoref{sec:setup:baselines:avoiding}
 quotes those numbers in full next to their reproduction; the shrinkage itself, the Minkowski difference
 with the mismatch ball, is stated in \autoref{sec:method:dpcc}. Untightened evaluations are therefore not
-reported. An unprojected plan is the same plan on either set, and its
-violations are scored against the tightened boundary.
+reported. The tightened set is the set the projector is handed; every violation count of
+\autoref{ch:results} is taken against the nominal constraints, the boundary the tightening keeps a margin
+from, and on UAV-corridor and UAV-s-curve the nominal surfaces carry the vehicle's rotor reach
+(\autoref{sec:setup:metrics:uav}). An unprojected plan is the same plan on either set and is scored the
+same way.
 \srcnote{\texttt{config/projection\_eval.yaml}: \texttt{halfspace\_constraints['avoiding-d3il']},
 \texttt{enlarge\_constraints: \{'avoiding': 0.025\}}; parity with \texttt{aux\_repo/dpcc} checked in
-v2, \autoref{sec:method:env:avoiding}.}
+v2, \autoref{sec:method:env:avoiding}. Scoring on the nominal set: \texttt{scripts/eval.py:330--343}
+(\texttt{constraint\_list\_polytopic\_not\_tightened}, raw obstacle radius), the same in
+\texttt{FM\_v3\_meanflow\_test/eval\_flow\_matching\_v3\_meanflow.py:661--678};
+\texttt{mix\_visual\_aligning\_test/eval\_mix\_visual\_aligning.py:1519--1530}
+(\texttt{check\_trajectory\_constraints(\ldots, 0.0)}); \texttt{mix\_uav\_test/eval\_mix\_uav.py:811--865}
+(raw geometry plus \texttt{r\_drone}); \texttt{uav\_avoiding\_bridge/scoring.py:91--110}; upstream
+\texttt{aux\_repo/dpcc/scripts/eval.py:98, 207} the same. v3.100 (audit F01).}
 
 \begin{table}[htpb]
   \caption[Constraint geometries of obstacle avoidance]{The three constraint geometries of the
@@ -307,8 +318,10 @@ is harder to produce, and it puts the projection where only some episodes finish
 The active geometry is \emph{combined-5} (\autoref{tab:aligning-constraints},
 \autoref{fig:aligning-contexts}): a halfspace that cuts off the far corner of the table, a circular
 keep-out region between the box and its target --- the same two geometric forms D3IL-avoiding uses, on a
-task whose plan is three-dimensional. Neither is respected by the demonstrations, so satisfying them is
-left to the projection.
+task whose plan is three-dimensional. Neither is built into the demonstrations: the straight push from
+the box to its target crosses the keep-out region in most recorded contexts and never the halfspace, and
+the plans learned from the demonstrations enter both (\autoref{sec:setup:data:aligning},
+\autoref{sec:res:aligning:projection}); satisfying the two is left to the projection.
 \srcnote{\texttt{config/visual\_aligning\_eval.yaml}: \texttt{active\_geo\_variants: [combined\_5]},
 \texttt{combined\_5.workspace\_bounds}, \texttt{enlarge\_constraints: 0.03}.}
 
@@ -346,7 +359,8 @@ over. They are ten different pushes: their lengths range from $0.41$ to $0.52$\,
 $0.4530$\,m, the starting distance \autoref{sec:res:visual} reports, so a policy that had learned one
 route would satisfy none of them. One context in that figure is drawn with the real box footprints at
 their recorded yaw, which every draw carries, because the marks alone understate the object --- a
-$0.10$\,m box has to be pushed around a $0.06$\,m keep-out region.
+$0.10$\,m box has to be pushed around a $0.06$\,m keep-out region, with the end effector kept out of the
+far corner the halfspace excludes.
 
 \begin{figure}[htpb]
   \centering
@@ -549,9 +563,14 @@ held out --- as the straight push from the box to its target, which is the short
 demonstration could take. The figure is the top view of the table plane, $x$--$y$, the plane the push
 happens in; it draws the contexts and not the demonstrated end-effector paths themselves. That segment
 crosses the keep-out region in $106$ of the $120$ contexts, and in $119$ of them once the region is
-tightened. The demonstrations were recorded without the region
-existing, so the task they teach is precisely the one the constraint forbids; going around it is the
-projection's work, not something the policy could have imitated.
+tightened. It crosses the halfspace in none, tightened or not: in every recorded context the box and its
+target both lie on the allowed side, so the straight push between them does too. Whether a
+demonstration's end effector entered the far corner while working its way around the box cannot be read
+from the contexts, and the recorded paths were not tested; the plans learned from them do enter it ---
+without projection the end effector crosses the keep-out region in seven of the ten evaluation contexts
+and the halfspace in one (\autoref{sec:res:aligning:projection}). The demonstrations were recorded
+without either constraint existing, so the task they teach is precisely the one the constraints forbid;
+going around them is the projection's work, not something the policy could have imitated.
 
 \begin{figure}[htpb]
   \centering
@@ -559,12 +578,19 @@ projection's work, not something the policy could have imitated.
   \caption[The recorded contexts against the alignment constraints]{The $120$ recorded contexts of the
   alignment task over the constraint set of \autoref{fig:aligning-contexts}. Each line joins the
   initial box centre (square) to its target centre (circle); red where that straight push crosses the
-  circular keep-out region, green where it clears it. The draw ranges of
+  circular keep-out region, green where it clears it; no push crosses the halfspace, whose excluded corner
+  is shaded. The draw ranges of
   \autoref{sec:setup:tasks:aligning} are visible as the two bands the squares and circles fall in.}
   \label{fig:expert-aligning}
 \end{figure}
 \dataref{DA\_in\_Paper/data/expert\_paths.json, extract/expert\_paths.py; contexts from
-d3il/environments/dataset/data/aligning/\{train,test\}\_contexts.pkl}
+d3il/environments/dataset/data/aligning/\{train,test\}\_contexts.pkl. v3.100 (author, audit F13.1): the
+push is also tested against the halfspace, nominal and tightened (\texttt{push\_hits\_halfspace}), $0$ of
+$120$ both ways; the demonstrations' end-effector paths are on the cluster and were not tested. The seven
+and one contexts: \texttt{per\_rollout\_detail.csv} of \texttt{batch\_va2\_20260915\_100754}, MeanFM
+$\nfe=20$, \texttt{diffuser}, \texttt{combined\_5-tightened}, \texttt{constraint\_exec\_obstacle\_viol\_count}
+$>0$ in 7 and \texttt{constraint\_exec\_halfspace\_viol\_count} $>0$ in 1 of the ten contexts (untightened
+set: 7 and 2).}
 
 In all three environments, a random tenth of the training windows is held out and used only to select
 the checkpoint (\autoref{tab:train}).
@@ -632,10 +658,13 @@ the obstacles they fly among, and \autoref{fig:expert-uav} shows what follows fr
 the demonstrations of the two scenes that have their own over their constraint sets, the tightened boundary dashed, and the grey silhouette
 on a route is the vehicle to scale at its tightest moment (\autoref{fig:platforms}), for size only. On
 UAV-s-curve the
-single route satisfies the constraint set the projection later enforces, tightening included: the
-generator threads a passage the scene already contains, so nothing in the data has to be corrected. The
-projection is then asked to repair a plan that was never broken, which is why that scene can expose a
-limit of the tracking controller but cannot order the projection methods.
+single route, the generator's reference route, satisfies the constraint set the projection later enforces,
+tightening included: the generator threads a passage the scene already contains, so the demonstrated
+route itself needs no correction. What the projection meets on that scene is the learned plan, which cuts
+the second corner of the crossover (\autoref{sec:res:uav:scurve}). The scene is read for what the tracking
+controller and the selected per-step configuration make of that plan; it yields no ranking of the
+projection methods, because at the selected budget of one evaluation endpoint projection has no guiding
+step (\autoref{sec:res:uav:scurve:projection}).
 
 UAV-corridor is built the other way, and it is the way the obstacle-avoidance benchmark is built. The three
 lanes clear both walls, but every one of them crosses the tilt --- at the launch altitude, where the leaned
@@ -659,10 +688,13 @@ On the two quadrotor-demonstrated scenes that figure draws the references the ge
 than the flights that tracked them, which is the conservative choice: a constraint crossed by the reference is crossed by construction rather than
 by tracking error.
 
-One thing has to be read correctly in that figure and in every quadrotor result that follows. A violation
-is a property of the \emph{path}, not of the aircraft: what is tested is the line of vehicle centres
-against the constraint surfaces, and those surfaces already carry the $0.31$\,m rotor reach
-(\autoref{tab:eval}), so the vehicle's own extent is inside the boundary rather than measured against it.
+One thing has to be read correctly in that figure and in every UAV-corridor and UAV-s-curve result that
+follows. A violation is a property of the \emph{path}, not of the aircraft: what is tested is the line of
+vehicle centres against the constraint surfaces, and on those two scenes the surfaces already carry the
+$0.31$\,m rotor reach (\autoref{tab:eval}), so the vehicle's own extent is inside the boundary rather than
+measured against it. On UAV-pillars no band is added: the scale of $36$ that maps the table into the arena
+sends the rod's radius onto the vehicle's radial reach of $0.36$\,m, so the mapped constraint sets carry
+the extent already (\autoref{sec:setup:tasks:uav}).
 A route turns red when its centre line crosses an inflated surface, and nothing is ever scored by sweeping
 the rotor disks through an obstacle. The scenes are built to be flyable on those terms --- the free
 channel that remains after inflation is a real one --- so a red route means a plan that had somewhere else
@@ -731,10 +763,12 @@ Computation Time.}
 Each episode is scored by
 \begin{itemize}
   \item the final distance between the box and its target in the table plane (metres), summarised over the
-    contexts by its median and its minimum, and the share of the initial distance that was closed,
-    $(d\sidx{init}-d\sidx{final})/d\sidx{init}$ in per cent, against an initial distance averaging
-    $0.4530$\,m: $100\,\%$ is a box brought onto its target and $0\,\%$ one that was not moved towards it
-    at all;
+    contexts by its median and its minimum, and, in per cent, the reduction of the median final distance
+    relative to the mean initial distance of the ten contexts,
+    $100\,(1-\operatorname{median}(d\sidx{final})/\overline{d}\sidx{init})$ with
+    $\overline{d}\sidx{init}=0.4530$\,m: $100\,\%$ is a median box brought onto its target and $0\,\%$ a
+    median final distance equal to the mean initial one --- not a box left unmoved, since the initial
+    distances differ between contexts (their median is $0.4557$\,m);
   \item whether the box was moved at all (a count of contexts);
   \item whether the box ends in position: within $0.018$\,m of its target in the table plane, the position
     tolerance of the task's own success test (a count of contexts); the orientation half of that test is not
@@ -764,7 +798,8 @@ Each flight is scored by
     the scene's walls on no more than $2\,\%$ of its physics steps on UAV-corridor and $8\,\%$ on
     UAV-s-curve, the tolerances with which the demonstrations of each scene were accepted. On UAV-corridor
     and UAV-s-curve the finish line is the end of the walls, $x=2.0$\,m and $x=3.0$\,m, where the walls and
-    every test-time constraint end; a flight is scored the moment it passes it and flies on as before. On
+    every test-time constraint end; the crossing is latched the moment the vehicle passes it, the flight flies
+    on as before, and the controlled-flight checks above are taken over the whole flight. On
     UAV-corridor the line through the route's goal point, $0.8$\,m further on, is not used: the episode limit was set from the
     demonstrations of the level corridor, and a projected flight that has descended under the tilt or climbed
     over the hump can reach that limit after the constraints have ended while still flying towards the goal.
@@ -779,8 +814,9 @@ Each flight is scored by
     (\texttt{DA\_20260924\_scurve\_R44a\_raw\_grid.md}); UAV-pillars is scored by the avoiding metrics
     below. Added v3.80 (DA note \texttt{FROM\_DA\_20260924\_scurve\_R44a\_ready.md} \S3.3).}
   \item whether it is violation-free: no control step on which the flown path violates a constraint. The
-    test is on the path, not on the airframe: the surfaces it is tested against already carry the
-    $0.31$\,m rotor reach (\autoref{tab:eval});
+    test is on the path, not on the airframe: on UAV-corridor and UAV-s-curve the surfaces it is tested
+    against already carry the $0.31$\,m rotor reach (\autoref{tab:eval}), and on UAV-pillars the mapped
+    constraint sets carry the vehicle's extent through the scale (\autoref{sec:setup:tasks:uav});
   \item success with constraint satisfaction: success on a violation-free flight, as on
     D3IL-avoiding;
   \item on UAV-corridor and UAV-s-curve, where almost no flight is free of violations, the constraint is read
@@ -830,15 +866,16 @@ average would hide how much it moves. \autoref{ch:results} therefore prints \emp
 wherever a spread exists, and what the spread is over depends on what the result is a claim about.
 
 \begin{itemize}
-  \item \textbf{Multi-seed results} --- every D3IL-avoiding table --- are reported as the mean over the
+  \item \textbf{Multi-seed results} --- the D3IL-avoiding tables at the protocol of \ac{DPCC}, and
+    UAV-pillars, which follows it --- are reported as the mean over the
     five training seeds and the \emph{sample standard deviation across those seeds}. A claim there is a
     claim about a model and not about one training run, so the variation that matters is how much the
     result moves when the model is trained again. It is also the larger of the two spreads available and
     therefore the conservative one. Each seed is first averaged over the constraint geometries it covers,
     then the mean and the standard deviation are taken over the seeds
     (\autoref{sec:setup:protocol:avoiding}).
-  \item \textbf{Single-seed results} --- the one-seed D3IL-avoiding tables, D3IL-aligning and the
-    quadrotor scenes --- carry no seed dimension, so the spread is the sample standard deviation
+  \item \textbf{Single-seed results} --- the one-seed D3IL-avoiding tables, D3IL-aligning, UAV-corridor and
+    UAV-s-curve --- carry no seed dimension, so the spread is the sample standard deviation
     \emph{across the episodes, contexts or flights} of the cell, which is stated with each table. Where a
     cell averages several constraint geometries, the within-geometry standard deviations are pooled.
   \item \textbf{Counts are printed as counts.} A result of the form \enquote{$10/10$ flights} or
@@ -1095,13 +1132,13 @@ contain, and what they leave out, is discussed in \autoref{ch:discussion}.
 environments; where a value differs between models it is given per model.
 
 \begin{table}[p]
-  \caption[Training parameters]{Training parameters. Values are those recorded by the training runs of the
-  reported models. The effective batch is the batch size times the number of gradient accumulation
+  \caption[Training parameters]{Training parameters. Values as recorded by the training runs. The effective batch is the batch size times the number of gradient accumulation
   steps. \enquote{Diffusion (\ac{DPCC})} is the baseline of \autoref{tab:target}: on D3IL-avoiding it is the
   training configuration of \ac{DPCC}, taken over unchanged; on the other two environments the same model
-  and backbone are trained on that environment's data, with the settings this table lists. The visual
+  and backbone are trained on that environment's data, with these settings. The visual
   input is two RGB tensors, each $(N,1,3,96,96)$, encoded to a combined $(N,128)$ feature; $N$ is the
-  training batch size.}
+  training batch size. The quadrotor column is UAV-corridor and UAV-s-curve; UAV-pillars flies the
+  D3IL-avoiding models unchanged.}
   \label{tab:train}
   \centering
   \footnotesize
@@ -1109,7 +1146,7 @@ environments; where a value differs between models it is given per model.
   \renewcommand{\arraystretch}{1.28}
   \begin{tabularx}{\linewidth}{@{}p{2.0cm} L p{1.3cm} p{1.15cm} p{1.5cm} p{1.65cm} p{1.65cm}@{}}
     \toprule
-    & & \multicolumn{3}{c}{D3IL-avoiding} & D3IL-aligning & UAV, all scenes \\
+    & & \multicolumn{3}{c}{D3IL-avoiding} & D3IL-aligning & UAV-corridor, UAV-s-curve \\
     \cmidrule(lr){3-5}
     Parameter & Meaning & Diffusion (\ac{DPCC}) & FM & MeanFM, CI-MeanFM & all models & all models \\
     \midrule
@@ -1132,9 +1169,10 @@ the same shape. In D3IL-avoiding, the state anchor is $(N,4)$ and the plan is $(
 position increment and the commanded and measured planar positions. In D3IL-aligning, the state anchor
 is $(N,6)$ and the plan is $(N,8,9)$: a spatial position increment and the commanded and measured
 spatial positions. Each of its two RGB cameras supplies one $(N,1,3,96,96)$ image tensor; the
-concatenated visual feature has shape $(N,128)$. In the UAV scenes, the state anchor is $(N,9)$ and
+concatenated visual feature has shape $(N,128)$. On UAV-corridor and UAV-s-curve, the state anchor is $(N,9)$ and
 the plan is $(N,8,12)$: a spatial position increment, commanded position, measured position and
-measured velocity. The embodiment layouts are introduced in \autoref{sec:method:deployment}.
+measured velocity; UAV-pillars flies the D3IL-avoiding models and their $(N,8,6)$ plans unchanged
+(\autoref{sec:setup:tasks:uav}). The embodiment layouts are introduced in \autoref{sec:method:deployment}.
 For the \textsc{b} entry the actual transport time is $1-\operatorname{Beta}(1.5,1)$; for
 \textsc{ln} the recorded parameters are $P\sidx{mean}=-0.4$ and $P\sidx{std}=1.0$. Their exact
 distributions are given in \autoref{app:training-time-laws}.
@@ -1169,7 +1207,8 @@ the same kind of choice, made for the same reason.
 What is held fixed is what the comparison rests on. All four models share the backbone, its parameter
 count, the dataset, the plan horizon and the projection they are read through, and each is evaluated at
 the step budgets stated with its results. What varies is how each objective was brought to convergence,
-which is a property of the training run and not of the comparison.
+and that recipe is part of what is compared: the results are those of the trained configurations as
+\autoref{tab:train} states them, not of the objectives in isolation.
 
 \subsection{Evaluation}\label{sec:setup:protocol:eval}
 
@@ -1197,7 +1236,7 @@ with one training seed, within the storage and compute available to this work.
     Projected position & coordinates constrained in the plan & $x,y$ (2D) & $x,y,z$ (3D) & $x,y,z$ (3D) \\
     Activation threshold $\eta$ & share of the sampling steps the projection runs on & $0.5$; $1.0$ at the budget floor & lowered with the budget & $0.5$ \\
     Tightening $\delta$ & safety margin, in metres, that every constraint surface is shrunk by; the
-      value \ac{DPCC} introduces, and the only quantity the tightened variants change & $0.025$ & $0.025$ & $0.025$ \\
+      value \ac{DPCC} introduces, and the only quantity the tightened variants change & $0.025$ & $0.03$ & $0.025$ \\
     Body inflation & separate offset, in metres, moving every surface outward so the \emph{vehicle}
       clears it and not only its centre point; the manipulator's end effector is constrained as a point
       and carries none & none & none & $0.31$ \\
@@ -1224,7 +1263,8 @@ The \emph{step budget} counts the sampling steps of a plan, and it is not the sa
 families: for the flow-based models it is the number of ODE solver steps, chosen at inference, and for
 the diffusion baseline the number of denoising steps, fixed at 20 when the model is trained. Without
 endpoint projection it is also the number of network evaluations per plan. Under endpoint projection each
-guiding step adds one further evaluation, the lookahead from the projected state, so a plan there costs
+guiding step adds one further evaluation, the lookahead from the predicted state whose endpoint is then
+projected, so a plan there costs
 $\nfe + n\sidx{guide}$ evaluations (\autoref{sec:setup:protocol:guiding}); the tables name the sampling
 steps $\nfe$ throughout.
 % v3.78: worded as v2.27 defines it (Ch 4): K counts sampling steps, NFE is counted separately.
@@ -1256,15 +1296,17 @@ the budget rises, so that the two alignment budgets are compared at the same num
 rather than at the same share. The one movement in the other direction --- $\eta=1.0$ on D3IL-avoiding ---
 is the same argument at the opposite end: at the budget floor half of the sampling steps is one step, and
 one step is the terminal one, so the threshold is raised until the method has anything to act on at all.
-The two families select the same steps except when $\eta\nfe$ is a whole number: the flow-based samplers
-project on the last $\lceil\eta\nfe\rceil$ steps, while the diffusion baseline's gate includes the step at
-the threshold itself and projects on one more --- eleven rather than ten at $\nfe=20$ and $\eta=0.5$.
+The two families select the same steps except when $\eta\nfe$ is a whole number below $\nfe$: the
+flow-based samplers project on the last $\lceil\eta\nfe\rceil$ steps, while the diffusion baseline's gate
+includes the step at the threshold itself and projects on one more --- eleven rather than ten at $\nfe=20$
+and $\eta=0.5$; at $\eta=1$ both project on every step.
 \autoref{sec:setup:protocol:guiding} works that arithmetic through.
 \srcnote{Baseline: \texttt{diffuser/models/diffusion.py:179, 186} (\texttt{t <= threshold * n\_timesteps},
 $t$ descending); flow: \texttt{flow\_matcher\_v3/models/diffusion.py:190--191}
 (\texttt{loop\_idx >= int((1 - threshold) * K)}) (v2 note of 2026-09-23, item 3).}
 
-The \emph{tightening} margin is $0.025$\,m in all three environments, the value \ac{DPCC} introduces. It
+The \emph{tightening} margin is $0.025$\,m on D3IL-avoiding and the quadrotor scenes, the value \ac{DPCC}
+introduces, and $0.03$\,m on D3IL-aligning (\autoref{tab:aligning-constraints}). It
 shrinks the feasible set, so that a plan which satisfies a constraint numerically still has room left to be
 tracked, and it is the one quantity the tightened variants of a constraint set change.
 
@@ -1422,14 +1464,22 @@ $\nfe=20$ with $\eta=0.2$, the projection runs on $\lceil 4 \rceil = 4$ sampling
 are guiding ones, so the reported endpoint-projection rows there are the method doing its own work. On
 D3IL-avoiding at the budget the benchmark is actually run at, $\nfe=2$ with the default $\eta=0.5$, the
 projection runs on $\lceil 1 \rceil = 1$ sampling step and that step is the terminal one --- so
-$n\sidx{guide}=0$, endpoint and per-step projection compute the same plan, and a difference between them
-there would be noise rather than a property of either method. The same arithmetic gives zero at $\nfe=1$
+$n\sidx{guide}=0$ and endpoint projection reduces to a terminal projection of the sampled plan. On
+instantaneous-velocity matching a run at $\nfe=2$ that handed both projectors the same candidate plans
+produced bit-identical rollouts; on the two average-velocity models the two arms differ even there, because
+the endpoint sampler integrates a different field (below), so only on instantaneous-velocity matching is the
+difference between the methods nil at that budget. The same arithmetic gives zero guiding steps at $\nfe=1$
 for every threshold below $1.0$.
+\dataref{Bit-identical rollouts on instantaneous-velocity matching at $\nfe=2$, $\eta=0.5$, one candidate:
+\texttt{logs\_in\_develop/aggregated\_hardflow\_lowK/DA\_20260824\_does\_HF\_pay\_when\_it\_actually\_runs.md}
+\S4 (from \texttt{HF\_Batch\_Parity/DA\_20260824\_mpc1\_parity\_MF\_vs\_FM.md}: step delta $0.00$, zero
+violations on both sides); on MeanFM the arms differed there (\enquote{HF loses TR 0.50 vs 1.00}). v3.100
+(audit F05).}
 
-Where endpoint projection has guiding steps, its sampler is not the plain one on the two average-velocity
-models: at every step it queries the network at a zero interval, where the plain sampler queries it at
-the step width $1/\nfe$. On those models a difference between endpoint and per-step projection therefore
-belongs to the sampler and the point of projection together.
+Under endpoint projection the sampler is not the plain one on the two average-velocity models, whether or
+not a step is a guiding one: at every transport step it queries the network at a zero interval, where the
+plain sampler queries it at the step width $1/\nfe$. On those models a difference between endpoint and
+per-step projection therefore belongs to the sampler and the point of projection together, at every budget.
 \srcnote{\texttt{flow\_matcher\_v3\_meanflow/sampling/hardflow\_projection.py:838--863, 959}
 (\texttt{\_velocity\_batch}: \texttt{h=torch.zeros\_like(t)}, used for the transport and the lookahead);
 \texttt{flow\_matcher\_v3\_alphaflow/sampling/hardflow\_projection.py:872--900, 998}, the same; plain

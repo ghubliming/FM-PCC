@@ -19,7 +19,13 @@
 %   - C Reproducibility is the compute environment alone and is titled so; label app:repro kept.
 %  v4.0: the long-data switch (parts/00_preamble_v4.tex), the dead block dropped, Reproducibility
 %  as facts, the artefact-name map and corpora out (notes/MOVED_...tex).
-%  Individual changelog: changelogs/v4.1_20260924_conclusion_ch7_discussion_ch8.md
+%  v4.2 (2026-09-25): the ChatGPT audit of v4.1a applied (AUDIT_v4.1a_2026-09-25.md, section 15,
+%  items E1-E7): rotor reach scoped to corridor/s-curve; B.1 guard (one episode per cell); B.2 the
+%  unattempted context and the nominal scoring set; B.3 guard split; B.4 summary on traversing cells,
+%  K=1/K=2 rules, the latched crossing (rules intro); B.5 aggregate-agreement guard (D01);
+%  C the MuJoCo MPC environment. The Extended Results heading carries the long-data / link flag
+%  (author); every \hole, \longdata and \guard stays.
+%  Individual changelog: changelogs/v4.2_20260925_audit_v4.1a_applied.md
 % =============================================================================
 \appendix{}
 % One "Appendix" heading over the lettered appendices (author, 2026-09-23, v3.74).
@@ -70,21 +76,22 @@ zero-length fraction: \texttt{mix\_visual\_aligning/models/mf\_diffusion.py:353-
 \section{Quadrotor Dimensions}\label{app:quadrotor-dimensions}
 
 The dimensions of the Skydio X2 that enter the quadrotor scenes, the rotor disks, the collision
-footprint and the rotor reach of $0.31$\,m by which every constraint surface is inflated
-(\autoref{sec:setup:tasks:uav}), are drawn to scale in \autoref{fig:platform-x2-dimensions}.
+footprint and the rotor reach of $0.31$\,m by which the constraint surfaces of UAV-corridor and
+UAV-s-curve are inflated (\autoref{sec:setup:tasks:uav}), are drawn to scale in
+\autoref{fig:platform-x2-dimensions}; on UAV-pillars the vehicle's extent enters through the scale of
+the scene, and no band is added.
 
 
 \begin{figure}[htpb]
   \centering
   \includegraphics[width=0.75\linewidth]{fig_platform_x2_dimensions}
   \caption[X2 dimensions and projection footprint]{The Skydio X2 rotor disks (radius $0.13$\,m), body
-  and $0.54\times0.62$\,m collision footprint (dotted), drawn to scale. The dashed circle is the
-  $0.31$\,m rotor reach used to inflate the projection constraints.}
+  and $0.54\times0.62$\,m collision footprint (dotted), drawn to scale. The dashed circle is the $0.31$\,m rotor reach, the configured inflation of the projection constraints on UAV-corridor and UAV-s-curve.}
   \label{fig:platform-x2-dimensions}
 \end{figure}
 \FloatBarrier
 
-\chapter{Extended Results}\label{app:results}
+\chapter{Extended Results (long data: web link and repository code link)}\label{app:results}
 
 This appendix records the data behind \autoref{ch:results} that the chapter reads without printing:
 the executed paths of D3IL-avoiding (\autoref{app:avoiding-paths}) and D3IL-aligning
@@ -128,8 +135,9 @@ protocol of \ac{DPCC} runs ---
 \autoref{fig:constraints-avoiding}.}
 \guard{One training seed and one geometry. The protocol runs these two episodes for each of five
 training seeds on each of three geometries (\autoref{tab:protocol}); only one seed's rollout artefacts
-are on disk, so this figure draws two of the thirty episodes a row of
-\autoref{tab:avoiding-dpcc-protocol} is averaged over, and the counts beside the panels are not that
+are on disk, so this figure draws one of the thirty episodes a row of
+\autoref{tab:avoiding-dpcc-protocol} is averaged over, episode 2 of each cell, and the counts beside
+the panels are not that
 row's rates.}
 
 \FloatBarrier
@@ -137,12 +145,16 @@ row's rates.}
 \section{D3IL-aligning: Executed Paths under Each Projection Method}\label{app:aligning-paths}
 
 \autoref{fig:aligning-paths} shows nine of the ten evaluated contexts under each projection setting;
-the tenth, context~7, is the one no configuration moves (\autoref{sec:res:aligning:projection}) and its
-logged path has no extent. Without projection eight of the nine paths enter the keep-out region
-or cross the tightened boundary; under per-step projection one still does, and under endpoint projection
-none. Over all ten contexts the unprojected setting has two violation-free paths, per-step projection
-nine and endpoint projection ten (\autoref{tab:va-projection}), and the panel counts agree with those
-once the unmoved context is added back. The projected paths are visibly longer than their unprojected
+the tenth, context~7, is the one the tightened evaluation never attempts: the tightening enlarges the
+keep-out region until it overlaps the box, the evaluation's box--obstacle guard holds the box
+(\autoref{sec:res:aligning:projection:models}), and its logged path has no extent. Without projection
+eight of the nine displayed contexts have a violating control step on the nominal constraint set, the
+set every violation of \autoref{ch:results} is scored on; under per-step projection one still has, and
+under endpoint projection none. The dashed tightened boundary in the panels is the margin the projector
+is handed, not the boundary the paths are scored against. Over all ten contexts the unprojected setting
+has two violation-free contexts, per-step projection nine and endpoint projection ten
+(\autoref{tab:va-projection}), and the panel counts agree with those once the unattempted context,
+which scores clean, is added back. The projected paths are visibly longer than their unprojected
 counterparts.
 
 \begin{figure}[htpb]
@@ -151,14 +163,13 @@ counterparts.
   \caption[Alignment: the executed end-effector paths under each projection method]{D3IL-aligning, the
   executed end-effector path in nine of the ten contexts under the three projection settings of
   \autoref{tab:va-projection}, over the constraint set of \autoref{tab:aligning-constraints};
-  analytic average-velocity matching at $\nfe=20$, random selection, tightened constraints, one training seed. Context~7, whose path has no extent because the arm never moves, is left out of every panel;
+  analytic average-velocity matching at $\nfe=20$, random selection, tightened constraints, one training seed. Context~7, which the tightened evaluation never attempts and whose path therefore has no extent, is left out of every panel;
   the full ten-context counts are in \autoref{tab:va-projection}. Only the $x$-$y$ position is plotted;
   height $z$ is omitted.
   Green: no violating control step in that context; red: at least one. The filled square is the
   end effector at the start, common to every context, and a dot marks where a context ended. The small
   marks are the nine box start poses (filled) and their targets (hollow), as in
-  \autoref{fig:aligning-contexts}. Shaded: the region excluded for the planned position; dashed: the
-  tightened boundary. Panel counts refer only to the paths shown.}
+  \autoref{fig:aligning-contexts}. Shaded: the region excluded for the planned position; dashed: the tightened boundary the projector is handed; violations are scored on the nominal set. Panel counts refer only to the paths shown.}
   \label{fig:aligning-paths}
 \end{figure}
 \dataref{DA\_in\_Paper/data/exec\_paths.json, extract/exec\_paths.py; the three
@@ -167,12 +178,12 @@ counterparts.
 \texttt{constraint\_exec\_zero\_violation} the colour; the nine drawn paths are episode positions
 0--7 and 9 of each cell (context~7 of the prose is position 8, id 6, in the JSON)}
 \guard{\textbf{This draws the end effector, not the box.} The constraint set of this task applies to
-the planned end-effector position, so the drawn quantity is the one the projector acts on --- but the
-quadrotor figures draw the constrained \emph{body}, and the equivalent here would be the box. The
-evaluation does not log a box pose: \texttt{eval\_mix\_visual\_aligning.py} writes a six-dimensional
-\texttt{obs\_all} that is the commanded and the measured end-effector position, and the box enters the
-record only as the distances of \autoref{tab:va-projection}. Drawing the box would need an
-evaluation re-run with that pose recorded, which is
+the planned end-effector position, so the drawn quantity is the one the projector acts on; the box,
+the task's object, is not constrained, and its pose is not logged: the evaluation writes the
+commanded and the measured end-effector position, and the box enters the record only as the distances
+of \autoref{tab:va-projection}.}
+\dataref{\texttt{eval\_mix\_visual\_aligning.py} writes a six-dimensional \texttt{obs\_all}; drawing
+the box would need an evaluation re-run with its pose recorded,
 \texttt{data\_status/PENDING\_20260922\_all\_lacking\_runs.md}, D10c.}
 
 \FloatBarrier
@@ -222,13 +233,17 @@ three placeholders \texttt{fig:uav-corridor-tradeoff}, \texttt{-paths}, \texttt{
 stays, the tables move to the web link}
 
 \autoref{tab:uav-corridor} prints each model at each budget at its best selection rule under each
-projection method. Under every constraint, projection method and budget the three rules of a
-flow-based model lie within two violating steps per flight and within about fifteen control steps of
-one another, cumulative projection cost leaving the fewest violating steps in most cells; the
-baseline's rules differ by up to five violating steps under the tilt, $0.8$ under cumulative projection
-cost against $6.1$ under temporal consistency, and its cumulative-cost rule over the hump loses one
-flight of ten. Every flight reaches the end of the corridor except under per-step projection at one and
-two evaluations over the hump.
+projection method. Where a cell's flights all traverse the corridor, the three rules of a flow-based
+model lie within about two violating steps per flight ($2.1$ at most) and within about twenty control
+steps ($21.4$ at most) of one another, cumulative projection cost leaving the fewest violating steps in
+most cells. Under per-step projection over the hump at $\nfe = 1$ no rule of any flow-based model
+traverses, and at $\nfe = 2$ only temporal consistency does, on one flight of ten for analytic
+average-velocity matching, two for the consistency-interpolated model and none for
+instantaneous-velocity matching; the zero violating steps of the other rules there belong to flights
+that stall short of the apex until the step cap, not to constrained traversals. The baseline's rules
+differ by about five violating steps under the tilt, $0.8$ under cumulative projection cost against
+$6.1$ under temporal consistency, and its cumulative-cost rule over the hump traverses on nine flights
+of ten.
 \ifappendixfull
 \input{chapters/app_long/uav_corridor_rules}
 \else
@@ -239,16 +254,25 @@ two evaluations over the hump.
 
 % The twenty-episode section is curated by another agent and used as is (author, v3.92).
 \input{chapters/app_ntrial20_feasible}
+\guard{The agreement reported in this section concerns aggregate outcomes across the recorded
+configurations; the identity of the two evaluations' first episodes was not verified, and one
+seed--geometry cell of analytic average-velocity matching differs between the two runs.}
+\dataref{Seed 7 / \emph{top-right-hard}: 1 of 2 against 20 of 20 at $\nfe=1$ and $2$, cause not
+established; \texttt{Working\_Space/ntrial20\_appendix\_20260924/DA\_20260924\_ntrial20\_feasible.md}
+\S5.1. The chapter keeps $29/30$.}
 
 \chapter{Compute Environment}\label{app:repro}\label{app:compute}
 
 Every training and evaluation of this thesis ran on one node of the institute's cluster, scheduled by
 SLURM; \autoref{tab:compute} lists it. The network runs on the GPU; the MuJoCo rollout and the SLSQP
 projection run on the CPU, which a job shares with the other jobs of the node, as it shares the memory
-and the I/O. Each job log records the git revision, the node and the GPU it ran on.
+and the I/O. The two MuJoCo MPC cells of UAV-s-curve (\autoref{sec:res:uav:controller}) ran in a
+second environment on the same node, a copy of the first with MuJoCo 3.x and MJX, in which the
+controller's predictive simulations run on the GPU beside the network. Each job log records the git
+revision, the node and the GPU it ran on.
 
 \begin{table}[htpb]
-  \caption[Compute environment]{The machine and the software of every reported run.}
+  \caption[Compute environment]{The machine and the main software environment of the reported runs; the two MuJoCo MPC cells ran in the second environment named in the text.}
   \label{tab:compute}
   \centering
   \begin{tabularx}{\linewidth}{@{}L L@{}}
@@ -274,7 +298,7 @@ and the I/O. Each job log records the git revision, the node and the GPU it ran 
     Python                  & 3.10 (Conda environment) \\
     PyTorch                 & 2.2.2, CUDA 12.1 build \\
     NumPy / SciPy           & 1.26.4 / 1.13.1 \\
-    MuJoCo                  & 2.3.7, headless EGL rendering \\
+    MuJoCo                  & 2.3.7, headless EGL rendering; 3.x with MJX in the MuJoCo MPC environment \\
     Projection solver       & SciPy SLSQP \\
     ODE integration         & \texttt{torchdiffeq} 0.2.3 \\
     Diffusers / Transformers & 0.31.0 / 4.41.2 \\

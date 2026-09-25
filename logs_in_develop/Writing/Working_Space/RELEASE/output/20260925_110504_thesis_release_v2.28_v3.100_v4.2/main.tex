@@ -1,0 +1,125 @@
+\RequirePackage[l2tabu,orthodox]{nag}
+\documentclass[headsepline,footsepline,footinclude=false,oneside,fontsize=11pt,paper=a4,listof=totoc,bibliography=totoc]{scrbook}
+
+\newcommand*{\getUniversity}{Technische Universität München}
+\newcommand*{\getFaculty}{Informatics}
+\newcommand*{\getDegree}{Informatics}
+\newcommand*{\getSchool}{Computation, Information and Technology}
+
+\newcommand*{\getTitle}{Flow Matching Predictive Control with Constraints}
+\newcommand*{\getTitleGer}{Flow-Matching-basierte prädiktive Regelung unter Nebenbedingungen}
+
+\newcommand*{\getAuthor}{TODO: Author}
+\newcommand*{\getDoctype}{Master's Thesis}
+\newcommand*{\getSupervisor}{TODO: Supervisor}
+\newcommand*{\getAdvisor}{TODO: Advisor}
+\newcommand*{\getKeywords}{flow matching;predictive control;constrained sampling;imitation learning}
+\newcommand*{\getSubmissionDate}{TODO: Submission date}
+\newcommand*{\getSubmissionLocation}{Munich}
+
+\usepackage{amsmath,amssymb,amsthm}
+\input{settings}
+\usepackage{xcolor}
+
+\usepackage{tabularx}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\setcounter{secnumdepth}{\subsubsectionnumdepth}
+\setcounter{tocdepth}{\subsectionnumdepth}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[chapter]
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}[chapter]
+\newtheorem{theorem}{Theorem}[chapter]
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}[chapter]
+
+\newcommand{\vect}[1]{\boldsymbol{#1}}
+\newcommand{\matr}[1]{\boldsymbol{#1}}
+\newcommand{\trans}{^{\textrm{T}}}
+\newcommand{\sidx}[1]{_{\textrm{#1}}}
+\newcommand{\Id}[1]{\textbf{Id}_{#1}}
+\newcommand{\unitvec}[1]{\textbf{e}_{#1}}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Unif}{\mathcal{U}}
+\newcommand{\Normal}{\mathcal{N}}
+\newcommand{\sg}{\operatorname{sg}}
+\newcommand{\proj}[1]{\Pi_{#1}}
+\newcommand{\dd}{\mathrm{d}}
+\newcommand{\vfield}{v}
+\newcommand{\afield}{u}
+\newcommand{\ftime}{\tau}
+\newcommand{\nfe}{K}
+
+\graphicspath{{figures/}}
+
+\newcommand{\mainconfig}[1]{\textbf{#1}}
+\newcommand{\selectedmark}{\ensuremath{\blacktriangleright}}
+\newcommand{\baselinemark}{\ensuremath{\bullet}}
+
+\providecommand{\definitionautorefname}{Definition}
+\providecommand{\propositionautorefname}{Proposition}
+\providecommand{\theoremautorefname}{Theorem}
+\providecommand{\remarkautorefname}{Remark}
+
+\providecommand{\chapterautorefname}{Chapter}
+\let\fmpccorigappendix\appendix
+\renewcommand{\appendix}{\fmpccorigappendix\def\chapterautorefname{Appendix}}
+
+\usepackage{placeins}
+
+\begin{document}
+
+\pagenumbering{alph}
+\input{pages/cover}
+\frontmatter{}
+\input{pages/title}
+\input{pages/disclaimer}
+\input{pages/acknowledgments}
+\input{pages/abstract}
+
+\microtypesetup{protrusion=false}
+\tableofcontents{}
+\microtypesetup{protrusion=true}
+
+\mainmatter{}
+
+\input{chapters/01_introduction}
+\input{chapters/02_background}
+\input{chapters/03_related_work}
+\input{chapters/04_method}
+\input{chapters/05_setup}
+\input{chapters/06_results}
+\input{chapters/07_conclusion}
+\input{chapters/08_discussion}
+
+\input{chapters/09_appendix}
+
+\microtypesetup{protrusion=false}
+
+\addchap{Abbreviations}
+\begin{acronym}
+  \itemsep-.25\baselineskip
+  \acro{TUM}[TUM]{Technical University of Munich}
+  \acro{DPCC}[DPCC]{Diffusion Predictive Control with Constraints}
+  \acro{NFE}[NFE]{number of function evaluations}
+  \acro{ODE}[ODE]{ordinary differential equation}
+  \acro{JVP}[JVP]{Jacobian--vector product}
+  \acro{NLP}[NLP]{nonlinear program}
+  \acro{SLSQP}[SLSQP]{sequential least-squares quadratic programming}
+  \acro{IK}[IK]{inverse kinematics}
+  \acro{PD}[PD]{proportional--derivative}
+  \acro{UAV}[UAV]{unmanned aerial vehicle}
+  \acro{FiLM}[FiLM]{feature-wise linear modulation}
+  \acro{MPC}[MPC]{model predictive control}
+\end{acronym}
+
+\listoffigures{}
+\listoftables{}
+
+\microtypesetup{protrusion=true}
+\printbibliography{}
+
+\end{document}

@@ -46,17 +46,32 @@ def strip_comments(text):
 
 
 def files_from_master():
-    """The master's \\input order -- the real file list, not a glob."""
+    """The master's \\input order -- the real file list, not a glob -- followed into the \\input
+    lines of the chapter files themselves (v3.100: chapters/app_ntrial20_feasible.tex is reached only
+    through chapters/09_appendix.tex, and its labels were reported missing). A nested \\input that
+    does not resolve under this draft (the template's pages/ and settings, input from parts/) belongs
+    to the template and is not reported; a missing master-level \\input still is."""
     with open(MASTER) as f:
         src = f.read()
     out = [('thesis_v3.tex', src)]
-    for rel in RE_INPUT.findall(src):
+    seen = set()
+    queue = [(rel, True) for rel in RE_INPUT.findall(src)]          # (path, from the master?)
+    while queue:
+        rel, top = queue.pop(0)
         path = os.path.join(V3, rel if rel.endswith('.tex') else rel + '.tex')
+        key = os.path.normpath(path)
+        if key in seen:
+            continue
+        seen.add(key)
         if not os.path.exists(path):
-            out.append((rel, None))
+            if top:
+                out.append((rel, None))
             continue
         with open(path) as f:
-            out.append((os.path.relpath(path, V3), f.read()))
+            text = f.read()
+        out.append((os.path.relpath(path, V3), text))
+        if rel.startswith('chapters/'):
+            queue.extend((sub, False) for sub in RE_INPUT.findall(strip_comments(text)))
     return out
 
 

@@ -285,3 +285,5 @@ Appended to by `make_bundle.py`. Bundles are build output; nothing reads them ba
 | 20260924_201628 | 15 | 8031 | 8129 | 41 | 49/78 | `thesis_v3_20260924_201628_full_clean.tex` |
 | 20260924_214628 | 11 | 5853 | 6013 | 40 | 49/78 | `thesis_v3_20260924_214628_new.tex` |
 | 20260924_214628 | 15 | 8035 | 8133 | 41 | 49/78 | `thesis_v3_20260924_214628_full_clean.tex` |
+| 20260925_102006 | 11 | 5941 | 6101 | 40 | 49/78 | `thesis_v3_20260925_102006_new.tex` |
+| 20260925_102007 | 15 | 8123 | 8221 | 41 | 49/78 | `thesis_v3_20260925_102007_full_clean.tex` |

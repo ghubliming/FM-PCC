@@ -61,5 +61,6 @@ and "suicide". Do not bring them back.
     with v3's and v2's additions; the `\longdata` banners and both holes must be gone.
 11. **`fig_hardflow_endpoint_generation`** is v2's vendored figure and is not in the DA_in_Paper store
     (as in v3); `figures/` carries v3's copy.
-12. **Page budget.** Ch 7 ≈ 6 pages, Ch 8 ≈ 4 at 11 pt (estimate, not compiled); the thesis as a whole is
+12. **Page budget.** The endings are ≈ 5 pages together since v4.1 (Ch 7 summary + RQ answers, Ch 8 three
+    sections; estimate, not compiled — the v4.0 figure of 6 + 4 is superseded); the thesis as a whole is
     well above the 60–80-page guide because of Ch 5–6 — an author's call, not v4's.

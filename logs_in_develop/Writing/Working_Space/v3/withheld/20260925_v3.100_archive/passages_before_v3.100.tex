@@ -1,0 +1,349 @@
+% The passages replaced at v3.100 (AUDIT_v3.98 §13, applied 2026-09-25), verbatim, by tag.
+% Not input by any master; kept for the record. New text: chapters/05_setup.tex, 06_results.tex.
+
+% ===== [A1a platforms prose] chapters/05_setup.tex =====
+On the quadrotor the
+planner updates a commanded position increment once every three $0.01$\,s MuJoCo physics steps.
+Between planner updates, the cascaded geometric controller of \autoref{sec:method:geometric}
+computes rotor thrusts at every physics step.
+
+% ===== [A1b Table 5.1 X2 row] chapters/05_setup.tex =====
+      & spatial position increments
+      & $0.03$\,s of simulated time; controller at $0.01$\,s \\
+
+% ===== [A2 obstacle radius] chapters/05_setup.tex =====
+the six obstacles of radius $0.025$ and the goal line at $y=0.35$.
+
+% ===== [A3 F01 scoring convention] chapters/05_setup.tex =====
+Untightened evaluations are therefore not
+reported. An unprojected plan is the same plan on either set, and its
+violations are scored against the tightened boundary.
+\srcnote{\texttt{config/projection\_eval.yaml}: \texttt{halfspace\_constraints['avoiding-d3il']},
+\texttt{enlarge\_constraints: \{'avoiding': 0.025\}}; parity with \texttt{aux\_repo/dpcc} checked in
+v2, \autoref{sec:method:env:avoiding}.}
+
+% ===== [A4a aligning constraints vs demos] chapters/05_setup.tex =====
+task whose plan is three-dimensional. Neither is respected by the demonstrations, so satisfying them is
+left to the projection.
+
+% ===== [A4x box around keep-out (halfspace sanity)] chapters/05_setup.tex =====
+the marks alone understate the object --- a
+$0.10$\,m box has to be pushed around a $0.06$\,m keep-out region.
+
+% ===== [A4b demonstrations paragraph] chapters/05_setup.tex =====
+That segment
+crosses the keep-out region in $106$ of the $120$ contexts, and in $119$ of them once the region is
+tightened. The demonstrations were recorded without the region
+existing, so the task they teach is precisely the one the constraint forbids; going around it is the
+projection's work, not something the policy could have imitated.
+
+% ===== [A4c fig:expert-aligning caption] chapters/05_setup.tex =====
+red where that straight push crosses the
+  circular keep-out region, green where it clears it.
+
+% ===== [A4d fig:expert-aligning dataref] chapters/05_setup.tex =====
+\dataref{DA\_in\_Paper/data/expert\_paths.json, extract/expert\_paths.py; contexts from
+d3il/environments/dataset/data/aligning/\{train,test\}\_contexts.pkl}
+
+% ===== [A5 s-curve reference route] chapters/05_setup.tex =====
+On
+UAV-s-curve the
+single route satisfies the constraint set the projection later enforces, tightening included: the
+generator threads a passage the scene already contains, so nothing in the data has to be corrected. The
+projection is then asked to repair a plan that was never broken, which is why that scene can expose a
+limit of the tracking controller but cannot order the projection methods.
+
+% ===== [A6 rotor reach scoping (datasets)] chapters/05_setup.tex =====
+One thing has to be read correctly in that figure and in every quadrotor result that follows. A violation
+is a property of the \emph{path}, not of the aircraft: what is tested is the line of vehicle centres
+against the constraint surfaces, and those surfaces already carry the $0.31$\,m rotor reach
+(\autoref{tab:eval}), so the vehicle's own extent is inside the boundary rather than measured against it.
+
+% ===== [A7 F03 metric definition] chapters/05_setup.tex =====
+    contexts by its median and its minimum, and the share of the initial distance that was closed,
+    $(d\sidx{init}-d\sidx{final})/d\sidx{init}$ in per cent, against an initial distance averaging
+    $0.4530$\,m: $100\,\%$ is a box brought onto its target and $0\,\%$ one that was not moved towards it
+    at all;
+
+% ===== [A8 F08 crossing latched] chapters/05_setup.tex =====
+every test-time constraint end; a flight is scored the moment it passes it and flies on as before. On
+
+% ===== [A9 rotor reach scoping (metrics)] chapters/05_setup.tex =====
+  \item whether it is violation-free: no control step on which the flown path violates a constraint. The
+    test is on the path, not on the airframe: the surfaces it is tested against already carry the
+    $0.31$\,m rotor reach (\autoref{tab:eval});
+
+% ===== [A10a multi-seed] chapters/05_setup.tex =====
+  \item \textbf{Multi-seed results} --- every D3IL-avoiding table --- are reported as the mean over the
+
+% ===== [A10b single-seed] chapters/05_setup.tex =====
+  \item \textbf{Single-seed results} --- the one-seed D3IL-avoiding tables, D3IL-aligning and the
+    quadrotor scenes --- carry no seed dimension,
+
+% ===== [A11a tab:train caption] chapters/05_setup.tex =====
+The visual
+  input is two RGB tensors, each $(N,1,3,96,96)$, encoded to a combined $(N,128)$ feature; $N$ is the
+  training batch size.}
+
+% ===== [A11b tab:train header] chapters/05_setup.tex =====
+    & & \multicolumn{3}{c}{D3IL-avoiding} & D3IL-aligning & UAV, all scenes \\
+
+% ===== [A11c tab:train prose] chapters/05_setup.tex =====
+In the UAV scenes, the state anchor is $(N,9)$ and
+the plan is $(N,8,12)$: a spatial position increment, commanded position, measured position and
+measured velocity.
+
+% ===== [A12 F12 recipe part of the comparison] chapters/05_setup.tex =====
+What varies is how each objective was brought to convergence,
+which is a property of the training run and not of the comparison.
+
+% ===== [A13a tab:eval delta row] chapters/05_setup.tex =====
+value \ac{DPCC} introduces, and the only quantity the tightened variants change & $0.025$ & $0.025$ & $0.025$ \\
+
+% ===== [A13b tightening prose] chapters/05_setup.tex =====
+The \emph{tightening} margin is $0.025$\,m in all three environments, the value \ac{DPCC} introduces. It
+
+% ===== [A14 lookahead order] chapters/05_setup.tex =====
+guiding step adds one further evaluation, the lookahead from the projected state, so a plan there costs
+
+% ===== [A15 eta K integral] chapters/05_setup.tex =====
+The two families select the same steps except when $\eta\nfe$ is a whole number: the flow-based samplers
+project on the last $\lceil\eta\nfe\rceil$ steps, while the diffusion baseline's gate includes the step at
+the threshold itself and projects on one more --- eleven rather than ten at $\nfe=20$ and $\eta=0.5$.
+
+% ===== [A16 F05 same plan claim] chapters/05_setup.tex =====
+projection runs on $\lceil 1 \rceil = 1$ sampling step and that step is the terminal one --- so
+$n\sidx{guide}=0$, endpoint and per-step projection compute the same plan, and a difference between them
+there would be noise rather than a property of either method. The same arithmetic gives zero at $\nfe=1$
+for every threshold below $1.0$.
+
+% ===== [A17 F05 sampler at every step] chapters/05_setup.tex =====
+Where endpoint projection has guiding steps, its sampler is not the plain one on the two average-velocity
+models: at every step it queries the network at a zero interval, where the plain sampler queries it at
+the step width $1/\nfe$. On those models a difference between endpoint and per-step projection therefore
+belongs to the sampler and the point of projection together.
+
+% ===== [B1 guard -> dataref (panels)] chapters/06_results.tex =====
+\guard{The four panels added to this figure were rendered
+
+% ===== [B2 frontier band] chapters/06_results.tex =====
+value in its panel, so that a fast configuration that reaches the goal less reliably cannot appear as a
+favourable trade.
+
+% ===== [B3 smallest guided budget with threshold] chapters/06_results.tex =====
+It is read at two budgets. $\nfe=3$ is
+the smallest budget at which endpoint projection has a guiding step
+(\autoref{sec:res:constraints:degenerate}), and therefore the smallest at which the two methods differ at
+all; at $\nfe=10$ both have several.
+
+% ===== [B4 guard ledger path -> dataref] chapters/06_results.tex =====
+\guard{No endpoint-projection evaluation of the diffusion baseline exists on D3IL-avoiding, so no
+statement in this subsection extends to it. Recorded in
+\texttt{data\_status/PENDING\_20260922\_all\_lacking\_runs.md}.}
+
+% ===== [B5 K=3 five of six] chapters/06_results.tex =====
+Every $\nfe=3$ point of
+\autoref{tab:avoiding-projectors} sits three to eight times to the right of that at the same success, so
+each is dominated by a cheaper configuration that solves the task as well. The budget of three is
+therefore dropped from this benchmark's operating point, and with it the one budget at which endpoint
+projection would be the better projector at a price that matters.
+
+% ===== [B6 bit-identical run named, 2.45x dropped] chapters/06_results.tex =====
+Endpoint projection needs sampling steps to guide, and at
+one and two evaluations it has none or one (\autoref{sec:method:degenerate},
+\autoref{sec:res:constraints:degenerate}); a run at $\nfe=2$ with both methods given the same candidate
+plans produced bit-identical rollouts at $2.45$ times the cost.
+
+% ===== [B6b dataref for the bit-identical run] chapters/06_results.tex =====
+instantaneous-velocity matching at three evaluations --- and that is the result carried to the tasks that are
+run at those budgets, D3IL-aligning and the quadrotor scenes.
+
+% ===== [B5b K=3 recap] chapters/06_results.tex =====
+and the budget of three, the first at which
+endpoint projection can act, buys no fewer control steps at three to eight times the time, so it is
+dominated in the sense of \autoref{sec:res:avoiding:pareto}.
+
+% ===== [B7 F02 avoiding conclusion] chapters/06_results.tex =====
+D3IL-avoiding carries the central claim of this thesis, and the results support it: the average-velocity models
+Pareto-dominate the diffusion model of \ac{DPCC} on its own benchmark, at its protocol and with its own
+temporal U-Net of $4.0$\,M parameters (\autoref{tab:avoiding-conclusion}). CI-MeanFM at one network
+evaluation, with temporal consistency and per-step projection, reaches $1.000$ success with constraint
+satisfaction as the baseline of record does, in $59.2$ control steps against $70.1$ and at $18.1$\,ms per
+step against $553.4$, a thirtieth of the time. Analytic average-velocity matching at the same budget and
+projector reaches $0.967$ in $58.6$ steps at $18.3$\,ms, one episode in thirty for the same saving.
+
+% ===== [B8 K=2 guiding steps with threshold] chapters/06_results.tex =====
+At one evaluation it has no
+guiding step, and at two it has only one; raising the budget
+
+% ===== [B9 F04 constraint set has no bearing] chapters/06_results.tex =====
+The generative models are compared on the final box-to-target distance of plans executed
+without projection, on which the constraint set has no bearing --- the plan is the same plan --- so all
+four models are compared at once; constraint violations and the time one action costs are compared in
+\autoref{sec:res:aligning:projection}.
+
+% ===== [B10 moves the box towards] chapters/06_results.tex =====
+One model moves the box to its target on this task and the other three barely move it at all
+
+% ===== [B11a Table 6.5 caption] chapters/06_results.tex =====
+contexts from an initial $0.4530$\,m, in brackets the share of that distance closed
+  (\autoref{sec:setup:metrics:aligning});
+
+% ===== [B11b reading rule] chapters/06_results.tex =====
+The outcome axis is the share of the starting distance
+the box was moved towards its target, the bracketed number of \autoref{tab:va-models}, so the dashed
+line at $0\,\%$ is a box that was not moved and $100\,\%$ at the top is a box delivered;
+
+% ===== [B11c fig:aligning-tradeoff caption] chapters/06_results.tex =====
+\caption[Alignment: outcome against cost]{D3IL-aligning without projection: the share of the
+  starting distance the box was moved towards its target, median over the ten contexts, against the time
+  to compute one action on a log axis; every cell of \autoref{tab:va-models} except the two
+  $\alpha_{\mathrm{end}}=0.05$ rows, one training seed. The
+  dashed red line at $0\,\%$ is a box not moved. Rings mark the non-dominated configurations, joined by
+  the dashed staircase; beside each point is its step budget; the boxed arrow points where both axes
+  improve. The outcome axis is logarithmic in the distance left to the
+  target; the tick labels are the share closed.}
+
+% ===== [B11d Table 6.7 caption] chapters/06_results.tex =====
+contexts, the median with the share of the initial $0.4530$\,m closed in brackets, the mean $\pm$
+
+% ===== [B11e section 6.4 percent] chapters/06_results.tex =====
+The median context ends $0.197$\,m from the target, $57\,\%$ of the initial distance closed.
+
+% ===== [B11f fig:aligning-projected-tradeoff caption] chapters/06_results.tex =====
+the faint dashed grey ring is the
+  unprojected MeanFM cell at the same budget. Filled points keep at least nine contexts violation-free,
+  hollow ones do not; rings and the dashed staircase mark the non-dominated filled points; the dashed line at $0\,\%$ is a box not moved.}
+
+% ===== [B11g comment on the label] chapters/06_results.tex =====
+% dashed line: under it, the bottom frame struck it through (already so before v3.77).
+
+% ===== [B12 context numbering in the guard] chapters/06_results.tex =====
+obstacle until it overlaps the box of context~8, the evaluation's box--obstacle guard holds the box, and
+
+% ===== [B13 editorial sentence out of the guard] chapters/06_results.tex =====
+that one. Comparisons between rows are unaffected. Whether the chapter states it is the author's call
+(\texttt{DA\_20260923\_R2fix\_R37\_aligning.md} \S6.2).}
+
+% ===== [B14 F04 twin ring] chapters/06_results.tex =====
+Every point of the second is a plan \emph{after} projection on the tightened
+set, so it is dearer per control step and, for the same model and budget, further from the target than its
+unprojected twin --- which is drawn as a faint grey ring for analytic average-velocity matching at the same
+budget, so the price can be read directly: from $84\,\%$ of the distance closed at $190$\,ms to
+$61\,\%$ at $266$\,ms.
+
+% ===== [B14b which constraint is crossed (halfspace sanity)] chapters/06_results.tex =====
+the unprojected plan ending closest of all while crossing the constraint in eight
+contexts of ten.
+
+% ===== [B15 pillars same plans] chapters/06_results.tex =====
+execute the
+same plans instead of the manipulator:
+
+% ===== [B16 changes nothing] chapters/06_results.tex =====
+Before projection the vehicle changes nothing (\autoref{tab:uav-pillars-raw}, upper block).
+
+% ===== [B17 guarantees] chapters/06_results.tex =====
+so what the per-step projector guarantees on D3IL-avoiding it guarantees on UAV-pillars. Yet success falls
+
+% ===== [B18 tracking percentile] chapters/06_results.tex =====
+The vehicle tracks more
+closely: its flown position stays within about $0.007$ of the commanded one in the table's units, against the
+
+% ===== [B19 corridor band dominance] chapters/06_results.tex =====
+Among the configurations with the fewest
+violating steps, instantaneous-velocity matching at twenty evaluations is on the frontier and the baseline is
+not: under the tilt per-step projection, $252.6$ steps at $360$\,ms, dominates endpoint projection ($269.8$,
+$417$\,ms) and the baseline ($290.3$, $666$\,ms); over the hump endpoint projection with one candidate is the
+cheaper, $316.2$ steps at $291$\,ms, per-step projection the shorter, $285.1$ at $355$\,ms, and the baseline,
+$320.8$ steps at $654$\,ms, is dominated.
+
+% ===== [B20 pillars same plan flown] chapters/06_results.tex =====
+its result is the difference between a plan's outcome on
+D3IL-avoiding and the outcome of the same plan flown,
+
+% ===== [B21 corridor within 1.6] chapters/06_results.tex =====
+with it they leave the same violating steps at a shared
+budget and projection method, to within $1.6$ per flight, while under the tilt the budget takes them from
+
+% ===== [B22 F08 flight endings] chapters/06_results.tex =====
+A flight ends in one of
+three ways: it crosses the finish line, it reaches the episode limit, or the divergence guard ends it
+because the vehicle inverted (\autoref{sec:setup:metrics:uav}).
+
+% ===== [B23 Table 6.13 caption success] chapters/06_results.tex =====
+training seed. \emph{Success}: crosses the finish line; \emph{violating steps}: per flight, counted until
+
+% ===== [B24 keeping the plan] chapters/06_results.tex =====
+What the controller changes is tested by
+keeping the plan and changing the controller:
+
+% ===== [B25 Table 6.15 title/caption] chapters/06_results.tex =====
+\caption[UAV-s-curve: the same plans under two tracking controllers]{UAV-s-curve, FM at $\nfe=1$, the
+  configuration selected in \autoref{tab:uav-scurve}, the same plans under the two tracking controllers,
+
+% ===== [B26 stale pilot sentence] chapters/06_results.tex =====
+The
+controller that flies this scene is about twenty-four times the price of the one that does not, and by itself
+it costs twelve times as much per control step as generating the plan
+
+% ===== [B26b isolates the controller] chapters/06_results.tex =====
+The remainder row therefore carries the
+simulator step with the controller, and it is only their \emph{difference} that isolates the controller.
+One training seed, ten flights against ten.}
+
+% ===== [B27b same projected plans] chapters/06_results.tex =====
+and the same projected plans succeed on five flights of ten or on none, and
+the same unprojected plans violate on $23$ control steps per flight or on $42$, depending on which controller
+flies them.
+
+% ===== [B27a twenty-fourth (caveat)] chapters/06_results.tex =====
+fewer violating
+steps in both, at a twenty-fourth of the cost per control step. MuJoCo MPC's one gain, keeping the unprojected
+
+% ===== [B28a same plans (conclusion)] chapters/06_results.tex =====
+on a route of two sharp turns the same plans succeed or fail by the controller that
+flies them.
+
+% ===== [B27c twenty-fourth (conclusion)] chapters/06_results.tex =====
+succeeds on none, at a twenty-fourth of MuJoCo MPC's cost per control step. MuJoCo MPC's one gain, keeping
+
+% ===== [B29a follows from the data] chapters/06_results.tex =====
+That the
+simplest objective leads follows from the data:
+
+% ===== [B28b guard same plans] chapters/06_results.tex =====
+not on
+the controller comparison, which flies the same plans under both controllers.}
+
+% ===== [B30a 6.4 intro] chapters/06_results.tex =====
+On the two D3IL tasks the flow-based models
+Pareto-dominate the diffusion model of \ac{DPCC} with its own temporal U-Net of $4.0$\,M parameters; on the
+quadrotor they carry that result to a new plant,
+
+% ===== [B30b 6.4 avoiding item] chapters/06_results.tex =====
+The average-velocity models Pareto-dominate the baseline.
+    CI-MeanFM at one evaluation holds
+
+% ===== [B28c 6.4 s-curve item same plans] chapters/06_results.tex =====
+The same plans succeed or fail by the controller that flies
+    them, and the cascaded geometric controller is the better one:
+
+% ===== [B27d 6.4 s-curve twenty-fourth] chapters/06_results.tex =====
+projection, five of ten against none with it, at a twenty-fourth of the cost. Instantaneous-velocity
+
+% ===== [B30c 6.4 conclusion three steps] chapters/06_results.tex =====
+there the
+average-velocity models Pareto-dominate the diffusion model of \ac{DPCC} with its own temporal U-Net, and no
+
+% ===== [B30d 6.4 conclusion picture] chapters/06_results.tex =====
+the average-velocity models lead: on D3IL-avoiding they Pareto-dominate the diffusion model of
+\ac{DPCC} with its own temporal U-Net, in fewer control steps at a thirtieth of its time per action, and on
+
+% ===== [B29b as expected] chapters/06_results.tex =====
+on UAV-corridor the three
+objectives cannot be told apart, as expected from what the average-velocity objectives are built for, and on
+
+% ===== [B31 any flow-based objective] chapters/06_results.tex =====
+  \item[UAV-corridor.] Any flow-based objective, the budget chosen for the trade: violating steps per flight
+

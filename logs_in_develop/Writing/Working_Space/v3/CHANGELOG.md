@@ -21,6 +21,88 @@ is sourced from · what it left open.
 
 ---
 
+## v3.100 — 2026-09-25 · The audit of v3.98 applied in Ch 5/6; the alignment halfspace added to the demonstration check; four figures rebuilt; `check.py` follows nested inputs → [`changelogs/v3.100_20260925_audit_v3.98_applied.md`](changelogs/v3.100_20260925_audit_v3.98_applied.md)
+
+- **Applied (author: "I agree with them … Go"):** the agreed change list, §13 of the audit MD — 76 passages in
+  `05_setup.tex` and `06_results.tex` (A1–A17, B1–B31 with B5b/B26b/B27b, plus A4x/B14b for the halfspace), old
+  text in `withheld/20260925_v3.100_archive/`. F02: CI-MeanFM Pareto-dominates the baseline, MeanFM matches the
+  saving at one episode in thirty (five places; §6.4 intro names who dominates where). F03: the percentage is the
+  reduction of the median relative to the mean initial distance; "0 % = box not moved" gone from prose, captions
+  and both frontier figures. F01, F04–F13 and the §4 items as listed; guards with editorial text cleaned.
+- **Halfspace in V_A (author):** the straight push of the 120 recorded contexts crosses the keep-out region in 106
+  (119 tightened) and **the halfspace in none**; the learned plans enter the keep-out region in 7 of ten contexts
+  and the halfspace in 1 (tightened; per-context counts from `batch_va2_20260915_100754`). Ch 5 datasets, the
+  figure caption/subtitle and §6.2's "eight contexts" say so; `extract/expert_paths.py` carries the test;
+  `analysis/DA_20260925_aligning_frontier_label_halfspace_push.md` + INDEX row.
+- **Figures:** `fig_aligning_tradeoff`, `fig_aligning_projected_tradeoff` (label "0 % reference"),
+  `fig_expert_aligning` (subtitle), `fig_uav_corridor_paths` (legend vocabulary, incidental) rebuilt in the store,
+  values unchanged; exported to `v3/figures/`. **v4's copies are stale — the release prefers them** (INBOX → v4).
+- **Tools:** `tools/check.py` follows `\input` inside chapters: 15 files, 293 labels, all pass (the v3.99 false
+  positive is gone).
+- **Cross-draft:** → v4 note + INBOX row (Ch 7 l. 25/45/47 to mirror; re-export figures). → v2: nothing needed.
+- Not compiled; nothing committed. D01 stays a cluster check. **Bundle** rebuilt on request:
+  `bundle/output/thesis_v3_20260925_102006_new` and `…_102007_full_clean` (`.tex` + `.zip`), both verified.
+  Signed: Claude (Fable 5.1, Claude Code) · 2026-09-25.
+
+## v3.99c — 2026-09-25 · audit round 3: Codex's four points accepted; change list moved to §13 (end of the audit MD); nothing applied
+
+- **§11 (ChatGPT/Codex)** checked against HEAD `65bca136` and the figure store; all four points accepted in **§12**:
+  (1) the "box not moved" label is drawn by `DA_in_Paper/plotting/builders/frontier.py:252, 390` and sits inside both
+  alignment frontier figures (SVG and the rasterised PNG v3 includes), so the F03 rename now **requires** regenerating
+  both figures in DA_in_Paper and re-exporting them (C1, no plotted value changes); (2) the K=3 replacement says
+  "similar control-step counts at substantially greater planning time" and the recap at Results:668–671 is added
+  (B5b, threshold stated, tolerance frontier labelled as such); (3) A5 no longer derives "cannot order the projection
+  methods" from the feasible reference route — the reason is the guiding-step regime at the selected budget, which
+  Results:2133–2140 already states; (4) Results:2335–2336 ("the same projected/unprojected plans") and the guard at
+  2329–2332 ("isolates the controller") join the F06/F07 edits (B27b, B26b).
+- **The change list** was moved from §10.4 to **§13 at the end of the audit MD** (author's request) and updated:
+  A1–A17, B1–B31 (+B5b, B26b, B27b), C1 required + C2 optional, D1 (v4 Ch 7:25 via cross_draft), E1 (check.py).
+  A pointer stands where §10.4 was. Open decisions unchanged: F02 (default CI-MeanFM lead), F03 (default rename).
+- **Nothing applied:** no chapter, code, figure, bundle, INBOX or v4 file changed. Not compiled; nothing committed.
+  Signed: Claude (Fable 5.1, Claude Code) · 2026-09-25.
+
+## v3.99b — 2026-09-25 · audit round 2 answered: change list filed, nothing applied → [`audit from chatgpt/AUDIT_v3.98_2026-09-24.md`](audit%20from%20chatgpt/AUDIT_v3.98_2026-09-24.md) §10
+
+- **The auditor's §9** (ChatGPT/Codex, 2026-09-25) was checked against HEAD `65bca136`: every cited line, the
+  release tool's source selection (`make_release.py:82, 852–860` takes Ch 7–9 from v4's live files) and the
+  UAV scoring code read as quoted. Reply, conclusion and the per-chapter change list are **§10 of the audit MD**.
+- **Conceded from §8:** the F02 headline follows the printed table now ("keep the plural pending D01"
+  withdrawn); at K=3 five of six points are dominated on all three columns by CI-MeanFM K=1, the MeanFM
+  endpoint point (1.000 / 58.9 / 74.5) is not — the passage describes instead of asserting.
+- **Added:** the "2.45 times the cost" at Results:663 predates the 2026-08-24 terminal-evaluation change
+  (re-baseline note in `aggregated_hardflow_lowK/CHANGELOG_20260824_…md`) and goes or is dated; Results:557–561
+  ("nfe=3 the smallest budget with a guiding step") needs its threshold; the UAV-pillars "same plans" wording
+  (Results:1409, 1922) is the F06 imprecision again (Mode L re-plans from the vehicle's state) — author's call.
+- **Change list (§10.4):** A1–A17 in Chapter 5, B1–B31 in Chapter 6, C1–C2 optional figure items
+  (DA_in_Paper), D1 in v4's Chapter 7 via cross_draft (conditional on F02), E1 `tools/check.py` (code, separate
+  go-ahead). No number in any table changes. Open author decisions with defaults: F02 (CI-MeanFM lead),
+  F03 (rename the percentage). D01 stays a cluster check.
+- **Nothing applied:** no chapter, code, figure, bundle, INBOX or v4 file changed; bundle stays
+  `thesis_v3_20260924_214628_*`. Not compiled; nothing committed. The implementing pass (v3.100) waits for the
+  go-ahead. Signed: Claude (Fable 5.1, Claude Code) · 2026-09-25.
+
+## v3.99a — 2026-09-24 · the ChatGPT audit of v3.98 answered (nothing applied) → [`audit from chatgpt/AUDIT_v3.98_2026-09-24.md`](audit%20from%20chatgpt/AUDIT_v3.98_2026-09-24.md) §8
+
+- **The audit** (ChatGPT/Codex, 2026-09-24, snapshot `c885010b` = v3.98) was checked finding by finding against
+  the draft at HEAD (`65bca136`, v3.99), the cited evaluators and samplers at their current lines, the official
+  DA notes and — for F03/F04 — the alignment batch CSV (`analysis_results_checkpoint/15-09/batch_va2_20260915_100754`).
+  Verdicts, evidence and the fix each one would need are appended as **§8 of the audit MD**, signed.
+- **Outcome:** F01, F02, F04, F06–F13 confirmed as the audit states; **F05 confirmed and stronger** — the project's
+  own parity DA of 2026-08-24 (`aggregated_hardflow_lowK/DA_20260824_does_HF_pay_when_it_actually_runs.md` §4)
+  measured bit-identical K=2 rollouts on FM only and different ones on MeanFM, which contradicts Setup:1425–1428;
+  **F03 confirmed with the magnitude measured** (paired per-context shares differ from the printed percentages by
+  0–3 points; an unmoved cell prints −1 %); **F14** bullets 1–2 already resolved (v3.99, v4.0/v4.1a), bullet 3
+  concerns v3's layout bundle only; §4: seven items confirmed in v3, two resolved in v4, plus two `\guard`s that
+  would print provenance/editorial text in a clean or release build (`06_results.tex` HEAD 565 and 1241–1247);
+  D01–D04 and §6 agreed.
+- **Open for the author:** F02 (lead with CI-MeanFM's strict dominance; MeanFM's 0.967 row as a trade-off — or
+  keep the plural pending D01) and F03 (rename the printed quantity, no numbers change, or recompute paired
+  shares, table and figure change). D01's check (result-folder mtimes, episode 0–1 trajectories, seed 7 /
+  top-right-hard) is a cluster download, no run.
+- **Nothing applied:** no chapter, code, figure, bundle, INBOX or v4 file changed; bundle stays
+  `thesis_v3_20260924_214628_*`. Not compiled; nothing committed.
+  Signed: Claude (Fable 5.1, Claude Code) · 2026-09-24.
+
 ## v3.99 — 2026-09-24 · The v4.0 and v4.1 cross notes applied (Ch 5/6 appendix references); bundle
 
 - **What was asked:** the author: "check the inbox cross note, update the v3, only job is to check cross note from
